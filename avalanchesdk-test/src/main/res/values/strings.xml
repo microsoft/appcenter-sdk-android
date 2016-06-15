@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">AvalancheSDK</string>
+    <string name="button_title_crash">Crash me</string>
 </resources>

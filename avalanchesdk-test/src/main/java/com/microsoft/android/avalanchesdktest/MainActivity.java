@@ -2,24 +2,26 @@ package com.microsoft.android.avalanchesdktest;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Button;
+
 import com.microsoft.android.Avalanche;
 import com.microsoft.android.crash.CrashManager;
-import com.microsoft.android.crash.CrashManagerListener;
 import com.microsoft.android.utils.AvalancheLog;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
+
+    private Button mCrashButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Avalanche.configure(getApplication(), CrashManager.getInstance().register(this, new CrashManagerListener() {
-            @Override
-            public boolean shouldAutoUploadCrashes() {
-                return true;
-            }
-        }));
+        Avalanche.configure(getApplication());
 
         boolean crashManagerAvailable = Avalanche.isFeatureAvailable(Avalanche.FEATURE_CRASH);
         boolean updateManagerAvailable = Avalanche.isFeatureAvailable(Avalanche.FEATURE_UPDATE);
@@ -32,5 +34,14 @@ public class MainActivity extends AppCompatActivity {
 
         AvalancheLog.info("crash enabled: " + crashManagerEnabled);
         AvalancheLog.info("update enabled: " + updateManagerEnabled);
+
+        mCrashButton = (Button) findViewById(R.id.button_crash);
+        mCrashButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<String> fakeList = new ArrayList<>();
+                fakeList.get(1000);
+            }
+        });
     }
 }
