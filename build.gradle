@@ -16,6 +16,31 @@ allprojects {
     repositories {
         jcenter()
     }
+
+    apply plugin: 'checkstyle'
+
+    //add checkstyle to each module
+    task checkstyle(type: Checkstyle) {
+        configFile = new File(rootDir, "config/checkstyle/checkstyle.xml") //use same config file for each module
+        source 'src/'
+        include '**/*.java'
+        exclude '**/gen/**'
+        classpath = files()
+        reports {
+            xml {
+                destination "build/outputs/reports/checkstyle-results.xml"
+            }
+        }
+    }
+
+    task checkstyleReport(dependsOn: 'checkstyle') << {
+        if (file("build/outputs/reports/checkstyle-results.xml").exists()) {
+            ant.xslt(in: "build/outputs/reports/checkstyle-results.xml",
+                    style: "config/checkstyle/checkstyle.xsl",
+                    out: "build/outputs/reports/checkstyle-results.html"
+            )
+        }
+    }
 }
 
 task clean(type: Delete) {

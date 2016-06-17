@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE module PUBLIC
+    "-//Puppy Crawl//DTD Check Configuration 1.3//EN"
+    "http://www.puppycrawl.com/dtds/configuration_1_3.dtd">
+
+<!--
+    This configuration file was written by the eclipse-cs plugin configuration editor
+--><!--
+    Checkstyle-Configuration: Android_Checkstyle
+    Description: none
+-->
+<module name="Checker">
+    <property name="severity" value="warning" />
+    <module name="TreeWalker">
+        <property name="tabWidth" value="4" />
+        <module name="FileContentsHolder" />
+        <module name="MissingOverride" />
+        <module name="JavadocMethod">
+            <property name="severity" value="ignore" />
+            <property name="scope" value="protected" />
+            <property name="allowUndeclaredRTE" value="true" />
+            <property name="suppressLoadErrors" value="true" />
+            <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit" />
+        </module>
+        <module name="JavadocStyle">
+            <property name="severity" value="ignore" />
+            <property name="checkEmptyJavadoc" value="true" />
+            <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit" />
+        </module>
+        <module name="JavadocType">
+            <property name="severity" value="ignore" />
+            <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit" />
+        </module>
+        <module name="ConstantName" />
+        <module name="LocalFinalVariableName" />
+        <module name="LocalVariableName" />
+        <module name="MemberName">
+            <property name="applyToPackage" value="false" />
+            <property name="applyToPrivate" value="false" />
+        </module>
+        <module name="MethodName" />
+        <module name="MethodTypeParameterName" />
+        <module name="PackageName" />
+        <module name="ParameterName" />
+        <module name="StaticVariableName" />
+        <module name="TypeName" />
+        <module name="IllegalImport" />
+        <module name="RedundantImport" />
+        <module name="UnusedImports" />
+        <module name="AnonInnerLength" />
+        <module name="LineLength">
+            <metadata name="net.sf.eclipsecs.core.comment"
+                value="Give a few more characters to allow exlipse auto formatter some exceptions from 80 characters if it wants so..." />
+            <property name="severity" value="ignore" />
+            <property name="ignorePattern" value="^import.*$" />
+            <property name="max" value="100" />
+            <property name="tabWidth" value="4" />
+            <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit" />
+        </module>
+        <module name="MethodLength">
+            <property name="max" value="40" />
+        </module>
+        <module name="ParameterNumber">
+            <property name="max" value="9" />
+        </module>
+        <module name="GenericWhitespace" />
+        <module name="EmptyForInitializerPad" />
+        <module name="EmptyForIteratorPad" />
+        <module name="NoWhitespaceAfter">
+            <property name="tokens" value="BNOT,DEC,DOT,INC,LNOT,UNARY_MINUS,UNARY_PLUS" />
+        </module>
+        <module name="NoWhitespaceBefore" />
+        <module name="TypecastParenPad">
+            <property name="tokens" value="RPAREN,TYPECAST" />
+        </module>
+        <module name="WhitespaceAfter" />
+        <module name="WhitespaceAround" />
+        <module name="ModifierOrder" />
+        <module name="RedundantModifier">
+            <property name="severity" value="ignore" />
+            <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit" />
+        </module>
+        <module name="EmptyBlock">
+            <property name="option" value="text" />
+        </module>
+        <module name="LeftCurly" />
+        <module name="NeedBraces" />
+        <module name="RightCurly" />
+        <module name="AvoidInlineConditionals" />
+        <module name="DefaultComesLast" />
+        <module name="EmptyStatement" />
+        <module name="EqualsAvoidNull">
+            <message key="equals.avoid.null"
+                value="String literal expressions should be on the left side of an equals comparison. This may avoid a NullPointerException." />
+        </module>
+        <module name="EqualsHashCode" />
+        <module name="FallThrough" />
+        <module name="IllegalCatch" />
+        <module name="IllegalThrows" />
+        <module name="MagicNumber" />
+        <module name="MissingSwitchDefault" />
+        <module name="MultipleStringLiterals">
+            <property name="ignoreStringsRegexp"
+                value="^&quot;(\s*)&quot;$|^&quot;(\s*)'(\s*)&quot;$|^&quot;/&quot;$|^&quot;(\s*):(\s*)&quot;|^&quot;(\s*)\[(\s*)&quot;$|^&quot;(\s*)\](\s*)&quot;$" />
+            <property name="ignoreOccurrenceContext" value="LITERAL_THROW,ANNOTATION" />
+        </module>
+        <module name="MultipleVariableDeclarations" />
+        <module name="NestedIfDepth">
+            <property name="max" value="2" />
+        </module>
+        <module name="NestedTryDepth">
+            <property name="max" value="2" />
+        </module>
+        <module name="PackageDeclaration" />
+        <module name="SimplifyBooleanExpression" />
+        <module name="SimplifyBooleanReturn" />
+        <module name="StringLiteralEquality" />
+        <module name="SuperClone" />
+        <module name="SuperFinalize" />
+        <module name="VisibilityModifier">
+            <property name="severity" value="ignore" />
+            <property name="packageAllowed" value="true" />
+            <property name="protectedAllowed" value="true" />
+            <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit" />
+        </module>
+        <module name="BooleanExpressionComplexity" />
+        <module name="CyclomaticComplexity" />
+        <module name="NPathComplexity" />
+        <module name="ClassFanOutComplexity">
+            <property name="max" value="25" />
+        </module>
+        <module name="TrailingComment" />
+        <module name="UpperEll" />
+        <module name="JavadocVariable">
+            <property name="severity" value="ignore" />
+            <property name="scope" value="package" />
+            <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit" />
+        </module>
+        <module name="MissingDeprecated" />
+        <module name="PackageAnnotation" />
+        <module name="AnnotationUseStyle" />
+        <module name="MemberName">
+            <property name="applyToPrivate" value="false" />
+        </module>
+        <module name="MemberName">
+            <property name="applyToPrivate" value="false" />
+        </module>
+    </module>
+    <module name="JavadocPackage">
+        <property name="severity" value="ignore" />
+        <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit" />
+    </module>
+    <module name="FileLength">
+        <property name="max" value="800" />
+    </module>
+    <module name="StrictDuplicateCode">
+        <property name="min" value="15" />
+    </module>
+    <!--<module name="NewlineAtEndOfFile"/>-->
+    <module name="SuppressionCommentFilter" />
+    <module name="FileTabCharacter" />
+    <module name="RegexpSingleline">
+        <property name="format" value="printStackTrace" />
+        <property name="message" value="Handle exception correctly or use logging." />
+    </module>
+</module>
