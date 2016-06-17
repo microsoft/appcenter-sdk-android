@@ -1,4 +1,4 @@
-package com.microsoft.android.avalanchesdktest;
+package com.microsoft.android.sasquatch;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;

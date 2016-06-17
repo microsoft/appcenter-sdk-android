@@ -1,4 +1,4 @@
-package com.microsoft.android.avalanchesdktest;
+package com.microsoft.android.sasquatch;
 
 import org.junit.Test;
 
