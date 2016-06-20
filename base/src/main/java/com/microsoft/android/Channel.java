@@ -18,7 +18,7 @@ public class Channel {
     public void handle(AvalancheDataInterface data) {
         //TODO forward data to Sending/Journalling pipeline
         if(data.isHighPriority()) {
-            
+
         }
         else {
 

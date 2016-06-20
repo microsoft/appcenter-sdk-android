@@ -14,6 +14,9 @@ import java.io.UnsupportedEncodingException;
 public class Base64 {
     private static final String TAG = "BASE64";
 
+    //REMOVE AS ANDROID
+
+
     /**
      * Default values for encoder/decoder flags.
      */

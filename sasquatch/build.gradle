@@ -31,7 +31,7 @@ dependencies {
     androidTestCompile 'com.android.support.test:runner:0.5'
     androidTestCompile "com.android.support:support-annotations:$supportLibVersion"
 
-    compile project(':avalanchesdk-base')
-    compile project(':avalanchesdk-crash')
+    compile project(':base')
+    compile project(':crash')
 
 }

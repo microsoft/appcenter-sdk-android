@@ -361,5 +361,8 @@ public class CrashReport implements AvalancheDataInterface {
         this.format = format;
     }
 
-
+    @Override
+    public boolean isHighPriority() {
+        return true;
+    }
 }

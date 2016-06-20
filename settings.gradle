@@ -1,1 +1,1 @@
-include ':avalanchesdk-base', ':avalanchesdk-crash', ':sasquatch'
+include ':base', ':crash', ':sasquatch'
