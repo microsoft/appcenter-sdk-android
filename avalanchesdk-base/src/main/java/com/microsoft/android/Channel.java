@@ -17,10 +17,13 @@ public class Channel {
 
     public void handle(AvalancheDataInterface data) {
         //TODO forward data to Sending/Journalling pipeline
+        if(data.isHighPriority()) {
+            
+        }
+        else {
+
+        }
     }
 
-    public void handleWithHighPriority(AvalancheDataInterface data) {
-        //TODO forward data to sending/journalling pipeline but with higher prio
-    }
 
 }

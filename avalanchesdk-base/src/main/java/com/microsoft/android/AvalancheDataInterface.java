@@ -5,4 +5,8 @@ package com.microsoft.android;
  */
 
 public interface AvalancheDataInterface {
+
+    //TODO could also be an enum or whatever
+    public boolean isHighPriority();
+
 }
