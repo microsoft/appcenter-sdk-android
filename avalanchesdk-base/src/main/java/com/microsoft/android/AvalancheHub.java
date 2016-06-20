@@ -12,36 +12,36 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public final class Avalanche {
+public final class AvalancheHub {
 
-    public static final String FEATURE_CRASH = "com.microsoft.android.crash.CrashManager";
-    public static final String FEATURE_UPDATE = "com.microsoft.android.update.UpdateManager";
-    private static Avalanche sharedInstance;
-    private final Set<AvalancheComponent> mComponents;
+    public static final String FEATURE_CRASH = "com.microsoft.android.crash.Crashes";
+
+    private static AvalancheHub sharedInstance;
+    private final Set<AvalancheFeature> mFeatures;
     private String mAppIdentifier;
     private WeakReference<Application> mApplicationWeakReference;
 
-    protected Avalanche() {
-        mComponents = new HashSet<>();
+    protected AvalancheHub() {
+        mFeatures = new HashSet<>();
     }
 
-    public static Avalanche getSharedInstance() {
+    public static AvalancheHub getSharedInstance() {
         if (sharedInstance == null) {
-            sharedInstance = new Avalanche();
+            sharedInstance = new AvalancheHub();
         }
         return sharedInstance;
     }
 
     /**
-     * The most convenient way to set up the SDK. It will gather all available features and automatically instantiate and configure them.
+     * The most convenient way to set up the SDK. It will gather all available features and automatically instantiate and use them.
      * Instantiation and registration of the features is handled on opinionated basis - the features will register themselves in
      * the most suitable way for them. The app identifier will be read from your manifest.
      *
      * @param application Your application object.
-     * @return The Avalanche SDK, fully configured with all features, which are available.
+     * @return The AvalancheHub SDK, fully configured with all features, which are available.
      */
-    public static Avalanche configure(Application application) {
-        return configure(application, true);
+    public static AvalancheHub use(Application application) {
+        return use(application, true);
     }
 
     /**
@@ -49,23 +49,23 @@ public final class Avalanche {
      * The app identifier will be read from your manifest.
      *
      * @param application   Your application object.
-     * @param autoConfigure Whether to auto-configure all available features. If false, only the SDK will be set up.
-     * @return The Avalanche SDK, ready to use.
+     * @param autoConfigure Whether to auto-use all available features. If false, only the SDK will be set up.
+     * @return The AvalancheHub SDK, ready to use.
      */
-    public static Avalanche configure(Application application, boolean autoConfigure) {
+    public static AvalancheHub use(Application application, boolean autoConfigure) {
         if (!autoConfigure) {
-            return configure(application, new AvalancheComponent[0]);
+            return use(application, new AvalancheFeature[0]);
         }
-        String[] allFeatureNames = {FEATURE_CRASH, FEATURE_UPDATE};
-        List<Class<? extends AvalancheComponent>> components = new ArrayList<>();
+        String[] allFeatureNames = {FEATURE_CRASH};
+        List<Class<? extends AvalancheFeature>> features = new ArrayList<>();
         for (String featureName : allFeatureNames) {
-            Class<? extends AvalancheComponent> clazz = getClassForComponent(featureName);
+            Class<? extends AvalancheFeature> clazz = getClassForFeature(featureName);
             if (clazz != null) {
-                components.add(clazz);
+                features.add(clazz);
             }
         }
         //noinspection unchecked
-        return configure(application, components.toArray(new Class[components.size()]));
+        return use(application, features.toArray(new Class[features.size()]));
     }
 
     /**
@@ -73,12 +73,12 @@ public final class Avalanche {
      * The app identifier will be read from your manifest.
      *
      * @param application Your application object.
-     * @param features    Vararg list of feature classes to auto-configure.
-     * @return The Avalanche SDK, configured with your selected features.
+     * @param features    Vararg list of feature classes to auto-use.
+     * @return The AvalancheHub SDK, configured with your selected features.
      */
     @SafeVarargs
-    public static Avalanche configure(Application application, Class<? extends AvalancheComponent>... features) {
-        return configure(application, Util.getAppIdentifier(application), features);
+    public static AvalancheHub use(Application application, Class<? extends AvalancheFeature>... features) {
+        return use(application, Util.getAppIdentifier(application), features);
     }
 
     /**
@@ -86,22 +86,22 @@ public final class Avalanche {
      *
      * @param application   Your application object.
      * @param appIdentifier The app identifier to use.
-     * @param features      Vararg list of feature classes to auto-configure.
-     * @return The Avalanche SDK, configured with your selected features.
+     * @param features      Vararg list of feature classes to auto-use.
+     * @return The AvalancheHub SDK, configured with your selected features.
      */
     @SafeVarargs
-    public static Avalanche configure(Application application, String appIdentifier, Class<? extends AvalancheComponent>... features) {
-        List<AvalancheComponent> components = new ArrayList<>();
+    public static AvalancheHub use(Application application, String appIdentifier, Class<? extends AvalancheFeature>... features) {
+        List<AvalancheFeature> featureList = new ArrayList<>();
         if (features != null && features.length > 0) {
-            for (Class<? extends AvalancheComponent> featureClass : features) {
-                AvalancheComponent component = instantiateComponent(featureClass);
-                if (component != null) {
-                    components.add(component);
+            for (Class<? extends AvalancheFeature> featureClass : features) {
+                AvalancheFeature feature = instantiateFeature(featureClass);
+                if (feature != null) {
+                    featureList.add(feature);
                 }
             }
         }
 
-        return configure(application, appIdentifier, components.toArray(new AvalancheComponent[components.size()]));
+        return use(application, appIdentifier, featureList.toArray(new AvalancheFeature[featureList.size()]));
     }
 
     /**
@@ -110,10 +110,10 @@ public final class Avalanche {
      *
      * @param application Your application object.
      * @param features    Vararg list of configured features to enable.
-     * @return The Avalanche SDK, configured with the selected feature instances.
+     * @return The AvalancheHub SDK, configured with the selected feature instances.
      */
-    public static Avalanche configure(Application application, AvalancheComponent... features) {
-        return configure(application, Util.getAppIdentifier(application), features);
+    public static AvalancheHub use(Application application, AvalancheFeature... features) {
+        return use(application, Util.getAppIdentifier(application), features);
     }
 
     /**
@@ -122,36 +122,36 @@ public final class Avalanche {
      * @param application   Your application object.
      * @param appIdentifier The app identifier to use.
      * @param features      Vararg list of configured features to enable.
-     * @return The Avalanche SDK, configured with the selected feature instances.
+     * @return The AvalancheHub SDK, configured with the selected feature instances.
      */
-    public static Avalanche configure(Application application, String appIdentifier, AvalancheComponent... features) {
-        Avalanche avalanche = getSharedInstance().initialize(application, appIdentifier);
+    public static AvalancheHub use(Application application, String appIdentifier, AvalancheFeature... features) {
+        AvalancheHub avalancheHub = getSharedInstance().initialize(application, appIdentifier);
 
         if (features != null && features.length > 0) {
-            for (AvalancheComponent feature : features) {
-                avalanche.addFeature(feature);
+            for (AvalancheFeature feature : features) {
+                avalancheHub.addFeature(feature);
             }
         }
 
-        return avalanche;
+        return avalancheHub;
     }
 
     /**
      * Checks whether a feature is available at runtime or not.
      *
-     * @param componentName The name of the feature you want to check for.
+     * @param featureName The name of the feature you want to check for.
      * @return Whether the feature is available.
      */
-    public static boolean isFeatureAvailable(String componentName) {
-        return getClassForComponent(componentName) != null;
+    public static boolean isFeatureAvailable(String featureName) {
+        return getClassForFeature(featureName) != null;
     }
 
-    private static Class<? extends AvalancheComponent> getClassForComponent(String componentName) {
+    private static Class<? extends AvalancheFeature> getClassForFeature(String featureName) {
         try {
             //noinspection unchecked
-            return (Class<? extends AvalancheComponent>) Class.forName(componentName);
+            return (Class<? extends AvalancheFeature>) Class.forName(featureName);
         } catch (ClassCastException e) {
-            // If the class can be resolved but can't be cast to AvalancheComponent, this is no valid component
+            // If the class can be resolved but can't be cast to AvalancheFeature, this is no valid feature
             return null;
         } catch (ClassNotFoundException e) {
             // If the class can not be resolved, the feature in question is not available.
@@ -159,11 +159,11 @@ public final class Avalanche {
         }
     }
 
-    private static AvalancheComponent instantiateComponent(Class<? extends AvalancheComponent> clazz) {
+    private static AvalancheFeature instantiateFeature(Class<? extends AvalancheFeature> clazz) {
         //noinspection TryWithIdenticalCatches
         try {
             Method getSharedInstanceMethod = clazz.getMethod("getInstance");
-            return (AvalancheComponent) getSharedInstanceMethod.invoke(null);
+            return (AvalancheFeature) getSharedInstanceMethod.invoke(null);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
@@ -173,10 +173,10 @@ public final class Avalanche {
         }
     }
 
-    private Avalanche initialize(Application application, String appIdentifier) {
+    private AvalancheHub initialize(Application application, String appIdentifier) {
         mAppIdentifier = appIdentifier;
         mApplicationWeakReference = new WeakReference<>(application);
-        mComponents.clear();
+        mFeatures.clear();
 
         Constants.loadFromContext(application.getApplicationContext());
 
@@ -186,14 +186,14 @@ public final class Avalanche {
     /**
      * Add and enable a configured feature.
      *
-     * @param component
+     * @param feature
      */
-    public void addFeature(AvalancheComponent component) {
+    public void addFeature(AvalancheFeature feature) {
 
         Application application = getApplication();
         if (application != null) {
-            application.registerActivityLifecycleCallbacks(component);
-            mComponents.add(component);
+            application.registerActivityLifecycleCallbacks(feature);
+            mFeatures.add(feature);
         }
     }
 
@@ -212,7 +212,7 @@ public final class Avalanche {
      * @return Whether the feature is enabled.
      */
     public boolean isFeatureEnabled(String feature) {
-        Class<? extends AvalancheComponent> clazz = getClassForComponent(feature);
+        Class<? extends AvalancheFeature> clazz = getClassForFeature(feature);
         if (clazz != null) {
             return isFeatureEnabled(clazz);
         }
@@ -225,10 +225,10 @@ public final class Avalanche {
      * @param feature    The feature class to check for.
      * @return  Whether the feature is enabled.
      */
-    public boolean isFeatureEnabled(Class<? extends AvalancheComponent> feature) {
-        for (AvalancheComponent component :
-                mComponents) {
-            if (component.getClass().equals(feature)) {
+    public boolean isFeatureEnabled(Class<? extends AvalancheFeature> feature) {
+        for (AvalancheFeature aFeature :
+                mFeatures) {
+            if (aFeature.getClass().equals(feature)) {
                 return true;
             }
         }

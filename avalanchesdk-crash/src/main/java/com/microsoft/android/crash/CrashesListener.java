@@ -3,10 +3,10 @@ package com.microsoft.android.crash;
 /**
  * <h3>Description</h3>
  *
- * Abstract class for callbacks to be invoked from the CrashManager.
+ * Abstract class for callbacks to be invoked from the Crashes.
  *
  **/
-public abstract class CrashManagerListener {
+public abstract class CrashesListener {
     /**
      * Return true to ignore the default exception handler, i.e. the user will not
      * get the alert dialog with the "Force Close" button.
@@ -116,26 +116,26 @@ public abstract class CrashManagerListener {
     }
 
     /**
-     * Called when the crash manager has sent crashes to Avalanche.
+     * Called when the crash manager has sent crashes to AvalancheHub.
      */
     public void onCrashesSent() {
     }
 
     /**
-     * Called when the crash manager failed to send crashes to Avalanche, e.g.
+     * Called when the crash manager failed to send crashes to AvalancheHub, e.g.
      * because the device has no network connections.
      */
     public void onCrashesNotSent() {
     }
 
     /**
-     * Called when the user denied to send crashes to Avalanche.
+     * Called when the user denied to send crashes to AvalancheHub.
      */
     public void onUserDeniedCrashes() {
     }
 
     /**
-     * Get the number of max retry attempts to send crashes to Avalanche.
+     * Get the number of max retry attempts to send crashes to AvalancheHub.
      * Infinite retries if this value is set to -1
      *
      * @return the max number of retry attempts

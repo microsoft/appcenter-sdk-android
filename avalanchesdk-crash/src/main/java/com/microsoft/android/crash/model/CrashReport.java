@@ -2,6 +2,7 @@ package com.microsoft.android.crash.model;
 
 import android.text.TextUtils;
 
+import com.microsoft.android.AvalancheDataInterface;
 import com.microsoft.android.Constants;
 import com.microsoft.android.utils.AvalancheLog;
 
@@ -20,7 +21,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class CrashDetails {
+public class CrashReport implements AvalancheDataInterface {
 
     public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
 
@@ -64,11 +65,11 @@ public class CrashDetails {
 
     private String format;
 
-    public CrashDetails(String crashIdentifier) {
+    public CrashReport(String crashIdentifier) {
         this.crashIdentifier = crashIdentifier;
     }
 
-    public CrashDetails(String crashIdentifier, Throwable throwable) {
+    public CrashReport(String crashIdentifier, Throwable throwable) {
         this(crashIdentifier);
 
         isXamarinException = false;
@@ -79,7 +80,7 @@ public class CrashDetails {
         throwableStackTrace = stackTraceResult.toString();
     }
 
-    public CrashDetails(String crashIdentifier, Throwable throwable, String managedExceptionString, Boolean isManagedException) {
+    public CrashReport(String crashIdentifier, Throwable throwable, String managedExceptionString, Boolean isManagedException) {
         this(crashIdentifier);
 
         final Writer stackTraceResult = new StringWriter();
@@ -119,15 +120,15 @@ public class CrashDetails {
     }
 
 
-    public static CrashDetails fromFile(File file) throws IOException {
+    public static CrashReport fromFile(File file) throws IOException {
         String crashIdentifier = file.getName().substring(0, file.getName().indexOf(".stacktrace"));
         return fromReader(crashIdentifier, new FileReader(file));
     }
 
-    public static CrashDetails fromReader(String crashIdentifier, Reader in) throws IOException {
+    public static CrashReport fromReader(String crashIdentifier, Reader in) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(in);
 
-        CrashDetails result = new CrashDetails(crashIdentifier);
+        CrashReport result = new CrashReport(crashIdentifier);
 
         String readLine, headerName, headerValue;
         boolean headersProcessed = false;
@@ -192,6 +193,7 @@ public class CrashDetails {
         return result;
     }
 
+    //TODO this should not be in the model class
     public void writeCrashReport() {
         String path = Constants.FILES_PATH + "/" + crashIdentifier + ".stacktrace";
         AvalancheLog.debug("Writing unhandled exception to: " + path);

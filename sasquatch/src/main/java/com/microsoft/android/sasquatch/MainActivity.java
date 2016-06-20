@@ -5,8 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 
-import com.microsoft.android.Avalanche;
-import com.microsoft.android.crash.CrashManager;
+import com.microsoft.android.AvalancheHub;
 import com.microsoft.android.utils.AvalancheLog;
 
 import java.util.ArrayList;
@@ -21,19 +20,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Avalanche.configure(getApplication());
+        AvalancheHub.use(getApplication());
 
-        boolean crashManagerAvailable = Avalanche.isFeatureAvailable(Avalanche.FEATURE_CRASH);
-        boolean updateManagerAvailable = Avalanche.isFeatureAvailable(Avalanche.FEATURE_UPDATE);
+        boolean crashManagerAvailable = AvalancheHub.isFeatureAvailable(AvalancheHub.FEATURE_CRASH);
 
         AvalancheLog.info("crash available: " + crashManagerAvailable);
-        AvalancheLog.info("update available: " + updateManagerAvailable);
 
-        boolean crashManagerEnabled = Avalanche.getSharedInstance().isFeatureEnabled(Avalanche.FEATURE_CRASH);
-        boolean updateManagerEnabled = Avalanche.getSharedInstance().isFeatureEnabled(Avalanche.FEATURE_UPDATE);
+        boolean crashManagerEnabled = AvalancheHub.getSharedInstance().isFeatureEnabled(AvalancheHub.FEATURE_CRASH);
 
         AvalancheLog.info("crash enabled: " + crashManagerEnabled);
-        AvalancheLog.info("update enabled: " + updateManagerEnabled);
 
         mCrashButton = (Button) findViewById(R.id.button_crash);
         mCrashButton.setOnClickListener(new View.OnClickListener() {

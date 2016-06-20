@@ -3,7 +3,7 @@ package com.microsoft.android;
 import android.app.Activity;
 import android.os.Bundle;
 
-public abstract class DefaultAvalancheComponent implements AvalancheComponent {
+public abstract class DefaultAvalancheFeature implements AvalancheFeature {
 
     @Override
     public String getName() {

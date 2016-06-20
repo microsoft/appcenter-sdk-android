@@ -1,17 +1,12 @@
 package com.microsoft.android.crash;
 
 import android.text.TextUtils;
-
 import com.microsoft.android.Constants;
-import com.microsoft.android.crash.model.CrashDetails;
+import com.microsoft.android.Channel;
+import com.microsoft.android.crash.model.CrashReport;
 import com.microsoft.android.utils.AvalancheLog;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Date;
 import java.util.UUID;
@@ -20,65 +15,67 @@ import java.util.UUID;
  * <h3>Description</h3>
  * Helper class to catch exceptions. Saves the stack trace
  * as a file and executes callback methods to ask the app for
- * additional information and meta data (see CrashManagerListener).
+ * additional information and meta data (see CrashesListener).
  *
  **/
 public class ExceptionHandler implements UncaughtExceptionHandler {
-    private final CrashManager mCrashManager;
+    private final Crashes mCrashes;
     private boolean mIgnoreDefaultHandler = false;
-    private CrashManagerListener mCrashManagerListener;
+    private CrashesListener mCrashesListener;
     private UncaughtExceptionHandler mDefaultExceptionHandler;
 
-    public ExceptionHandler(CrashManager crashManager, UncaughtExceptionHandler defaultExceptionHandler, CrashManagerListener listener, boolean ignoreDefaultHandler) {
-        mCrashManager = crashManager;
+    public ExceptionHandler(Crashes crashes, UncaughtExceptionHandler defaultExceptionHandler, CrashesListener listener, boolean ignoreDefaultHandler) {
+        mCrashes = crashes;
         mDefaultExceptionHandler = defaultExceptionHandler;
         mIgnoreDefaultHandler = ignoreDefaultHandler;
-        mCrashManagerListener = listener;
+        mCrashesListener = listener;
     }
 
-    public void setListener(CrashManagerListener listener) {
-        mCrashManagerListener = listener;
+    public void setListener(CrashesListener listener) {
+        mCrashesListener = listener;
     }
+
+
 
     /**
      * Save a caught exception to disk.
      *
      * @param exception Exception to save.
      * @param thread    Thread that crashed.
-     * @param listener  Custom CrashManager listener instance.
+     * @param listener  Custom Crashes listener instance.
      */
-    public void saveException(Throwable exception, Thread thread, CrashManagerListener listener) {
+    public void saveException(Throwable exception, Thread thread, CrashesListener listener) {
         final Date now = new Date();
-        final Date startDate = new Date(mCrashManager.getInitializeTimestamp());
+        final Date startDate = new Date(mCrashes.getInitializeTimestamp());
         final Writer result = new StringWriter();
         final PrintWriter printWriter = new PrintWriter(result);
         exception.printStackTrace(printWriter);
 
         String filename = UUID.randomUUID().toString();
 
-        CrashDetails crashDetails = new CrashDetails(filename, exception);
-        crashDetails.setAppPackage(Constants.APP_PACKAGE);
-        crashDetails.setAppVersionCode(Constants.APP_VERSION);
-        crashDetails.setAppVersionName(Constants.APP_VERSION_NAME);
-        crashDetails.setAppStartDate(startDate);
-        crashDetails.setAppCrashDate(now);
+        CrashReport crashReport = new CrashReport(filename, exception);
+        crashReport.setAppPackage(Constants.APP_PACKAGE);
+        crashReport.setAppVersionCode(Constants.APP_VERSION);
+        crashReport.setAppVersionName(Constants.APP_VERSION_NAME);
+        crashReport.setAppStartDate(startDate);
+        crashReport.setAppCrashDate(now);
 
         if ((listener == null) || (listener.includeDeviceData())) {
-            crashDetails.setOsVersion(Constants.ANDROID_VERSION);
-            crashDetails.setOsBuild(Constants.ANDROID_BUILD);
-            crashDetails.setDeviceManufacturer(Constants.PHONE_MANUFACTURER);
-            crashDetails.setDeviceModel(Constants.PHONE_MODEL);
+            crashReport.setOsVersion(Constants.ANDROID_VERSION);
+            crashReport.setOsBuild(Constants.ANDROID_BUILD);
+            crashReport.setDeviceManufacturer(Constants.PHONE_MANUFACTURER);
+            crashReport.setDeviceModel(Constants.PHONE_MODEL);
         }
 
         if (thread != null && ((listener == null) || (listener.includeThreadDetails()))) {
-            crashDetails.setThreadName(thread.getName() + "-" + thread.getId());
+            crashReport.setThreadName(thread.getName() + "-" + thread.getId());
         }
 
         if (Constants.CRASH_IDENTIFIER != null && (listener == null || listener.includeDeviceIdentifier())) {
-            crashDetails.setReporterKey(Constants.CRASH_IDENTIFIER);
+            crashReport.setReporterKey(Constants.CRASH_IDENTIFIER);
         }
 
-        crashDetails.writeCrashReport();
+        crashReport.writeCrashReport();
 
         if (listener != null) {
             try {
@@ -98,10 +95,10 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
      * @param exception              The native java exception to save.
      * @param managedExceptionString String representation of the full exception including the managed exception.
      * @param thread                 Thread that crashed.
-     * @param listener               Custom CrashManager listener instance.
+     * @param listener               Custom Crashes listener instance.
      */
     @SuppressWarnings("unused")
-    public void saveNativeException(Throwable exception, String managedExceptionString, Thread thread, CrashManagerListener listener) {
+    public void saveNativeException(Throwable exception, String managedExceptionString, Thread thread, CrashesListener listener) {
         // the throwable will a "native" Java exception. In this case managedExceptionString contains the full, "unconverted" exception
         // which contains information about the managed exception, too. We don't want to loose that part. Sadly, passing a managed
         // exception as an additional throwable strips that info, so we pass in the full managed exception as a string
@@ -122,15 +119,16 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
      *
      * @param exception              The managed exception to save.
      * @param thread                 Thread that crashed.
-     * @param listener               Custom CrashManager listener instance.
+     * @param listener               Custom Crashes listener instance.
      */
     @SuppressWarnings("unused")
-    public void saveManagedException(Throwable exception, Thread thread, CrashManagerListener listener) {
+    public void saveManagedException(Throwable exception, Thread thread, CrashesListener listener) {
         saveXamarinException(exception, thread, null, true, listener);
     }
 
-    private void saveXamarinException(Throwable exception, Thread thread, String additionalManagedException, Boolean isManagedException, CrashManagerListener listener) {
-        final Date startDate = new Date(mCrashManager.getInitializeTimestamp());
+    //TODO refacture so we don't have duplicate code
+    private void saveXamarinException(Throwable exception, Thread thread, String additionalManagedException, Boolean isManagedException, CrashesListener listener) {
+        final Date startDate = new Date(mCrashes.getInitializeTimestamp());
         String filename = UUID.randomUUID().toString();
         final Date now = new Date();
 
@@ -140,29 +138,33 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
             exception.printStackTrace(printWriter);
         }
 
-        CrashDetails crashDetails = new CrashDetails(filename, exception, additionalManagedException, isManagedException);
-        crashDetails.setAppPackage(Constants.APP_PACKAGE);
-        crashDetails.setAppVersionCode(Constants.APP_VERSION);
-        crashDetails.setAppVersionName(Constants.APP_VERSION_NAME);
-        crashDetails.setAppStartDate(startDate);
-        crashDetails.setAppCrashDate(now);
+
+        //TODO move this to a Factory class
+        CrashReport crashReport = new CrashReport(filename, exception, additionalManagedException, isManagedException);
+        crashReport.setAppPackage(Constants.APP_PACKAGE);
+        crashReport.setAppVersionCode(Constants.APP_VERSION);
+        crashReport.setAppVersionName(Constants.APP_VERSION_NAME);
+        crashReport.setAppStartDate(startDate);
+        crashReport.setAppCrashDate(now);
 
         if ((listener == null) || (listener.includeDeviceData())) {
-            crashDetails.setOsVersion(Constants.ANDROID_VERSION);
-            crashDetails.setOsBuild(Constants.ANDROID_BUILD);
-            crashDetails.setDeviceManufacturer(Constants.PHONE_MANUFACTURER);
-            crashDetails.setDeviceModel(Constants.PHONE_MODEL);
+            crashReport.setOsVersion(Constants.ANDROID_VERSION);
+            crashReport.setOsBuild(Constants.ANDROID_BUILD);
+            crashReport.setDeviceManufacturer(Constants.PHONE_MANUFACTURER);
+            crashReport.setDeviceModel(Constants.PHONE_MODEL);
         }
 
         if (thread != null && ((listener == null) || (listener.includeThreadDetails()))) {
-            crashDetails.setThreadName(thread.getName() + "-" + thread.getId());
+            crashReport.setThreadName(thread.getName() + "-" + thread.getId());
         }
 
         if (Constants.CRASH_IDENTIFIER != null && (listener == null || listener.includeDeviceIdentifier())) {
-            crashDetails.setReporterKey(Constants.CRASH_IDENTIFIER);
+            crashReport.setReporterKey(Constants.CRASH_IDENTIFIER);
         }
 
-        crashDetails.writeCrashReport();
+        crashReport.writeCrashReport();
+
+        Channel.getInstance().handle(crashReport);
 
         if (listener != null) {
             try {
@@ -176,13 +178,14 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
         }
     }
 
+    //TODO: this should be the only method here, no persisting logic in here.
     public void uncaughtException(Thread thread, Throwable exception) {
         if (Constants.FILES_PATH == null) {
             // If the files path is null, the exception can't be stored
             // Always call the default handler instead
             mDefaultExceptionHandler.uncaughtException(thread, exception);
         } else {
-            saveException(exception, thread, mCrashManagerListener);
+            saveException(exception, thread, mCrashesListener);
 
             if (!mIgnoreDefaultHandler) {
                 mDefaultExceptionHandler.uncaughtException(thread, exception);
@@ -193,6 +196,7 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
         }
     }
 
+    //TODO: this should be part of the pipleine in the base module
     private static void writeValueToFile(String value, String filename) throws IOException {
         if (TextUtils.isEmpty(value)) {
             return;

@@ -4,7 +4,7 @@ package com.microsoft.android.crash.model;
  * Crash Manager user input
  *
  */
-public enum CrashManagerUserInput {
+public enum CrashesUserInput {
     /**
      * User chose not to send the crash report
      */
@@ -20,7 +20,7 @@ public enum CrashManagerUserInput {
 
     private final int mValue;
 
-    CrashManagerUserInput(int value) {
+    CrashesUserInput(int value) {
         this.mValue = value;
     }
 

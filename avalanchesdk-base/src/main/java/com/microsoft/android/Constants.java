@@ -27,7 +27,7 @@ import java.util.UUID;
 public class Constants {
 
     /**
-     * Avalanche API URL.
+     * AvalancheHub API URL.
      */
     public static final String BASE_URL = "https://sdk.hockeyapp.net/";
     /**
@@ -39,10 +39,10 @@ public class Constants {
      */
     public static final String SDK_VERSION = BuildConfig.VERSION_NAME;
 
-    public static final String FILES_DIRECTORY_NAME = "Avalanche";
+    public static final String FILES_DIRECTORY_NAME = "AvalancheHub";
 
     /**
-     * The user agent string the SDK will send with every Avalanche API request.
+     * The user agent string the SDK will send with every AvalancheHub API request.
      */
     public static final String SDK_USER_AGENT = "AvalancheSDK/Android " + BuildConfig.VERSION_NAME;
 
@@ -118,7 +118,7 @@ public class Constants {
         File dir = new File(externalStorage.getAbsolutePath() + "/" + Constants.FILES_DIRECTORY_NAME);
         boolean success = dir.exists() || dir.mkdirs();
         if (!success) {
-            AvalancheLog.warn("Couldn't create Avalanche Storage dir");
+            AvalancheLog.warn("Couldn't create AvalancheHub Storage dir");
         }
         return dir;
     }

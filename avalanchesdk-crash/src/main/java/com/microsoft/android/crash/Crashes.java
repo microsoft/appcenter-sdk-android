@@ -6,11 +6,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import com.microsoft.android.Avalanche;
+import com.microsoft.android.AvalancheHub;
 import com.microsoft.android.Constants;
-import com.microsoft.android.DefaultAvalancheComponent;
-import com.microsoft.android.crash.model.CrashDetails;
-import com.microsoft.android.crash.model.CrashManagerUserInput;
+import com.microsoft.android.DefaultAvalancheFeature;
+import com.microsoft.android.crash.model.CrashReport;
+import com.microsoft.android.crash.model.CrashesUserInput;
 import com.microsoft.android.crash.model.CrashMetaData;
 import com.microsoft.android.utils.AvalancheLog;
 import com.microsoft.android.utils.HttpURLConnectionBuilder;
@@ -29,15 +29,15 @@ import java.util.Map;
 import static android.text.TextUtils.isEmpty;
 
 
-public class CrashManager extends DefaultAvalancheComponent {
+public class Crashes extends DefaultAvalancheFeature {
 
     private static final String ALWAYS_SEND_KEY = "always_send_crash_reports";
 
     private static final int STACK_TRACES_FOUND_NONE = 0;
     private static final int STACK_TRACES_FOUND_NEW = 1;
     private static final int STACK_TRACES_FOUND_CONFIRMED = 2;
-    private static CrashManager sharedInstance = null;
-    private CrashManagerListener mListener;
+    private static Crashes sharedInstance = null;
+    private CrashesListener mListener;
     private String mEndpointUrl;
     private WeakReference<Context> mContextWeakReference;
     private boolean mLazyExecution;
@@ -45,12 +45,12 @@ public class CrashManager extends DefaultAvalancheComponent {
     private long mInitializeTimestamp;
     private boolean mDidCrashInLastSession = false;
 
-    protected CrashManager() {
+    protected Crashes() {
     }
 
-    public static CrashManager getInstance() {
+    public static Crashes getInstance() {
         if (sharedInstance == null) {
-            sharedInstance = new CrashManager();
+            sharedInstance = new Crashes();
         }
         return sharedInstance;
     }
@@ -109,20 +109,20 @@ public class CrashManager extends DefaultAvalancheComponent {
 
     /**
      * Registers the crash manager and handles existing crash logs.
-     * Avalanche app identifier is read from configuration values in manifest.
+     * AvalancheHub app identifier is read from configuration values in manifest.
      *
      * @param context The context to use. Usually your Activity object. If
      *                context is not an instance of Activity (or a subclass of it),
      *                crashes will be sent automatically.
      * @return The configured crash manager for method chaining.
      */
-    public CrashManager register(Context context) {
+    public Crashes register(Context context) {
         return register(context, null);
     }
 
     /**
      * Registers the crash manager and handles existing crash logs.
-     * Avalanche app identifier is read from configuration values in manifest.
+     * AvalancheHub app identifier is read from configuration values in manifest.
      *
      * @param context  The context to use. Usually your Activity object. If
      *                 context is not an instance of Activity (or a subclass of it),
@@ -130,38 +130,38 @@ public class CrashManager extends DefaultAvalancheComponent {
      * @param listener Implement this for callback functions.
      * @return The configured crash manager for method chaining.
      */
-    public CrashManager register(Context context, CrashManagerListener listener) {
+    public Crashes register(Context context, CrashesListener listener) {
         return register(context, Constants.BASE_URL, listener);
     }
 
     /**
      * Registers the crash manager and handles existing crash logs.
-     * Avalanche app identifier is read from configuration values in manifest.
+     * AvalancheHub app identifier is read from configuration values in manifest.
      *
      * @param context     The context to use. Usually your Activity object. If
      *                    context is not an instance of Activity (or a subclass of it),
      *                    crashes will be sent automatically.
-     * @param endpointUrl URL of the Avalanche endpoint to use.
+     * @param endpointUrl URL of the AvalancheHub endpoint to use.
      * @param listener    Implement this for callback functions.
      * @return The configured crash manager for method chaining.
      */
-    public CrashManager register(Context context, String endpointUrl, CrashManagerListener listener) {
+    public Crashes register(Context context, String endpointUrl, CrashesListener listener) {
         return register(context, endpointUrl, listener, false);
     }
 
     /**
      * Registers the crash manager and handles existing crash logs.
-     * Avalanche app identifier is read from configuration values in manifest.
+     * AvalancheHub app identifier is read from configuration values in manifest.
      *
      * @param context       The context to use. Usually your Activity object. If
      *                      context is not an instance of Activity (or a subclass of it),
      *                      crashes will be sent automatically.
-     * @param endpointUrl   URL of the Avalanche endpoint to use.
+     * @param endpointUrl   URL of the AvalancheHub endpoint to use.
      * @param listener      Implement this for callback functions.
      * @param lazyExecution Whether the manager should execute lazily, e.g. not check for crashes right away.
      * @return
      */
-    public CrashManager register(Context context, String endpointUrl, CrashManagerListener listener, boolean lazyExecution) {
+    public Crashes register(Context context, String endpointUrl, CrashesListener listener, boolean lazyExecution) {
         mContextWeakReference = new WeakReference<>(context);
         mListener = listener;
         mEndpointUrl = endpointUrl;
@@ -275,7 +275,7 @@ public class CrashManager extends DefaultAvalancheComponent {
     }
 
     /**
-     * Submits all stack traces in the files dir to Avalanche.
+     * Submits all stack traces in the files dir to AvalancheHub.
      *
      * @param crashMetaData The crashMetaData, provided by the user.
      */
@@ -372,7 +372,7 @@ public class CrashManager extends DefaultAvalancheComponent {
 
     /**
      * Shows a dialog to ask the user whether he wants to send crash reports to
-     * Avalanche or delete them.
+     * AvalancheHub or delete them.
      */
     private void showDialog(final WeakReference<Context> weakContext) {
         Context context = null;
@@ -397,19 +397,19 @@ public class CrashManager extends DefaultAvalancheComponent {
 
         builder.setNegativeButton(R.string.avalanche_crash_dialog_negative_button, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-                handleUserInput(CrashManagerUserInput.CrashManagerUserInputDontSend, null, mListener, weakContext, ignoreDefaultHandler);
+                handleUserInput(CrashesUserInput.CrashManagerUserInputDontSend, null, mListener, weakContext, ignoreDefaultHandler);
             }
         });
 
         builder.setNeutralButton(R.string.avalanche_crash_dialog_neutral_button, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-                handleUserInput(CrashManagerUserInput.CrashManagerUserInputAlwaysSend, null, mListener, weakContext, ignoreDefaultHandler);
+                handleUserInput(CrashesUserInput.CrashManagerUserInputAlwaysSend, null, mListener, weakContext, ignoreDefaultHandler);
             }
         });
 
         builder.setPositiveButton(R.string.avalanche_crash_dialog_positive_button, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-                handleUserInput(CrashManagerUserInput.CrashManagerUserInputSend, null, mListener,
+                handleUserInput(CrashesUserInput.CrashManagerUserInputSend, null, mListener,
                         weakContext, ignoreDefaultHandler);
             }
         });
@@ -427,12 +427,12 @@ public class CrashManager extends DefaultAvalancheComponent {
      * @param weakContext          The context to use. Usually your Activity object.
      * @param ignoreDefaultHandler whether to ignore the default exception handler.
      * @return true if the input is a valid option and successfully triggered further processing of the crash report.
-     * @see CrashManagerUserInput
+     * @see CrashesUserInput
      * @see CrashMetaData
-     * @see CrashManagerListener
+     * @see CrashesListener
      */
-    public boolean handleUserInput(final CrashManagerUserInput userInput,
-                                   final CrashMetaData userProvidedMetaData, final CrashManagerListener listener,
+    public boolean handleUserInput(final CrashesUserInput userInput,
+                                   final CrashMetaData userProvidedMetaData, final CrashesListener listener,
                                    final WeakReference<Context> weakContext, final boolean ignoreDefaultHandler) {
         switch (userInput) {
             case CrashManagerUserInputDontSend:
@@ -511,7 +511,7 @@ public class CrashManager extends DefaultAvalancheComponent {
         return mDidCrashInLastSession;
     }
 
-    public CrashDetails getLastCrashDetails() {
+    public CrashReport getLastCrashDetails() {
         if (Constants.FILES_PATH == null || !didCrashInLastSession()) {
             return null;
         }
@@ -526,7 +526,7 @@ public class CrashManager extends DefaultAvalancheComponent {
 
         long lastModification = 0;
         File lastModifiedFile = null;
-        CrashDetails result = null;
+        CrashReport result = null;
         for (File file : files) {
             if (file.lastModified() > lastModification) {
                 lastModification = file.lastModified();
@@ -536,7 +536,7 @@ public class CrashManager extends DefaultAvalancheComponent {
 
         if (lastModifiedFile != null && lastModifiedFile.exists()) {
             try {
-                result = CrashDetails.fromFile(lastModifiedFile);
+                result = CrashReport.fromFile(lastModifiedFile);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -639,6 +639,6 @@ public class CrashManager extends DefaultAvalancheComponent {
     }
 
     private String getURLString() {
-        return mEndpointUrl + "api/2/apps/" + Avalanche.getSharedInstance().getAppIdentifier() + "/crashes/";
+        return mEndpointUrl + "api/2/apps/" + AvalancheHub.getSharedInstance().getAppIdentifier() + "/crashes/";
     }
 }
