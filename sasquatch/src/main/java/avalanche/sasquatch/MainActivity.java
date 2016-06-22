@@ -2,6 +2,7 @@ package avalanche.sasquatch;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import avalanche.base.AvalancheHub;
@@ -21,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
 
         AvalancheHub.use(getApplication());
 
+        AvalancheLog.setLogLevel(Log.INFO);
 
         boolean crashManagerAvailable = AvalancheHub.isFeatureAvailable(AvalancheHub.FEATURE_CRASH);
 

@@ -14,7 +14,7 @@ import java.util.Set;
 
 public final class AvalancheHub {
 
-    public static final String FEATURE_CRASH = "com.microsoft.android.crash.Crashes";
+    public static final String FEATURE_CRASH = "avalanche.crash.Crashes";
 
     private static AvalancheHub sharedInstance;
     private final Set<AvalancheFeature> mFeatures;
