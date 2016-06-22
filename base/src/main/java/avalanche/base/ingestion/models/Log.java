@@ -4,7 +4,7 @@ package avalanche.base.ingestion.models;
 /**
  * The Log model.
  */
-public class Log {
+public abstract class Log {
 
     /**
      * Corresponds to the number of milliseconds elapsed between the time the

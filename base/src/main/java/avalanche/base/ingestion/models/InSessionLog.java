@@ -5,7 +5,7 @@ import java.util.Map;
 /**
  * The InSessionLog model.
  */
-public class InSessionLog extends Log {
+public abstract class InSessionLog extends Log {
 
     /**
      * Additional key/value pair parameters.

@@ -31,6 +31,11 @@ public class DeviceLog extends Log {
     private String osVersion;
 
     /**
+     * API level when applicable like in Android (example: 15).
+     */
+    private Integer osApiLevel;
+
+    /**
      * Language code (example: en_US).
      */
     private String locale;
@@ -154,6 +159,24 @@ public class DeviceLog extends Log {
      */
     public void setOsVersion(String osVersion) {
         this.osVersion = osVersion;
+    }
+
+    /**
+     * Get the osApiLevel value.
+     *
+     * @return the osApiLevel value
+     */
+    public Integer getOsApiLevel() {
+        return this.osApiLevel;
+    }
+
+    /**
+     * Set the osApiLevel value.
+     *
+     * @param osApiLevel the osApiLevel value to set
+     */
+    public void setOsApiLevel(Integer osApiLevel) {
+        this.osApiLevel = osApiLevel;
     }
 
     /**
