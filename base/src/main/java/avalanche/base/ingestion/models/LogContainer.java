@@ -75,4 +75,26 @@ public class LogContainer {
     public void setLogs(List<Log> logs) {
         this.logs = logs;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        LogContainer container = (LogContainer) o;
+
+        if (installId != null ? !installId.equals(container.installId) : container.installId != null)
+            return false;
+        if (appId != null ? !appId.equals(container.appId) : container.appId != null) return false;
+        return logs != null ? logs.equals(container.logs) : container.logs == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = installId != null ? installId.hashCode() : 0;
+        result = 31 * result + (appId != null ? appId.hashCode() : 0);
+        result = 31 * result + (logs != null ? logs.hashCode() : 0);
+        return result;
+    }
 }

@@ -17,6 +17,11 @@ public class EventLog extends InSessionLog {
      */
     private String name;
 
+    @Override
+    public String getType() {
+        return "event";
+    }
+
     /**
      * Get the id value.
      *

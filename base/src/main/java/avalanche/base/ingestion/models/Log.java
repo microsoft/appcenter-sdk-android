@@ -29,4 +29,11 @@ public abstract class Log {
     public void setToffset(long toffset) {
         this.toffset = toffset;
     }
+
+    /**
+     * Get the type value.
+     *
+     * @return the type value
+     */
+    public abstract String getType();
 }

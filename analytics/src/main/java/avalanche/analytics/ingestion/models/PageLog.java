@@ -12,6 +12,11 @@ public class PageLog extends InSessionLog {
      */
     private String name;
 
+    @Override
+    public String getType() {
+        return "page";
+    }
+
     /**
      * Get the name value.
      *

@@ -19,6 +19,11 @@ public class SessionLog extends Log {
      */
     private Boolean end;
 
+    @Override
+    public String getType() {
+        return "session";
+    }
+
     /**
      * Get the sid value.
      *

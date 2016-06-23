@@ -71,6 +71,11 @@ public class DeviceLog extends Log {
      */
     private String carrierCountry;
 
+    @Override
+    public String getType() {
+        return "device";
+    }
+
     /**
      * Get the sdkVersion value.
      *
