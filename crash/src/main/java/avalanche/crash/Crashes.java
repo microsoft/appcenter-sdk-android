@@ -210,7 +210,6 @@ public class Crashes extends DefaultAvalancheFeature {
 
             if (mListener != null) {
                 autoSend |= mListener.shouldAutoUploadCrashes();
-                autoSend |= mListener.onCrashesFound();
 
                 mListener.onNewCrashesFound();
             }

@@ -80,18 +80,6 @@ public abstract class CrashesListener {
     }
 
     /**
-     * Called when the crash manager found one or more crashes. Return true
-     * if you want to auto-send crashes (i.e. not ask the user)
-     *
-     * @return if true, crashes are sent automatically
-     * @deprecated Replace this method with onNewCrashesFound,
-     * onConfirmedCrashesFound, and shouldAutoUploadCrashReport.
-     */
-    public boolean onCrashesFound() {
-        return false;
-    }
-
-    /**
      * Return true if you want to auto-send crashes. Note that this method
      * is only called if new crashes were found.
      *
