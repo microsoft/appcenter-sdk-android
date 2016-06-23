@@ -1,39 +1,45 @@
 package avalanche.base.ingestion.models;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONStringer;
 
-/**
- * The Log model.
- */
-public abstract class Log {
+public interface Log {
 
     /**
-     * Corresponds to the number of milliseconds elapsed between the time the
-     * request is sent and the time the log is emitted.
+     * type property
      */
-    private long toffset;
+    String TYPE = "type";
+
+    /**
+     * toffset property
+     */
+    String TOFFSET = "toffset";
 
     /**
      * Get the toffset value.
      *
      * @return the toffset value
      */
-    public long getToffset() {
-        return this.toffset;
-    }
+    long getToffset();
 
     /**
      * Set the toffset value.
      *
      * @param toffset the toffset value to set
      */
-    public void setToffset(long toffset) {
-        this.toffset = toffset;
-    }
+    void setToffset(long toffset);
 
     /**
      * Get the type value.
      *
      * @return the type value
      */
-    public abstract String getType();
+    String getType();
+
+    void read(JSONObject object) throws JSONException;
+
+    void write(JSONStringer writer) throws JSONException;
+
+    void validate() throws IllegalArgumentException;
 }

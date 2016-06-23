@@ -1,11 +1,11 @@
 package avalanche.analytics.ingestion.models;
 
-import avalanche.base.ingestion.models.Log;
+import avalanche.base.ingestion.models.AbstractLog;
 
 /**
  * Session log.
  */
-public class SessionLog extends Log {
+public class SessionLog extends AbstractLog {
 
     /**
      * Unique session identifier. The same identifier must be used for end and

@@ -1,9 +1,44 @@
 package avalanche.base.ingestion.models;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONStringer;
+
+import avalanche.base.ingestion.models.utils.LogUtils;
+
 /**
  * Device characteristic log.
  */
-public class DeviceLog extends Log {
+public class DeviceLog extends AbstractLog {
+
+    /**
+     * The log type.
+     */
+    public static final String TYPE = "device";
+
+    private static final String SDK_VERSION = "sdkVersion";
+
+    private static final String MODEL = "model";
+
+    private static final String OEM_NAME = "oemName";
+
+    private static final String OS_NAME = "osName";
+
+    private static final String OS_VERSION = "osVersion";
+
+    private static final String OS_API_LEVEL = "osApiLevel";
+
+    private static final String LOCALE = "locale";
+
+    private static final String TIME_ZONE_OFFSET = "timeZoneOffset";
+
+    private static final String SCREEN_SIZE = "screenSize";
+
+    private static final String APP_VERSION = "appVersion";
+
+    private static final String CARRIER_NAME = "carrierName";
+
+    private static final String CARRIER_COUNTRY = "carrierCountry";
 
     /**
      * Version of the SDK.
@@ -44,7 +79,7 @@ public class DeviceLog extends Log {
      * The offset in minutes from UTC for the device time zone, including
      * daylight savings time.
      */
-    private String timeZoneOffset;
+    private Integer timeZoneOffset;
 
     /**
      * Screen size of the device in pixels (example: 640x480).
@@ -55,11 +90,6 @@ public class DeviceLog extends Log {
      * Application version name.
      */
     private String appVersion;
-
-    /**
-     * Application version code.
-     */
-    private String appCode;
 
     /**
      * Carrier name (for mobile devices).
@@ -73,7 +103,7 @@ public class DeviceLog extends Log {
 
     @Override
     public String getType() {
-        return "device";
+        return TYPE;
     }
 
     /**
@@ -207,7 +237,7 @@ public class DeviceLog extends Log {
      *
      * @return the timeZoneOffset value
      */
-    public String getTimeZoneOffset() {
+    public Integer getTimeZoneOffset() {
         return this.timeZoneOffset;
     }
 
@@ -216,7 +246,7 @@ public class DeviceLog extends Log {
      *
      * @param timeZoneOffset the timeZoneOffset value to set
      */
-    public void setTimeZoneOffset(String timeZoneOffset) {
+    public void setTimeZoneOffset(Integer timeZoneOffset) {
         this.timeZoneOffset = timeZoneOffset;
     }
 
@@ -257,24 +287,6 @@ public class DeviceLog extends Log {
     }
 
     /**
-     * Get the appCode value.
-     *
-     * @return the appCode value
-     */
-    public String getAppCode() {
-        return this.appCode;
-    }
-
-    /**
-     * Set the appCode value.
-     *
-     * @param appCode the appCode value to set
-     */
-    public void setAppCode(String appCode) {
-        this.appCode = appCode;
-    }
-
-    /**
      * Get the carrierName value.
      *
      * @return the carrierName value
@@ -308,5 +320,108 @@ public class DeviceLog extends Log {
      */
     public void setCarrierCountry(String carrierCountry) {
         this.carrierCountry = carrierCountry;
+    }
+
+    @Override
+    public void read(JSONObject object) throws JSONException {
+        super.read(object);
+        setSdkVersion(object.getString(SDK_VERSION));
+        setModel(object.getString(MODEL));
+        setOemName(object.getString(OEM_NAME));
+        setOsName(object.getString(OS_NAME));
+        setOsVersion(object.getString(OS_VERSION));
+        if (object.has(OS_API_LEVEL))
+            setOsApiLevel(object.getInt(OS_API_LEVEL));
+        setLocale(object.getString(LOCALE));
+        setTimeZoneOffset(object.getInt(TIME_ZONE_OFFSET));
+        setScreenSize(object.getString(SCREEN_SIZE));
+        setAppVersion(object.getString(APP_VERSION));
+        setCarrierName(object.optString(CARRIER_NAME, null));
+        setCarrierCountry(object.optString(CARRIER_COUNTRY, null));
+    }
+
+    @Override
+    public void write(JSONStringer writer) throws JSONException {
+        super.write(writer);
+        writer.key(SDK_VERSION).value(getSdkVersion());
+        writer.key(MODEL).value(getModel());
+        writer.key(OEM_NAME).value(getOemName());
+        writer.key(OS_NAME).value(getOsName());
+        writer.key(OS_VERSION).value(getOsVersion());
+        if (getOsApiLevel() != null)
+            writer.key(OS_API_LEVEL).value(getOsApiLevel());
+        writer.key(LOCALE).value(getLocale());
+        writer.key(TIME_ZONE_OFFSET).value(getTimeZoneOffset());
+        writer.key(SCREEN_SIZE).value(getScreenSize());
+        writer.key(APP_VERSION).value(getAppVersion());
+        if (getCarrierName() != null)
+            writer.key(CARRIER_NAME).value(getCarrierName());
+        if (getCarrierCountry() != null)
+            writer.key(CARRIER_COUNTRY).value(getCarrierCountry());
+    }
+
+    @Override
+    public void validate() throws IllegalArgumentException {
+        super.validate();
+        LogUtils.checkNotNull(SDK_VERSION, getSdkVersion());
+        LogUtils.checkNotNull(MODEL, getModel());
+        LogUtils.checkNotNull(OEM_NAME, getOemName());
+        LogUtils.checkNotNull(OS_NAME, getOsName());
+        LogUtils.checkNotNull(OS_VERSION, getOsVersion());
+        LogUtils.checkNotNull(LOCALE, getLocale());
+        LogUtils.checkNotNull(TIME_ZONE_OFFSET, getTimeZoneOffset());
+        LogUtils.checkNotNull(SCREEN_SIZE, getScreenSize());
+        LogUtils.checkNotNull(APP_VERSION, getAppVersion());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        DeviceLog deviceLog = (DeviceLog) o;
+
+        if (sdkVersion != null ? !sdkVersion.equals(deviceLog.sdkVersion) : deviceLog.sdkVersion != null)
+            return false;
+        if (model != null ? !model.equals(deviceLog.model) : deviceLog.model != null) return false;
+        if (oemName != null ? !oemName.equals(deviceLog.oemName) : deviceLog.oemName != null)
+            return false;
+        if (osName != null ? !osName.equals(deviceLog.osName) : deviceLog.osName != null)
+            return false;
+        if (osVersion != null ? !osVersion.equals(deviceLog.osVersion) : deviceLog.osVersion != null)
+            return false;
+        if (osApiLevel != null ? !osApiLevel.equals(deviceLog.osApiLevel) : deviceLog.osApiLevel != null)
+            return false;
+        if (locale != null ? !locale.equals(deviceLog.locale) : deviceLog.locale != null)
+            return false;
+        if (timeZoneOffset != null ? !timeZoneOffset.equals(deviceLog.timeZoneOffset) : deviceLog.timeZoneOffset != null)
+            return false;
+        if (screenSize != null ? !screenSize.equals(deviceLog.screenSize) : deviceLog.screenSize != null)
+            return false;
+        if (appVersion != null ? !appVersion.equals(deviceLog.appVersion) : deviceLog.appVersion != null)
+            return false;
+        if (carrierName != null ? !carrierName.equals(deviceLog.carrierName) : deviceLog.carrierName != null)
+            return false;
+        return carrierCountry != null ? carrierCountry.equals(deviceLog.carrierCountry) : deviceLog.carrierCountry == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (sdkVersion != null ? sdkVersion.hashCode() : 0);
+        result = 31 * result + (model != null ? model.hashCode() : 0);
+        result = 31 * result + (oemName != null ? oemName.hashCode() : 0);
+        result = 31 * result + (osName != null ? osName.hashCode() : 0);
+        result = 31 * result + (osVersion != null ? osVersion.hashCode() : 0);
+        result = 31 * result + (osApiLevel != null ? osApiLevel.hashCode() : 0);
+        result = 31 * result + (locale != null ? locale.hashCode() : 0);
+        result = 31 * result + (timeZoneOffset != null ? timeZoneOffset.hashCode() : 0);
+        result = 31 * result + (screenSize != null ? screenSize.hashCode() : 0);
+        result = 31 * result + (appVersion != null ? appVersion.hashCode() : 0);
+        result = 31 * result + (carrierName != null ? carrierName.hashCode() : 0);
+        result = 31 * result + (carrierCountry != null ? carrierCountry.hashCode() : 0);
+        return result;
     }
 }
