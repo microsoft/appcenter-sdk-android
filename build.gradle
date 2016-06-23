@@ -1,0 +1,58 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.1.2'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+allprojects {
+    repositories {
+        jcenter()
+    }
+
+    apply plugin: 'checkstyle'
+
+    //add checkstyle to each module
+    task checkstyle(type: Checkstyle) {
+        configFile = new File(rootDir, "config/checkstyle/checkstyle.xml") //use same config file for each module
+        source 'src/'
+        include '**/*.java'
+        exclude '**/gen/**'
+        classpath = files()
+        reports {
+            xml {
+                destination "build/outputs/reports/checkstyle-results.xml"
+            }
+        }
+    }
+
+    task checkstyleReport(dependsOn: 'checkstyle') << {
+        if (file("build/outputs/reports/checkstyle-results.xml").exists()) {
+            ant.xslt(in: "build/outputs/reports/checkstyle-results.xml",
+                    style: "config/checkstyle/checkstyle.xsl",
+                    out: "build/outputs/reports/checkstyle-results.html"
+            )
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+ext {
+    versionCode = 1
+    versionName = '1.0.0-alpha.1'
+    minSdkVersion = 15
+    targetSdkVersion = 23
+    compileSdkVersion = 23
+    buildToolsVersion = '23.0.3'
+    supportLibVersion = '24.0.0'
+}

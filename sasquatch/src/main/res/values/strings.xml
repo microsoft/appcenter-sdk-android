@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Sasquatch App</string>
+    <string name="button_title_crash">Crash me</string>
+</resources>

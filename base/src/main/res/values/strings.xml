@@ -1,0 +1,12 @@
+<resources>
+    <string name="avalanche_app_name_fallback">This app</string>
+
+    <!-- Dialogs -->
+    <string name="avalanche_dialog_positive_button">OK</string>
+    <string name="avalanche_dialog_negative_button">Cancel</string>
+    <string name="avalanche_dialog_error_title">Error</string>
+    <string name="avalanche_dialog_error_message">An error has occurred</string>
+
+    <!-- Misc -->
+    <string name="avalanche_error_no_network_message">Your device is not connected to the internet. Please resolve connectivity issues and try again.</string>
+</resources>
