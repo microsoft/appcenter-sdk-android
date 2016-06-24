@@ -15,7 +15,7 @@ import avalanche.base.ingestion.models.utils.LogUtils;
  */
 public abstract class InSessionLog extends AbstractLog {
 
-    private static final String SID = "sid";
+    public static final String SID = "sid";
 
     private static final String PROPERTIES = "properties";
 
@@ -85,8 +85,12 @@ public abstract class InSessionLog extends AbstractLog {
     public void write(JSONStringer writer) throws JSONException {
         super.write(writer);
         writer.key(SID).value(getSid());
-        if (getProperties() != null)
-            writer.key(PROPERTIES).value(getProperties());
+        if (getProperties() != null) {
+            writer.key(PROPERTIES).object();
+            for (Map.Entry<String, String> property : getProperties().entrySet())
+                writer.key(property.getKey()).value(property.getValue());
+            writer.endObject();
+        }
     }
 
     @Override

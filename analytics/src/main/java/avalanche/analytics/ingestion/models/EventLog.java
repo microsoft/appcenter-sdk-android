@@ -1,11 +1,22 @@
 package avalanche.analytics.ingestion.models;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONStringer;
+
 import avalanche.base.ingestion.models.InSessionLog;
+import avalanche.base.ingestion.models.utils.LogUtils;
 
 /**
  * Event log.
  */
 public class EventLog extends InSessionLog {
+
+    public static final String TYPE = "event";
+
+    public static final String ID = "id";
+
+    public static final String NAME = "name";
 
     /**
      * Unique identifier for this event.
@@ -19,7 +30,7 @@ public class EventLog extends InSessionLog {
 
     @Override
     public String getType() {
-        return "event";
+        return TYPE;
     }
 
     /**
@@ -56,5 +67,26 @@ public class EventLog extends InSessionLog {
      */
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public void read(JSONObject object) throws JSONException {
+        super.read(object);
+        setId(object.getString(ID));
+        setName(object.getString(NAME));
+    }
+
+    @Override
+    public void write(JSONStringer writer) throws JSONException {
+        super.write(writer);
+        writer.key(ID).value(getId());
+        writer.key(NAME).value(getName());
+    }
+
+    @Override
+    public void validate() throws IllegalArgumentException {
+        super.validate();
+        LogUtils.checkNotNull(ID, getId());
+        LogUtils.checkNotNull(NAME, getName());
     }
 }

@@ -1,11 +1,20 @@
 package avalanche.analytics.ingestion.models;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONStringer;
+
 import avalanche.base.ingestion.models.InSessionLog;
+import avalanche.base.ingestion.models.utils.LogUtils;
 
 /**
  * Page log.
  */
 public class PageLog extends InSessionLog {
+
+    public static final String TYPE = "page";
+
+    public static final String NAME = "name";
 
     /**
      * Name of the page.
@@ -14,7 +23,7 @@ public class PageLog extends InSessionLog {
 
     @Override
     public String getType() {
-        return "page";
+        return TYPE;
     }
 
     /**
@@ -33,5 +42,42 @@ public class PageLog extends InSessionLog {
      */
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public void read(JSONObject object) throws JSONException {
+        super.read(object);
+        setName(object.getString(NAME));
+    }
+
+    @Override
+    public void write(JSONStringer writer) throws JSONException {
+        super.write(writer);
+        writer.key(NAME).value(getName());
+    }
+
+    @Override
+    public void validate() throws IllegalArgumentException {
+        super.validate();
+        LogUtils.checkNotNull(NAME, getName());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        PageLog pageLog = (PageLog) o;
+
+        return name != null ? name.equals(pageLog.name) : pageLog.name == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        return result;
     }
 }
