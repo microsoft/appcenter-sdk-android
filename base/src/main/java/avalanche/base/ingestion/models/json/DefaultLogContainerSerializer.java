@@ -4,7 +4,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
-import org.json.JSONTokener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,8 +60,7 @@ public class DefaultLogContainerSerializer implements LogContainerSerializer {
 
     @Override
     public LogContainer deserialize(String json) throws JSONException {
-        JSONTokener reader = new JSONTokener(json);
-        JSONObject jContainer = (JSONObject) reader.nextValue();
+        JSONObject jContainer = new JSONObject(json);
         LogContainer container = new LogContainer();
         container.setAppId(jContainer.getString(APP_ID));
         container.setInstallId(jContainer.getString(INSTALL_ID));
