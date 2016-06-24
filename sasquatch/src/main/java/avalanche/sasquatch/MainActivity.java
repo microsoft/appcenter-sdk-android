@@ -5,11 +5,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import avalanche.base.AvalancheHub;
-import avalanche.base.utils.AvalancheLog;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import avalanche.base.AvalancheHub;
+import avalanche.base.utils.AvalancheLog;
 
 public class MainActivity extends AppCompatActivity {
 

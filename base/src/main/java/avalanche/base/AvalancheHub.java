@@ -2,8 +2,6 @@ package avalanche.base;
 
 import android.app.Application;
 
-import avalanche.base.utils.Util;
-
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -11,6 +9,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import avalanche.base.utils.Util;
 
 public final class AvalancheHub {
 
@@ -199,6 +199,7 @@ public final class AvalancheHub {
 
     /**
      * Get the configured application object.
+     *
      * @return The application instance or null if not set.
      */
     public Application getApplication() {
@@ -222,8 +223,8 @@ public final class AvalancheHub {
     /**
      * Check whether a feature class is enabled.
      *
-     * @param feature    The feature class to check for.
-     * @return  Whether the feature is enabled.
+     * @param feature The feature class to check for.
+     * @return Whether the feature is enabled.
      */
     public boolean isFeatureEnabled(Class<? extends AvalancheFeature> feature) {
         for (AvalancheFeature aFeature :
@@ -237,6 +238,7 @@ public final class AvalancheHub {
 
     /**
      * Get the configured app identifier.
+     *
      * @return The app identifier or null if not set.
      */
     public String getAppIdentifier() {

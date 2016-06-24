@@ -6,28 +6,24 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import avalanche.base.AvalancheHub;
-import avalanche.base.Constants;
-import avalanche.base.DefaultAvalancheFeature;
-
-
-
-import avalanche.crash.model.CrashReport;
-import avalanche.crash.model.CrashesUserInput;
-import avalanche.crash.model.CrashMetaData;
-import avalanche.base.utils.AvalancheLog;
-import avalanche.base.utils.HttpURLConnectionBuilder;
-import avalanche.base.utils.Util;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.net.HttpURLConnection;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import avalanche.base.Constants;
+import avalanche.base.DefaultAvalancheFeature;
+import avalanche.base.utils.AvalancheLog;
+import avalanche.base.utils.Persistence;
+import avalanche.base.utils.PersistenceListener;
+import avalanche.base.utils.Util;
+import avalanche.crash.ingestion.models.CrashLog;
+import avalanche.crash.model.CrashMetaData;
+import avalanche.crash.model.CrashReport;
+import avalanche.crash.model.CrashesUserInput;
 
 import static android.text.TextUtils.isEmpty;
 
@@ -39,12 +35,11 @@ public class Crashes extends DefaultAvalancheFeature {
     private static final int STACK_TRACES_FOUND_NONE = 0;
     private static final int STACK_TRACES_FOUND_NEW = 1;
     private static final int STACK_TRACES_FOUND_CONFIRMED = 2;
+
     private static Crashes sharedInstance = null;
     private CrashesListener mListener;
-    private String mEndpointUrl;
     private WeakReference<Context> mContextWeakReference;
     private boolean mLazyExecution;
-    private boolean mIsSubmitting = false;
     private long mInitializeTimestamp;
     private boolean mDidCrashInLastSession = false;
 
@@ -134,22 +129,7 @@ public class Crashes extends DefaultAvalancheFeature {
      * @return The configured crash manager for method chaining.
      */
     public Crashes register(Context context, CrashesListener listener) {
-        return register(context, Constants.BASE_URL, listener);
-    }
-
-    /**
-     * Registers the crash manager and handles existing crash logs.
-     * AvalancheHub app identifier is read from configuration values in manifest.
-     *
-     * @param context     The context to use. Usually your Activity object. If
-     *                    context is not an instance of Activity (or a subclass of it),
-     *                    crashes will be sent automatically.
-     * @param endpointUrl URL of the AvalancheHub endpoint to use.
-     * @param listener    Implement this for callback functions.
-     * @return The configured crash manager for method chaining.
-     */
-    public Crashes register(Context context, String endpointUrl, CrashesListener listener) {
-        return register(context, endpointUrl, listener, false);
+        return register(context, listener, false);
     }
 
     /**
@@ -159,15 +139,13 @@ public class Crashes extends DefaultAvalancheFeature {
      * @param context       The context to use. Usually your Activity object. If
      *                      context is not an instance of Activity (or a subclass of it),
      *                      crashes will be sent automatically.
-     * @param endpointUrl   URL of the AvalancheHub endpoint to use.
      * @param listener      Implement this for callback functions.
      * @param lazyExecution Whether the manager should execute lazily, e.g. not check for crashes right away.
      * @return
      */
-    public Crashes register(Context context, String endpointUrl, CrashesListener listener, boolean lazyExecution) {
+    public Crashes register(Context context, CrashesListener listener, boolean lazyExecution) {
         mContextWeakReference = new WeakReference<>(context);
         mListener = listener;
-        mEndpointUrl = endpointUrl;
         mLazyExecution = lazyExecution;
 
         initialize();
@@ -176,18 +154,12 @@ public class Crashes extends DefaultAvalancheFeature {
     }
 
     private void initialize() {
-        Context context = mContextWeakReference.get();
+        if (mInitializeTimestamp == 0) {
+            mInitializeTimestamp = System.currentTimeMillis();
+        }
 
-        if (context != null) {
-            if (mInitializeTimestamp == 0) {
-                mInitializeTimestamp = System.currentTimeMillis();
-            }
-
-            Constants.loadFromContext(context);
-
-            if (!mLazyExecution) {
-                execute();
-            }
+        if (!mLazyExecution) {
+            execute();
         }
     }
 
@@ -217,14 +189,14 @@ public class Crashes extends DefaultAvalancheFeature {
             if (!autoSend) {
                 showDialog(mContextWeakReference);
             } else {
-                sendCrashes();
+                sendCrashes(null);
             }
         } else if (foundOrSend == STACK_TRACES_FOUND_CONFIRMED) {
             if (mListener != null) {
                 mListener.onConfirmedCrashesFound();
             }
 
-            sendCrashes();
+            sendCrashes(null);
         } else {
             registerExceptionHandler();
         }
@@ -249,31 +221,10 @@ public class Crashes extends DefaultAvalancheFeature {
         }
     }
 
-    private void sendCrashes() {
-        sendCrashes(null);
-    }
-
     private void sendCrashes(final CrashMetaData crashMetaData) {
         saveConfirmedStackTraces();
         registerExceptionHandler();
-
-        Context context = mContextWeakReference.get();
-        if (context != null && !Util.isConnectedToNetwork(context)) {
-            // Not connected to network, not trying to submit stack traces
-            return;
-        }
-
-        if (!mIsSubmitting) {
-            mIsSubmitting = true;
-
-            new Thread() {
-                @Override
-                public void run() {
-                    submitStackTraces(crashMetaData);
-                    mIsSubmitting = false;
-                }
-            }.start();
-        }
+        submitStackTraces(crashMetaData);
     }
 
     /**
@@ -291,82 +242,64 @@ public class Crashes extends DefaultAvalancheFeature {
             AvalancheLog.debug("Found " + list.length + " stacktrace(s).");
 
             for (int index = 0; index < list.length; index++) {
-                HttpURLConnection urlConnection = null;
-                try {
-                    // Read contents of stack trace
-                    String filename = list[index];
-                    String stacktrace = Util.contentsOfFile(context, filename);
-                    if (stacktrace.length() > 0) {
-                        // Transmit stack trace with POST request
+                // Read contents of stack trace
+                final String filename = list[index];
+                String stacktrace = Util.contentsOfFile(context, filename);
+                if (stacktrace.length() > 0) {
+                    AvalancheLog.debug("Forwarding crash data: \n" + stacktrace);
 
-                        AvalancheLog.debug("Transmitting crash data: \n" + stacktrace);
+                    // Retrieve user ID and contact information if given
+                    String userID = Util.contentsOfFile(context, filename.replace(".stacktrace", ".user"));
+                    String contact = Util.contentsOfFile(context, filename.replace(".stacktrace", ".contact"));
 
-                        // Retrieve user ID and contact information if given
-                        String userID = Util.contentsOfFile(context, filename.replace(".stacktrace", ".user"));
-                        String contact = Util.contentsOfFile(context, filename.replace(".stacktrace", ".contact"));
-
-                        if (crashMetaData != null) {
-                            final String crashMetaDataUserID = crashMetaData.getUserID();
-                            if (!isEmpty(crashMetaDataUserID)) {
-                                userID = crashMetaDataUserID;
-                            }
-                            final String crashMetaDataContact = crashMetaData.getUserEmail();
-                            if (!isEmpty(crashMetaDataContact)) {
-                                contact = crashMetaDataContact;
-                            }
+                    if (crashMetaData != null) {
+                        final String crashMetaDataUserID = crashMetaData.getUserID();
+                        if (!isEmpty(crashMetaDataUserID)) {
+                            userID = crashMetaDataUserID;
                         }
+                        final String crashMetaDataContact = crashMetaData.getUserEmail();
+                        if (!isEmpty(crashMetaDataContact)) {
+                            contact = crashMetaDataContact;
+                        }
+                    }
 
-                        // Append application log to user provided description if present, if not, just send application log
-                        final String applicationLog = Util.contentsOfFile(context, filename.replace(".stacktrace", ".description"));
-                        String description = crashMetaData != null ? crashMetaData.getUserDescription() : "";
-                        if (!isEmpty(applicationLog)) {
-                            if (!isEmpty(description)) {
-                                description = String.format("%s\n\nLog:\n%s", description, applicationLog);
+                    //TODO Crash Object Generation here
+                    CrashLog crashLog = new CrashLog();
+
+
+                    // Append application log to user provided description if present, if not, just send application log
+                    final String applicationLog = Util.contentsOfFile(context, filename.replace(".stacktrace", ".description"));
+                    String description = crashMetaData != null ? crashMetaData.getUserDescription() : "";
+                    if (!isEmpty(applicationLog)) {
+                        if (!isEmpty(description)) {
+                            description = String.format("%s\n\nLog:\n%s", description, applicationLog);
+                        } else {
+                            description = String.format("Log:\n%s", applicationLog);
+                        }
+                    }
+
+                    //We'll forward the final crash object to Persistence for processing
+                    String fileName = list[index];
+                    Persistence.getInstance().setListener(new PersistenceListener() {
+                        @Override
+                        public void storingSuccessful(boolean success) {
+                            if (success) {
+                                AvalancheLog.debug("Transmission succeeded");
+                                deleteStackTrace(filename);
+
+                                if (mListener != null) {
+                                    mListener.onCrashesSent();
+                                }
                             } else {
-                                description = String.format("Log:\n%s", applicationLog);
+                                AvalancheLog.debug("Transmission failed, will retry on next register() call");
+                                if (mListener != null) {
+                                    mListener.onCrashesNotSent();
+                                }
                             }
+
                         }
-
-                        Map<String, String> parameters = new HashMap<String, String>();
-
-                        parameters.put("raw", stacktrace);
-                        parameters.put("userID", userID);
-                        parameters.put("contact", contact);
-                        parameters.put("description", description);
-                        parameters.put("sdk", Constants.SDK_NAME);
-                        parameters.put("sdk_version", BuildConfig.VERSION_NAME);
-
-                        urlConnection = new HttpURLConnectionBuilder(getURLString())
-                                .setRequestMethod("POST")
-                                .writeFormFields(parameters)
-                                .build();
-
-                        int responseCode = urlConnection.getResponseCode();
-
-                        successful = (responseCode == HttpURLConnection.HTTP_ACCEPTED || responseCode == HttpURLConnection.HTTP_CREATED);
-
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    if (urlConnection != null) {
-                        urlConnection.disconnect();
-                    }
-                    if (successful) {
-                        AvalancheLog.debug("Transmission succeeded");
-                        deleteStackTrace(list[index]);
-
-                        if (mListener != null) {
-                            mListener.onCrashesSent();
-                            deleteRetryCounter(list[index], mListener.getMaxRetryAttempts());
-                        }
-                    } else {
-                        AvalancheLog.debug("Transmission failed, will retry on next register() call");
-                        if (mListener != null) {
-                            mListener.onCrashesNotSent();
-                            updateRetryCounter(list[index], mListener.getMaxRetryAttempts());
-                        }
-                    }
+                    });
+                    Persistence.getInstance().storeCrash(crashLog);
                 }
             }
         }
@@ -513,7 +446,7 @@ public class Crashes extends DefaultAvalancheFeature {
         return mDidCrashInLastSession;
     }
 
-    public CrashReport getLastCrashDetails() {
+    public CrashReport getLastCrashReport() {
         if (Constants.FILES_PATH == null || !didCrashInLastSession()) {
             return null;
         }
@@ -602,45 +535,7 @@ public class Crashes extends DefaultAvalancheFeature {
         context.deleteFile(description);
     }
 
-    /**
-     * Update the retry attempts count for this crash stacktrace.
-     */
-    private void updateRetryCounter(String filename, int maxRetryAttempts) {
-        if (maxRetryAttempts == -1) {
-            return;
-        }
-
-        Context context = mContextWeakReference.get();
-        SharedPreferences preferences = context.getSharedPreferences("AvalancheSDK", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-
-        int retryCounter = preferences.getInt("RETRY_COUNT: " + filename, 0);
-        if (retryCounter >= maxRetryAttempts) {
-            deleteStackTrace(filename);
-            deleteRetryCounter(filename, maxRetryAttempts);
-        } else {
-            editor.putInt("RETRY_COUNT: " + filename, retryCounter + 1);
-            editor.apply();
-        }
-    }
-
-    /**
-     * Delete the retry counter if stacktrace is uploaded or retry limit is
-     * reached.
-     */
-    private void deleteRetryCounter(String filename, int maxRetryAttempts) {
-        Context context = mContextWeakReference.get();
-        SharedPreferences preferences = context.getSharedPreferences("AvalancheSDK", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.remove("RETRY_COUNT: " + filename);
-        editor.apply();
-    }
-
     private boolean isIgnoreDefaultHandler() {
         return mListener != null && mListener.ignoreDefaultHandler();
-    }
-
-    private String getURLString() {
-        return mEndpointUrl + "api/2/apps/" + AvalancheHub.getSharedInstance().getAppIdentifier() + "/crashes/";
     }
 }
