@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import avalanche.base.ingestion.models.DeviceLog;
 import avalanche.base.ingestion.models.Log;
@@ -53,7 +54,7 @@ public class LogContainerSerializerTest {
         deviceLog.setTimeZoneOffset(120);
         deviceLog.setScreenSize("800x600");
         deviceLog.setAppVersion("3.2.1");
-        ArrayList<Log> logs = new ArrayList<>();
+        List<Log> logs = new ArrayList<>();
         logs.add(deviceLog);
         expectedContainer.setLogs(logs);
         LogContainerSerializer serializer = new DefaultLogContainerSerializer();

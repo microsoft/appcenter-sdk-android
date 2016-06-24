@@ -7,14 +7,14 @@ import org.json.JSONStringer;
 import avalanche.base.ingestion.models.InSessionLog;
 import avalanche.base.ingestion.models.utils.LogUtils;
 
+import static avalanche.base.ingestion.models.CommonProperties.NAME;
+
 /**
  * Page log.
  */
 public class PageLog extends InSessionLog {
 
     public static final String TYPE = "page";
-
-    public static final String NAME = "name";
 
     /**
      * Name of the page.

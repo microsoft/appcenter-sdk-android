@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import avalanche.analytics.ingestion.models.EventLog;
@@ -26,7 +27,7 @@ public class AnalyticsSerializerTest {
         LogContainer expectedContainer = new LogContainer();
         expectedContainer.setAppId("app000123");
         expectedContainer.setInstallId("0123456789abcdef0123456789abcdef");
-        ArrayList<Log> logs = new ArrayList<>();
+        List<Log> logs = new ArrayList<>();
         expectedContainer.setLogs(logs);
 
         String sid = UUID.randomUUID().toString();

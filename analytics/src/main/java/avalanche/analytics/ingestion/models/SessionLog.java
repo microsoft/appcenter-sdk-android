@@ -7,7 +7,7 @@ import org.json.JSONStringer;
 import avalanche.base.ingestion.models.AbstractLog;
 import avalanche.base.ingestion.models.utils.LogUtils;
 
-import static avalanche.base.ingestion.models.InSessionLog.SID;
+import static avalanche.base.ingestion.models.CommonProperties.SID;
 
 /**
  * Session log.

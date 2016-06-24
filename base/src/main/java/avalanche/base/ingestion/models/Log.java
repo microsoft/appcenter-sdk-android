@@ -1,20 +1,13 @@
 package avalanche.base.ingestion.models;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONStringer;
-
-public interface Log {
+public interface Log extends Definition {
 
     /**
-     * type property
+     * Get the type value.
+     *
+     * @return the type value
      */
-    String TYPE = "type";
-
-    /**
-     * toffset property
-     */
-    String TOFFSET = "toffset";
+    String getType();
 
     /**
      * Get the toffset value.
@@ -29,17 +22,4 @@ public interface Log {
      * @param toffset the toffset value to set
      */
     void setToffset(long toffset);
-
-    /**
-     * Get the type value.
-     *
-     * @return the type value
-     */
-    String getType();
-
-    void read(JSONObject object) throws JSONException;
-
-    void write(JSONStringer writer) throws JSONException;
-
-    void validate() throws IllegalArgumentException;
 }

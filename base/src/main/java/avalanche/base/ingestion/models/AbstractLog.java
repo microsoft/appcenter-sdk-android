@@ -13,6 +13,11 @@ import avalanche.base.ingestion.models.utils.LogUtils;
 public abstract class AbstractLog implements Log {
 
     /**
+     * toffset property
+     */
+    private static final String TOFFSET = "toffset";
+
+    /**
      * Corresponds to the number of milliseconds elapsed between the time the
      * request is sent and the time the log is emitted.
      */
@@ -30,20 +35,20 @@ public abstract class AbstractLog implements Log {
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        writer.key(TYPE).value(getType());
+        writer.key(CommonProperties.TYPE).value(getType());
         writer.key(TOFFSET).value(getToffset());
     }
 
     @Override
     public void read(JSONObject object) throws JSONException {
-        if (!object.getString(TYPE).equals(getType()))
+        if (!object.getString(CommonProperties.TYPE).equals(getType()))
             throw new JSONException("Invalid type");
         setToffset(object.getLong(TOFFSET));
     }
 
     @Override
     public void validate() throws IllegalArgumentException {
-        LogUtils.checkNotNull(TYPE, getType());
+        LogUtils.checkNotNull(CommonProperties.TYPE, getType());
         LogUtils.checkNotNull(TOFFSET, getToffset());
     }
 

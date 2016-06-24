@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import avalanche.base.ingestion.models.CommonProperties;
+import avalanche.base.ingestion.models.Definition;
 import avalanche.base.ingestion.models.DeviceLog;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
@@ -43,7 +45,7 @@ public class DefaultLogContainerSerializer implements LogContainerSerializer {
         writer.key(APP_ID).value(logContainer.getAppId());
         writer.key(INSTALL_ID).value(logContainer.getInstallId());
         writer.key(LOGS).array();
-        for (Log log : logContainer.getLogs()) {
+        for (Definition log : logContainer.getLogs()) {
             writer.object();
             log.write(writer);
             try {
@@ -68,7 +70,7 @@ public class DefaultLogContainerSerializer implements LogContainerSerializer {
         List<Log> logs = new ArrayList<>();
         for (int i = 0; i < jLogs.length(); i++) {
             JSONObject jLog = jLogs.getJSONObject(i);
-            String type = jLog.getString(Log.TYPE);
+            String type = jLog.getString(CommonProperties.TYPE);
             Log log = mLogFactories.get(type).create();
             log.read(jLog);
             logs.add(log);

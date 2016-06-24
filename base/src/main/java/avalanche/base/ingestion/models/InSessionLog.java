@@ -10,12 +10,12 @@ import java.util.Map;
 
 import avalanche.base.ingestion.models.utils.LogUtils;
 
+import static avalanche.base.ingestion.models.CommonProperties.SID;
+
 /**
  * The InSessionLog model.
  */
 public abstract class InSessionLog extends AbstractLog {
-
-    public static final String SID = "sid";
 
     private static final String PROPERTIES = "properties";
 
@@ -85,12 +85,7 @@ public abstract class InSessionLog extends AbstractLog {
     public void write(JSONStringer writer) throws JSONException {
         super.write(writer);
         writer.key(SID).value(getSid());
-        if (getProperties() != null) {
-            writer.key(PROPERTIES).object();
-            for (Map.Entry<String, String> property : getProperties().entrySet())
-                writer.key(property.getKey()).value(property.getValue());
-            writer.endObject();
-        }
+        CommonProperties.serializeMap(PROPERTIES, getProperties(), writer);
     }
 
     @Override

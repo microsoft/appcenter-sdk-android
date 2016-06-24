@@ -7,16 +7,15 @@ import org.json.JSONStringer;
 import avalanche.base.ingestion.models.InSessionLog;
 import avalanche.base.ingestion.models.utils.LogUtils;
 
+import static avalanche.base.ingestion.models.CommonProperties.ID;
+import static avalanche.base.ingestion.models.CommonProperties.NAME;
+
 /**
  * Event log.
  */
 public class EventLog extends InSessionLog {
 
     public static final String TYPE = "event";
-
-    public static final String ID = "id";
-
-    public static final String NAME = "name";
 
     /**
      * Unique identifier for this event.
