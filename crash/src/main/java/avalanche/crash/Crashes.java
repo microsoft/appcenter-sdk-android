@@ -4,20 +4,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
-import avalanche.base.AvalancheHub;
-import avalanche.base.Constants;
-import avalanche.base.DefaultAvalancheFeature;
-
-
-
-import avalanche.crash.model.CrashReport;
-import avalanche.crash.model.CrashesUserInput;
-import avalanche.crash.model.CrashMetaData;
-import avalanche.base.utils.AvalancheLog;
-import avalanche.base.utils.HttpURLConnectionBuilder;
-import avalanche.base.utils.Util;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -29,7 +15,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import avalanche.base.AvalancheHub;
+import avalanche.base.Constants;
+import avalanche.base.DefaultAvalancheFeature;
+import avalanche.base.utils.AvalancheLog;
+import avalanche.base.utils.HttpURLConnectionBuilder;
+import avalanche.base.utils.Util;
+import avalanche.crash.model.CrashMetaData;
+import avalanche.crash.model.CrashReport;
+import avalanche.crash.model.CrashesUserInput;
+
 import static android.text.TextUtils.isEmpty;
+import static avalanche.base.utils.StorageHelper.InternalStorage;
+import static avalanche.base.utils.StorageHelper.SharedPreferences;
 
 
 public class Crashes extends DefaultAvalancheFeature {
@@ -65,33 +63,21 @@ public class Crashes extends DefaultAvalancheFeature {
         if (Constants.FILES_PATH != null) {
             AvalancheLog.debug("Looking for exceptions in: " + Constants.FILES_PATH);
 
-            // Try to create the files folder if it doesn't exist
-            File dir = new File(Constants.FILES_PATH + "/");
-            boolean created = dir.mkdir();
-            if (!created && !dir.exists()) {
-                return new String[0];
-            }
-
             // Filter for ".stacktrace" files
             FilenameFilter filter = new FilenameFilter() {
                 public boolean accept(File dir, String name) {
                     return name.endsWith(".stacktrace");
                 }
             };
-            return dir.list(filter);
+            return InternalStorage.getFilenames(Constants.FILES_PATH, filter);
         } else {
             AvalancheLog.debug("Can't search for exception as file path is null.");
             return null;
         }
     }
 
-    private static List<String> getConfirmedFilenames(Context context) {
-        List<String> result = null;
-        if (context != null) {
-            SharedPreferences preferences = context.getSharedPreferences("AvalancheSDK", Context.MODE_PRIVATE);
-            result = Arrays.asList(preferences.getString("ConfirmedFilenames", "").split("\\|"));
-        }
-        return result;
+    private static List<String> getConfirmedFilenames() {
+        return Arrays.asList(SharedPreferences.getString("ConfirmedFilenames", "").split("\\|"));
     }
 
     private static String getAlertTitle(Context context) {
@@ -200,13 +186,12 @@ public class Crashes extends DefaultAvalancheFeature {
             return;
         }
 
-        int foundOrSend = hasStackTraces(context);
+        int foundOrSend = hasStackTraces();
 
         if (foundOrSend == STACK_TRACES_FOUND_NEW) {
             mDidCrashInLastSession = true;
             Boolean autoSend = !(context instanceof Activity);
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-            autoSend |= prefs.getBoolean(ALWAYS_SEND_KEY, false);
+            autoSend |= SharedPreferences.getBoolean(ALWAYS_SEND_KEY, false);
 
             if (mListener != null) {
                 autoSend |= mListener.shouldAutoUploadCrashes();
@@ -285,8 +270,6 @@ public class Crashes extends DefaultAvalancheFeature {
         String[] list = searchForStackTraces();
         Boolean successful = false;
 
-        Context context = mContextWeakReference.get();
-
         if ((list != null) && (list.length > 0)) {
             AvalancheLog.debug("Found " + list.length + " stacktrace(s).");
 
@@ -294,16 +277,16 @@ public class Crashes extends DefaultAvalancheFeature {
                 HttpURLConnection urlConnection = null;
                 try {
                     // Read contents of stack trace
-                    String filename = list[index];
-                    String stacktrace = Util.contentsOfFile(context, filename);
+                    String filename = Constants.FILES_PATH + "/" + list[index];
+                    String stacktrace = InternalStorage.read(filename);
                     if (stacktrace.length() > 0) {
                         // Transmit stack trace with POST request
 
                         AvalancheLog.debug("Transmitting crash data: \n" + stacktrace);
 
                         // Retrieve user ID and contact information if given
-                        String userID = Util.contentsOfFile(context, filename.replace(".stacktrace", ".user"));
-                        String contact = Util.contentsOfFile(context, filename.replace(".stacktrace", ".contact"));
+                        String userID = InternalStorage.read(filename.replace(".stacktrace", ".user"));
+                        String contact = InternalStorage.read(filename.replace(".stacktrace", ".contact"));
 
                         if (crashMetaData != null) {
                             final String crashMetaDataUserID = crashMetaData.getUserID();
@@ -317,7 +300,7 @@ public class Crashes extends DefaultAvalancheFeature {
                         }
 
                         // Append application log to user provided description if present, if not, just send application log
-                        final String applicationLog = Util.contentsOfFile(context, filename.replace(".stacktrace", ".description"));
+                        final String applicationLog = InternalStorage.read(filename.replace(".stacktrace", ".description"));
                         String description = crashMetaData != null ? crashMetaData.getUserDescription() : "";
                         if (!isEmpty(applicationLog)) {
                             if (!isEmpty(description)) {
@@ -446,18 +429,7 @@ public class Crashes extends DefaultAvalancheFeature {
                 registerExceptionHandler();
                 return true;
             case CrashManagerUserInputAlwaysSend:
-                Context context = null;
-                if (weakContext != null) {
-                    context = weakContext.get();
-                }
-
-                if (context == null) {
-                    return false;
-                }
-
-                final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-                prefs.edit().putBoolean(ALWAYS_SEND_KEY, true).apply();
-
+                SharedPreferences.putBoolean(ALWAYS_SEND_KEY, true);
                 sendCrashes(userProvidedMetaData);
                 return true;
             case CrashManagerUserInputSend:
@@ -475,18 +447,17 @@ public class Crashes extends DefaultAvalancheFeature {
     /**
      * Checks if there are any saved stack traces in the files dir.
      *
-     * @param context The context to use. Usually your Activity object.
      * @return STACK_TRACES_FOUND_NONE if there are no stack traces,
      * STACK_TRACES_FOUND_NEW if there are any new stack traces,
      * STACK_TRACES_FOUND_CONFIRMED if there only are confirmed stack traces.
      */
-    public int hasStackTraces(Context context) {
+    public int hasStackTraces() {
         String[] filenames = searchForStackTraces();
         List<String> confirmedFilenames = null;
         int result = STACK_TRACES_FOUND_NONE;
         if ((filenames != null) && (filenames.length > 0)) {
             try {
-                confirmedFilenames = getConfirmedFilenames(context);
+                confirmedFilenames = getConfirmedFilenames();
 
             } catch (Exception e) {
                 // Just in case, we catch all exceptions here
@@ -518,28 +489,20 @@ public class Crashes extends DefaultAvalancheFeature {
             return null;
         }
 
-        File dir = new File(Constants.FILES_PATH + "/");
-        File[] files = dir.listFiles(new FilenameFilter() {
+        FilenameFilter filter = new FilenameFilter() {
             @Override
             public boolean accept(File dir, String filename) {
                 return filename.endsWith(".stacktrace");
             }
-        });
+        };
 
-        long lastModification = 0;
-        File lastModifiedFile = null;
+        File lastModifiedFile = InternalStorage.lastModifiedFile(Constants.FILES_PATH, filter);
         CrashReport result = null;
-        for (File file : files) {
-            if (file.lastModified() > lastModification) {
-                lastModification = file.lastModified();
-                lastModifiedFile = file;
-            }
-        }
 
         if (lastModifiedFile != null && lastModifiedFile.exists()) {
             try {
                 result = CrashReport.fromFile(lastModifiedFile);
-            } catch (IOException e) {
+            } catch (IOException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -548,17 +511,11 @@ public class Crashes extends DefaultAvalancheFeature {
     }
 
     private void saveConfirmedStackTraces() {
-        Context context = mContextWeakReference.get();
-        if (context != null) {
-            try {
-                String[] filenames = searchForStackTraces();
-                SharedPreferences preferences = context.getSharedPreferences("AvalancheSDK", Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = preferences.edit();
-                editor.putString("ConfirmedFilenames", Util.joinArray(filenames, "|"));
-                editor.apply();
-            } catch (Exception e) {
-                // Just in case, we catch all exceptions here
-            }
+        try {
+            String[] filenames = searchForStackTraces();
+            SharedPreferences.putString("ConfirmedFilenames", Util.joinArray(filenames, "|"));
+        } catch (Exception e) {
+            // Just in case, we catch all exceptions here
         }
     }
 
@@ -570,13 +527,9 @@ public class Crashes extends DefaultAvalancheFeature {
 
             for (int index = 0; index < list.length; index++) {
                 try {
-                    Context context = mContextWeakReference.get();
                     AvalancheLog.debug("Delete stacktrace " + list[index] + ".");
                     deleteStackTrace(list[index]);
-
-                    if (context != null) {
-                        context.deleteFile(list[index]);
-                    }
+                    InternalStorage.delete(Constants.FILES_PATH + "/" + list[index]);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -589,17 +542,17 @@ public class Crashes extends DefaultAvalancheFeature {
      * different extension).
      */
     private void deleteStackTrace(String filename) {
-        Context context = mContextWeakReference.get();
-        context.deleteFile(filename);
+        filename = Constants.FILES_PATH + "/" + filename;
+        InternalStorage.delete(filename);
 
         String user = filename.replace(".stacktrace", ".user");
-        context.deleteFile(user);
+        InternalStorage.delete(user);
 
         String contact = filename.replace(".stacktrace", ".contact");
-        context.deleteFile(contact);
+        InternalStorage.delete(contact);
 
         String description = filename.replace(".stacktrace", ".description");
-        context.deleteFile(description);
+        InternalStorage.delete(description);
     }
 
     /**
@@ -610,17 +563,12 @@ public class Crashes extends DefaultAvalancheFeature {
             return;
         }
 
-        Context context = mContextWeakReference.get();
-        SharedPreferences preferences = context.getSharedPreferences("AvalancheSDK", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-
-        int retryCounter = preferences.getInt("RETRY_COUNT: " + filename, 0);
+        int retryCounter = SharedPreferences.getInt("RETRY_COUNT: " + filename);
         if (retryCounter >= maxRetryAttempts) {
             deleteStackTrace(filename);
             deleteRetryCounter(filename, maxRetryAttempts);
         } else {
-            editor.putInt("RETRY_COUNT: " + filename, retryCounter + 1);
-            editor.apply();
+            SharedPreferences.putInt("RETRY_COUNT: " + filename, retryCounter + 1);
         }
     }
 
@@ -629,11 +577,7 @@ public class Crashes extends DefaultAvalancheFeature {
      * reached.
      */
     private void deleteRetryCounter(String filename, int maxRetryAttempts) {
-        Context context = mContextWeakReference.get();
-        SharedPreferences preferences = context.getSharedPreferences("AvalancheSDK", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.remove("RETRY_COUNT: " + filename);
-        editor.apply();
+        SharedPreferences.remove("RETRY_COUNT: " + filename);
     }
 
     private boolean isIgnoreDefaultHandler() {

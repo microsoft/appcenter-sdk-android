@@ -16,10 +16,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
@@ -368,34 +364,6 @@ public class Util {
             }
         }
         return buffer.toString();
-    }
-
-    /**
-     * Returns the content of a file as a string.
-     */
-    public static String contentsOfFile(Context context, String filename) {
-        StringBuilder contents = new StringBuilder();
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new InputStreamReader(context.openFileInput(filename)));
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                contents.append(line);
-                contents.append(System.getProperty("line.separator"));
-            }
-        } catch (FileNotFoundException e) {
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException ignored) {
-                }
-            }
-        }
-
-        return contents.toString();
     }
 
     public static boolean isMainActivity(Activity activity) {

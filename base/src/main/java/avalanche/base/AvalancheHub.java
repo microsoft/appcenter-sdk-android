@@ -2,8 +2,6 @@ package avalanche.base;
 
 import android.app.Application;
 
-import avalanche.base.utils.Util;
-
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -11,6 +9,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import avalanche.base.utils.StorageHelper;
+import avalanche.base.utils.Util;
 
 public final class AvalancheHub {
 
@@ -126,6 +127,7 @@ public final class AvalancheHub {
      */
     public static AvalancheHub use(Application application, String appIdentifier, AvalancheFeature... features) {
         AvalancheHub avalancheHub = getSharedInstance().initialize(application, appIdentifier);
+        StorageHelper.initialize(application);
 
         if (features != null && features.length > 0) {
             for (AvalancheFeature feature : features) {

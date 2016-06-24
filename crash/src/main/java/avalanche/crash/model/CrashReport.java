@@ -2,42 +2,22 @@ package avalanche.crash.model;
 
 import android.text.TextUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Serializable;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.Date;
+
 import avalanche.base.AvalancheDataInterface;
 import avalanche.base.Constants;
 import avalanche.base.utils.AvalancheLog;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import static avalanche.base.utils.StorageHelper.InternalStorage;
 
-public class CrashReport implements AvalancheDataInterface {
+public class CrashReport implements AvalancheDataInterface, Serializable {
 
-    public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
-
-    private static final String FIELD_CRASH_REPORTER_KEY = "CrashReporter Key";
-    private static final String FIELD_APP_START_DATE = "Start Date";
-    private static final String FIELD_APP_CRASH_DATE = "Date";
-    private static final String FIELD_OS_VERSION = "Android";
-    private static final String FIELD_OS_BUILD = "Android Build";
-    private static final String FIELD_DEVICE_MANUFACTURER = "Manufacturer";
-    private static final String FIELD_DEVICE_MODEL = "Model";
-    private static final String FIELD_APP_PACKAGE = "Package";
-    private static final String FIELD_APP_VERSION_NAME = "Version Name";
-    private static final String FIELD_APP_VERSION_CODE = "Version Code";
-    private static final String FIELD_THREAD_NAME = "Thread";
-
-    private static final String FIELD_FORMAT = "Format";
     private static final String FIELD_FORMAT_VALUE = "Xamarin";
     private static final String FIELD_XAMARIN_CAUSED_BY = "Xamarin caused by: "; //Field that marks a Xamarin Exception
 
@@ -119,129 +99,19 @@ public class CrashReport implements AvalancheDataInterface {
         throwableStackTrace = stackTraceResult.toString();
     }
 
-
-    public static CrashReport fromFile(File file) throws IOException {
-        String crashIdentifier = file.getName().substring(0, file.getName().indexOf(".stacktrace"));
-        return fromReader(crashIdentifier, new FileReader(file));
+    public static CrashReport fromFile(File file) throws IOException, ClassNotFoundException {
+        return InternalStorage.readObject(file, CrashReport.class);
     }
 
-    public static CrashReport fromReader(String crashIdentifier, Reader in) throws IOException {
-        BufferedReader bufferedReader = new BufferedReader(in);
-
-        CrashReport result = new CrashReport(crashIdentifier);
-
-        String readLine, headerName, headerValue;
-        boolean headersProcessed = false;
-        StringBuilder stackTraceBuilder = new StringBuilder();
-        while ((readLine = bufferedReader.readLine()) != null) {
-            if (!headersProcessed) {
-
-                if (readLine.isEmpty()) {
-                    // empty line denotes break between headers and stack trace
-                    headersProcessed = true;
-                    continue;
-                }
-
-                int colonIndex = readLine.indexOf(":");
-                if (colonIndex < 0) {
-                    AvalancheLog.error("Malformed header line when parsing crash details: \"" + readLine + "\"");
-                }
-
-                headerName = readLine.substring(0, colonIndex).trim();
-                headerValue = readLine.substring(colonIndex + 1, readLine.length()).trim();
-
-                if (headerName.equals(FIELD_CRASH_REPORTER_KEY)) {
-                    result.setReporterKey(headerValue);
-                } else if (headerName.equals(FIELD_APP_START_DATE)) {
-                    try {
-                        result.setAppStartDate(DATE_FORMAT.parse(headerValue));
-                    } catch (ParseException e) {
-                        throw new RuntimeException(e);
-                    }
-                } else if (headerName.equals(FIELD_APP_CRASH_DATE)) {
-                    try {
-                        result.setAppCrashDate(DATE_FORMAT.parse(headerValue));
-                    } catch (ParseException e) {
-                        throw new RuntimeException(e);
-                    }
-                } else if (headerName.equals(FIELD_OS_VERSION)) {
-                    result.setOsVersion(headerValue);
-                } else if (headerName.equals(FIELD_OS_BUILD)) {
-                    result.setOsBuild(headerValue);
-                } else if (headerName.equals(FIELD_DEVICE_MANUFACTURER)) {
-                    result.setDeviceManufacturer(headerValue);
-                } else if (headerName.equals(FIELD_DEVICE_MODEL)) {
-                    result.setDeviceModel(headerValue);
-                } else if (headerName.equals(FIELD_APP_PACKAGE)) {
-                    result.setAppPackage(headerValue);
-                } else if (headerName.equals(FIELD_APP_VERSION_NAME)) {
-                    result.setAppVersionName(headerValue);
-                } else if (headerName.equals(FIELD_APP_VERSION_CODE)) {
-                    result.setAppVersionCode(headerValue);
-                } else if (headerName.equals(FIELD_THREAD_NAME)) {
-                    result.setThreadName(headerValue);
-                } else if (headerName.equals(FIELD_FORMAT)) {
-                    result.setFormat(headerValue);
-                }
-
-            } else {
-                stackTraceBuilder.append(readLine).append("\n");
-            }
-        }
-        result.setThrowableStackTrace(stackTraceBuilder.toString());
-
-        return result;
-    }
-
-    //TODO this should not be in the model class
     public void writeCrashReport() {
         String path = Constants.FILES_PATH + "/" + crashIdentifier + ".stacktrace";
         AvalancheLog.debug("Writing unhandled exception to: " + path);
 
-        BufferedWriter writer = null;
-
         try {
-            writer = new BufferedWriter(new FileWriter(path));
-
-            writeHeader(writer, FIELD_APP_PACKAGE, appPackage);
-            writeHeader(writer, FIELD_APP_VERSION_CODE, appVersionCode);
-            writeHeader(writer, FIELD_APP_VERSION_NAME, appVersionName);
-            writeHeader(writer, FIELD_OS_VERSION, osVersion);
-            writeHeader(writer, FIELD_OS_BUILD, osBuild);
-            writeHeader(writer, FIELD_DEVICE_MANUFACTURER, deviceManufacturer);
-            writeHeader(writer, FIELD_DEVICE_MODEL, deviceModel);
-            writeHeader(writer, FIELD_THREAD_NAME, threadName);
-            writeHeader(writer, FIELD_CRASH_REPORTER_KEY, reporterKey);
-
-            writeHeader(writer, FIELD_APP_START_DATE, DATE_FORMAT.format(appStartDate));
-            writeHeader(writer, FIELD_APP_CRASH_DATE, DATE_FORMAT.format(appCrashDate));
-
-            if (isXamarinException) {
-                writeHeader(writer, FIELD_FORMAT, FIELD_FORMAT_VALUE);
-            }
-
-            writer.write("\n");
-            writer.write(throwableStackTrace);
-
-            writer.flush();
-
+            InternalStorage.writeObject(new File(path), this);
         } catch (IOException e) {
             AvalancheLog.error("Error saving crash report!", e);
-        } finally {
-            try {
-                if (writer != null) {
-                    writer.close();
-                }
-            } catch (IOException e1) {
-                AvalancheLog.error("Error saving crash report!", e1);
-            }
         }
-
-
-    }
-
-    private void writeHeader(Writer writer, String name, String value) throws IOException {
-        writer.write(name + ": " + value + "\n");
     }
 
     public String getCrashIdentifier() {
