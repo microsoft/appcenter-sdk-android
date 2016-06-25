@@ -88,4 +88,24 @@ public class EventLog extends InSessionLog {
         LogUtils.checkNotNull(ID, getId());
         LogUtils.checkNotNull(NAME, getName());
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        EventLog eventLog = (EventLog) o;
+
+        if (id != null ? !id.equals(eventLog.id) : eventLog.id != null) return false;
+        return name != null ? name.equals(eventLog.name) : eventLog.name == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (id != null ? id.hashCode() : 0);
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        return result;
+    }
 }

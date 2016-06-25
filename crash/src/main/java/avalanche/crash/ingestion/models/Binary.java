@@ -238,7 +238,6 @@ public class Binary implements Definition {
             return false;
         if (uuid != null ? !uuid.equals(binary.uuid) : binary.uuid != null) return false;
         return path != null ? path.equals(binary.path) : binary.path == null;
-
     }
 
     @Override

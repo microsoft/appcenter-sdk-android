@@ -71,7 +71,6 @@ public class PageLog extends InSessionLog {
         PageLog pageLog = (PageLog) o;
 
         return name != null ? name.equals(pageLog.name) : pageLog.name == null;
-
     }
 
     @Override

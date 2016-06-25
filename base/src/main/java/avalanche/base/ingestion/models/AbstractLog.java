@@ -7,6 +7,8 @@ import org.json.JSONStringer;
 
 import avalanche.base.ingestion.models.utils.LogUtils;
 
+import static avalanche.base.ingestion.models.CommonProperties.TYPE;
+
 /**
  * The AbstractLog model.
  */
@@ -35,20 +37,20 @@ public abstract class AbstractLog implements Log {
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        writer.key(CommonProperties.TYPE).value(getType());
+        writer.key(TYPE).value(getType());
         writer.key(TOFFSET).value(getToffset());
     }
 
     @Override
     public void read(JSONObject object) throws JSONException {
-        if (!object.getString(CommonProperties.TYPE).equals(getType()))
+        if (!object.getString(TYPE).equals(getType()))
             throw new JSONException("Invalid type");
         setToffset(object.getLong(TOFFSET));
     }
 
     @Override
     public void validate() throws IllegalArgumentException {
-        LogUtils.checkNotNull(CommonProperties.TYPE, getType());
+        LogUtils.checkNotNull(TYPE, getType());
         LogUtils.checkNotNull(TOFFSET, getToffset());
     }
 

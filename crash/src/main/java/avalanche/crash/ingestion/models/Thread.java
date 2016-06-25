@@ -6,12 +6,12 @@ import org.json.JSONStringer;
 
 import java.util.List;
 
-import avalanche.base.ingestion.models.CommonProperties;
 import avalanche.base.ingestion.models.Definition;
 import avalanche.base.ingestion.models.json.JSONUtils;
 import avalanche.base.ingestion.models.utils.LogUtils;
 import avalanche.crash.ingestion.models.json.ThreadFrameFactory;
 
+import static avalanche.base.ingestion.models.CommonProperties.FRAMES;
 import static avalanche.base.ingestion.models.CommonProperties.ID;
 
 /**
@@ -68,19 +68,19 @@ public class Thread implements Definition {
     @Override
     public void read(JSONObject object) throws JSONException {
         setId(object.getInt(ID));
-        setFrames(JSONUtils.readArray(object, CommonProperties.FRAMES, ThreadFrameFactory.getInstance()));
+        setFrames(JSONUtils.readArray(object, FRAMES, ThreadFrameFactory.getInstance()));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
         writer.key(ID).value(getId());
-        JSONUtils.writeArray(writer, CommonProperties.FRAMES, getFrames());
+        JSONUtils.writeArray(writer, FRAMES, getFrames());
     }
 
     @Override
     public void validate() throws IllegalArgumentException {
         LogUtils.checkNotNull(ID, getId());
-        LogUtils.checkNotNull(CommonProperties.FRAMES, getFrames());
+        LogUtils.checkNotNull(FRAMES, getFrames());
     }
 
     @Override
@@ -92,7 +92,6 @@ public class Thread implements Definition {
 
         if (id != thread.id) return false;
         return frames != null ? frames.equals(thread.frames) : thread.frames == null;
-
     }
 
     @Override

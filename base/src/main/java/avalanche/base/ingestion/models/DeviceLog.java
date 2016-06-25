@@ -4,6 +4,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+import avalanche.base.ingestion.models.json.JSONUtils;
 import avalanche.base.ingestion.models.utils.LogUtils;
 
 /**
@@ -348,16 +349,13 @@ public class DeviceLog extends AbstractLog {
         writer.key(OEM_NAME).value(getOemName());
         writer.key(OS_NAME).value(getOsName());
         writer.key(OS_VERSION).value(getOsVersion());
-        if (getOsApiLevel() != null)
-            writer.key(OS_API_LEVEL).value(getOsApiLevel());
+        JSONUtils.write(writer, OS_API_LEVEL, getOsApiLevel(), false);
         writer.key(LOCALE).value(getLocale());
         writer.key(TIME_ZONE_OFFSET).value(getTimeZoneOffset());
         writer.key(SCREEN_SIZE).value(getScreenSize());
         writer.key(APP_VERSION).value(getAppVersion());
-        if (getCarrierName() != null)
-            writer.key(CARRIER_NAME).value(getCarrierName());
-        if (getCarrierCountry() != null)
-            writer.key(CARRIER_COUNTRY).value(getCarrierCountry());
+        JSONUtils.write(writer, CARRIER_NAME, getCarrierName(), false);
+        JSONUtils.write(writer, CARRIER_COUNTRY, getCarrierCountry(), false);
     }
 
     @Override
@@ -404,7 +402,6 @@ public class DeviceLog extends AbstractLog {
         if (carrierName != null ? !carrierName.equals(deviceLog.carrierName) : deviceLog.carrierName != null)
             return false;
         return carrierCountry != null ? carrierCountry.equals(deviceLog.carrierCountry) : deviceLog.carrierCountry == null;
-
     }
 
     @Override

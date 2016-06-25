@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import org.json.JSONStringer;
 
 import avalanche.base.ingestion.models.AbstractLog;
+import avalanche.base.ingestion.models.json.JSONUtils;
 import avalanche.base.ingestion.models.utils.LogUtils;
 
 import static avalanche.base.ingestion.models.CommonProperties.SID;
@@ -82,14 +83,13 @@ public class SessionLog extends AbstractLog {
     public void write(JSONStringer writer) throws JSONException {
         super.write(writer);
         writer.key(SID).value(getSid());
-        if (isEnd())
-            writer.key(END).value(isEnd());
+        JSONUtils.write(writer, END, isEnd(), false);
     }
 
     @Override
     public void validate() throws IllegalArgumentException {
         super.validate();
-        LogUtils.checkNotNull(SID, "sid");
+        LogUtils.checkNotNull(SID, getSid());
     }
 
     @Override
@@ -102,7 +102,6 @@ public class SessionLog extends AbstractLog {
 
         if (end != that.end) return false;
         return sid != null ? sid.equals(that.sid) : that.sid == null;
-
     }
 
     @Override
