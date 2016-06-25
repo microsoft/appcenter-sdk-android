@@ -27,7 +27,7 @@ import avalanche.crash.model.CrashesUserInput;
 
 import static android.text.TextUtils.isEmpty;
 import static avalanche.base.utils.StorageHelper.InternalStorage;
-import static avalanche.base.utils.StorageHelper.SharedPreferences;
+import static avalanche.base.utils.StorageHelper.PreferencesStorage;
 
 
 public class Crashes extends DefaultAvalancheFeature {
@@ -77,7 +77,7 @@ public class Crashes extends DefaultAvalancheFeature {
     }
 
     private static List<String> getConfirmedFilenames() {
-        return Arrays.asList(SharedPreferences.getString("ConfirmedFilenames", "").split("\\|"));
+        return Arrays.asList(PreferencesStorage.getString("ConfirmedFilenames", "").split("\\|"));
     }
 
     private static String getAlertTitle(Context context) {
@@ -191,7 +191,7 @@ public class Crashes extends DefaultAvalancheFeature {
         if (foundOrSend == STACK_TRACES_FOUND_NEW) {
             mDidCrashInLastSession = true;
             Boolean autoSend = !(context instanceof Activity);
-            autoSend |= SharedPreferences.getBoolean(ALWAYS_SEND_KEY, false);
+            autoSend |= PreferencesStorage.getBoolean(ALWAYS_SEND_KEY, false);
 
             if (mListener != null) {
                 autoSend |= mListener.shouldAutoUploadCrashes();
@@ -429,7 +429,7 @@ public class Crashes extends DefaultAvalancheFeature {
                 registerExceptionHandler();
                 return true;
             case CrashManagerUserInputAlwaysSend:
-                SharedPreferences.putBoolean(ALWAYS_SEND_KEY, true);
+                PreferencesStorage.putBoolean(ALWAYS_SEND_KEY, true);
                 sendCrashes(userProvidedMetaData);
                 return true;
             case CrashManagerUserInputSend:
@@ -513,7 +513,7 @@ public class Crashes extends DefaultAvalancheFeature {
     private void saveConfirmedStackTraces() {
         try {
             String[] filenames = searchForStackTraces();
-            SharedPreferences.putString("ConfirmedFilenames", Util.joinArray(filenames, "|"));
+            PreferencesStorage.putString("ConfirmedFilenames", Util.joinArray(filenames, "|"));
         } catch (Exception e) {
             // Just in case, we catch all exceptions here
         }
@@ -563,12 +563,12 @@ public class Crashes extends DefaultAvalancheFeature {
             return;
         }
 
-        int retryCounter = SharedPreferences.getInt("RETRY_COUNT: " + filename);
+        int retryCounter = PreferencesStorage.getInt("RETRY_COUNT: " + filename);
         if (retryCounter >= maxRetryAttempts) {
             deleteStackTrace(filename);
             deleteRetryCounter(filename, maxRetryAttempts);
         } else {
-            SharedPreferences.putInt("RETRY_COUNT: " + filename, retryCounter + 1);
+            PreferencesStorage.putInt("RETRY_COUNT: " + filename, retryCounter + 1);
         }
     }
 
@@ -577,7 +577,7 @@ public class Crashes extends DefaultAvalancheFeature {
      * reached.
      */
     private void deleteRetryCounter(String filename, int maxRetryAttempts) {
-        SharedPreferences.remove("RETRY_COUNT: " + filename);
+        PreferencesStorage.remove("RETRY_COUNT: " + filename);
     }
 
     private boolean isIgnoreDefaultHandler() {

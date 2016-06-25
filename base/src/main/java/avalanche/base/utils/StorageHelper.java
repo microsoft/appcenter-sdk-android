@@ -1,6 +1,7 @@
 package avalanche.base.utils;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.text.TextUtils;
 
 import java.io.BufferedReader;
@@ -23,9 +24,14 @@ import java.util.Set;
  */
 public final class StorageHelper {
     /**
+     * Name of preferences.
+     */
+    private static final String PREFERENCES_NAME = "AvalancheSDK";
+
+    /**
      * Android SharedPreferences instance.
      */
-    private static android.content.SharedPreferences sSharedPreferences;
+    private static SharedPreferences sSharedPreferences;
 
     /**
      * Initializes StorageHelper class.
@@ -33,13 +39,13 @@ public final class StorageHelper {
      * @param context The context of the application.
      */
     public static void initialize(Context context) {
-        sSharedPreferences = context.getSharedPreferences("AvalancheSDK", Context.MODE_PRIVATE);
+        sSharedPreferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
     }
 
     /**
      * SharesPreferences Helper class
      */
-    public final static class SharedPreferences {
+    public final static class PreferencesStorage {
         /*
          * boolean value
          */
@@ -52,7 +58,7 @@ public final class StorageHelper {
         }
 
         public static void putBoolean(String key, boolean value) {
-            android.content.SharedPreferences.Editor editor = sSharedPreferences.edit();
+            SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putBoolean(key, value);
             editor.apply();
         }
@@ -69,7 +75,7 @@ public final class StorageHelper {
         }
 
         public static void putFloat(String key, float value) {
-            android.content.SharedPreferences.Editor editor = sSharedPreferences.edit();
+            SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putFloat(key, value);
             editor.apply();
         }
@@ -86,7 +92,7 @@ public final class StorageHelper {
         }
 
         public static void putInt(String key, int value) {
-            android.content.SharedPreferences.Editor editor = sSharedPreferences.edit();
+            SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putInt(key, value);
             editor.apply();
         }
@@ -103,7 +109,7 @@ public final class StorageHelper {
         }
 
         public static void putLong(String key, long value) {
-            android.content.SharedPreferences.Editor editor = sSharedPreferences.edit();
+            SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putLong(key, value);
             editor.apply();
         }
@@ -120,7 +126,7 @@ public final class StorageHelper {
         }
 
         public static void putString(String key, String value) {
-            android.content.SharedPreferences.Editor editor = sSharedPreferences.edit();
+            SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putString(key, value);
             editor.apply();
         }
@@ -137,7 +143,7 @@ public final class StorageHelper {
         }
 
         public static void putStringSet(String key, Set<String> value) {
-            android.content.SharedPreferences.Editor editor = sSharedPreferences.edit();
+            SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putStringSet(key, value);
             editor.apply();
         }
@@ -148,13 +154,13 @@ public final class StorageHelper {
          * @param key A key.
          */
         public static void remove(String key) {
-            android.content.SharedPreferences.Editor editor = sSharedPreferences.edit();
+            SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.remove(key);
             editor.apply();
         }
     }
 
-    public static class InternalStorage {
+    public final static class InternalStorage {
         /**
          * Reads contents from the file.
          *
