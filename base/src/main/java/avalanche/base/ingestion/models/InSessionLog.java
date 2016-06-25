@@ -4,10 +4,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
+import avalanche.base.ingestion.models.json.JSONUtils;
 import avalanche.base.ingestion.models.utils.LogUtils;
 
 import static avalanche.base.ingestion.models.CommonProperties.SID;
@@ -69,23 +68,14 @@ public abstract class InSessionLog extends AbstractLog {
     public void read(JSONObject object) throws JSONException {
         super.read(object);
         setSid(object.getString(SID));
-        JSONObject jProperties = object.optJSONObject(PROPERTIES);
-        if (jProperties != null) {
-            Map<String, String> properties = new HashMap<>(jProperties.length());
-            Iterator<String> keys = jProperties.keys();
-            while (keys.hasNext()) {
-                String key = keys.next();
-                properties.put(key, jProperties.getString(key));
-            }
-            setProperties(properties);
-        }
+        setProperties(JSONUtils.readMap(object, PROPERTIES));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
         super.write(writer);
         writer.key(SID).value(getSid());
-        CommonProperties.serializeMap(PROPERTIES, getProperties(), writer);
+        JSONUtils.writeMap(writer, PROPERTIES, getProperties());
     }
 
     @Override
