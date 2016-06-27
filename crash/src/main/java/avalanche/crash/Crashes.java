@@ -1,9 +1,7 @@
 package avalanche.crash;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
@@ -21,9 +19,9 @@ import avalanche.base.utils.Persistence;
 import avalanche.base.utils.PersistenceListener;
 import avalanche.base.utils.Util;
 import avalanche.crash.ingestion.models.CrashLog;
+import avalanche.crash.ingestion.models.Thread;
 import avalanche.crash.model.CrashMetaData;
 import avalanche.crash.model.CrashReport;
-import avalanche.crash.model.CrashesUserInput;
 
 import static android.text.TextUtils.isEmpty;
 
@@ -41,6 +39,8 @@ public class Crashes extends DefaultAvalancheFeature {
     private WeakReference<Context> mContextWeakReference;
     private long mInitializeTimestamp;
     private boolean mDidCrashInLastSession = false;
+
+    private boolean mCrashReportingEnabled;
 
     protected Crashes() {
     }
@@ -88,13 +88,6 @@ public class Crashes extends DefaultAvalancheFeature {
         return result;
     }
 
-    private static String getAlertTitle(Context context) {
-        String appTitle = Util.getAppName(context);
-
-        String message = context.getString(R.string.avalanche_crash_dialog_title);
-        return String.format(message, appTitle);
-    }
-
     @Override
     public void onActivityResumed(Activity activity) {
         super.onActivityResumed(activity);
@@ -128,7 +121,12 @@ public class Crashes extends DefaultAvalancheFeature {
      * @return The configured crash manager for method chaining.
      */
     public Crashes register(Context context, CrashesListener listener) {
-        return register(context, listener);
+        mContextWeakReference = new WeakReference<>(context);
+        mListener = listener;
+
+        initialize();
+
+        return this;
     }
 
     private void initialize() {
@@ -136,13 +134,36 @@ public class Crashes extends DefaultAvalancheFeature {
             mInitializeTimestamp = System.currentTimeMillis();
         }
 
-        execute();
+        //Write ALWAYS_SEND_KEY to preferences to send all crashes immediatelly
+        Context context = mContextWeakReference.get();
+        if (context != null) {
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            prefs.edit().putBoolean(ALWAYS_SEND_KEY, true).apply();
+        }
+
+        mCrashReportingEnabled = true;
+
+        checkForCrashes();
+        registerExceptionHandler();
     }
 
+    public void enableCrashReporting() {
+        mCrashReportingEnabled = true;
+        registerExceptionHandler();
+        checkForCrashes();
+    }
+
+    public void disableCrashReporting() {
+        mCrashReportingEnabled = false;
+        //TODO check mCrashReportingEnabled where apropriate and make sure we don't clutter the device with crashlogs.
+        deleteStackTraces();
+    }
+
+
     /**
-     * Allows you to execute the crash manager later on-demand.
+     * Allows you to checkForCrashes the crash manager later on-demand.
      */
-    public void execute() {
+    private void checkForCrashes() {
         Context context = mContextWeakReference.get();
         if (context == null) {
             return;
@@ -152,31 +173,19 @@ public class Crashes extends DefaultAvalancheFeature {
 
         if (foundOrSend == STACK_TRACES_FOUND_NEW) {
             mDidCrashInLastSession = true;
-            Boolean autoSend = !(context instanceof Activity);
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-            autoSend |= prefs.getBoolean(ALWAYS_SEND_KEY, false);
-
             if (mListener != null) {
-                autoSend |= mListener.shouldAutoUploadCrashes();
-
                 mListener.onNewCrashesFound();
             }
-
-            if (!autoSend) {
-                showDialog(mContextWeakReference);
-            } else {
-                sendCrashes(null);
-            }
+            sendCrashes(null);
         } else if (foundOrSend == STACK_TRACES_FOUND_CONFIRMED) {
             if (mListener != null) {
                 mListener.onConfirmedCrashesFound();
             }
 
             sendCrashes(null);
-        } else {
-            registerExceptionHandler();
         }
     }
+
 
     private void registerExceptionHandler() {
         if (!isEmpty(Constants.APP_VERSION) && !isEmpty(Constants.APP_PACKAGE)) {
@@ -208,7 +217,7 @@ public class Crashes extends DefaultAvalancheFeature {
      *
      * @param crashMetaData The crashMetaData, provided by the user.
      */
-    public void submitStackTraces(CrashMetaData crashMetaData) {
+    private void submitStackTraces(CrashMetaData crashMetaData) {
         String[] list = searchForStackTraces();
         Boolean successful = false;
 
@@ -255,7 +264,6 @@ public class Crashes extends DefaultAvalancheFeature {
                     }
 
                     //We'll forward the final crash object to Persistence for processing
-                    String fileName = list[index];
                     Persistence.getInstance().setListener(new PersistenceListener() {
                         @Override
                         public void storingSuccessful(boolean success) {
@@ -281,101 +289,6 @@ public class Crashes extends DefaultAvalancheFeature {
         }
     }
 
-    /**
-     * Shows a dialog to ask the user whether he wants to send crash reports to
-     * AvalancheHub or delete them.
-     */
-    private void showDialog(final WeakReference<Context> weakContext) {
-        Context context = null;
-        if (weakContext != null) {
-            context = weakContext.get();
-        }
-
-        if (context == null) {
-            return;
-        }
-
-        if (mListener != null && mListener.onHandleAlertView()) {
-            return;
-        }
-
-        final boolean ignoreDefaultHandler = isIgnoreDefaultHandler();
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        String alertTitle = getAlertTitle(context);
-        builder.setTitle(alertTitle);
-        builder.setMessage(R.string.avalanche_crash_dialog_message);
-
-        builder.setNegativeButton(R.string.avalanche_crash_dialog_negative_button, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                handleUserInput(CrashesUserInput.CrashManagerUserInputDontSend, null, mListener, weakContext, ignoreDefaultHandler);
-            }
-        });
-
-        builder.setNeutralButton(R.string.avalanche_crash_dialog_neutral_button, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                handleUserInput(CrashesUserInput.CrashManagerUserInputAlwaysSend, null, mListener, weakContext, ignoreDefaultHandler);
-            }
-        });
-
-        builder.setPositiveButton(R.string.avalanche_crash_dialog_positive_button, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                handleUserInput(CrashesUserInput.CrashManagerUserInputSend, null, mListener,
-                        weakContext, ignoreDefaultHandler);
-            }
-        });
-
-        builder.create().show();
-    }
-
-    /**
-     * Provides an interface to pass user input from a custom alert to a crash report
-     *
-     * @param userInput            Defines the users action whether to send, always send, or not to send the crash report.
-     * @param userProvidedMetaData The content of this optional CrashMetaData instance will be attached to the crash report
-     *                             and allows to ask the user for e.g. additional comments or info.
-     * @param listener             an optional crash manager listener to use.
-     * @param weakContext          The context to use. Usually your Activity object.
-     * @param ignoreDefaultHandler whether to ignore the default exception handler.
-     * @return true if the input is a valid option and successfully triggered further processing of the crash report.
-     * @see CrashesUserInput
-     * @see CrashMetaData
-     * @see CrashesListener
-     */
-    public boolean handleUserInput(final CrashesUserInput userInput,
-                                   final CrashMetaData userProvidedMetaData, final CrashesListener listener,
-                                   final WeakReference<Context> weakContext, final boolean ignoreDefaultHandler) {
-        switch (userInput) {
-            case CrashManagerUserInputDontSend:
-                if (listener != null) {
-                    listener.onUserDeniedCrashes();
-                }
-
-                deleteStackTraces();
-                registerExceptionHandler();
-                return true;
-            case CrashManagerUserInputAlwaysSend:
-                Context context = null;
-                if (weakContext != null) {
-                    context = weakContext.get();
-                }
-
-                if (context == null) {
-                    return false;
-                }
-
-                final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-                prefs.edit().putBoolean(ALWAYS_SEND_KEY, true).apply();
-
-                sendCrashes(userProvidedMetaData);
-                return true;
-            case CrashManagerUserInputSend:
-                sendCrashes(userProvidedMetaData);
-                return true;
-            default:
-                return false;
-        }
-    }
 
     long getInitializeTimestamp() {
         return mInitializeTimestamp;
@@ -471,7 +384,8 @@ public class Crashes extends DefaultAvalancheFeature {
         }
     }
 
-    public void deleteStackTraces() {
+    //TODO Private needs to be called once crashes have been forwarded to the queue
+    private void deleteStackTraces() {
         String[] list = searchForStackTraces();
 
         if ((list != null) && (list.length > 0)) {
