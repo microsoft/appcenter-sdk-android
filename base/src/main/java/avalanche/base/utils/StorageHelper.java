@@ -223,17 +223,15 @@ public final class StorageHelper {
          * @throws IOException
          */
         public static void write(File file, String contents) throws IOException {
-            if (TextUtils.isEmpty(contents)) {
+            if (TextUtils.isEmpty(contents) && TextUtils.getTrimmedLength(contents) > 0) {
                 return;
             }
 
             BufferedWriter writer = null;
             try {
-                if (!TextUtils.isEmpty(contents) && TextUtils.getTrimmedLength(contents) > 0) {
-                    writer = new BufferedWriter(new FileWriter(file));
-                    writer.write(contents);
-                    writer.flush();
-                }
+                writer = new BufferedWriter(new FileWriter(file));
+                writer.write(contents);
+                writer.flush();
             } finally {
                 if (writer != null) {
                     writer.close();
