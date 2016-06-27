@@ -43,7 +43,7 @@ public final class StorageHelper {
     }
 
     /**
-     * SharedPreferences Helper class
+     * PreferencesStorage Helper class
      */
     public final static class PreferencesStorage {
         /*
