@@ -43,7 +43,7 @@ public final class StorageHelper {
     }
 
     /**
-     * SharesPreferences Helper class
+     * SharedPreferences Helper class
      */
     public final static class PreferencesStorage {
         /*
@@ -101,7 +101,7 @@ public final class StorageHelper {
          * long value
          */
         public static long getLong(String key) {
-            return getLong(key, 0l);
+            return getLong(key, 0L);
         }
 
         public static long getLong(String key, long defValue) {
@@ -151,7 +151,7 @@ public final class StorageHelper {
         /**
          * Removes a value with the given key.
          *
-         * @param key A key.
+         * @param key Key of the value to be removed.
          */
         public static void remove(String key) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
@@ -188,10 +188,10 @@ public final class StorageHelper {
                     contents.append(line).append(lineSeparator);
                 }
             } catch (FileNotFoundException ignored) {
-                // Log the exception and return empty string.
+                // Log the exception and return an empty string.
                 AvalancheLog.error("Cannot find file " + file.getAbsolutePath());
             } catch (IOException ignored) {
-                // Ignore IOException and return empty string.
+                // Ignore IOException and return the already read contents.
             } finally {
                 if (reader != null) {
                     try {
@@ -297,7 +297,8 @@ public final class StorageHelper {
 
         /**
          * Gets the most recent file in the path.
-         * @param path The directory path.
+         *
+         * @param path   The directory path.
          * @param filter The filter to match names against, may be {@code null}.
          * @return A file instance, may be {@code null} if the directory is empty.
          */
