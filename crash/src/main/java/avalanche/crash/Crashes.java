@@ -39,7 +39,6 @@ public class Crashes extends DefaultAvalancheFeature {
     private static Crashes sharedInstance = null;
     private CrashesListener mListener;
     private WeakReference<Context> mContextWeakReference;
-    private boolean mLazyExecution;
     private long mInitializeTimestamp;
     private boolean mDidCrashInLastSession = false;
 
@@ -129,28 +128,7 @@ public class Crashes extends DefaultAvalancheFeature {
      * @return The configured crash manager for method chaining.
      */
     public Crashes register(Context context, CrashesListener listener) {
-        return register(context, listener, false);
-    }
-
-    /**
-     * Registers the crash manager and handles existing crash logs.
-     * AvalancheHub app identifier is read from configuration values in manifest.
-     *
-     * @param context       The context to use. Usually your Activity object. If
-     *                      context is not an instance of Activity (or a subclass of it),
-     *                      crashes will be sent automatically.
-     * @param listener      Implement this for callback functions.
-     * @param lazyExecution Whether the manager should execute lazily, e.g. not check for crashes right away.
-     * @return
-     */
-    public Crashes register(Context context, CrashesListener listener, boolean lazyExecution) {
-        mContextWeakReference = new WeakReference<>(context);
-        mListener = listener;
-        mLazyExecution = lazyExecution;
-
-        initialize();
-
-        return this;
+        return register(context, listener);
     }
 
     private void initialize() {
@@ -158,9 +136,7 @@ public class Crashes extends DefaultAvalancheFeature {
             mInitializeTimestamp = System.currentTimeMillis();
         }
 
-        if (!mLazyExecution) {
-            execute();
-        }
+        execute();
     }
 
     /**
