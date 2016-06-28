@@ -1,15 +1,21 @@
 package avalanche.crash;
 
 import android.text.TextUtils;
-import avalanche.base.Constants;
-import avalanche.base.Channel;
-import avalanche.crash.model.CrashReport;
-import avalanche.base.utils.AvalancheLog;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Date;
 import java.util.UUID;
+
+import avalanche.base.Channel;
+import avalanche.base.Constants;
+import avalanche.base.utils.AvalancheLog;
+import avalanche.crash.model.CrashReport;
+
+import static avalanche.base.utils.StorageHelper.InternalStorage;
 
 /**
  * <h3>Description</h3>
@@ -79,9 +85,10 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
 
         if (listener != null) {
             try {
-                writeValueToFile(limitedString(listener.getUserID()), filename + ".user");
-                writeValueToFile(limitedString(listener.getContact()), filename + ".contact");
-                writeValueToFile(listener.getDescription(), filename + ".description");
+                filename = Constants.FILES_PATH + "/" + filename;
+                InternalStorage.write(filename + ".user", limitedString(listener.getUserID()));
+                InternalStorage.write(filename + ".contact", limitedString(listener.getContact()));
+                InternalStorage.write(filename + ".description", listener.getDescription());
             } catch (IOException e) {
                 AvalancheLog.error("Error saving crash meta data!", e);
             }
@@ -168,13 +175,13 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
 
         if (listener != null) {
             try {
-                writeValueToFile(limitedString(listener.getUserID()), filename + ".user");
-                writeValueToFile(limitedString(listener.getContact()), filename + ".contact");
-                writeValueToFile(listener.getDescription(), filename + ".description");
+                filename = Constants.FILES_PATH + "/" + filename;
+                InternalStorage.write(filename + ".user", limitedString(listener.getUserID()));
+                InternalStorage.write(filename + ".contact", limitedString(listener.getContact()));
+                InternalStorage.write(filename + ".description", listener.getDescription());
             } catch (IOException e) {
                 AvalancheLog.error("Error saving crash meta data!", e);
             }
-
         }
     }
 
@@ -192,28 +199,6 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
             } else {
                 android.os.Process.killProcess(android.os.Process.myPid());
                 System.exit(10);
-            }
-        }
-    }
-
-    //TODO: this should be part of the pipleine in the base module
-    private static void writeValueToFile(String value, String filename) throws IOException {
-        if (TextUtils.isEmpty(value)) {
-            return;
-        }
-        BufferedWriter writer = null;
-        try {
-            String path = Constants.FILES_PATH + "/" + filename;
-            if (!TextUtils.isEmpty(value) && TextUtils.getTrimmedLength(value) > 0) {
-                writer = new BufferedWriter(new FileWriter(path));
-                writer.write(value);
-                writer.flush();
-            }
-        } catch (IOException e) {
-            // TODO: Handle exception here
-        } finally {
-            if (writer != null) {
-                writer.close();
             }
         }
     }
