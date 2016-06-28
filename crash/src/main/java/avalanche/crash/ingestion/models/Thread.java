@@ -1,27 +1,103 @@
 package avalanche.crash.ingestion.models;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONStringer;
+
 import java.util.List;
 
+import avalanche.base.ingestion.models.Model;
+import avalanche.base.ingestion.models.json.JSONUtils;
+import avalanche.base.ingestion.models.utils.LogUtils;
+import avalanche.crash.ingestion.models.json.ThreadFrameFactory;
 
-public class Thread {
+import static avalanche.base.ingestion.models.CommonProperties.FRAMES;
+import static avalanche.base.ingestion.models.CommonProperties.ID;
 
-    private Integer id = null;
-    private List<ThreadFrame> frames = null;
+/**
+ * The Thread model.
+ */
+public class Thread implements Model {
 
+    /**
+     * Thread number.
+     */
+    private int id;
 
-    public Integer getId() {
-        return id;
+    /**
+     * Thread frames.
+     */
+    private List<ThreadFrame> frames;
+
+    /**
+     * Get the id value.
+     *
+     * @return the id value
+     */
+    public int getId() {
+        return this.id;
     }
 
-    public void setId(Integer id) {
+    /**
+     * Set the id value.
+     *
+     * @param id the id value to set
+     */
+    public void setId(int id) {
         this.id = id;
     }
 
+    /**
+     * Get the frames value.
+     *
+     * @return the frames value
+     */
     public List<ThreadFrame> getFrames() {
-        return frames;
+        return this.frames;
     }
 
+    /**
+     * Set the frames value.
+     *
+     * @param frames the frames value to set
+     */
     public void setFrames(List<ThreadFrame> frames) {
         this.frames = frames;
+    }
+
+    @Override
+    public void read(JSONObject object) throws JSONException {
+        setId(object.getInt(ID));
+        setFrames(JSONUtils.readArray(object, FRAMES, ThreadFrameFactory.getInstance()));
+    }
+
+    @Override
+    public void write(JSONStringer writer) throws JSONException {
+        writer.key(ID).value(getId());
+        JSONUtils.writeArray(writer, FRAMES, getFrames());
+    }
+
+    @Override
+    public void validate() throws IllegalArgumentException {
+        LogUtils.checkNotNull(ID, getId());
+        LogUtils.checkNotNull(FRAMES, getFrames());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Thread thread = (Thread) o;
+
+        if (id != thread.id) return false;
+        return frames != null ? frames.equals(thread.frames) : thread.frames == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id;
+        result = 31 * result + (frames != null ? frames.hashCode() : 0);
+        return result;
     }
 }

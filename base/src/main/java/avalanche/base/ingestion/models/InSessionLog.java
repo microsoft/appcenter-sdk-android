@@ -1,11 +1,22 @@
 package avalanche.base.ingestion.models;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONStringer;
+
 import java.util.Map;
+
+import avalanche.base.ingestion.models.json.JSONUtils;
+import avalanche.base.ingestion.models.utils.LogUtils;
+
+import static avalanche.base.ingestion.models.CommonProperties.SID;
 
 /**
  * The InSessionLog model.
  */
-public abstract class InSessionLog extends Log {
+public abstract class InSessionLog extends AbstractLog {
+
+    private static final String PROPERTIES = "properties";
 
     /**
      * Additional key/value pair parameters.
@@ -51,5 +62,46 @@ public abstract class InSessionLog extends Log {
      */
     public void setSid(String sid) {
         this.sid = sid;
+    }
+
+    @Override
+    public void read(JSONObject object) throws JSONException {
+        super.read(object);
+        setSid(object.getString(SID));
+        setProperties(JSONUtils.readMap(object, PROPERTIES));
+    }
+
+    @Override
+    public void write(JSONStringer writer) throws JSONException {
+        super.write(writer);
+        writer.key(SID).value(getSid());
+        JSONUtils.writeMap(writer, PROPERTIES, getProperties());
+    }
+
+    @Override
+    public void validate() throws IllegalArgumentException {
+        super.validate();
+        LogUtils.checkNotNull(SID, getSid());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        InSessionLog that = (InSessionLog) o;
+
+        if (properties != null ? !properties.equals(that.properties) : that.properties != null)
+            return false;
+        return sid != null ? sid.equals(that.sid) : that.sid == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (properties != null ? properties.hashCode() : 0);
+        result = 31 * result + (sid != null ? sid.hashCode() : 0);
+        return result;
     }
 }
