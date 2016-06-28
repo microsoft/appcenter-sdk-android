@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import avalanche.base.AvalancheHub;
+import avalanche.base.Avalanche;
 import avalanche.base.Constants;
 import avalanche.base.DefaultAvalancheFeature;
 import avalanche.base.utils.AvalancheLog;
@@ -98,7 +98,7 @@ public class Crashes extends DefaultAvalancheFeature {
 
     /**
      * Registers the crash manager and handles existing crash logs.
-     * AvalancheHub app identifier is read from configuration values in manifest.
+     * Avalanche app identifier is read from configuration values in manifest.
      *
      * @param context The context to use. Usually your Activity object. If
      *                context is not an instance of Activity (or a subclass of it),
@@ -111,7 +111,7 @@ public class Crashes extends DefaultAvalancheFeature {
 
     /**
      * Registers the crash manager and handles existing crash logs.
-     * AvalancheHub app identifier is read from configuration values in manifest.
+     * Avalanche app identifier is read from configuration values in manifest.
      *
      * @param context  The context to use. Usually your Activity object. If
      *                 context is not an instance of Activity (or a subclass of it),
@@ -125,12 +125,12 @@ public class Crashes extends DefaultAvalancheFeature {
 
     /**
      * Registers the crash manager and handles existing crash logs.
-     * AvalancheHub app identifier is read from configuration values in manifest.
+     * Avalanche app identifier is read from configuration values in manifest.
      *
      * @param context     The context to use. Usually your Activity object. If
      *                    context is not an instance of Activity (or a subclass of it),
      *                    crashes will be sent automatically.
-     * @param endpointUrl URL of the AvalancheHub endpoint to use.
+     * @param endpointUrl URL of the Avalanche endpoint to use.
      * @param listener    Implement this for callback functions.
      * @return The configured crash manager for method chaining.
      */
@@ -140,12 +140,12 @@ public class Crashes extends DefaultAvalancheFeature {
 
     /**
      * Registers the crash manager and handles existing crash logs.
-     * AvalancheHub app identifier is read from configuration values in manifest.
+     * Avalanche app identifier is read from configuration values in manifest.
      *
      * @param context       The context to use. Usually your Activity object. If
      *                      context is not an instance of Activity (or a subclass of it),
      *                      crashes will be sent automatically.
-     * @param endpointUrl   URL of the AvalancheHub endpoint to use.
+     * @param endpointUrl   URL of the Avalanche endpoint to use.
      * @param listener      Implement this for callback functions.
      * @param lazyExecution Whether the manager should execute lazily, e.g. not check for crashes right away.
      * @return
@@ -262,7 +262,7 @@ public class Crashes extends DefaultAvalancheFeature {
     }
 
     /**
-     * Submits all stack traces in the files dir to AvalancheHub.
+     * Submits all stack traces in the files dir to Avalanche.
      *
      * @param crashMetaData The crashMetaData, provided by the user.
      */
@@ -357,7 +357,7 @@ public class Crashes extends DefaultAvalancheFeature {
 
     /**
      * Shows a dialog to ask the user whether he wants to send crash reports to
-     * AvalancheHub or delete them.
+     * Avalanche or delete them.
      */
     private void showDialog(final WeakReference<Context> weakContext) {
         Context context = null;
@@ -585,6 +585,6 @@ public class Crashes extends DefaultAvalancheFeature {
     }
 
     private String getURLString() {
-        return mEndpointUrl + "api/2/apps/" + AvalancheHub.getSharedInstance().getAppIdentifier() + "/crashes/";
+        return mEndpointUrl + "api/2/apps/" + Avalanche.getSharedInstance().getAppIdentifier() + "/crashes/";
     }
 }
