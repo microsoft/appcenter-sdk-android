@@ -25,8 +25,6 @@ public class AnalyticsSerializerTest {
     @Test
     public void someBatch() throws JSONException {
         LogContainer expectedContainer = new LogContainer();
-        expectedContainer.setAppId("app000123");
-        expectedContainer.setInstallId("0123456789abcdef0123456789abcdef");
         List<Log> logs = new ArrayList<>();
         expectedContainer.setLogs(logs);
 

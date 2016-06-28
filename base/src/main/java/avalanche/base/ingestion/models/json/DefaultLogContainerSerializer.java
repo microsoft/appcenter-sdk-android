@@ -19,10 +19,6 @@ import avalanche.base.ingestion.models.utils.LogUtils;
 
 public class DefaultLogContainerSerializer implements LogContainerSerializer {
 
-    private static final String APP_ID = "appId";
-
-    private static final String INSTALL_ID = "installId";
-
     private static final String LOGS = "logs";
 
     private final Map<String, LogFactory> mLogFactories = new HashMap<>();
@@ -34,16 +30,12 @@ public class DefaultLogContainerSerializer implements LogContainerSerializer {
     @Override
     public String serialize(LogContainer logContainer) throws JSONException {
         try {
-            LogUtils.checkNotNull(APP_ID, logContainer.getAppId());
-            LogUtils.checkNotNull(INSTALL_ID, logContainer.getInstallId());
             LogUtils.checkNotNull(LOGS, logContainer.getLogs());
         } catch (IllegalArgumentException e) {
             throw new JSONException(e.getMessage());
         }
         JSONStringer writer = new JSONStringer();
         writer.object();
-        writer.key(APP_ID).value(logContainer.getAppId());
-        writer.key(INSTALL_ID).value(logContainer.getInstallId());
         writer.key(LOGS).array();
         for (Model log : logContainer.getLogs()) {
             writer.object();
@@ -64,8 +56,6 @@ public class DefaultLogContainerSerializer implements LogContainerSerializer {
     public LogContainer deserialize(String json) throws JSONException {
         JSONObject jContainer = new JSONObject(json);
         LogContainer container = new LogContainer();
-        container.setAppId(jContainer.getString(APP_ID));
-        container.setInstallId(jContainer.getString(INSTALL_ID));
         JSONArray jLogs = jContainer.getJSONArray(LOGS);
         List<Log> logs = new ArrayList<>();
         for (int i = 0; i < jLogs.length(); i++) {

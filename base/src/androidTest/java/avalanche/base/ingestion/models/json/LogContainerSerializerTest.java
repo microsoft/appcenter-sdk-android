@@ -13,9 +13,9 @@ import avalanche.base.ingestion.models.DeviceLog;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
 
-public class LogContainerSerializerTest {
+import static avalanche.base.TestUtils.TAG;
 
-    private static final String TAG = "TestRunner";
+public class LogContainerSerializerTest {
 
     @Test(expected = JSONException.class)
     public void nullFields() throws JSONException {
@@ -28,8 +28,6 @@ public class LogContainerSerializerTest {
     @Test
     public void emptyLogs() throws JSONException {
         LogContainer expectedContainer = new LogContainer();
-        expectedContainer.setAppId("app000123");
-        expectedContainer.setInstallId("0123456789abcdef0123456789abcdef");
         expectedContainer.setLogs(Collections.<Log>emptyList());
         LogContainerSerializer serializer = new DefaultLogContainerSerializer();
         String payload = serializer.serialize(expectedContainer);
@@ -41,8 +39,6 @@ public class LogContainerSerializerTest {
     @Test
     public void deviceLog() throws JSONException {
         LogContainer expectedContainer = new LogContainer();
-        expectedContainer.setAppId("app000123");
-        expectedContainer.setInstallId("0123456789abcdef0123456789abcdef");
         DeviceLog deviceLog = new DeviceLog();
         deviceLog.setSdkVersion("1.2.3");
         deviceLog.setModel("S5");
