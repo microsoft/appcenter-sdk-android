@@ -6,14 +6,14 @@ import org.json.JSONStringer;
 
 import java.util.Map;
 
-import avalanche.base.ingestion.models.Definition;
+import avalanche.base.ingestion.models.Model;
 import avalanche.base.ingestion.models.json.JSONUtils;
 import avalanche.base.ingestion.models.utils.LogUtils;
 
 /**
  * The ThreadFrame model.
  */
-public class ThreadFrame implements Definition {
+public class ThreadFrame implements Model {
 
     private static final String ADDRESS = "address";
 

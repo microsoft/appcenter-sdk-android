@@ -1,6 +1,6 @@
 package avalanche.base.ingestion.models;
 
-public interface Log extends Definition {
+public interface Log extends Model {
 
     /**
      * Get the type value.

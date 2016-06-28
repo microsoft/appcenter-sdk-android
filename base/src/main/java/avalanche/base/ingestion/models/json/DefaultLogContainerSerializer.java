@@ -11,10 +11,10 @@ import java.util.List;
 import java.util.Map;
 
 import avalanche.base.ingestion.models.CommonProperties;
-import avalanche.base.ingestion.models.Definition;
 import avalanche.base.ingestion.models.DeviceLog;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
+import avalanche.base.ingestion.models.Model;
 import avalanche.base.ingestion.models.utils.LogUtils;
 
 public class DefaultLogContainerSerializer implements LogContainerSerializer {
@@ -45,7 +45,7 @@ public class DefaultLogContainerSerializer implements LogContainerSerializer {
         writer.key(APP_ID).value(logContainer.getAppId());
         writer.key(INSTALL_ID).value(logContainer.getInstallId());
         writer.key(LOGS).array();
-        for (Definition log : logContainer.getLogs()) {
+        for (Model log : logContainer.getLogs()) {
             writer.object();
             log.write(writer);
             try {

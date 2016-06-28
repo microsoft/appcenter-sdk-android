@@ -6,7 +6,7 @@ import org.json.JSONStringer;
 
 import java.util.List;
 
-import avalanche.base.ingestion.models.Definition;
+import avalanche.base.ingestion.models.Model;
 import avalanche.base.ingestion.models.json.JSONUtils;
 import avalanche.base.ingestion.models.utils.LogUtils;
 import avalanche.crash.ingestion.models.json.ThreadFrameFactory;
@@ -17,7 +17,7 @@ import static avalanche.base.ingestion.models.CommonProperties.ID;
 /**
  * The Thread model.
  */
-public class Thread implements Definition {
+public class Thread implements Model {
 
     /**
      * Thread number.

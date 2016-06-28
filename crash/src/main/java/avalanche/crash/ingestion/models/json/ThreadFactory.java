@@ -3,10 +3,10 @@ package avalanche.crash.ingestion.models.json;
 import java.util.ArrayList;
 import java.util.List;
 
-import avalanche.base.ingestion.models.json.DefinitionFactory;
+import avalanche.base.ingestion.models.json.ModelFactory;
 import avalanche.crash.ingestion.models.Thread;
 
-public class ThreadFactory implements DefinitionFactory<Thread> {
+public class ThreadFactory implements ModelFactory<Thread> {
 
     private static ThreadFactory sInstance = new ThreadFactory();
 

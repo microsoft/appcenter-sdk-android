@@ -6,7 +6,7 @@ import org.json.JSONStringer;
 
 import java.util.List;
 
-import avalanche.base.ingestion.models.Definition;
+import avalanche.base.ingestion.models.Model;
 import avalanche.base.ingestion.models.json.JSONUtils;
 import avalanche.crash.ingestion.models.json.ThreadFrameFactory;
 
@@ -17,7 +17,7 @@ import static avalanche.base.ingestion.models.CommonProperties.TYPE;
 /**
  * The Exception model.
  */
-public class Exception implements Definition {
+public class Exception implements Model {
 
     private static final String REASON = "reason";
 

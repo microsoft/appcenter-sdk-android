@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import avalanche.base.ingestion.models.Definition;
+import avalanche.base.ingestion.models.Model;
 
 public final class JSONUtils {
 
@@ -48,14 +48,14 @@ public final class JSONUtils {
         return properties;
     }
 
-    public static <D extends Definition> List<D> readArray(JSONObject object, String key, DefinitionFactory<D> factory) throws JSONException {
+    public static <M extends Model> List<M> readArray(JSONObject object, String key, ModelFactory<M> factory) throws JSONException {
         JSONArray jArray = object.optJSONArray(key);
         if (jArray == null)
             return null;
-        List<D> array = factory.createList(jArray.length());
+        List<M> array = factory.createList(jArray.length());
         for (int i = 0; i < jArray.length(); i++) {
             JSONObject jDefinition = jArray.getJSONObject(i);
-            D definition = factory.create();
+            M definition = factory.create();
             array.add(definition);
         }
         return array;
@@ -75,12 +75,12 @@ public final class JSONUtils {
         }
     }
 
-    public static void writeArray(JSONStringer writer, String key, List<? extends Definition> value) throws JSONException {
+    public static void writeArray(JSONStringer writer, String key, List<? extends Model> value) throws JSONException {
         if (value != null) {
             writer.key(key).array();
-            for (Definition definition : value) {
+            for (Model model : value) {
                 writer.object();
-                definition.write(writer);
+                model.write(writer);
                 writer.endObject();
             }
             writer.endArray();

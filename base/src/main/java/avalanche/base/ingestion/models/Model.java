@@ -4,7 +4,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
-public interface Definition {
+public interface Model {
 
     void read(JSONObject object) throws JSONException;
 
