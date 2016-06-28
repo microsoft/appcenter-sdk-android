@@ -5,7 +5,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import avalanche.base.AvalancheHub;
+
+import avalanche.base.Avalanche;
 import avalanche.base.utils.AvalancheLog;
 
 import java.util.ArrayList;
@@ -20,15 +21,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        AvalancheHub.use(getApplication());
+        Avalanche.useFeatures(getApplication());
 
         AvalancheLog.setLogLevel(Log.INFO);
 
-        boolean crashManagerAvailable = AvalancheHub.isFeatureAvailable(AvalancheHub.FEATURE_CRASH);
+        boolean crashManagerAvailable = Avalanche.isFeatureAvailable(Avalanche.FEATURE_CRASH);
 
         AvalancheLog.info("crash available: " + crashManagerAvailable);
 
-        boolean crashManagerEnabled = AvalancheHub.getSharedInstance().isFeatureEnabled(AvalancheHub.FEATURE_CRASH);
+        boolean crashManagerEnabled = Avalanche.getSharedInstance().isFeatureEnabled(Avalanche.FEATURE_CRASH);
 
         AvalancheLog.info("crash enabled: " + crashManagerEnabled);
 

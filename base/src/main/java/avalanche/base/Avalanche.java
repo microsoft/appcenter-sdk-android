@@ -13,22 +13,22 @@ import java.util.Set;
 import avalanche.base.utils.StorageHelper;
 import avalanche.base.utils.Util;
 
-public final class AvalancheHub {
+public final class Avalanche {
 
     public static final String FEATURE_CRASH = "avalanche.crash.Crashes";
 
-    private static AvalancheHub sharedInstance;
+    private static Avalanche sharedInstance;
     private final Set<AvalancheFeature> mFeatures;
     private String mAppIdentifier;
     private WeakReference<Application> mApplicationWeakReference;
 
-    protected AvalancheHub() {
+    protected Avalanche() {
         mFeatures = new HashSet<>();
     }
 
-    public static AvalancheHub getSharedInstance() {
+    public static Avalanche getSharedInstance() {
         if (sharedInstance == null) {
-            sharedInstance = new AvalancheHub();
+            sharedInstance = new Avalanche();
         }
         return sharedInstance;
     }
@@ -39,10 +39,10 @@ public final class AvalancheHub {
      * the most suitable way for them. The app identifier will be read from your manifest.
      *
      * @param application Your application object.
-     * @return The AvalancheHub SDK, fully configured with all features, which are available.
+     * @return The Avalanche SDK, fully configured with all features, which are available.
      */
-    public static AvalancheHub use(Application application) {
-        return use(application, true);
+    public static Avalanche useFeatures(Application application) {
+        return useFeatures(application, true);
     }
 
     /**
@@ -51,11 +51,11 @@ public final class AvalancheHub {
      *
      * @param application   Your application object.
      * @param autoConfigure Whether to auto-use all available features. If false, only the SDK will be set up.
-     * @return The AvalancheHub SDK, ready to use.
+     * @return The Avalanche SDK, ready to use.
      */
-    public static AvalancheHub use(Application application, boolean autoConfigure) {
+    public static Avalanche useFeatures(Application application, boolean autoConfigure) {
         if (!autoConfigure) {
-            return use(application, new AvalancheFeature[0]);
+            return useFeatures(application, new AvalancheFeature[0]);
         }
         String[] allFeatureNames = {FEATURE_CRASH};
         List<Class<? extends AvalancheFeature>> features = new ArrayList<>();
@@ -66,7 +66,7 @@ public final class AvalancheHub {
             }
         }
         //noinspection unchecked
-        return use(application, features.toArray(new Class[features.size()]));
+        return useFeatures(application, features.toArray(new Class[features.size()]));
     }
 
     /**
@@ -75,11 +75,11 @@ public final class AvalancheHub {
      *
      * @param application Your application object.
      * @param features    Vararg list of feature classes to auto-use.
-     * @return The AvalancheHub SDK, configured with your selected features.
+     * @return The Avalanche SDK, configured with your selected features.
      */
     @SafeVarargs
-    public static AvalancheHub use(Application application, Class<? extends AvalancheFeature>... features) {
-        return use(application, Util.getAppIdentifier(application), features);
+    public static Avalanche useFeatures(Application application, Class<? extends AvalancheFeature>... features) {
+        return useFeatures(application, Util.getAppIdentifier(application), features);
     }
 
     /**
@@ -88,10 +88,10 @@ public final class AvalancheHub {
      * @param application   Your application object.
      * @param appIdentifier The app identifier to use.
      * @param features      Vararg list of feature classes to auto-use.
-     * @return The AvalancheHub SDK, configured with your selected features.
+     * @return The Avalanche SDK, configured with your selected features.
      */
     @SafeVarargs
-    public static AvalancheHub use(Application application, String appIdentifier, Class<? extends AvalancheFeature>... features) {
+    public static Avalanche useFeatures(Application application, String appIdentifier, Class<? extends AvalancheFeature>... features) {
         List<AvalancheFeature> featureList = new ArrayList<>();
         if (features != null && features.length > 0) {
             for (Class<? extends AvalancheFeature> featureClass : features) {
@@ -102,7 +102,7 @@ public final class AvalancheHub {
             }
         }
 
-        return use(application, appIdentifier, featureList.toArray(new AvalancheFeature[featureList.size()]));
+        return useFeatures(application, appIdentifier, featureList.toArray(new AvalancheFeature[featureList.size()]));
     }
 
     /**
@@ -111,10 +111,10 @@ public final class AvalancheHub {
      *
      * @param application Your application object.
      * @param features    Vararg list of configured features to enable.
-     * @return The AvalancheHub SDK, configured with the selected feature instances.
+     * @return The Avalanche SDK, configured with the selected feature instances.
      */
-    public static AvalancheHub use(Application application, AvalancheFeature... features) {
-        return use(application, Util.getAppIdentifier(application), features);
+    public static Avalanche useFeatures(Application application, AvalancheFeature... features) {
+        return useFeatures(application, Util.getAppIdentifier(application), features);
     }
 
     /**
@@ -123,10 +123,10 @@ public final class AvalancheHub {
      * @param application   Your application object.
      * @param appIdentifier The app identifier to use.
      * @param features      Vararg list of configured features to enable.
-     * @return The AvalancheHub SDK, configured with the selected feature instances.
+     * @return The Avalanche SDK, configured with the selected feature instances.
      */
-    public static AvalancheHub use(Application application, String appIdentifier, AvalancheFeature... features) {
-        AvalancheHub avalancheHub = getSharedInstance().initialize(application, appIdentifier);
+    public static Avalanche useFeatures(Application application, String appIdentifier, AvalancheFeature... features) {
+        Avalanche avalancheHub = getSharedInstance().initialize(application, appIdentifier);
         StorageHelper.initialize(application);
 
         if (features != null && features.length > 0) {
@@ -175,7 +175,7 @@ public final class AvalancheHub {
         }
     }
 
-    private AvalancheHub initialize(Application application, String appIdentifier) {
+    private Avalanche initialize(Application application, String appIdentifier) {
         mAppIdentifier = appIdentifier;
         mApplicationWeakReference = new WeakReference<>(application);
         mFeatures.clear();
