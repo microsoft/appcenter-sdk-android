@@ -1,32 +1,25 @@
 package avalanche.base.ingestion.models;
 
-
-/**
- * The Log model.
- */
-public abstract class Log {
+public interface Log extends Model {
 
     /**
-     * Corresponds to the number of milliseconds elapsed between the time the
-     * request is sent and the time the log is emitted.
+     * Get the type value.
+     *
+     * @return the type value
      */
-    private long toffset;
+    String getType();
 
     /**
      * Get the toffset value.
      *
      * @return the toffset value
      */
-    public long getToffset() {
-        return this.toffset;
-    }
+    long getToffset();
 
     /**
      * Set the toffset value.
      *
      * @param toffset the toffset value to set
      */
-    public void setToffset(long toffset) {
-        this.toffset = toffset;
-    }
+    void setToffset(long toffset);
 }
