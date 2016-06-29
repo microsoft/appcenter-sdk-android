@@ -8,6 +8,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import avalanche.base.ingestion.models.DeviceLog;
 import avalanche.base.ingestion.models.Log;
@@ -40,6 +41,7 @@ public class LogContainerSerializerTest {
     public void deviceLog() throws JSONException {
         LogContainer expectedContainer = new LogContainer();
         DeviceLog deviceLog = new DeviceLog();
+        deviceLog.setSid(UUID.randomUUID().toString());
         deviceLog.setSdkVersion("1.2.3");
         deviceLog.setModel("S5");
         deviceLog.setOemName("HTC");

@@ -50,6 +50,7 @@ public class AvalancheIngestionHttpTest {
         /* Build some payload. */
         LogContainer container = new LogContainer();
         DeviceLog deviceLog = new DeviceLog();
+        deviceLog.setSid(UUID.randomUUID().toString());
         deviceLog.setSdkVersion("1.2.3");
         deviceLog.setModel("S5");
         deviceLog.setOemName("HTC");
@@ -99,6 +100,7 @@ public class AvalancheIngestionHttpTest {
         /* Build some payload. */
         LogContainer container = new LogContainer();
         DeviceLog deviceLog = new DeviceLog();
+        deviceLog.setSid(UUID.randomUUID().toString());
         deviceLog.setSdkVersion("1.2.3");
         deviceLog.setModel("S5");
         deviceLog.setOemName("HTC");
