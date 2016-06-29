@@ -19,4 +19,19 @@ public class HttpException extends IOException {
     public int getStatusCode() {
         return statusCode;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        HttpException exception = (HttpException) o;
+
+        return statusCode == exception.statusCode;
+    }
+
+    @Override
+    public int hashCode() {
+        return statusCode;
+    }
 }
