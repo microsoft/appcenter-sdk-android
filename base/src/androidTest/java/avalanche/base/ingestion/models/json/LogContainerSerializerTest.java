@@ -8,14 +8,15 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import avalanche.base.ingestion.models.DeviceLog;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
 
-public class LogContainerSerializerTest {
+import static avalanche.base.TestUtils.TAG;
 
-    private static final String TAG = "TestRunner";
+public class LogContainerSerializerTest {
 
     @Test(expected = JSONException.class)
     public void nullFields() throws JSONException {
@@ -28,8 +29,6 @@ public class LogContainerSerializerTest {
     @Test
     public void emptyLogs() throws JSONException {
         LogContainer expectedContainer = new LogContainer();
-        expectedContainer.setAppId("app000123");
-        expectedContainer.setInstallId("0123456789abcdef0123456789abcdef");
         expectedContainer.setLogs(Collections.<Log>emptyList());
         LogContainerSerializer serializer = new DefaultLogContainerSerializer();
         String payload = serializer.serialize(expectedContainer);
@@ -41,9 +40,8 @@ public class LogContainerSerializerTest {
     @Test
     public void deviceLog() throws JSONException {
         LogContainer expectedContainer = new LogContainer();
-        expectedContainer.setAppId("app000123");
-        expectedContainer.setInstallId("0123456789abcdef0123456789abcdef");
         DeviceLog deviceLog = new DeviceLog();
+        deviceLog.setSid(UUID.randomUUID().toString());
         deviceLog.setSdkVersion("1.2.3");
         deviceLog.setModel("S5");
         deviceLog.setOemName("HTC");

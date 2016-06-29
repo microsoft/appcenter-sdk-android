@@ -7,14 +7,11 @@ import org.json.JSONStringer;
 import java.util.Map;
 
 import avalanche.base.ingestion.models.json.JSONUtils;
-import avalanche.base.ingestion.models.utils.LogUtils;
-
-import static avalanche.base.ingestion.models.CommonProperties.SID;
 
 /**
- * The InSessionLog model.
+ * The LogWithProperties model.
  */
-public abstract class InSessionLog extends AbstractLog {
+public abstract class LogWithProperties extends AbstractLog {
 
     private static final String PROPERTIES = "properties";
 
@@ -22,11 +19,6 @@ public abstract class InSessionLog extends AbstractLog {
      * Additional key/value pair parameters.
      */
     private Map<String, String> properties;
-
-    /**
-     * The session identifier that was provided when the session was started.
-     */
-    private String sid;
 
     /**
      * Get the properties value.
@@ -46,42 +38,16 @@ public abstract class InSessionLog extends AbstractLog {
         this.properties = properties;
     }
 
-    /**
-     * Get the sid value.
-     *
-     * @return the sid value
-     */
-    public String getSid() {
-        return this.sid;
-    }
-
-    /**
-     * Set the sid value.
-     *
-     * @param sid the sid value to set
-     */
-    public void setSid(String sid) {
-        this.sid = sid;
-    }
-
     @Override
     public void read(JSONObject object) throws JSONException {
         super.read(object);
-        setSid(object.getString(SID));
         setProperties(JSONUtils.readMap(object, PROPERTIES));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
         super.write(writer);
-        writer.key(SID).value(getSid());
         JSONUtils.writeMap(writer, PROPERTIES, getProperties());
-    }
-
-    @Override
-    public void validate() throws IllegalArgumentException {
-        super.validate();
-        LogUtils.checkNotNull(SID, getSid());
     }
 
     @Override
@@ -90,18 +56,15 @@ public abstract class InSessionLog extends AbstractLog {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
 
-        InSessionLog that = (InSessionLog) o;
+        LogWithProperties that = (LogWithProperties) o;
 
-        if (properties != null ? !properties.equals(that.properties) : that.properties != null)
-            return false;
-        return sid != null ? sid.equals(that.sid) : that.sid == null;
+        return properties != null ? properties.equals(that.properties) : that.properties == null;
     }
 
     @Override
     public int hashCode() {
         int result = super.hashCode();
         result = 31 * result + (properties != null ? properties.hashCode() : 0);
-        result = 31 * result + (sid != null ? sid.hashCode() : 0);
         return result;
     }
 }

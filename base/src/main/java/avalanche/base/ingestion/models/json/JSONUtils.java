@@ -54,9 +54,9 @@ public final class JSONUtils {
             return null;
         List<M> array = factory.createList(jArray.length());
         for (int i = 0; i < jArray.length(); i++) {
-            JSONObject jDefinition = jArray.getJSONObject(i);
-            M definition = factory.create();
-            array.add(definition);
+            JSONObject jModel = jArray.getJSONObject(i);
+            M model = factory.create();
+            array.add(model);
         }
         return array;
     }

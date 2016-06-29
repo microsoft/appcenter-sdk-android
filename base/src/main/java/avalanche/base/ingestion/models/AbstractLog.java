@@ -15,7 +15,12 @@ import static avalanche.base.ingestion.models.CommonProperties.TYPE;
 public abstract class AbstractLog implements Log {
 
     /**
-     * toffset property
+     * Session identifier property.
+     */
+    public static final String SID = "sid";
+
+    /**
+     * toffset property.
      */
     private static final String TOFFSET = "toffset";
 
@@ -24,6 +29,11 @@ public abstract class AbstractLog implements Log {
      * request is sent and the time the log is emitted.
      */
     private long toffset;
+
+    /**
+     * The session identifier that was provided when the session was started.
+     */
+    private String sid;
 
     @Override
     public long getToffset() {
@@ -35,10 +45,29 @@ public abstract class AbstractLog implements Log {
         this.toffset = toffset;
     }
 
+    /**
+     * Get the sid value.
+     *
+     * @return the sid value
+     */
+    public String getSid() {
+        return this.sid;
+    }
+
+    /**
+     * Set the sid value.
+     *
+     * @param sid the sid value to set
+     */
+    public void setSid(String sid) {
+        this.sid = sid;
+    }
+
     @Override
     public void write(JSONStringer writer) throws JSONException {
         writer.key(TYPE).value(getType());
         writer.key(TOFFSET).value(getToffset());
+        writer.key(SID).value(getSid());
     }
 
     @Override
@@ -46,12 +75,14 @@ public abstract class AbstractLog implements Log {
         if (!object.getString(TYPE).equals(getType()))
             throw new JSONException("Invalid type");
         setToffset(object.getLong(TOFFSET));
+        setSid(object.getString(SID));
     }
 
     @Override
     public void validate() throws IllegalArgumentException {
         LogUtils.checkNotNull(TYPE, getType());
         LogUtils.checkNotNull(TOFFSET, getToffset());
+        LogUtils.checkNotNull(SID, getSid());
     }
 
     @Override
@@ -61,11 +92,14 @@ public abstract class AbstractLog implements Log {
 
         AbstractLog that = (AbstractLog) o;
 
-        return toffset == that.toffset;
+        if (toffset != that.toffset) return false;
+        return sid != null ? sid.equals(that.sid) : that.sid == null;
     }
 
     @Override
     public int hashCode() {
-        return (int) (toffset ^ (toffset >>> 32));
+        int result = (int) (toffset ^ (toffset >>> 32));
+        result = 31 * result + (sid != null ? sid.hashCode() : 0);
+        return result;
     }
 }
