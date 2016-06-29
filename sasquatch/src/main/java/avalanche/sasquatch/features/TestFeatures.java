@@ -25,7 +25,7 @@ public final class TestFeatures {
             }
         }));
 
-        sTestFeatureModel.add(new TestFeatureModel(R.string.title_device_info, R.string.title_device_info, DeviceInfoActivity.class));
+        sTestFeatureModel.add(new TestFeatureModel(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
     }
 
     public static List<TestFeatureModel> getAvailableControls() {

@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -26,7 +27,14 @@ public class DeviceInfoActivity extends AppCompatActivity {
 
         deviceInfoListView = (ListView) findViewById(R.id.device_info_list_view);
 
-        DeviceLog log = DeviceInfoHelper.getDeviceLog(getApplicationContext());
+        DeviceLog log;
+        try {
+            log = DeviceInfoHelper.getDeviceLog(getApplicationContext());
+        } catch (DeviceInfoHelper.DeviceInfoException e) {
+            Toast.makeText(getBaseContext(), R.string.error_device_info, Toast.LENGTH_LONG).show();
+            return;
+        }
+
         final List<DeviceInfoDisplayModel> list = getDeviceInfoDisplayModelList(log);
 
         ArrayAdapter<DeviceInfoDisplayModel> adapter = new ArrayAdapter<DeviceInfoDisplayModel>(this, android.R.layout.simple_list_item_2, android.R.id.text1, list) {

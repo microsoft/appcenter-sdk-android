@@ -4,4 +4,5 @@
     <string name="description_crash">Simulate application crashes</string>
     <string name="title_device_info">Device info</string>
     <string name="description_device_info">Display device information</string>
+    <string name="error_device_info">Couldn\'t retrieve device information</string>
 </resources>
