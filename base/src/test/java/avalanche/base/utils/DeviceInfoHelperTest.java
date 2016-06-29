@@ -39,12 +39,14 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Build.class, Locale.class, TimeZone.class, DeviceInfoHelper.class})
 public class DeviceInfoHelperTest {
+
     /**
      * Log tag.
      */
     private static final String TAG = "DeviceInfoHelperTest";
 
     @Test
+    @SuppressWarnings("WrongConstant")
     public void getDeviceInfo() throws PackageManager.NameNotFoundException {
         Log.i(TAG, "Testing device info");
 
