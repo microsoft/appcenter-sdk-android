@@ -26,7 +26,7 @@ public class DeviceInfoHelper {
      * @param context The context of the application.
      * @return {@link DeviceLog}
      */
-    public static DeviceLog getDeviceLog(Context context) {
+    public static DeviceLog getDeviceLog(Context context) throws DeviceInfoException {
         DeviceLog deviceLog = new DeviceLog();
 
         /* Application version. */
@@ -37,6 +37,7 @@ public class DeviceInfoHelper {
             deviceLog.setAppVersion(packageInfo.versionName);
         } catch (Exception e) {
             AvalancheLog.error("Cannot retrieve package info", e);
+            throw new DeviceInfoException("Cannot retrieve package info", e);
         }
 
         /* Carrier info. */
@@ -103,5 +104,14 @@ public class DeviceInfoHelper {
 
          /* Serialize screen resolution */
         return screenWidth + "x" + screenHeight;
+    }
+
+    /**
+     * Thrown when {@link DeviceInfoHelper} cannot retrieve device information from devices
+     */
+    public static class DeviceInfoException extends Exception {
+        public DeviceInfoException(String detailMessage, Throwable throwable) {
+            super(detailMessage, throwable);
+        }
     }
 }

@@ -47,49 +47,49 @@ public class DeviceInfoHelperTest {
 
     @Test
     @SuppressWarnings("WrongConstant")
-    public void getDeviceInfo() throws PackageManager.NameNotFoundException {
+    public void getDeviceInfo() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
         Log.i(TAG, "Testing device info");
 
         /* Mock data. */
-        final String versionName = "1.0";
-        final String networkCountryIso = "us";
-        final String networkOperatorName = "mock-service";
-        final Locale defaultLocale = Locale.KOREA;
+        final String appVersion = "1.0";
+        final String carrierCountry = "us";
+        final String carrierName = "mock-service";
+        final Locale locale = Locale.KOREA;
         final String model = "mock-model";
-        final String manufacture = "mock-manufacture";
-        final Integer sdkVersion = 23;
-        final String id = "MOC64";
-        final String release = "mock-version";
+        final String oemName = "mock-manufacture";
+        final Integer osApiLevel = 23;
+        final String osName = "MOC64";
+        final String osVersion = "mock-version";
         final String screenSizeLandscape = "100x200";
         final String screenSizePortrait = "200x100";
-        final Integer tzOffset = -300;
+        final Integer timeZoneOffset = -300;
         final int MIN_IN_MILLI = 60 * 1000;
 
         /* Mocking instances. */
-        Context context = mock(Context.class);
-        PackageManager packageManager = mock(PackageManager.class);
-        PackageInfo packageInfo = mock(PackageInfo.class);
-        WindowManager windowManager = mock(WindowManager.class);
-        TelephonyManager telephonyManager = mock(TelephonyManager.class);
-        Display display = mock(Display.class);
-        TimeZone timeZone = mock(TimeZone.class);
+        Context contextMock = mock(Context.class);
+        PackageManager packageManagerMock = mock(PackageManager.class);
+        PackageInfo packageInfoMock = mock(PackageInfo.class);
+        WindowManager windowManagerMock = mock(WindowManager.class);
+        TelephonyManager telephonyManagerMock = mock(TelephonyManager.class);
+        Display displayMock = mock(Display.class);
+        TimeZone timeZoneMock = mock(TimeZone.class);
 
         /* Mocking static classes. */
         mockStatic(Locale.class);
         mockStatic(TimeZone.class);
 
         /* Delegates to mock instances. */
-        when(context.getPackageManager()).thenReturn(packageManager);
-        when(context.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(telephonyManager);
-        when(context.getSystemService(Context.WINDOW_SERVICE)).thenReturn(windowManager);
-        when(packageManager.getPackageInfo(anyString(), eq(0))).thenReturn(packageInfo);
-        when(telephonyManager.getNetworkCountryIso()).thenReturn(networkCountryIso);
-        when(telephonyManager.getNetworkOperatorName()).thenReturn(networkOperatorName);
-        when(windowManager.getDefaultDisplay()).thenReturn(display);
-        when(display.getRotation()).thenReturn(Surface.ROTATION_0, Surface.ROTATION_90, Surface.ROTATION_180, Surface.ROTATION_270);
-        when(Locale.getDefault()).thenReturn(defaultLocale);
-        when(TimeZone.getDefault()).thenReturn(timeZone);
-        when(timeZone.getOffset(anyLong())).thenReturn(tzOffset * MIN_IN_MILLI);
+        when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
+        when(contextMock.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(telephonyManagerMock);
+        when(contextMock.getSystemService(Context.WINDOW_SERVICE)).thenReturn(windowManagerMock);
+        when(packageManagerMock.getPackageInfo(anyString(), eq(0))).thenReturn(packageInfoMock);
+        when(telephonyManagerMock.getNetworkCountryIso()).thenReturn(carrierCountry);
+        when(telephonyManagerMock.getNetworkOperatorName()).thenReturn(carrierName);
+        when(windowManagerMock.getDefaultDisplay()).thenReturn(displayMock);
+        when(displayMock.getRotation()).thenReturn(Surface.ROTATION_0, Surface.ROTATION_90, Surface.ROTATION_180, Surface.ROTATION_270);
+        when(Locale.getDefault()).thenReturn(locale);
+        when(TimeZone.getDefault()).thenReturn(timeZoneMock);
+        when(timeZoneMock.getOffset(anyLong())).thenReturn(timeZoneOffset * MIN_IN_MILLI);
         doAnswer(new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -99,45 +99,63 @@ public class DeviceInfoHelperTest {
                 ((Point) args[0]).y = 200;
                 return null;
             }
-        }).when(display).getSize(any(Point.class));
+        }).when(displayMock).getSize(any(Point.class));
 
         /* Sets values of fields for static classes. */
-        Whitebox.setInternalState(packageInfo, "versionName", versionName);
+        Whitebox.setInternalState(packageInfoMock, "versionName", appVersion);
         Whitebox.setInternalState(Build.class, "MODEL", model);
-        Whitebox.setInternalState(Build.class, "MANUFACTURER", manufacture);
-        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", sdkVersion);
-        Whitebox.setInternalState(Build.class, "ID", id);
-        Whitebox.setInternalState(Build.VERSION.class, "RELEASE", release);
+        Whitebox.setInternalState(Build.class, "MANUFACTURER", oemName);
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", osApiLevel);
+        Whitebox.setInternalState(Build.class, "ID", osName);
+        Whitebox.setInternalState(Build.VERSION.class, "RELEASE", osVersion);
+
+        /* TODO: Implement mock for BuildConfig.VERSION_NAME and verify getSdkVersion(). Need a special way to do this since BuildConfig is a final class. */
 
         /* First call */
-        DeviceLog log = DeviceInfoHelper.getDeviceLog(context);
+        DeviceLog log = DeviceInfoHelper.getDeviceLog(contextMock);
 
         /* Verify device information. */
-        assertEquals(versionName, log.getAppVersion());
-        assertEquals(networkCountryIso, log.getCarrierCountry());
-        assertEquals(networkOperatorName, log.getCarrierName());
-        assertEquals(defaultLocale.toString(), log.getLocale());
+        assertEquals(appVersion, log.getAppVersion());
+        assertEquals(carrierCountry, log.getCarrierCountry());
+        assertEquals(carrierName, log.getCarrierName());
+        assertEquals(locale.toString(), log.getLocale());
         assertEquals(model, log.getModel());
-        assertEquals(manufacture, log.getOemName());
-        assertEquals(sdkVersion, log.getOsApiLevel());
-        assertEquals(id, log.getOsName());
-        assertEquals(release, log.getOsVersion());
+        assertEquals(oemName, log.getOemName());
+        assertEquals(osApiLevel, log.getOsApiLevel());
+        assertEquals(osName, log.getOsName());
+        assertEquals(osVersion, log.getOsVersion());
         assertEquals(screenSizeLandscape, log.getScreenSize());
-        assertEquals(tzOffset, log.getTimeZoneOffset());
+        assertEquals(timeZoneOffset, log.getTimeZoneOffset());
 
         /* Verify screen size based on different orientations (Surface.ROTATION_90). */
-        log = DeviceInfoHelper.getDeviceLog(context);
+        log = DeviceInfoHelper.getDeviceLog(contextMock);
         assertEquals(screenSizePortrait, log.getScreenSize());
 
         /* Verify screen size based on different orientations (Surface.ROTATION_180). */
-        log = DeviceInfoHelper.getDeviceLog(context);
+        log = DeviceInfoHelper.getDeviceLog(contextMock);
         assertEquals(screenSizeLandscape, log.getScreenSize());
 
         /* Verify screen size based on different orientations (Surface.ROTATION_270). */
-        log = DeviceInfoHelper.getDeviceLog(context);
+        log = DeviceInfoHelper.getDeviceLog(contextMock);
         assertEquals(screenSizePortrait, log.getScreenSize());
 
         /* Make sure screen size is verified for all orientations. */
-        verify(display, times(4)).getRotation();
+        verify(displayMock, times(4)).getRotation();
+    }
+
+    @Test(expected = DeviceInfoHelper.DeviceInfoException.class)
+    @SuppressWarnings("WrongConstant")
+    public void getDeviceInfoWithException() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
+        Log.i(TAG, "Testing device info with exception");
+
+        /* Mocking instances. */
+        Context contextMock = mock(Context.class);
+        PackageManager packageManagerMock = mock(PackageManager.class);
+
+        /* Delegates to mock instances. */
+        when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
+        when(packageManagerMock.getPackageInfo(anyString(), eq(0))).thenThrow(new PackageManager.NameNotFoundException());
+
+        DeviceInfoHelper.getDeviceLog(contextMock);
     }
 }
