@@ -28,7 +28,7 @@ android {
 dependencies {
 
     //Mocking
-    androidTestCompile 'org.mockito:mockito-core:2.0.59-beta'
+    androidTestCompile 'org.mockito:mockito-core:1.10.19'
     androidTestCompile 'com.crittercism.dexmaker:dexmaker:1.4'
     androidTestCompile 'com.crittercism.dexmaker:dexmaker-dx:1.4'
     androidTestCompile 'com.crittercism.dexmaker:dexmaker-mockito:1.4'

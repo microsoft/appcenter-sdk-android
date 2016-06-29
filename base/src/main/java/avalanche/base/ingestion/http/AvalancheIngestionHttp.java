@@ -84,6 +84,11 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     private String mBaseUrl;
 
     /**
+     * Url connection factory.
+     */
+    private UrlConnectionFactory mUrlConnectionFactory;
+
+    /**
      * Log container serializer.
      */
     private LogContainerSerializer mLogContainerSerializer;
@@ -95,6 +100,15 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
      */
     public void setBaseUrl(String baseUrl) {
         mBaseUrl = baseUrl;
+    }
+
+    /**
+     * Set URL connection factory.
+     *
+     * @param urlConnectionFactory URL connection factory.
+     */
+    public void setUrlConnectionFactory(UrlConnectionFactory urlConnectionFactory) {
+        mUrlConnectionFactory = urlConnectionFactory;
     }
 
     /**
@@ -111,6 +125,8 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     public ServiceCall sendAsync(final String appId, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         if (mBaseUrl == null)
             throw new IllegalStateException("baseUrl not configured");
+        if (mUrlConnectionFactory == null)
+            throw new IllegalStateException("urlConnectionFactory not configured");
         if (mLogContainerSerializer == null)
             throw new IllegalStateException("logContainerSerializer not configured");
         final AsyncTask<Void, Void, Exception> call = new AsyncTask<Void, Void, Exception>() {
@@ -161,7 +177,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             /* Init connection. */
             URL url = new URL(mBaseUrl + API_PATH);
             AvalancheLog.debug(LOG_TAG, "Calling " + url + " ...");
-            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection = mUrlConnectionFactory.openConnection(url);
             urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
             urlConnection.setReadTimeout(READ_TIMEOUT);
             urlConnection.setRequestProperty(CONTENT_TYPE, CONTENT_TYPE_JSON);
