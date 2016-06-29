@@ -41,7 +41,7 @@ public class Util {
     public static final String APP_IDENTIFIER_PATTERN = "[0-9a-f]+";
     public static final int APP_IDENTIFIER_LENGTH = 32;
     public static final String APP_IDENTIFIER_KEY = "com.microsoft.android.appIdentifier";
-    public static final String LOG_IDENTIFIER = "AvalancheHub";
+    public static final String LOG_IDENTIFIER = "Avalanche";
     private static final String APP_SECRET_KEY = "com.microsoft.android.appSecret";
     private static final Pattern appIdentifierPattern = Pattern.compile(APP_IDENTIFIER_PATTERN, Pattern.CASE_INSENSITIVE);
 
@@ -235,20 +235,20 @@ public class Util {
     }
 
     /**
-     * Retrieve the AvalancheHub AppIdentifier from the Manifest
+     * Retrieve the Avalanche AppIdentifier from the Manifest
      *
      * @param context usually your Activity
-     * @return the AvalancheHub AppIdentifier
+     * @return the Avalanche AppIdentifier
      */
     public static String getAppIdentifier(Context context) {
         return getManifestString(context, APP_IDENTIFIER_KEY);
     }
 
     /**
-     * Retrieve the AvalancheHub appSecret from the Manifest
+     * Retrieve the Avalanche appSecret from the Manifest
      *
      * @param context usually your Activity
-     * @return the AvalancheHub appSecret
+     * @return the Avalanche appSecret
      */
     public static String getAppSecret(Context context) {
         return getManifestString(context, APP_SECRET_KEY);
