@@ -18,14 +18,12 @@ import avalanche.base.utils.DeviceInfoHelper;
 import avalanche.sasquatch.R;
 
 public class DeviceInfoActivity extends AppCompatActivity {
-    private ListView deviceInfoListView;
+    private static final String[] METHOD_BLACK_LIST = {"getClass", "getToffset", "getType"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_device_info);
-
-        deviceInfoListView = (ListView) findViewById(R.id.device_info_list_view);
 
         DeviceLog log;
         try {
@@ -50,7 +48,7 @@ public class DeviceInfoActivity extends AppCompatActivity {
             }
         };
 
-        deviceInfoListView.setAdapter(adapter);
+        ((ListView) findViewById(R.id.device_info_list_view)).setAdapter(adapter);
     }
 
     private List<DeviceInfoDisplayModel> getDeviceInfoDisplayModelList(DeviceLog log) {
@@ -59,7 +57,7 @@ public class DeviceInfoActivity extends AppCompatActivity {
         Method[] methods = DeviceLog.class.getDeclaredMethods();
         for (Method method : methods) {
             String name = method.getName();
-            if (name.startsWith("get") && !name.equals("getClass") && !name.equals("getToffset")) {
+            if (name.startsWith("get") && !isInBlackList(name)) {
                 DeviceInfoDisplayModel model = new DeviceInfoDisplayModel();
                 model.title = name.replace("get", "");
                 try {
@@ -72,6 +70,15 @@ public class DeviceInfoActivity extends AppCompatActivity {
         }
 
         return list;
+    }
+
+    private boolean isInBlackList(String name) {
+        for (String method : METHOD_BLACK_LIST) {
+            if (method.equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private class DeviceInfoDisplayModel {
