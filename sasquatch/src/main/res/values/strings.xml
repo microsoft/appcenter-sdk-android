@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Sasquatch App</string>
-    <string name="button_title_crash">Crash me</string>
+    <string name="title_crash">Crash me</string>
+    <string name="description_crash">Simulate application crashes</string>
+    <string name="title_device_info">Device info</string>
+    <string name="description_device_info">Display device information</string>
 </resources>

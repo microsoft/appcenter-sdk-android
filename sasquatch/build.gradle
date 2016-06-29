@@ -26,10 +26,12 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile "com.android.support:appcompat-v7:$supportLibVersion"
-    testCompile 'junit:junit:4.12'
+
     androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.2'
     androidTestCompile 'com.android.support.test:runner:0.5'
     androidTestCompile "com.android.support:support-annotations:$supportLibVersion"
+
+    testCompile 'junit:junit:4.12'
 
     compile project(':base')
     compile project(':crash')
