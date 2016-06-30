@@ -41,7 +41,7 @@ public class LogContainerSerializerTest {
     public void deviceLog() throws JSONException {
         LogContainer expectedContainer = new LogContainer();
         DeviceLog deviceLog = new DeviceLog();
-        deviceLog.setSid(UUID.randomUUID().toString());
+        deviceLog.setSid(UUID.randomUUID());
         deviceLog.setSdkVersion("1.2.3");
         deviceLog.setModel("S5");
         deviceLog.setOemName("HTC");
@@ -52,6 +52,10 @@ public class LogContainerSerializerTest {
         deviceLog.setTimeZoneOffset(120);
         deviceLog.setScreenSize("800x600");
         deviceLog.setAppVersion("3.2.1");
+        deviceLog.setAppBuild("42");
+        deviceLog.setAppNamespace("avalanche.test");
+        deviceLog.setCarrierCountry("us");
+        deviceLog.setCarrierName("AT&T");
         List<Log> logs = new ArrayList<>();
         logs.add(deviceLog);
         expectedContainer.setLogs(logs);

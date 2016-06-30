@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import avalanche.base.ingestion.ServiceCall;
 import avalanche.base.ingestion.ServiceCallback;
@@ -47,7 +46,7 @@ public class AvalancheIngestionHttpTest {
         /* Build some payload. */
         LogContainer container = new LogContainer();
         DeviceLog deviceLog = new DeviceLog();
-        deviceLog.setSid(UUID.randomUUID().toString());
+        deviceLog.setSid(UUID.randomUUID());
         deviceLog.setSdkVersion("1.2.3");
         deviceLog.setModel("S5");
         deviceLog.setOemName("HTC");
@@ -58,6 +57,7 @@ public class AvalancheIngestionHttpTest {
         deviceLog.setTimeZoneOffset(120);
         deviceLog.setScreenSize("800x600");
         deviceLog.setAppVersion("3.2.1");
+        deviceLog.setAppBuild("42");
         List<Log> logs = new ArrayList<>();
         logs.add(deviceLog);
         container.setLogs(logs);
@@ -97,7 +97,7 @@ public class AvalancheIngestionHttpTest {
         /* Build some payload. */
         LogContainer container = new LogContainer();
         DeviceLog deviceLog = new DeviceLog();
-        deviceLog.setSid(UUID.randomUUID().toString());
+        deviceLog.setSid(UUID.randomUUID());
         deviceLog.setSdkVersion("1.2.3");
         deviceLog.setModel("S5");
         deviceLog.setOemName("HTC");
@@ -108,6 +108,7 @@ public class AvalancheIngestionHttpTest {
         deviceLog.setTimeZoneOffset(120);
         deviceLog.setScreenSize("800x600");
         deviceLog.setAppVersion("3.2.1");
+        deviceLog.setAppBuild("42");
         List<Log> logs = new ArrayList<>();
         logs.add(deviceLog);
         container.setLogs(logs);
@@ -129,8 +130,6 @@ public class AvalancheIngestionHttpTest {
         httpClient.setUrlConnectionFactory(urlConnectionFactory);
 
         /* Test calling code. */
-        final Semaphore semaphore = new Semaphore(0);
-        final AtomicReference<Throwable> failure = new AtomicReference<>();
         String appId = "app000000";
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);

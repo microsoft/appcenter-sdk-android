@@ -27,7 +27,7 @@ public class AnalyticsSerializerTest {
         LogContainer expectedContainer = new LogContainer();
         List<Log> logs = new ArrayList<>();
         expectedContainer.setLogs(logs);
-        String sid = UUID.randomUUID().toString();
+        UUID sid = UUID.randomUUID();
         {
             PageLog pageLog = new PageLog();
             pageLog.setSid(sid);
@@ -46,14 +46,14 @@ public class AnalyticsSerializerTest {
         }
         {
             EventLog eventLog = new EventLog();
-            eventLog.setId(UUID.randomUUID().toString());
+            eventLog.setId(UUID.randomUUID());
             eventLog.setSid(sid);
             eventLog.setName("subscribe");
             logs.add(eventLog);
         }
         {
             EventLog eventLog = new EventLog();
-            eventLog.setId(UUID.randomUUID().toString());
+            eventLog.setId(UUID.randomUUID());
             eventLog.setSid(sid);
             eventLog.setName("click");
             eventLog.setProperties(new HashMap<String, String>() {{

@@ -1,5 +1,7 @@
 package avalanche.base.ingestion.models;
 
+import java.util.UUID;
+
 public interface Log extends Model {
 
     /**
@@ -28,12 +30,12 @@ public interface Log extends Model {
      *
      * @return the sid value
      */
-    String getSid();
+    UUID getSid();
 
     /**
      * Set the sid value.
      *
      * @param sid the sid value to set
      */
-    void setSid(String sid);
+    void setSid(UUID sid);
 }
