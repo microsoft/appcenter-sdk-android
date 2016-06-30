@@ -1,20 +1,19 @@
-package avalanche.sasquatch;
+package avalanche.sasquatch.activities;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
+import android.widget.ListView;
 
 import avalanche.base.Avalanche;
 import avalanche.base.utils.AvalancheLog;
-
-import java.util.ArrayList;
-import java.util.List;
+import avalanche.sasquatch.R;
+import avalanche.sasquatch.features.TestFeatures;
+import avalanche.sasquatch.features.TestFeaturesListAdapter;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button mCrashButton;
+    private ListView mListView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,13 +32,9 @@ public class MainActivity extends AppCompatActivity {
 
         AvalancheLog.info("crash enabled: " + crashManagerEnabled);
 
-        mCrashButton = (Button) findViewById(R.id.button_crash);
-        mCrashButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                List<String> fakeList = new ArrayList<>();
-                fakeList.get(1000);
-            }
-        });
+        TestFeatures.initialize(this);
+        mListView = (ListView) findViewById(R.id.list);
+        mListView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
+        mListView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
     }
 }
