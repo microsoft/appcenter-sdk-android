@@ -11,6 +11,7 @@ import avalanche.base.ingestion.http.AvalancheIngestionHttp;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
 import avalanche.base.utils.AvalancheLog;
+import avalanche.base.utils.StorageHelper;
 
 public class DefaultAvalancheChannel implements AvalancheChannel {
 
@@ -87,8 +88,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         //TODO get batch from persistence and forward to ingestion
 
         AvalancheIngestionHttp ingestion = new AvalancheIngestionHttp();
-        String appId = "";
-        UUID installId = null;
+        UUID installId = StorageHelper.PreferencesStorage.getInstallId();
+        String appId = StorageHelper.PreferencesStorage.getString(StorageHelper.PreferencesStorage.SHARED_PREFS_APP_ID);
         LogContainer logContainer = null;
 
         ingestion.sendAsync(appId, installId, logContainer, new ServiceCallback() {
