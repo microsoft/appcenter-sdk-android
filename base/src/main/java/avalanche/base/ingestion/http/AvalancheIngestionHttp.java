@@ -11,7 +11,6 @@ import java.net.URL;
 import java.util.UUID;
 
 import avalanche.base.ingestion.AvalancheIngestion;
-import avalanche.base.ingestion.HttpException;
 import avalanche.base.ingestion.ServiceCall;
 import avalanche.base.ingestion.ServiceCallback;
 import avalanche.base.ingestion.models.LogContainer;

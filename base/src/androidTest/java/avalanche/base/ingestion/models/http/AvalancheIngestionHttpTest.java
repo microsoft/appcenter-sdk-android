@@ -18,10 +18,10 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import avalanche.base.ingestion.HttpException;
 import avalanche.base.ingestion.ServiceCall;
 import avalanche.base.ingestion.ServiceCallback;
 import avalanche.base.ingestion.http.AvalancheIngestionHttp;
+import avalanche.base.ingestion.http.HttpException;
 import avalanche.base.ingestion.http.UrlConnectionFactory;
 import avalanche.base.ingestion.models.DeviceLog;
 import avalanche.base.ingestion.models.Log;
