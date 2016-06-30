@@ -1,4 +1,4 @@
-package avalanche.base.ingestion.models.http;
+package avalanche.base.ingestion.http;
 
 import junit.framework.Assert;
 
@@ -20,9 +20,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import avalanche.base.ingestion.ServiceCall;
 import avalanche.base.ingestion.ServiceCallback;
-import avalanche.base.ingestion.http.AvalancheIngestionHttp;
-import avalanche.base.ingestion.http.HttpException;
-import avalanche.base.ingestion.http.UrlConnectionFactory;
 import avalanche.base.ingestion.models.DeviceLog;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
