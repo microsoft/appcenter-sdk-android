@@ -16,13 +16,13 @@ import avalanche.base.ingestion.models.LogContainer;
 
 import static avalanche.base.TestUtils.TAG;
 
-public class LogContainerSerializerTest {
+public class LogSerializerTest {
 
     @Test(expected = JSONException.class)
     public void nullFields() throws JSONException {
         LogContainer expectedContainer = new LogContainer();
-        LogContainerSerializer serializer = new DefaultLogContainerSerializer();
-        String payload = serializer.serialize(expectedContainer);
+        LogSerializer serializer = new DefaultLogSerializer();
+        String payload = serializer.serializeContainer(expectedContainer);
         android.util.Log.v(TAG, payload);
     }
 
@@ -30,10 +30,10 @@ public class LogContainerSerializerTest {
     public void emptyLogs() throws JSONException {
         LogContainer expectedContainer = new LogContainer();
         expectedContainer.setLogs(Collections.<Log>emptyList());
-        LogContainerSerializer serializer = new DefaultLogContainerSerializer();
-        String payload = serializer.serialize(expectedContainer);
+        LogSerializer serializer = new DefaultLogSerializer();
+        String payload = serializer.serializeContainer(expectedContainer);
         android.util.Log.v(TAG, payload);
-        LogContainer actualContainer = serializer.deserialize(payload);
+        LogContainer actualContainer = serializer.deserializeContainer(payload);
         Assert.assertEquals(expectedContainer, actualContainer);
     }
 
@@ -59,10 +59,10 @@ public class LogContainerSerializerTest {
         List<Log> logs = new ArrayList<>();
         logs.add(deviceLog);
         expectedContainer.setLogs(logs);
-        LogContainerSerializer serializer = new DefaultLogContainerSerializer();
-        String payload = serializer.serialize(expectedContainer);
+        LogSerializer serializer = new DefaultLogSerializer();
+        String payload = serializer.serializeContainer(expectedContainer);
         android.util.Log.v(TAG, payload);
-        LogContainer actualContainer = serializer.deserialize(payload);
+        LogContainer actualContainer = serializer.deserializeContainer(payload);
         Assert.assertEquals(expectedContainer, actualContainer);
     }
 }

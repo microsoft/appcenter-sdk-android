@@ -15,8 +15,8 @@ import avalanche.analytics.ingestion.models.EventLog;
 import avalanche.analytics.ingestion.models.PageLog;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
-import avalanche.base.ingestion.models.json.DefaultLogContainerSerializer;
-import avalanche.base.ingestion.models.json.LogContainerSerializer;
+import avalanche.base.ingestion.models.json.DefaultLogSerializer;
+import avalanche.base.ingestion.models.json.LogSerializer;
 
 public class AnalyticsSerializerTest {
 
@@ -67,13 +67,13 @@ public class AnalyticsSerializerTest {
             endSessionLog.setSid(sid);
             logs.add(endSessionLog);
         }
-        LogContainerSerializer serializer = new DefaultLogContainerSerializer();
+        LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(EndSessionLog.TYPE, new SessionLogFactory());
         serializer.addLogFactory(PageLog.TYPE, new PageLogFactory());
         serializer.addLogFactory(EventLog.TYPE, new EventLogFactory());
-        String payload = serializer.serialize(expectedContainer);
+        String payload = serializer.serializeContainer(expectedContainer);
         android.util.Log.v(TAG, payload);
-        LogContainer actualContainer = serializer.deserialize(payload);
+        LogContainer actualContainer = serializer.deserializeContainer(payload);
         Assert.assertEquals(expectedContainer, actualContainer);
     }
 }

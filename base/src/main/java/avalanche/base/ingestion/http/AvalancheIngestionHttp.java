@@ -14,7 +14,7 @@ import avalanche.base.ingestion.AvalancheIngestion;
 import avalanche.base.ingestion.ServiceCall;
 import avalanche.base.ingestion.ServiceCallback;
 import avalanche.base.ingestion.models.LogContainer;
-import avalanche.base.ingestion.models.json.LogContainerSerializer;
+import avalanche.base.ingestion.models.json.LogSerializer;
 import avalanche.base.utils.AvalancheLog;
 
 import static java.lang.Math.max;
@@ -88,9 +88,9 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     private UrlConnectionFactory mUrlConnectionFactory;
 
     /**
-     * Log container serializer.
+     * Log serializer.
      */
-    private LogContainerSerializer mLogContainerSerializer;
+    private LogSerializer mLogSerializer;
 
     /**
      * Set the base url.
@@ -111,13 +111,13 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     }
 
     /**
-     * Set the log container serializer.
+     * Set the log serializer.
      * It is expected that the caller of this method is responsible for adding the factories to the serializer.
      *
-     * @param logContainerSerializer log container serializer
+     * @param logSerializer log serializer
      */
-    public void setLogContainerSerializer(LogContainerSerializer logContainerSerializer) {
-        mLogContainerSerializer = logContainerSerializer;
+    public void setLogSerializer(LogSerializer logSerializer) {
+        mLogSerializer = logSerializer;
     }
 
     @Override
@@ -126,8 +126,8 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             throw new IllegalStateException("baseUrl not configured");
         if (mUrlConnectionFactory == null)
             throw new IllegalStateException("urlConnectionFactory not configured");
-        if (mLogContainerSerializer == null)
-            throw new IllegalStateException("logContainerSerializer not configured");
+        if (mLogSerializer == null)
+            throw new IllegalStateException("logSerializer not configured");
         final AsyncTask<Void, Void, Exception> call = new AsyncTask<Void, Void, Exception>() {
 
             @Override
@@ -187,7 +187,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
 
             /* Serialize payload. */
             urlConnection.setDoOutput(true);
-            String payload = mLogContainerSerializer.serialize(logContainer);
+            String payload = mLogSerializer.serializeContainer(logContainer);
             AvalancheLog.debug(LOG_TAG, payload);
 
             /* Send payload through the wire. */

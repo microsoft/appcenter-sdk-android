@@ -22,8 +22,8 @@ import avalanche.base.ingestion.ServiceCallback;
 import avalanche.base.ingestion.models.DeviceLog;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
-import avalanche.base.ingestion.models.json.DefaultLogContainerSerializer;
-import avalanche.base.ingestion.models.json.LogContainerSerializer;
+import avalanche.base.ingestion.models.json.DefaultLogSerializer;
+import avalanche.base.ingestion.models.json.LogSerializer;
 import avalanche.base.utils.AvalancheLog;
 
 import static org.mockito.Mockito.any;
@@ -74,8 +74,8 @@ public class AvalancheIngestionHttpTest {
         /* Configure API client. */
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp();
         httpClient.setBaseUrl("http://mock");
-        LogContainerSerializer serializer = new DefaultLogContainerSerializer();
-        httpClient.setLogContainerSerializer(serializer);
+        LogSerializer serializer = new DefaultLogSerializer();
+        httpClient.setLogSerializer(serializer);
         httpClient.setUrlConnectionFactory(urlConnectionFactory);
 
         /* Test calling code. */
@@ -87,7 +87,7 @@ public class AvalancheIngestionHttpTest {
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestProperty("App-ID", appKey.toString());
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
-        Assert.assertEquals(serializer.serialize(container), buffer.toString("UTF-8"));
+        Assert.assertEquals(serializer.serializeContainer(container), buffer.toString("UTF-8"));
         verify(urlConnection).disconnect();
     }
 
@@ -125,8 +125,8 @@ public class AvalancheIngestionHttpTest {
         /* Configure API client. */
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp();
         httpClient.setBaseUrl("http://mock");
-        LogContainerSerializer serializer = new DefaultLogContainerSerializer();
-        httpClient.setLogContainerSerializer(serializer);
+        LogSerializer serializer = new DefaultLogSerializer();
+        httpClient.setLogSerializer(serializer);
         httpClient.setUrlConnectionFactory(urlConnectionFactory);
 
         /* Test calling code. */
@@ -144,7 +144,7 @@ public class AvalancheIngestionHttpTest {
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp();
         httpClient.setBaseUrl("http://mock");
         httpClient.setUrlConnectionFactory(mock(UrlConnectionFactory.class));
-        httpClient.setLogContainerSerializer(new DefaultLogContainerSerializer());
+        httpClient.setLogSerializer(new DefaultLogSerializer());
         final Semaphore semaphore = new Semaphore(0);
         ServiceCall call = httpClient.sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), new ServiceCallback() {
 
@@ -190,7 +190,7 @@ public class AvalancheIngestionHttpTest {
     public void failedConnection() throws IOException {
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp();
         httpClient.setBaseUrl("http://mock");
-        httpClient.setLogContainerSerializer(new DefaultLogContainerSerializer());
+        httpClient.setLogSerializer(new DefaultLogSerializer());
         UrlConnectionFactory urlConnectionFactory = mock(UrlConnectionFactory.class);
         httpClient.setUrlConnectionFactory(urlConnectionFactory);
         IOException exception = new IOException("mock");
