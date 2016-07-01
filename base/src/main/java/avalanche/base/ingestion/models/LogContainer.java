@@ -14,8 +14,6 @@ public class LogContainer {
 
     /**
      * Get the logs value.
-     *
-
      * @return the logs value
      */
     public List<Log> getLogs() {

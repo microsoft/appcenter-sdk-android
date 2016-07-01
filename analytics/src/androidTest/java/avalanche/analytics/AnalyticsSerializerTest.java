@@ -15,8 +15,8 @@ import avalanche.analytics.ingestion.models.EventLog;
 import avalanche.analytics.ingestion.models.PageLog;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
-import avalanche.base.ingestion.models.json.DefaultLogContainerSerializer;
-import avalanche.base.ingestion.models.json.LogContainerSerializer;
+import avalanche.base.ingestion.models.json.DefaultLogSerializer;
+import avalanche.base.ingestion.models.json.LogSerializer;
 
 public class AnalyticsSerializerTest {
 
@@ -27,7 +27,7 @@ public class AnalyticsSerializerTest {
         LogContainer expectedContainer = new LogContainer();
         List<Log> logs = new ArrayList<>();
         expectedContainer.setLogs(logs);
-        String sid = UUID.randomUUID().toString();
+        UUID sid = UUID.randomUUID();
         {
             PageLog pageLog = new PageLog();
             pageLog.setSid(sid);
@@ -46,14 +46,14 @@ public class AnalyticsSerializerTest {
         }
         {
             EventLog eventLog = new EventLog();
-            eventLog.setId(UUID.randomUUID().toString());
+            eventLog.setId(UUID.randomUUID());
             eventLog.setSid(sid);
             eventLog.setName("subscribe");
             logs.add(eventLog);
         }
         {
             EventLog eventLog = new EventLog();
-            eventLog.setId(UUID.randomUUID().toString());
+            eventLog.setId(UUID.randomUUID());
             eventLog.setSid(sid);
             eventLog.setName("click");
             eventLog.setProperties(new HashMap<String, String>() {{
@@ -67,13 +67,13 @@ public class AnalyticsSerializerTest {
             endSessionLog.setSid(sid);
             logs.add(endSessionLog);
         }
-        LogContainerSerializer serializer = new DefaultLogContainerSerializer();
+        LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(EndSessionLog.TYPE, new SessionLogFactory());
         serializer.addLogFactory(PageLog.TYPE, new PageLogFactory());
         serializer.addLogFactory(EventLog.TYPE, new EventLogFactory());
-        String payload = serializer.serialize(expectedContainer);
+        String payload = serializer.serializeContainer(expectedContainer);
         android.util.Log.v(TAG, payload);
-        LogContainer actualContainer = serializer.deserialize(payload);
+        LogContainer actualContainer = serializer.deserializeContainer(payload);
         Assert.assertEquals(expectedContainer, actualContainer);
     }
 }

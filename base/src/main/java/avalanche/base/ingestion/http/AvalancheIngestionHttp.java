@@ -11,11 +11,10 @@ import java.net.URL;
 import java.util.UUID;
 
 import avalanche.base.ingestion.AvalancheIngestion;
-import avalanche.base.ingestion.HttpException;
 import avalanche.base.ingestion.ServiceCall;
 import avalanche.base.ingestion.ServiceCallback;
 import avalanche.base.ingestion.models.LogContainer;
-import avalanche.base.ingestion.models.json.LogContainerSerializer;
+import avalanche.base.ingestion.models.json.LogSerializer;
 import avalanche.base.utils.AvalancheLog;
 
 import static java.lang.Math.max;
@@ -89,9 +88,9 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     private UrlConnectionFactory mUrlConnectionFactory;
 
     /**
-     * Log container serializer.
+     * Log serializer.
      */
-    private LogContainerSerializer mLogContainerSerializer;
+    private LogSerializer mLogSerializer;
 
     /**
      * Set the base url.
@@ -112,29 +111,29 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     }
 
     /**
-     * Set the log container serializer.
+     * Set the log serializer.
      * It is expected that the caller of this method is responsible for adding the factories to the serializer.
      *
-     * @param logContainerSerializer log container serializer
+     * @param logSerializer log serializer
      */
-    public void setLogContainerSerializer(LogContainerSerializer logContainerSerializer) {
-        mLogContainerSerializer = logContainerSerializer;
+    public void setLogSerializer(LogSerializer logSerializer) {
+        mLogSerializer = logSerializer;
     }
 
     @Override
-    public ServiceCall sendAsync(final String appId, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(final UUID appKey, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         if (mBaseUrl == null)
             throw new IllegalStateException("baseUrl not configured");
         if (mUrlConnectionFactory == null)
             throw new IllegalStateException("urlConnectionFactory not configured");
-        if (mLogContainerSerializer == null)
-            throw new IllegalStateException("logContainerSerializer not configured");
+        if (mLogSerializer == null)
+            throw new IllegalStateException("logSerializer not configured");
         final AsyncTask<Void, Void, Exception> call = new AsyncTask<Void, Void, Exception>() {
 
             @Override
             protected Exception doInBackground(Void... params) {
                 try {
-                    doCall(appId, installId, logContainer);
+                    doCall(appKey, installId, logContainer);
                 } catch (Exception e) {
                     return e;
                 }
@@ -163,12 +162,12 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     /**
      * Do the HTTP call now.
      *
-     * @param appId        application identifier.
+     * @param appKey        application identifier.
      * @param installId    install identifier.
      * @param logContainer payload.
      * @throws Exception if an error occurs.
      */
-    private void doCall(String appId, UUID installId, LogContainer logContainer) throws Exception {
+    private void doCall(UUID appKey, UUID installId, LogContainer logContainer) throws Exception {
 
         /* HTTP session. */
         HttpURLConnection urlConnection = null;
@@ -183,12 +182,12 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             urlConnection.setRequestProperty(CONTENT_TYPE, CONTENT_TYPE_JSON);
 
             /* Set headers. */
-            urlConnection.setRequestProperty(APP_ID, appId);
+            urlConnection.setRequestProperty(APP_ID, appKey.toString());
             urlConnection.setRequestProperty(INSTALL_ID, installId.toString());
 
             /* Serialize payload. */
             urlConnection.setDoOutput(true);
-            String payload = mLogContainerSerializer.serialize(logContainer);
+            String payload = mLogSerializer.serializeContainer(logContainer);
             AvalancheLog.debug(LOG_TAG, payload);
 
             /* Send payload through the wire. */

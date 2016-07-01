@@ -41,6 +41,10 @@ public class DeviceLog extends AbstractLog {
 
     private static final String CARRIER_COUNTRY = "carrierCountry";
 
+    private static final String APP_BUILD = "appBuild";
+
+    private static final String APP_NAMESPACE = "appNamespace";
+
     /**
      * Version of the SDK.
      */
@@ -101,6 +105,17 @@ public class DeviceLog extends AbstractLog {
      * Carrier country code (for mobile devices).
      */
     private String carrierCountry;
+
+    /**
+     * The app's build number, e.g. 42.
+     */
+    private String appBuild;
+
+    /**
+     * The bundle identifier, package identifier, or namespace, depending on
+     * what the individual plattforms use,  .e.g com.microsoft.example.
+     */
+    private String appNamespace;
 
     @Override
     public String getType() {
@@ -323,6 +338,42 @@ public class DeviceLog extends AbstractLog {
         this.carrierCountry = carrierCountry;
     }
 
+    /**
+     * Get the appBuild value.
+     *
+     * @return the appBuild value
+     */
+    public String getAppBuild() {
+        return this.appBuild;
+    }
+
+    /**
+     * Set the appBuild value.
+     *
+     * @param appBuild the appBuild value to set
+     */
+    public void setAppBuild(String appBuild) {
+        this.appBuild = appBuild;
+    }
+
+    /**
+     * Get the appNamespace value.
+     *
+     * @return the appNamespace value
+     */
+    public String getAppNamespace() {
+        return this.appNamespace;
+    }
+
+    /**
+     * Set the appNamespace value.
+     *
+     * @param appNamespace the appNamespace value to set
+     */
+    public void setAppNamespace(String appNamespace) {
+        this.appNamespace = appNamespace;
+    }
+
     @Override
     public void read(JSONObject object) throws JSONException {
         super.read(object);
@@ -331,14 +382,15 @@ public class DeviceLog extends AbstractLog {
         setOemName(object.getString(OEM_NAME));
         setOsName(object.getString(OS_NAME));
         setOsVersion(object.getString(OS_VERSION));
-        if (object.has(OS_API_LEVEL))
-            setOsApiLevel(object.getInt(OS_API_LEVEL));
+        setOsApiLevel(JSONUtils.readInteger(object, OS_API_LEVEL));
         setLocale(object.getString(LOCALE));
         setTimeZoneOffset(object.getInt(TIME_ZONE_OFFSET));
         setScreenSize(object.getString(SCREEN_SIZE));
         setAppVersion(object.getString(APP_VERSION));
         setCarrierName(object.optString(CARRIER_NAME, null));
         setCarrierCountry(object.optString(CARRIER_COUNTRY, null));
+        setAppBuild(object.getString(APP_BUILD));
+        setAppNamespace(object.optString(APP_NAMESPACE, null));
     }
 
     @Override
@@ -356,6 +408,8 @@ public class DeviceLog extends AbstractLog {
         writer.key(APP_VERSION).value(getAppVersion());
         JSONUtils.write(writer, CARRIER_NAME, getCarrierName(), false);
         JSONUtils.write(writer, CARRIER_COUNTRY, getCarrierCountry(), false);
+        writer.key(APP_BUILD).value(getAppBuild());
+        JSONUtils.write(writer, APP_NAMESPACE, getAppNamespace(), false);
     }
 
     @Override
@@ -370,6 +424,7 @@ public class DeviceLog extends AbstractLog {
         LogUtils.checkNotNull(TIME_ZONE_OFFSET, getTimeZoneOffset());
         LogUtils.checkNotNull(SCREEN_SIZE, getScreenSize());
         LogUtils.checkNotNull(APP_VERSION, getAppVersion());
+        LogUtils.checkNotNull(APP_BUILD, getAppBuild());
     }
 
     @Override
@@ -401,7 +456,11 @@ public class DeviceLog extends AbstractLog {
             return false;
         if (carrierName != null ? !carrierName.equals(deviceLog.carrierName) : deviceLog.carrierName != null)
             return false;
-        return carrierCountry != null ? carrierCountry.equals(deviceLog.carrierCountry) : deviceLog.carrierCountry == null;
+        if (carrierCountry != null ? !carrierCountry.equals(deviceLog.carrierCountry) : deviceLog.carrierCountry != null)
+            return false;
+        if (appBuild != null ? !appBuild.equals(deviceLog.appBuild) : deviceLog.appBuild != null)
+            return false;
+        return appNamespace != null ? appNamespace.equals(deviceLog.appNamespace) : deviceLog.appNamespace == null;
     }
 
     @Override
@@ -419,6 +478,8 @@ public class DeviceLog extends AbstractLog {
         result = 31 * result + (appVersion != null ? appVersion.hashCode() : 0);
         result = 31 * result + (carrierName != null ? carrierName.hashCode() : 0);
         result = 31 * result + (carrierCountry != null ? carrierCountry.hashCode() : 0);
+        result = 31 * result + (appBuild != null ? appBuild.hashCode() : 0);
+        result = 31 * result + (appNamespace != null ? appNamespace.hashCode() : 0);
         return result;
     }
 }

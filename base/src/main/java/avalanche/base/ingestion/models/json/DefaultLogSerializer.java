@@ -10,25 +10,54 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import avalanche.base.ingestion.models.CommonProperties;
 import avalanche.base.ingestion.models.DeviceLog;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
-import avalanche.base.ingestion.models.Model;
 import avalanche.base.ingestion.models.utils.LogUtils;
 
-public class DefaultLogContainerSerializer implements LogContainerSerializer {
+import static avalanche.base.ingestion.models.CommonProperties.TYPE;
+
+public class DefaultLogSerializer implements LogSerializer {
 
     private static final String LOGS = "logs";
 
     private final Map<String, LogFactory> mLogFactories = new HashMap<>();
 
-    public DefaultLogContainerSerializer() {
+    public DefaultLogSerializer() {
         addLogFactory(DeviceLog.TYPE, new DeviceLogFactory());
     }
 
+    private JSONStringer writeLog(JSONStringer writer, Log log) throws JSONException {
+        writer.object();
+        log.write(writer);
+        try {
+            log.validate();
+        } catch (IllegalArgumentException e) {
+            throw new JSONException(e.getMessage());
+        }
+        writer.endObject();
+        return writer;
+    }
+
+    private Log readLog(JSONObject object) throws JSONException {
+        String type = object.getString(TYPE);
+        Log log = mLogFactories.get(type).create();
+        log.read(object);
+        return log;
+    }
+
     @Override
-    public String serialize(LogContainer logContainer) throws JSONException {
+    public String serializeLog(Log log) throws JSONException {
+        return writeLog(new JSONStringer(), log).toString();
+    }
+
+    @Override
+    public Log deserializeLog(String json) throws JSONException {
+        return readLog(new JSONObject(json));
+    }
+
+    @Override
+    public String serializeContainer(LogContainer logContainer) throws JSONException {
         try {
             LogUtils.checkNotNull(LOGS, logContainer.getLogs());
         } catch (IllegalArgumentException e) {
@@ -37,32 +66,22 @@ public class DefaultLogContainerSerializer implements LogContainerSerializer {
         JSONStringer writer = new JSONStringer();
         writer.object();
         writer.key(LOGS).array();
-        for (Model log : logContainer.getLogs()) {
-            writer.object();
-            log.write(writer);
-            try {
-                log.validate();
-            } catch (IllegalArgumentException e) {
-                throw new JSONException(e.getMessage());
-            }
-            writer.endObject();
-        }
+        for (Log log : logContainer.getLogs())
+            writeLog(writer, log);
         writer.endArray();
         writer.endObject();
         return writer.toString();
     }
 
     @Override
-    public LogContainer deserialize(String json) throws JSONException {
+    public LogContainer deserializeContainer(String json) throws JSONException {
         JSONObject jContainer = new JSONObject(json);
         LogContainer container = new LogContainer();
         JSONArray jLogs = jContainer.getJSONArray(LOGS);
         List<Log> logs = new ArrayList<>();
         for (int i = 0; i < jLogs.length(); i++) {
             JSONObject jLog = jLogs.getJSONObject(i);
-            String type = jLog.getString(CommonProperties.TYPE);
-            Log log = mLogFactories.get(type).create();
-            log.read(jLog);
+            Log log = readLog(jLog);
             logs.add(log);
         }
         container.setLogs(logs);

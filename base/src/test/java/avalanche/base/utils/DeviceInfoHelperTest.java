@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.os.Build;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
@@ -40,25 +39,21 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @PrepareForTest({Build.class, Locale.class, TimeZone.class, DeviceInfoHelper.class})
 public class DeviceInfoHelperTest {
 
-    /**
-     * Log tag.
-     */
-    private static final String TAG = "DeviceInfoHelperTest";
-
     @Test
     @SuppressWarnings("WrongConstant")
     public void getDeviceInfo() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
-        Log.i(TAG, "Testing device info");
 
         /* Mock data. */
         final String appVersion = "1.0";
+        final String appBuild = "1";
+        final String appNamespace = "com.contoso.app";
         final String carrierCountry = "us";
         final String carrierName = "mock-service";
         final Locale locale = Locale.KOREA;
         final String model = "mock-model";
         final String oemName = "mock-manufacture";
         final Integer osApiLevel = 23;
-        final String osName = "MOC64";
+        final String osName = "Android";
         final String osVersion = "mock-version";
         final String screenSizeLandscape = "100x200";
         final String screenSizePortrait = "200x100";
@@ -79,6 +74,7 @@ public class DeviceInfoHelperTest {
         mockStatic(TimeZone.class);
 
         /* Delegates to mock instances. */
+        when(contextMock.getPackageName()).thenReturn(appNamespace);
         when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
         when(contextMock.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(telephonyManagerMock);
         when(contextMock.getSystemService(Context.WINDOW_SERVICE)).thenReturn(windowManagerMock);
@@ -103,6 +99,7 @@ public class DeviceInfoHelperTest {
 
         /* Sets values of fields for static classes. */
         Whitebox.setInternalState(packageInfoMock, "versionName", appVersion);
+        Whitebox.setInternalState(packageInfoMock, "versionCode", Integer.parseInt(appBuild));
         Whitebox.setInternalState(Build.class, "MODEL", model);
         Whitebox.setInternalState(Build.class, "MANUFACTURER", oemName);
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", osApiLevel);
@@ -116,6 +113,8 @@ public class DeviceInfoHelperTest {
 
         /* Verify device information. */
         assertEquals(appVersion, log.getAppVersion());
+        assertEquals(appBuild, log.getAppBuild());
+        assertEquals(appNamespace, log.getAppNamespace());
         assertEquals(carrierCountry, log.getCarrierCountry());
         assertEquals(carrierName, log.getCarrierName());
         assertEquals(locale.toString(), log.getLocale());
@@ -146,7 +145,6 @@ public class DeviceInfoHelperTest {
     @Test(expected = DeviceInfoHelper.DeviceInfoException.class)
     @SuppressWarnings("WrongConstant")
     public void getDeviceInfoWithException() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
-        Log.i(TAG, "Testing device info with exception");
 
         /* Mocking instances. */
         Context contextMock = mock(Context.class);
