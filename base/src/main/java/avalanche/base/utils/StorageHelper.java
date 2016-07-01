@@ -18,7 +18,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * StorageHelper class to access local storage.
@@ -48,17 +47,14 @@ public final class StorageHelper {
      * PreferencesStorage Helper class
      */
     public final static class PreferencesStorage {
-        public static final String SHARED_PREFS_INSTALL_ID = "storage_helper_install_id";
-        public static final String SHARED_PREFS_APP_ID = "storage_helper_app_id";
-
         /*
          * boolean value
          */
-        public static boolean getBoolean(@StorageHelperDef String key) {
+        public static boolean getBoolean(@PreferenceStorageKeyDef String key) {
             return getBoolean(key, false);
         }
 
-        public static boolean getBoolean(@StorageHelperDef String key, boolean defValue) {
+        public static boolean getBoolean(@PreferenceStorageKeyDef String key, boolean defValue) {
             return sSharedPreferences.getBoolean(key, defValue);
         }
 
@@ -71,15 +67,15 @@ public final class StorageHelper {
         /*
          * float value
          */
-        public static float getFloat(@StorageHelperDef String key) {
+        public static float getFloat(@PreferenceStorageKeyDef String key) {
             return getFloat(key, 0f);
         }
 
-        public static float getFloat(@StorageHelperDef String key, float defValue) {
+        public static float getFloat(@PreferenceStorageKeyDef String key, float defValue) {
             return sSharedPreferences.getFloat(key, defValue);
         }
 
-        public static void putFloat(@StorageHelperDef String key, float value) {
+        public static void putFloat(@PreferenceStorageKeyDef String key, float value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putFloat(key, value);
             editor.apply();
@@ -88,15 +84,15 @@ public final class StorageHelper {
         /*
          * int value
          */
-        public static int getInt(@StorageHelperDef String key) {
+        public static int getInt(@PreferenceStorageKeyDef String key) {
             return getInt(key, 0);
         }
 
-        public static int getInt(@StorageHelperDef String key, int defValue) {
+        public static int getInt(@PreferenceStorageKeyDef String key, int defValue) {
             return sSharedPreferences.getInt(key, defValue);
         }
 
-        public static void putInt(@StorageHelperDef String key, int value) {
+        public static void putInt(@PreferenceStorageKeyDef String key, int value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putInt(key, value);
             editor.apply();
@@ -105,15 +101,15 @@ public final class StorageHelper {
         /*
          * long value
          */
-        public static long getLong(@StorageHelperDef String key) {
+        public static long getLong(@PreferenceStorageKeyDef String key) {
             return getLong(key, 0L);
         }
 
-        public static long getLong(@StorageHelperDef String key, long defValue) {
+        public static long getLong(@PreferenceStorageKeyDef String key, long defValue) {
             return sSharedPreferences.getLong(key, defValue);
         }
 
-        public static void putLong(@StorageHelperDef String key, long value) {
+        public static void putLong(@PreferenceStorageKeyDef String key, long value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putLong(key, value);
             editor.apply();
@@ -122,15 +118,15 @@ public final class StorageHelper {
         /*
          * String value
          */
-        public static String getString(@StorageHelperDef String key) {
+        public static String getString(@PreferenceStorageKeyDef String key) {
             return getString(key, null);
         }
 
-        public static String getString(@StorageHelperDef String key, String defValue) {
+        public static String getString(@PreferenceStorageKeyDef String key, String defValue) {
             return sSharedPreferences.getString(key, defValue);
         }
 
-        public static void putString(@StorageHelperDef String key, String value) {
+        public static void putString(@PreferenceStorageKeyDef String key, String value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putString(key, value);
             editor.apply();
@@ -139,15 +135,15 @@ public final class StorageHelper {
         /*
          * Set<String> value
          */
-        public static Set<String> getStringSet(@StorageHelperDef String key) {
+        public static Set<String> getStringSet(@PreferenceStorageKeyDef String key) {
             return getStringSet(key, null);
         }
 
-        public static Set<String> getStringSet(@StorageHelperDef String key, Set<String> defValue) {
+        public static Set<String> getStringSet(@PreferenceStorageKeyDef String key, Set<String> defValue) {
             return sSharedPreferences.getStringSet(key, defValue);
         }
 
-        public static void putStringSet(@StorageHelperDef String key, Set<String> value) {
+        public static void putStringSet(@PreferenceStorageKeyDef String key, Set<String> value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putStringSet(key, value);
             editor.apply();
@@ -162,24 +158,6 @@ public final class StorageHelper {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.remove(key);
             editor.apply();
-        }
-
-        /**
-         * Get the installID from the Shared preferences. In case this fails, will generate a new installId.
-         * @return the installID
-         */
-        public static UUID getInstallId() {
-            String installIdString = sSharedPreferences.getString(SHARED_PREFS_INSTALL_ID, "");
-            UUID installId;
-            try {
-                installId = UUID.fromString(installIdString);
-            }
-            catch (Exception e) {
-                AvalancheLog.warn("Unable to get installID from Shared Preferences");
-                installId = UUID.randomUUID();
-                putString(SHARED_PREFS_INSTALL_ID, installId.toString());
-            }
-            return installId;
         }
     }
 

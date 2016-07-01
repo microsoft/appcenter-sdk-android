@@ -1,7 +1,5 @@
 package avalanche.base;
 
-
-//TODO this class is just a dumb pipe that forwards
 public class Channel {
 
     private static Channel sharedInstance = null;
@@ -16,7 +14,7 @@ public class Channel {
     }
 
     public void handle(AvalancheDataInterface data) {
-        //TODO forward data to Sending/Journalling pipeline
+        //TODO (bereimol) forward data to Sending/Journalling pipeline
         if(data.isHighPriority()) {
 
         }

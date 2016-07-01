@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 import static avalanche.base.utils.StorageHelper.InternalStorage;
 import static avalanche.base.utils.StorageHelper.PreferencesStorage;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 
 @SmallTest
@@ -161,22 +160,6 @@ public class StorageHelperTest {
             /* Check the value equals to default value. */
             assertEquals(data.defaultValue, data.getMethod.invoke(null, key, data.defaultValue));
         }
-    }
-
-    @Test
-    public void installId() {
-        Log.i(TAG, "Testing installId-shortcut");
-        UUID expected = UUID.randomUUID();
-        PreferencesStorage.putString(PreferencesStorage.SHARED_PREFS_INSTALL_ID, expected.toString());
-
-        UUID actual = PreferencesStorage.getInstallId();
-        assertEquals(expected, actual);
-
-        String wrongUUID = "1234567";
-        PreferencesStorage.putString(PreferencesStorage.SHARED_PREFS_INSTALL_ID, expected.toString());
-
-        actual = PreferencesStorage.getInstallId();
-        assertNotEquals(wrongUUID, actual);
     }
 
     @Test
