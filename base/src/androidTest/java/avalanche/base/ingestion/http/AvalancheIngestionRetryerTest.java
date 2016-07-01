@@ -16,7 +16,6 @@ import avalanche.base.ingestion.models.LogContainer;
 import avalanche.base.utils.AvalancheLog;
 
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
@@ -43,7 +42,7 @@ public class AvalancheIngestionRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[3]).success();
                 return call;
             }
-        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(ingestion);
         retryer.sendAsync(null, null, null, callback);
         verify(callback).success();
@@ -69,7 +68,7 @@ public class AvalancheIngestionRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[3]).success();
                 return mock(ServiceCall.class);
             }
-        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(ingestion, 100);
         retryer.sendAsync(null, null, null, callback);
         Thread.sleep(40);
@@ -97,7 +96,7 @@ public class AvalancheIngestionRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[3]).failure(expectedException);
                 return mock(ServiceCall.class);
             }
-        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(ingestion, 100, 200);
         retryer.sendAsync(null, null, null, callback);
         Thread.sleep(40);
@@ -118,7 +117,7 @@ public class AvalancheIngestionRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[3]).failure(new HttpException(429));
                 return call;
             }
-        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(ingestion, 100, 200);
         retryer.sendAsync(null, null, null, callback);
         Thread.sleep(500);
@@ -139,7 +138,7 @@ public class AvalancheIngestionRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[3]).failure(new HttpException(503));
                 return call;
             }
-        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(ingestion, 100, 200);
         retryer.sendAsync(null, null, null, callback).cancel();
         Thread.sleep(500);

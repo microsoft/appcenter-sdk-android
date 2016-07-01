@@ -49,10 +49,10 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
     }
 
     @Override
-    public ServiceCall sendAsync(String appId, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
 
         /* Wrap the call with the retry logic and call delegate. */
-        RetryableCall retryableCall = new RetryableCall(appId, installId, logContainer, serviceCallback);
+        RetryableCall retryableCall = new RetryableCall(appKey, installId, logContainer, serviceCallback);
         retryableCall.run();
         return retryableCall;
     }
@@ -65,7 +65,7 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
         /**
          * Wrapped parameter.
          */
-        private final String mAppId;
+        private final UUID mAppKey;
 
         /**
          * Wrapped parameter.
@@ -92,8 +92,8 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
          */
         private int mRetryCount;
 
-        RetryableCall(String appId, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
-            mAppId = appId;
+        RetryableCall(UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
+            mAppKey = appKey;
             mInstallId = installId;
             mLogContainer = logContainer;
             mServiceCallback = serviceCallback;
@@ -101,7 +101,7 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
 
         @Override
         public synchronized void run() {
-            mDecoratedServiceCall = mDecoratedApi.sendAsync(mAppId, mInstallId, mLogContainer, this);
+            mDecoratedServiceCall = mDecoratedApi.sendAsync(mAppKey, mInstallId, mLogContainer, this);
         }
 
         @Override

@@ -16,7 +16,7 @@ public abstract class AvalancheIngestionDecorator implements AvalancheIngestion 
     }
 
     @Override
-    public ServiceCall sendAsync(String appId, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
-        return mDecoratedApi.sendAsync(appId, installId, logContainer, serviceCallback);
+    public ServiceCall sendAsync(UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
+        return mDecoratedApi.sendAsync(appKey, installId, logContainer, serviceCallback);
     }
 }

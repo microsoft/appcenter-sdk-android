@@ -121,7 +121,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     }
 
     @Override
-    public ServiceCall sendAsync(final String appId, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(final UUID appKey, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         if (mBaseUrl == null)
             throw new IllegalStateException("baseUrl not configured");
         if (mUrlConnectionFactory == null)
@@ -133,7 +133,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             @Override
             protected Exception doInBackground(Void... params) {
                 try {
-                    doCall(appId, installId, logContainer);
+                    doCall(appKey, installId, logContainer);
                 } catch (Exception e) {
                     return e;
                 }
@@ -162,12 +162,12 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     /**
      * Do the HTTP call now.
      *
-     * @param appId        application identifier.
+     * @param appKey        application identifier.
      * @param installId    install identifier.
      * @param logContainer payload.
      * @throws Exception if an error occurs.
      */
-    private void doCall(String appId, UUID installId, LogContainer logContainer) throws Exception {
+    private void doCall(UUID appKey, UUID installId, LogContainer logContainer) throws Exception {
 
         /* HTTP session. */
         HttpURLConnection urlConnection = null;
@@ -182,7 +182,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             urlConnection.setRequestProperty(CONTENT_TYPE, CONTENT_TYPE_JSON);
 
             /* Set headers. */
-            urlConnection.setRequestProperty(APP_ID, appId);
+            urlConnection.setRequestProperty(APP_ID, appKey.toString());
             urlConnection.setRequestProperty(INSTALL_ID, installId.toString());
 
             /* Serialize payload. */

@@ -79,13 +79,13 @@ public class AvalancheIngestionHttpTest {
         httpClient.setUrlConnectionFactory(urlConnectionFactory);
 
         /* Test calling code. */
-        String appId = "app000000";
+        UUID appKey = UUID.randomUUID();
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        httpClient.sendAsync(appId, installId, container, serviceCallback);
+        httpClient.sendAsync(appKey, installId, container, serviceCallback);
         verify(serviceCallback, timeout(100)).success();
         verifyNoMoreInteractions(serviceCallback);
-        verify(urlConnection).setRequestProperty("App-ID", appId);
+        verify(urlConnection).setRequestProperty("App-ID", appKey.toString());
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
         Assert.assertEquals(serializer.serialize(container), buffer.toString("UTF-8"));
         verify(urlConnection).disconnect();
@@ -130,10 +130,10 @@ public class AvalancheIngestionHttpTest {
         httpClient.setUrlConnectionFactory(urlConnectionFactory);
 
         /* Test calling code. */
-        String appId = "app000000";
+        UUID appKey = UUID.randomUUID();
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        httpClient.sendAsync(appId, installId, container, serviceCallback);
+        httpClient.sendAsync(appKey, installId, container, serviceCallback);
         verify(serviceCallback, timeout(100)).failure(new HttpException(503));
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
@@ -146,7 +146,7 @@ public class AvalancheIngestionHttpTest {
         httpClient.setUrlConnectionFactory(mock(UrlConnectionFactory.class));
         httpClient.setLogContainerSerializer(new DefaultLogContainerSerializer());
         final Semaphore semaphore = new Semaphore(0);
-        ServiceCall call = httpClient.sendAsync("app000000", UUID.randomUUID(), new LogContainer(), new ServiceCallback() {
+        ServiceCall call = httpClient.sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), new ServiceCallback() {
 
             @Override
             public void success() {
@@ -167,14 +167,14 @@ public class AvalancheIngestionHttpTest {
 
     @Test(expected = IllegalStateException.class)
     public void noUrl() {
-        new AvalancheIngestionHttp().sendAsync("app000000", UUID.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
+        new AvalancheIngestionHttp().sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void noUrlFactory() {
         AvalancheIngestionHttp http = new AvalancheIngestionHttp();
         http.setBaseUrl("");
-        http.sendAsync("app000000", UUID.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
+        http.sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
     }
 
 
@@ -183,7 +183,7 @@ public class AvalancheIngestionHttpTest {
         AvalancheIngestionHttp http = new AvalancheIngestionHttp();
         http.setBaseUrl("");
         http.setUrlConnectionFactory(mock(UrlConnectionFactory.class));
-        http.sendAsync("app000000", UUID.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
+        http.sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
     }
 
     @Test
@@ -196,7 +196,7 @@ public class AvalancheIngestionHttpTest {
         IOException exception = new IOException("mock");
         when(urlConnectionFactory.openConnection(any(URL.class))).thenThrow(exception);
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        httpClient.sendAsync("app000000", UUID.randomUUID(), new LogContainer(), serviceCallback);
+        httpClient.sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), serviceCallback);
         verify(serviceCallback, timeout(1000)).failure(exception);
         verifyNoMoreInteractions(serviceCallback);
     }
