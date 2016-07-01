@@ -4,7 +4,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
-import avalanche.base.ingestion.models.InSessionLog;
+import avalanche.base.ingestion.models.LogWithProperties;
 import avalanche.base.ingestion.models.utils.LogUtils;
 
 import static avalanche.base.ingestion.models.CommonProperties.NAME;
@@ -12,7 +12,7 @@ import static avalanche.base.ingestion.models.CommonProperties.NAME;
 /**
  * Page log.
  */
-public class PageLog extends InSessionLog {
+public class PageLog extends LogWithProperties {
 
     public static final String TYPE = "page";
 

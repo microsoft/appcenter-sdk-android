@@ -13,7 +13,7 @@ import android.util.Log;
  * @see Log
  */
 public class AvalancheLog {
-    public static final String AVALANCHE_TAG = "AvalancheHub";
+    public static final String AVALANCHE_TAG = "Avalanche";
 
     private static int sLogLevel = Log.ERROR;
 
@@ -271,7 +271,7 @@ public class AvalancheLog {
      * Sanitize a TAG string
      *
      * @param tag the log tag for your message for the logging
-     * @return a sanitized TAG, defaults to 'AvalancheHub' in case the log tag for your message is null, empty or longer than
+     * @return a sanitized TAG, defaults to 'Avalanche' in case the log tag for your message is null, empty or longer than
      * 23 characters.
      */
     static String sanitizeTag(String tag) {

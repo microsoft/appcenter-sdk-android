@@ -22,4 +22,18 @@ public interface Log extends Model {
      * @param toffset the toffset value to set
      */
     void setToffset(long toffset);
+
+    /**
+     * Get the sid value.
+     *
+     * @return the sid value
+     */
+    String getSid();
+
+    /**
+     * Set the sid value.
+     *
+     * @param sid the sid value to set
+     */
+    void setSid(String sid);
 }

@@ -104,22 +104,32 @@ public abstract class CrashesListener {
     }
 
     /**
-     * Called when the crash manager has sent crashes to AvalancheHub.
+     * Called when the crash manager has sent crashes to Avalanche.
      */
     public void onCrashesSent() {
     }
 
     /**
-     * Called when the crash manager failed to send crashes to AvalancheHub, e.g.
+     * Called when the crash manager failed to send crashes to Avalanche, e.g.
      * because the device has no network connections.
      */
     public void onCrashesNotSent() {
     }
 
     /**
-     * Called when the user denied to send crashes to AvalancheHub.
+     * Called when the user denied to send crashes to Avalanche.
      */
     public void onUserDeniedCrashes() {
+    }
+
+    /**
+     * Get the number of max retry attempts to send crashes to Avalanche.
+     * Infinite retries if this value is set to -1
+     *
+     * @return the max number of retry attempts
+     */
+    public int getMaxRetryAttempts() {
+        return 1;
     }
 
     /**

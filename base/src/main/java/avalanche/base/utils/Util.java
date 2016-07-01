@@ -16,10 +16,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
@@ -45,7 +41,7 @@ public class Util {
     public static final String APP_IDENTIFIER_PATTERN = "[0-9a-f]+";
     public static final int APP_IDENTIFIER_LENGTH = 32;
     public static final String APP_IDENTIFIER_KEY = "com.microsoft.android.appIdentifier";
-    public static final String LOG_IDENTIFIER = "AvalancheHub";
+    public static final String LOG_IDENTIFIER = "Avalanche";
     private static final String APP_SECRET_KEY = "com.microsoft.android.appSecret";
     private static final Pattern appIdentifierPattern = Pattern.compile(APP_IDENTIFIER_PATTERN, Pattern.CASE_INSENSITIVE);
 
@@ -239,20 +235,20 @@ public class Util {
     }
 
     /**
-     * Retrieve the AvalancheHub AppIdentifier from the Manifest
+     * Retrieve the Avalanche AppIdentifier from the Manifest
      *
      * @param context usually your Activity
-     * @return the AvalancheHub AppIdentifier
+     * @return the Avalanche AppIdentifier
      */
     public static String getAppIdentifier(Context context) {
         return getManifestString(context, APP_IDENTIFIER_KEY);
     }
 
     /**
-     * Retrieve the AvalancheHub appSecret from the Manifest
+     * Retrieve the Avalanche appSecret from the Manifest
      *
      * @param context usually your Activity
-     * @return the AvalancheHub appSecret
+     * @return the Avalanche appSecret
      */
     public static String getAppSecret(Context context) {
         return getManifestString(context, APP_SECRET_KEY);
@@ -368,34 +364,6 @@ public class Util {
             }
         }
         return buffer.toString();
-    }
-
-    /**
-     * Returns the content of a file as a string.
-     */
-    public static String contentsOfFile(Context context, String filename) {
-        StringBuilder contents = new StringBuilder();
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new InputStreamReader(context.openFileInput(filename)));
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                contents.append(line);
-                contents.append(System.getProperty("line.separator"));
-            }
-        } catch (FileNotFoundException e) {
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException ignored) {
-                }
-            }
-        }
-
-        return contents.toString();
     }
 
     public static boolean isMainActivity(Activity activity) {

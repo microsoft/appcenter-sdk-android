@@ -6,7 +6,7 @@ import org.json.JSONStringer;
 
 import java.util.List;
 
-import avalanche.base.ingestion.models.InSessionLog;
+import avalanche.base.ingestion.models.LogWithProperties;
 import avalanche.base.ingestion.models.json.JSONUtils;
 import avalanche.base.ingestion.models.utils.LogUtils;
 import avalanche.crash.ingestion.models.json.BinaryFactory;
@@ -16,11 +16,11 @@ import avalanche.crash.ingestion.models.json.ThreadFactory;
 import static avalanche.base.ingestion.models.CommonProperties.ID;
 
 /**
- * Crash log.
+ * Error log.
  */
-public class CrashLog extends InSessionLog {
+public class ErrorLog extends LogWithProperties {
 
-    private static final String TYPE = "crash";
+    private static final String TYPE = "error";
 
     private static final String PROCESS = "process";
 
@@ -483,37 +483,37 @@ public class CrashLog extends InSessionLog {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
 
-        CrashLog crashLog = (CrashLog) o;
+        ErrorLog errorLog = (ErrorLog) o;
 
-        if (id != null ? !id.equals(crashLog.id) : crashLog.id != null) return false;
-        if (process != null ? !process.equals(crashLog.process) : crashLog.process != null)
+        if (id != null ? !id.equals(errorLog.id) : errorLog.id != null) return false;
+        if (process != null ? !process.equals(errorLog.process) : errorLog.process != null)
             return false;
-        if (processId != null ? !processId.equals(crashLog.processId) : crashLog.processId != null)
+        if (processId != null ? !processId.equals(errorLog.processId) : errorLog.processId != null)
             return false;
-        if (parentProcess != null ? !parentProcess.equals(crashLog.parentProcess) : crashLog.parentProcess != null)
+        if (parentProcess != null ? !parentProcess.equals(errorLog.parentProcess) : errorLog.parentProcess != null)
             return false;
-        if (parentProcessId != null ? !parentProcessId.equals(crashLog.parentProcessId) : crashLog.parentProcessId != null)
+        if (parentProcessId != null ? !parentProcessId.equals(errorLog.parentProcessId) : errorLog.parentProcessId != null)
             return false;
-        if (crashThread != null ? !crashThread.equals(crashLog.crashThread) : crashLog.crashThread != null)
+        if (crashThread != null ? !crashThread.equals(errorLog.crashThread) : errorLog.crashThread != null)
             return false;
-        if (applicationPath != null ? !applicationPath.equals(crashLog.applicationPath) : crashLog.applicationPath != null)
+        if (applicationPath != null ? !applicationPath.equals(errorLog.applicationPath) : errorLog.applicationPath != null)
             return false;
-        if (appLaunchTOffset != null ? !appLaunchTOffset.equals(crashLog.appLaunchTOffset) : crashLog.appLaunchTOffset != null)
+        if (appLaunchTOffset != null ? !appLaunchTOffset.equals(errorLog.appLaunchTOffset) : errorLog.appLaunchTOffset != null)
             return false;
-        if (exceptionType != null ? !exceptionType.equals(crashLog.exceptionType) : crashLog.exceptionType != null)
+        if (exceptionType != null ? !exceptionType.equals(errorLog.exceptionType) : errorLog.exceptionType != null)
             return false;
-        if (exceptionCode != null ? !exceptionCode.equals(crashLog.exceptionCode) : crashLog.exceptionCode != null)
+        if (exceptionCode != null ? !exceptionCode.equals(errorLog.exceptionCode) : errorLog.exceptionCode != null)
             return false;
-        if (exceptionAddress != null ? !exceptionAddress.equals(crashLog.exceptionAddress) : crashLog.exceptionAddress != null)
+        if (exceptionAddress != null ? !exceptionAddress.equals(errorLog.exceptionAddress) : errorLog.exceptionAddress != null)
             return false;
-        if (exceptionReason != null ? !exceptionReason.equals(crashLog.exceptionReason) : crashLog.exceptionReason != null)
+        if (exceptionReason != null ? !exceptionReason.equals(errorLog.exceptionReason) : errorLog.exceptionReason != null)
             return false;
-        if (fatal != null ? !fatal.equals(crashLog.fatal) : crashLog.fatal != null) return false;
-        if (threads != null ? !threads.equals(crashLog.threads) : crashLog.threads != null)
+        if (fatal != null ? !fatal.equals(errorLog.fatal) : errorLog.fatal != null) return false;
+        if (threads != null ? !threads.equals(errorLog.threads) : errorLog.threads != null)
             return false;
-        if (exceptions != null ? !exceptions.equals(crashLog.exceptions) : crashLog.exceptions != null)
+        if (exceptions != null ? !exceptions.equals(errorLog.exceptions) : errorLog.exceptions != null)
             return false;
-        return binaries != null ? binaries.equals(crashLog.binaries) : crashLog.binaries == null;
+        return binaries != null ? binaries.equals(errorLog.binaries) : errorLog.binaries == null;
 
     }
 
