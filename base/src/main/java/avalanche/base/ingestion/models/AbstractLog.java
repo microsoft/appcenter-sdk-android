@@ -5,6 +5,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+import java.util.UUID;
+
 import avalanche.base.ingestion.models.utils.LogUtils;
 
 import static avalanche.base.ingestion.models.CommonProperties.TYPE;
@@ -33,7 +35,7 @@ public abstract class AbstractLog implements Log {
     /**
      * The session identifier that was provided when the session was started.
      */
-    private String sid;
+    private UUID sid;
 
     @Override
     public long getToffset() {
@@ -50,7 +52,7 @@ public abstract class AbstractLog implements Log {
      *
      * @return the sid value
      */
-    public String getSid() {
+    public UUID getSid() {
         return this.sid;
     }
 
@@ -59,7 +61,7 @@ public abstract class AbstractLog implements Log {
      *
      * @param sid the sid value to set
      */
-    public void setSid(String sid) {
+    public void setSid(UUID sid) {
         this.sid = sid;
     }
 
@@ -75,7 +77,7 @@ public abstract class AbstractLog implements Log {
         if (!object.getString(TYPE).equals(getType()))
             throw new JSONException("Invalid type");
         setToffset(object.getLong(TOFFSET));
-        setSid(object.getString(SID));
+        setSid(UUID.fromString(object.getString(SID)));
     }
 
     @Override

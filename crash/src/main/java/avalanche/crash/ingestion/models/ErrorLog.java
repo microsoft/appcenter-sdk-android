@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import org.json.JSONStringer;
 
 import java.util.List;
+import java.util.UUID;
 
 import avalanche.base.ingestion.models.LogWithProperties;
 import avalanche.base.ingestion.models.json.JSONUtils;
@@ -55,7 +56,7 @@ public class ErrorLog extends LogWithProperties {
     /**
      * Crash identifier.
      */
-    private String id;
+    private UUID id;
 
     /**
      * Name of the process that crashes.
@@ -144,7 +145,7 @@ public class ErrorLog extends LogWithProperties {
      *
      * @return the id value
      */
-    public String getId() {
+    public UUID getId() {
         return this.id;
     }
 
@@ -153,7 +154,7 @@ public class ErrorLog extends LogWithProperties {
      *
      * @param id the id value to set
      */
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -430,7 +431,7 @@ public class ErrorLog extends LogWithProperties {
     @Override
     public void read(JSONObject object) throws JSONException {
         super.read(object);
-        setId(object.getString(ID));
+        setId(UUID.fromString(object.getString(ID)));
         setProcess(object.optString(PROCESS, null));
         setProcessId(JSONUtils.readInteger(object, PROCESS_ID));
         setParentProcess(object.optString(PARENT_PROCESS, null));
@@ -475,6 +476,9 @@ public class ErrorLog extends LogWithProperties {
         LogUtils.checkNotNull(ID, getId());
         LogUtils.checkNotNull(EXCEPTION_TYPE, getExceptionType());
         LogUtils.checkNotNull(EXCEPTION_REASON, getExceptionReason());
+        LogUtils.validateArray(getThreads());
+        LogUtils.validateArray(getExceptions());
+        LogUtils.validateArray(getBinaries());
     }
 
     @Override

@@ -1,5 +1,6 @@
 package avalanche.base.utils;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -20,6 +21,12 @@ import avalanche.base.ingestion.models.DeviceLog;
  * DeviceInfoHelper class to retrieve device information.
  */
 public class DeviceInfoHelper {
+
+    /**
+     * OS name.
+     */
+    private static final String OS_NAME = "Android";
+
     /**
      * Gets device information.
      *
@@ -35,10 +42,14 @@ public class DeviceInfoHelper {
             PackageManager packageManager = context.getPackageManager();
             packageInfo = packageManager.getPackageInfo(context.getPackageName(), 0);
             deviceLog.setAppVersion(packageInfo.versionName);
+            deviceLog.setAppBuild(String.valueOf(packageInfo.versionCode));
         } catch (Exception e) {
             AvalancheLog.error("Cannot retrieve package info", e);
             throw new DeviceInfoException("Cannot retrieve package info", e);
         }
+
+        /* Application namespace. */
+        deviceLog.setAppNamespace(context.getPackageName());
 
         /* Carrier info. */
         try {
@@ -58,7 +69,7 @@ public class DeviceInfoHelper {
 
         /* OS version. */
         deviceLog.setOsApiLevel(Build.VERSION.SDK_INT);
-        deviceLog.setOsName(Build.ID);
+        deviceLog.setOsName(OS_NAME);
         deviceLog.setOsVersion(Build.VERSION.RELEASE);
 
         /* Screen size. */
@@ -73,7 +84,6 @@ public class DeviceInfoHelper {
 
         /* Timezone offset in minutes (including DST). */
         deviceLog.setTimeZoneOffset(TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 60 / 1000);
-
         return deviceLog;
     }
 
@@ -83,7 +93,10 @@ public class DeviceInfoHelper {
      * @param context The context of the application.
      * @return A string with {@code <width>x<height>} format.
      */
+    @SuppressLint("SwitchIntDef")
+    @SuppressWarnings("SuspiciousNameCombination")
     private static String getScreenSize(Context context) {
+
         /* Guess resolution based on the natural device orientation */
         int screenWidth;
         int screenHeight;
@@ -110,6 +123,7 @@ public class DeviceInfoHelper {
      * Thrown when {@link DeviceInfoHelper} cannot retrieve device information from devices
      */
     public static class DeviceInfoException extends Exception {
+
         public DeviceInfoException(String detailMessage, Throwable throwable) {
             super(detailMessage, throwable);
         }

@@ -1,4 +1,4 @@
-package avalanche.base.ingestion;
+package avalanche.base.ingestion.http;
 
 import java.io.IOException;
 

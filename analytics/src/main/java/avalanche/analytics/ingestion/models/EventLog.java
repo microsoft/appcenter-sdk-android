@@ -4,6 +4,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+import java.util.UUID;
+
 import avalanche.base.ingestion.models.LogWithProperties;
 import avalanche.base.ingestion.models.utils.LogUtils;
 
@@ -20,7 +22,7 @@ public class EventLog extends LogWithProperties {
     /**
      * Unique identifier for this event.
      */
-    private String id;
+    private UUID id;
 
     /**
      * Name of the event.
@@ -37,7 +39,7 @@ public class EventLog extends LogWithProperties {
      *
      * @return the id value
      */
-    public String getId() {
+    public UUID getId() {
         return this.id;
     }
 
@@ -46,7 +48,7 @@ public class EventLog extends LogWithProperties {
      *
      * @param id the id value to set
      */
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -71,7 +73,7 @@ public class EventLog extends LogWithProperties {
     @Override
     public void read(JSONObject object) throws JSONException {
         super.read(object);
-        setId(object.getString(ID));
+        setId(UUID.fromString(object.getString(ID)));
         setName(object.getString(NAME));
     }
 

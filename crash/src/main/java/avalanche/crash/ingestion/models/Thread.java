@@ -81,6 +81,7 @@ public class Thread implements Model {
     public void validate() throws IllegalArgumentException {
         LogUtils.checkNotNull(ID, getId());
         LogUtils.checkNotNull(FRAMES, getFrames());
+        LogUtils.validateArray(getFrames());
     }
 
     @Override

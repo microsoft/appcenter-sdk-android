@@ -1,4 +1,4 @@
-package avalanche.base.ingestion.models.http;
+package avalanche.base.ingestion.http;
 
 import junit.framework.Assert;
 
@@ -16,18 +16,14 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
-import avalanche.base.ingestion.HttpException;
 import avalanche.base.ingestion.ServiceCall;
 import avalanche.base.ingestion.ServiceCallback;
-import avalanche.base.ingestion.http.AvalancheIngestionHttp;
-import avalanche.base.ingestion.http.UrlConnectionFactory;
 import avalanche.base.ingestion.models.DeviceLog;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
-import avalanche.base.ingestion.models.json.DefaultLogContainerSerializer;
-import avalanche.base.ingestion.models.json.LogContainerSerializer;
+import avalanche.base.ingestion.models.json.DefaultLogSerializer;
+import avalanche.base.ingestion.models.json.LogSerializer;
 import avalanche.base.utils.AvalancheLog;
 
 import static org.mockito.Mockito.any;
@@ -50,7 +46,7 @@ public class AvalancheIngestionHttpTest {
         /* Build some payload. */
         LogContainer container = new LogContainer();
         DeviceLog deviceLog = new DeviceLog();
-        deviceLog.setSid(UUID.randomUUID().toString());
+        deviceLog.setSid(UUID.randomUUID());
         deviceLog.setSdkVersion("1.2.3");
         deviceLog.setModel("S5");
         deviceLog.setOemName("HTC");
@@ -61,6 +57,7 @@ public class AvalancheIngestionHttpTest {
         deviceLog.setTimeZoneOffset(120);
         deviceLog.setScreenSize("800x600");
         deviceLog.setAppVersion("3.2.1");
+        deviceLog.setAppBuild("42");
         List<Log> logs = new ArrayList<>();
         logs.add(deviceLog);
         container.setLogs(logs);
@@ -77,20 +74,20 @@ public class AvalancheIngestionHttpTest {
         /* Configure API client. */
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp();
         httpClient.setBaseUrl("http://mock");
-        LogContainerSerializer serializer = new DefaultLogContainerSerializer();
-        httpClient.setLogContainerSerializer(serializer);
+        LogSerializer serializer = new DefaultLogSerializer();
+        httpClient.setLogSerializer(serializer);
         httpClient.setUrlConnectionFactory(urlConnectionFactory);
 
         /* Test calling code. */
-        String appId = "app000000";
+        UUID appKey = UUID.randomUUID();
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        httpClient.sendAsync(appId, installId, container, serviceCallback);
+        httpClient.sendAsync(appKey, installId, container, serviceCallback);
         verify(serviceCallback, timeout(100)).success();
         verifyNoMoreInteractions(serviceCallback);
-        verify(urlConnection).setRequestProperty("App-ID", appId);
+        verify(urlConnection).setRequestProperty("App-ID", appKey.toString());
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
-        Assert.assertEquals(serializer.serialize(container), buffer.toString("UTF-8"));
+        Assert.assertEquals(serializer.serializeContainer(container), buffer.toString("UTF-8"));
         verify(urlConnection).disconnect();
     }
 
@@ -100,7 +97,7 @@ public class AvalancheIngestionHttpTest {
         /* Build some payload. */
         LogContainer container = new LogContainer();
         DeviceLog deviceLog = new DeviceLog();
-        deviceLog.setSid(UUID.randomUUID().toString());
+        deviceLog.setSid(UUID.randomUUID());
         deviceLog.setSdkVersion("1.2.3");
         deviceLog.setModel("S5");
         deviceLog.setOemName("HTC");
@@ -111,6 +108,7 @@ public class AvalancheIngestionHttpTest {
         deviceLog.setTimeZoneOffset(120);
         deviceLog.setScreenSize("800x600");
         deviceLog.setAppVersion("3.2.1");
+        deviceLog.setAppBuild("42");
         List<Log> logs = new ArrayList<>();
         logs.add(deviceLog);
         container.setLogs(logs);
@@ -127,17 +125,15 @@ public class AvalancheIngestionHttpTest {
         /* Configure API client. */
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp();
         httpClient.setBaseUrl("http://mock");
-        LogContainerSerializer serializer = new DefaultLogContainerSerializer();
-        httpClient.setLogContainerSerializer(serializer);
+        LogSerializer serializer = new DefaultLogSerializer();
+        httpClient.setLogSerializer(serializer);
         httpClient.setUrlConnectionFactory(urlConnectionFactory);
 
         /* Test calling code. */
-        final Semaphore semaphore = new Semaphore(0);
-        final AtomicReference<Throwable> failure = new AtomicReference<>();
-        String appId = "app000000";
+        UUID appKey = UUID.randomUUID();
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        httpClient.sendAsync(appId, installId, container, serviceCallback);
+        httpClient.sendAsync(appKey, installId, container, serviceCallback);
         verify(serviceCallback, timeout(100)).failure(new HttpException(503));
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
@@ -148,9 +144,9 @@ public class AvalancheIngestionHttpTest {
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp();
         httpClient.setBaseUrl("http://mock");
         httpClient.setUrlConnectionFactory(mock(UrlConnectionFactory.class));
-        httpClient.setLogContainerSerializer(new DefaultLogContainerSerializer());
+        httpClient.setLogSerializer(new DefaultLogSerializer());
         final Semaphore semaphore = new Semaphore(0);
-        ServiceCall call = httpClient.sendAsync("app000000", UUID.randomUUID(), new LogContainer(), new ServiceCallback() {
+        ServiceCall call = httpClient.sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), new ServiceCallback() {
 
             @Override
             public void success() {
@@ -171,14 +167,14 @@ public class AvalancheIngestionHttpTest {
 
     @Test(expected = IllegalStateException.class)
     public void noUrl() {
-        new AvalancheIngestionHttp().sendAsync("app000000", UUID.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
+        new AvalancheIngestionHttp().sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void noUrlFactory() {
         AvalancheIngestionHttp http = new AvalancheIngestionHttp();
         http.setBaseUrl("");
-        http.sendAsync("app000000", UUID.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
+        http.sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
     }
 
 
@@ -187,20 +183,20 @@ public class AvalancheIngestionHttpTest {
         AvalancheIngestionHttp http = new AvalancheIngestionHttp();
         http.setBaseUrl("");
         http.setUrlConnectionFactory(mock(UrlConnectionFactory.class));
-        http.sendAsync("app000000", UUID.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
+        http.sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
     }
 
     @Test
     public void failedConnection() throws IOException {
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp();
         httpClient.setBaseUrl("http://mock");
-        httpClient.setLogContainerSerializer(new DefaultLogContainerSerializer());
+        httpClient.setLogSerializer(new DefaultLogSerializer());
         UrlConnectionFactory urlConnectionFactory = mock(UrlConnectionFactory.class);
         httpClient.setUrlConnectionFactory(urlConnectionFactory);
         IOException exception = new IOException("mock");
         when(urlConnectionFactory.openConnection(any(URL.class))).thenThrow(exception);
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        httpClient.sendAsync("app000000", UUID.randomUUID(), new LogContainer(), serviceCallback);
+        httpClient.sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), serviceCallback);
         verify(serviceCallback, timeout(1000)).failure(exception);
         verifyNoMoreInteractions(serviceCallback);
     }

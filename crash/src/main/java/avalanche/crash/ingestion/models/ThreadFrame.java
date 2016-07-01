@@ -8,7 +8,6 @@ import java.util.Map;
 
 import avalanche.base.ingestion.models.Model;
 import avalanche.base.ingestion.models.json.JSONUtils;
-import avalanche.base.ingestion.models.utils.LogUtils;
 
 /**
  * The ThreadFrame model.
@@ -107,7 +106,6 @@ public class ThreadFrame implements Model {
 
     @Override
     public void validate() throws IllegalArgumentException {
-        LogUtils.checkNotNull(ADDRESS, getAddress());
     }
 
     @Override

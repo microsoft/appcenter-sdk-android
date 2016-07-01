@@ -18,9 +18,7 @@ public class Binary implements Model {
 
     private static final String NAME = "name";
 
-    private static final String CPU_TYPE = "cpuType";
-
-    private static final String CPU_SUB_TYPE = "cpuSubType";
+    private static final String ARCHITECTURE = "architecture";
 
     private static final String UUID = "uuid";
 
@@ -42,14 +40,9 @@ public class Binary implements Model {
     private String name;
 
     /**
-     * The cpuType property.
+     * amd64, arm64, x86...
      */
-    private String cpuType;
-
-    /**
-     * The cpuSubType property.
-     */
-    private String cpuSubType;
+    private String architecture;
 
     /**
      * The uuid property.
@@ -116,39 +109,21 @@ public class Binary implements Model {
     }
 
     /**
-     * Get the cpuType value.
+     * Get the architecture value.
      *
-     * @return the cpuType value
+     * @return the architecture value
      */
-    public String getCpuType() {
-        return this.cpuType;
+    public String getArchitecture() {
+        return this.architecture;
     }
 
     /**
-     * Set the cpuType value.
+     * Set the architecture value.
      *
-     * @param cpuType the cpuType value to set
+     * @param architecture the architecture value to set
      */
-    public void setCpuType(String cpuType) {
-        this.cpuType = cpuType;
-    }
-
-    /**
-     * Get the cpuSubType value.
-     *
-     * @return the cpuSubType value
-     */
-    public String getCpuSubType() {
-        return this.cpuSubType;
-    }
-
-    /**
-     * Set the cpuSubType value.
-     *
-     * @param cpuSubType the cpuSubType value to set
-     */
-    public void setCpuSubType(String cpuSubType) {
-        this.cpuSubType = cpuSubType;
+    public void setArchitecture(String architecture) {
+        this.architecture = architecture;
     }
 
     /**
@@ -192,8 +167,7 @@ public class Binary implements Model {
         setStartAddress(object.getString(START_ADDRESS));
         setEndAddress(object.getString(END_ADDRESS));
         setName(object.getString(NAME));
-        setCpuType(object.getString(CPU_TYPE));
-        setCpuSubType(object.getString(CPU_SUB_TYPE));
+        setArchitecture(object.getString(ARCHITECTURE));
         setUuid(object.getString(UUID));
         setPath(object.getString(PATH));
     }
@@ -203,8 +177,7 @@ public class Binary implements Model {
         writer.key(START_ADDRESS).value(getStartAddress());
         writer.key(END_ADDRESS).value(getEndAddress());
         writer.key(NAME).value(getName());
-        writer.key(CPU_TYPE).value(getCpuType());
-        writer.key(CPU_SUB_TYPE).value(getCpuSubType());
+        writer.key(ARCHITECTURE).value(getArchitecture());
         writer.key(UUID).value(getUuid());
         writer.key(PATH).value(getPath());
     }
@@ -214,8 +187,7 @@ public class Binary implements Model {
         LogUtils.checkNotNull(START_ADDRESS, getStartAddress());
         LogUtils.checkNotNull(END_ADDRESS, getEndAddress());
         LogUtils.checkNotNull(NAME, getName());
-        LogUtils.checkNotNull(CPU_TYPE, getCpuType());
-        LogUtils.checkNotNull(CPU_SUB_TYPE, getCpuSubType());
+        LogUtils.checkNotNull(ARCHITECTURE, getArchitecture());
         LogUtils.checkNotNull(UUID, getUuid());
         LogUtils.checkNotNull(PATH, getPath());
     }
@@ -232,9 +204,7 @@ public class Binary implements Model {
         if (endAddress != null ? !endAddress.equals(binary.endAddress) : binary.endAddress != null)
             return false;
         if (name != null ? !name.equals(binary.name) : binary.name != null) return false;
-        if (cpuType != null ? !cpuType.equals(binary.cpuType) : binary.cpuType != null)
-            return false;
-        if (cpuSubType != null ? !cpuSubType.equals(binary.cpuSubType) : binary.cpuSubType != null)
+        if (architecture != null ? !architecture.equals(binary.architecture) : binary.architecture != null)
             return false;
         if (uuid != null ? !uuid.equals(binary.uuid) : binary.uuid != null) return false;
         return path != null ? path.equals(binary.path) : binary.path == null;
@@ -245,8 +215,7 @@ public class Binary implements Model {
         int result = startAddress != null ? startAddress.hashCode() : 0;
         result = 31 * result + (endAddress != null ? endAddress.hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (cpuType != null ? cpuType.hashCode() : 0);
-        result = 31 * result + (cpuSubType != null ? cpuSubType.hashCode() : 0);
+        result = 31 * result + (architecture != null ? architecture.hashCode() : 0);
         result = 31 * result + (uuid != null ? uuid.hashCode() : 0);
         result = 31 * result + (path != null ? path.hashCode() : 0);
         return result;
