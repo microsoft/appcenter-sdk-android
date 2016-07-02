@@ -17,7 +17,7 @@ import static android.net.ConnectivityManager.CONNECTIVITY_ACTION;
 /**
  * Network state helper.
  */
-public final class NetworkStateHelper implements Closeable {
+public class NetworkStateHelper implements Closeable {
 
     /**
      * Android context.

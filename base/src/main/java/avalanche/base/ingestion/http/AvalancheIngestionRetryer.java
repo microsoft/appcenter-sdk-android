@@ -13,6 +13,9 @@ import avalanche.base.ingestion.ServiceCallback;
 import avalanche.base.ingestion.models.LogContainer;
 import avalanche.base.utils.AvalancheLog;
 
+/**
+ * Decorator managing retries.
+ */
 public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
 
     /**
@@ -39,10 +42,21 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
      */
     private final Random mRandom = new Random();
 
+    /**
+     * Init with default retry policy.
+     *
+     * @param decoratedApi API to decorate.
+     */
     public AvalancheIngestionRetryer(AvalancheIngestion decoratedApi) {
         this(decoratedApi, RETRY_INTERVALS);
     }
 
+    /**
+     * Init.
+     *
+     * @param decoratedApi   API to decorate.
+     * @param retryIntervals retry intervals, array index is to use the value for each retry. When we used all the array values, we give up and forward the last error.
+     */
     protected AvalancheIngestionRetryer(AvalancheIngestion decoratedApi, long... retryIntervals) {
         super(decoratedApi);
         mRetryIntervals = retryIntervals;

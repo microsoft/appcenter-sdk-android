@@ -88,11 +88,12 @@ public class AvalancheIngestionNetworkStateHandler extends AvalancheIngestionDec
         @Override
         public synchronized void cancel() {
             mCalls.remove(this);
-            super.cancel();
+            pauseCall();
         }
 
-        public void pauseCall() {
-            mServiceCall.cancel();
+        public synchronized void pauseCall() {
+            if (mServiceCall != null)
+                mServiceCall.cancel();
         }
 
         @Override
