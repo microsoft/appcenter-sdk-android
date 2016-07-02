@@ -10,13 +10,12 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Date;
 
-import avalanche.base.AvalancheDataInterface;
 import avalanche.base.Constants;
 import avalanche.base.utils.AvalancheLog;
 
 import static avalanche.base.utils.StorageHelper.InternalStorage;
 
-public class CrashReport implements AvalancheDataInterface, Serializable {
+public class CrashReport implements Serializable {
 
     private static final String FIELD_FORMAT_VALUE = "Xamarin";
     private static final String FIELD_XAMARIN_CAUSED_BY = "Xamarin caused by: "; //Field that marks a Xamarin Exception
@@ -229,10 +228,5 @@ public class CrashReport implements AvalancheDataInterface, Serializable {
 
     public void setFormat(String format) {
         this.format = format;
-    }
-
-    @Override
-    public boolean isHighPriority() {
-        return true;
     }
 }

@@ -10,7 +10,6 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Date;
 import java.util.UUID;
 
-import avalanche.base.Channel;
 import avalanche.base.Constants;
 import avalanche.base.utils.AvalancheLog;
 import avalanche.crash.model.CrashReport;
@@ -170,8 +169,6 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
         }
 
         crashReport.writeCrashReport();
-
-        Channel.getInstance().handle(crashReport);
 
         if (listener != null) {
             try {

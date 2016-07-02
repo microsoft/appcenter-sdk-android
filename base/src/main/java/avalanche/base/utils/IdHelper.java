@@ -2,7 +2,6 @@ package avalanche.base.utils;
 
 import java.util.UUID;
 
-import static avalanche.base.utils.PrefStorageConstants.KEY_APP_ID;
 import static avalanche.base.utils.PrefStorageConstants.KEY_INSTALL_ID;
 
 public class IdHelper {
@@ -19,7 +18,7 @@ public class IdHelper {
         catch (Exception e) {
             AvalancheLog.warn("Unable to get installID from Shared Preferences");
             installId = UUID.randomUUID();
-            StorageHelper.PreferencesStorage.putString(KEY_APP_ID, installId.toString());
+            StorageHelper.PreferencesStorage.putString(KEY_INSTALL_ID, installId.toString());
         }
         return installId;
     }
