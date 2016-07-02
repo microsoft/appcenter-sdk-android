@@ -52,7 +52,7 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
     public ServiceCall sendAsync(UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
 
         /* Wrap the call with the retry logic and call delegate. */
-        RetryableCall retryableCall = new RetryableCall(appKey, installId, logContainer, serviceCallback);
+        RetryableCall retryableCall = new RetryableCall(mDecoratedApi, appKey, installId, logContainer, serviceCallback);
         retryableCall.run();
         return retryableCall;
     }
@@ -60,59 +60,21 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
     /**
      * Retry wrapper logic.
      */
-    private class RetryableCall implements Runnable, ServiceCall, ServiceCallback {
-
-        /**
-         * Wrapped parameter.
-         */
-        private final UUID mAppKey;
-
-        /**
-         * Wrapped parameter.
-         */
-        private final UUID mInstallId;
-
-        /**
-         * Wrapped parameter.
-         */
-        private final LogContainer mLogContainer;
-
-        /**
-         * Wrapped parameter.
-         */
-        private final ServiceCallback mServiceCallback;
-
-        /**
-         * Delegate call to be able to cancel the underlying request.
-         */
-        private ServiceCall mDecoratedServiceCall;
+    private class RetryableCall extends AvalancheIngestionCallDecorator {
 
         /**
          * Current retry counter. 0 means its the first try.
          */
         private int mRetryCount;
 
-        RetryableCall(UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
-            mAppKey = appKey;
-            mInstallId = installId;
-            mLogContainer = logContainer;
-            mServiceCallback = serviceCallback;
-        }
-
-        @Override
-        public synchronized void run() {
-            mDecoratedServiceCall = mDecoratedApi.sendAsync(mAppKey, mInstallId, mLogContainer, this);
+        RetryableCall(AvalancheIngestion decoratedApi, UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
+            super(decoratedApi, appKey, installId, logContainer, serviceCallback);
         }
 
         @Override
         public synchronized void cancel() {
             mHandler.removeCallbacks(this);
-            mDecoratedServiceCall.cancel();
-        }
-
-        @Override
-        public void success() {
-            mServiceCallback.success();
+            super.cancel();
         }
 
         @Override

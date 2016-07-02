@@ -240,4 +240,10 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             builder.append(buffer, 0, len);
         return builder.toString();
     }
+
+    @Override
+    public void close() throws IOException {
+
+        /* No-op. A decorator can take care of tracking calls to cancel. */
+    }
 }
