@@ -5,6 +5,12 @@ import android.os.Bundle;
 
 public abstract class DefaultAvalancheFeature implements AvalancheFeature {
 
+    private boolean mEnabled;
+
+    public DefaultAvalancheFeature() {
+        mEnabled = true;
+    }
+
     @Override
     public String getName() {
         return getClass().getName();
@@ -44,4 +50,15 @@ public abstract class DefaultAvalancheFeature implements AvalancheFeature {
     public void onActivityDestroyed(Activity activity) {
 
     }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        mEnabled = enabled;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return mEnabled;
+    }
+
 }
