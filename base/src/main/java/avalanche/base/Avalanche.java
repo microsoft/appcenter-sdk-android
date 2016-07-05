@@ -21,6 +21,7 @@ public final class Avalanche {
     private final Set<AvalancheFeature> mFeatures;
     private String mAppIdentifier;
     private WeakReference<Application> mApplicationWeakReference;
+    private boolean mEnabled;
 
     protected Avalanche() {
         mFeatures = new HashSet<>();
@@ -243,5 +244,18 @@ public final class Avalanche {
      */
     public String getAppIdentifier() {
         return mAppIdentifier;
+    }
+
+    public boolean isEnabled() {
+        return mEnabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        mEnabled = enabled;
+
+        // Set enabled state for every module
+        for (AvalancheFeature feature : mFeatures) {
+            feature.setEnabled(mEnabled);
+        }
     }
 }
