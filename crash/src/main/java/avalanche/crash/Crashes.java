@@ -1,9 +1,7 @@
 package avalanche.crash;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -23,9 +21,9 @@ import avalanche.base.utils.HttpURLConnectionBuilder;
 import avalanche.base.utils.Util;
 import avalanche.crash.model.CrashMetaData;
 import avalanche.crash.model.CrashReport;
-import avalanche.crash.model.CrashesUserInput;
 
 import static android.text.TextUtils.isEmpty;
+import static avalanche.base.Constants.BASE_URL;
 import static avalanche.base.utils.StorageHelper.InternalStorage;
 import static avalanche.base.utils.StorageHelper.PreferencesStorage;
 
@@ -39,7 +37,7 @@ public class Crashes extends DefaultAvalancheFeature {
     private static final int STACK_TRACES_FOUND_CONFIRMED = 2;
     private static Crashes sharedInstance = null;
     private CrashesListener mListener;
-    private String mEndpointUrl;
+    private static final String mEndpointUrl = BASE_URL;
     private WeakReference<Context> mContextWeakReference;
     private boolean mLazyExecution;
     private boolean mIsSubmitting = false;
@@ -80,13 +78,6 @@ public class Crashes extends DefaultAvalancheFeature {
         return Arrays.asList(PreferencesStorage.getString("ConfirmedFilenames", "").split("\\|"));
     }
 
-    private static String getAlertTitle(Context context) {
-        String appTitle = Util.getAppName(context);
-
-        String message = context.getString(R.string.avalanche_crash_dialog_title);
-        return String.format(message, appTitle);
-    }
-
     @Override
     public void onActivityResumed(Activity activity) {
         super.onActivityResumed(activity);
@@ -120,22 +111,7 @@ public class Crashes extends DefaultAvalancheFeature {
      * @return The configured crash manager for method chaining.
      */
     public Crashes register(Context context, CrashesListener listener) {
-        return register(context, Constants.BASE_URL, listener);
-    }
-
-    /**
-     * Registers the crash manager and handles existing crash logs.
-     * Avalanche app identifier is read from configuration values in manifest.
-     *
-     * @param context     The context to use. Usually your Activity object. If
-     *                    context is not an instance of Activity (or a subclass of it),
-     *                    crashes will be sent automatically.
-     * @param endpointUrl URL of the Avalanche endpoint to use.
-     * @param listener    Implement this for callback functions.
-     * @return The configured crash manager for method chaining.
-     */
-    public Crashes register(Context context, String endpointUrl, CrashesListener listener) {
-        return register(context, endpointUrl, listener, false);
+        return register(context, listener, false);
     }
 
     /**
@@ -145,15 +121,13 @@ public class Crashes extends DefaultAvalancheFeature {
      * @param context       The context to use. Usually your Activity object. If
      *                      context is not an instance of Activity (or a subclass of it),
      *                      crashes will be sent automatically.
-     * @param endpointUrl   URL of the Avalanche endpoint to use.
      * @param listener      Implement this for callback functions.
      * @param lazyExecution Whether the manager should execute lazily, e.g. not check for crashes right away.
      * @return
      */
-    public Crashes register(Context context, String endpointUrl, CrashesListener listener, boolean lazyExecution) {
+    public Crashes register(Context context, CrashesListener listener, boolean lazyExecution) {
         mContextWeakReference = new WeakReference<>(context);
         mListener = listener;
-        mEndpointUrl = endpointUrl;
         mLazyExecution = lazyExecution;
 
         initialize();
@@ -199,11 +173,7 @@ public class Crashes extends DefaultAvalancheFeature {
                 mListener.onNewCrashesFound();
             }
 
-            if (!autoSend) {
-                showDialog(mContextWeakReference);
-            } else {
-                sendCrashes();
-            }
+            sendCrashes();
         } else if (foundOrSend == STACK_TRACES_FOUND_CONFIRMED) {
             if (mListener != null) {
                 mListener.onConfirmedCrashesFound();
@@ -284,38 +254,12 @@ public class Crashes extends DefaultAvalancheFeature {
 
                         AvalancheLog.debug("Transmitting crash data: \n" + stacktrace);
 
-                        // Retrieve user ID and contact information if given
-                        String userID = InternalStorage.read(filename.replace(".stacktrace", ".user"));
-                        String contact = InternalStorage.read(filename.replace(".stacktrace", ".contact"));
-
-                        if (crashMetaData != null) {
-                            final String crashMetaDataUserID = crashMetaData.getUserID();
-                            if (!isEmpty(crashMetaDataUserID)) {
-                                userID = crashMetaDataUserID;
-                            }
-                            final String crashMetaDataContact = crashMetaData.getUserEmail();
-                            if (!isEmpty(crashMetaDataContact)) {
-                                contact = crashMetaDataContact;
-                            }
-                        }
-
-                        // Append application log to user provided description if present, if not, just send application log
-                        final String applicationLog = InternalStorage.read(filename.replace(".stacktrace", ".description"));
-                        String description = crashMetaData != null ? crashMetaData.getUserDescription() : "";
-                        if (!isEmpty(applicationLog)) {
-                            if (!isEmpty(description)) {
-                                description = String.format("%s\n\nLog:\n%s", description, applicationLog);
-                            } else {
-                                description = String.format("Log:\n%s", applicationLog);
-                            }
-                        }
-
                         Map<String, String> parameters = new HashMap<String, String>();
 
                         parameters.put("raw", stacktrace);
-                        parameters.put("userID", userID);
-                        parameters.put("contact", contact);
-                        parameters.put("description", description);
+                        parameters.put("userID", "");
+                        parameters.put("contact", "");
+                        parameters.put("description", "");
                         parameters.put("sdk", Constants.SDK_NAME);
                         parameters.put("sdk_version", BuildConfig.VERSION_NAME);
 
@@ -341,13 +285,11 @@ public class Crashes extends DefaultAvalancheFeature {
 
                         if (mListener != null) {
                             mListener.onCrashesSent();
-                            deleteRetryCounter(list[index], mListener.getMaxRetryAttempts());
                         }
                     } else {
                         AvalancheLog.debug("Transmission failed, will retry on next register() call");
                         if (mListener != null) {
                             mListener.onCrashesNotSent();
-                            updateRetryCounter(list[index], mListener.getMaxRetryAttempts());
                         }
                     }
                 }
@@ -355,90 +297,6 @@ public class Crashes extends DefaultAvalancheFeature {
         }
     }
 
-    /**
-     * Shows a dialog to ask the user whether he wants to send crash reports to
-     * Avalanche or delete them.
-     */
-    private void showDialog(final WeakReference<Context> weakContext) {
-        Context context = null;
-        if (weakContext != null) {
-            context = weakContext.get();
-        }
-
-        if (context == null) {
-            return;
-        }
-
-        if (mListener != null && mListener.onHandleAlertView()) {
-            return;
-        }
-
-        final boolean ignoreDefaultHandler = isIgnoreDefaultHandler();
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        String alertTitle = getAlertTitle(context);
-        builder.setTitle(alertTitle);
-        builder.setMessage(R.string.avalanche_crash_dialog_message);
-
-        builder.setNegativeButton(R.string.avalanche_crash_dialog_negative_button, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                handleUserInput(CrashesUserInput.CrashManagerUserInputDontSend, null, mListener, weakContext, ignoreDefaultHandler);
-            }
-        });
-
-        builder.setNeutralButton(R.string.avalanche_crash_dialog_neutral_button, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                handleUserInput(CrashesUserInput.CrashManagerUserInputAlwaysSend, null, mListener, weakContext, ignoreDefaultHandler);
-            }
-        });
-
-        builder.setPositiveButton(R.string.avalanche_crash_dialog_positive_button, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                handleUserInput(CrashesUserInput.CrashManagerUserInputSend, null, mListener,
-                        weakContext, ignoreDefaultHandler);
-            }
-        });
-
-        builder.create().show();
-    }
-
-    /**
-     * Provides an interface to pass user input from a custom alert to a crash report
-     *
-     * @param userInput            Defines the users action whether to send, always send, or not to send the crash report.
-     * @param userProvidedMetaData The content of this optional CrashMetaData instance will be attached to the crash report
-     *                             and allows to ask the user for e.g. additional comments or info.
-     * @param listener             an optional crash manager listener to use.
-     * @param weakContext          The context to use. Usually your Activity object.
-     * @param ignoreDefaultHandler whether to ignore the default exception handler.
-     * @return true if the input is a valid option and successfully triggered further processing of the crash report.
-     * @see CrashesUserInput
-     * @see CrashMetaData
-     * @see CrashesListener
-     */
-    public boolean handleUserInput(final CrashesUserInput userInput,
-                                   final CrashMetaData userProvidedMetaData, final CrashesListener listener,
-                                   final WeakReference<Context> weakContext, final boolean ignoreDefaultHandler) {
-        switch (userInput) {
-            case CrashManagerUserInputDontSend:
-                if (listener != null) {
-                    listener.onUserDeniedCrashes();
-                }
-
-                deleteStackTraces();
-                registerExceptionHandler();
-                return true;
-            case CrashManagerUserInputAlwaysSend:
-                PreferencesStorage.putBoolean(ALWAYS_SEND_KEY, true);
-                sendCrashes(userProvidedMetaData);
-                return true;
-            case CrashManagerUserInputSend:
-                sendCrashes(userProvidedMetaData);
-                return true;
-            default:
-                return false;
-        }
-    }
 
     long getInitializeTimestamp() {
         return mInitializeTimestamp;
@@ -553,31 +411,6 @@ public class Crashes extends DefaultAvalancheFeature {
 
         String description = filename.replace(".stacktrace", ".description");
         InternalStorage.delete(description);
-    }
-
-    /**
-     * Update the retry attempts count for this crash stacktrace.
-     */
-    private void updateRetryCounter(String filename, int maxRetryAttempts) {
-        if (maxRetryAttempts == -1) {
-            return;
-        }
-
-        int retryCounter = PreferencesStorage.getInt("RETRY_COUNT: " + filename);
-        if (retryCounter >= maxRetryAttempts) {
-            deleteStackTrace(filename);
-            deleteRetryCounter(filename, maxRetryAttempts);
-        } else {
-            PreferencesStorage.putInt("RETRY_COUNT: " + filename, retryCounter + 1);
-        }
-    }
-
-    /**
-     * Delete the retry counter if stacktrace is uploaded or retry limit is
-     * reached.
-     */
-    private void deleteRetryCounter(String filename, int maxRetryAttempts) {
-        PreferencesStorage.remove("RETRY_COUNT: " + filename);
     }
 
     private boolean isIgnoreDefaultHandler() {
