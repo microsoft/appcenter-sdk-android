@@ -25,7 +25,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     /**
      * API Path.
      */
-    public static final String API_PATH = "/logs";
+    public static final String API_PATH = "/logs?api-version=1.0.0-preview20160705";
 
     /**
      * JSON Content-Type.
