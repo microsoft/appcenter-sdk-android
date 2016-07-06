@@ -16,7 +16,9 @@ import java.util.Set;
 import avalanche.base.utils.Util;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
@@ -71,6 +73,26 @@ public class AvalancheTest {
 
         assertNotNull(features);
         assertEquals(2, features.size());
+    }
+
+    @Test
+    public void avalancheFeaturesEnableTest() {
+        Avalanche.useFeatures(application, DummyFeature.class, AnotherDummyFeature.class);
+
+        Avalanche avalanche = Avalanche.getSharedInstance();
+        Set<AvalancheFeature> features = avalanche.getFeatures();
+
+        assertTrue(avalanche.isEnabled());
+        for (AvalancheFeature feature: features) {
+            assertTrue(feature.isEnabled());
+        }
+
+        avalanche.setEnabled(false);
+
+        assertFalse(avalanche.isEnabled());
+        for (AvalancheFeature feature : features) {
+            assertFalse(feature.isEnabled());
+        }
     }
 
     static class DummyFeature extends DefaultAvalancheFeature {
