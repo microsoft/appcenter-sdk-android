@@ -21,6 +21,7 @@ public final class Avalanche {
     private boolean mEnabled;
 
     protected Avalanche() {
+        mEnabled = true;
         mFeatures = new HashSet<>();
     }
 
