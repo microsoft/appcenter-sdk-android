@@ -107,10 +107,19 @@ public class NetworkStateHelperTest {
         verify(listener2).onNetworkStateUpdated(false);
         verify(listener2).onNetworkStateUpdated(true);
 
+        /* But then WIFI is disconnected. */
+        helper.removeListener(listener2);
+        NetworkStateHelper.Listener listener3 = mock(NetworkStateHelper.Listener.class);
+        helper.addListener(listener3);
+        when(networkInfo.getState()).thenReturn(NetworkInfo.State.DISCONNECTED);
+        receiver.onReceive(context, mock(Intent.class));
+        verify(listener3).onNetworkStateUpdated(false);
+
         /* Close and verify interactions. */
         helper.close();
         verify(context).unregisterReceiver(receiver);
         verifyNoMoreInteractions(listener);
         verifyNoMoreInteractions(listener2);
+        verifyNoMoreInteractions(listener3);
     }
 }
