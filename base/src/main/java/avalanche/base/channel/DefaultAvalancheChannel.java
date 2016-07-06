@@ -21,53 +21,101 @@ import avalanche.base.utils.PrefStorageConstants;
 import avalanche.base.utils.StorageHelper;
 
 public class DefaultAvalancheChannel implements AvalancheChannel {
-
+    /**
+     * Constant marking event of the error group
+     */
     public static final String GROUP_ERROR = "group_error";
+
+    /**
+     * Constant marking event of the analytics group
+     */
     public static final String GROUP_ANALYTICS = "group_analytics";
 
-
-    private static final String TAG = "DefaultChannel";
-
-    /**
-     * Number of metrics queue items which will trigger synchronization with the persistence layer.
-     */
-    private static final int MAX_BATCH_COUNT_ANALYTICS = 5;
-
-    /**
-     * Number of error queue items which will trigger synchronization with the persistence layer.
-     */
-    private static final int MAX_BATCH_COUNT_ERROR = 1;
-
-    /**
-     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
-     */
-    private static final int MAX_BATCH_INTERVAL_ANALYTICS = 3 * 1000;
-
-    /**
-     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
-     */
-    private static final int MAX_BATCH_INTERVAL_ERROR = 3 * 1000;
     /**
      * Synchronization lock.
      */
     private static final Object LOCK = new Object();
+
+    /**
+     * TAG used in logging
+     */
+    private final String TAG = "DefaultChannel";
+
+    /**
+     * Number of metrics queue items which will trigger synchronization with the persistence layer.
+     */
+    private final int MAX_BATCH_COUNT_ANALYTICS = 5;
+
+    /**
+     * Number of error queue items which will trigger synchronization with the persistence layer.
+     */
+    private final int MAX_BATCH_COUNT_ERROR = 1;
+
+    /**
+     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
+     */
+    private final int MAX_BATCH_INTERVAL_ANALYTICS = 3 * 1000;
+
+    /**
+     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
+     */
+    private final int MAX_BATCH_INTERVAL_ERROR = 3 * 1000;
+
+    /**
+     * Maximum number of pending event batches per event group.
+     */
+    private final int MAX_PENDING_COUNT = 3;
+
     /**
      * Timer to run scheduled tasks on for metrics queue.
      */
     private final Timer mAnalyticsTimer;
+
     /**
      * Timer to run scheduled tasks on for error queue.
      */
     private final Timer mErrorTimer;
+
+    /**
+     * The appKey that's required for forwarding to ingestion.
+     */
     private final UUID mAppKey;
+
+    /**
+     * The installId that's required for forwarding to ingestion.
+     */
     private final UUID mInstallId;
-    private final int MAX_PENDING_COUNT = 3;
+
+    /**
+     * The persistence object used to store events in the local storage.
+     */
     private final DefaultAvalanchePersistence mPersistence;
-    AvalancheIngestionHttp mIngestion;
+
+    /**
+     * The ingestion object used to send batches to the server
+     */
+    private final AvalancheIngestionHttp mIngestion;
+
+    /**
+     * Counter for error events
+     */
     private int errorCounter = 0;
+
+    /**
+     * Counter for analytics events
+     */
     private int analyticsCounter = 0;
+
+    /**
+     * ArrayList of batchIds for error batches
+     */
     private ArrayList<String> errorBatchIds = new ArrayList<>(0);
+
+    /**
+     * ArrayList of batchIds for analytics batches
+     */
     private ArrayList<String> analyticsBatchIds = new ArrayList<>(0);
+
     /**
      * Task to be scheduled for forwarding crashes at a certain max interval.
      */
@@ -76,7 +124,12 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * Task to be scheduled for forwarding metrics at a certain max interval.
      */
     private TriggerIngestionTask mForwardAnalyticsTask;
-    private boolean isDisabled;
+
+
+    /**
+     * Property that indicates disabled channel.
+     */
+    private boolean mDisabled;
 
     /**
      * Creates and initializes a new instance.
@@ -93,62 +146,39 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         mIngestion = new AvalancheIngestionHttp();
 
         //TODO trigger mIngestion at creation and reset disabled flag
-        isDisabled = false;
+        mDisabled = false;
 
-        triggerIngestion(GROUP_ERROR);
-        triggerIngestion(GROUP_ANALYTICS);
+        synchronize();
     }
 
-    @Override
-    public void enqueue(@NonNull Log log, @NonNull @GroupNameDef String queueName) {
-        if (log == null) {
-            AvalancheLog.warn(TAG, "Tried to enqueue empty log. Doing nothing.");
-            return;
-        }
-        try {
-            mPersistence.putLog(queueName, log);
-            if (!isDisabled) {
-                countAndTime(queueName);
-            } else {
-                AvalancheLog.warn(TAG, "Channel is disabled, event was saved to disk.");
-            }
-
-        } catch (AvalanchePersistence.PersistenceException e) {
-            //TODO (bereimol) add error handling?
-            AvalancheLog.warn(TAG, "Error persisting event with exception: " + e.toString());
-        }
-    }
-
-    private void countAndTime(@GroupNameDef String queueName) {
+    /**
+     * This will reset the counters and timers for the event groups and trigger ingestion immediatelly.
+     * Intended to be used after disabling and re-enabling the Channel.
+     */
+    public void synchronize() {
         synchronized (LOCK) {
-            if (queueName.equals(GROUP_ANALYTICS)) {
-                //Check if counter is 0, increase by 1 and kick of timer task
-                switch (analyticsCounter) {
-                    case 0:
-                        analyticsCounter = 1;
-                        mForwardAnalyticsTask = new TriggerIngestionTask(queueName);
-                        mAnalyticsTimer.schedule(mForwardAnalyticsTask, MAX_BATCH_INTERVAL_ANALYTICS);
-                        break;
-                    case MAX_BATCH_COUNT_ANALYTICS:
-                        //We have reached the max batch count. Trigger ingestion!
-                        triggerIngestion(GROUP_ANALYTICS);
-                        break;
-                    default:
-                        analyticsCounter = analyticsCounter + 1;
-                }
-            } else if (queueName.equals(GROUP_ERROR)) {
-                //Check if counter is 0, increase by 1 and kick of timertask
-                if (errorCounter == 0) {
-                    errorCounter = 1;
-                    mForwardErrorsTask = new TriggerIngestionTask(queueName);
-                    mErrorTimer.schedule(mForwardErrorsTask, MAX_BATCH_INTERVAL_ERROR);
-                } else if (errorCounter == MAX_BATCH_COUNT_ERROR) {
-                    //We have reached the max batch count. Trigger ingestion.
-                    triggerIngestion(GROUP_ERROR);
-                }
+            analyticsCounter = 0;
+            errorCounter = 0;
+            if (mAnalyticsTimer != null) {
+                mAnalyticsTimer.cancel();
             }
-
+            if (mErrorTimer != null) {
+                mErrorTimer.cancel();
+            }
+            triggerIngestion(GROUP_ANALYTICS);
+            triggerIngestion(GROUP_ERROR);
         }
+    }
+
+    /**
+     * Set the disabled flag. If true, the channel will continue to persist data but not forward any item to ingestion.
+     * The most common use-case would be to set it to true and enable sending again after the channel has disabled itself after receiving
+     * a recoverable error (most likely related to a server issue).
+     *
+     * @param disabled flag to disable the Channel.
+     */
+    public void setDisabled(boolean disabled) {
+        mDisabled = disabled;
     }
 
     /**
@@ -159,7 +189,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      *
      * @param groupName the group name
      */
-    private void triggerIngestion(@GroupNameDef @NonNull String groupName) {
+    protected void triggerIngestion(@GroupNameDef @NonNull String groupName) {
         if (TextUtils.isEmpty(groupName)) {
             return;
         }
@@ -230,6 +260,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
 
     private void ingestLogs(@NonNull final String groupName, @NonNull final String batchId, @NonNull LogContainer logContainer) {
+
+
         if (mAppKey == null) {
             AvalancheLog.error("Appkey is null");
             return;
@@ -289,7 +321,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
                 removeBatchIdSuccessful = isAnalytics ? analyticsBatchIds.remove(batchId) : errorBatchIds.remove(batchId);
                 if (!removeBatchIdSuccessful) {
                     AvalancheLog.warn(TAG, "Error removing batchId after recoverable error");
-                    isDisabled = true;
+                    mDisabled = true;
                 }
             } else {
                 mPersistence.deleteLog(groupName, batchId);
@@ -300,6 +332,90 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             }
         }
     }
+
+    @Override
+    public void enqueue(@NonNull Log log, @NonNull @GroupNameDef String queueName) {
+        if (log == null) {
+            AvalancheLog.warn(TAG, "Tried to enqueue empty log. Doing nothing.");
+            return;
+        }
+        try {
+            mPersistence.putLog(queueName, log);
+
+            //CIncrement counters and schedule ingestion
+            synchronized (LOCK) {
+                if (!mDisabled) {
+                    increment(queueName);
+                    scheduleIngestion(queueName);
+                } else {
+                    AvalancheLog.warn(TAG, "Channel is disabled, event was saved to disk.");
+                }
+            }
+        } catch (AvalanchePersistence.PersistenceException e) {
+            //TODO (bereimol) add error handling?
+            AvalancheLog.warn(TAG, "Error persisting event with exception: " + e.toString());
+        }
+    }
+
+    /**
+     * This will increment the counter for the event group.
+     * Intended to be used from inside a synchronized-block
+     *
+     * @param groupName The group name
+     */
+    protected void increment(@GroupNameDef String groupName) {
+        boolean isAnalytics = groupName.equals(GROUP_ANALYTICS);
+        final int maxBatchSize = isAnalytics ? MAX_BATCH_COUNT_ANALYTICS : MAX_BATCH_COUNT_ERROR;
+        int counter = isAnalytics ? analyticsCounter : errorCounter;
+
+        if (counter == 0) {
+            counter = 1;
+        } else if (counter == maxBatchSize) {
+            //don't increment as we have reached the maximum batch size
+            return;
+        } else {
+            counter = counter + 1;
+        }
+
+        if (isAnalytics) {
+            analyticsCounter = counter;
+        } else {
+            errorCounter = counter;
+        }
+    }
+
+    /**
+     * This will check the counters for each event group and will either trigger ingestion immediatelly or schedule ingestion at the
+     * interval specified for the group.
+     * Intended to be used from inside a synchronized-block.
+     *
+     * @param groupName the groupname
+     */
+    protected void scheduleIngestion(@GroupNameDef String groupName) {
+        boolean isAnalytics = groupName.equals(GROUP_ANALYTICS);
+
+        int counter = isAnalytics ? analyticsCounter : errorCounter;
+        int maxCount = isAnalytics ? MAX_BATCH_COUNT_ANALYTICS : MAX_BATCH_COUNT_ERROR;
+
+        if (counter == 0) {
+            //Check if counter is 0, increase by 1 and kick of timer task
+            if (isAnalytics) {
+                mForwardAnalyticsTask = new TriggerIngestionTask(groupName);
+                mAnalyticsTimer.schedule(mForwardAnalyticsTask, MAX_BATCH_INTERVAL_ANALYTICS);
+            } else {
+                mForwardErrorsTask = new TriggerIngestionTask(groupName);
+                mErrorTimer.schedule(mForwardErrorsTask, MAX_BATCH_INTERVAL_ERROR);
+            }
+        } else if (counter == maxCount) {
+            //We have reached the max batch count. Trigger ingestion.
+            if (isAnalytics) {
+                triggerIngestion(GROUP_ANALYTICS);
+            } else {
+                triggerIngestion(GROUP_ERROR);
+            }
+        }
+    }
+
 
     /**
      * Task to trigger ingestion after batch time interval has passed.
