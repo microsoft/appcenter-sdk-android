@@ -13,6 +13,9 @@ import avalanche.base.ingestion.ServiceCallback;
 import avalanche.base.ingestion.models.LogContainer;
 import avalanche.base.utils.AvalancheLog;
 
+/**
+ * Decorator managing retries.
+ */
 public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
 
     /**
@@ -39,10 +42,21 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
      */
     private final Random mRandom = new Random();
 
+    /**
+     * Init with default retry policy.
+     *
+     * @param decoratedApi API to decorate.
+     */
     public AvalancheIngestionRetryer(AvalancheIngestion decoratedApi) {
         this(decoratedApi, RETRY_INTERVALS);
     }
 
+    /**
+     * Init.
+     *
+     * @param decoratedApi   API to decorate.
+     * @param retryIntervals retry intervals, array index is to use the value for each retry. When we used all the array values, we give up and forward the last error.
+     */
     protected AvalancheIngestionRetryer(AvalancheIngestion decoratedApi, long... retryIntervals) {
         super(decoratedApi);
         mRetryIntervals = retryIntervals;
@@ -52,7 +66,7 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
     public ServiceCall sendAsync(UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
 
         /* Wrap the call with the retry logic and call delegate. */
-        RetryableCall retryableCall = new RetryableCall(appKey, installId, logContainer, serviceCallback);
+        RetryableCall retryableCall = new RetryableCall(mDecoratedApi, appKey, installId, logContainer, serviceCallback);
         retryableCall.run();
         return retryableCall;
     }
@@ -60,59 +74,21 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
     /**
      * Retry wrapper logic.
      */
-    private class RetryableCall implements Runnable, ServiceCall, ServiceCallback {
-
-        /**
-         * Wrapped parameter.
-         */
-        private final UUID mAppKey;
-
-        /**
-         * Wrapped parameter.
-         */
-        private final UUID mInstallId;
-
-        /**
-         * Wrapped parameter.
-         */
-        private final LogContainer mLogContainer;
-
-        /**
-         * Wrapped parameter.
-         */
-        private final ServiceCallback mServiceCallback;
-
-        /**
-         * Delegate call to be able to cancel the underlying request.
-         */
-        private ServiceCall mDecoratedServiceCall;
+    private class RetryableCall extends AvalancheIngestionCallDecorator {
 
         /**
          * Current retry counter. 0 means its the first try.
          */
         private int mRetryCount;
 
-        RetryableCall(UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
-            mAppKey = appKey;
-            mInstallId = installId;
-            mLogContainer = logContainer;
-            mServiceCallback = serviceCallback;
-        }
-
-        @Override
-        public synchronized void run() {
-            mDecoratedServiceCall = mDecoratedApi.sendAsync(mAppKey, mInstallId, mLogContainer, this);
+        RetryableCall(AvalancheIngestion decoratedApi, UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
+            super(decoratedApi, appKey, installId, logContainer, serviceCallback);
         }
 
         @Override
         public synchronized void cancel() {
             mHandler.removeCallbacks(this);
-            mDecoratedServiceCall.cancel();
-        }
-
-        @Override
-        public void success() {
-            mServiceCallback.success();
+            super.cancel();
         }
 
         @Override
