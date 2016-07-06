@@ -14,16 +14,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 import avalanche.base.ingestion.models.DeviceLog;
+import avalanche.base.utils.AvalancheLog;
 import avalanche.base.utils.DeviceInfoHelper;
+import avalanche.base.utils.NetworkStateHelper;
 import avalanche.sasquatch.R;
 
-public class DeviceInfoActivity extends AppCompatActivity {
+public class DeviceInfoActivity extends AppCompatActivity implements NetworkStateHelper.Listener {
     private static final String[] METHOD_BLACK_LIST = {"getClass", "getToffset", "getType"};
+
+    private NetworkStateHelper mNetworkStateHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_device_info);
+
+        mNetworkStateHelper = new NetworkStateHelper(this);
+        mNetworkStateHelper.addListener(this);
+        onNetworkStateUpdated(mNetworkStateHelper.isNetworkConnected());
 
         DeviceLog log;
         try {
@@ -49,6 +57,12 @@ public class DeviceInfoActivity extends AppCompatActivity {
         };
 
         ((ListView) findViewById(R.id.device_info_list_view)).setAdapter(adapter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        mNetworkStateHelper.removeListener(this);
+        super.onDestroy();
     }
 
     private List<DeviceInfoDisplayModel> getDeviceInfoDisplayModelList(DeviceLog log) {
@@ -79,6 +93,13 @@ public class DeviceInfoActivity extends AppCompatActivity {
             }
         }
         return false;
+    }
+
+    @Override
+    public void onNetworkStateUpdated(boolean connected) {
+        String message = "Network " + (connected ? "up" : "down");
+        AvalancheLog.verbose(message);
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     private class DeviceInfoDisplayModel {

@@ -160,7 +160,7 @@ public class NetworkStateHelper implements Closeable {
             boolean networkTypeChanged = previousNetworkType == null ? mNetworkType != null : !previousNetworkType.equals(mNetworkType);
             if (networkTypeChanged) {
                 boolean connected = isNetworkConnected();
-                if (connected)
+                if (connected && previousNetworkType != null)
                     notifyNetworkStateUpdated(false);
                 notifyNetworkStateUpdated(connected);
             }
