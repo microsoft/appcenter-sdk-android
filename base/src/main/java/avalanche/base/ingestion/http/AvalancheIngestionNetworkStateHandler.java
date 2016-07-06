@@ -115,16 +115,8 @@ public class AvalancheIngestionNetworkStateHandler extends AvalancheIngestionDec
              * Guard against multiple calls since this call can be retried on network state change.
              */
             if (mCalls.contains(this)) {
-
-                /*
-                 * Hide transient errors if the network is now down,
-                 * the call may have failed because of the network change before we could cancel.
-                 * We'll retry the call when network is up again.
-                 */
-                if (!HttpUtils.isRecoverableError(t) || mNetworkStateHelper.isNetworkConnected()) {
-                    mServiceCallback.failure(t);
-                    mCalls.remove(this);
-                }
+                mServiceCallback.failure(t);
+                mCalls.remove(this);
             }
         }
     }

@@ -5,6 +5,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -39,7 +40,9 @@ public class AvalancheNetworkStateHandlerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).success();
+                ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[3];
+                serviceCallback.success();
+                serviceCallback.success();
                 return call;
             }
         }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
@@ -53,6 +56,7 @@ public class AvalancheNetworkStateHandlerTest {
         decorator.sendAsync(appKey, installId, container, callback);
         verify(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
         verify(callback).success();
+        verifyNoMoreInteractions(callback);
 
         /* Close. */
         decorator.close();
@@ -73,7 +77,9 @@ public class AvalancheNetworkStateHandlerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).failure(new HttpException(503));
+                ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[3];
+                serviceCallback.failure(new HttpException(503));
+                serviceCallback.failure(new SocketException());
                 return call;
             }
         }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
@@ -87,6 +93,7 @@ public class AvalancheNetworkStateHandlerTest {
         decorator.sendAsync(appKey, installId, container, callback);
         verify(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
         verify(callback).failure(new HttpException(503));
+        verifyNoMoreInteractions(callback);
 
         /* Close. */
         decorator.close();
@@ -188,6 +195,7 @@ public class AvalancheNetworkStateHandlerTest {
             @Override
             public ServiceCall answer(final InvocationOnMock invocationOnMock) throws Throwable {
                 Thread thread = new Thread() {
+
                     @Override
                     public void run() {
                         try {
@@ -204,6 +212,7 @@ public class AvalancheNetworkStateHandlerTest {
             }
         }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
         doAnswer(new Answer() {
+
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 threadRef.get().interrupt();
@@ -251,6 +260,7 @@ public class AvalancheNetworkStateHandlerTest {
             @Override
             public ServiceCall answer(final InvocationOnMock invocationOnMock) throws Throwable {
                 Thread thread = new Thread() {
+
                     @Override
                     public void run() {
                         try {
@@ -267,6 +277,7 @@ public class AvalancheNetworkStateHandlerTest {
             }
         }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
         doAnswer(new Answer() {
+
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 threadRef.get().interrupt();
@@ -311,6 +322,7 @@ public class AvalancheNetworkStateHandlerTest {
             @Override
             public ServiceCall answer(final InvocationOnMock invocationOnMock) throws Throwable {
                 Thread thread = new Thread() {
+
                     @Override
                     public void run() {
                         try {
@@ -327,6 +339,7 @@ public class AvalancheNetworkStateHandlerTest {
             }
         }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
         doAnswer(new Answer() {
+
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 threadRef.get().interrupt();
@@ -340,7 +353,7 @@ public class AvalancheNetworkStateHandlerTest {
 
         /* Test call. */
         AvalancheIngestionNetworkStateHandler decorator = new AvalancheIngestionNetworkStateHandler(ingestion, networkStateHelper);
-        ServiceCall decoratorCall = decorator.sendAsync(appKey, installId, container, callback);
+        decorator.sendAsync(appKey, installId, container, callback);
 
         /* Wait some time. */
         Thread.sleep(100);
