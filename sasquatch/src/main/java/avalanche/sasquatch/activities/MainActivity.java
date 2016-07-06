@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
 
         Avalanche.useFeatures(getApplication());
 
-        AvalancheLog.setLogLevel(Log.INFO);
+        AvalancheLog.setLogLevel(Log.VERBOSE);
 
         boolean crashManagerAvailable = Avalanche.isFeatureAvailable(Avalanche.FEATURE_CRASH);
 

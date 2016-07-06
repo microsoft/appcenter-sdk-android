@@ -25,7 +25,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     /**
      * API Path.
      */
-    public static final String API_PATH = "/logs";
+    public static final String API_PATH = "/logs?api-version=1.0.0-preview20160705";
 
     /**
      * JSON Content-Type.
@@ -239,5 +239,11 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
         while ((len = in.read(buffer)) > 0)
             builder.append(buffer, 0, len);
         return builder.toString();
+    }
+
+    @Override
+    public void close() throws IOException {
+
+        /* No-op. A decorator can take care of tracking calls to cancel. */
     }
 }

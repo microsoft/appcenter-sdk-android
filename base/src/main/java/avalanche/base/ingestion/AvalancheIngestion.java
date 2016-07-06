@@ -1,5 +1,6 @@
 package avalanche.base.ingestion;
 
+import java.io.Closeable;
 import java.util.UUID;
 
 import avalanche.base.ingestion.models.LogContainer;
@@ -7,7 +8,7 @@ import avalanche.base.ingestion.models.LogContainer;
 /**
  * The interface for AvalancheIngestion class.
  */
-public interface AvalancheIngestion {
+public interface AvalancheIngestion extends Closeable {
 
     /**
      * Send logs to the Ingestion service.

@@ -43,7 +43,7 @@ public class AvalancheIngestionRetryerTest {
                 return call;
             }
         }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(ingestion);
+        AvalancheIngestion retryer = new AvalancheIngestionRetryer(ingestion);
         retryer.sendAsync(null, null, null, callback);
         verify(callback).success();
         verifyNoMoreInteractions(callback);
@@ -69,7 +69,7 @@ public class AvalancheIngestionRetryerTest {
                 return mock(ServiceCall.class);
             }
         }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(ingestion, 100);
+        AvalancheIngestion retryer = new AvalancheIngestionRetryer(ingestion, 100);
         retryer.sendAsync(null, null, null, callback);
         Thread.sleep(40);
         verify(callback, times(0)).success();
@@ -97,7 +97,7 @@ public class AvalancheIngestionRetryerTest {
                 return mock(ServiceCall.class);
             }
         }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(ingestion, 100, 200);
+        AvalancheIngestion retryer = new AvalancheIngestionRetryer(ingestion, 100, 200);
         retryer.sendAsync(null, null, null, callback);
         Thread.sleep(40);
         verify(callback, times(0)).failure(any(Throwable.class));
@@ -118,7 +118,7 @@ public class AvalancheIngestionRetryerTest {
                 return call;
             }
         }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(ingestion, 100, 200);
+        AvalancheIngestion retryer = new AvalancheIngestionRetryer(ingestion, 100, 200);
         retryer.sendAsync(null, null, null, callback);
         Thread.sleep(500);
         verify(callback).failure(new HttpException(429));
@@ -139,7 +139,7 @@ public class AvalancheIngestionRetryerTest {
                 return call;
             }
         }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(ingestion, 100, 200);
+        AvalancheIngestion retryer = new AvalancheIngestionRetryer(ingestion, 100, 200);
         retryer.sendAsync(null, null, null, callback).cancel();
         Thread.sleep(500);
         verifyNoMoreInteractions(callback);
