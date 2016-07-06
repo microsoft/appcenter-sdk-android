@@ -4,8 +4,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+import java.util.UUID;
+
 import avalanche.base.ingestion.models.Model;
 import avalanche.base.ingestion.models.utils.LogUtils;
+
+import static avalanche.base.ingestion.models.CommonProperties.ID;
 
 /**
  * The Binary model.
@@ -20,9 +24,12 @@ public class Binary implements Model {
 
     private static final String ARCHITECTURE = "architecture";
 
-    private static final String UUID = "uuid";
-
     private static final String PATH = "path";
+
+    /**
+     * The id property.
+     */
+    private UUID id;
 
     /**
      * The startAddress property.
@@ -45,14 +52,27 @@ public class Binary implements Model {
     private String architecture;
 
     /**
-     * The uuid property.
-     */
-    private String uuid;
-
-    /**
      * The path property.
      */
     private String path;
+
+    /**
+     * Get the id value.
+     *
+     * @return the id value
+     */
+    public UUID getId() {
+        return this.id;
+    }
+
+    /**
+     * Set the id value.
+     *
+     * @param id the id value to set
+     */
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
     /**
      * Get the startAddress value.
@@ -127,24 +147,6 @@ public class Binary implements Model {
     }
 
     /**
-     * Get the uuid value.
-     *
-     * @return the uuid value
-     */
-    public String getUuid() {
-        return this.uuid;
-    }
-
-    /**
-     * Set the uuid value.
-     *
-     * @param uuid the uuid value to set
-     */
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
-    }
-
-    /**
      * Get the path value.
      *
      * @return the path value
@@ -164,31 +166,31 @@ public class Binary implements Model {
 
     @Override
     public void read(JSONObject object) throws JSONException {
+        setId(UUID.fromString(object.getString(ID)));
         setStartAddress(object.getString(START_ADDRESS));
         setEndAddress(object.getString(END_ADDRESS));
         setName(object.getString(NAME));
         setArchitecture(object.getString(ARCHITECTURE));
-        setUuid(object.getString(UUID));
         setPath(object.getString(PATH));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
+        writer.key(ID).value(getId());
         writer.key(START_ADDRESS).value(getStartAddress());
         writer.key(END_ADDRESS).value(getEndAddress());
         writer.key(NAME).value(getName());
         writer.key(ARCHITECTURE).value(getArchitecture());
-        writer.key(UUID).value(getUuid());
         writer.key(PATH).value(getPath());
     }
 
     @Override
     public void validate() throws IllegalArgumentException {
+        LogUtils.checkNotNull(ID, getId());
         LogUtils.checkNotNull(START_ADDRESS, getStartAddress());
         LogUtils.checkNotNull(END_ADDRESS, getEndAddress());
         LogUtils.checkNotNull(NAME, getName());
         LogUtils.checkNotNull(ARCHITECTURE, getArchitecture());
-        LogUtils.checkNotNull(UUID, getUuid());
         LogUtils.checkNotNull(PATH, getPath());
     }
 
@@ -199,6 +201,7 @@ public class Binary implements Model {
 
         Binary binary = (Binary) o;
 
+        if (id != null ? !id.equals(binary.id) : binary.id != null) return false;
         if (startAddress != null ? !startAddress.equals(binary.startAddress) : binary.startAddress != null)
             return false;
         if (endAddress != null ? !endAddress.equals(binary.endAddress) : binary.endAddress != null)
@@ -206,17 +209,16 @@ public class Binary implements Model {
         if (name != null ? !name.equals(binary.name) : binary.name != null) return false;
         if (architecture != null ? !architecture.equals(binary.architecture) : binary.architecture != null)
             return false;
-        if (uuid != null ? !uuid.equals(binary.uuid) : binary.uuid != null) return false;
         return path != null ? path.equals(binary.path) : binary.path == null;
     }
 
     @Override
     public int hashCode() {
-        int result = startAddress != null ? startAddress.hashCode() : 0;
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (startAddress != null ? startAddress.hashCode() : 0);
         result = 31 * result + (endAddress != null ? endAddress.hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (architecture != null ? architecture.hashCode() : 0);
-        result = 31 * result + (uuid != null ? uuid.hashCode() : 0);
         result = 31 * result + (path != null ? path.hashCode() : 0);
         return result;
     }
