@@ -1,8 +1,10 @@
 package avalanche.base.channel;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
+import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -39,32 +41,32 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * TAG used in logging
      */
-    private final String TAG = "DefaultChannel";
+    private static final String TAG = "DefaultChannel";
 
     /**
      * Number of metrics queue items which will trigger synchronization with the persistence layer.
      */
-    private final int MAX_BATCH_COUNT_ANALYTICS = 5;
+    private static final int MAX_BATCH_ANALYTICS_COUNT = 5;
 
     /**
      * Number of error queue items which will trigger synchronization with the persistence layer.
      */
-    private final int MAX_BATCH_COUNT_ERROR = 1;
+    private static final int MAX_BATCH_ERROR_COUNT = 1;
 
     /**
      * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
      */
-    private final int MAX_BATCH_INTERVAL_ANALYTICS = 3 * 1000;
+    private static final int MAX_BATCH_INTERVAL_ANALYTICS = 3 * 1000;
 
     /**
      * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
      */
-    private final int MAX_BATCH_INTERVAL_ERROR = 3 * 1000;
+    private static final int MAX_BATCH_INTERVAL_ERROR = 3 * 1000;
 
     /**
      * Maximum number of pending event batches per event group.
      */
-    private final int MAX_PENDING_COUNT = 3;
+    private static final int MAX_PENDING_COUNT = 3;
 
     /**
      * Timer to run scheduled tasks on for metrics queue.
@@ -79,7 +81,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * The appKey that's required for forwarding to ingestion.
      */
-    private final UUID mAppKey;
+    private UUID mAppKey = null;
 
     /**
      * The installId that's required for forwarding to ingestion.
@@ -89,7 +91,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * The persistence object used to store events in the local storage.
      */
-    private final DefaultAvalanchePersistence mPersistence;
+    private final AvalanchePersistence mPersistence;
 
     /**
      * The ingestion object used to send batches to the server
@@ -99,22 +101,22 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * Counter for error events
      */
-    private int errorCounter = 0;
+    private int mErrorCounter = 0;
 
     /**
      * Counter for analytics events
      */
-    private int analyticsCounter = 0;
+    private int mAnalyticsCounter = 0;
 
     /**
      * ArrayList of batchIds for error batches
      */
-    private ArrayList<String> errorBatchIds = new ArrayList<>(0);
+    private final AbstractCollection<String> errorBatchIds = new ArrayList<>(0);
 
     /**
      * ArrayList of batchIds for analytics batches
      */
-    private ArrayList<String> analyticsBatchIds = new ArrayList<>(0);
+    private final AbstractCollection<String> analyticsBatchIds = new ArrayList<>(0);
 
     /**
      * Task to be scheduled for forwarding crashes at a certain max interval.
@@ -134,31 +136,33 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * Creates and initializes a new instance.
      */
-    public DefaultAvalancheChannel() {
+    public DefaultAvalancheChannel(Context context) {
         mAnalyticsTimer = new Timer("Avalanche Metrics Queue", true);
         mErrorTimer = new Timer("Avalanche Error Queue", true);
 
+        StorageHelper.initialize(context);
         String appKeyString = StorageHelper.PreferencesStorage.getString(PrefStorageConstants.KEY_APP_KEY);
-        mAppKey = UUID.fromString(appKeyString);
-
+        if(!TextUtils.isEmpty(appKeyString)) {
+            mAppKey = UUID.fromString(appKeyString);
+        }
         mInstallId = IdHelper.getInstallId();
         mPersistence = new DefaultAvalanchePersistence();
         mIngestion = new AvalancheIngestionHttp();
 
-        //TODO trigger mIngestion at creation and reset disabled flag
         mDisabled = false;
 
+        //Trigger ingestion immediately to make sure we don't have any unsent files on disk.
         synchronize();
     }
 
     /**
-     * This will reset the counters and timers for the event groups and trigger ingestion immediatelly.
+     * This will reset the counters and timers for the event groups and trigger ingestion immediately.
      * Intended to be used after disabling and re-enabling the Channel.
      */
     public void synchronize() {
         synchronized (LOCK) {
-            analyticsCounter = 0;
-            errorCounter = 0;
+            mAnalyticsCounter = 0;
+            mErrorCounter = 0;
             if (mAnalyticsTimer != null) {
                 mAnalyticsTimer.cancel();
             }
@@ -200,14 +204,14 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             boolean isAnalytics = groupName.equals(GROUP_ANALYTICS);
             if (isAnalytics) {
                 //Reset the counters
-                analyticsCounter = 0;
+                mAnalyticsCounter = 0;
                 if (mForwardAnalyticsTask != null) {
                     mForwardAnalyticsTask.cancel();
                 }
 
-                limit = MAX_BATCH_COUNT_ANALYTICS;
+                limit = MAX_BATCH_ANALYTICS_COUNT;
 
-                //Check if we haved reached the maximum number of pending batches, log to LogCat and don't trigger another sending
+                //Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending
                 if (analyticsBatchIds.size() == MAX_PENDING_COUNT) {
                     AvalancheLog.info(TAG, "Already sending 3 batches of analytics data to the server.");
 
@@ -216,13 +220,13 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
             } else {
                 //Reset the counters
-                errorCounter = 0;
+                mErrorCounter = 0;
                 if (mForwardErrorsTask != null) {
                     mForwardErrorsTask.cancel();
                 }
                 //Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending
 
-                limit = MAX_BATCH_COUNT_ERROR;
+                limit = MAX_BATCH_ERROR_COUNT;
 
                 if (errorBatchIds.size() == MAX_PENDING_COUNT) {
                     AvalancheLog.info(TAG, "Already sending 3 batches of error data to the server.");
@@ -263,7 +267,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
 
         if (mAppKey == null) {
-            AvalancheLog.error("Appkey is null");
+            AvalancheLog.error("AppKey is null");
             return;
         }
         if (mInstallId == null) {
@@ -365,8 +369,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     protected void increment(@GroupNameDef String groupName) {
         boolean isAnalytics = groupName.equals(GROUP_ANALYTICS);
-        final int maxBatchSize = isAnalytics ? MAX_BATCH_COUNT_ANALYTICS : MAX_BATCH_COUNT_ERROR;
-        int counter = isAnalytics ? analyticsCounter : errorCounter;
+        final int maxBatchSize = isAnalytics ? MAX_BATCH_ANALYTICS_COUNT : MAX_BATCH_ERROR_COUNT;
+        int counter = isAnalytics ? mAnalyticsCounter : mErrorCounter;
 
         if (counter == 0) {
             counter = 1;
@@ -378,9 +382,9 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         }
 
         if (isAnalytics) {
-            analyticsCounter = counter;
+            mAnalyticsCounter = counter;
         } else {
-            errorCounter = counter;
+            mErrorCounter = counter;
         }
     }
 
@@ -389,13 +393,13 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * interval specified for the group.
      * Intended to be used from inside a synchronized-block.
      *
-     * @param groupName the groupname
+     * @param groupName the group name
      */
     protected void scheduleIngestion(@GroupNameDef String groupName) {
         boolean isAnalytics = groupName.equals(GROUP_ANALYTICS);
 
-        int counter = isAnalytics ? analyticsCounter : errorCounter;
-        int maxCount = isAnalytics ? MAX_BATCH_COUNT_ANALYTICS : MAX_BATCH_COUNT_ERROR;
+        int counter = isAnalytics ? mAnalyticsCounter : mErrorCounter;
+        int maxCount = isAnalytics ? MAX_BATCH_ANALYTICS_COUNT : MAX_BATCH_ERROR_COUNT;
 
         if (counter == 0) {
             //Check if counter is 0, increase by 1 and kick of timer task
