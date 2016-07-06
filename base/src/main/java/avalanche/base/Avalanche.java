@@ -191,4 +191,8 @@ public final class Avalanche {
             feature.setEnabled(mEnabled);
         }
     }
+
+    protected Set<AvalancheFeature> getFeatures() {
+        return mFeatures;
+    }
 }
