@@ -72,26 +72,25 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     private final UUID mInstallId;
     /**
-     * The persistence object used to store events in the local storage.
-     */
-    private final AvalanchePersistence mPersistence;
-    /**
-     * The ingestion object used to send batches to the server
-     */
-    private final AvalancheIngestionHttp mIngestion;
-    /**
      * ArrayList of batchIds for error batches
      */
-    private final List<String> errorBatchIds = new ArrayList<>(0);
+    private final List<String> mErrorBatchIds = new ArrayList<>(0);
     /**
      * ArrayList of batchIds for analytics batches
      */
-    private final List<String> analyticsBatchIds = new ArrayList<>(0);
-
+    private final List<String> mAnalyticsBatchIds = new ArrayList<>(0);
     /**
      * Handler for triggering ingestion of events
      */
     private final Handler mIngestionHandler;
+    /**
+     * The persistence object used to store events in the local storage.
+     */
+    private AvalanchePersistence mPersistence;
+    /**
+     * The ingestion object used to send batches to the server
+     */
+    private AvalancheIngestionHttp mIngestion;
     /**
      * The appKey that's required for forwarding to ingestion.
      */
@@ -109,17 +108,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     private boolean mDisabled;
     /**
-     * Runnable that triggers ingestion of analytics data and triggers itself in ANALYTICS_INTERVAL
-     * amount of ms.
-     */
-    private final Runnable mAnalyticsRunnable = new Runnable() {
-        @Override
-        public void run() {
-            triggerIngestion(ANALYTICS_GROUP);
-            mIngestionHandler.postDelayed(this, ANALYTICS_INTERVAL);
-        }
-    };
-    /**
      * Runnable that triggers ingestion of error data and triggers itself in ERROR_INTERVAL
      * amount of ms.
      */
@@ -130,25 +118,60 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             mIngestionHandler.postDelayed(this, ERROR_INTERVAL);
         }
     };
+    /**
+     * Runnable that triggers ingestion of analytics data and triggers itself in ANALYTICS_INTERVAL
+     * amount of ms.
+     */
+    private final Runnable mAnalyticsRunnable = new Runnable() {
+        @Override
+        public void run() {
+            triggerIngestion(ANALYTICS_GROUP);
+            mIngestionHandler.postDelayed(this, ANALYTICS_INTERVAL);
+        }
+    };
 
     /**
      * Creates and initializes a new instance.
      */
-    public DefaultAvalancheChannel(Context context) {
+    public DefaultAvalancheChannel(Context context, @NonNull UUID appKey) {
         StorageHelper.initialize(context);
         String appKeyString = StorageHelper.PreferencesStorage.getString(PrefStorageConstants.KEY_APP_KEY);
-        if (!TextUtils.isEmpty(appKeyString)) {
-            mAppKey = UUID.fromString(appKeyString);
-        }
+        mAppKey = appKey;
+
         mInstallId = IdHelper.getInstallId();
         mPersistence = new DefaultAvalanchePersistence();
         mIngestion = new AvalancheIngestionHttp();
         mIngestionHandler = new Handler(Looper.getMainLooper());
 
         mDisabled = false;
+    }
 
-        //Trigger ingestion immediately to make sure we don't have any unsent files on disk.
-        synchronize();
+    void setAppKey(UUID appKey) {
+        mAppKey = appKey;
+    }
+
+    List<String> getErrorBatchIds() {
+        return mErrorBatchIds;
+    }
+
+    List<String> getAnalyticsBatchIds() {
+        return mAnalyticsBatchIds;
+    }
+    
+    int getErrorCounter() {
+        return mErrorCounter;
+    }
+
+    int getAnalyticsCounter() {
+        return mAnalyticsCounter;
+    }
+
+    void setPersistence(AvalanchePersistence persistence) {
+        this.mPersistence = persistence;
+    }
+
+    void setIngestion(AvalancheIngestionHttp ingestion) {
+        this.mIngestion = ingestion;
     }
 
     /**
@@ -169,7 +192,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      *
      * @param disabled flag to disable the Channel.
      */
-    public void setDisabled(boolean disabled) {
+    protected void setDisabled(boolean disabled) {
         mDisabled = disabled;
     }
 
@@ -199,7 +222,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
                 limit = ANALYTICS_COUNT;
 
                 //Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending
-                if (analyticsBatchIds.size() == MAX_PENDING_COUNT) {
+                if (mAnalyticsBatchIds.size() == MAX_PENDING_COUNT) {
                     AvalancheLog.info(TAG, "Already sending 3 batches of analytics data to the server.");
                     return;
                 }
@@ -214,7 +237,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
                 limit = ERROR_COUNT;
 
-                if (errorBatchIds.size() == MAX_PENDING_COUNT) {
+                if (mErrorBatchIds.size() == MAX_PENDING_COUNT) {
                     AvalancheLog.info(TAG, "Already sending 3 batches of error data to the server.");
                     return;
                 }
@@ -222,7 +245,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
             //Get a batch from persistence
             ArrayList<Log> list = new ArrayList<>(0);
-            final String batchId = mPersistence.getLogs(groupName, limit, list);
+
+            String batchId = mPersistence.getLogs(groupName, limit, list);
 
             //Add batchIds to the list of batchIds and forward to ingestion for real
             if ((!TextUtils.isEmpty(batchId)) && (list.size() > 0)) {
@@ -230,9 +254,9 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
                 logContainer.setLogs(list);
 
                 if (isAnalytics) {
-                    analyticsBatchIds.add(batchId);
+                    mAnalyticsBatchIds.add(batchId);
                 } else {
-                    errorBatchIds.add(batchId);
+                    mErrorBatchIds.add(batchId);
                 }
 
                 ingestLogs(groupName, batchId, logContainer);
@@ -284,7 +308,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             final boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
 
             mPersistence.deleteLog(groupName, batchId);
-            boolean removeBatchIdSuccessful = isAnalytics ? analyticsBatchIds.remove(batchId) : errorBatchIds.remove(batchId);
+            boolean removeBatchIdSuccessful = isAnalytics ? mAnalyticsBatchIds.remove(batchId) : mErrorBatchIds.remove(batchId);
             if (!removeBatchIdSuccessful) {
                 AvalancheLog.warn(TAG, "Error removing batchId after successfully sending data.");
             }
@@ -306,14 +330,14 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
             boolean removeBatchIdSuccessful;
             if (HttpUtils.isRecoverableError(t)) {
-                removeBatchIdSuccessful = isAnalytics ? analyticsBatchIds.remove(batchId) : errorBatchIds.remove(batchId);
+                removeBatchIdSuccessful = isAnalytics ? mAnalyticsBatchIds.remove(batchId) : mErrorBatchIds.remove(batchId);
                 if (!removeBatchIdSuccessful) {
                     AvalancheLog.warn(TAG, "Error removing batchId after recoverable error");
                     mDisabled = true;
                 }
             } else {
                 mPersistence.deleteLog(groupName, batchId);
-                removeBatchIdSuccessful = isAnalytics ? analyticsBatchIds.remove(batchId) : errorBatchIds.remove(batchId);
+                removeBatchIdSuccessful = isAnalytics ? mAnalyticsBatchIds.remove(batchId) : mErrorBatchIds.remove(batchId);
                 if (!removeBatchIdSuccessful) {
                     AvalancheLog.warn(TAG, "Error removing batchId after non-recoverable error sending data");
                 }
