@@ -107,9 +107,9 @@ public final class Avalanche {
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException("AvalancheFeature subclass must provide public static accessible method getInstance()", e);
         } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException("AvalancheFeature subclass must provide public static accessible method getInstance()", e);
         }
     }
 
