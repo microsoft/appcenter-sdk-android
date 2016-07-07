@@ -24,12 +24,12 @@ import avalanche.base.utils.StorageHelper;
 
 public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
-     * Constant marking event of the error group
+     * Constant marking event of the error group.
      */
     public static final String ERROR_GROUP = "group_error";
 
     /**
-     * Constant marking event of the analytics group
+     * Constant marking event of the analytics group.
      */
     public static final String ANALYTICS_GROUP = "group_analytics";
 
@@ -39,7 +39,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     private static final Object LOCK = new Object();
 
     /**
-     * TAG used in logging
+     * TAG used in logging.
      */
     private static final String TAG = "DefaultChannel";
 
@@ -72,15 +72,15 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     private final UUID mInstallId;
     /**
-     * ArrayList of batchIds for error batches
+     * ArrayList of batchIds for error batches.
      */
     private final List<String> mErrorBatchIds = new ArrayList<>(0);
     /**
-     * ArrayList of batchIds for analytics batches
+     * ArrayList of batchIds for analytics batches.
      */
     private final List<String> mAnalyticsBatchIds = new ArrayList<>(0);
     /**
-     * Handler for triggering ingestion of events
+     * Handler for triggering ingestion of events.
      */
     private final Handler mIngestionHandler;
     /**
@@ -88,7 +88,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     private AvalanchePersistence mPersistence;
     /**
-     * The ingestion object used to send batches to the server
+     * The ingestion object used to send batches to the server.
      */
     private AvalancheIngestionHttp mIngestion;
     /**
@@ -96,11 +96,11 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     private UUID mAppKey = null;
     /**
-     * Counter for error events
+     * Counter for error events.
      */
     private int mErrorCounter = 0;
     /**
-     * Counter for analytics events
+     * Counter for analytics events.
      */
     private int mAnalyticsCounter = 0;
     /**
@@ -146,6 +146,21 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         mDisabled = false;
     }
 
+    boolean isDisabled() {
+        return mDisabled;
+    }
+
+    /**
+     * Set the disabled flag. If true, the channel will continue to persist data but not forward any item to ingestion.
+     * The most common use-case would be to set it to true and enable sending again after the channel has disabled itself after receiving
+     * a recoverable error (most likely related to a server issue).
+     *
+     * @param disabled flag to disable the Channel.
+     */
+    protected void setDisabled(boolean disabled) {
+        mDisabled = disabled;
+    }
+
     void setAppKey(UUID appKey) {
         mAppKey = appKey;
     }
@@ -157,7 +172,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     List<String> getAnalyticsBatchIds() {
         return mAnalyticsBatchIds;
     }
-    
+
     int getErrorCounter() {
         return mErrorCounter;
     }
@@ -183,17 +198,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             triggerIngestion(ANALYTICS_GROUP);
             triggerIngestion(ERROR_GROUP);
         }
-    }
-
-    /**
-     * Set the disabled flag. If true, the channel will continue to persist data but not forward any item to ingestion.
-     * The most common use-case would be to set it to true and enable sending again after the channel has disabled itself after receiving
-     * a recoverable error (most likely related to a server issue).
-     *
-     * @param disabled flag to disable the Channel.
-     */
-    protected void setDisabled(boolean disabled) {
-        mDisabled = disabled;
     }
 
     /**
@@ -333,8 +337,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
                 removeBatchIdSuccessful = isAnalytics ? mAnalyticsBatchIds.remove(batchId) : mErrorBatchIds.remove(batchId);
                 if (!removeBatchIdSuccessful) {
                     AvalancheLog.warn(TAG, "Error removing batchId after recoverable error");
-                    mDisabled = true;
                 }
+                mDisabled = true;
             } else {
                 mPersistence.deleteLog(groupName, batchId);
                 removeBatchIdSuccessful = isAnalytics ? mAnalyticsBatchIds.remove(batchId) : mErrorBatchIds.remove(batchId);
