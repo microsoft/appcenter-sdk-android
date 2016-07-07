@@ -1,1 +1,9 @@
-include ':base', ':crash', ':sasquatch', ':analytics'
+// core
+include ':base'
+
+// modules
+include ':crash'
+include ':analytics'
+
+// test apps
+include ':sasquatch'
