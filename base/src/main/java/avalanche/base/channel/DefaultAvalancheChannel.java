@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import avalanche.base.ingestion.AvalancheIngestion;
 import avalanche.base.ingestion.ServiceCallback;
 import avalanche.base.ingestion.http.AvalancheIngestionHttp;
 import avalanche.base.ingestion.http.HttpUtils;
@@ -91,7 +92,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * The ingestion object used to send batches to the server.
      */
-    private AvalancheIngestionHttp mIngestion;
+    private AvalancheIngestion mIngestion;
     /**
      * The appKey that's required for forwarding to ingestion.
      */
@@ -186,7 +187,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         this.mPersistence = persistence;
     }
 
-    void setIngestion(AvalancheIngestionHttp ingestion) {
+    void setIngestion(AvalancheIngestion ingestion) {
         this.mIngestion = ingestion;
     }
 
