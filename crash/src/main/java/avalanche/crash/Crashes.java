@@ -148,7 +148,7 @@ public class Crashes extends DefaultAvalancheFeature {
      * @param endpointUrl   URL of the Avalanche endpoint to use.
      * @param listener      Implement this for callback functions.
      * @param lazyExecution Whether the manager should execute lazily, e.g. not check for crashes right away.
-     * @return
+     * @return this crashes module.
      */
     public Crashes register(Context context, String endpointUrl, CrashesListener listener, boolean lazyExecution) {
         mContextWeakReference = new WeakReference<>(context);
@@ -273,11 +273,11 @@ public class Crashes extends DefaultAvalancheFeature {
         if ((list != null) && (list.length > 0)) {
             AvalancheLog.debug("Found " + list.length + " stacktrace(s).");
 
-            for (int index = 0; index < list.length; index++) {
+            for (String stackTrace : list) {
                 HttpURLConnection urlConnection = null;
                 try {
                     // Read contents of stack trace
-                    String filename = Constants.FILES_PATH + "/" + list[index];
+                    String filename = Constants.FILES_PATH + "/" + stackTrace;
                     String stacktrace = InternalStorage.read(filename);
                     if (stacktrace.length() > 0) {
                         // Transmit stack trace with POST request
@@ -310,7 +310,7 @@ public class Crashes extends DefaultAvalancheFeature {
                             }
                         }
 
-                        Map<String, String> parameters = new HashMap<String, String>();
+                        Map<String, String> parameters = new HashMap<>();
 
                         parameters.put("raw", stacktrace);
                         parameters.put("userID", userID);
@@ -337,17 +337,17 @@ public class Crashes extends DefaultAvalancheFeature {
                     }
                     if (successful) {
                         AvalancheLog.debug("Transmission succeeded");
-                        deleteStackTrace(list[index]);
+                        deleteStackTrace(stackTrace);
 
                         if (mListener != null) {
                             mListener.onCrashesSent();
-                            deleteRetryCounter(list[index], mListener.getMaxRetryAttempts());
+                            deleteRetryCounter(stackTrace, mListener.getMaxRetryAttempts());
                         }
                     } else {
                         AvalancheLog.debug("Transmission failed, will retry on next register() call");
                         if (mListener != null) {
                             mListener.onCrashesNotSent();
-                            updateRetryCounter(list[index], mListener.getMaxRetryAttempts());
+                            updateRetryCounter(stackTrace, mListener.getMaxRetryAttempts());
                         }
                     }
                 }
@@ -525,11 +525,11 @@ public class Crashes extends DefaultAvalancheFeature {
         if ((list != null) && (list.length > 0)) {
             AvalancheLog.debug("Found " + list.length + " stacktrace(s).");
 
-            for (int index = 0; index < list.length; index++) {
+            for (String stackTrace : list) {
                 try {
-                    AvalancheLog.debug("Delete stacktrace " + list[index] + ".");
-                    deleteStackTrace(list[index]);
-                    InternalStorage.delete(Constants.FILES_PATH + "/" + list[index]);
+                    AvalancheLog.debug("Delete stacktrace " + stackTrace + ".");
+                    deleteStackTrace(stackTrace);
+                    InternalStorage.delete(Constants.FILES_PATH + "/" + stackTrace);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -585,6 +585,6 @@ public class Crashes extends DefaultAvalancheFeature {
     }
 
     private String getURLString() {
-        return mEndpointUrl + "api/2/apps/" + Avalanche.getSharedInstance().getAppIdentifier() + "/crashes/";
+        return mEndpointUrl + "api/2/apps/" + Avalanche.getSharedInstance().getAppKey() + "/crashes/";
     }
 }

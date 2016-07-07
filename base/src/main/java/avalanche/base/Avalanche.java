@@ -11,15 +11,12 @@ import java.util.List;
 import java.util.Set;
 
 import avalanche.base.utils.StorageHelper;
-import avalanche.base.utils.Util;
 
 public final class Avalanche {
 
-    public static final String FEATURE_CRASH = "avalanche.crash.Crashes";
-
     private static Avalanche sharedInstance;
     private final Set<AvalancheFeature> mFeatures;
-    private String mAppIdentifier;
+    private String mAppKey;
     private WeakReference<Application> mApplicationWeakReference;
     private boolean mEnabled;
 
@@ -35,64 +32,15 @@ public final class Avalanche {
     }
 
     /**
-     * The most convenient way to set up the SDK. It will gather all available features and automatically instantiate and use them.
-     * Instantiation and registration of the features is handled on opinionated basis - the features will register themselves in
-     * the most suitable way for them. The app identifier will be read from your manifest.
-     *
-     * @param application Your application object.
-     * @return The Avalanche SDK, fully configured with all features, which are available.
-     */
-    public static Avalanche useFeatures(Application application) {
-        return useFeatures(application, true);
-    }
-
-    /**
-     * The second-most convenient way to set up the SDK. Offers to option to skip auto configuration of the features.
-     * The app identifier will be read from your manifest.
-     *
-     * @param application   Your application object.
-     * @param autoConfigure Whether to auto-use all available features. If false, only the SDK will be set up.
-     * @return The Avalanche SDK, ready to use.
-     */
-    public static Avalanche useFeatures(Application application, boolean autoConfigure) {
-        if (!autoConfigure) {
-            return useFeatures(application, new AvalancheFeature[0]);
-        }
-        String[] allFeatureNames = {FEATURE_CRASH};
-        List<Class<? extends AvalancheFeature>> features = new ArrayList<>();
-        for (String featureName : allFeatureNames) {
-            Class<? extends AvalancheFeature> clazz = getClassForFeature(featureName);
-            if (clazz != null) {
-                features.add(clazz);
-            }
-        }
-        //noinspection unchecked
-        return useFeatures(application, features.toArray(new Class[features.size()]));
-    }
-
-    /**
-     * Set up the SDK and provide a varargs list of feature classes you would like to have enabled and auto-configured.
-     * The app identifier will be read from your manifest.
-     *
-     * @param application Your application object.
-     * @param features    Vararg list of feature classes to auto-use.
-     * @return The Avalanche SDK, configured with your selected features.
-     */
-    @SafeVarargs
-    public static Avalanche useFeatures(Application application, Class<? extends AvalancheFeature>... features) {
-        return useFeatures(application, Util.getAppIdentifier(application), features);
-    }
-
-    /**
      * Set up the SDK and provide a varargs list of feature classes you would like to have enabled and auto-configured.
      *
      * @param application   Your application object.
-     * @param appIdentifier The app identifier to use.
+     * @param appKey        The app key to use (application/environment).
      * @param features      Vararg list of feature classes to auto-use.
      * @return The Avalanche SDK, configured with your selected features.
      */
     @SafeVarargs
-    public static Avalanche useFeatures(Application application, String appIdentifier, Class<? extends AvalancheFeature>... features) {
+    public static Avalanche useFeatures(Application application, String appKey, Class<? extends AvalancheFeature>... features) {
         List<AvalancheFeature> featureList = new ArrayList<>();
         if (features != null && features.length > 0) {
             for (Class<? extends AvalancheFeature> featureClass : features) {
@@ -103,31 +51,19 @@ public final class Avalanche {
             }
         }
 
-        return useFeatures(application, appIdentifier, featureList.toArray(new AvalancheFeature[featureList.size()]));
-    }
-
-    /**
-     * The most flexible way to set up the SDK. Configure your features first and then pass them in here to enable them in the SDK.
-     * The app identifier will be read from your manifest.
-     *
-     * @param application Your application object.
-     * @param features    Vararg list of configured features to enable.
-     * @return The Avalanche SDK, configured with the selected feature instances.
-     */
-    public static Avalanche useFeatures(Application application, AvalancheFeature... features) {
-        return useFeatures(application, Util.getAppIdentifier(application), features);
+        return useFeatures(application, appKey, featureList.toArray(new AvalancheFeature[featureList.size()]));
     }
 
     /**
      * The most flexible way to set up the SDK. Configure your features first and then pass them in here to enable them in the SDK.
      *
      * @param application   Your application object.
-     * @param appIdentifier The app identifier to use.
+     * @param appKey        The app key to use (application/environment).
      * @param features      Vararg list of configured features to enable.
      * @return The Avalanche SDK, configured with the selected feature instances.
      */
-    public static Avalanche useFeatures(Application application, String appIdentifier, AvalancheFeature... features) {
-        Avalanche avalancheHub = getSharedInstance().initialize(application, appIdentifier);
+    public static Avalanche useFeatures(Application application, String appKey, AvalancheFeature... features) {
+        Avalanche avalancheHub = getSharedInstance().initialize(application, appKey);
         StorageHelper.initialize(application);
 
         if (features != null && features.length > 0) {
@@ -176,8 +112,8 @@ public final class Avalanche {
         }
     }
 
-    private Avalanche initialize(Application application, String appIdentifier) {
-        mAppIdentifier = appIdentifier;
+    private Avalanche initialize(Application application, String appKey) {
+        mAppKey = appKey;
         mApplicationWeakReference = new WeakReference<>(application);
         mFeatures.clear();
 
@@ -189,7 +125,7 @@ public final class Avalanche {
     /**
      * Add and enable a configured feature.
      *
-     * @param feature
+     * @param feature feature to add.
      */
     public void addFeature(AvalancheFeature feature) {
 
@@ -216,10 +152,7 @@ public final class Avalanche {
      */
     public boolean isFeatureEnabled(String feature) {
         Class<? extends AvalancheFeature> clazz = getClassForFeature(feature);
-        if (clazz != null) {
-            return isFeatureEnabled(clazz);
-        }
-        return false;
+        return clazz != null && isFeatureEnabled(clazz);
     }
 
     /**
@@ -242,8 +175,8 @@ public final class Avalanche {
      * Get the configured app identifier.
      * @return The app identifier or null if not set.
      */
-    public String getAppIdentifier() {
-        return mAppIdentifier;
+    public String getAppKey() {
+        return mAppKey;
     }
 
     public boolean isEnabled() {

@@ -4,8 +4,6 @@ import org.junit.Test;
 
 import java.io.EOFException;
 import java.io.InterruptedIOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.PortUnreachableException;
 import java.net.SocketException;
@@ -34,12 +32,5 @@ public class HttpUtilsTest {
         assertTrue(isRecoverableError(new HttpException(408)));
         assertFalse(isRecoverableError(new HttpException(413)));
         assertTrue(isRecoverableError(new HttpException(429)));
-    }
-
-    @Test
-    public void coverageTrick() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        Constructor<HttpUtils> constructor = HttpUtils.class.getDeclaredConstructor();
-        constructor.setAccessible(true);
-        constructor.newInstance();
     }
 }

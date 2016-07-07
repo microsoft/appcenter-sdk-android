@@ -8,18 +8,15 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.Settings;
 import android.text.TextUtils;
-
-
-
-import avalanche.base.utils.AvalancheLog;
 
 import java.io.File;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
+
+import avalanche.base.utils.AvalancheLog;
 
 /**
  * <h3>Description</h3>
@@ -36,12 +33,6 @@ public class Constants {
      * Name of this SDK.
      */
     public static final String SDK_NAME = "AvalancheSDK";
-    /**
-     * Version of the SDK - retrieved from the build configuration.
-     */
-    public static final String SDK_VERSION = BuildConfig.VERSION_NAME;
-
-    public static final String FILES_DIRECTORY_NAME = "Avalanche";
 
     /**
      * The user agent string the SDK will send with every Avalanche API request.
@@ -107,22 +98,6 @@ public class Constants {
         loadPackageData(context);
         loadCrashIdentifier(context);
         loadDeviceIdentifier(context);
-    }
-
-    /**
-     * Returns a file representing the folder in which screenshots are stored.
-     *
-     * @return A file representing the screenshot folder.
-     */
-    public static File getAvalancheStorageDir() {
-        File externalStorage = Environment.getExternalStorageDirectory();
-
-        File dir = new File(externalStorage.getAbsolutePath() + "/" + Constants.FILES_DIRECTORY_NAME);
-        boolean success = dir.exists() || dir.mkdirs();
-        if (!success) {
-            AvalancheLog.warn("Couldn't create Avalanche Storage dir");
-        }
-        return dir;
     }
 
     /**
@@ -279,6 +254,7 @@ public class Constants {
         try {
             serial = Build.class.getField("SERIAL").get(null).toString();
         } catch (Throwable t) {
+            AvalancheLog.warn("Could not get Build.SERIAL", t);
         }
 
         return fingerprint + ":" + serial;
