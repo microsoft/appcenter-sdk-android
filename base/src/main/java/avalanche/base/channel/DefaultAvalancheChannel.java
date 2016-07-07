@@ -3,6 +3,7 @@ package avalanche.base.channel;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
@@ -195,8 +196,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     public void synchronize() {
         synchronized (LOCK) {
-            triggerIngestion(ANALYTICS_GROUP);
-            triggerIngestion(ERROR_GROUP);
+            scheduleIngestion(ANALYTICS_GROUP);
+            scheduleIngestion(ERROR_GROUP);
         }
     }
 
@@ -212,28 +213,34 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         if (TextUtils.isEmpty(groupName)) {
             return;
         }
+        if (mAppKey == null) {
+            AvalancheLog.error("AppKey is null");
+            return;
+        }
+        if (mInstallId == null) {
+            AvalancheLog.error("InstallId is null");
+            return;
+        }
 
         synchronized (LOCK) {
             int limit;
 
             boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
             if (isAnalytics) {
-                //Reset the counters and restart runable
-                mAnalyticsCounter = 0;
+                //Restart runnable.
                 mIngestionHandler.removeCallbacks(mAnalyticsRunnable);
-                mIngestionHandler.postDelayed(mAnalyticsRunnable, ANALYTICS_INTERVAL);
+//                mIngestionHandler.postDelayed(mAnalyticsRunnable, ANALYTICS_INTERVAL);
 
                 limit = ANALYTICS_COUNT;
 
-                //Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending
+                //Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending.
                 if (mAnalyticsBatchIds.size() == MAX_PENDING_COUNT) {
                     AvalancheLog.info(TAG, "Already sending 3 batches of analytics data to the server.");
                     return;
                 }
 
             } else {
-                //Reset the counters and restart runnables
-                mErrorCounter = 0;
+                //Reset the counters and restart runnable.
                 mIngestionHandler.removeCallbacks(mErrorRunnable);
                 mIngestionHandler.postDelayed(mErrorRunnable, ERROR_INTERVAL);
 
@@ -262,7 +269,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
                 } else {
                     mErrorBatchIds.add(batchId);
                 }
-
                 ingestLogs(groupName, batchId, logContainer);
             }
 
@@ -278,36 +284,28 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
 
     private void ingestLogs(@NonNull final String groupName, @NonNull final String batchId, @NonNull LogContainer logContainer) {
-        if (mAppKey == null) {
-            AvalancheLog.error("AppKey is null");
-            return;
-        }
-        if (mInstallId == null) {
-            AvalancheLog.error("InstallId is null");
-            return;
-        }
-
+        final int size = logContainer.getLogs().size();
         mIngestion.sendAsync(mAppKey, mInstallId, logContainer, new ServiceCallback() {
                     @Override
                     public void success() {
-                        handleSendingSuccess(groupName, batchId);
+                        handleSendingSuccess(groupName, batchId, size);
                     }
 
                     @Override
                     public void failure(Throwable t) {
-                        handleSendingFailure(groupName, batchId, t);
+                        handleSendingFailure(groupName, batchId, size, t);
                     }
                 }
         );
     }
 
     /**
-     * The actual implementation to react to sending a batch to the server successfully
+     * The actual implementation to react to sending a batch to the server successfully.
      *
-     * @param groupName The group name.
+     * @param groupName The group name
      * @param batchId   The batch ID
      */
-    private void handleSendingSuccess(@NonNull final String groupName, @NonNull final String batchId) {
+    private void handleSendingSuccess(@NonNull final String groupName, @NonNull final String batchId, int size) {
         synchronized (LOCK) {
             final boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
 
@@ -316,6 +314,9 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             if (!removeBatchIdSuccessful) {
                 AvalancheLog.warn(TAG, "Error removing batchId after successfully sending data.");
             }
+
+            decrement(groupName, size);
+            scheduleIngestion(groupName);
         }
     }
 
@@ -328,7 +329,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param batchId   the batch ID
      * @param t         the error
      */
-    private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, @NonNull final Throwable t) {
+    private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, int size, @NonNull final Throwable t) {
         synchronized (LOCK) {
             final boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
 
@@ -345,6 +346,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
                 if (!removeBatchIdSuccessful) {
                     AvalancheLog.warn(TAG, "Error removing batchId after non-recoverable error sending data");
                 }
+
+                decrement(groupName, size);
             }
         }
     }
@@ -360,10 +363,9 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
             //CIncrement counters and schedule ingestion
             synchronized (LOCK) {
-                if (!mDisabled) {
-                    increment(queueName);
-                    scheduleIngestion(queueName);
-                } else {
+                increment(queueName);
+                scheduleIngestion(queueName);
+                if (mDisabled) {
                     AvalancheLog.warn(TAG, "Channel is disabled, event was saved to disk.");
                 }
             }
@@ -375,22 +377,30 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
     /**
      * This will increment the counter for the event group.
-     * Intended to be used from inside a synchronized-block
+     * Intended to be used from inside a synchronized-block.
      *
      * @param groupName The group name
      */
     protected void increment(@GroupNameDef String groupName) {
         boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
-        final int maxBatchSize = isAnalytics ? ANALYTICS_COUNT : ERROR_COUNT;
         int counter = isAnalytics ? mAnalyticsCounter : mErrorCounter;
 
-        if (counter == 0) {
-            counter = 1;
-        } else if (counter == maxBatchSize) {
-            //don't increment as we have reached the maximum batch size
-            return;
+        counter = counter + 1;
+
+        if (isAnalytics) {
+            mAnalyticsCounter = counter;
         } else {
-            counter = counter + 1;
+            mErrorCounter = counter;
+        }
+    }
+
+    protected void decrement(@GroupNameDef String groupName, @IntRange(from = 0) int dectementBy) {
+        boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
+        int counter = isAnalytics ? mAnalyticsCounter : mErrorCounter;
+        counter = counter - dectementBy;
+
+        if (counter < 0) {
+            counter = 0;
         }
 
         if (isAnalytics) {
@@ -414,14 +424,14 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         int maxCount = isAnalytics ? ANALYTICS_COUNT : ERROR_COUNT;
 
         if (counter == 0) {
-            //Check if counter is 0, increase by 1 and kick of timer task
+            //Check if counter is 0, kick of timer task.
             if (isAnalytics) {
                 mIngestionHandler.postDelayed(mAnalyticsRunnable, ANALYTICS_INTERVAL);
             } else {
                 mIngestionHandler.postDelayed(mErrorRunnable, ERROR_INTERVAL);
             }
-        } else if (counter == maxCount) {
-            //We have reached the max batch count. Trigger ingestion.
+        } else if (counter % maxCount == 0) {
+            //We have reached the max batch count or a mutliple of it. Trigger ingestion.
             if (isAnalytics) {
                 triggerIngestion(ANALYTICS_GROUP);
             } else {
