@@ -1,4 +1,4 @@
-package avalanche.analytics;
+package avalanche.analytics.ingestion.models.json;
 
 import avalanche.analytics.ingestion.models.PageLog;
 import avalanche.base.ingestion.models.json.LogFactory;
