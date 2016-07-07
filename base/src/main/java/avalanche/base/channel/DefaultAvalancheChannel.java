@@ -163,18 +163,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         mDisabled = disabled;
     }
 
-    void setAppKey(UUID appKey) {
-        mAppKey = appKey;
-    }
-
-    List<String> getErrorBatchIds() {
-        return mErrorBatchIds;
-    }
-
-    List<String> getAnalyticsBatchIds() {
-        return mAnalyticsBatchIds;
-    }
-
     int getErrorCounter() {
         return mErrorCounter;
     }
@@ -230,7 +218,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             if (isAnalytics) {
                 //Restart runnable.
                 mIngestionHandler.removeCallbacks(mAnalyticsRunnable);
-//                mIngestionHandler.postDelayed(mAnalyticsRunnable, ANALYTICS_INTERVAL);
+                mIngestionHandler.postDelayed(mAnalyticsRunnable, ANALYTICS_INTERVAL);
 
                 limit = ANALYTICS_COUNT;
 
