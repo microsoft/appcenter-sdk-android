@@ -1,15 +1,15 @@
 package avalanche.base;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 
-public abstract class DefaultAvalancheFeature implements AvalancheFeature {
+import avalanche.base.ingestion.models.json.LogSerializer;
+import avalanche.base.utils.NetworkStateHelper;
 
-    private boolean mEnabled;
+public abstract class AbstractAvalancheFeature implements AvalancheFeature {
 
-    public DefaultAvalancheFeature() {
-        mEnabled = true;
-    }
+    private boolean mEnabled = true;
 
     @Override
     public String getName() {
@@ -18,37 +18,35 @@ public abstract class DefaultAvalancheFeature implements AvalancheFeature {
 
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-
     }
 
     @Override
     public void onActivityStarted(Activity activity) {
-
     }
 
     @Override
     public void onActivityResumed(Activity activity) {
-
     }
 
     @Override
     public void onActivityPaused(Activity activity) {
-
     }
 
     @Override
     public void onActivityStopped(Activity activity) {
-
     }
 
     @Override
     public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-
     }
 
     @Override
     public void onActivityDestroyed(Activity activity) {
+    }
 
+    @Override
+    public boolean isEnabled() {
+        return mEnabled;
     }
 
     @Override
@@ -57,8 +55,6 @@ public abstract class DefaultAvalancheFeature implements AvalancheFeature {
     }
 
     @Override
-    public boolean isEnabled() {
-        return mEnabled;
+    public void onChannelReady(Context context, String appKey, LogSerializer logSerializer, NetworkStateHelper networkStateHelper) {
     }
-
 }

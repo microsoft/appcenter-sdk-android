@@ -13,9 +13,9 @@ import java.util.UUID;
 import avalanche.analytics.ingestion.models.EndSessionLog;
 import avalanche.analytics.ingestion.models.EventLog;
 import avalanche.analytics.ingestion.models.PageLog;
+import avalanche.analytics.ingestion.models.json.EndSessionLogFactory;
 import avalanche.analytics.ingestion.models.json.EventLogFactory;
 import avalanche.analytics.ingestion.models.json.PageLogFactory;
-import avalanche.analytics.ingestion.models.json.SessionLogFactory;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
 import avalanche.base.ingestion.models.json.DefaultLogSerializer;
@@ -71,7 +71,7 @@ public class AnalyticsSerializerTest {
             logs.add(endSessionLog);
         }
         LogSerializer serializer = new DefaultLogSerializer();
-        serializer.addLogFactory(EndSessionLog.TYPE, new SessionLogFactory());
+        serializer.addLogFactory(EndSessionLog.TYPE, new EndSessionLogFactory());
         serializer.addLogFactory(PageLog.TYPE, new PageLogFactory());
         serializer.addLogFactory(EventLog.TYPE, new EventLogFactory());
         String payload = serializer.serializeContainer(expectedContainer);
