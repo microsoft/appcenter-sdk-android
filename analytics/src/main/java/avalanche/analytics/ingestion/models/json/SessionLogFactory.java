@@ -1,4 +1,4 @@
-package avalanche.analytics;
+package avalanche.analytics.ingestion.models.json;
 
 import avalanche.analytics.ingestion.models.EndSessionLog;
 import avalanche.base.ingestion.models.json.LogFactory;
