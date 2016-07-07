@@ -35,7 +35,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     /**
      * Application identifier HTTP Header.
      */
-    public static final String APP_ID = "App-ID";
+    public static final String APP_KEY = "App-Key";
 
     /**
      * Installation identifier HTTP Header.
@@ -162,7 +162,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     /**
      * Do the HTTP call now.
      *
-     * @param appKey        application identifier.
+     * @param appKey       application identifier.
      * @param installId    install identifier.
      * @param logContainer payload.
      * @throws Exception if an error occurs.
@@ -179,11 +179,12 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             urlConnection = mUrlConnectionFactory.openConnection(url);
             urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
             urlConnection.setReadTimeout(READ_TIMEOUT);
-            urlConnection.setRequestProperty(CONTENT_TYPE, CONTENT_TYPE_JSON);
 
             /* Set headers. */
-            urlConnection.setRequestProperty(APP_ID, appKey.toString());
+            urlConnection.setRequestProperty(CONTENT_TYPE, CONTENT_TYPE_JSON);
+            urlConnection.setRequestProperty(APP_KEY, appKey.toString());
             urlConnection.setRequestProperty(INSTALL_ID, installId.toString());
+            AvalancheLog.debug(LOG_TAG, "Headers: " + urlConnection.getRequestProperties());
 
             /* Serialize payload. */
             urlConnection.setDoOutput(true);
