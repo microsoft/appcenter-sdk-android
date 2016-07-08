@@ -133,7 +133,9 @@ public final class Avalanche {
      * @param feature feature to add.
      */
     public void addFeature(AvalancheFeature feature) {
-
+        if (feature == null) {
+            return;
+        }
         Application application = getApplication();
         if (application != null) {
             application.registerActivityLifecycleCallbacks(feature);
