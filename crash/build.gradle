@@ -28,7 +28,7 @@ android {
 dependencies {
     compile project(':base')
 
-    testCompile project(path: ':base', configuration: 'testCompile')
+//    testCompile project(path: ':base', configuration: 'testCompile')
 
-    androidTestCompile project(path: ':base', configuration: 'androidTestCompile')
+//    androidTestCompile project(path: ':base', configuration: 'androidTestCompile')
 }
