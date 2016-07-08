@@ -29,7 +29,7 @@ public class DeviceInfoActivity extends AppCompatActivity implements NetworkStat
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_device_info);
 
-        mNetworkStateHelper = new NetworkStateHelper(this);
+        mNetworkStateHelper = NetworkStateHelper.getSharedInstance(this);
         mNetworkStateHelper.addListener(this);
         onNetworkStateUpdated(mNetworkStateHelper.isNetworkConnected());
 

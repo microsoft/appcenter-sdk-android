@@ -1,6 +1,7 @@
 package avalanche.base;
 
 import android.app.Application;
+import android.content.Context;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
@@ -10,11 +11,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
+import avalanche.base.channel.AvalancheChannel;
+import avalanche.base.channel.AvalancheChannelSessionDecorator;
+import avalanche.base.channel.DirectAvalancheChannel;
 import avalanche.base.ingestion.models.json.DefaultLogSerializer;
 import avalanche.base.ingestion.models.json.LogFactory;
 import avalanche.base.ingestion.models.json.LogSerializer;
-import avalanche.base.utils.NetworkStateHelper;
 import avalanche.base.utils.StorageHelper;
 
 public final class Avalanche {
@@ -22,10 +26,10 @@ public final class Avalanche {
     private static Avalanche sharedInstance;
     private final Set<AvalancheFeature> mFeatures;
     private final LogSerializer mLogSerializer = new DefaultLogSerializer();
-    private String mAppKey;
+    private UUID mAppKey;
     private WeakReference<Application> mApplicationWeakReference;
     private boolean mEnabled;
-    private NetworkStateHelper mNetworkStateHelper;
+    private AvalancheChannel mChannel;
 
     private Avalanche() {
         mFeatures = new HashSet<>();
@@ -70,15 +74,12 @@ public final class Avalanche {
      * @return The Avalanche SDK, configured with the selected feature instances.
      */
     public static Avalanche useFeatures(Application application, String appKey, AvalancheFeature... features) {
-        Avalanche avalancheHub = getSharedInstance().initialize(application, appKey);
-        StorageHelper.initialize(application);
-
+        Avalanche avalancheHub = getSharedInstance().initialize(application, UUID.fromString(appKey));
         if (features != null && features.length > 0) {
             for (AvalancheFeature feature : features) {
                 avalancheHub.addFeature(feature);
             }
         }
-
         return avalancheHub;
     }
 
@@ -119,14 +120,19 @@ public final class Avalanche {
         }
     }
 
-    private Avalanche initialize(Application application, String appKey) {
+    private Avalanche initialize(Application application, UUID appKey) {
         mAppKey = appKey;
         mApplicationWeakReference = new WeakReference<>(application);
         mFeatures.clear();
-        mNetworkStateHelper = new NetworkStateHelper(application);
-
-        Constants.loadFromContext(application.getApplicationContext());
-
+        if (mChannel == null) { // TODO we must rethink this multiple useFeatures calls
+            Context context = application.getApplicationContext();
+            Constants.loadFromContext(context);
+            StorageHelper.initialize(context);
+            AvalancheChannel channel = new DirectAvalancheChannel(context, mAppKey, mLogSerializer); // TODO replace direct by default impl once problems there are fixed
+            AvalancheChannelSessionDecorator sessionChannel = new AvalancheChannelSessionDecorator(context, channel);
+            application.registerActivityLifecycleCallbacks(sessionChannel);
+            mChannel = sessionChannel;
+        }
         return this;
     }
 
@@ -149,7 +155,7 @@ public final class Avalanche {
             for (Map.Entry<String, LogFactory> logFactory : feature.getLogFactories().entrySet())
                 mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
             mFeatures.add(feature);
-            feature.onChannelReady(mApplicationWeakReference.get().getApplicationContext(), mAppKey, mLogSerializer, mNetworkStateHelper);
+            feature.onChannelReady(mChannel);
         }
     }
 
@@ -189,11 +195,11 @@ public final class Avalanche {
     }
 
     /**
-     * Get the configured app identifier.
+     * Get the configured app key.
      *
-     * @return The app identifier or null if not set.
+     * @return The app key or null if not set or an invalid value was used when calling {@link #useFeatures(Application, String, AvalancheFeature...)}.
      */
-    public String getAppKey() {
+    public UUID getAppKey() {
         return mAppKey;
     }
 

@@ -15,13 +15,20 @@ import java.util.UUID;
 import avalanche.base.ingestion.AvalancheIngestion;
 import avalanche.base.ingestion.ServiceCallback;
 import avalanche.base.ingestion.http.AvalancheIngestionHttp;
-import avalanche.base.ingestion.models.DeviceLog;
+import avalanche.base.ingestion.models.Device;
+import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
+import avalanche.base.ingestion.models.json.DefaultLogSerializer;
+import avalanche.base.ingestion.models.json.LogSerializer;
+import avalanche.base.ingestion.models.json.MockLog;
+import avalanche.base.ingestion.models.json.MockLogFactory;
 import avalanche.base.persistence.AvalanchePersistence;
 import avalanche.base.utils.AvalancheLog;
+import avalanche.base.utils.StorageHelper;
 
 import static avalanche.base.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
 import static avalanche.base.channel.DefaultAvalancheChannel.ERROR_GROUP;
+import static avalanche.base.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
@@ -34,32 +41,38 @@ import static org.mockito.Mockito.when;
 
 public class AvalancheChannelTest {
     private static Context sContext;
-    private static DeviceLog sDeviceLog;
+    private static Log sDeviceLog;
+    private static LogSerializer sLogSerializer;
 
     @BeforeClass
     public static void setUpBeforeClass() {
         AvalancheLog.setLogLevel(android.util.Log.VERBOSE);
 
         sContext = InstrumentationRegistry.getTargetContext();
+        StorageHelper.initialize(sContext);
 
-        sDeviceLog = new DeviceLog();
+        sDeviceLog = new MockLog();
         sDeviceLog.setSid(UUID.randomUUID());
-        sDeviceLog.setSdkVersion("1.2.3");
-        sDeviceLog.setModel("S5");
-        sDeviceLog.setOemName("HTC");
-        sDeviceLog.setOsName("Android");
-        sDeviceLog.setOsVersion("4.0.3");
-        sDeviceLog.setOsApiLevel(15);
-        sDeviceLog.setLocale("en_US");
-        sDeviceLog.setTimeZoneOffset(120);
-        sDeviceLog.setScreenSize("800x600");
-        sDeviceLog.setAppVersion("3.2.1");
-        sDeviceLog.setAppBuild("42");
+        Device device = new Device();
+        device.setSdkVersion("1.2.3");
+        device.setModel("S5");
+        device.setOemName("HTC");
+        device.setOsName("Android");
+        device.setOsVersion("4.0.3");
+        device.setOsApiLevel(15);
+        device.setLocale("en_US");
+        device.setTimeZoneOffset(120);
+        device.setScreenSize("800x600");
+        device.setAppVersion("3.2.1");
+        device.setAppBuild("42");
+        sDeviceLog.setDevice(device);
+        sLogSerializer = new DefaultLogSerializer();
+        sLogSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
     }
 
     @Test
     public void creationWorks() {
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID());
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
         assertNotNull(sut);
     }
 
@@ -68,7 +81,9 @@ public class AvalancheChannelTest {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
 
         //Stubbing getLogs so Persistence returns a batchID and adds 5 logs to the list
+        //noinspection unchecked
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(new Answer<String>() {
+            @SuppressWarnings("unchecked")
             public String answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
                 if (args[2] instanceof ArrayList) {
@@ -86,7 +101,7 @@ public class AvalancheChannelTest {
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
         //don't provide a UUID to prevent sending
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, null);
+        @SuppressWarnings("ConstantConditions") DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, null, sLogSerializer);
 
         sut.setPersistence(mockPersistence);
         sut.setIngestion(mockIngestion);
@@ -115,7 +130,9 @@ public class AvalancheChannelTest {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
 
         //Stubbing getLogs so Persistence returns a batchID and adds 5 logs to the list
+        //noinspection unchecked
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(new Answer<String>() {
+            @SuppressWarnings("unchecked")
             public String answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
                 if (args[2] instanceof ArrayList) {
@@ -132,7 +149,7 @@ public class AvalancheChannelTest {
 
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID());
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
         sut.setPersistence(mockPersistence);
         sut.setIngestion(mockIngestion);
 
@@ -171,7 +188,9 @@ public class AvalancheChannelTest {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
 
         //Stubbing getLogs so Persistence returns a batchID and adds 5 logs to the list
+        //noinspection unchecked
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(new Answer<String>() {
+            @SuppressWarnings("unchecked")
             public String answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
                 if (args[2] instanceof ArrayList) {
@@ -189,7 +208,7 @@ public class AvalancheChannelTest {
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
         //don't provide a UUID to prevent sending
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID());
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
 
         sut.setPersistence(mockPersistence);
         sut.setIngestion(mockIngestion);
@@ -224,7 +243,7 @@ public class AvalancheChannelTest {
         assertTrue(sut.isDisabled());
 
         //Enqueuing 20 more events.
-        for(int i = 0; i < 20; i++) {
+        for (int i = 0; i < 20; i++) {
             sut.enqueue(sDeviceLog, ANALYTICS_GROUP);
         }
 
@@ -263,7 +282,9 @@ public class AvalancheChannelTest {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
 
         //Stubbing getLogs so Persistence returns a batchID and adds 5 logs to the list
+        //noinspection unchecked
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(new Answer<String>() {
+            @SuppressWarnings("unchecked")
             public String answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
                 if (args[2] instanceof ArrayList) {
@@ -277,7 +298,7 @@ public class AvalancheChannelTest {
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
         //don't provide a UUID to prevent sending
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, null);
+        @SuppressWarnings("ConstantConditions") DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, null, sLogSerializer);
 
         sut.setPersistence(mockPersistence);
         sut.setIngestion(mockIngestion);
@@ -306,7 +327,9 @@ public class AvalancheChannelTest {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
 
         //Stubbing getLogs so Persistence returns a batchID and adds 5 logs to the list
+        //noinspection unchecked
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(new Answer<String>() {
+            @SuppressWarnings("unchecked")
             public String answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
                 if (args[2] instanceof ArrayList) {
@@ -319,7 +342,7 @@ public class AvalancheChannelTest {
 
         AvalancheIngestion mockIngestion = mock(AvalancheIngestion.class);
 
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID());
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
         sut.setPersistence(mockPersistence);
         sut.setIngestion(mockIngestion);
 
@@ -358,7 +381,9 @@ public class AvalancheChannelTest {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
 
         //Stubbing getLogs so Persistence returns a batchID and adds 5 logs to the list
+        //noinspection unchecked
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(new Answer<String>() {
+            @SuppressWarnings("unchecked")
             public String answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
                 if (args[2] instanceof ArrayList) {
@@ -372,7 +397,7 @@ public class AvalancheChannelTest {
         AvalancheIngestion mockIngestion = mock(AvalancheIngestion.class);
 
         //don't provide a UUID to prevent sending
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID());
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
 
         sut.setPersistence(mockPersistence);
         sut.setIngestion(mockIngestion);
@@ -407,7 +432,7 @@ public class AvalancheChannelTest {
         assertTrue(sut.isDisabled());
 
         //Enqueuing 20 more events.
-        for(int i = 0; i < 20; i++) {
+        for (int i = 0; i < 20; i++) {
             sut.enqueue(sDeviceLog, ERROR_GROUP);
         }
 

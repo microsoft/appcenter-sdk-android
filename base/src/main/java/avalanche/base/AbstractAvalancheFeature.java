@@ -1,13 +1,13 @@
 package avalanche.base;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
 
-import avalanche.base.ingestion.models.json.LogSerializer;
-import avalanche.base.utils.NetworkStateHelper;
+import avalanche.base.channel.AvalancheChannel;
 
 public abstract class AbstractAvalancheFeature implements AvalancheFeature {
+
+    protected AvalancheChannel mChannel;
 
     private boolean mEnabled = true;
 
@@ -55,6 +55,7 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
     }
 
     @Override
-    public void onChannelReady(Context context, String appKey, LogSerializer logSerializer, NetworkStateHelper networkStateHelper) {
+    public void onChannelReady(AvalancheChannel channel) {
+        mChannel = channel;
     }
 }
