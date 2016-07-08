@@ -10,7 +10,6 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Date;
 import java.util.UUID;
 
-import avalanche.base.Channel;
 import avalanche.base.Constants;
 import avalanche.base.utils.AvalancheLog;
 import avalanche.crash.model.CrashReport;
@@ -133,7 +132,7 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
         saveXamarinException(exception, thread, null, true, listener);
     }
 
-    //TODO refacture so we don't have duplicate code
+    //TODO (bereimol) refacture so we don't have duplicate code
     private void saveXamarinException(Throwable exception, Thread thread, String additionalManagedException, Boolean isManagedException, CrashesListener listener) {
         final Date startDate = new Date(mCrashes.getInitializeTimestamp());
         String filename = UUID.randomUUID().toString();
@@ -146,7 +145,7 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
         }
 
 
-        //TODO move this to a Factory class
+        //TODO (bereimol) move this to a Factory class
         CrashReport crashReport = new CrashReport(filename, exception, additionalManagedException, isManagedException);
         crashReport.setAppPackage(Constants.APP_PACKAGE);
         crashReport.setAppVersionCode(Constants.APP_VERSION);
@@ -171,8 +170,6 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
 
         crashReport.writeCrashReport();
 
-        Channel.getInstance().handle(crashReport);
-
         if (listener != null) {
             try {
                 filename = Constants.FILES_PATH + "/" + filename;
@@ -185,7 +182,7 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
         }
     }
 
-    //TODO: this should be the only method here, no persisting logic in here.
+    //TODO: (bereimol) this should be the only method here, no persisting logic in here.
     public void uncaughtException(Thread thread, Throwable exception) {
         if (Constants.FILES_PATH == null) {
             // If the files path is null, the exception can't be stored
