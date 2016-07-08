@@ -1,8 +1,5 @@
 package avalanche.base.channel;
 
-import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -18,6 +15,7 @@ import avalanche.base.ingestion.http.AvalancheIngestionHttp;
 import avalanche.base.ingestion.models.DeviceLog;
 import avalanche.base.ingestion.models.LogContainer;
 import avalanche.base.persistence.AvalanchePersistence;
+import avalanche.base.persistence.DefaultAvalanchePersistence;
 import avalanche.base.utils.AvalancheLog;
 
 import static avalanche.base.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
@@ -32,15 +30,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class AvalancheChannelTest {
-    private static Context sContext;
+public class DefaultAvalancheChannelTest {
     private static DeviceLog sDeviceLog;
 
     @BeforeClass
     public static void setUpBeforeClass() {
         AvalancheLog.setLogLevel(android.util.Log.VERBOSE);
-
-        sContext = InstrumentationRegistry.getTargetContext();
 
         sDeviceLog = new DeviceLog();
         sDeviceLog.setSid(UUID.randomUUID());
@@ -59,7 +54,7 @@ public class AvalancheChannelTest {
 
     @Test
     public void creationWorks() {
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID());
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(UUID.randomUUID(), UUID.randomUUID(), new DefaultAvalanchePersistence(), new AvalancheIngestionHttp());
         assertNotNull(sut);
     }
 
@@ -86,10 +81,7 @@ public class AvalancheChannelTest {
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
         //don't provide a UUID to prevent sending
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, null);
-
-        sut.setPersistence(mockPersistence);
-        sut.setIngestion(mockIngestion);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(null, null, mockPersistence, mockIngestion);
 
         //Enqueuing 4 events.
         sut.enqueue(sDeviceLog, ANALYTICS_GROUP);
@@ -131,11 +123,6 @@ public class AvalancheChannelTest {
         });
 
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
-
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID());
-        sut.setPersistence(mockPersistence);
-        sut.setIngestion(mockIngestion);
-
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
@@ -145,6 +132,8 @@ public class AvalancheChannelTest {
                 return null;
             }
         });
+
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(UUID.randomUUID(), UUID.randomUUID(), mockPersistence, mockIngestion);
 
         //Enqueuing 5 events.
         sut.enqueue(sDeviceLog, ANALYTICS_GROUP);
@@ -170,29 +159,33 @@ public class AvalancheChannelTest {
     public void analyticsRecoverable() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
 
-        //Stubbing getLogs so Persistence returns a batchID and adds 5 logs to the list
+        //Stubbing getLogs so Persistence returns a batchID and adds 5 logs to the list for ANALYTICS_GROUP and nothing for ERROR_GROUP
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(new Answer<String>() {
             public String answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
-                if (args[2] instanceof ArrayList) {
-                    ArrayList logs = (ArrayList) args[2];
-                    logs.add(sDeviceLog);
-                    logs.add(sDeviceLog);
-                    logs.add(sDeviceLog);
-                    logs.add(sDeviceLog);
-                    logs.add(sDeviceLog);
+                String uuidString = null;
+                if(args[0] instanceof String) {
+                    if((args[0]).equals(ANALYTICS_GROUP)) {
+                        if (args[2] instanceof ArrayList) {
+                            ArrayList logs = (ArrayList) args[2];
+                            logs.add(sDeviceLog);
+                            logs.add(sDeviceLog);
+                            logs.add(sDeviceLog);
+                            logs.add(sDeviceLog);
+                            logs.add(sDeviceLog);
+                        }
+                        uuidString = UUID.randomUUID().toString();
+                    }
+
                 }
-                return UUID.randomUUID().toString();
+                return uuidString;
             }
         });
 
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
         //don't provide a UUID to prevent sending
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID());
-
-        sut.setPersistence(mockPersistence);
-        sut.setIngestion(mockIngestion);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(UUID.randomUUID(), UUID.randomUUID(), mockPersistence, mockIngestion);
 
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
             public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -228,12 +221,12 @@ public class AvalancheChannelTest {
             sut.enqueue(sDeviceLog, ANALYTICS_GROUP);
         }
 
-        //The counter should have been 10 now as we didn't sent data.
+        //The counter should have been 25 now as we didn't sent data.
         assertEquals(25, sut.getAnalyticsCounter());
 
         //Using a fresh ingestion object to change our stub to use the analyticsSuccess()-callback
-        mockIngestion = mock(AvalancheIngestionHttp.class);
-        when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
+        AvalancheIngestionHttp newIngestion = mock(AvalancheIngestionHttp.class);
+        when(newIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
                 if (args[3] instanceof ServiceCallback) {
@@ -243,16 +236,16 @@ public class AvalancheChannelTest {
             }
         });
 
-        sut.setIngestion(mockIngestion);
+        sut.setIngestion(newIngestion);
 
         sut.setDisabled(false);
-        sut.synchronize();
+        sut.ingestNow();
 
         //The counter should back to 0 now.
         assertEquals(0, sut.getAnalyticsCounter());
 
-        //Verify that we have called sendAsync on the ingestion 3 times total (1st one failed with recoverable error.
-        verify(mockIngestion, times(5)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        //Verify that we have called sendAsync on the ingestion 5 times total.
+        verify(newIngestion, times(5)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have called deleteLogs on the persistence
         verify(mockPersistence, times(5)).deleteLog(any(String.class), any(String.class));
@@ -277,10 +270,7 @@ public class AvalancheChannelTest {
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
         //don't provide a UUID to prevent sending
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, null);
-
-        sut.setPersistence(mockPersistence);
-        sut.setIngestion(mockIngestion);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(UUID.randomUUID(), UUID.randomUUID(), mockPersistence, mockIngestion);
 
         //Enqueuing 4 events.
         sut.enqueue(sDeviceLog, ERROR_GROUP);
@@ -319,9 +309,7 @@ public class AvalancheChannelTest {
 
         AvalancheIngestion mockIngestion = mock(AvalancheIngestion.class);
 
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID());
-        sut.setPersistence(mockPersistence);
-        sut.setIngestion(mockIngestion);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(UUID.randomUUID(), UUID.randomUUID(), mockPersistence, mockIngestion);
 
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
             public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -357,25 +345,29 @@ public class AvalancheChannelTest {
     public void errorLogRecoverable() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
 
-        //Stubbing getLogs so Persistence returns a batchID and adds 5 logs to the list
+        //Stubbing getLogs so Persistence returns a batchID and adds 1 log to the list for ERROR_GROUP and nothing for ANALYTICS_GROUP
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(new Answer<String>() {
             public String answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
-                if (args[2] instanceof ArrayList) {
-                    ArrayList logs = (ArrayList) args[2];
-                    logs.add(sDeviceLog);
+                String uuidString = null;
+                if(args[0] instanceof String) {
+                    if((args[0]).equals(ERROR_GROUP)) {
+                        if (args[2] instanceof ArrayList) {
+                            ArrayList logs = (ArrayList) args[2];
+                            logs.add(sDeviceLog);
+                        }
+                        uuidString = UUID.randomUUID().toString();
+                    }
+
                 }
-                return UUID.randomUUID().toString();
+                return uuidString;
             }
         });
 
         AvalancheIngestion mockIngestion = mock(AvalancheIngestion.class);
 
         //don't provide a UUID to prevent sending
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID());
-
-        sut.setPersistence(mockPersistence);
-        sut.setIngestion(mockIngestion);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(UUID.randomUUID(), UUID.randomUUID(), mockPersistence, mockIngestion);
 
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
             public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -429,12 +421,12 @@ public class AvalancheChannelTest {
         sut.setIngestion(mockIngestion);
 
         sut.setDisabled(false);
-        sut.synchronize();
+        sut.ingestNow();
 
         //The counter should back to 0 now.
         assertEquals(0, sut.getErrorCounter());
 
-        //Verify that we have called sendAsync on the ingestion 3 times total (1st one failed with recoverable error.
+        //Verify that we have called sendAsync on the ingestion 25 times total
         verify(mockIngestion, times(25)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have called deleteLogs on the persistence

@@ -1,6 +1,5 @@
 package avalanche.base.channel;
 
-import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.IntRange;
@@ -13,16 +12,11 @@ import java.util.UUID;
 
 import avalanche.base.ingestion.AvalancheIngestion;
 import avalanche.base.ingestion.ServiceCallback;
-import avalanche.base.ingestion.http.AvalancheIngestionHttp;
 import avalanche.base.ingestion.http.HttpUtils;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
 import avalanche.base.persistence.AvalanchePersistence;
-import avalanche.base.persistence.DefaultAvalanchePersistence;
 import avalanche.base.utils.AvalancheLog;
-import avalanche.base.utils.IdHelper;
-import avalanche.base.utils.PrefStorageConstants;
-import avalanche.base.utils.StorageHelper;
 
 public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
@@ -110,17 +104,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     private boolean mDisabled;
     /**
-     * Runnable that triggers ingestion of error data and triggers itself in ERROR_INTERVAL
-     * amount of ms.
-     */
-    private final Runnable mErrorRunnable = new Runnable() {
-        @Override
-        public void run() {
-            triggerIngestion(ERROR_GROUP);
-            mIngestionHandler.postDelayed(this, ERROR_INTERVAL);
-        }
-    };
-    /**
      * Runnable that triggers ingestion of analytics data and triggers itself in ANALYTICS_INTERVAL
      * amount of ms.
      */
@@ -131,18 +114,26 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             mIngestionHandler.postDelayed(this, ANALYTICS_INTERVAL);
         }
     };
+    /**
+     * Runnable that triggers ingestion of error data and triggers itself in ERROR_INTERVAL
+     * amount of ms.
+     */
+    private final Runnable mErrorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            triggerIngestion(ERROR_GROUP);
+            mIngestionHandler.postDelayed(this, ERROR_INTERVAL);
+        }
+    };
 
     /**
      * Creates and initializes a new instance.
      */
-    public DefaultAvalancheChannel(Context context, @NonNull UUID appKey) {
-        StorageHelper.initialize(context);
-        String appKeyString = StorageHelper.PreferencesStorage.getString(PrefStorageConstants.KEY_APP_KEY);
+    public DefaultAvalancheChannel(@NonNull UUID appKey, @NonNull UUID installId, @NonNull AvalanchePersistence persistence, @NonNull AvalancheIngestion ingestion) {
         mAppKey = appKey;
-
-        mInstallId = IdHelper.getInstallId();
-        mPersistence = new DefaultAvalanchePersistence();
-        mIngestion = new AvalancheIngestionHttp();
+        mInstallId = installId;
+        mPersistence = persistence;
+        mIngestion = ingestion;
         mIngestionHandler = new Handler(Looper.getMainLooper());
 
         mDisabled = false;
@@ -159,7 +150,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      *
      * @param disabled flag to disable the Channel.
      */
-    protected void setDisabled(boolean disabled) {
+    void setDisabled(boolean disabled) {
         mDisabled = disabled;
     }
 
@@ -171,10 +162,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         return mAnalyticsCounter;
     }
 
-    void setPersistence(AvalanchePersistence persistence) {
-        this.mPersistence = persistence;
-    }
-
+    //TODO(bereimol) add missing comments
     void setIngestion(AvalancheIngestion ingestion) {
         this.mIngestion = ingestion;
     }
@@ -183,10 +171,10 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * This will reset the counters and timers for the event groups and trigger ingestion immediately.
      * Intended to be used after disabling and re-enabling the Channel.
      */
-    public void synchronize() {
+    public void ingestNow() { //TODO (bereimol) change to "scheduleIngestion()"
         synchronized (LOCK) {
-            scheduleIngestion(ANALYTICS_GROUP);
-            scheduleIngestion(ERROR_GROUP);
+            triggerIngestion(ANALYTICS_GROUP);
+            triggerIngestion(ERROR_GROUP);
         }
     }
 
@@ -214,11 +202,11 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         synchronized (LOCK) {
             int limit;
 
-            boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
+            boolean isAnalytics = groupName.equals(ANALYTICS_GROUP); //TODO(bereimol) move to list in case we get other types
             if (isAnalytics) {
                 //Restart runnable.
-                mIngestionHandler.removeCallbacks(mAnalyticsRunnable);
-                mIngestionHandler.postDelayed(mAnalyticsRunnable, ANALYTICS_INTERVAL);
+//                mIngestionHandler.removeCallbacks(mAnalyticsRunnable);
+//                mIngestionHandler.postDelayed(mAnalyticsRunnable, ANALYTICS_INTERVAL); //TODO (bereimol)interfers with counter logic
 
                 limit = ANALYTICS_COUNT;
 
@@ -230,8 +218,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
             } else {
                 //Reset the counters and restart runnable.
-                mIngestionHandler.removeCallbacks(mErrorRunnable);
-                mIngestionHandler.postDelayed(mErrorRunnable, ERROR_INTERVAL);
+//                mIngestionHandler.removeCallbacks(mErrorRunnable);
+//                mIngestionHandler.postDelayed(mErrorRunnable, ERROR_INTERVAL);
 
                 //Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending
 
@@ -287,6 +275,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
                 }
         );
     }
+
+    //TODO: (bereimol) fetch persisted items and ingest immediatelly, maybe increase batchsize a little for offline usecase
 
     /**
      * The actual implementation to react to sending a batch to the server successfully.
@@ -350,7 +340,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         try {
             mPersistence.putLog(queueName, log);
 
-            //CIncrement counters and schedule ingestion
+            //Increment counters and schedule ingestion
             synchronized (LOCK) {
                 increment(queueName);
                 scheduleIngestion(queueName);
@@ -390,6 +380,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
         if (counter < 0) {
             counter = 0;
+
         }
 
         if (isAnalytics) {
@@ -420,7 +411,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
                 mIngestionHandler.postDelayed(mErrorRunnable, ERROR_INTERVAL);
             }
         } else if (counter % maxCount == 0) {
-            //We have reached the max batch count or a mutliple of it. Trigger ingestion.
+            //We have reached the max batch count or a multiple of it. Trigger ingestion.
             if (isAnalytics) {
                 triggerIngestion(ANALYTICS_GROUP);
             } else {
