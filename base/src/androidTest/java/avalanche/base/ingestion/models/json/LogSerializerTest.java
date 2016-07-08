@@ -10,11 +10,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import avalanche.base.ingestion.models.DeviceLog;
+import avalanche.base.ingestion.models.Device;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
 
 import static avalanche.base.TestUtils.TAG;
+import static avalanche.base.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 
 public class LogSerializerTest {
 
@@ -40,26 +41,26 @@ public class LogSerializerTest {
     @Test
     public void deviceLog() throws JSONException {
         LogContainer expectedContainer = new LogContainer();
-        DeviceLog deviceLog = new DeviceLog();
-        deviceLog.setSid(UUID.randomUUID());
-        deviceLog.setSdkVersion("1.2.3");
-        deviceLog.setModel("S5");
-        deviceLog.setOemName("HTC");
-        deviceLog.setOsName("Android");
-        deviceLog.setOsVersion("4.0.3");
-        deviceLog.setOsApiLevel(15);
-        deviceLog.setLocale("en_US");
-        deviceLog.setTimeZoneOffset(120);
-        deviceLog.setScreenSize("800x600");
-        deviceLog.setAppVersion("3.2.1");
-        deviceLog.setAppBuild("42");
-        deviceLog.setAppNamespace("avalanche.test");
-        deviceLog.setCarrierCountry("us");
-        deviceLog.setCarrierName("AT&T");
+        Device device = new Device();
+        device.setSdkVersion("1.2.3");
+        device.setModel("S5");
+        device.setOemName("HTC");
+        device.setOsName("Android");
+        device.setOsVersion("4.0.3");
+        device.setOsApiLevel(15);
+        device.setLocale("en_US");
+        device.setTimeZoneOffset(120);
+        device.setScreenSize("800x600");
+        device.setAppVersion("3.2.1");
+        device.setAppBuild("42");
+        Log log = new MockLog();
+        log.setDevice(device);
+        log.setSid(UUID.randomUUID());
         List<Log> logs = new ArrayList<>();
-        logs.add(deviceLog);
+        logs.add(log);
         expectedContainer.setLogs(logs);
         LogSerializer serializer = new DefaultLogSerializer();
+        serializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
         String payload = serializer.serializeContainer(expectedContainer);
         android.util.Log.v(TAG, payload);
         LogContainer actualContainer = serializer.deserializeContainer(payload);

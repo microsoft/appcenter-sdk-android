@@ -2,6 +2,7 @@ package avalanche.analytics;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.SystemClock;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +22,7 @@ import avalanche.base.ingestion.http.AvalancheIngestionHttp;
 import avalanche.base.ingestion.http.AvalancheIngestionNetworkStateHandler;
 import avalanche.base.ingestion.http.AvalancheIngestionRetryer;
 import avalanche.base.ingestion.http.DefaultUrlConnectionFactory;
-import avalanche.base.ingestion.models.DeviceLog;
+import avalanche.base.ingestion.models.Device;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
 import avalanche.base.ingestion.models.json.LogFactory;
@@ -32,17 +33,25 @@ import avalanche.base.utils.NetworkStateHelper;
 
 public class Analytics extends AbstractAvalancheFeature {
 
+    private static final int ACTIVITY_TIMEOUT = 20000;
+
     private static Analytics sharedInstance = null;
 
     private final UUID mInstallId = UUID.randomUUID();
 
+    private Context mContext;
+
     private UUID mAppKey;
+
+    private AvalancheIngestionNetworkStateHandler mIngestionClient;
 
     private UUID mSid;
 
-    private Context mContext;
+    private Device mDevice;
 
-    private AvalancheIngestionNetworkStateHandler mIngestionClient;
+    private long mLastLogSent;
+
+    private long mLastActivityPaused;
 
     private Analytics() {
     }
@@ -52,6 +61,15 @@ public class Analytics extends AbstractAvalancheFeature {
             sharedInstance = new Analytics();
         }
         return sharedInstance;
+    }
+
+    private static String getDefaultPageName(Class<?> activityClass) {
+        String name = activityClass.getSimpleName();
+        String suffix = "Activity";
+        if (name.endsWith(suffix) && name.length() > suffix.length())
+            return name.substring(0, name.length() - suffix.length());
+        else
+            return name;
     }
 
     @Override
@@ -70,14 +88,19 @@ public class Analytics extends AbstractAvalancheFeature {
         AvalancheIngestionHttp api = new AvalancheIngestionHttp();
         api.setUrlConnectionFactory(new DefaultUrlConnectionFactory());
         api.setLogSerializer(logSerializer);
-        api.setBaseUrl("https://jsonplaceholder.typicode.com");
+        api.setBaseUrl("http://avalanche-perf.westus.cloudapp.azure.com:8081");
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(api);
         mIngestionClient = new AvalancheIngestionNetworkStateHandler(retryer, networkStateHelper);
     }
 
     @Override
     public void onActivityResumed(Activity activity) {
-        sendPage(activity.getLocalClassName(), null);
+        sendPage(getDefaultPageName(activity.getClass()), null);
+    }
+
+    @Override
+    public void onActivityPaused(Activity activity) {
+        mLastActivityPaused = SystemClock.elapsedRealtime();
     }
 
     public void sendPage(String name, Map<String, String> properties) {
@@ -87,22 +110,25 @@ public class Analytics extends AbstractAvalancheFeature {
         send(pageLog);
     }
 
-    private void send(Log log) {
-        if (mAppKey == null)
+    private synchronized void send(Log log) {
+
+        /* If session not yet started, or current session is in background for more than a specific time. */
+        if (mAppKey == null) {
             return;
-        List<Log> logs = new ArrayList<>();
-        if (mSid == null) {
+        }
+        long now = SystemClock.elapsedRealtime();
+        if (mSid == null || (now - mLastLogSent >= ACTIVITY_TIMEOUT && now - mLastActivityPaused >= ACTIVITY_TIMEOUT)) {
             mSid = UUID.randomUUID();
             try {
-                DeviceLog deviceLog = DeviceInfoHelper.getDeviceLog(mContext);
-                deviceLog.setSid(mSid);
-                logs.add(deviceLog);
+                mDevice = DeviceInfoHelper.getDeviceInfo(mContext);
             } catch (DeviceInfoHelper.DeviceInfoException e) {
                 AvalancheLog.error("Device log cannot be generated", e);
                 return;
             }
         }
+        List<Log> logs = new ArrayList<>();
         log.setSid(mSid);
+        log.setDevice(mDevice);
         logs.add(log);
         LogContainer logContainer = new LogContainer();
         logContainer.setLogs(logs);
@@ -118,5 +144,6 @@ public class Analytics extends AbstractAvalancheFeature {
                 AvalancheLog.error("Could not send log", t);
             }
         });
+        mLastLogSent = SystemClock.elapsedRealtime();
     }
 }
