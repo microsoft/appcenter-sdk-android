@@ -171,10 +171,15 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * This will reset the counters and timers for the event groups and trigger ingestion immediately.
      * Intended to be used after disabling and re-enabling the Channel.
      */
-    public void ingestNow() { //TODO (bereimol) change to "scheduleIngestion()"
+    public void triggerIngestion() {
+        //TODO (bereimol) trigger max amount of sending operations immediatelly
+        //Explanation: this triggers sending for 1 batch, and then will trigger the next batch after 3s.
+        //If the requests take longer than 3s, it will start to use the max amount of sending operations at some point or not.
+        //We need to trigger the maximum amount of sending immediatelly. Either by starting the max amount of sending immediatelly
+        //or by retrieving the amount of files logs on disk and then increment the counter which will trigger more sending operations.
         synchronized (LOCK) {
-            triggerIngestion(ANALYTICS_GROUP);
-            triggerIngestion(ERROR_GROUP);
+                triggerIngestion(ANALYTICS_GROUP);
+                triggerIngestion(ERROR_GROUP);
         }
     }
 
@@ -205,8 +210,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             boolean isAnalytics = groupName.equals(ANALYTICS_GROUP); //TODO(bereimol) move to list in case we get other types
             if (isAnalytics) {
                 //Restart runnable.
-//                mIngestionHandler.removeCallbacks(mAnalyticsRunnable);
-//                mIngestionHandler.postDelayed(mAnalyticsRunnable, ANALYTICS_INTERVAL); //TODO (bereimol)interfers with counter logic
+                mIngestionHandler.removeCallbacks(mAnalyticsRunnable);
+                mIngestionHandler.postDelayed(mAnalyticsRunnable, ANALYTICS_INTERVAL); //TODO (bereimol)interfers with counter logic
 
                 limit = ANALYTICS_COUNT;
 
@@ -218,8 +223,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
             } else {
                 //Reset the counters and restart runnable.
-//                mIngestionHandler.removeCallbacks(mErrorRunnable);
-//                mIngestionHandler.postDelayed(mErrorRunnable, ERROR_INTERVAL);
+                mIngestionHandler.removeCallbacks(mErrorRunnable);
+                mIngestionHandler.postDelayed(mErrorRunnable, ERROR_INTERVAL);
 
                 //Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending
 
@@ -327,6 +332,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
                 }
 
                 decrement(groupName, size);
+                scheduleIngestion(groupName);
             }
         }
     }
@@ -398,25 +404,27 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param groupName the group name
      */
     protected void scheduleIngestion(@GroupNameDef String groupName) {
-        boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
+       synchronized (LOCK) {
+           boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
 
-        int counter = isAnalytics ? mAnalyticsCounter : mErrorCounter;
-        int maxCount = isAnalytics ? ANALYTICS_COUNT : ERROR_COUNT;
+           int counter = isAnalytics ? mAnalyticsCounter : mErrorCounter;
+           int maxCount = isAnalytics ? ANALYTICS_COUNT : ERROR_COUNT;
 
-        if (counter == 0) {
-            //Check if counter is 0, kick of timer task.
-            if (isAnalytics) {
+           if (counter == 0) {
+               //Check if counter is 0, kick of timer task.
+               if (isAnalytics) {
                 mIngestionHandler.postDelayed(mAnalyticsRunnable, ANALYTICS_INTERVAL);
-            } else {
+               } else {
                 mIngestionHandler.postDelayed(mErrorRunnable, ERROR_INTERVAL);
-            }
-        } else if (counter % maxCount == 0) {
-            //We have reached the max batch count or a multiple of it. Trigger ingestion.
-            if (isAnalytics) {
-                triggerIngestion(ANALYTICS_GROUP);
-            } else {
-                triggerIngestion(ERROR_GROUP);
-            }
-        }
+               }
+           } else if (counter % maxCount == 0) {
+               //We have reached the max batch count or a multiple of it. Trigger ingestion.
+               if (isAnalytics) {
+                   triggerIngestion(ANALYTICS_GROUP);
+               } else {
+                   triggerIngestion(ERROR_GROUP);
+               }
+           }
+       }
     }
 }
