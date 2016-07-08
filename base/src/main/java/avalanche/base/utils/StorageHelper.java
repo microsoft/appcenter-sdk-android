@@ -23,6 +23,7 @@ import java.util.Set;
  * StorageHelper class to access local storage.
  */
 public final class StorageHelper {
+
     /**
      * Name of preferences.
      */
@@ -49,11 +50,11 @@ public final class StorageHelper {
         /*
          * boolean value
          */
-        public static boolean getBoolean(String key) {
+        public static boolean getBoolean(@PreferenceStorageKeyDef String key) {
             return getBoolean(key, false);
         }
 
-        public static boolean getBoolean(String key, boolean defValue) {
+        public static boolean getBoolean(@PreferenceStorageKeyDef String key, boolean defValue) {
             return sSharedPreferences.getBoolean(key, defValue);
         }
 
@@ -66,15 +67,15 @@ public final class StorageHelper {
         /*
          * float value
          */
-        public static float getFloat(String key) {
+        public static float getFloat(@PreferenceStorageKeyDef String key) {
             return getFloat(key, 0f);
         }
 
-        public static float getFloat(String key, float defValue) {
+        public static float getFloat(@PreferenceStorageKeyDef String key, float defValue) {
             return sSharedPreferences.getFloat(key, defValue);
         }
 
-        public static void putFloat(String key, float value) {
+        public static void putFloat(@PreferenceStorageKeyDef String key, float value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putFloat(key, value);
             editor.apply();
@@ -83,15 +84,15 @@ public final class StorageHelper {
         /*
          * int value
          */
-        public static int getInt(String key) {
+        public static int getInt(@PreferenceStorageKeyDef String key) {
             return getInt(key, 0);
         }
 
-        public static int getInt(String key, int defValue) {
+        public static int getInt(@PreferenceStorageKeyDef String key, int defValue) {
             return sSharedPreferences.getInt(key, defValue);
         }
 
-        public static void putInt(String key, int value) {
+        public static void putInt(@PreferenceStorageKeyDef String key, int value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putInt(key, value);
             editor.apply();
@@ -100,15 +101,15 @@ public final class StorageHelper {
         /*
          * long value
          */
-        public static long getLong(String key) {
+        public static long getLong(@PreferenceStorageKeyDef String key) {
             return getLong(key, 0L);
         }
 
-        public static long getLong(String key, long defValue) {
+        public static long getLong(@PreferenceStorageKeyDef String key, long defValue) {
             return sSharedPreferences.getLong(key, defValue);
         }
 
-        public static void putLong(String key, long value) {
+        public static void putLong(@PreferenceStorageKeyDef String key, long value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putLong(key, value);
             editor.apply();
@@ -117,15 +118,15 @@ public final class StorageHelper {
         /*
          * String value
          */
-        public static String getString(String key) {
+        public static String getString(@PreferenceStorageKeyDef String key) {
             return getString(key, null);
         }
 
-        public static String getString(String key, String defValue) {
+        public static String getString(@PreferenceStorageKeyDef String key, String defValue) {
             return sSharedPreferences.getString(key, defValue);
         }
 
-        public static void putString(String key, String value) {
+        public static void putString(@PreferenceStorageKeyDef String key, String value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putString(key, value);
             editor.apply();
@@ -134,15 +135,15 @@ public final class StorageHelper {
         /*
          * Set<String> value
          */
-        public static Set<String> getStringSet(String key) {
+        public static Set<String> getStringSet(@PreferenceStorageKeyDef String key) {
             return getStringSet(key, null);
         }
 
-        public static Set<String> getStringSet(String key, Set<String> defValue) {
+        public static Set<String> getStringSet(@PreferenceStorageKeyDef String key, Set<String> defValue) {
             return sSharedPreferences.getStringSet(key, defValue);
         }
 
-        public static void putStringSet(String key, Set<String> value) {
+        public static void putStringSet(@PreferenceStorageKeyDef String key, Set<String> value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putStringSet(key, value);
             editor.apply();
