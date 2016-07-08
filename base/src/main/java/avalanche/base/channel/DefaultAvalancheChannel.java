@@ -139,6 +139,10 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         mDisabled = false;
     }
 
+    /**
+     * Flag to check if the channel was disabled.
+     * @return isDisabled.
+     */
     boolean isDisabled() {
         return mDisabled;
     }
@@ -154,15 +158,26 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         mDisabled = disabled;
     }
 
+    /**
+     * Getter to get errpr count for tests.
+     * @return the error counter
+     */
     int getErrorCounter() {
         return mErrorCounter;
     }
 
+    /**
+     * Getter to get analytics count for tests.
+     * @return the analytics counter
+     */
     int getAnalyticsCounter() {
         return mAnalyticsCounter;
     }
 
-    //TODO(bereimol) add missing comments
+    /**
+     * Setter to be able to inject a new mock during testing.
+     * @param ingestion
+     */
     void setIngestion(AvalancheIngestion ingestion) {
         this.mIngestion = ingestion;
     }
@@ -211,7 +226,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             if (isAnalytics) {
                 //Restart runnable.
                 mIngestionHandler.removeCallbacks(mAnalyticsRunnable);
-                mIngestionHandler.postDelayed(mAnalyticsRunnable, ANALYTICS_INTERVAL); //TODO (bereimol)interfers with counter logic
+                mIngestionHandler.postDelayed(mAnalyticsRunnable, ANALYTICS_INTERVAL);
 
                 limit = ANALYTICS_COUNT;
 
@@ -337,6 +352,11 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         }
     }
 
+    /**
+     * Actual implementation of enqueue logic. Will increase counters, triggers of batching logic.
+     * @param log the Log to be enqueued
+     * @param queueName the queue to use
+     */
     @Override
     public void enqueue(@NonNull Log log, @NonNull @GroupNameDef String queueName) {
         if (log == null) {
@@ -379,6 +399,12 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         }
     }
 
+    /**
+     * Decrements counter for a group. Intended to be used from inside a synchronized-block.
+     * Will set the counter to 0 if decrementBy is bigger then counter to avoid a negatice counter.
+     * @param groupName the group name
+     * @param dectementBy amount to decrement the counter
+     */
     protected void decrement(@GroupNameDef String groupName, @IntRange(from = 0) int dectementBy) {
         boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
         int counter = isAnalytics ? mAnalyticsCounter : mErrorCounter;
