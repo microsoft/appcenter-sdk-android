@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import avalanche.base.utils.StorageHelper;
 import avalanche.base.utils.Util;
@@ -17,7 +18,7 @@ public final class Avalanche {
 
     private static Avalanche sharedInstance;
     private final Set<AvalancheFeature> mFeatures;
-    private String mAppKey;
+    private UUID mAppKey;
     private WeakReference<Application> mApplicationWeakReference;
     private boolean mEnabled;
 
@@ -118,7 +119,10 @@ public final class Avalanche {
         if (application == null) {
             throw new IllegalArgumentException("Application must not be null!");
         }
-        mAppKey = Util.sanitizeAppIdentifier(appKey);
+        if (appKey == null) {
+            throw new IllegalArgumentException("App Key must not be null!");
+        }
+        mAppKey = UUID.fromString(appKey);
         mApplicationWeakReference = new WeakReference<>(application);
         mFeatures.clear();
 
@@ -183,7 +187,7 @@ public final class Avalanche {
      * @return The app identifier or null if not set.
      */
     public String getAppKey() {
-        return mAppKey;
+        return mAppKey.toString();
     }
 
     public boolean isEnabled() {

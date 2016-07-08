@@ -25,7 +25,7 @@ import static org.mockito.Mockito.mock;
 @PrepareForTest({Constants.class})
 public class AvalancheTest {
 
-    private static final String DUMMY_APP_KEY = "12345678901234567890123456789012";
+    private static final String DUMMY_APP_KEY = "123e4567-e89b-12d3-a456-426655440000";
 
     private Application application;
 
