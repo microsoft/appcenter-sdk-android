@@ -2,6 +2,8 @@ package avalanche.base.ingestion.http;
 
 import android.os.AsyncTask;
 
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -192,6 +194,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             AvalancheLog.debug(LOG_TAG, payload);
 
             /* Send payload through the wire. */
+            payload = JSONObject.quote(payload); // FIXME quote is because of a temporary backend bug
             byte[] binaryPayload = payload.getBytes(CHARSET_NAME);
             urlConnection.setFixedLengthStreamingMode(binaryPayload.length);
             OutputStream out = urlConnection.getOutputStream();

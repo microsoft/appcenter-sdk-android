@@ -3,6 +3,7 @@ package avalanche.base.ingestion.http;
 import junit.framework.Assert;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -86,9 +87,10 @@ public class AvalancheIngestionHttpTest {
         httpClient.sendAsync(appKey, installId, container, serviceCallback);
         verify(serviceCallback, timeout(100)).success();
         verifyNoMoreInteractions(serviceCallback);
-        verify(urlConnection).setRequestProperty("App-ID", appKey.toString());
+        verify(urlConnection).setRequestProperty("Content-Type", "application/json");
+        verify(urlConnection).setRequestProperty("App-Key", appKey.toString());
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
-        Assert.assertEquals(serializer.serializeContainer(container), buffer.toString("UTF-8"));
+        Assert.assertEquals(JSONObject.quote(serializer.serializeContainer(container)), buffer.toString("UTF-8")); // FIXME quote is because of a temporary backend bug
         verify(urlConnection).disconnect();
     }
 
