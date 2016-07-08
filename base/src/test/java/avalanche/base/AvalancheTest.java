@@ -22,18 +22,16 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Util.class, Constants.class})
+@PrepareForTest({Constants.class})
 public class AvalancheTest {
+
+    private static final String DUMMY_APP_KEY = "12345678901234567890123456789012";
 
     private Application application;
 
     @Before
     public void setUp() throws Exception {
         application = mock(Application.class);
-
-        // Partial mock for Util class to return valid app identifier
-        PowerMockito.spy(Util.class);
-        PowerMockito.doReturn("12345678901234567890123456789012").when(Util.class, "getAppIdentifier", any(Context.class));
 
         PowerMockito.mockStatic(Constants.class);
     }
@@ -45,7 +43,7 @@ public class AvalancheTest {
 
     @Test
     public void avalancheUseDefaultFeaturesTest() {
-        Avalanche.useFeatures(application);
+        Avalanche.useFeatures(application, DUMMY_APP_KEY, (AvalancheFeature) null);
 
         // Verify that no modules have been auto-loaded since none are configured for this
         assertEquals(0, Avalanche.getSharedInstance().getFeatures().size());
@@ -54,7 +52,7 @@ public class AvalancheTest {
 
     @Test
     public void avalancheUseDummyFeatureTest() {
-        Avalanche.useFeatures(application, DummyFeature.class);
+        Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class);
 
         // Verify that single module has been loaded and configured
         assertEquals(1, Avalanche.getSharedInstance().getFeatures().size());
@@ -63,7 +61,7 @@ public class AvalancheTest {
 
     @Test
     public void avalancheUseDummyFeaturesTest() {
-        Avalanche.useFeatures(application, DummyFeature.class, AnotherDummyFeature.class);
+        Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
 
         // Verify that the right amount of modules have been loaded and configured
         assertEquals(2, Avalanche.getSharedInstance().getFeatures().size());
@@ -73,7 +71,7 @@ public class AvalancheTest {
 
     @Test
     public void avalancheAddFeaturesTest() {
-        Avalanche.useFeatures(application);
+        Avalanche.useFeatures(application, DUMMY_APP_KEY, (AvalancheFeature) null);
 
         // Verify that no initial modules are loaded and configured
         assertEquals(0, Avalanche.getSharedInstance().getFeatures().size());
@@ -94,7 +92,7 @@ public class AvalancheTest {
 
     @Test
     public void avalancheFeaturesEnableTest() {
-        Avalanche.useFeatures(application, DummyFeature.class, AnotherDummyFeature.class);
+        Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
 
         // Verify modules are enabled by default
         Avalanche avalanche = Avalanche.getSharedInstance();
@@ -136,12 +134,12 @@ public class AvalancheTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void avalancheInvalidFeatureTest() {
-        Avalanche.useFeatures(application, InvalidFeature.class);
+        Avalanche.useFeatures(application, DUMMY_APP_KEY, InvalidFeature.class);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void avalancheNullApplicationTest() {
-        Avalanche.useFeatures(null);
+        Avalanche.useFeatures(null, DUMMY_APP_KEY, DummyFeature.class);
     }
 
     @Test(expected = IllegalArgumentException.class)
