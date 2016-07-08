@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 import avalanche.base.utils.StorageHelper;
+import avalanche.base.utils.Util;
 
 public final class Avalanche {
 
@@ -114,7 +115,10 @@ public final class Avalanche {
     }
 
     private Avalanche initialize(Application application, String appKey) {
-        mAppKey = appKey;
+        if (application == null) {
+            throw new IllegalArgumentException("Application must not be null!");
+        }
+        mAppKey = Util.sanitizeAppIdentifier(appKey);
         mApplicationWeakReference = new WeakReference<>(application);
         mFeatures.clear();
 

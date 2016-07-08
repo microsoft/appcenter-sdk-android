@@ -6,7 +6,6 @@ import android.content.Context;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -19,6 +18,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
@@ -28,11 +28,12 @@ public class AvalancheTest {
     private Application application;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         application = mock(Application.class);
 
-        PowerMockito.mockStatic(Util.class);
-        Mockito.when(Util.getAppIdentifier(Mockito.any(Context.class))).thenReturn("");
+        // Partial mock for Util class to return valid app identifier
+        PowerMockito.spy(Util.class);
+        PowerMockito.doReturn("12345678901234567890123456789012").when(Util.class, "getAppIdentifier", any(Context.class));
 
         PowerMockito.mockStatic(Constants.class);
     }
@@ -136,6 +137,31 @@ public class AvalancheTest {
     @Test(expected = IllegalArgumentException.class)
     public void avalancheInvalidFeatureTest() {
         Avalanche.useFeatures(application, InvalidFeature.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void avalancheNullApplicationTest() {
+        Avalanche.useFeatures(null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void avalancheNullAppIdentifierTest() {
+        Avalanche.useFeatures(application, (String) null, DummyFeature.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void avalancheEmptyAppIdentifierTest() {
+        Avalanche.useFeatures(application, "", DummyFeature.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void avalancheTooShortAppIdentifierTest() {
+        Avalanche.useFeatures(application, "too-short", DummyFeature.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void avalancheInvalidAppIdentifierTest() {
+        Avalanche.useFeatures(application, "123xyz123xyz123xyz123xyz123xyz12", DummyFeature.class);
     }
 
     static class DummyFeature extends DefaultAvalancheFeature {
