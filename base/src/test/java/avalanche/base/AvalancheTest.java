@@ -46,6 +46,7 @@ public class AvalancheTest {
     public void avalancheUseDefaultFeaturesTest() {
         Avalanche.useFeatures(application);
 
+        // Verify that no modules have been auto-loaded since none are configured for this
         assertEquals(0, Avalanche.getSharedInstance().getFeatures().size());
         assertEquals(application, Avalanche.getSharedInstance().getApplication());
     }
@@ -54,6 +55,7 @@ public class AvalancheTest {
     public void avalancheUseDummyFeatureTest() {
         Avalanche.useFeatures(application, DummyFeature.class);
 
+        // Verify that single module has been loaded and configured
         assertEquals(1, Avalanche.getSharedInstance().getFeatures().size());
         assertTrue(Avalanche.getSharedInstance().getFeatures().contains(DummyFeature.getInstance()));
     }
@@ -62,19 +64,24 @@ public class AvalancheTest {
     public void avalancheUseDummyFeaturesTest() {
         Avalanche.useFeatures(application, DummyFeature.class, AnotherDummyFeature.class);
 
+        // Verify that the right amount of modules have been loaded and configured
         assertEquals(2, Avalanche.getSharedInstance().getFeatures().size());
+        assertTrue(Avalanche.getSharedInstance().getFeatures().contains(DummyFeature.getInstance()));
+        assertTrue(Avalanche.getSharedInstance().getFeatures().contains(AnotherDummyFeature.getInstance()));
     }
 
     @Test
     public void avalancheAddFeaturesTest() {
         Avalanche.useFeatures(application);
 
+        // Verify that no initial modules are loaded and configured
         assertEquals(0, Avalanche.getSharedInstance().getFeatures().size());
 
         Avalanche.getSharedInstance().addFeature(DummyFeature.getInstance());
         assertEquals(1, Avalanche.getSharedInstance().getFeatures().size());
         assertTrue(Avalanche.getSharedInstance().getFeatures().contains(DummyFeature.getInstance()));
 
+        // Verify that adding a module only gets added once
         Avalanche.getSharedInstance().addFeature(DummyFeature.getInstance());
         assertEquals(1, Avalanche.getSharedInstance().getFeatures().size());
 
@@ -88,6 +95,7 @@ public class AvalancheTest {
     public void avalancheFeaturesEnableTest() {
         Avalanche.useFeatures(application, DummyFeature.class, AnotherDummyFeature.class);
 
+        // Verify modules are enabled by default
         Avalanche avalanche = Avalanche.getSharedInstance();
         Set<AvalancheFeature> features = avalanche.getFeatures();
 
@@ -96,6 +104,7 @@ public class AvalancheTest {
             assertTrue(feature.isEnabled());
         }
 
+        // Verify disabling base disables all modules
         avalanche.setEnabled(false);
 
         assertFalse(avalanche.isEnabled());
@@ -103,11 +112,18 @@ public class AvalancheTest {
             assertFalse(feature.isEnabled());
         }
 
+        // Verify re-enabling base re-enables all modules
         avalanche.setEnabled(true);
         assertTrue(avalanche.isEnabled());
         for (AvalancheFeature feature : features) {
             assertTrue(feature.isEnabled());
         }
+
+        // Verify that disabling one module leaves base and other modules enabled
+        DummyFeature.getInstance().setEnabled(false);
+        assertFalse(DummyFeature.getInstance().isEnabled());
+        assertTrue(Avalanche.getSharedInstance().isEnabled());
+        assertTrue(AnotherDummyFeature.getInstance().isEnabled());
     }
 
     @Test(expected = IllegalArgumentException.class)
