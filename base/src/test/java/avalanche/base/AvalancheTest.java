@@ -104,6 +104,10 @@ public class AvalancheTest {
             assertTrue(feature.isEnabled());
         }
 
+        assertTrue(Avalanche.getSharedInstance().isFeatureEnabled(DummyFeature.class));
+        assertTrue(Avalanche.getSharedInstance().isFeatureEnabled(AnotherDummyFeature.class));
+        assertFalse(Avalanche.getSharedInstance().isFeatureEnabled(InvalidFeature.class));
+
         // Verify disabling base disables all modules
         avalanche.setEnabled(false);
 
@@ -111,6 +115,9 @@ public class AvalancheTest {
         for (AvalancheFeature feature : features) {
             assertFalse(feature.isEnabled());
         }
+
+        assertFalse(Avalanche.getSharedInstance().isFeatureEnabled(DummyFeature.class));
+        assertFalse(Avalanche.getSharedInstance().isFeatureEnabled(AnotherDummyFeature.class));
 
         // Verify re-enabling base re-enables all modules
         avalanche.setEnabled(true);

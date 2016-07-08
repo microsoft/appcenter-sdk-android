@@ -166,7 +166,7 @@ public final class Avalanche {
         for (AvalancheFeature aFeature :
                 mFeatures) {
             if (aFeature.getClass().equals(feature)) {
-                return true;
+                return aFeature.isEnabled();
             }
         }
         return false;
