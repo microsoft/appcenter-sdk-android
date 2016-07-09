@@ -72,7 +72,7 @@ public class AvalancheIngestionHttpTest {
         /* Configure mock HTTP. */
         HttpURLConnection urlConnection = mock(HttpURLConnection.class);
         UrlConnectionFactory urlConnectionFactory = mock(UrlConnectionFactory.class);
-        when(urlConnectionFactory.openConnection(eq(new URL("http://mock/logs?api-version=1.0.0-preview20160705")))).thenReturn(urlConnection);
+        when(urlConnectionFactory.openConnection(eq(new URL("http://mock/logs?api-version=1.0.0-preview20160708")))).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
