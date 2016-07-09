@@ -21,7 +21,13 @@ public class Analytics extends AbstractAvalancheFeature {
 
     private static Analytics sharedInstance = null;
 
+    private final Map<String, LogFactory> mFactories;
+
     protected Analytics() {
+        mFactories = new HashMap<>();
+        mFactories.put(EndSessionLog.TYPE, new EndSessionLogFactory());
+        mFactories.put(PageLog.TYPE, new PageLogFactory());
+        mFactories.put(EventLog.TYPE, new EventLogFactory());
     }
 
     public static Analytics getInstance() {
@@ -42,11 +48,7 @@ public class Analytics extends AbstractAvalancheFeature {
 
     @Override
     public Map<String, LogFactory> getLogFactories() {
-        HashMap<String, LogFactory> factories = new HashMap<>();
-        factories.put(EndSessionLog.TYPE, new EndSessionLogFactory());
-        factories.put(PageLog.TYPE, new PageLogFactory());
-        factories.put(EventLog.TYPE, new EventLogFactory());
-        return factories;
+        return mFactories;
     }
 
     @Override
@@ -68,7 +70,7 @@ public class Analytics extends AbstractAvalancheFeature {
         send(eventLog);
     }
 
-    private void send(Log pageLog) {
-        mChannel.enqueue(pageLog, ANALYTICS_GROUP);
+    private void send(Log log) {
+        mChannel.enqueue(log, ANALYTICS_GROUP);
     }
 }

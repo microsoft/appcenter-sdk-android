@@ -101,8 +101,8 @@ public class AvalancheChannelTest {
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
         //don't provide a UUID to prevent sending
-        @SuppressWarnings("ConstantConditions") DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, null, sLogSerializer);
-
+        @SuppressWarnings("ConstantConditions")
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, null, sLogSerializer);
         sut.setPersistence(mockPersistence);
         sut.setIngestion(mockIngestion);
 

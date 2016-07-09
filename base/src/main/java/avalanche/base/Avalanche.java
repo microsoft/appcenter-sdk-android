@@ -31,7 +31,7 @@ public final class Avalanche {
     private boolean mEnabled;
     private AvalancheChannel mChannel;
 
-    private Avalanche() {
+    protected Avalanche() {
         mFeatures = new HashSet<>();
     }
 
