@@ -4,6 +4,7 @@ import android.app.Activity;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import avalanche.analytics.ingestion.models.EndSessionLog;
 import avalanche.analytics.ingestion.models.EventLog;
@@ -65,6 +66,7 @@ public class Analytics extends AbstractAvalancheFeature {
 
     public void sendEvent(String name, Map<String, String> properties) {
         EventLog eventLog = new EventLog();
+        eventLog.setId(UUID.randomUUID());
         eventLog.setName(name);
         eventLog.setProperties(properties);
         send(eventLog);

@@ -1,4 +1,4 @@
-package avalanche.analytics;
+package avalanche.analytics.models.json;
 
 import junit.framework.Assert;
 
