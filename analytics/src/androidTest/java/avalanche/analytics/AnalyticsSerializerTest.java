@@ -16,6 +16,7 @@ import avalanche.analytics.ingestion.models.PageLog;
 import avalanche.analytics.ingestion.models.json.EndSessionLogFactory;
 import avalanche.analytics.ingestion.models.json.EventLogFactory;
 import avalanche.analytics.ingestion.models.json.PageLogFactory;
+import avalanche.base.ingestion.models.Device;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
 import avalanche.base.ingestion.models.json.DefaultLogSerializer;
@@ -28,18 +29,27 @@ public class AnalyticsSerializerTest {
     @Test
     public void someBatch() throws JSONException {
         LogContainer expectedContainer = new LogContainer();
+        Device device = new Device();
+        device.setSdkVersion("1.2.3");
+        device.setModel("S5");
+        device.setOemName("HTC");
+        device.setOsName("Android");
+        device.setOsVersion("4.0.3");
+        device.setOsApiLevel(15);
+        device.setLocale("en_US");
+        device.setTimeZoneOffset(120);
+        device.setScreenSize("800x600");
+        device.setAppVersion("3.2.1");
+        device.setAppBuild("42");
         List<Log> logs = new ArrayList<>();
         expectedContainer.setLogs(logs);
-        UUID sid = UUID.randomUUID();
         {
             PageLog pageLog = new PageLog();
-            pageLog.setSid(sid);
             pageLog.setName("home");
             logs.add(pageLog);
         }
         {
             PageLog pageLog = new PageLog();
-            pageLog.setSid(sid);
             pageLog.setName("settings");
             pageLog.setProperties(new HashMap<String, String>() {{
                 put("from", "home_menu");
@@ -50,14 +60,12 @@ public class AnalyticsSerializerTest {
         {
             EventLog eventLog = new EventLog();
             eventLog.setId(UUID.randomUUID());
-            eventLog.setSid(sid);
             eventLog.setName("subscribe");
             logs.add(eventLog);
         }
         {
             EventLog eventLog = new EventLog();
             eventLog.setId(UUID.randomUUID());
-            eventLog.setSid(sid);
             eventLog.setName("click");
             eventLog.setProperties(new HashMap<String, String>() {{
                 put("x", "1");
@@ -66,9 +74,12 @@ public class AnalyticsSerializerTest {
             logs.add(eventLog);
         }
         {
-            EndSessionLog endSessionLog = new EndSessionLog();
-            endSessionLog.setSid(sid);
-            logs.add(endSessionLog);
+            logs.add(new EndSessionLog());
+        }
+        UUID sid = UUID.randomUUID();
+        for (Log log : logs) {
+            log.setSid(sid);
+            log.setDevice(device);
         }
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(EndSessionLog.TYPE, new EndSessionLogFactory());

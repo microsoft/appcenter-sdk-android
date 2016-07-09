@@ -111,12 +111,9 @@ public abstract class AbstractLog implements Log {
             throw new JSONException("Invalid type");
         setToffset(object.getLong(TOFFSET));
         setSid(UUID.fromString(object.getString(SID)));
-        JSONObject jDevice = object.optJSONObject(DEVICE);
-        if (jDevice != null) {
-            Device device = new Device();
-            device.read(jDevice);
-            setDevice(device);
-        }
+        Device device = new Device();
+        device.read(object.getJSONObject(DEVICE));
+        setDevice(device);
     }
 
     @Override
@@ -124,11 +121,12 @@ public abstract class AbstractLog implements Log {
         LogUtils.checkNotNull(TYPE, getType());
         LogUtils.checkNotNull(TOFFSET, getToffset());
         LogUtils.checkNotNull(SID, getSid());
-        if (getDevice() != null)
-            getDevice().validate();
+        LogUtils.checkNotNull(DEVICE, getDevice());
+        getDevice().validate();
     }
 
     @Override
+    @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
