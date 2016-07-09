@@ -6,6 +6,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 import java.util.UUID;
 
@@ -20,9 +21,9 @@ import avalanche.base.utils.DeviceInfoHelper;
 public class AvalancheChannelSessionDecorator implements AvalancheChannel, Application.ActivityLifecycleCallbacks {
 
     /**
-     * Session timeout in milliseconds.
+     * Default session timeout in milliseconds.
      */
-    private static final int SESSION_TIMEOUT = 20000;
+    private static final long SESSION_TIMEOUT = 20000;
 
     /**
      * Application context.
@@ -33,6 +34,11 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
      * Decorated channel.
      */
     private final AvalancheChannel mChannel;
+
+    /**
+     * Session timeout.
+     */
+    private long mSessionTimeout;
 
     /**
      * Current session identifier.
@@ -65,6 +71,16 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
         mChannel = channel;
     }
 
+    /**
+     * Set session timeout.
+     *
+     * @param sessionTimeout session timeout.
+     */
+    @VisibleForTesting
+    void setSessionTimeout(long sessionTimeout) {
+        mSessionTimeout = sessionTimeout;
+    }
+
     @Override
     public void enqueue(@NonNull Log log, @NonNull @GroupNameDef String queueName) {
 
@@ -78,7 +94,7 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
          * the same session as long as the current activity is not paused (long video for example).
          */
         long now = SystemClock.elapsedRealtime();
-        if (mSid == null || (now - mLastQueuedLogTime >= SESSION_TIMEOUT && now - mLastBackgroundTime >= SESSION_TIMEOUT)) {
+        if (mSid == null || (now - mLastQueuedLogTime >= mSessionTimeout && now - mLastBackgroundTime >= mSessionTimeout)) {
 
             /* New session: generate a new identifier. */
             mSid = UUID.randomUUID();
