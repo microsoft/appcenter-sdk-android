@@ -1,7 +1,5 @@
 package avalanche.analytics;
 
-import android.app.Activity;
-
 import junit.framework.Assert;
 
 import org.junit.Test;
@@ -21,7 +19,6 @@ import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.json.LogFactory;
 
 import static avalanche.base.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
@@ -39,18 +36,17 @@ public class AnalyticsTest {
     @Test
     public void checkFactories() {
         Map<String, LogFactory> factories = new Analytics().getLogFactories();
-        assertEquals(3, factories.size());
-        assertTrue(factories.get(PageLog.TYPE) instanceof PageLogFactory);
-        assertTrue(factories.get(EventLog.TYPE) instanceof EventLogFactory);
-        assertTrue(factories.get(EndSessionLog.TYPE) instanceof EndSessionLogFactory);
+        assertTrue(factories.remove(PageLog.TYPE) instanceof PageLogFactory);
+        assertTrue(factories.remove(EventLog.TYPE) instanceof EventLogFactory);
+        assertTrue(factories.remove(EndSessionLog.TYPE) instanceof EndSessionLogFactory);
+        assertTrue(factories.isEmpty());
     }
 
-    @Test
-    public void activityResumedNoSuffix() {
+    public void activityResumed(final String expectedName, android.app.Activity activity) {
         Analytics analytics = new Analytics();
         AvalancheChannel channel = mock(AvalancheChannel.class);
         analytics.onChannelReady(channel);
-        analytics.onActivityResumed(new MyActivity());
+        analytics.onActivityResumed(activity);
         //noinspection WrongConstant (well its not a wrong constant but something is odd with compiler here)
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -58,7 +54,7 @@ public class AnalyticsTest {
             public boolean matches(Object item) {
                 if (item instanceof PageLog) {
                     PageLog pageLog = (PageLog) item;
-                    return "My".equals(pageLog.getName());
+                    return expectedName.equals(pageLog.getName());
                 }
                 return false;
             }
@@ -67,22 +63,17 @@ public class AnalyticsTest {
 
     @Test
     public void activityResumedWithSuffix() {
-        Analytics analytics = new Analytics();
-        AvalancheChannel channel = mock(AvalancheChannel.class);
-        analytics.onChannelReady(channel);
-        analytics.onActivityResumed(new SomeScreen());
-        //noinspection WrongConstant (well its not a wrong constant but something is odd with compiler here)
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+        activityResumed("My", new MyActivity());
+    }
 
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof PageLog) {
-                    PageLog pageLog = (PageLog) item;
-                    return "SomeScreen".equals(pageLog.getName());
-                }
-                return false;
-            }
-        }), eq(ANALYTICS_GROUP));
+    @Test
+    public void activityResumedNoSuffix() {
+        activityResumed("SomeScreen", new SomeScreen());
+    }
+
+    @Test
+    public void activityResumedNamedActivity() {
+        activityResumed("Activity", new Activity());
     }
 
     @Test
@@ -108,9 +99,12 @@ public class AnalyticsTest {
         }), eq(ANALYTICS_GROUP));
     }
 
-    private static class SomeScreen extends Activity {
+    private static class MyActivity extends android.app.Activity {
     }
 
-    private static class MyActivity extends Activity {
+    private static class SomeScreen extends android.app.Activity {
+    }
+
+    private static class Activity extends android.app.Activity {
     }
 }
