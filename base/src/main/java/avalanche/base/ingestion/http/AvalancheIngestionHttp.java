@@ -2,8 +2,6 @@ package avalanche.base.ingestion.http;
 
 import android.os.AsyncTask;
 
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -28,30 +26,37 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
      * API Path.
      */
     public static final String API_PATH = "/logs?api-version=1.0.0-preview20160708";
+
     /**
      * Content type header value.
      */
     public static final String CONTENT_TYPE_VALUE = "application/json";
+
     /**
      * Application identifier HTTP Header.
      */
     public static final String APP_KEY = "App-Key";
+
     /**
      * Installation identifier HTTP Header.
      */
     public static final String INSTALL_ID = "Install-ID";
+
     /**
      * Default string builder capacity.
      */
     public static final int DEFAULT_STRING_BUILDER_CAPACITY = 16;
+
     /**
      * Log tag for POST payload.
      */
     private static final String LOG_TAG = "AvalancheHttp";
+
     /**
      * Content type header key.
      */
     private static final String CONTENT_TYPE_KEY = "Content-Type";
+
     /**
      * Character encoding.
      */
@@ -187,7 +192,6 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             AvalancheLog.verbose(LOG_TAG, payload);
 
             /* Send payload through the wire. */
-            payload = JSONObject.quote(payload); // FIXME quote is because of a temporary backend bug
             byte[] binaryPayload = payload.getBytes(CHARSET_NAME);
             urlConnection.setFixedLengthStreamingMode(binaryPayload.length);
             OutputStream out = urlConnection.getOutputStream();
