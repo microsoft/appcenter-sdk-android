@@ -99,12 +99,21 @@ public class AnalyticsTest {
         }), eq(ANALYTICS_GROUP));
     }
 
+    /**
+     * Activity with page name automatically resolving to "My" (no "Activity" suffix).
+     */
     private static class MyActivity extends android.app.Activity {
     }
 
+    /**
+     * Activity with page name automatically resolving to "SomeScreen".
+     */
     private static class SomeScreen extends android.app.Activity {
     }
 
+    /**
+     * Activity with page name automatically resolving to "Activity", because name == suffix.
+     */
     private static class Activity extends android.app.Activity {
     }
 }
