@@ -1,7 +1,6 @@
 package avalanche.base;
 
 import android.app.Application;
-import android.content.Context;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -12,17 +11,17 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Set;
 
-import avalanche.base.utils.Util;
+import avalanche.base.utils.AvalancheLog;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Constants.class})
+@PrepareForTest({Constants.class, AvalancheLog.class})
 public class AvalancheTest {
 
     private static final String DUMMY_APP_KEY = "123e4567-e89b-12d3-a456-426655440000";
@@ -34,6 +33,7 @@ public class AvalancheTest {
         application = mock(Application.class);
 
         PowerMockito.mockStatic(Constants.class);
+        PowerMockito.mockStatic(AvalancheLog.class);
     }
 
     @Test
@@ -142,9 +142,12 @@ public class AvalancheTest {
         Avalanche.useFeatures(null, DUMMY_APP_KEY, DummyFeature.class);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void avalancheNullAppIdentifierTest() {
         Avalanche.useFeatures(application, (String) null, DummyFeature.class);
+
+        PowerMockito.verifyStatic();
+        AvalancheLog.error(anyString());
     }
 
     @Test(expected = IllegalArgumentException.class)

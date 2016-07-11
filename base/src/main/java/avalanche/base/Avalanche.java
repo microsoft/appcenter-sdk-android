@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import avalanche.base.utils.AvalancheLog;
 import avalanche.base.utils.StorageHelper;
-import avalanche.base.utils.Util;
 
 public final class Avalanche {
 
@@ -119,10 +119,12 @@ public final class Avalanche {
         if (application == null) {
             throw new IllegalArgumentException("Application must not be null!");
         }
-        if (appKey == null) {
-            throw new IllegalArgumentException("App Key must not be null!");
+        if (appKey != null) {
+            mAppKey = UUID.fromString(appKey);
+        } else {
+            AvalancheLog.error("App Key must be set for initializing the Avalanche SDK!");
         }
-        mAppKey = UUID.fromString(appKey);
+
         mApplicationWeakReference = new WeakReference<>(application);
         mFeatures.clear();
 
