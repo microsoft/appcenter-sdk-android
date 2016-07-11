@@ -6,6 +6,9 @@ import android.content.pm.PackageManager;
 
 import org.junit.Test;
 
+import java.util.UUID;
+
+import avalanche.base.ingestion.models.Device;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.json.MockLog;
 
@@ -37,42 +40,90 @@ public class AvalancheChannelSessionDecoratorTest {
         AvalancheChannelSessionDecorator sessionChannel = new AvalancheChannelSessionDecorator(context, channel);
         sessionChannel.setSessionTimeout(20);
 
-        /* Send a log, verify decoration. */
-        Log log = new MockLog();
-        sessionChannel.enqueue(log, ANALYTICS_GROUP);
-        assertNotNull(log.getSid());
-        assertNotNull(log.getDevice());
-        verify(channel).enqueue(log, ANALYTICS_GROUP);
+        /* Application is in background, send a log, verify decoration. */
+        UUID expectedSid;
+        Device expectedDevice;
+        {
+            Log log = new MockLog();
+            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            assertNotNull(log.getSid());
+            assertNotNull(log.getDevice());
+            verify(channel).enqueue(log, ANALYTICS_GROUP);
+            expectedSid = log.getSid();
+            expectedDevice = log.getDevice();
+        }
 
         /* Verify session reused for second log. */
-        Log log2 = new MockLog();
-        sessionChannel.enqueue(log2, ANALYTICS_GROUP);
-        assertEquals(log.getSid(), log2.getSid());
-        assertEquals(log.getDevice(), log2.getDevice());
+        {
+            Log log = new MockLog();
+            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            assertEquals(expectedSid, log.getSid());
+            assertEquals(expectedDevice, log.getDevice());
+        }
 
-        /* Verify new session. */
-        Thread.sleep(30);
-        packageInfo.versionCode++; // make any change in device properties
-        Log log3 = new MockLog();
-        sessionChannel.enqueue(log3, ANALYTICS_GROUP);
-        assertNotEquals(log.getSid(), log3.getSid());
-        assertNotEquals(log.getDevice(), log3.getDevice());
+        /* No usage from background for a long time. */
+        {
+            Thread.sleep(30);
+            packageInfo.versionCode++; // make any change in device properties
+            Log log = new MockLog();
+            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            assertNotEquals(expectedSid, log.getSid());
+            assertNotEquals(expectedDevice, log.getDevice());
+            expectedSid = log.getSid();
+            expectedDevice = log.getDevice();
+        }
 
-        /* After a long time make believe we just exited an activity and thus still in session. */
-        Thread.sleep(30);
-        sessionChannel.onActivityPaused(null);
-        Log log4 = new MockLog();
-        sessionChannel.enqueue(log4, ANALYTICS_GROUP);
-        assertEquals(log3.getSid(), log4.getSid());
-        assertEquals(log3.getDevice(), log4.getDevice());
+        /* App comes to foreground and sends a log, still session. */
+        {
+            sessionChannel.onActivityResumed(null);
+            Log log = new MockLog();
+            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            assertEquals(expectedSid, log.getSid());
+            assertEquals(expectedDevice, log.getDevice());
+        }
 
-        /* Both times are above threshold, new session. */
-        Thread.sleep(30);
-        packageInfo.versionCode++; // make any change in device properties
-        Log log5 = new MockLog();
-        sessionChannel.enqueue(log5, ANALYTICS_GROUP);
-        assertNotEquals(log4.getSid(), log5.getSid());
-        assertNotEquals(log4.getDevice(), log5.getDevice());
+        /* Switch to another activity. */
+        {
+            Thread.sleep(2);
+            sessionChannel.onActivityPaused(null);
+            Thread.sleep(2);
+            sessionChannel.onActivityResumed(null);
+            Log log = new MockLog();
+            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            assertEquals(expectedSid, log.getSid());
+            assertEquals(expectedDevice, log.getDevice());
+        }
+
+        /* We are in foreground, even after timeout a log is still in session. */
+        {
+            Thread.sleep(30);
+            Log log = new MockLog();
+            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            assertEquals(expectedSid, log.getSid());
+            assertEquals(expectedDevice, log.getDevice());
+        }
+
+        /* Background for a short time and send log: still in session. */
+        {
+            Thread.sleep(2);
+            sessionChannel.onActivityPaused(null);
+            Thread.sleep(2);
+            Log log = new MockLog();
+            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            assertEquals(expectedSid, log.getSid());
+            assertEquals(expectedDevice, log.getDevice());
+        }
+
+        /* Background for a long time and coming back to foreground: new session. */
+        {
+            Thread.sleep(30);
+            packageInfo.versionCode++; // make any change in device properties
+            sessionChannel.onActivityResumed(null);
+            Log log = new MockLog();
+            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            assertNotEquals(expectedSid, log.getSid());
+            assertNotEquals(expectedDevice, log.getDevice());
+        }
     }
 
     @Test
