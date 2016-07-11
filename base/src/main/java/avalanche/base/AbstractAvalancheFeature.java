@@ -3,13 +3,13 @@ package avalanche.base;
 import android.app.Activity;
 import android.os.Bundle;
 
-public abstract class DefaultAvalancheFeature implements AvalancheFeature {
+import avalanche.base.channel.AvalancheChannel;
 
-    private boolean mEnabled;
+public abstract class AbstractAvalancheFeature implements AvalancheFeature {
 
-    public DefaultAvalancheFeature() {
-        mEnabled = true;
-    }
+    protected AvalancheChannel mChannel;
+
+    private boolean mEnabled = true;
 
     @Override
     public String getName() {
@@ -18,37 +18,35 @@ public abstract class DefaultAvalancheFeature implements AvalancheFeature {
 
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-
     }
 
     @Override
     public void onActivityStarted(Activity activity) {
-
     }
 
     @Override
     public void onActivityResumed(Activity activity) {
-
     }
 
     @Override
     public void onActivityPaused(Activity activity) {
-
     }
 
     @Override
     public void onActivityStopped(Activity activity) {
-
     }
 
     @Override
     public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-
     }
 
     @Override
     public void onActivityDestroyed(Activity activity) {
+    }
 
+    @Override
+    public boolean isEnabled() {
+        return mEnabled;
     }
 
     @Override
@@ -57,8 +55,7 @@ public abstract class DefaultAvalancheFeature implements AvalancheFeature {
     }
 
     @Override
-    public boolean isEnabled() {
-        return mEnabled;
+    public void onChannelReady(AvalancheChannel channel) {
+        mChannel = channel;
     }
-
 }

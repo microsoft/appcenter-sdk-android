@@ -10,12 +10,7 @@ import avalanche.base.ingestion.models.utils.LogUtils;
 /**
  * Device characteristic log.
  */
-public class DeviceLog extends AbstractLog {
-
-    /**
-     * The log type.
-     */
-    public static final String TYPE = "device";
+public class Device implements Model {
 
     private static final String SDK_VERSION = "sdkVersion";
 
@@ -116,11 +111,6 @@ public class DeviceLog extends AbstractLog {
      * what the individual plattforms use,  .e.g com.microsoft.example.
      */
     private String appNamespace;
-
-    @Override
-    public String getType() {
-        return TYPE;
-    }
 
     /**
      * Get the sdkVersion value.
@@ -376,7 +366,6 @@ public class DeviceLog extends AbstractLog {
 
     @Override
     public void read(JSONObject object) throws JSONException {
-        super.read(object);
         setSdkVersion(object.getString(SDK_VERSION));
         setModel(object.getString(MODEL));
         setOemName(object.getString(OEM_NAME));
@@ -395,7 +384,6 @@ public class DeviceLog extends AbstractLog {
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        super.write(writer);
         writer.key(SDK_VERSION).value(getSdkVersion());
         writer.key(MODEL).value(getModel());
         writer.key(OEM_NAME).value(getOemName());
@@ -414,7 +402,6 @@ public class DeviceLog extends AbstractLog {
 
     @Override
     public void validate() throws IllegalArgumentException {
-        super.validate();
         LogUtils.checkNotNull(SDK_VERSION, getSdkVersion());
         LogUtils.checkNotNull(MODEL, getModel());
         LogUtils.checkNotNull(OEM_NAME, getOemName());
@@ -431,42 +418,38 @@ public class DeviceLog extends AbstractLog {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
 
-        DeviceLog deviceLog = (DeviceLog) o;
+        Device device = (Device) o;
 
-        if (sdkVersion != null ? !sdkVersion.equals(deviceLog.sdkVersion) : deviceLog.sdkVersion != null)
+        if (sdkVersion != null ? !sdkVersion.equals(device.sdkVersion) : device.sdkVersion != null)
             return false;
-        if (model != null ? !model.equals(deviceLog.model) : deviceLog.model != null) return false;
-        if (oemName != null ? !oemName.equals(deviceLog.oemName) : deviceLog.oemName != null)
+        if (model != null ? !model.equals(device.model) : device.model != null) return false;
+        if (oemName != null ? !oemName.equals(device.oemName) : device.oemName != null)
             return false;
-        if (osName != null ? !osName.equals(deviceLog.osName) : deviceLog.osName != null)
+        if (osName != null ? !osName.equals(device.osName) : device.osName != null) return false;
+        if (osVersion != null ? !osVersion.equals(device.osVersion) : device.osVersion != null)
             return false;
-        if (osVersion != null ? !osVersion.equals(deviceLog.osVersion) : deviceLog.osVersion != null)
+        if (osApiLevel != null ? !osApiLevel.equals(device.osApiLevel) : device.osApiLevel != null)
             return false;
-        if (osApiLevel != null ? !osApiLevel.equals(deviceLog.osApiLevel) : deviceLog.osApiLevel != null)
+        if (locale != null ? !locale.equals(device.locale) : device.locale != null) return false;
+        if (timeZoneOffset != null ? !timeZoneOffset.equals(device.timeZoneOffset) : device.timeZoneOffset != null)
             return false;
-        if (locale != null ? !locale.equals(deviceLog.locale) : deviceLog.locale != null)
+        if (screenSize != null ? !screenSize.equals(device.screenSize) : device.screenSize != null)
             return false;
-        if (timeZoneOffset != null ? !timeZoneOffset.equals(deviceLog.timeZoneOffset) : deviceLog.timeZoneOffset != null)
+        if (appVersion != null ? !appVersion.equals(device.appVersion) : device.appVersion != null)
             return false;
-        if (screenSize != null ? !screenSize.equals(deviceLog.screenSize) : deviceLog.screenSize != null)
+        if (carrierName != null ? !carrierName.equals(device.carrierName) : device.carrierName != null)
             return false;
-        if (appVersion != null ? !appVersion.equals(deviceLog.appVersion) : deviceLog.appVersion != null)
+        if (carrierCountry != null ? !carrierCountry.equals(device.carrierCountry) : device.carrierCountry != null)
             return false;
-        if (carrierName != null ? !carrierName.equals(deviceLog.carrierName) : deviceLog.carrierName != null)
+        if (appBuild != null ? !appBuild.equals(device.appBuild) : device.appBuild != null)
             return false;
-        if (carrierCountry != null ? !carrierCountry.equals(deviceLog.carrierCountry) : deviceLog.carrierCountry != null)
-            return false;
-        if (appBuild != null ? !appBuild.equals(deviceLog.appBuild) : deviceLog.appBuild != null)
-            return false;
-        return appNamespace != null ? appNamespace.equals(deviceLog.appNamespace) : deviceLog.appNamespace == null;
+        return appNamespace != null ? appNamespace.equals(device.appNamespace) : device.appNamespace == null;
     }
 
     @Override
     public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (sdkVersion != null ? sdkVersion.hashCode() : 0);
+        int result = sdkVersion != null ? sdkVersion.hashCode() : 0;
         result = 31 * result + (model != null ? model.hashCode() : 0);
         result = 31 * result + (oemName != null ? oemName.hashCode() : 0);
         result = 31 * result + (osName != null ? osName.hashCode() : 0);

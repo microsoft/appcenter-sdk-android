@@ -28,6 +28,8 @@ android {
 dependencies {
     compile project(':base')
 
+    testCompile project(path: ':base', configuration: 'testCompile')
+
     androidTestCompile 'com.crittercism.dexmaker:dexmaker-dx:1.4'
     androidTestCompile 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
     androidTestCompile 'com.android.support.test:runner:0.5'

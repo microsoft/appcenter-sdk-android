@@ -20,6 +20,11 @@ import static android.net.ConnectivityManager.CONNECTIVITY_ACTION;
 public class NetworkStateHelper implements Closeable {
 
     /**
+     * Shared instance.
+     */
+    private static NetworkStateHelper sSharedInstance;
+
+    /**
      * Android context.
      */
     private final Context mContext;
@@ -49,12 +54,24 @@ public class NetworkStateHelper implements Closeable {
      *
      * @param context any Android context.
      */
-    public NetworkStateHelper(Context context) {
+    protected NetworkStateHelper(Context context) {
         mContext = context.getApplicationContext();
         mConnectivityManager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
         mConnectivityReceiver = new ConnectivityReceiver();
         updateNetworkType();
         context.registerReceiver(mConnectivityReceiver, new IntentFilter(CONNECTIVITY_ACTION));
+    }
+
+    /**
+     * Get shared instance.
+     *
+     * @param context any context.
+     * @return shared instance.
+     */
+    public static NetworkStateHelper getSharedInstance(Context context) {
+        if (sSharedInstance == null)
+            sSharedInstance = new NetworkStateHelper(context);
+        return sSharedInstance;
     }
 
     /**

@@ -15,7 +15,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import avalanche.base.BuildConfig;
-import avalanche.base.ingestion.models.DeviceLog;
+import avalanche.base.ingestion.models.Device;
 
 /**
  * DeviceInfoHelper class to retrieve device information.
@@ -31,60 +31,60 @@ public class DeviceInfoHelper {
      * Gets device information.
      *
      * @param context The context of the application.
-     * @return {@link DeviceLog}
+     * @return {@link Device}
      */
-    public static DeviceLog getDeviceLog(Context context) throws DeviceInfoException {
-        DeviceLog deviceLog = new DeviceLog();
+    public static Device getDeviceInfo(Context context) throws DeviceInfoException {
+        Device device = new Device();
 
         /* Application version. */
         PackageInfo packageInfo;
         try {
             PackageManager packageManager = context.getPackageManager();
             packageInfo = packageManager.getPackageInfo(context.getPackageName(), 0);
-            deviceLog.setAppVersion(packageInfo.versionName);
-            deviceLog.setAppBuild(String.valueOf(packageInfo.versionCode));
+            device.setAppVersion(packageInfo.versionName);
+            device.setAppBuild(String.valueOf(packageInfo.versionCode));
         } catch (Exception e) {
             AvalancheLog.error("Cannot retrieve package info", e);
             throw new DeviceInfoException("Cannot retrieve package info", e);
         }
 
         /* Application namespace. */
-        deviceLog.setAppNamespace(context.getPackageName());
+        device.setAppNamespace(context.getPackageName());
 
         /* Carrier info. */
         try {
             TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            deviceLog.setCarrierCountry(telephonyManager.getNetworkCountryIso());
-            deviceLog.setCarrierName(telephonyManager.getNetworkOperatorName());
+            device.setCarrierCountry(telephonyManager.getNetworkCountryIso());
+            device.setCarrierName(telephonyManager.getNetworkOperatorName());
         } catch (Exception e) {
             AvalancheLog.error("Cannot retrieve carrier info", e);
         }
 
         /* Locale. */
-        deviceLog.setLocale(Locale.getDefault().toString());
+        device.setLocale(Locale.getDefault().toString());
 
         /* Hardware info. */
-        deviceLog.setModel(Build.MODEL);
-        deviceLog.setOemName(Build.MANUFACTURER);
+        device.setModel(Build.MODEL);
+        device.setOemName(Build.MANUFACTURER);
 
         /* OS version. */
-        deviceLog.setOsApiLevel(Build.VERSION.SDK_INT);
-        deviceLog.setOsName(OS_NAME);
-        deviceLog.setOsVersion(Build.VERSION.RELEASE);
+        device.setOsApiLevel(Build.VERSION.SDK_INT);
+        device.setOsName(OS_NAME);
+        device.setOsVersion(Build.VERSION.RELEASE);
 
         /* Screen size. */
         try {
-            deviceLog.setScreenSize(getScreenSize(context));
+            device.setScreenSize(getScreenSize(context));
         } catch (Exception e) {
             AvalancheLog.error("Cannot retrieve screen size", e);
         }
 
         /* SDK version. */
-        deviceLog.setSdkVersion(BuildConfig.VERSION_NAME);
+        device.setSdkVersion(BuildConfig.VERSION_NAME);
 
         /* Timezone offset in minutes (including DST). */
-        deviceLog.setTimeZoneOffset(TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 60 / 1000);
-        return deviceLog;
+        device.setTimeZoneOffset(TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 60 / 1000);
+        return device;
     }
 
     /**
