@@ -119,10 +119,13 @@ public final class Avalanche {
         if (application == null) {
             throw new IllegalArgumentException("Application must not be null!");
         }
-        if (appKey != null) {
+
+        try {
             mAppKey = UUID.fromString(appKey);
-        } else {
+        } catch (NullPointerException e) {
             AvalancheLog.error("App Key must be set for initializing the Avalanche SDK!");
+        } catch (IllegalArgumentException e) {
+            AvalancheLog.error("App Key is not valid!", e);
         }
 
         mApplicationWeakReference = new WeakReference<>(application);

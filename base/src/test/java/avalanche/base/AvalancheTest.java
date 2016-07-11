@@ -17,6 +17,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 
@@ -150,19 +151,27 @@ public class AvalancheTest {
         AvalancheLog.error(anyString());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void avalancheEmptyAppIdentifierTest() {
         Avalanche.useFeatures(application, "", DummyFeature.class);
+
+        PowerMockito.verifyStatic();
+        AvalancheLog.error(anyString(), any(IllegalArgumentException.class));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void avalancheTooShortAppIdentifierTest() {
         Avalanche.useFeatures(application, "too-short", DummyFeature.class);
+
+        PowerMockito.verifyStatic();
+        AvalancheLog.error(anyString(), any(IllegalArgumentException.class));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void avalancheInvalidAppIdentifierTest() {
-        Avalanche.useFeatures(application, "123xyz123xyz123xyz123xyz123xyz12", DummyFeature.class);
+        Avalanche.useFeatures(application, "123xyz12-3xyz-123x-yz12-3xyz123xyz12", DummyFeature.class);
+        PowerMockito.verifyStatic();
+        AvalancheLog.error(anyString(), any(NumberFormatException.class));
     }
 
     static class DummyFeature extends DefaultAvalancheFeature {
