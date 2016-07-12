@@ -1,6 +1,7 @@
 package avalanche.base;
 
 import android.app.Application;
+import android.content.Context;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -12,6 +13,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.util.Set;
 
 import avalanche.base.utils.AvalancheLog;
+import avalanche.base.utils.IdHelper;
+import avalanche.base.utils.StorageHelper;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
@@ -20,21 +23,28 @@ import static junit.framework.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Constants.class, AvalancheLog.class})
+@PrepareForTest({Constants.class, AvalancheLog.class, StorageHelper.class, IdHelper.class})
 public class AvalancheTest {
 
     private static final String DUMMY_APP_KEY = "123e4567-e89b-12d3-a456-426655440000";
 
     private Application application;
+    private Context context;
 
     @Before
     public void setUp() throws Exception {
         application = mock(Application.class);
+        context = mock(Context.class);
+
+        when(application.getApplicationContext()).thenReturn(context);
 
         PowerMockito.mockStatic(Constants.class);
         PowerMockito.mockStatic(AvalancheLog.class);
+        PowerMockito.mockStatic(StorageHelper.class);
+        PowerMockito.mockStatic(IdHelper.class);
     }
 
     @Test
@@ -174,7 +184,7 @@ public class AvalancheTest {
         AvalancheLog.error(anyString(), any(NumberFormatException.class));
     }
 
-    static class DummyFeature extends DefaultAvalancheFeature {
+    static class DummyFeature extends AbstractAvalancheFeature {
 
         private static DummyFeature sharedInstance = null;
 
@@ -184,9 +194,10 @@ public class AvalancheTest {
             }
             return sharedInstance;
         }
+
     }
 
-    static class AnotherDummyFeature extends DefaultAvalancheFeature {
+    static class AnotherDummyFeature extends AbstractAvalancheFeature {
 
         private static AnotherDummyFeature sharedInstance;
 
@@ -198,7 +209,7 @@ public class AvalancheTest {
         }
     }
 
-    static class InvalidFeature extends DefaultAvalancheFeature {
+    static class InvalidFeature extends AbstractAvalancheFeature {
 
     }
 

@@ -23,7 +23,7 @@ public class AvalancheFeatureTest {
         assertTrue(feature.isEnabled());
     }
 
-    static class TestAvalancheFeature extends DefaultAvalancheFeature {
+    static class TestAvalancheFeature extends AbstractAvalancheFeature {
 
     }
 
