@@ -4,6 +4,8 @@
     <string name="description_crash">Simulate application crashes</string>
     <string name="title_device_info">Device info</string>
     <string name="description_device_info">Display device information</string>
+    <string name="title_generate_page_log">Generate page logs</string>
+    <string name="description_generate_page_log">Simulate page open and close 5 times</string>
     <string name="error_device_info">Couldn\'t retrieve device information</string>
     <string name="title_event">Events</string>
     <string name="description_event">Send a custom event</string>
