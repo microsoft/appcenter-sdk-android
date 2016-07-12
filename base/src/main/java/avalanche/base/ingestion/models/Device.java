@@ -108,7 +108,7 @@ public class Device implements Model {
 
     /**
      * The bundle identifier, package identifier, or namespace, depending on
-     * what the individual plattforms use,  .e.g com.microsoft.example.
+     * what the individual platforms use,  .e.g com.microsoft.example.
      */
     private String appNamespace;
 
@@ -415,6 +415,7 @@ public class Device implements Model {
     }
 
     @Override
+    @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

@@ -158,7 +158,7 @@ public class AvalancheLog {
      * @param throwable the throwable you want to log
      */
     public static void info(String message, Throwable throwable) {
-        info(message, throwable);
+        info(null, message, throwable);
     }
 
     /**

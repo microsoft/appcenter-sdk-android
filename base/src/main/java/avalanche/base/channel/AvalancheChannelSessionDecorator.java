@@ -72,17 +72,13 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
      * @param channel channel to decorate.
      */
     public AvalancheChannelSessionDecorator(Context context, AvalancheChannel channel) {
-        mContext = context.getApplicationContext();
-        mChannel = channel;
+        this(context, channel, SESSION_TIMEOUT);
     }
 
-    /**
-     * Set session timeout.
-     *
-     * @param sessionTimeout session timeout.
-     */
     @VisibleForTesting
-    void setSessionTimeout(long sessionTimeout) {
+    AvalancheChannelSessionDecorator(Context context, AvalancheChannel channel, long sessionTimeout) {
+        mContext = context;
+        mChannel = channel;
         mSessionTimeout = sessionTimeout;
     }
 

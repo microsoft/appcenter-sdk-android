@@ -64,8 +64,8 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     @VisibleForTesting
-    static void setInstance(Analytics instance) {
-        sInstance = instance;
+    static void unsetInstance() {
+        sInstance = null;
     }
 
     /**

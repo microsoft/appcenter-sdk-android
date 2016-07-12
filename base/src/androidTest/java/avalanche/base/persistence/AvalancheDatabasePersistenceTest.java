@@ -229,6 +229,7 @@ public class AvalancheDatabasePersistenceTest {
             DatabaseScanner scanner2 = persistence.mDatabaseStorage.getScanner(AvalancheDatabasePersistence.COLUMN_KEY, "test-p2");
             DatabaseScanner scanner3 = persistence.mDatabaseStorage.getScanner(AvalancheDatabasePersistence.COLUMN_KEY, "test-p3");
 
+            //noinspection TryFinallyCanBeTryWithResources
             try {
                 /* Verify. */
                 assertEquals(2, getIteratorSize(scanner1.iterator()));
@@ -247,6 +248,7 @@ public class AvalancheDatabasePersistenceTest {
             /* Access DatabaseStorage directly to verify the deletions. */
             DatabaseScanner scanner4 = persistence.mDatabaseStorage.getScanner(AvalancheDatabasePersistence.COLUMN_KEY, "test-p1");
 
+            //noinspection TryFinallyCanBeTryWithResources
             try {
                 /* Verify. */
                 assertEquals(0, getIteratorSize(scanner4.iterator()));
@@ -284,8 +286,8 @@ public class AvalancheDatabasePersistenceTest {
                 logs[i] = generateLog();
 
             /* Put. */
-            for (int i = 0; i < logs.length; i++)
-                persistence.putLog("test", logs[i]);
+            for (Log log : logs)
+                persistence.putLog("test", log);
 
             /* Get. */
             List<Log> outputLogs = new ArrayList<>();
@@ -333,8 +335,8 @@ public class AvalancheDatabasePersistenceTest {
                 logs[i] = generateLog();
 
             /* Put. */
-            for (int i = 0; i < logs.length; i++)
-                persistence.putLog("test", logs[i]);
+            for (Log log : logs)
+                persistence.putLog("test", log);
 
             /* Get. */
             List<Log> outputLogs = new ArrayList<>();

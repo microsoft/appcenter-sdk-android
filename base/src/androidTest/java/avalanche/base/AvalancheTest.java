@@ -21,12 +21,13 @@ public class AvalancheTest {
     public void getInstallId() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
         Application application = Instrumentation.newApplication(Application.class, InstrumentationRegistry.getTargetContext());
         Avalanche avalanche = Avalanche.useFeatures(application, UUID.randomUUID().toString(), new AvalancheFeature[]{});
+        assertNotNull(avalanche);
         StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
-        UUID installId = avalanche.getInstallId();
+        UUID installId = Avalanche.getInstallId();
         assertNotNull(installId);
-        assertEquals(installId, avalanche.getInstallId());
+        assertEquals(installId, Avalanche.getInstallId());
         StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
-        UUID installId2 = avalanche.getInstallId();
+        UUID installId2 = Avalanche.getInstallId();
         assertNotNull(installId2);
         assertNotEquals(installId2, installId);
     }

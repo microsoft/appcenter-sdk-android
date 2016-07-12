@@ -2,6 +2,7 @@ package avalanche.base.ingestion.http;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.VisibleForTesting;
 
 import java.util.Random;
 import java.util.UUID;
@@ -57,7 +58,8 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
      * @param decoratedApi   API to decorate.
      * @param retryIntervals retry intervals, array index is to use the value for each retry. When we used all the array values, we give up and forward the last error.
      */
-    protected AvalancheIngestionRetryer(AvalancheIngestion decoratedApi, long... retryIntervals) {
+    @VisibleForTesting
+    AvalancheIngestionRetryer(AvalancheIngestion decoratedApi, long... retryIntervals) {
         super(decoratedApi);
         mRetryIntervals = retryIntervals;
     }

@@ -19,7 +19,7 @@ public abstract class AbstractLog implements Log {
     /**
      * Session identifier property.
      */
-    public static final String SID = "sid";
+    private static final String SID = "sid";
 
     /**
      * toffset property.
