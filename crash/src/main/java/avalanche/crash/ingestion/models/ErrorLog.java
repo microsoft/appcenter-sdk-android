@@ -21,7 +21,7 @@ import static avalanche.base.ingestion.models.CommonProperties.ID;
  */
 public class ErrorLog extends LogWithProperties {
 
-    private static final String TYPE = "error";
+    public static final String TYPE = "error";
 
     private static final String PROCESS = "process";
 
@@ -482,6 +482,7 @@ public class ErrorLog extends LogWithProperties {
     }
 
     @Override
+    @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -518,7 +519,6 @@ public class ErrorLog extends LogWithProperties {
         if (exceptions != null ? !exceptions.equals(errorLog.exceptions) : errorLog.exceptions != null)
             return false;
         return binaries != null ? binaries.equals(errorLog.binaries) : errorLog.binaries == null;
-
     }
 
     @Override

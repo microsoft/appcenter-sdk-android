@@ -21,7 +21,7 @@ import org.powermock.reflect.Whitebox;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import avalanche.base.ingestion.models.DeviceLog;
+import avalanche.base.ingestion.models.Device;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
@@ -109,7 +109,7 @@ public class DeviceInfoHelperTest {
         /* TODO: Implement mock for BuildConfig.VERSION_NAME and verify getSdkVersion(). Need a special way to do this since BuildConfig is a final class. */
 
         /* First call */
-        DeviceLog log = DeviceInfoHelper.getDeviceLog(contextMock);
+        Device log = DeviceInfoHelper.getDeviceInfo(contextMock);
 
         /* Verify device information. */
         assertEquals(appVersion, log.getAppVersion());
@@ -127,15 +127,15 @@ public class DeviceInfoHelperTest {
         assertEquals(timeZoneOffset, log.getTimeZoneOffset());
 
         /* Verify screen size based on different orientations (Surface.ROTATION_90). */
-        log = DeviceInfoHelper.getDeviceLog(contextMock);
+        log = DeviceInfoHelper.getDeviceInfo(contextMock);
         assertEquals(screenSizePortrait, log.getScreenSize());
 
         /* Verify screen size based on different orientations (Surface.ROTATION_180). */
-        log = DeviceInfoHelper.getDeviceLog(contextMock);
+        log = DeviceInfoHelper.getDeviceInfo(contextMock);
         assertEquals(screenSizeLandscape, log.getScreenSize());
 
         /* Verify screen size based on different orientations (Surface.ROTATION_270). */
-        log = DeviceInfoHelper.getDeviceLog(contextMock);
+        log = DeviceInfoHelper.getDeviceInfo(contextMock);
         assertEquals(screenSizePortrait, log.getScreenSize());
 
         /* Make sure screen size is verified for all orientations. */
@@ -154,6 +154,6 @@ public class DeviceInfoHelperTest {
         when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
         when(packageManagerMock.getPackageInfo(anyString(), eq(0))).thenThrow(new PackageManager.NameNotFoundException());
 
-        DeviceInfoHelper.getDeviceLog(contextMock);
+        DeviceInfoHelper.getDeviceInfo(contextMock);
     }
 }

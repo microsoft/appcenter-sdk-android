@@ -25,17 +25,17 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     /**
      * API Path.
      */
-    public static final String API_PATH = "/logs?api-version=1.0.0-preview20160705";
+    public static final String API_PATH = "/logs?api-version=1.0.0-preview20160708";
 
     /**
-     * JSON Content-Type.
+     * Content type header value.
      */
-    public static final String CONTENT_TYPE_JSON = "application/json";
+    public static final String CONTENT_TYPE_VALUE = "application/json";
 
     /**
      * Application identifier HTTP Header.
      */
-    public static final String APP_ID = "App-ID";
+    public static final String APP_KEY = "App-Key";
 
     /**
      * Installation identifier HTTP Header.
@@ -50,12 +50,12 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     /**
      * Log tag for POST payload.
      */
-    private static final String LOG_TAG = "avalanche-http";
+    private static final String LOG_TAG = "AvalancheHttp";
 
     /**
-     * Content type header.
+     * Content type header key.
      */
-    private static final String CONTENT_TYPE = "Content-Type";
+    private static final String CONTENT_TYPE_KEY = "Content-Type";
 
     /**
      * Character encoding.
@@ -162,7 +162,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     /**
      * Do the HTTP call now.
      *
-     * @param appKey        application identifier.
+     * @param appKey       application identifier.
      * @param installId    install identifier.
      * @param logContainer payload.
      * @throws Exception if an error occurs.
@@ -175,20 +175,21 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
 
             /* Init connection. */
             URL url = new URL(mBaseUrl + API_PATH);
-            AvalancheLog.debug(LOG_TAG, "Calling " + url + " ...");
+            AvalancheLog.verbose(LOG_TAG, "Calling " + url + " ...");
             urlConnection = mUrlConnectionFactory.openConnection(url);
             urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
             urlConnection.setReadTimeout(READ_TIMEOUT);
-            urlConnection.setRequestProperty(CONTENT_TYPE, CONTENT_TYPE_JSON);
 
             /* Set headers. */
-            urlConnection.setRequestProperty(APP_ID, appKey.toString());
+            urlConnection.setRequestProperty(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
+            urlConnection.setRequestProperty(APP_KEY, appKey.toString());
             urlConnection.setRequestProperty(INSTALL_ID, installId.toString());
+            AvalancheLog.verbose(LOG_TAG, "Headers: " + urlConnection.getRequestProperties());
 
             /* Serialize payload. */
             urlConnection.setDoOutput(true);
             String payload = mLogSerializer.serializeContainer(logContainer);
-            AvalancheLog.debug(LOG_TAG, payload);
+            AvalancheLog.verbose(LOG_TAG, payload);
 
             /* Send payload through the wire. */
             byte[] binaryPayload = payload.getBytes(CHARSET_NAME);
@@ -200,7 +201,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             /* Read response. */
             int status = urlConnection.getResponseCode();
             String response = dump(urlConnection);
-            AvalancheLog.debug(LOG_TAG, "HTTP response status=" + status + " payload=" + response);
+            AvalancheLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + response);
 
             /* Generate exception on failure. */
             if (status != 200)

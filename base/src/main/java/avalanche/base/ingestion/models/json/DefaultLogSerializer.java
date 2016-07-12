@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import avalanche.base.ingestion.models.DeviceLog;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
 import avalanche.base.ingestion.models.utils.LogUtils;
@@ -22,10 +21,6 @@ public class DefaultLogSerializer implements LogSerializer {
     private static final String LOGS = "logs";
 
     private final Map<String, LogFactory> mLogFactories = new HashMap<>();
-
-    public DefaultLogSerializer() {
-        addLogFactory(DeviceLog.TYPE, new DeviceLogFactory());
-    }
 
     private JSONStringer writeLog(JSONStringer writer, Log log) throws JSONException {
         writer.object();

@@ -15,12 +15,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import avalanche.base.AbstractAvalancheFeature;
 import avalanche.base.Avalanche;
 import avalanche.base.Constants;
-import avalanche.base.DefaultAvalancheFeature;
+import avalanche.base.ingestion.models.json.LogFactory;
 import avalanche.base.utils.AvalancheLog;
 import avalanche.base.utils.HttpURLConnectionBuilder;
 import avalanche.base.utils.Util;
+import avalanche.crash.ingestion.models.ErrorLog;
+import avalanche.crash.ingestion.models.json.ErrorLogFactory;
 import avalanche.crash.model.CrashMetaData;
 import avalanche.crash.model.CrashReport;
 import avalanche.crash.model.CrashesUserInput;
@@ -30,7 +33,7 @@ import static avalanche.base.utils.StorageHelper.InternalStorage;
 import static avalanche.base.utils.StorageHelper.PreferencesStorage;
 
 
-public class Crashes extends DefaultAvalancheFeature {
+public class Crashes extends AbstractAvalancheFeature {
 
     private static final String ALWAYS_SEND_KEY = "always_send_crash_reports";
 
@@ -585,6 +588,13 @@ public class Crashes extends DefaultAvalancheFeature {
     }
 
     private String getURLString() {
-        return mEndpointUrl + "api/2/apps/" + Avalanche.getSharedInstance().getAppKey() + "/crashes/";
+        return mEndpointUrl + "api/2/apps/" + Avalanche.getAppKey() + "/crashes/";
+    }
+
+    @Override
+    public Map<String, LogFactory> getLogFactories() {
+        HashMap<String, LogFactory> factories = new HashMap<>();
+        factories.put(ErrorLog.TYPE, new ErrorLogFactory());
+        return factories;
     }
 }

@@ -27,6 +27,11 @@ public abstract class AbstractLog implements Log {
     private static final String TOFFSET = "toffset";
 
     /**
+     * device property.
+     */
+    private static final String DEVICE = "device";
+
+    /**
      * Corresponds to the number of milliseconds elapsed between the time the
      * request is sent and the time the log is emitted.
      */
@@ -36,6 +41,11 @@ public abstract class AbstractLog implements Log {
      * The session identifier that was provided when the session was started.
      */
     private UUID sid;
+
+    /**
+     * Device characteristics associated to this log.
+     */
+    private Device device;
 
     @Override
     public long getToffset() {
@@ -65,11 +75,34 @@ public abstract class AbstractLog implements Log {
         this.sid = sid;
     }
 
+    /**
+     * Get the device value.
+     *
+     * @return the device value
+     */
+    public Device getDevice() {
+        return this.device;
+    }
+
+    /**
+     * Set the device value.
+     *
+     * @param device the device value to set
+     */
+    public void setDevice(Device device) {
+        this.device = device;
+    }
+
     @Override
     public void write(JSONStringer writer) throws JSONException {
         writer.key(TYPE).value(getType());
         writer.key(TOFFSET).value(getToffset());
         writer.key(SID).value(getSid());
+        if (getDevice() != null) {
+            writer.key(DEVICE).object();
+            getDevice().write(writer);
+            writer.endObject();
+        }
     }
 
     @Override
@@ -78,6 +111,9 @@ public abstract class AbstractLog implements Log {
             throw new JSONException("Invalid type");
         setToffset(object.getLong(TOFFSET));
         setSid(UUID.fromString(object.getString(SID)));
+        Device device = new Device();
+        device.read(object.getJSONObject(DEVICE));
+        setDevice(device);
     }
 
     @Override
@@ -85,9 +121,12 @@ public abstract class AbstractLog implements Log {
         LogUtils.checkNotNull(TYPE, getType());
         LogUtils.checkNotNull(TOFFSET, getToffset());
         LogUtils.checkNotNull(SID, getSid());
+        LogUtils.checkNotNull(DEVICE, getDevice());
+        getDevice().validate();
     }
 
     @Override
+    @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -95,13 +134,15 @@ public abstract class AbstractLog implements Log {
         AbstractLog that = (AbstractLog) o;
 
         if (toffset != that.toffset) return false;
-        return sid != null ? sid.equals(that.sid) : that.sid == null;
+        if (sid != null ? !sid.equals(that.sid) : that.sid != null) return false;
+        return device != null ? device.equals(that.device) : that.device == null;
     }
 
     @Override
     public int hashCode() {
         int result = (int) (toffset ^ (toffset >>> 32));
         result = 31 * result + (sid != null ? sid.hashCode() : 0);
+        result = 31 * result + (device != null ? device.hashCode() : 0);
         return result;
     }
 }

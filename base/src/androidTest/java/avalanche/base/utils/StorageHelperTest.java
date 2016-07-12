@@ -1,5 +1,6 @@
 package avalanche.base.utils;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -17,15 +18,24 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static avalanche.base.utils.StorageHelper.DatabaseStorage;
 import static avalanche.base.utils.StorageHelper.InternalStorage;
 import static avalanche.base.utils.StorageHelper.PreferencesStorage;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -50,11 +60,22 @@ public class StorageHelperTest {
      */
     private static String sAndroidFilesPath;
 
+    /**
+     * Database schema.
+     */
+    private static ContentValues mSchema;
+
     @BeforeClass
     public static void setUpClass() {
         sContext = InstrumentationRegistry.getTargetContext();
         StorageHelper.initialize(sContext);
-        sAndroidFilesPath = sContext.getFilesDir().getAbsolutePath();
+        sAndroidFilesPath = sContext.getFilesDir().getAbsolutePath() + "/test";
+
+        /* Create a test directory. */
+        InternalStorage.mkdir(sAndroidFilesPath);
+
+        /* Create a test schema. */
+        mSchema = getContentValues();
     }
 
     @AfterClass
@@ -83,6 +104,15 @@ public class StorageHelperTest {
         for (String filename : filenames) {
             InternalStorage.delete(sAndroidFilesPath + "/" + filename);
         }
+
+        InternalStorage.delete(sAndroidFilesPath);
+
+        /* Delete database. */
+        sContext.deleteDatabase("test-databaseStorage");
+        sContext.deleteDatabase("test-databaseStorageUpgrade");
+        sContext.deleteDatabase("test-databaseStorageScannerRemove");
+        sContext.deleteDatabase("test-databaseStorageScannerNext");
+        sContext.deleteDatabase("test-databaseStorageInMemoryDB");
     }
 
     private static SharedPreferencesTestData[] generateSharedPreferenceData() throws NoSuchMethodException {
@@ -92,35 +122,40 @@ public class StorageHelperTest {
         testData[0] = new SharedPreferencesTestData();
         testData[0].value = true;
         testData[0].defaultValue = false;
-        testData[0].getMethod = PreferencesStorage.class.getDeclaredMethod("getBoolean", String.class, boolean.class);
+        testData[0].getMethod1 = PreferencesStorage.class.getDeclaredMethod("getBoolean", String.class);
+        testData[0].getMethod2 = PreferencesStorage.class.getDeclaredMethod("getBoolean", String.class, boolean.class);
         testData[0].putMethod = PreferencesStorage.class.getDeclaredMethod("putBoolean", String.class, boolean.class);
 
         /* float */
         testData[1] = new SharedPreferencesTestData();
         testData[1].value = 111.22f;
-        testData[1].defaultValue = 0f;
-        testData[1].getMethod = PreferencesStorage.class.getDeclaredMethod("getFloat", String.class, float.class);
+        testData[1].defaultValue = 0.01f;
+        testData[1].getMethod1 = PreferencesStorage.class.getDeclaredMethod("getFloat", String.class);
+        testData[1].getMethod2 = PreferencesStorage.class.getDeclaredMethod("getFloat", String.class, float.class);
         testData[1].putMethod = PreferencesStorage.class.getDeclaredMethod("putFloat", String.class, float.class);
 
         /* int */
         testData[2] = new SharedPreferencesTestData();
         testData[2].value = 123;
-        testData[2].defaultValue = 0;
-        testData[2].getMethod = PreferencesStorage.class.getDeclaredMethod("getInt", String.class, int.class);
+        testData[2].defaultValue = -1;
+        testData[2].getMethod1 = PreferencesStorage.class.getDeclaredMethod("getInt", String.class);
+        testData[2].getMethod2 = PreferencesStorage.class.getDeclaredMethod("getInt", String.class, int.class);
         testData[2].putMethod = PreferencesStorage.class.getDeclaredMethod("putInt", String.class, int.class);
 
         /* long */
         testData[3] = new SharedPreferencesTestData();
         testData[3].value = 123456789000L;
-        testData[3].defaultValue = 0L;
-        testData[3].getMethod = PreferencesStorage.class.getDeclaredMethod("getLong", String.class, long.class);
+        testData[3].defaultValue = 345L;
+        testData[3].getMethod1 = PreferencesStorage.class.getDeclaredMethod("getLong", String.class);
+        testData[3].getMethod2 = PreferencesStorage.class.getDeclaredMethod("getLong", String.class, long.class);
         testData[3].putMethod = PreferencesStorage.class.getDeclaredMethod("putLong", String.class, long.class);
 
         /* String */
         testData[4] = new SharedPreferencesTestData();
         testData[4].value = "Hello World";
-        testData[4].defaultValue = null;
-        testData[4].getMethod = PreferencesStorage.class.getDeclaredMethod("getString", String.class, String.class);
+        testData[4].defaultValue = "Empty";
+        testData[4].getMethod1 = PreferencesStorage.class.getDeclaredMethod("getString", String.class);
+        testData[4].getMethod2 = PreferencesStorage.class.getDeclaredMethod("getString", String.class, String.class);
         testData[4].putMethod = PreferencesStorage.class.getDeclaredMethod("putString", String.class, String.class);
 
         /* Set<String> */
@@ -128,14 +163,97 @@ public class StorageHelperTest {
         data.add("ABC");
         data.add("Hello World");
         data.add("Welcome to the world!");
+        Set<String> defaultSet = new HashSet<>();
+        defaultSet.add("DEFAULT");
 
         testData[5] = new SharedPreferencesTestData();
         testData[5].value = data;
-        testData[5].defaultValue = null;
-        testData[5].getMethod = PreferencesStorage.class.getDeclaredMethod("getStringSet", String.class, Set.class);
+        testData[5].defaultValue = defaultSet;
+        testData[5].getMethod1 = PreferencesStorage.class.getDeclaredMethod("getStringSet", String.class);
+        testData[5].getMethod2 = PreferencesStorage.class.getDeclaredMethod("getStringSet", String.class, Set.class);
         testData[5].putMethod = PreferencesStorage.class.getDeclaredMethod("putStringSet", String.class, Set.class);
 
         return testData;
+    }
+
+    private static ContentValues getContentValues() {
+        Random random = new Random(System.currentTimeMillis());
+        byte[] randomBytes = new byte[10];
+        random.nextBytes(randomBytes);
+
+        ContentValues values = new ContentValues();
+        values.put("COL_STRING", randomBytes.toString());
+        values.put("COL_BYTE", randomBytes[0]);
+        values.put("COL_SHORT", (short) random.nextInt(100));
+        values.put("COL_INTEGER", random.nextInt());
+        values.put("COL_LONG", random.nextLong());
+        values.put("COL_FLOAT", random.nextFloat());
+        values.put("COL_DOUBLE", random.nextDouble());
+        values.put("COL_BOOLEAN", Boolean.TRUE/*random.nextBoolean()*/);
+        values.put("COL_BYTE_ARRAY", randomBytes);
+        return values;
+    }
+
+    public static void assertContentValuesEquals(ContentValues expected, ContentValues actual) {
+        assertEquals(expected.getAsString("COL_STRING"), actual.getAsString("COL_STRING"));
+        assertEquals(expected.getAsByte("COL_BYTE"), actual.getAsByte("COL_BYTE"));
+        assertEquals(expected.getAsShort("COL_SHORT"), actual.getAsShort("COL_SHORT"));
+        assertEquals(expected.getAsInteger("COL_INTEGER"), actual.getAsInteger("COL_INTEGER"));
+        assertEquals(expected.getAsLong("COL_LONG"), actual.getAsLong("COL_LONG"));
+        assertEquals(expected.getAsFloat("COL_FLOAT"), actual.getAsFloat("COL_FLOAT"));
+        assertEquals(expected.getAsDouble("COL_DOUBLE"), actual.getAsDouble("COL_DOUBLE"));
+        assertEquals(expected.getAsBoolean("COL_BOOLEAN"), actual.getAsBoolean("COL_BOOLEAN"));
+        assertArrayEquals(expected.getAsByteArray("COL_BYTE_ARRAY"), actual.getAsByteArray("COL_BYTE_ARRAY"));
+    }
+
+    private static void runDatabaseStorageTest(DatabaseStorage databaseStorage) {
+        ContentValues firstValue = getContentValues();
+        ContentValues secondValue = getContentValues();
+        ContentValues thirdValue = getContentValues();
+
+        /* Put. */
+        Long firstValueId = databaseStorage.put(firstValue);
+        Long secondValueId = databaseStorage.put(secondValue);
+
+        assertNotNull(firstValueId);
+        assertNotNull(secondValueId);
+
+        /* Generate an ID that is neither firstValueId nor secondValueId. */
+
+        /* Get. */
+        ContentValues firstValueFromDatabase = databaseStorage.get(firstValueId);
+        assertContentValuesEquals(firstValue, firstValueFromDatabase);
+        ContentValues secondValueFromDatabase = databaseStorage.get(DatabaseManager.PRIMARY_KEY, secondValueId);
+        assertContentValuesEquals(secondValue, secondValueFromDatabase);
+        @SuppressWarnings("ResourceType")
+        ContentValues nullValueFromDatabase = databaseStorage.get(-1);
+        assertNull(nullValueFromDatabase);
+
+        /* Update. */
+        assertTrue(databaseStorage.update(firstValueId, thirdValue));
+        ContentValues thirdValueFromDatabase = databaseStorage.get(firstValueId);
+        assertContentValuesEquals(thirdValue, thirdValueFromDatabase);
+
+        /* Delete. */
+        databaseStorage.delete(firstValueId);
+        assertNull(databaseStorage.get(firstValueId));
+        assertEquals(1, databaseStorage.getRowCount());
+
+        /* Clear. */
+        databaseStorage.clear();
+        assertEquals(0, databaseStorage.getRowCount());
+    }
+
+    /**
+     * This method is to go through the code that intentionally ignores exceptions.
+     */
+    @Test
+    public void storageHelperForCoverage() throws IOException {
+        Log.i(TAG, "Testing StorageHelper for code coverage");
+
+        new StorageHelper();
+        new PreferencesStorage();
+        new InternalStorage();
     }
 
     @Test
@@ -149,16 +267,16 @@ public class StorageHelperTest {
             data.putMethod.invoke(null, key, data.value);
 
             /* Get value from shared preferences. */
-            Object actual = data.getMethod.invoke(null, key, data.defaultValue);
+            Object actual = data.getMethod1.invoke(null, key);
 
-            /* Check the value is same as assigned. */
+            /* Verify the value is same as assigned. */
             assertEquals(data.value, actual);
 
             /* Remove key from shared preferences. */
             PreferencesStorage.remove(key);
 
-            /* Check the value equals to default value. */
-            assertEquals(data.defaultValue, data.getMethod.invoke(null, key, data.defaultValue));
+            /* Verify the value equals to default value. */
+            assertEquals(data.defaultValue, data.getMethod2.invoke(null, key, data.defaultValue));
         }
     }
 
@@ -180,6 +298,7 @@ public class StorageHelperTest {
                 "at java.io.FileOutputStream.<init>(FileOutputStream.java:87)\n" +
                 "at java.io.FileOutputStream.<init>(FileOutputStream.java:72)\n" +
                 "at java.io.FileWriter.<init>(FileWriter.java:42)";
+        String filename3 = prefix + "-" + UUID.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENTION;
 
         /* FilenameFilter to look up files that are created in current test. */
         FilenameFilter filter = new FilenameFilter() {
@@ -195,25 +314,32 @@ public class StorageHelperTest {
         TimeUnit.SECONDS.sleep(2);
         Log.i(TAG, "Writing " + filename2);
         InternalStorage.write(sAndroidFilesPath + "/" + filename2, contents2);
+        /* Also write empty content to a test file. */
+        TimeUnit.SECONDS.sleep(2);
+        InternalStorage.write(sAndroidFilesPath + "/" + filename3, "");
 
         /* Get file names in the root path. */
         String[] filenames = InternalStorage.getFilenames(sAndroidFilesPath + "/", filter);
 
-        /* Check the files are created. */
+        /* Verify the files are created. */
         assertNotNull(filenames);
         assertEquals(2, filenames.length);
+        List<String> list = Arrays.asList(filenames);
+        assertTrue(list.contains(filename1));
+        assertTrue(list.contains(filename2));
+        assertFalse(list.contains(filename3));
 
         /* Get the most recent file. */
         File lastModifiedFile = InternalStorage.lastModifiedFile(sAndroidFilesPath, filter);
 
-        /* Check the most recent file. */
+        /* Verify the most recent file. */
         assertNotNull(lastModifiedFile);
         assertEquals(filename2, lastModifiedFile.getName());
 
         /* Read the most recent file. */
         String actual = InternalStorage.read(lastModifiedFile);
 
-        /* Check the contents of the most recent file. */
+        /* Verify the contents of the most recent file. */
         assertEquals(contents2, actual.trim());
 
         /* Delete the files to clean up. */
@@ -222,8 +348,13 @@ public class StorageHelperTest {
             InternalStorage.delete(sAndroidFilesPath + "/" + filename);
         }
 
-        /* Check all the files are properly deleted. */
+        /* Verify all the files are properly deleted. */
         assertEquals(0, InternalStorage.getFilenames(sAndroidFilesPath, filter).length);
+
+        /* Verify invalid accesses. */
+        assertEquals("", InternalStorage.read("not-exist-filename"));
+        assertArrayEquals(new String[0], InternalStorage.getFilenames("not-exist-path", null));
+        assertNull(InternalStorage.lastModifiedFile("not-exist-path", null));
     }
 
     @Test
@@ -241,7 +372,7 @@ public class StorageHelperTest {
         /* Read the file. */
         DataModel actual = InternalStorage.readObject(file, DataModel.class);
 
-        /* Check the deserialized instance and original instance are same. */
+        /* Verify the deserialized instance and original instance are same. */
         assertNotNull(actual);
         assertEquals(model.number, actual.number);
         assertEquals(model.object.text, actual.object.text);
@@ -252,33 +383,202 @@ public class StorageHelperTest {
         InternalStorage.delete(file);
     }
 
+    @Test
+    public void databaseStorage() throws IOException {
+        Log.i(TAG, "Testing Database Storage");
+
+        /* Get instance to access database. */
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorage", "databaseStorage", 1, mSchema, new DatabaseStorage.DatabaseErrorListener() {
+            @Override
+            public void onError(String operation, RuntimeException e) {
+                throw e;
+            }
+        });
+
+        try {
+            runDatabaseStorageTest(databaseStorage);
+        } finally {
+            /* Close. */
+            databaseStorage.close();
+        }
+    }
+
+    @Test
+    public void databaseStorageUpgrade() throws IOException {
+        Log.i(TAG, "Testing Database Storage Upgrade");
+
+        /* Create a schema for v1. */
+        ContentValues schema = new ContentValues();
+        schema.put("COL_STRING", "");
+
+        /* Create a row for v1. */
+        ContentValues oldVersionValue = new ContentValues();
+        oldVersionValue.put("COL_STRING", "Hello World");
+
+        /* Get instance to access database. */
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageUpgrade", "databaseStorageUpgrade", 1, schema, new DatabaseStorage.DatabaseErrorListener() {
+            @Override
+            public void onError(String operation, RuntimeException e) {
+                throw e;
+            }
+        });
+
+        try {
+            /* Database will always create a column for identifiers so default length of all tables is 1. */
+            assertEquals(2, databaseStorage.getColumnNames().length);
+        } finally {
+            /* Close. */
+            databaseStorage.close();
+        }
+
+        /* Get instance to access database with a newer schema. */
+        databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageUpgrade", "databaseStorageUpgrade", 2, mSchema, new DatabaseStorage.DatabaseErrorListener() {
+            @Override
+            public void onError(String operation, RuntimeException e) {
+                throw e;
+            }
+        });
+
+        try {
+            assertEquals(10, databaseStorage.getColumnNames().length);
+        } finally {
+            /* Close. */
+            databaseStorage.close();
+        }
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void databaseStorageScannerRemove() throws IOException {
+        Log.i(TAG, "Testing Database Storage Exceptions");
+
+        /* Get instance to access database. */
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageScannerRemove", "databaseStorageScannerRemove", 1, mSchema, new DatabaseStorage.DatabaseErrorListener() {
+            @Override
+            public void onError(String operation, RuntimeException e) {
+                throw e;
+            }
+        });
+
+        try {
+            databaseStorage.getScanner().iterator().remove();
+        } finally {
+            /* Close. */
+            databaseStorage.close();
+        }
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void databaseStorageScannerNext() throws IOException {
+        Log.i(TAG, "Testing Database Storage Exceptions");
+
+        /* Get instance to access database. */
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageScannerNext", "databaseStorageScannerNext", 1, mSchema, new DatabaseStorage.DatabaseErrorListener() {
+            @Override
+            public void onError(String operation, RuntimeException e) {
+                throw e;
+            }
+        });
+
+        try {
+            databaseStorage.getScanner().iterator().next();
+        } finally {
+            /* Close. */
+            databaseStorage.close();
+        }
+    }
+
+    /* This is a hack to test database failure by passing a weird table name which is actually valid.
+       SQLite database allows to create a table that contains period (.) but it doesn't actually create the table and doesn't raise any exceptions.
+       This test method will then be able to test in-memory database by accessing a table which is not created.
+       Only tested on emulator so it might not work in the future or on any other devices. */
+    @Test
+    public void databaseStorageInMemoryDB() throws IOException {
+        Log.i(TAG, "Testing Database Storage switch over to in-memory database");
+
+        /* Get instance to access database. */
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageInMemoryDB", "test.databaseStorageInMemoryDB", 1, mSchema, new DatabaseStorage.DatabaseErrorListener() {
+            @Override
+            public void onError(String operation, RuntimeException e) {
+                /* Do not handle any errors. This is simulating errors so this is expected. */
+            }
+        });
+
+        try {
+            runDatabaseStorageTest(databaseStorage);
+        } finally {
+            /* Close. */
+            databaseStorage.close();
+        }
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void databaseStorageScannerRemoveInMemoryDB() throws IOException {
+        Log.i(TAG, "Testing Database Storage Exceptions");
+
+        /* Get instance to access database. */
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageInMemoryDB", "test.databaseStorageInMemoryDB", 1, mSchema, new DatabaseStorage.DatabaseErrorListener() {
+            @Override
+            public void onError(String operation, RuntimeException e) {
+                /* Do not handle any errors. This is simulating errors so this is expected. */
+            }
+        });
+
+        try {
+            databaseStorage.getScanner().iterator().remove();
+        } finally {
+            /* Close. */
+            databaseStorage.close();
+        }
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void databaseStorageScannerNextInMemoryDB() throws IOException {
+        Log.i(TAG, "Testing Database Storage Exceptions");
+
+        /* Get instance to access database. */
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageInMemoryDB", "databaseStorageInMemoryDB", 1, mSchema, new DatabaseStorage.DatabaseErrorListener() {
+            @Override
+            public void onError(String operation, RuntimeException e) {
+                /* Do not handle any errors. This is simulating errors so this is expected. */
+            }
+        });
+
+        try {
+            databaseStorage.getScanner().iterator().next();
+        } finally {
+            /* Close. */
+            databaseStorage.close();
+        }
+    }
+
     /**
      * Temporary class for testing shared preferences.
      */
     private static class SharedPreferencesTestData {
-        protected Object value;
-        protected Object defaultValue;
-        protected Method getMethod;
-        protected Method putMethod;
+        Object value;
+        Object defaultValue;
+        Method getMethod1;
+        Method getMethod2;
+        Method putMethod;
     }
 
     /**
      * Temporary class for testing object serialization.
      */
     private static class DataModel implements Serializable {
-        protected int number;
-        protected InnerModel object;
+        int number;
+        InnerModel object;
 
-        protected DataModel(int number, String text, boolean enabled) {
+        DataModel(int number, String text, boolean enabled) {
             this.number = number;
             this.object = new InnerModel(text, enabled);
         }
 
-        protected static class InnerModel implements Serializable {
-            protected String text;
-            protected boolean enabled;
+        static class InnerModel implements Serializable {
+            String text;
+            boolean enabled;
 
-            protected InnerModel(String text, boolean enabled) {
+            InnerModel(String text, boolean enabled) {
                 this.text = text;
                 this.enabled = enabled;
             }
