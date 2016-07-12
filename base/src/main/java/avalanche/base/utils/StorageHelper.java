@@ -62,15 +62,15 @@ public final class StorageHelper {
         /*
          * boolean value
          */
-        public static boolean getBoolean(@PreferenceStorageKeyDef String key) {
+        public static boolean getBoolean(@NonNull String key) {
             return getBoolean(key, false);
         }
 
-        public static boolean getBoolean(@PreferenceStorageKeyDef String key, boolean defValue) {
+        public static boolean getBoolean(@NonNull String key, boolean defValue) {
             return sSharedPreferences.getBoolean(key, defValue);
         }
 
-        public static void putBoolean(String key, boolean value) {
+        public static void putBoolean(@NonNull String key, boolean value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putBoolean(key, value);
             editor.apply();
@@ -79,15 +79,15 @@ public final class StorageHelper {
         /*
          * float value
          */
-        public static float getFloat(@PreferenceStorageKeyDef String key) {
+        public static float getFloat(@NonNull String key) {
             return getFloat(key, 0f);
         }
 
-        public static float getFloat(@PreferenceStorageKeyDef String key, float defValue) {
+        public static float getFloat(@NonNull String key, float defValue) {
             return sSharedPreferences.getFloat(key, defValue);
         }
 
-        public static void putFloat(@PreferenceStorageKeyDef String key, float value) {
+        public static void putFloat(@NonNull String key, float value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putFloat(key, value);
             editor.apply();
@@ -96,15 +96,15 @@ public final class StorageHelper {
         /*
          * int value
          */
-        public static int getInt(@PreferenceStorageKeyDef String key) {
+        public static int getInt(@NonNull String key) {
             return getInt(key, 0);
         }
 
-        public static int getInt(@PreferenceStorageKeyDef String key, int defValue) {
+        public static int getInt(@NonNull String key, int defValue) {
             return sSharedPreferences.getInt(key, defValue);
         }
 
-        public static void putInt(@PreferenceStorageKeyDef String key, int value) {
+        public static void putInt(@NonNull String key, int value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putInt(key, value);
             editor.apply();
@@ -113,15 +113,15 @@ public final class StorageHelper {
         /*
          * long value
          */
-        public static long getLong(@PreferenceStorageKeyDef String key) {
+        public static long getLong(@NonNull String key) {
             return getLong(key, 0L);
         }
 
-        public static long getLong(@PreferenceStorageKeyDef String key, long defValue) {
+        public static long getLong(@NonNull String key, long defValue) {
             return sSharedPreferences.getLong(key, defValue);
         }
 
-        public static void putLong(@PreferenceStorageKeyDef String key, long value) {
+        public static void putLong(@NonNull String key, long value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putLong(key, value);
             editor.apply();
@@ -130,15 +130,15 @@ public final class StorageHelper {
         /*
          * String value
          */
-        public static String getString(@PreferenceStorageKeyDef String key) {
+        public static String getString(@NonNull String key) {
             return getString(key, null);
         }
 
-        public static String getString(@PreferenceStorageKeyDef String key, String defValue) {
+        public static String getString(@NonNull String key, String defValue) {
             return sSharedPreferences.getString(key, defValue);
         }
 
-        public static void putString(@PreferenceStorageKeyDef String key, String value) {
+        public static void putString(@NonNull String key, String value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putString(key, value);
             editor.apply();
@@ -147,15 +147,15 @@ public final class StorageHelper {
         /*
          * Set<String> value
          */
-        public static Set<String> getStringSet(@PreferenceStorageKeyDef String key) {
+        public static Set<String> getStringSet(@NonNull String key) {
             return getStringSet(key, null);
         }
 
-        public static Set<String> getStringSet(@PreferenceStorageKeyDef String key, Set<String> defValue) {
+        public static Set<String> getStringSet(@NonNull String key, Set<String> defValue) {
             return sSharedPreferences.getStringSet(key, defValue);
         }
 
-        public static void putStringSet(@PreferenceStorageKeyDef String key, Set<String> value) {
+        public static void putStringSet(@NonNull String key, Set<String> value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putStringSet(key, value);
             editor.apply();
@@ -166,7 +166,7 @@ public final class StorageHelper {
          *
          * @param key Key of the value to be removed.
          */
-        public static void remove(String key) {
+        public static void remove(@NonNull String key) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.remove(key);
             editor.apply();
@@ -264,6 +264,7 @@ public final class StorageHelper {
          * @throws IOException
          * @throws ClassNotFoundException
          */
+        @SuppressWarnings("unchecked")
         public static <T extends Serializable> T readObject(@NonNull File file, @NonNull Class<T> clazz)
                 throws IOException, ClassNotFoundException {
             ObjectInputStream inputStream = null;
@@ -366,6 +367,7 @@ public final class StorageHelper {
          *
          * @param path An absolute path for directory.
          */
+        @SuppressWarnings("ResultOfMethodCallIgnored")
         public static void mkdir(@NonNull String path) {
             File dir = new File(path);
             dir.mkdirs();
@@ -400,7 +402,7 @@ public final class StorageHelper {
          * @param schema   The schema of the database. If the database has tables more than 1,
          *                 the schema should contain schemas for all the tables.
          * @param listener The error listener
-         * @return
+         * @return database storage.
          */
         public static DatabaseStorage getDatabaseStorage(@NonNull String database,
                                                          @NonNull String table,
@@ -420,7 +422,7 @@ public final class StorageHelper {
          *                   the schema should contain schemas for all the tables.
          * @param maxRecords The maximum number of records allowed in the table.
          * @param listener   The error listener
-         * @return
+         * @return database storage.
          */
         public static DatabaseStorage getDatabaseStorage(@NonNull String database,
                                                          @NonNull String table,
