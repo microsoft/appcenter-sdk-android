@@ -15,17 +15,24 @@ import avalanche.base.ingestion.http.DefaultUrlConnectionFactory;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
 import avalanche.base.ingestion.models.json.LogSerializer;
+import avalanche.base.persistence.AvalancheDatabasePersistence;
+import avalanche.base.persistence.AvalanchePersistence;
+import avalanche.base.utils.AvalancheLog;
 import avalanche.base.utils.IdHelper;
 import avalanche.base.utils.NetworkStateHelper;
 
 // FIXME temporary class that directly send logs while fixing bugs on actual channel
 public class DirectAvalancheChannel implements AvalancheChannel {
 
+    private static final int BATCH_SIZE = 50;
+
     private final UUID mAppKey;
 
     private final UUID mInstallId;
 
     private final AvalancheIngestion mIngestion;
+
+    private final AvalanchePersistence mPersistence;
 
     /**
      * Creates and initializes a new instance.
@@ -39,23 +46,42 @@ public class DirectAvalancheChannel implements AvalancheChannel {
         api.setBaseUrl("http://avalanche-perf.westus.cloudapp.azure.com:8081"); //TODO make that a parameter
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(api);
         mIngestion = new AvalancheIngestionNetworkStateHandler(retryer, NetworkStateHelper.getSharedInstance(context));
+        mPersistence = new AvalancheDatabasePersistence();
+        mPersistence.setLogSerializer(logSerializer);
     }
 
     @Override
-    public void enqueue(@NonNull Log log, @NonNull @GroupNameDef String queueName) {
-        LogContainer logContainer = new LogContainer();
-        ArrayList<Log> logs = new ArrayList<>();
-        logs.add(log);
-        logContainer.setLogs(logs);
-        mIngestion.sendAsync(mAppKey, mInstallId, logContainer, new ServiceCallback() {
+    public void enqueue(@NonNull Log log, @NonNull @GroupNameDef final String queueName) {
+        try {
+            mPersistence.putLog(queueName, log);
+        } catch (AvalanchePersistence.PersistenceException e) {
+            AvalancheLog.error("Cannot persist logs", e);
+            return;
+        }
 
-            @Override
-            public void success() {
-            }
+        ArrayList<Log> logs;
+        do {
+            logs = new ArrayList<>();
+            final String batchId = mPersistence.getLogs(queueName, BATCH_SIZE, logs);
 
-            @Override
-            public void failure(Throwable t) {
-            }
-        });
+            if (batchId == null || logs.size() <= 0)
+                break;
+
+            LogContainer logContainer = new LogContainer();
+            logs.add(log);
+            logContainer.setLogs(logs);
+            mIngestion.sendAsync(mAppKey, mInstallId, logContainer, new ServiceCallback() {
+
+                @Override
+                public void success() {
+                    mPersistence.deleteLog(queueName, batchId);
+                }
+
+                @Override
+                public void failure(Throwable t) {
+                    AvalancheLog.warn("Failed to send logs to ingestion service for batchId " + batchId, t);
+                }
+            });
+        } while (logs.size() >= BATCH_SIZE);
     }
 }
