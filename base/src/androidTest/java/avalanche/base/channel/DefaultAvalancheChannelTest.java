@@ -126,7 +126,7 @@ public class DefaultAvalancheChannelTest {
     }
 
     @Test
-    public void analyticsSuccess() throws AvalanchePersistence.PersistenceException {
+    public void analyticsSuccess() throws AvalanchePersistence.PersistenceException, InterruptedException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
 
         //Stubbing getLogs so Persistence returns a batchID and adds 5 logs to the list
@@ -434,8 +434,8 @@ public class DefaultAvalancheChannelTest {
         //Verifying that 5 items have been persisted.
         verify(mockPersistence, times(5)).putLog(ERROR_GROUP, sDeviceLog);
 
-        //Verify that we have called sendAsync on the ingestion
-        verify(mockIngestion, times(5)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        //Verify that we have called sendAsync on the ingestion once for the first item, but not more than that.
+        verify(mockIngestion, times(1)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have not called deleteLogs on the persistence
         verify(mockPersistence, times(0)).deleteLog(any(String.class), any(String.class));

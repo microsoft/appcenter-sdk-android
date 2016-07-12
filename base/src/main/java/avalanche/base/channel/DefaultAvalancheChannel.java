@@ -113,17 +113,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     private boolean mDisabled;
     /**
-     * Runnable that triggers ingestion of error data and triggers itself in ERROR_INTERVAL
-     * amount of ms.
-     */
-    private final Runnable mErrorRunnable = new Runnable() {
-        @Override
-        public void run() {
-            triggerIngestion(ERROR_GROUP);
-            mIngestionHandler.postDelayed(this, ERROR_INTERVAL);
-        }
-    };
-    /**
      * Runnable that triggers ingestion of analytics data and triggers itself in ANALYTICS_INTERVAL
      * amount of ms.
      */
@@ -134,6 +123,18 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             mIngestionHandler.postDelayed(this, ANALYTICS_INTERVAL);
         }
     };
+    /**
+     * Runnable that triggers ingestion of error data and triggers itself in ERROR_INTERVAL
+     * amount of ms.
+     */
+    private final Runnable mErrorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            triggerIngestion(ERROR_GROUP);
+            mIngestionHandler.postDelayed(this, ERROR_INTERVAL);
+        }
+    };
+
     /**
      * Creates and initializes a new instance.
      */
@@ -176,12 +177,20 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     }
 
     /**
-     * Getter to get errpr count for tests.
+     * Getter to get error count for tests.
      *
      * @return the error counter
      */
     int getErrorCounter() {
-        return mErrorCounter;
+        synchronized (LOCK) {
+            return mErrorCounter;
+        }
+    }
+
+    void setErrorCounter(int errorCounter) {
+        synchronized (LOCK) {
+            mErrorCounter = errorCounter;
+        }
     }
 
     /**
@@ -190,7 +199,15 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @return the analytics counter
      */
     int getAnalyticsCounter() {
-        return mAnalyticsCounter;
+        synchronized (LOCK) {
+            return mAnalyticsCounter;
+        }
+    }
+
+    void setAnalyticsCounter(int analyticsCounter) {
+        synchronized (LOCK) {
+            mAnalyticsCounter = analyticsCounter;
+        }
     }
 
     void setIngestion(AvalancheIngestion ingestion) {
@@ -205,11 +222,13 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         //TODO (bereimol) trigger max amount of sending operations immediatelly
         //Explanation: this triggers sending for 1 batch, and then will trigger the next batch after 3s.
         //If the requests take longer than 3s, it will start to use the max amount of sending operations at some point or not.
-        //We need to trigger the maximum amount of sending immediatelly. Either by starting the max amount of sending immediatelly
+        //We need to trigger the maximum amount of sending immediately. Either by starting the max amount of sending immediatelly
         //or by retrieving the amount of files logs on disk and then increment the counter which will trigger more sending operations.
         synchronized (LOCK) {
-            triggerIngestion(ANALYTICS_GROUP);
-            triggerIngestion(ERROR_GROUP);
+            if (!mDisabled) {
+                triggerIngestion(ANALYTICS_GROUP);
+                triggerIngestion(ERROR_GROUP);
+            }
         }
     }
 
@@ -221,7 +240,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      *
      * @param groupName the group name
      */
-    protected void triggerIngestion(@GroupNameDef @NonNull String groupName) {
+    private void triggerIngestion(@GroupNameDef @NonNull String groupName) {
+
 
         AvalancheLog.debug("triggerIngestion(" + groupName + ")");
         if (TextUtils.isEmpty(groupName)) {
@@ -313,7 +333,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         );
     }
 
-    //TODO: (bereimol) fetch persisted items and ingest immediatelly, maybe increase batchsize a little for offline usecase
+    //TODO: (bereimol) fetch persisted items and ingest immediately, maybe increase batchsize a little for offline usecase
 
     /**
      * The actual implementation to react to sending a batch to the server successfully.
@@ -382,7 +402,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
             //Increment counters and schedule ingestion
             synchronized (LOCK) {
-                increment(queueName);
                 scheduleIngestion(queueName);
                 if (mDisabled) {
                     AvalancheLog.warn(TAG, "Channel is disabled, event was saved to disk.");
@@ -395,75 +414,86 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     }
 
     /**
-     * This will increment the counter for the event group.
-     * Intended to be used from inside a synchronized-block.
-     *
-     * @param groupName The group name
-     */
-    protected void increment(@GroupNameDef String groupName) {
-        boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
-        int counter = isAnalytics ? mAnalyticsCounter : mErrorCounter;
-
-        counter = counter + 1;
-
-        if (isAnalytics) {
-            mAnalyticsCounter = counter;
-        } else {
-            mErrorCounter = counter;
-        }
-    }
-
-    /**
-     * Decrements counter for a group. Intended to be used from inside a synchronized-block.
-     * Will set the counter to 0 if decrementBy is bigger then counter to avoid a negatice counter.
+     * Decrements counter for a group.
+     * Will set the counter to 0 if decrementBy is bigger then counter to avoid a negative counter.
      *
      * @param groupName   the group name
-     * @param dectementBy amount to decrement the counter
+     * @param decrementBy amount to decrement the counter
      */
-    protected void decrement(@GroupNameDef String groupName, @IntRange(from = 0) int dectementBy) {
-        boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
-        int counter = isAnalytics ? mAnalyticsCounter : mErrorCounter;
-        counter = counter - dectementBy;
+    private void decrement(@GroupNameDef String groupName, @IntRange(from = 0) int decrementBy) {
+        synchronized (LOCK) {
+            boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
+            int counter = isAnalytics ? getAnalyticsCounter() : getErrorCounter();
+            counter = counter - decrementBy;
 
-        if (counter < 0) {
-            counter = 0;
+            if (counter < 0) {
+                counter = 0;
+            }
 
-        }
+            if (isAnalytics) {
+                setAnalyticsCounter(counter);
+            } else {
+                setErrorCounter(counter);
+            }
 
-        if (isAnalytics) {
-            mAnalyticsCounter = counter;
-        } else {
-            mErrorCounter = counter;
+            if (counter == 0) {
+                if (isAnalytics) {
+                    mIngestionHandler.removeCallbacks(mAnalyticsRunnable);
+                } else {
+                    mIngestionHandler.removeCallbacks(mErrorRunnable);
+                }
+            }
         }
     }
 
     /**
-     * This will check the counters for each event group and will either trigger ingestion immediatelly or schedule ingestion at the
+     * This will check the counters for each event group and will either trigger ingestion immediately or schedule ingestion at the
      * interval specified for the group.
      * Intended to be used from inside a synchronized-block.
      *
      * @param groupName the group name
      */
-    protected void scheduleIngestion(@GroupNameDef String groupName) {
+    private void scheduleIngestion(@GroupNameDef String groupName) {
         synchronized (LOCK) {
+
             boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
 
             int counter = isAnalytics ? mAnalyticsCounter : mErrorCounter;
             int maxCount = isAnalytics ? ANALYTICS_COUNT : ERROR_COUNT;
 
             if (counter == 0) {
-                //Check if counter is 0, kick of timer task.
-                if (isAnalytics) {
-                    mIngestionHandler.postDelayed(mAnalyticsRunnable, ANALYTICS_INTERVAL);
-                } else {
-                    mIngestionHandler.postDelayed(mErrorRunnable, ERROR_INTERVAL);
+                //Kick of timer if the counter is 0 and cancel previously running timer
+                if (!mDisabled) {
+                    if (isAnalytics) {
+                        mIngestionHandler.removeCallbacks(mAnalyticsRunnable);
+                        mIngestionHandler.postDelayed(mAnalyticsRunnable, ANALYTICS_INTERVAL);
+                    } else {
+                        mIngestionHandler.removeCallbacks(mAnalyticsRunnable);
+                        mIngestionHandler.postDelayed(mErrorRunnable, ERROR_INTERVAL);
+                    }
                 }
-            } else if (counter % maxCount == 0) {
+                //increment counter
+                counter = counter + 1;
+            } else {
+                //just increment the counter
+                counter = counter + 1;
+            }
+
+            //set the counter property
+            if (isAnalytics) {
+                setAnalyticsCounter(counter);
+            } else {
+                setErrorCounter(counter);
+            }
+
+            if (counter % maxCount == 0) {
                 //We have reached the max batch count or a multiple of it. Trigger ingestion.
-                if (isAnalytics) {
-                    triggerIngestion(ANALYTICS_GROUP);
-                } else {
-                    triggerIngestion(ERROR_GROUP);
+                if (!mDisabled) {
+                    if (isAnalytics) {
+                        triggerIngestion(ANALYTICS_GROUP);
+                    } else {
+                        triggerIngestion(ERROR_GROUP);
+                    }
                 }
             }
         }
