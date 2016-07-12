@@ -21,9 +21,10 @@ import avalanche.base.ingestion.http.HttpUtils;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
 import avalanche.base.ingestion.models.json.LogSerializer;
+import avalanche.base.persistence.AvalancheDatabasePersistence;
 import avalanche.base.persistence.AvalanchePersistence;
-import avalanche.base.persistence.DefaultAvalanchePersistence;
 import avalanche.base.utils.AvalancheLog;
+import avalanche.base.utils.IdHelper;
 import avalanche.base.utils.NetworkStateHelper;
 
 public class DefaultAvalancheChannel implements AvalancheChannel {
@@ -136,10 +137,10 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * Creates and initializes a new instance.
      */
-    public DefaultAvalancheChannel(@NonNull Context context, @NonNull UUID appKey, @NonNull UUID installId, @NonNull LogSerializer logSerializer) {
+    public DefaultAvalancheChannel(@NonNull Context context, @NonNull UUID appKey, @NonNull LogSerializer logSerializer) {
         mAppKey = appKey;
-        mInstallId = installId;
-        mPersistence = new DefaultAvalanchePersistence();
+        mInstallId = IdHelper.getInstallId();
+        mPersistence = new AvalancheDatabasePersistence();
         AvalancheIngestionHttp api = new AvalancheIngestionHttp();
         api.setUrlConnectionFactory(new DefaultUrlConnectionFactory());
         api.setLogSerializer(logSerializer);
@@ -192,11 +193,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         return mAnalyticsCounter;
     }
 
-    /**
-     * Setter to be able to inject a new mock during testing.
-     *
-     * @param ingestion
-     */
     void setIngestion(AvalancheIngestion ingestion) {
         this.mIngestion = ingestion;
     }

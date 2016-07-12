@@ -72,7 +72,7 @@ public class DefaultAvalancheChannelTest {
 
     @Test
     public void creationWorks() {
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), UUID.randomUUID(), sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
         assertNotNull(sut);
     }
 
@@ -102,7 +102,7 @@ public class DefaultAvalancheChannelTest {
 
         //don't provide a UUID to prevent sending
         @SuppressWarnings("ConstantConditions")
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, null, null, sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, null, sLogSerializer);
         sut.setPersistence(mockPersistence);
         sut.setIngestion(mockIngestion);
 
@@ -158,7 +158,7 @@ public class DefaultAvalancheChannelTest {
             }
         });
 
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), UUID.randomUUID(), sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
         sut.setPersistence(mockPersistence);
         sut.setIngestion(mockIngestion);
 
@@ -224,7 +224,7 @@ public class DefaultAvalancheChannelTest {
         });
 
         //don't provide a UUID to prevent sending
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), UUID.randomUUID(), sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
         sut.setIngestion(mockIngestion);
         sut.setPersistence(mockPersistence);
 
@@ -303,7 +303,7 @@ public class DefaultAvalancheChannelTest {
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
         //don't provide a UUID to prevent sending
-        @SuppressWarnings("ConstantConditions") DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, null, null, sLogSerializer);
+        @SuppressWarnings("ConstantConditions") DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, null, sLogSerializer);
 
         sut.setPersistence(mockPersistence);
         sut.setIngestion(mockIngestion);
@@ -358,7 +358,7 @@ public class DefaultAvalancheChannelTest {
             }
         });
 
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), UUID.randomUUID(), sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext,  UUID.randomUUID(), sLogSerializer);
         sut.setIngestion(mockIngestion);
         sut.setPersistence(mockPersistence);
 
@@ -420,7 +420,7 @@ public class DefaultAvalancheChannelTest {
         });
 
         //don't provide a UUID to prevent sending
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), UUID.randomUUID(), sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
         sut.setPersistence(mockPersistence);
         sut.setIngestion(mockIngestion);
 
@@ -509,7 +509,7 @@ public class DefaultAvalancheChannelTest {
 
         AvalancheIngestion mockIngestion = mock(AvalancheIngestion.class);
 
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), UUID.randomUUID(), sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
 
         sut.setIngestion(mockIngestion);
         sut.setPersistence(mockPersistence);
@@ -585,7 +585,7 @@ public class DefaultAvalancheChannelTest {
         AvalancheIngestion mockIngestion = mock(AvalancheIngestion.class);
 
         //don't provide a UUID to prevent sending
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), UUID.randomUUID(), sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
         sut.setIngestion(mockIngestion);
         sut.setPersistence(mockPersistence);
 
@@ -693,7 +693,7 @@ public class DefaultAvalancheChannelTest {
 
         AvalancheIngestion mockIngestion = mock(AvalancheIngestion.class);
 
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), UUID.randomUUID(), sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
         sut.setPersistence(mockPersistence);
         sut.setIngestion(mockIngestion);
 
