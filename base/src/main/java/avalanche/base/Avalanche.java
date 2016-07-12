@@ -168,8 +168,12 @@ public final class Avalanche {
              */
             application.unregisterActivityLifecycleCallbacks(feature);
             application.registerActivityLifecycleCallbacks(feature);
-            for (Map.Entry<String, LogFactory> logFactory : feature.getLogFactories().entrySet())
-                mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
+            if (feature.getLogFactories() != null) {
+                for (Map.Entry<String, LogFactory> logFactory : feature.getLogFactories().entrySet()) {
+                    mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
+                }
+            }
+
             mFeatures.add(feature);
             feature.onChannelReady(mChannel);
         }
