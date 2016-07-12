@@ -7,6 +7,7 @@ import android.widget.ListView;
 
 import java.util.UUID;
 
+import avalanche.analytics.Analytics;
 import avalanche.base.Avalanche;
 import avalanche.base.utils.AvalancheLog;
 import avalanche.crash.Crashes;
@@ -23,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Avalanche.useFeatures(getApplication(), UUID.randomUUID().toString(), Crashes.class);
+        Avalanche.useFeatures(getApplication(), UUID.randomUUID().toString(), Analytics.class, Crashes.class);
 
         AvalancheLog.setLogLevel(Log.VERBOSE);
 

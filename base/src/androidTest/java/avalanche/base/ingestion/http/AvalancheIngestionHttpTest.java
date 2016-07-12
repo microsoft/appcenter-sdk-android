@@ -19,13 +19,16 @@ import java.util.concurrent.TimeUnit;
 
 import avalanche.base.ingestion.ServiceCall;
 import avalanche.base.ingestion.ServiceCallback;
-import avalanche.base.ingestion.models.DeviceLog;
+import avalanche.base.ingestion.models.Device;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
 import avalanche.base.ingestion.models.json.DefaultLogSerializer;
 import avalanche.base.ingestion.models.json.LogSerializer;
+import avalanche.base.ingestion.models.json.MockLog;
+import avalanche.base.ingestion.models.json.MockLogFactory;
 import avalanche.base.utils.AvalancheLog;
 
+import static avalanche.base.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
@@ -46,27 +49,29 @@ public class AvalancheIngestionHttpTest {
 
         /* Build some payload. */
         LogContainer container = new LogContainer();
-        DeviceLog deviceLog = new DeviceLog();
-        deviceLog.setSid(UUID.randomUUID());
-        deviceLog.setSdkVersion("1.2.3");
-        deviceLog.setModel("S5");
-        deviceLog.setOemName("HTC");
-        deviceLog.setOsName("Android");
-        deviceLog.setOsVersion("4.0.3");
-        deviceLog.setOsApiLevel(15);
-        deviceLog.setLocale("en_US");
-        deviceLog.setTimeZoneOffset(120);
-        deviceLog.setScreenSize("800x600");
-        deviceLog.setAppVersion("3.2.1");
-        deviceLog.setAppBuild("42");
+        Device device = new Device();
+        device.setSdkVersion("1.2.3");
+        device.setModel("S5");
+        device.setOemName("HTC");
+        device.setOsName("Android");
+        device.setOsVersion("4.0.3");
+        device.setOsApiLevel(15);
+        device.setLocale("en_US");
+        device.setTimeZoneOffset(120);
+        device.setScreenSize("800x600");
+        device.setAppVersion("3.2.1");
+        device.setAppBuild("42");
+        Log log = new MockLog();
+        log.setDevice(device);
+        log.setSid(UUID.randomUUID());
         List<Log> logs = new ArrayList<>();
-        logs.add(deviceLog);
+        logs.add(log);
         container.setLogs(logs);
 
         /* Configure mock HTTP. */
         HttpURLConnection urlConnection = mock(HttpURLConnection.class);
         UrlConnectionFactory urlConnectionFactory = mock(UrlConnectionFactory.class);
-        when(urlConnectionFactory.openConnection(eq(new URL("http://mock/logs?api-version=1.0.0-preview20160705")))).thenReturn(urlConnection);
+        when(urlConnectionFactory.openConnection(eq(new URL("http://mock/logs?api-version=1.0.0-preview20160708")))).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -76,6 +81,7 @@ public class AvalancheIngestionHttpTest {
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp();
         httpClient.setBaseUrl("http://mock");
         LogSerializer serializer = new DefaultLogSerializer();
+        serializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
         httpClient.setLogSerializer(serializer);
         httpClient.setUrlConnectionFactory(urlConnectionFactory);
 
@@ -86,7 +92,8 @@ public class AvalancheIngestionHttpTest {
         httpClient.sendAsync(appKey, installId, container, serviceCallback);
         verify(serviceCallback, timeout(100)).success();
         verifyNoMoreInteractions(serviceCallback);
-        verify(urlConnection).setRequestProperty("App-ID", appKey.toString());
+        verify(urlConnection).setRequestProperty("Content-Type", "application/json");
+        verify(urlConnection).setRequestProperty("App-Key", appKey.toString());
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
         Assert.assertEquals(serializer.serializeContainer(container), buffer.toString("UTF-8"));
         verify(urlConnection).disconnect();
@@ -97,21 +104,23 @@ public class AvalancheIngestionHttpTest {
 
         /* Build some payload. */
         LogContainer container = new LogContainer();
-        DeviceLog deviceLog = new DeviceLog();
-        deviceLog.setSid(UUID.randomUUID());
-        deviceLog.setSdkVersion("1.2.3");
-        deviceLog.setModel("S5");
-        deviceLog.setOemName("HTC");
-        deviceLog.setOsName("Android");
-        deviceLog.setOsVersion("4.0.3");
-        deviceLog.setOsApiLevel(15);
-        deviceLog.setLocale("en_US");
-        deviceLog.setTimeZoneOffset(120);
-        deviceLog.setScreenSize("800x600");
-        deviceLog.setAppVersion("3.2.1");
-        deviceLog.setAppBuild("42");
+        Device device = new Device();
+        device.setSdkVersion("1.2.3");
+        device.setModel("S5");
+        device.setOemName("HTC");
+        device.setOsName("Android");
+        device.setOsVersion("4.0.3");
+        device.setOsApiLevel(15);
+        device.setLocale("en_US");
+        device.setTimeZoneOffset(120);
+        device.setScreenSize("800x600");
+        device.setAppVersion("3.2.1");
+        device.setAppBuild("42");
+        Log log = new MockLog();
+        log.setDevice(device);
+        log.setSid(UUID.randomUUID());
         List<Log> logs = new ArrayList<>();
-        logs.add(deviceLog);
+        logs.add(log);
         container.setLogs(logs);
 
         /* Configure mock HTTP. */
@@ -127,6 +136,7 @@ public class AvalancheIngestionHttpTest {
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp();
         httpClient.setBaseUrl("http://mock");
         LogSerializer serializer = new DefaultLogSerializer();
+        serializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
         httpClient.setLogSerializer(serializer);
         httpClient.setUrlConnectionFactory(urlConnectionFactory);
 
@@ -177,7 +187,6 @@ public class AvalancheIngestionHttpTest {
         http.setBaseUrl("");
         http.sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
     }
-
 
     @Test(expected = IllegalStateException.class)
     public void noSerializer() {

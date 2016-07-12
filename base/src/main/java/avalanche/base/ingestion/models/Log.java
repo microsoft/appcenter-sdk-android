@@ -38,4 +38,18 @@ public interface Log extends Model {
      * @param sid the sid value to set
      */
     void setSid(UUID sid);
+
+    /**
+     * Get the device value.
+     *
+     * @return the device value
+     */
+    Device getDevice();
+
+    /**
+     * Set the device value.
+     *
+     * @param device the device value to set
+     */
+    void setDevice(Device device);
 }

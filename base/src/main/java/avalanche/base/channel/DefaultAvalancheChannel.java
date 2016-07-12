@@ -14,15 +14,18 @@ import java.util.UUID;
 import avalanche.base.ingestion.AvalancheIngestion;
 import avalanche.base.ingestion.ServiceCallback;
 import avalanche.base.ingestion.http.AvalancheIngestionHttp;
+import avalanche.base.ingestion.http.AvalancheIngestionNetworkStateHandler;
+import avalanche.base.ingestion.http.AvalancheIngestionRetryer;
+import avalanche.base.ingestion.http.DefaultUrlConnectionFactory;
 import avalanche.base.ingestion.http.HttpUtils;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
+import avalanche.base.ingestion.models.json.LogSerializer;
 import avalanche.base.persistence.AvalanchePersistence;
 import avalanche.base.persistence.DefaultAvalanchePersistence;
 import avalanche.base.utils.AvalancheLog;
 import avalanche.base.utils.IdHelper;
-import avalanche.base.utils.PrefStorageConstants;
-import avalanche.base.utils.StorageHelper;
+import avalanche.base.utils.NetworkStateHelper;
 
 public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
@@ -43,7 +46,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * TAG used in logging.
      */
-    private static final String TAG = "DefaultChannel";
+    private static final String TAG = "AvalancheChannel";
 
     /**
      * Number of metrics queue items which will trigger synchronization with the persistence layer.
@@ -110,17 +113,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     private boolean mDisabled;
     /**
-     * Runnable that triggers ingestion of error data and triggers itself in ERROR_INTERVAL
-     * amount of ms.
-     */
-    private final Runnable mErrorRunnable = new Runnable() {
-        @Override
-        public void run() {
-            triggerIngestion(ERROR_GROUP);
-            mIngestionHandler.postDelayed(this, ERROR_INTERVAL);
-        }
-    };
-    /**
      * Runnable that triggers ingestion of analytics data and triggers itself in ANALYTICS_INTERVAL
      * amount of ms.
      */
@@ -131,20 +123,32 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             mIngestionHandler.postDelayed(this, ANALYTICS_INTERVAL);
         }
     };
+    /**
+     * Runnable that triggers ingestion of error data and triggers itself in ERROR_INTERVAL
+     * amount of ms.
+     */
+    private final Runnable mErrorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            triggerIngestion(ERROR_GROUP);
+            mIngestionHandler.postDelayed(this, ERROR_INTERVAL);
+        }
+    };
 
     /**
      * Creates and initializes a new instance.
      */
-    public DefaultAvalancheChannel(Context context, @NonNull UUID appKey) {
-        StorageHelper.initialize(context);
-        String appKeyString = StorageHelper.PreferencesStorage.getString(PrefStorageConstants.KEY_APP_KEY);
+    public DefaultAvalancheChannel(@NonNull Context context, @NonNull UUID appKey, @NonNull LogSerializer logSerializer) {
         mAppKey = appKey;
-
         mInstallId = IdHelper.getInstallId();
         mPersistence = new DefaultAvalanchePersistence();
-        mIngestion = new AvalancheIngestionHttp();
+        AvalancheIngestionHttp api = new AvalancheIngestionHttp();
+        api.setUrlConnectionFactory(new DefaultUrlConnectionFactory());
+        api.setLogSerializer(logSerializer);
+        api.setBaseUrl("http://avalanche-perf.westus.cloudapp.azure.com:8081"); //TODO make that a parameter
+        AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(api);
+        mIngestion = new AvalancheIngestionNetworkStateHandler(retryer, NetworkStateHelper.getSharedInstance(context));
         mIngestionHandler = new Handler(Looper.getMainLooper());
-
         mDisabled = false;
     }
 
@@ -199,6 +203,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param groupName the group name
      */
     protected void triggerIngestion(@GroupNameDef @NonNull String groupName) {
+
+        AvalancheLog.debug("triggerIngestion(" + groupName + ")");
         if (TextUtils.isEmpty(groupName)) {
             return;
         }
@@ -343,10 +349,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
     @Override
     public void enqueue(@NonNull Log log, @NonNull @GroupNameDef String queueName) {
-        if (log == null) {
-            AvalancheLog.warn(TAG, "Tried to enqueue empty log. Doing nothing.");
-            return;
-        }
         try {
             mPersistence.putLog(queueName, log);
 

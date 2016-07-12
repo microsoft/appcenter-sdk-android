@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import avalanche.base.ingestion.models.DeviceLog;
+import avalanche.base.ingestion.models.Device;
 import avalanche.base.utils.AvalancheLog;
 import avalanche.base.utils.DeviceInfoHelper;
 import avalanche.base.utils.NetworkStateHelper;
@@ -29,13 +29,13 @@ public class DeviceInfoActivity extends AppCompatActivity implements NetworkStat
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_device_info);
 
-        mNetworkStateHelper = new NetworkStateHelper(this);
+        mNetworkStateHelper = NetworkStateHelper.getSharedInstance(this);
         mNetworkStateHelper.addListener(this);
         onNetworkStateUpdated(mNetworkStateHelper.isNetworkConnected());
 
-        DeviceLog log;
+        Device log;
         try {
-            log = DeviceInfoHelper.getDeviceLog(getApplicationContext());
+            log = DeviceInfoHelper.getDeviceInfo(getApplicationContext());
         } catch (DeviceInfoHelper.DeviceInfoException e) {
             Toast.makeText(getBaseContext(), R.string.error_device_info, Toast.LENGTH_LONG).show();
             return;
@@ -65,10 +65,10 @@ public class DeviceInfoActivity extends AppCompatActivity implements NetworkStat
         super.onDestroy();
     }
 
-    private List<DeviceInfoDisplayModel> getDeviceInfoDisplayModelList(DeviceLog log) {
+    private List<DeviceInfoDisplayModel> getDeviceInfoDisplayModelList(Device log) {
         List<DeviceInfoDisplayModel> list = new ArrayList<>();
 
-        Method[] methods = DeviceLog.class.getDeclaredMethods();
+        Method[] methods = Device.class.getDeclaredMethods();
         for (Method method : methods) {
             String name = method.getName();
             if (name.startsWith("get") && !isInBlackList(name)) {
