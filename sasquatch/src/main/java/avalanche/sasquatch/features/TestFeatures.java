@@ -47,7 +47,7 @@ public final class TestFeatures {
         };
     }
 
-    private static View.OnClickListener getDefalutOnClickListener(final Class<? extends Activity> clazz) {
+    private static View.OnClickListener getDefaultOnClickListener(final Class<? extends Activity> clazz) {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -57,12 +57,12 @@ public final class TestFeatures {
     }
 
     public static class TestFeatureModel {
-        private String mTitle;
-        private String mDescription;
-        private View.OnClickListener mOnClickListener;
+        private final String mTitle;
+        private final String mDescription;
+        private final View.OnClickListener mOnClickListener;
 
         public TestFeatureModel(int title, int description, Class<? extends Activity> clazz) {
-            this(title, description, getDefalutOnClickListener(clazz));
+            this(title, description, getDefaultOnClickListener(clazz));
         }
 
         public TestFeatureModel(int title, int description, View.OnClickListener listener) {

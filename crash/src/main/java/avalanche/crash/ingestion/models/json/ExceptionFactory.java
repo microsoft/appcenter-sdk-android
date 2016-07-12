@@ -8,7 +8,7 @@ import avalanche.crash.ingestion.models.Exception;
 
 public class ExceptionFactory implements ModelFactory<Exception> {
 
-    private static ExceptionFactory sInstance = new ExceptionFactory();
+    private static final ExceptionFactory sInstance = new ExceptionFactory();
 
     private ExceptionFactory() {
     }

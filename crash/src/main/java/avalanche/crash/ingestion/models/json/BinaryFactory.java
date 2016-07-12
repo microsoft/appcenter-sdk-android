@@ -8,7 +8,7 @@ import avalanche.crash.ingestion.models.Binary;
 
 public class BinaryFactory implements ModelFactory<Binary> {
 
-    private static BinaryFactory sInstance = new BinaryFactory();
+    private static final BinaryFactory sInstance = new BinaryFactory();
 
     private BinaryFactory() {
     }

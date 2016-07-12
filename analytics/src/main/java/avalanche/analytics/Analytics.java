@@ -2,6 +2,7 @@ package avalanche.analytics;
 
 import android.app.Activity;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import java.util.HashMap;
@@ -89,7 +90,7 @@ public class Analytics extends AbstractAvalancheFeature {
      * @param name       page name.
      * @param properties optional properties.
      */
-    public static void sendPage(@NonNull String name, Map<String, String> properties) {
+    public static void sendPage(@NonNull String name, @Nullable Map<String, String> properties) {
         PageLog pageLog = new PageLog();
         pageLog.setName(name);
         pageLog.setProperties(properties);
@@ -102,7 +103,7 @@ public class Analytics extends AbstractAvalancheFeature {
      * @param name       event name.
      * @param properties optional properties.
      */
-    public static void sendEvent(@NonNull String name, Map<String, String> properties) {
+    public static void sendEvent(@NonNull String name, @Nullable Map<String, String> properties) {
         EventLog eventLog = new EventLog();
         eventLog.setId(UUID.randomUUID());
         eventLog.setName(name);

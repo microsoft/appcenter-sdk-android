@@ -531,7 +531,7 @@ public final class StorageHelper {
          *
          * @return The number of records in the table.
          */
-        protected long getRowCount() {
+        long getRowCount() {
             return mDatabaseManager.getRowCount();
         }
 
@@ -540,7 +540,7 @@ public final class StorageHelper {
          *
          * @return An array of column names.
          */
-        protected String[] getColumnNames() {
+        String[] getColumnNames() {
             return mDatabaseManager.getCursor(null, null).getColumnNames();
         }
 
@@ -558,7 +558,7 @@ public final class StorageHelper {
          * Database scanner to iterate values.
          */
         public static class DatabaseScanner implements Iterable<ContentValues>, Closeable {
-            private DatabaseManager.Scanner mScanner;
+            private final DatabaseManager.Scanner mScanner;
 
             private DatabaseScanner(DatabaseManager.Scanner scanner) {
                 mScanner = scanner;

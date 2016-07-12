@@ -18,7 +18,7 @@ public class AvalancheLog {
     private static int sLogLevel = Log.ERROR;
 
     /**
-     * Get the loglevel to find out how much data the AvalancheSDK spews into LogCat. The Default will be
+     * Get the log level to find out how much data the AvalancheSDK spews into LogCat. The Default will be
      * LOG_LEVEL.ERROR so only errors show up in LogCat.
      *
      * @return the log level

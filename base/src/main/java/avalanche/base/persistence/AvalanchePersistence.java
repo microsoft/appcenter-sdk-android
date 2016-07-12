@@ -18,12 +18,12 @@ public abstract class AvalanchePersistence {
     /**
      * Storage capacity in number of logs
      */
-    public static final int DEFAULT_CAPACITY = 300;
+    static final int DEFAULT_CAPACITY = 300;
 
     /**
      * Log serializer override.
      */
-    protected LogSerializer mLogSerializer;
+    LogSerializer mLogSerializer;
 
     /**
      * Writes a log to the storage with the given {@code key}.
