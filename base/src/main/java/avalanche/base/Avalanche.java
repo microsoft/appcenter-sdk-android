@@ -2,6 +2,7 @@ package avalanche.base;
 
 import android.app.Application;
 import android.content.Context;
+import android.support.annotation.VisibleForTesting;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
@@ -32,11 +33,12 @@ public final class Avalanche {
     private boolean mEnabled;
     private AvalancheChannel mChannel;
 
-    protected Avalanche() {
+    private Avalanche() {
         mFeatures = new HashSet<>();
     }
 
-    public static Avalanche getSharedInstance() {
+    @VisibleForTesting
+    static Avalanche getSharedInstance() {
         if (sharedInstance == null) {
             sharedInstance = new Avalanche();
         }
@@ -121,6 +123,64 @@ public final class Avalanche {
         }
     }
 
+    /**
+     * Check whether a feature is enabled.
+     *
+     * @param feature Name of the feature to check.
+     * @return Whether the feature is enabled.
+     */
+    public static boolean isFeatureEnabled(String feature) {
+        Class<? extends AvalancheFeature> clazz = getClassForFeature(feature);
+        return clazz != null && isFeatureEnabled(clazz);
+    }
+
+    /**
+     * Check whether a feature class is enabled.
+     *
+     * @param feature The feature class to check for.
+     * @return Whether the feature is enabled.
+     */
+    public static boolean isFeatureEnabled(Class<? extends AvalancheFeature> feature) {
+        for (AvalancheFeature aFeature : getSharedInstance().mFeatures) {
+            if (aFeature.getClass().equals(feature)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get the configured app key.
+     *
+     * @return The app key or null if not set or an invalid value was used when calling {@link #useFeatures(Application, String, AvalancheFeature...)}.
+     */
+    public static UUID getAppKey() {
+        return getSharedInstance().mAppKey;
+    }
+
+    /**
+     * Get unique installation identifier.
+     *
+     * @return unique install identifier.
+     */
+    public static UUID getInstallId() {
+        return IdHelper.getInstallId();
+    }
+
+    public static boolean isEnabled() {
+        return getSharedInstance().mEnabled;
+    }
+
+    public static void setEnabled(boolean enabled) {
+        Avalanche avalanche = getSharedInstance();
+        avalanche.mEnabled = enabled;
+
+        // Set enabled state for every module
+        for (AvalancheFeature feature : avalanche.mFeatures) {
+            feature.setEnabled(avalanche.mEnabled);
+        }
+    }
+
     private Avalanche initialize(Application application, UUID appKey) {
         mAppKey = appKey;
         mApplicationWeakReference = new WeakReference<>(application);
@@ -142,8 +202,8 @@ public final class Avalanche {
      *
      * @param feature feature to add.
      */
-    public void addFeature(AvalancheFeature feature) {
-        Application application = getApplication();
+    private void addFeature(AvalancheFeature feature) {
+        Application application = mApplicationWeakReference.get();
         if (application != null) {
 
             /*
@@ -157,72 +217,6 @@ public final class Avalanche {
                 mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
             mFeatures.add(feature);
             feature.onChannelReady(mChannel);
-        }
-    }
-
-    /**
-     * Get the configured application object.
-     *
-     * @return The application instance or null if not set.
-     */
-    public Application getApplication() {
-        return mApplicationWeakReference.get();
-    }
-
-    /**
-     * Check whether a feature is enabled.
-     *
-     * @param feature Name of the feature to check.
-     * @return Whether the feature is enabled.
-     */
-    public boolean isFeatureEnabled(String feature) {
-        Class<? extends AvalancheFeature> clazz = getClassForFeature(feature);
-        return clazz != null && isFeatureEnabled(clazz);
-    }
-
-    /**
-     * Check whether a feature class is enabled.
-     *
-     * @param feature The feature class to check for.
-     * @return Whether the feature is enabled.
-     */
-    public boolean isFeatureEnabled(Class<? extends AvalancheFeature> feature) {
-        for (AvalancheFeature aFeature : mFeatures) {
-            if (aFeature.getClass().equals(feature)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Get the configured app key.
-     *
-     * @return The app key or null if not set or an invalid value was used when calling {@link #useFeatures(Application, String, AvalancheFeature...)}.
-     */
-    public UUID getAppKey() {
-        return mAppKey;
-    }
-
-    /**
-     * Get unique installation identifier.
-     *
-     * @return unique install identifier.
-     */
-    public UUID getInstallId() {
-        return IdHelper.getInstallId();
-    }
-
-    public boolean isEnabled() {
-        return mEnabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        mEnabled = enabled;
-
-        // Set enabled state for every module
-        for (AvalancheFeature feature : mFeatures) {
-            feature.setEnabled(mEnabled);
         }
     }
 }

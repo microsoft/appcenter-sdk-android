@@ -588,7 +588,7 @@ public class Crashes extends AbstractAvalancheFeature {
     }
 
     private String getURLString() {
-        return mEndpointUrl + "api/2/apps/" + Avalanche.getSharedInstance().getAppKey() + "/crashes/";
+        return mEndpointUrl + "api/2/apps/" + Avalanche.getAppKey() + "/crashes/";
     }
 
     @Override
