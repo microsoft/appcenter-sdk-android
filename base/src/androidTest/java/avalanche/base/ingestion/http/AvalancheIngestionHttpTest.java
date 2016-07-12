@@ -90,7 +90,7 @@ public class AvalancheIngestionHttpTest {
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         httpClient.sendAsync(appKey, installId, container, serviceCallback);
-        verify(serviceCallback, timeout(100)).success();
+        verify(serviceCallback, timeout(1000)).success();
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Key", appKey.toString());
@@ -145,7 +145,7 @@ public class AvalancheIngestionHttpTest {
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         httpClient.sendAsync(appKey, installId, container, serviceCallback);
-        verify(serviceCallback, timeout(100)).failure(new HttpException(503));
+        verify(serviceCallback, timeout(1000)).failure(new HttpException(503));
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
     }

@@ -2,6 +2,7 @@ package avalanche.analytics;
 
 import android.app.Activity;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +17,7 @@ import avalanche.analytics.ingestion.models.json.PageLogFactory;
 import avalanche.base.AbstractAvalancheFeature;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.json.LogFactory;
+import avalanche.base.utils.AvalancheLog;
 
 import static avalanche.base.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
 
@@ -42,7 +44,7 @@ public class Analytics extends AbstractAvalancheFeature {
     /**
      * Init.
      */
-    protected Analytics() {
+    private Analytics() {
         mFactories = new HashMap<>();
         mFactories.put(EndSessionLog.TYPE, new EndSessionLogFactory());
         mFactories.put(PageLog.TYPE, new PageLogFactory());
@@ -61,6 +63,11 @@ public class Analytics extends AbstractAvalancheFeature {
         return sInstance;
     }
 
+    @VisibleForTesting
+    static void setInstance(Analytics instance) {
+        sInstance = instance;
+    }
+
     /**
      * Generate a page name for an activity.
      *
@@ -76,6 +83,33 @@ public class Analytics extends AbstractAvalancheFeature {
             return name;
     }
 
+    /**
+     * Send a page.
+     *
+     * @param name       page name.
+     * @param properties optional properties.
+     */
+    public static void sendPage(@NonNull String name, Map<String, String> properties) {
+        PageLog pageLog = new PageLog();
+        pageLog.setName(name);
+        pageLog.setProperties(properties);
+        getInstance().send(pageLog);
+    }
+
+    /**
+     * Send an event.
+     *
+     * @param name       event name.
+     * @param properties optional properties.
+     */
+    public static void sendEvent(@NonNull String name, Map<String, String> properties) {
+        EventLog eventLog = new EventLog();
+        eventLog.setId(UUID.randomUUID());
+        eventLog.setName(name);
+        eventLog.setProperties(properties);
+        getInstance().send(eventLog);
+    }
+
     @Override
     public Map<String, LogFactory> getLogFactories() {
         return mFactories;
@@ -88,38 +122,14 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     /**
-     * Send a page.
-     *
-     * @param name       page name.
-     * @param properties optional properties.
-     */
-    public void sendPage(@NonNull String name, Map<String, String> properties) {
-        PageLog pageLog = new PageLog();
-        pageLog.setName(name);
-        pageLog.setProperties(properties);
-        send(pageLog);
-    }
-
-    /**
-     * Send an event.
-     *
-     * @param name       event name.
-     * @param properties optional properties.
-     */
-    public void sendEvent(@NonNull String name, Map<String, String> properties) {
-        EventLog eventLog = new EventLog();
-        eventLog.setId(UUID.randomUUID());
-        eventLog.setName(name);
-        eventLog.setProperties(properties);
-        send(eventLog);
-    }
-
-    /**
      * Send log to channel.
      *
      * @param log log to send.
      */
     private void send(Log log) {
-        mChannel.enqueue(log, ANALYTICS_GROUP);
+        if (mChannel == null)
+            AvalancheLog.error("Analytics feature not initialized, discarding calls.");
+        else
+            mChannel.enqueue(log, ANALYTICS_GROUP);
     }
 }

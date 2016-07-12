@@ -2,6 +2,7 @@ package avalanche.analytics;
 
 import junit.framework.Assert;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 
@@ -27,23 +28,34 @@ import static org.mockito.Mockito.verify;
 
 public class AnalyticsTest {
 
+    @Before
+    public void setUp() {
+        Analytics.setInstance(null);
+    }
+
     @Test
     public void singleton() {
-        Assert.assertNotSame(new Analytics(), Analytics.getInstance());
         Assert.assertSame(Analytics.getInstance(), Analytics.getInstance());
     }
 
     @Test
     public void checkFactories() {
-        Map<String, LogFactory> factories = new Analytics().getLogFactories();
+        Map<String, LogFactory> factories = Analytics.getInstance().getLogFactories();
         assertTrue(factories.remove(PageLog.TYPE) instanceof PageLogFactory);
         assertTrue(factories.remove(EventLog.TYPE) instanceof EventLogFactory);
         assertTrue(factories.remove(EndSessionLog.TYPE) instanceof EndSessionLogFactory);
         assertTrue(factories.isEmpty());
     }
 
+    @Test
+    public void notInit() {
+
+        /* Just check log is discarded without throwing any exception. */
+        Analytics.sendPage("test", new HashMap<String, String>());
+    }
+
     public void activityResumed(final String expectedName, android.app.Activity activity) {
-        Analytics analytics = new Analytics();
+        Analytics analytics = Analytics.getInstance();
         AvalancheChannel channel = mock(AvalancheChannel.class);
         analytics.onChannelReady(channel);
         analytics.onActivityResumed(activity);
@@ -78,13 +90,13 @@ public class AnalyticsTest {
 
     @Test
     public void sendEvent() {
-        Analytics analytics = new Analytics();
+        Analytics analytics = Analytics.getInstance();
         AvalancheChannel channel = mock(AvalancheChannel.class);
         analytics.onChannelReady(channel);
         final String name = "testEvent";
         final HashMap<String, String> properties = new HashMap<>();
         properties.put("a", "b");
-        analytics.sendEvent(name, properties);
+        Analytics.sendEvent(name, properties);
         //noinspection WrongConstant (well its not a wrong constant but something is odd with compiler here)
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
