@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
         AvalancheLog.info("crash available: " + crashManagerAvailable);
 
-        boolean crashManagerEnabled = Avalanche.getSharedInstance().isFeatureEnabled(Crashes.class.getName());
+        boolean crashManagerEnabled = Avalanche.isFeatureEnabled(Crashes.class.getName());
 
         AvalancheLog.info("crash enabled: " + crashManagerEnabled);
 
