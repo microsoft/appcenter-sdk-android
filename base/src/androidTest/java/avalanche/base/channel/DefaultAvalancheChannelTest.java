@@ -137,11 +137,10 @@ public class DefaultAvalancheChannelTest {
                 Object[] args = invocation.getArguments();
                 if (args[2] instanceof ArrayList) {
                     ArrayList logs = (ArrayList) args[2];
-                    logs.add(sDeviceLog);
-                    logs.add(sDeviceLog);
-                    logs.add(sDeviceLog);
-                    logs.add(sDeviceLog);
-                    logs.add(sDeviceLog);
+                    int size = (int) args[1];
+                    for (int i = 0; i < size; i++) {
+                        logs.add(sDeviceLog);
+                    }
                 }
                 return UUID.randomUUID().toString();
             }
@@ -198,11 +197,10 @@ public class DefaultAvalancheChannelTest {
                     if ((args[0]).equals(ANALYTICS_GROUP)) {
                         if (args[2] instanceof ArrayList) {
                             ArrayList logs = (ArrayList) args[2];
-                            logs.add(sDeviceLog);
-                            logs.add(sDeviceLog);
-                            logs.add(sDeviceLog);
-                            logs.add(sDeviceLog);
-                            logs.add(sDeviceLog);
+                            int size = (int) args[1];
+                            for (int i = 0; i < size; i++) {
+                                logs.add(sDeviceLog);
+                            }
                         }
                         uuidString = UUID.randomUUID().toString();
                     }
@@ -213,7 +211,6 @@ public class DefaultAvalancheChannelTest {
         });
 
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
-
 
 
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
@@ -227,7 +224,7 @@ public class DefaultAvalancheChannelTest {
         });
 
         //don't provide a UUID to prevent sending
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(),  UUID.randomUUID(), sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), UUID.randomUUID(), sLogSerializer);
         sut.setIngestion(mockIngestion);
         sut.setPersistence(mockPersistence);
 
@@ -570,8 +567,7 @@ public class DefaultAvalancheChannelTest {
                             ArrayList logs = (ArrayList) args[2];
                             logs.add(sDeviceLog);
                         }
-                    }
-                    else {
+                    } else {
                         if (args[2] instanceof ArrayList) {
                             ArrayList logs = (ArrayList) args[2];
                             logs.add(sDeviceLog);
@@ -680,8 +676,7 @@ public class DefaultAvalancheChannelTest {
                             ArrayList logs = (ArrayList) args[2];
                             logs.add(sDeviceLog);
                         }
-                    }
-                    else {
+                    } else {
                         if (args[2] instanceof ArrayList) {
                             ArrayList logs = (ArrayList) args[2];
                             logs.add(sDeviceLog);
