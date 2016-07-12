@@ -10,6 +10,7 @@ import java.util.List;
 
 import avalanche.sasquatch.R;
 import avalanche.sasquatch.activities.DeviceInfoActivity;
+import avalanche.sasquatch.activities.EventActivity;
 
 public final class TestFeatures {
     private static List<TestFeatureModel> sTestFeatureModel;
@@ -19,13 +20,17 @@ public final class TestFeatures {
         sTestFeatureModel = new ArrayList<>();
         sParentActivity = parentActivity;
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_crash, R.string.description_crash, new View.OnClickListener() {
+
             @Override
+            @SuppressWarnings({"ConstantConditions", "ResultOfMethodCallIgnored"})
             public void onClick(View v) {
+
+                /* Make the app crash on purpose for testing report. */
                 ((String) null).isEmpty();
             }
         }));
-
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
+        sTestFeatureModel.add(new TestFeatureModel(R.string.title_event, R.string.description_event, EventActivity.class));
     }
 
     public static List<TestFeatureModel> getAvailableControls() {

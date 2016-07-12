@@ -19,6 +19,8 @@
         </activity>
 
         <activity android:name=".activities.DeviceInfoActivity" />
+
+        <activity android:name=".activities.EventActivity"/>
     </application>
 
 </manifest>

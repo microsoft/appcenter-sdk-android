@@ -38,7 +38,7 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
     /**
      * Session timeout.
      */
-    private long mSessionTimeout;
+    private long mSessionTimeout = SESSION_TIMEOUT;
 
     /**
      * Current session identifier.
@@ -56,9 +56,14 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
     private long mLastQueuedLogTime;
 
     /**
+     * Timestamp of the last time the application went to foreground.
+     */
+    private long mLastResumedTime;
+
+    /**
      * Timestamp of the last time the application went to background.
      */
-    private long mLastBackgroundTime;
+    private long mLastPausedTime;
 
     /**
      * Init.
@@ -93,8 +98,7 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
          * the session even when no pages are triggered but at the same time we want to keep using
          * the same session as long as the current activity is not paused (long video for example).
          */
-        long now = SystemClock.elapsedRealtime();
-        if (mSid == null || (now - mLastQueuedLogTime >= mSessionTimeout && now - mLastBackgroundTime >= mSessionTimeout)) {
+        if (mSid == null || hasSessionTimedOut()) {
 
             /* New session: generate a new identifier. */
             mSid = UUID.randomUUID();
@@ -118,6 +122,19 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
         mLastQueuedLogTime = SystemClock.elapsedRealtime();
     }
 
+    /**
+     * Check if current session has timed out.
+     *
+     * @return true if current session has timed out, false otherwise.
+     */
+    private boolean hasSessionTimedOut() {
+        long now = SystemClock.elapsedRealtime();
+        boolean noLogSentForLong = now - mLastQueuedLogTime >= mSessionTimeout;
+        boolean isBackgroundForLong = mLastPausedTime >= mLastResumedTime && now - mLastPausedTime >= mSessionTimeout;
+        boolean wasBackgroundForLong = mLastResumedTime - mLastPausedTime >= mSessionTimeout;
+        return noLogSentForLong && (isBackgroundForLong || wasBackgroundForLong);
+    }
+
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
     }
@@ -128,13 +145,16 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
 
     @Override
     public void onActivityResumed(Activity activity) {
+
+        /* Record resume time for session timeout management. */
+        mLastResumedTime = SystemClock.elapsedRealtime();
     }
 
     @Override
     public void onActivityPaused(Activity activity) {
 
-        /* Record time for session timeout management. */
-        mLastBackgroundTime = SystemClock.elapsedRealtime();
+        /* Record pause time for session timeout management. */
+        mLastPausedTime = SystemClock.elapsedRealtime();
     }
 
     @Override

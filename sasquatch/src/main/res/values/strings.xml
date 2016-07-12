@@ -5,4 +5,8 @@
     <string name="title_device_info">Device info</string>
     <string name="description_device_info">Display device information</string>
     <string name="error_device_info">Couldn\'t retrieve device information</string>
+    <string name="title_event">Events</string>
+    <string name="description_event">Send a custom event</string>
+    <string name="send">Send</string>
+    <string name="name">Name</string>
 </resources>
