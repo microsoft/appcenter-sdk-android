@@ -19,6 +19,7 @@ import avalanche.base.channel.DirectAvalancheChannel;
 import avalanche.base.ingestion.models.json.DefaultLogSerializer;
 import avalanche.base.ingestion.models.json.LogFactory;
 import avalanche.base.ingestion.models.json.LogSerializer;
+import avalanche.base.utils.IdHelper;
 import avalanche.base.utils.StorageHelper;
 
 public final class Avalanche {
@@ -201,6 +202,15 @@ public final class Avalanche {
      */
     public UUID getAppKey() {
         return mAppKey;
+    }
+
+    /**
+     * Get unique installation identifier.
+     *
+     * @return unique install identifier.
+     */
+    public UUID getInstallId() {
+        return IdHelper.getInstallId();
     }
 
     public boolean isEnabled() {
