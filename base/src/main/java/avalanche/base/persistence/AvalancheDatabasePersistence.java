@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.VisibleForTesting;
 
 import org.json.JSONException;
 
@@ -30,12 +31,13 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
     /**
      * Name of key column in the table.
      */
+    @VisibleForTesting
     static final String COLUMN_KEY = "key";
 
     /**
      * Name of log column in the table.
      */
-    static final String COLUMN_LOG = "log";
+    private static final String COLUMN_LOG = "log";
 
     /**
      * Database name.
@@ -126,10 +128,9 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
 
         /* Convert log to JSON string and put in the database. */
         try {
-            AvalancheLog.info("Storing a log to the persistence database for log type " + log.getType() + " with " + log.getSid());
+            AvalancheLog.debug("Storing a log to the persistence database for log type " + log.getType() + " with " + log.getSid());
             mDatabaseStorage.put(getContentValues(key, mLogSerializer.serializeLog(log)));
         } catch (JSONException e) {
-            AvalancheLog.error("Cannot convert to JSON string", e);
             throw new PersistenceException("Cannot convert to JSON string", e);
         }
     }
@@ -137,10 +138,10 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
     @Override
     public void deleteLog(@NonNull String key, @NonNull String id) {
         /* Log. */
-        AvalancheLog.info("Deleting logs from the persistence database for " + id);
+        AvalancheLog.info("Deleting logs from the persistence database for " + key + " with " + id);
         AvalancheLog.debug("The IDs for deleting log(s) is/are:");
 
-        List<Long> dbIdentifiers = mPendingDbIdentifiersGroups.remove(id);
+        List<Long> dbIdentifiers = mPendingDbIdentifiersGroups.remove(key + id);
         if (dbIdentifiers != null) {
             for (Long dbIdentifier : dbIdentifiers) {
                 AvalancheLog.debug("\t" + dbIdentifier);
@@ -213,7 +214,7 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
         }
 
         /* Update pending IDs. */
-        mPendingDbIdentifiersGroups.put(id, pendingDbIdentifiersGroup);
+        mPendingDbIdentifiersGroups.put(key + id, pendingDbIdentifiersGroup);
 
         return id;
     }

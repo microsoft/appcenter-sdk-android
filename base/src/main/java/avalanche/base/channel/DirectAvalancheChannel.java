@@ -24,13 +24,15 @@ import avalanche.base.utils.NetworkStateHelper;
 // FIXME temporary class that directly send logs while fixing bugs on actual channel
 public class DirectAvalancheChannel implements AvalancheChannel {
 
+    private static final int BATCH_SIZE = 50;
+
     private final UUID mAppKey;
 
     private final UUID mInstallId;
 
     private final AvalancheIngestion mIngestion;
 
-    private AvalanchePersistence mPersistence;
+    private final AvalanchePersistence mPersistence;
 
     /**
      * Creates and initializes a new instance.
@@ -53,17 +55,16 @@ public class DirectAvalancheChannel implements AvalancheChannel {
         try {
             mPersistence.putLog(queueName, log);
         } catch (AvalanchePersistence.PersistenceException e) {
-            AvalancheLog.error("Cannot persist logs");
+            AvalancheLog.error("Cannot persist logs", e);
             return;
         }
 
-        int batchSize = 50;
         ArrayList<Log> logs;
         do {
             logs = new ArrayList<>();
-            final String batchId = mPersistence.getLogs(queueName, batchSize, logs);
+            final String batchId = mPersistence.getLogs(queueName, BATCH_SIZE, logs);
 
-            if (logs.size() <= 0)
+            if (batchId == null || logs.size() <= 0)
                 break;
 
             LogContainer logContainer = new LogContainer();
@@ -81,6 +82,6 @@ public class DirectAvalancheChannel implements AvalancheChannel {
                     AvalancheLog.warn("Failed to send logs to ingestion service for batchId " + batchId, t);
                 }
             });
-        } while (logs.size() >= batchSize);
+        } while (logs.size() >= BATCH_SIZE);
     }
 }

@@ -12,6 +12,7 @@ import avalanche.base.ingestion.models.json.LogSerializer;
 /**
  * Abstract class for AvalanchePersistence service.
  */
+/* TODO (jaelim): Interface vs Abstract class. Need to revisit to finalize. */
 public abstract class AvalanchePersistence {
 
     /**
