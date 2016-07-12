@@ -231,7 +231,7 @@ public class AvalancheDatabasePersistenceTest {
 
             try {
                 /* Verify. */
-                assertEquals(0, getIteratorSize(scanner1.iterator()));
+                assertEquals(2, getIteratorSize(scanner1.iterator()));
                 assertEquals(1, getIteratorSize(scanner2.iterator()));
                 assertEquals(1, getIteratorSize(scanner3.iterator()));
             } finally {
@@ -240,6 +240,21 @@ public class AvalancheDatabasePersistenceTest {
                 scanner2.close();
                 scanner3.close();
             }
+
+            /* Delete. */
+            persistence.deleteLog("test-p1", id);
+
+            /* Access DatabaseStorage directly to verify the deletions. */
+            DatabaseScanner scanner4 = persistence.mDatabaseStorage.getScanner(AvalancheDatabasePersistence.COLUMN_KEY, "test-p1");
+
+            try {
+                /* Verify. */
+                assertEquals(0, getIteratorSize(scanner4.iterator()));
+            } finally {
+                /* Close. */
+                scanner4.close();
+            }
+
         } finally {
             /* Close. */
             persistence.close();
