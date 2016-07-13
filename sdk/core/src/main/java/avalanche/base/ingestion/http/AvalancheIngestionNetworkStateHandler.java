@@ -81,42 +81,52 @@ public class AvalancheIngestionNetworkStateHandler extends AvalancheIngestionDec
         }
 
         @Override
-        public synchronized void run() {
-            mServiceCall = mDecoratedApi.sendAsync(mAppKey, mInstallId, mLogContainer, this);
-        }
-
-        @Override
-        public synchronized void cancel() {
-            mCalls.remove(this);
-            pauseCall();
-        }
-
-        public synchronized void pauseCall() {
-            if (mServiceCall != null)
-                mServiceCall.cancel();
-        }
-
-        @Override
-        public synchronized void success() {
-
-            /**
-             * Guard against multiple calls since this call can be retried on network state change.
-             */
-            if (mCalls.contains(this)) {
-                super.success();
-                mCalls.remove(this);
+        public void run() {
+            synchronized (mCalls) {
+                mServiceCall = mDecoratedApi.sendAsync(mAppKey, mInstallId, mLogContainer, this);
             }
         }
 
         @Override
-        public synchronized void failure(Throwable t) {
+        public void cancel() {
+            synchronized (mCalls) {
+                mCalls.remove(this);
+                pauseCall();
+            }
+        }
+
+        public void pauseCall() {
+            synchronized (mCalls) {
+                if (mServiceCall != null)
+                    mServiceCall.cancel();
+            }
+        }
+
+        @Override
+        public void success() {
 
             /**
              * Guard against multiple calls since this call can be retried on network state change.
              */
-            if (mCalls.contains(this)) {
-                mServiceCallback.failure(t);
-                mCalls.remove(this);
+            synchronized (mCalls) {
+                if (mCalls.contains(this)) {
+                    super.success();
+                    mCalls.remove(this);
+                }
+            }
+        }
+
+        @Override
+        public void failure(Throwable t) {
+
+            /**
+             * Guard against multiple calls since this call can be retried on network state change.
+             */
+            synchronized (mCalls) {
+                if (mCalls.contains(this)) {
+                    mServiceCallback.failure(t);
+                    mCalls.remove(this);
+                }
             }
         }
     }
