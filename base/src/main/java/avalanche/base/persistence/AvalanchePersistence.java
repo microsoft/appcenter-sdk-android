@@ -23,7 +23,7 @@ public abstract class AvalanchePersistence {
     /**
      * Log serializer override.
      */
-    protected LogSerializer mLogSerializer;
+    private LogSerializer mLogSerializer;
 
     /**
      * Writes a log to the storage with the given {@code key}.
@@ -58,10 +58,12 @@ public abstract class AvalanchePersistence {
      *
      * @return The log serializer instance.
      */
-    public LogSerializer getLogSerializer() {
+    LogSerializer getLogSerializer() {
+        if (mLogSerializer == null)
+            throw new IllegalStateException("logSerializer not configured");
         return mLogSerializer;
     }
-    
+
     /**
      * Sets a {@link LogSerializer}.
      *

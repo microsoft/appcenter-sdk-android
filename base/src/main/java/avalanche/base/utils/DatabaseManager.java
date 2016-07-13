@@ -293,10 +293,13 @@ public class DatabaseManager implements Closeable {
 
         /* Get the values from in-memory database. */
         else if (PRIMARY_KEY.equals(key)) {
-            return mIMDB.get(value);
+            if (value == null || !(value instanceof Number)) {
+                throw new IllegalArgumentException("Primary key should be a number type and cannot be null");
+            }
+            return mIMDB.get(((Number) value).longValue());
         } else {
             for (ContentValues values : mIMDB.values())
-                if (value.equals(values.get(key)))
+                if (values.get(key).equals(value))
                     return values;
         }
 
