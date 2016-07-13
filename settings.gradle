@@ -1,9 +1,9 @@
-// core
-include ':base'
-
-// modules
-include ':crash'
-include ':analytics'
+// sdk modules
+include ':sdk'
+include ':sdk:core'
+include ':sdk:crash'
+include ':sdk:analytics'
 
 // test apps
-include ':sasquatch'
+include ':apps'
+include ':apps:sasquatch'

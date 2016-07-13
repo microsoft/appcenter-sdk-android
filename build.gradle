@@ -33,7 +33,7 @@ allprojects {
         }
     }
 
-    task checkstyleReport(dependsOn: 'checkstyle') << {
+    task checkstyleReport(dependsOn: 'checkstyle') {
         if (file("build/outputs/reports/checkstyle-results.xml").exists()) {
             ant.xslt(in: "build/outputs/reports/checkstyle-results.xml",
                     style: "config/checkstyle/checkstyle.xsl",

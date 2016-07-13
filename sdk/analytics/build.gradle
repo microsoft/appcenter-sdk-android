@@ -1,0 +1,8 @@
+//
+// :sdk:analytics
+//
+evaluationDependsOn(':sdk')
+
+dependencies {
+    compile project(':sdk:core')
+}
