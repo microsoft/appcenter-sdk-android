@@ -4,6 +4,7 @@
 
 subprojects {
     apply plugin: 'com.android.library'
+    apply plugin: 'jacoco'
 
     android {
         buildToolsVersion rootProject.ext.buildToolsVersion
@@ -25,6 +26,10 @@ subprojects {
         }
     }
 
+    jacoco {
+        toolVersion = "0.7.4.+"
+    }
+
     dependencies {
         compile "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
 
@@ -37,5 +42,22 @@ subprojects {
         androidTestCompile 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
         androidTestCompile 'com.android.support.test:runner:0.5'
         androidTestCompile 'com.android.support.test:rules:0.5'
+    }
+
+    task coverageReport(type: JacocoReport, dependsOn: ['createDebugCoverageReport', 'testDebugUnitTest']) {
+
+        reports {
+            xml.enabled = false
+            html.enabled = true
+        }
+
+        def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+        def debugTree = fileTree(dir: "${buildDir}/intermediates/classes/debug", excludes: fileFilter)
+        def mainSrc = "${project.projectDir}/src/main/java"
+
+        sourceDirectories = files([mainSrc])
+        classDirectories = files([debugTree])
+        executionData = files(["${buildDir}/jacoco/testDebugUnitTest.exec",
+                               "${buildDir}/outputs/code-coverage/connected/coverage.ec"])
     }
 }
