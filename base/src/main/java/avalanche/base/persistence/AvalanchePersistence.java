@@ -23,7 +23,7 @@ public abstract class AvalanchePersistence {
     /**
      * Log serializer override.
      */
-    LogSerializer mLogSerializer;
+    protected LogSerializer mLogSerializer;
 
     /**
      * Writes a log to the storage with the given {@code key}.
