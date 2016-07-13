@@ -1,5 +1,6 @@
 package avalanche.sasquatch.features;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,6 +35,7 @@ public class TestFeaturesListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         /* Not use view holder pattern since this is just a test app. */
+        @SuppressLint("ViewHolder")
         View rowView = LayoutInflater.from(parent.getContext()).inflate(android.R.layout.simple_list_item_2, parent, false);
         TextView titleView = (TextView) rowView.findViewById(android.R.id.text1);
         TextView descriptionView = (TextView) rowView.findViewById(android.R.id.text2);
@@ -43,10 +45,5 @@ public class TestFeaturesListAdapter extends BaseAdapter {
         titleView.setText(model.getTitle());
         descriptionView.setText(model.getDescription());
         return rowView;
-    }
-
-    public void setItem(List<TestFeatures.TestFeatureModel> list) {
-        mList = list;
-        notifyDataSetChanged();
     }
 }

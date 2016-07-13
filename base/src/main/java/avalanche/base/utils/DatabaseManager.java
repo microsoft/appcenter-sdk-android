@@ -86,7 +86,7 @@ public class DatabaseManager implements Closeable {
      * @param table    The table name.
      * @param version  The version of current schema.
      * @param schema   The schema.
-     * @param listener The error listner.
+     * @param listener The error listener.
      */
     protected DatabaseManager(Context context, String database, String table, int version,
                               ContentValues schema, ErrorListener listener) {
@@ -102,10 +102,10 @@ public class DatabaseManager implements Closeable {
      * @param version    The version of current schema.
      * @param schema     The schema.
      * @param maxRecords The maximum number of records allowed in the table. {@code 0} for no preset limit.
-     * @param listener   The error listner.
+     * @param listener   The error listener.
      */
-    protected DatabaseManager(Context context, String database, String table, int version,
-                              ContentValues schema, int maxRecords, ErrorListener listener) {
+    DatabaseManager(Context context, String database, String table, int version,
+                    ContentValues schema, int maxRecords, ErrorListener listener) {
         mContext = context;
         mDatabase = database;
         mTable = table;
@@ -293,11 +293,16 @@ public class DatabaseManager implements Closeable {
 
         /* Get the values from in-memory database. */
         else if (PRIMARY_KEY.equals(key)) {
-            return mIMDB.get(value);
+            if (value == null || !(value instanceof Number)) {
+                throw new IllegalArgumentException("Primary key should be a number type and cannot be null");
+            }
+            return mIMDB.get(((Number) value).longValue());
         } else {
-            for (ContentValues values : mIMDB.values())
-                if (value.equals(values.get(key)))
+            for (ContentValues values : mIMDB.values()) {
+                Object object = values.get(key);
+                if (object != null && object.equals(value))
                     return values;
+            }
         }
 
         return null;
@@ -361,7 +366,7 @@ public class DatabaseManager implements Closeable {
      *
      * @return The number of records in the table.
      */
-    protected long getRowCount() {
+    long getRowCount() {
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
@@ -383,7 +388,7 @@ public class DatabaseManager implements Closeable {
      * @return A cursor for all rows that matches the given criteria.
      * @throws RuntimeException If an error occurs.
      */
-    protected Cursor getCursor(String key, Object value) throws RuntimeException {
+    Cursor getCursor(String key, Object value) throws RuntimeException {
         /* Build a query to get values. */
         SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
         builder.setTables(mTable);
@@ -441,7 +446,7 @@ public class DatabaseManager implements Closeable {
     /**
      * Error listener for DatabaseManager.
      */
-    protected interface ErrorListener {
+    interface ErrorListener {
         /**
          * Notifies an exception
          */
@@ -544,8 +549,9 @@ public class DatabaseManager implements Closeable {
 
             /* Scanner for in-memory database. */
             return new Iterator<ContentValues>() {
+
                 /** In memory map iterator that we wrap because of the filter logic. */
-                Iterator<ContentValues> iterator = mIMDB.values().iterator();
+                final Iterator<ContentValues> iterator = mIMDB.values().iterator();
 
                 /** True if we moved the iterator but not retrieved the value. */
                 boolean advanced;

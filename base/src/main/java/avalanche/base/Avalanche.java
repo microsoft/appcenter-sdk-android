@@ -2,6 +2,7 @@ package avalanche.base;
 
 import android.app.Application;
 import android.content.Context;
+import android.support.annotation.VisibleForTesting;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
@@ -13,13 +14,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import avalanche.base.utils.AvalancheLog;
 import avalanche.base.channel.AvalancheChannel;
 import avalanche.base.channel.AvalancheChannelSessionDecorator;
 import avalanche.base.channel.DirectAvalancheChannel;
 import avalanche.base.ingestion.models.json.DefaultLogSerializer;
 import avalanche.base.ingestion.models.json.LogFactory;
 import avalanche.base.ingestion.models.json.LogSerializer;
+import avalanche.base.utils.AvalancheLog;
+import avalanche.base.utils.IdHelper;
 import avalanche.base.utils.StorageHelper;
 
 public final class Avalanche {
@@ -32,12 +34,13 @@ public final class Avalanche {
     private boolean mEnabled;
     private AvalancheChannel mChannel;
 
-    protected Avalanche() {
+    private Avalanche() {
         mEnabled = true;
         mFeatures = new HashSet<>();
     }
 
-    public static Avalanche getSharedInstance() {
+    @VisibleForTesting
+    static Avalanche getSharedInstance() {
         if (sharedInstance == null) {
             sharedInstance = new Avalanche();
         }
@@ -50,10 +53,9 @@ public final class Avalanche {
      * @param application Your application object.
      * @param appKey      The app key to use (application/environment).
      * @param features    Vararg list of feature classes to auto-use.
-     * @return The Avalanche SDK, configured with your selected features.
      */
     @SafeVarargs
-    public static Avalanche useFeatures(Application application, String appKey, Class<? extends AvalancheFeature>... features) {
+    public static void useFeatures(Application application, String appKey, Class<? extends AvalancheFeature>... features) {
         List<AvalancheFeature> featureList = new ArrayList<>();
         if (features != null && features.length > 0) {
             for (Class<? extends AvalancheFeature> featureClass : features) {
@@ -63,8 +65,7 @@ public final class Avalanche {
                 }
             }
         }
-
-        return useFeatures(application, appKey, featureList.toArray(new AvalancheFeature[featureList.size()]));
+        useFeatures(application, appKey, featureList.toArray(new AvalancheFeature[featureList.size()]));
     }
 
     /**
@@ -73,16 +74,14 @@ public final class Avalanche {
      * @param application Your application object.
      * @param appKey      The app key to use (application/environment).
      * @param features    Vararg list of configured features to enable.
-     * @return The Avalanche SDK, configured with the selected feature instances.
      */
-    public static Avalanche useFeatures(Application application, String appKey, AvalancheFeature... features) {
+    public static void useFeatures(Application application, String appKey, AvalancheFeature... features) {
         Avalanche avalancheHub = getSharedInstance().initialize(application, appKey);
         if (features != null && features.length > 0) {
             for (AvalancheFeature feature : features) {
                 avalancheHub.addFeature(feature);
             }
         }
-        return avalancheHub;
     }
 
     /**
@@ -122,11 +121,68 @@ public final class Avalanche {
         }
     }
 
+    /**
+     * Check whether a feature is enabled.
+     *
+     * @param feature Name of the feature to check.
+     * @return Whether the feature is enabled.
+     */
+    public static boolean isFeatureEnabled(String feature) {
+        Class<? extends AvalancheFeature> clazz = getClassForFeature(feature);
+        return clazz != null && isFeatureEnabled(clazz);
+    }
+
+    /**
+     * Check whether a feature class is enabled.
+     *
+     * @param feature The feature class to check for.
+     * @return Whether the feature is enabled.
+     */
+    public static boolean isFeatureEnabled(Class<? extends AvalancheFeature> feature) {
+        for (AvalancheFeature aFeature : getSharedInstance().mFeatures) {
+            if (aFeature.getClass().equals(feature)) {
+                return aFeature.isEnabled();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get the configured app key.
+     *
+     * @return The app key or null if not set or an invalid value was used when calling {@link #useFeatures(Application, String, AvalancheFeature...)}.
+     */
+    public static UUID getAppKey() {
+        return getSharedInstance().mAppKey;
+    }
+
+    /**
+     * Get unique installation identifier.
+     *
+     * @return unique install identifier.
+     */
+    public static UUID getInstallId() {
+        return IdHelper.getInstallId();
+    }
+
+    public static boolean isEnabled() {
+        return getSharedInstance().mEnabled;
+    }
+
+    public static void setEnabled(boolean enabled) {
+        Avalanche avalanche = getSharedInstance();
+        avalanche.mEnabled = enabled;
+
+        // Set enabled state for every module
+        for (AvalancheFeature feature : avalanche.mFeatures) {
+            feature.setEnabled(avalanche.mEnabled);
+        }
+    }
+
     private Avalanche initialize(Application application, String appKey) {
         if (application == null) {
             throw new IllegalArgumentException("Application must not be null!");
         }
-
         try {
             mAppKey = UUID.fromString(appKey);
         } catch (NullPointerException e) {
@@ -134,7 +190,6 @@ public final class Avalanche {
         } catch (IllegalArgumentException e) {
             AvalancheLog.error("App Key is not valid!", e);
         }
-
         mApplicationWeakReference = new WeakReference<>(application);
         mFeatures.clear();
         if (mChannel == null) { // TODO we must rethink this multiple useFeatures calls
@@ -154,11 +209,11 @@ public final class Avalanche {
      *
      * @param feature feature to add.
      */
-    public void addFeature(AvalancheFeature feature) {
-        if (feature == null) {
+    @VisibleForTesting
+    void addFeature(AvalancheFeature feature) {
+        if (feature == null)
             return;
-        }
-        Application application = getApplication();
+        Application application = mApplicationWeakReference.get();
         if (application != null) {
 
             /*
@@ -169,74 +224,21 @@ public final class Avalanche {
             application.unregisterActivityLifecycleCallbacks(feature);
             application.registerActivityLifecycleCallbacks(feature);
             if (feature.getLogFactories() != null) {
-                for (Map.Entry<String, LogFactory> logFactory : feature.getLogFactories().entrySet()) {
+                for (Map.Entry<String, LogFactory> logFactory : feature.getLogFactories().entrySet())
                     mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
-                }
             }
-
             mFeatures.add(feature);
             feature.onChannelReady(mChannel);
         }
     }
 
-    /**
-     * Get the configured application object.
-     *
-     * @return The application instance or null if not set.
-     */
-    public Application getApplication() {
-        return mApplicationWeakReference.get();
-    }
-
-    /**
-     * Check whether a feature is enabled.
-     *
-     * @param feature Name of the feature to check.
-     * @return Whether the feature is enabled.
-     */
-    public boolean isFeatureEnabled(String feature) {
-        Class<? extends AvalancheFeature> clazz = getClassForFeature(feature);
-        return clazz != null && isFeatureEnabled(clazz);
-    }
-
-    /**
-     * Check whether a feature class is enabled.
-     *
-     * @param feature The feature class to check for.
-     * @return Whether the feature is enabled.
-     */
-    public boolean isFeatureEnabled(Class<? extends AvalancheFeature> feature) {
-        for (AvalancheFeature aFeature : mFeatures) {
-            if (aFeature.getClass().equals(feature)) {
-                return aFeature.isEnabled();
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Get the configured app key.
-     *
-     * @return The app key or null if not set or an invalid value was used when calling {@link #useFeatures(Application, String, AvalancheFeature...)}.
-     */
-    public String getAppKey() {
-        return mAppKey.toString();
-    }
-
-    public boolean isEnabled() {
-        return mEnabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        mEnabled = enabled;
-
-        // Set enabled state for every module
-        for (AvalancheFeature feature : mFeatures) {
-            feature.setEnabled(mEnabled);
-        }
-    }
-
-    protected Set<AvalancheFeature> getFeatures() {
+    @VisibleForTesting
+    Set<AvalancheFeature> getFeatures() {
         return mFeatures;
+    }
+
+    @VisibleForTesting
+    Application getApplication() {
+        return mApplicationWeakReference.get();
     }
 }

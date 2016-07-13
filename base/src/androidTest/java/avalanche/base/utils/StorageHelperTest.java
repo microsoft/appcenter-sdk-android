@@ -48,7 +48,7 @@ public class StorageHelperTest {
     /**
      * File extension.
      */
-    private static final String INTERNAL_STORAGE_TEST_FILE_EXTENTION = ".stacktrace";
+    private static final String INTERNAL_STORAGE_TEST_FILE_EXTENSION = ".stacktrace";
 
     /**
      * Context instance.
@@ -94,7 +94,7 @@ public class StorageHelperTest {
         FilenameFilter filter = new FilenameFilter() {
             @Override
             public boolean accept(File dir, String filename) {
-                return filename.endsWith(INTERNAL_STORAGE_TEST_FILE_EXTENTION);
+                return filename.endsWith(INTERNAL_STORAGE_TEST_FILE_EXTENSION);
             }
         };
 
@@ -182,7 +182,7 @@ public class StorageHelperTest {
         random.nextBytes(randomBytes);
 
         ContentValues values = new ContentValues();
-        values.put("COL_STRING", randomBytes.toString());
+        values.put("COL_STRING", new String(randomBytes));
         values.put("COL_BYTE", randomBytes[0]);
         values.put("COL_SHORT", (short) random.nextInt(100));
         values.put("COL_INTEGER", random.nextInt());
@@ -287,24 +287,24 @@ public class StorageHelperTest {
         final String prefix = Long.toString(System.currentTimeMillis());
 
         /* Create a mock data. */
-        String filename1 = prefix + "-" + UUID.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENTION;
+        String filename1 = prefix + "-" + UUID.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION;
         String contents1 = "java.lang.NullPointerException: Attempt to invoke virtual method 'boolean java.lang.String.isEmpty()' on a null object reference\n" +
                 "at avalanche.base.utils.StorageHelperTest.internalStorage(StorageHelperTest.java:124)\n" +
                 "at java.lang.reflect.Method.invoke(Native Method)\n" +
                 "at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)";
-        String filename2 = prefix + "-" + UUID.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENTION;
+        String filename2 = prefix + "-" + UUID.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION;
         String contents2 = "java.io.FileNotFoundException: 6c1b1c58-1c2f-47d9-8f04-52639c3a804d: open failed: EROFS (Read-only file system)\n" +
                 "at libcore.io.IoBridge.open(IoBridge.java:452)\n" +
                 "at java.io.FileOutputStream.<init>(FileOutputStream.java:87)\n" +
                 "at java.io.FileOutputStream.<init>(FileOutputStream.java:72)\n" +
                 "at java.io.FileWriter.<init>(FileWriter.java:42)";
-        String filename3 = prefix + "-" + UUID.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENTION;
+        String filename3 = prefix + "-" + UUID.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION;
 
         /* FilenameFilter to look up files that are created in current test. */
         FilenameFilter filter = new FilenameFilter() {
             @Override
             public boolean accept(File dir, String filename) {
-                return filename.startsWith(prefix) && filename.endsWith(INTERNAL_STORAGE_TEST_FILE_EXTENTION);
+                return filename.startsWith(prefix) && filename.endsWith(INTERNAL_STORAGE_TEST_FILE_EXTENSION);
             }
         };
 
@@ -361,7 +361,7 @@ public class StorageHelperTest {
     public void internalStorageForObject() throws IOException, ClassNotFoundException {
         Log.i(TAG, "Testing Internal Storage object serialization");
 
-        File file = new File(sAndroidFilesPath + "/" + UUID.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENTION);
+        File file = new File(sAndroidFilesPath + "/" + UUID.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION);
 
         /* Create a mock object. */
         DataModel model = new DataModel(10, "Model", true);
@@ -370,7 +370,7 @@ public class StorageHelperTest {
         InternalStorage.writeObject(file, model);
 
         /* Read the file. */
-        DataModel actual = InternalStorage.readObject(file, DataModel.class);
+        DataModel actual = InternalStorage.readObject(file);
 
         /* Verify the deserialized instance and original instance are same. */
         assertNotNull(actual);
@@ -395,6 +395,7 @@ public class StorageHelperTest {
             }
         });
 
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             runDatabaseStorageTest(databaseStorage);
         } finally {
@@ -459,6 +460,7 @@ public class StorageHelperTest {
             }
         });
 
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             databaseStorage.getScanner().iterator().remove();
         } finally {
@@ -479,6 +481,7 @@ public class StorageHelperTest {
             }
         });
 
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             databaseStorage.getScanner().iterator().next();
         } finally {
@@ -503,6 +506,7 @@ public class StorageHelperTest {
             }
         });
 
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             runDatabaseStorageTest(databaseStorage);
         } finally {
@@ -523,6 +527,7 @@ public class StorageHelperTest {
             }
         });
 
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             databaseStorage.getScanner().iterator().remove();
         } finally {
@@ -543,6 +548,7 @@ public class StorageHelperTest {
             }
         });
 
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             databaseStorage.getScanner().iterator().next();
         } finally {
@@ -566,8 +572,8 @@ public class StorageHelperTest {
      * Temporary class for testing object serialization.
      */
     private static class DataModel implements Serializable {
-        int number;
-        InnerModel object;
+        final int number;
+        final InnerModel object;
 
         DataModel(int number, String text, boolean enabled) {
             this.number = number;
@@ -575,8 +581,8 @@ public class StorageHelperTest {
         }
 
         static class InnerModel implements Serializable {
-            String text;
-            boolean enabled;
+            final String text;
+            final boolean enabled;
 
             InnerModel(String text, boolean enabled) {
                 this.text = text;

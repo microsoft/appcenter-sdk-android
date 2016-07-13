@@ -17,8 +17,6 @@ import avalanche.sasquatch.features.TestFeaturesListAdapter;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ListView mListView;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,13 +30,14 @@ public class MainActivity extends AppCompatActivity {
 
         AvalancheLog.info("crash available: " + crashManagerAvailable);
 
-        boolean crashManagerEnabled = Avalanche.getSharedInstance().isFeatureEnabled(Crashes.class.getName());
+        boolean crashManagerEnabled = Avalanche.isFeatureEnabled(Crashes.class.getName());
 
         AvalancheLog.info("crash enabled: " + crashManagerEnabled);
 
         TestFeatures.initialize(this);
-        mListView = (ListView) findViewById(R.id.list);
-        mListView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
-        mListView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
+
+        ListView listView = (ListView) findViewById(R.id.list);
+        listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
+        listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
     }
 }

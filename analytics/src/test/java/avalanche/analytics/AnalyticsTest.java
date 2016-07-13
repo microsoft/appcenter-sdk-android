@@ -2,6 +2,7 @@ package avalanche.analytics;
 
 import junit.framework.Assert;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 
@@ -20,30 +21,45 @@ import avalanche.base.ingestion.models.json.LogFactory;
 
 import static avalanche.base.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class AnalyticsTest {
 
+    @Before
+    public void setUp() {
+        Analytics.unsetInstance();
+    }
+
     @Test
     public void singleton() {
-        Assert.assertNotSame(new Analytics(), Analytics.getInstance());
         Assert.assertSame(Analytics.getInstance(), Analytics.getInstance());
     }
 
     @Test
     public void checkFactories() {
-        Map<String, LogFactory> factories = new Analytics().getLogFactories();
+        Map<String, LogFactory> factories = Analytics.getInstance().getLogFactories();
         assertTrue(factories.remove(PageLog.TYPE) instanceof PageLogFactory);
         assertTrue(factories.remove(EventLog.TYPE) instanceof EventLogFactory);
         assertTrue(factories.remove(EndSessionLog.TYPE) instanceof EndSessionLogFactory);
         assertTrue(factories.isEmpty());
     }
 
-    public void activityResumed(final String expectedName, android.app.Activity activity) {
-        Analytics analytics = new Analytics();
+    @Test
+    public void notInit() {
+
+        /* Just check log is discarded without throwing any exception. */
+        Analytics.sendPage("test", new HashMap<String, String>());
+    }
+
+    private void activityResumed(final String expectedName, android.app.Activity activity) {
+        Analytics analytics = Analytics.getInstance();
         AvalancheChannel channel = mock(AvalancheChannel.class);
         analytics.onChannelReady(channel);
         analytics.onActivityResumed(activity);
@@ -78,13 +94,13 @@ public class AnalyticsTest {
 
     @Test
     public void sendEvent() {
-        Analytics analytics = new Analytics();
+        Analytics analytics = Analytics.getInstance();
         AvalancheChannel channel = mock(AvalancheChannel.class);
         analytics.onChannelReady(channel);
         final String name = "testEvent";
         final HashMap<String, String> properties = new HashMap<>();
         properties.put("a", "b");
-        analytics.sendEvent(name, properties);
+        Analytics.sendEvent(name, properties);
         //noinspection WrongConstant (well its not a wrong constant but something is odd with compiler here)
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -97,6 +113,30 @@ public class AnalyticsTest {
                 return false;
             }
         }), eq(ANALYTICS_GROUP));
+    }
+
+    @Test
+    public void setEnabled() {
+        Analytics analytics = Analytics.getInstance();
+        AvalancheChannel channel = mock(AvalancheChannel.class);
+        analytics.setEnabled(false);
+        analytics.onChannelReady(channel);
+        Analytics.sendEvent("test", null);
+        Analytics.sendPage("test", null);
+        verifyZeroInteractions(channel);
+
+        /* Enable back. */
+        analytics.setEnabled(true);
+        Analytics.sendEvent("test", null);
+        Analytics.sendPage("test", null);
+        //noinspection WrongConstant
+        verify(channel, times(2)).enqueue(any(Log.class), eq(ANALYTICS_GROUP));
+
+        /* Disable again. */
+        analytics.setEnabled(false);
+        Analytics.sendEvent("test", null);
+        Analytics.sendPage("test", null);
+        verifyNoMoreInteractions(channel);
     }
 
     /**

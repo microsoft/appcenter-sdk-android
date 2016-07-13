@@ -56,6 +56,7 @@ public final class JSONUtils {
         for (int i = 0; i < jArray.length(); i++) {
             JSONObject jModel = jArray.getJSONObject(i);
             M model = factory.create();
+            model.read(jModel);
             array.add(model);
         }
         return array;

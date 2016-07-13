@@ -21,8 +21,8 @@ import avalanche.base.ingestion.http.HttpUtils;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
 import avalanche.base.ingestion.models.json.LogSerializer;
+import avalanche.base.persistence.AvalancheDatabasePersistence;
 import avalanche.base.persistence.AvalanchePersistence;
-import avalanche.base.persistence.DefaultAvalanchePersistence;
 import avalanche.base.utils.AvalancheLog;
 import avalanche.base.utils.IdHelper;
 import avalanche.base.utils.NetworkStateHelper;
@@ -141,10 +141,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     public DefaultAvalancheChannel(@NonNull Context context, @NonNull UUID appKey, @NonNull LogSerializer logSerializer) {
         mAppKey = appKey;
         mInstallId = IdHelper.getInstallId();
-        mPersistence = new DefaultAvalanchePersistence();
-        AvalancheIngestionHttp api = new AvalancheIngestionHttp();
-        api.setUrlConnectionFactory(new DefaultUrlConnectionFactory());
-        api.setLogSerializer(logSerializer);
+        mPersistence = new AvalancheDatabasePersistence();
+        AvalancheIngestionHttp api = new AvalancheIngestionHttp(new DefaultUrlConnectionFactory(), logSerializer);
         api.setBaseUrl("http://avalanche-perf.westus.cloudapp.azure.com:8081"); //TODO make that a parameter
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(api);
         mIngestion = new AvalancheIngestionNetworkStateHandler(retryer, NetworkStateHelper.getSharedInstance(context));
