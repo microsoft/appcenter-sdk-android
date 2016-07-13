@@ -1,9 +1,20 @@
+include ':sdk'
+//project(':sdk').projectDir = new File('sdk')
+
 // core
-include ':base'
+include ':sdk:core'
+//project(':sdk:base').projectDir = new File('base')
 
 // modules
-include ':crash'
-include ':analytics'
+include ':sdk:crash'
+include ':sdk:analytics'
+
+//project(':sdk:crash').projectDir = new File('crash')
+//project(':sdk:analytics').projectDir = new File('analytics')
 
 // test apps
-include ':sasquatch'
+include ':apps'
+//project(':apps').projectDir = new File('apps')
+
+include ':apps:sasquatch'
+//project(':apps:sasquatch').projectDir = new File('sasquatch')

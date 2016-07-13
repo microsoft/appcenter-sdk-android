@@ -1,0 +1,5 @@
+//
+// :apps:sasquatch
+//
+
+evaluationDependsOn(':apps')
