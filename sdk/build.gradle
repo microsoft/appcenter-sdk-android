@@ -5,20 +5,13 @@
 subprojects {
     apply plugin: 'com.android.library'
 
-    def supportLibVersion = rootProject.ext.supportLibVersion
-
     android {
-        compileSdkVersion rootProject.ext.compileSdkVersion
         buildToolsVersion rootProject.ext.buildToolsVersion
 
         defaultConfig {
-            minSdkVersion rootProject.ext.minSdkVersion
-            targetSdkVersion rootProject.ext.targetSdkVersion
-            versionCode rootProject.ext.versionCode
-            versionName rootProject.ext.versionName
-            testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
             consumerProguardFiles 'proguard-rules.pro'
         }
+
         buildTypes {
             release {
                 minifyEnabled false
@@ -33,7 +26,7 @@ subprojects {
     }
 
     dependencies {
-        compile "com.android.support:support-annotations:$supportLibVersion"
+        compile "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
 
         testCompile 'org.powermock:powermock-api-mockito:1.6.5'
         testCompile 'org.powermock:powermock-module-junit4-rule-agent:1.6.5'

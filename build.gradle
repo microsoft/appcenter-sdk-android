@@ -21,7 +21,8 @@ allprojects {
 
     //add checkstyle to each module
     task checkstyle(type: Checkstyle) {
-        configFile = new File(rootDir, "config/checkstyle/checkstyle.xml") //use same config file for each module
+        configFile = new File(rootDir, "config/checkstyle/checkstyle.xml")
+        //use same config file for each module
         source 'src/'
         include '**/*.java'
         exclude '**/gen/**'
@@ -43,6 +44,27 @@ allprojects {
     }
 }
 
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            def config = android.defaultConfig
+            def ext = rootProject.ext
+            if (android.compileSdkVersion == null)
+                android.compileSdkVersion ext.compileSdkVersion
+            if (config.minSdkVersion == null)
+                config.minSdkVersion ext.minSdkVersion
+            if (config.targetSdkVersion == null)
+                config.targetSdkVersion ext.targetSdkVersion
+            if (config.versionCode == null)
+                config.versionCode ext.versionCode
+            if (config.versionName == null)
+                config.versionName ext.versionName
+            if (config.testInstrumentationRunner == null)
+                config.testInstrumentationRunner ext.testInstrumentationRunner
+        }
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
@@ -55,4 +77,5 @@ ext {
     compileSdkVersion = 23
     buildToolsVersion = '23.0.3'
     supportLibVersion = '24.0.0'
+    testInstrumentationRunner = 'android.support.test.runner.AndroidJUnitRunner'
 }
