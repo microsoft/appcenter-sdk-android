@@ -123,13 +123,10 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
 
     @Override
     public void putLog(@NonNull String key, @NonNull Log log) throws PersistenceException {
-        if (mLogSerializer == null)
-            throw new IllegalStateException("logSerializer not configured");
-
         /* Convert log to JSON string and put in the database. */
         try {
             AvalancheLog.debug("Storing a log to the persistence database for log type " + log.getType() + " with " + log.getSid());
-            mDatabaseStorage.put(getContentValues(key, mLogSerializer.serializeLog(log)));
+            mDatabaseStorage.put(getContentValues(key, getLogSerializer().serializeLog(log)));
         } catch (JSONException e) {
             throw new PersistenceException("Cannot convert to JSON string", e);
         }
@@ -154,9 +151,6 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
     @Override
     @Nullable
     public String getLogs(@NonNull String key, @IntRange(from = 1) int limit, @NonNull List<Log> outLogs) {
-        if (mLogSerializer == null)
-            throw new IllegalStateException("logSerializer not configured");
-
         /* Log. */
         AvalancheLog.info("Trying to get " + limit + " logs from the persistence database for " + key);
 
@@ -174,7 +168,7 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
             if (!mPendingDbIdentifiers.contains(dbIdentifier)) {
                 try {
                     /* Deserialize JSON to Log. */
-                    candidates.put(dbIdentifier, mLogSerializer.deserializeLog(values.getAsString(COLUMN_LOG)));
+                    candidates.put(dbIdentifier, getLogSerializer().deserializeLog(values.getAsString(COLUMN_LOG)));
                     count++;
                 } catch (JSONException e) {
                     /* If it is not able to deserialize, ignore and get another log. */

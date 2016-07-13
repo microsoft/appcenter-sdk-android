@@ -182,7 +182,7 @@ public class StorageHelperTest {
         random.nextBytes(randomBytes);
 
         ContentValues values = new ContentValues();
-        values.put("COL_STRING", randomBytes.toString());
+        values.put("COL_STRING", new String(randomBytes));
         values.put("COL_BYTE", randomBytes[0]);
         values.put("COL_SHORT", (short) random.nextInt(100));
         values.put("COL_INTEGER", random.nextInt());
@@ -370,7 +370,7 @@ public class StorageHelperTest {
         InternalStorage.writeObject(file, model);
 
         /* Read the file. */
-        DataModel actual = InternalStorage.readObject(file, DataModel.class);
+        DataModel actual = InternalStorage.readObject(file);
 
         /* Verify the deserialized instance and original instance are same. */
         assertNotNull(actual);
@@ -395,6 +395,7 @@ public class StorageHelperTest {
             }
         });
 
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             runDatabaseStorageTest(databaseStorage);
         } finally {
@@ -459,6 +460,7 @@ public class StorageHelperTest {
             }
         });
 
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             databaseStorage.getScanner().iterator().remove();
         } finally {
@@ -479,6 +481,7 @@ public class StorageHelperTest {
             }
         });
 
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             databaseStorage.getScanner().iterator().next();
         } finally {
@@ -503,6 +506,7 @@ public class StorageHelperTest {
             }
         });
 
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             runDatabaseStorageTest(databaseStorage);
         } finally {
@@ -523,6 +527,7 @@ public class StorageHelperTest {
             }
         });
 
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             databaseStorage.getScanner().iterator().remove();
         } finally {
@@ -543,6 +548,7 @@ public class StorageHelperTest {
             }
         });
 
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             databaseStorage.getScanner().iterator().next();
         } finally {

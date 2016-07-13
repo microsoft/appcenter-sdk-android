@@ -21,10 +21,14 @@ import avalanche.base.ingestion.models.json.LogFactory;
 
 import static avalanche.base.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class AnalyticsTest {
 
@@ -109,6 +113,30 @@ public class AnalyticsTest {
                 return false;
             }
         }), eq(ANALYTICS_GROUP));
+    }
+
+    @Test
+    public void setEnabled() {
+        Analytics analytics = Analytics.getInstance();
+        AvalancheChannel channel = mock(AvalancheChannel.class);
+        analytics.setEnabled(false);
+        analytics.onChannelReady(channel);
+        Analytics.sendEvent("test", null);
+        Analytics.sendPage("test", null);
+        verifyZeroInteractions(channel);
+
+        /* Enable back. */
+        analytics.setEnabled(true);
+        Analytics.sendEvent("test", null);
+        Analytics.sendPage("test", null);
+        //noinspection WrongConstant
+        verify(channel, times(2)).enqueue(any(Log.class), eq(ANALYTICS_GROUP));
+
+        /* Disable again. */
+        analytics.setEnabled(false);
+        Analytics.sendEvent("test", null);
+        Analytics.sendPage("test", null);
+        verifyNoMoreInteractions(channel);
     }
 
     /**

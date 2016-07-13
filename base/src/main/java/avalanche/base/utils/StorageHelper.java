@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
 import java.io.BufferedReader;
@@ -259,13 +260,12 @@ public final class StorageHelper {
          * Reads an object from the file (deserialization).
          *
          * @param file  The file instance.
-         * @param clazz The type of the object to be deserialized.
          * @return The deserialized instance.
          * @throws IOException
          * @throws ClassNotFoundException
          */
         @SuppressWarnings("unchecked")
-        public static <T extends Serializable> T readObject(@NonNull File file, @NonNull Class<T> clazz)
+        public static <T extends Serializable> T readObject(@NonNull File file)
                 throws IOException, ClassNotFoundException {
             ObjectInputStream inputStream = null;
             T object;
@@ -531,6 +531,7 @@ public final class StorageHelper {
          *
          * @return The number of records in the table.
          */
+        @VisibleForTesting
         long getRowCount() {
             return mDatabaseManager.getRowCount();
         }
@@ -540,6 +541,7 @@ public final class StorageHelper {
          *
          * @return An array of column names.
          */
+        @VisibleForTesting
         String[] getColumnNames() {
             return mDatabaseManager.getCursor(null, null).getColumnNames();
         }

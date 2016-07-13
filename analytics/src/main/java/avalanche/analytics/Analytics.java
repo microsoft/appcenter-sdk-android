@@ -70,6 +70,26 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     /**
+     * Send a page.
+     *
+     * @param name       page name.
+     * @param properties optional properties.
+     */
+    public static void sendPage(@NonNull String name, @Nullable Map<String, String> properties) {
+        getInstance().mSendPage(name, properties);
+    }
+
+    /**
+     * Send an event.
+     *
+     * @param name       event name.
+     * @param properties optional properties.
+     */
+    public static void sendEvent(@NonNull String name, @Nullable Map<String, String> properties) {
+        getInstance().mSendEvent(name, properties);
+    }
+
+    /**
      * Generate a page name for an activity.
      *
      * @param activityClass activity class.
@@ -84,33 +104,6 @@ public class Analytics extends AbstractAvalancheFeature {
             return name;
     }
 
-    /**
-     * Send a page.
-     *
-     * @param name       page name.
-     * @param properties optional properties.
-     */
-    public static void sendPage(@NonNull String name, @Nullable Map<String, String> properties) {
-        PageLog pageLog = new PageLog();
-        pageLog.setName(name);
-        pageLog.setProperties(properties);
-        getInstance().send(pageLog);
-    }
-
-    /**
-     * Send an event.
-     *
-     * @param name       event name.
-     * @param properties optional properties.
-     */
-    public static void sendEvent(@NonNull String name, @Nullable Map<String, String> properties) {
-        EventLog eventLog = new EventLog();
-        eventLog.setId(UUID.randomUUID());
-        eventLog.setName(name);
-        eventLog.setProperties(properties);
-        getInstance().send(eventLog);
-    }
-
     @Override
     public Map<String, LogFactory> getLogFactories() {
         return mFactories;
@@ -118,8 +111,7 @@ public class Analytics extends AbstractAvalancheFeature {
 
     @Override
     public void onActivityResumed(Activity activity) {
-        // TODO add a way to customize the automatic page behavior
-        sendPage(generatePageName(activity.getClass()), null);
+        mSendPage(generatePageName(activity.getClass()), null);
     }
 
     /**
@@ -132,5 +124,36 @@ public class Analytics extends AbstractAvalancheFeature {
             AvalancheLog.error("Analytics feature not initialized, discarding calls.");
         else
             mChannel.enqueue(log, ANALYTICS_GROUP);
+    }
+
+    /**
+     * Send a page.
+     *
+     * @param name       page name.
+     * @param properties optional properties.
+     */
+    private void mSendPage(@NonNull String name, @Nullable Map<String, String> properties) {
+        if (!isEnabled())
+            return;
+        PageLog pageLog = new PageLog();
+        pageLog.setName(name);
+        pageLog.setProperties(properties);
+        send(pageLog);
+    }
+
+    /**
+     * Send an event.
+     *
+     * @param name       event name.
+     * @param properties optional properties.
+     */
+    private void mSendEvent(@NonNull String name, @Nullable Map<String, String> properties) {
+        if (!isEnabled())
+            return;
+        EventLog eventLog = new EventLog();
+        eventLog.setId(UUID.randomUUID());
+        eventLog.setName(name);
+        eventLog.setProperties(properties);
+        send(eventLog);
     }
 }
