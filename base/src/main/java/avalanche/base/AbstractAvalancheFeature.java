@@ -3,7 +3,10 @@ package avalanche.base;
 import android.app.Activity;
 import android.os.Bundle;
 
+import java.util.Map;
+
 import avalanche.base.channel.AvalancheChannel;
+import avalanche.base.ingestion.models.json.LogFactory;
 
 public abstract class AbstractAvalancheFeature implements AvalancheFeature {
 
@@ -57,5 +60,10 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
     @Override
     public void onChannelReady(AvalancheChannel channel) {
         mChannel = channel;
+    }
+
+    @Override
+    public Map<String, LogFactory> getLogFactories() {
+        return null;
     }
 }

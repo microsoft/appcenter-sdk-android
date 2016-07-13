@@ -20,6 +20,7 @@ import avalanche.base.channel.DirectAvalancheChannel;
 import avalanche.base.ingestion.models.json.DefaultLogSerializer;
 import avalanche.base.ingestion.models.json.LogFactory;
 import avalanche.base.ingestion.models.json.LogSerializer;
+import avalanche.base.utils.AvalancheLog;
 import avalanche.base.utils.IdHelper;
 import avalanche.base.utils.StorageHelper;
 
@@ -34,6 +35,7 @@ public final class Avalanche {
     private AvalancheChannel mChannel;
 
     private Avalanche() {
+        mEnabled = true;
         mFeatures = new HashSet<>();
     }
 
@@ -74,7 +76,7 @@ public final class Avalanche {
      * @param features    Vararg list of configured features to enable.
      */
     public static void useFeatures(Application application, String appKey, AvalancheFeature... features) {
-        Avalanche avalancheHub = getSharedInstance().initialize(application, UUID.fromString(appKey));
+        Avalanche avalancheHub = getSharedInstance().initialize(application, appKey);
         if (features != null && features.length > 0) {
             for (AvalancheFeature feature : features) {
                 avalancheHub.addFeature(feature);
@@ -113,9 +115,9 @@ public final class Avalanche {
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException("AvalancheFeature subclass must provide public static accessible method getInstance()", e);
         } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException("AvalancheFeature subclass must provide public static accessible method getInstance()", e);
         }
     }
 
@@ -139,7 +141,7 @@ public final class Avalanche {
     public static boolean isFeatureEnabled(Class<? extends AvalancheFeature> feature) {
         for (AvalancheFeature aFeature : getSharedInstance().mFeatures) {
             if (aFeature.getClass().equals(feature)) {
-                return true;
+                return aFeature.isEnabled();
             }
         }
         return false;
@@ -177,8 +179,17 @@ public final class Avalanche {
         }
     }
 
-    private Avalanche initialize(Application application, UUID appKey) {
-        mAppKey = appKey;
+    private Avalanche initialize(Application application, String appKey) {
+        if (application == null) {
+            throw new IllegalArgumentException("Application must not be null!");
+        }
+        try {
+            mAppKey = UUID.fromString(appKey);
+        } catch (NullPointerException e) {
+            AvalancheLog.error("App Key must be set for initializing the Avalanche SDK!");
+        } catch (IllegalArgumentException e) {
+            AvalancheLog.error("App Key is not valid!", e);
+        }
         mApplicationWeakReference = new WeakReference<>(application);
         mFeatures.clear();
         if (mChannel == null) { // TODO we must rethink this multiple useFeatures calls
@@ -198,7 +209,10 @@ public final class Avalanche {
      *
      * @param feature feature to add.
      */
-    private void addFeature(AvalancheFeature feature) {
+    @VisibleForTesting
+    void addFeature(AvalancheFeature feature) {
+        if (feature == null)
+            return;
         Application application = mApplicationWeakReference.get();
         if (application != null) {
 
@@ -209,10 +223,22 @@ public final class Avalanche {
              */
             application.unregisterActivityLifecycleCallbacks(feature);
             application.registerActivityLifecycleCallbacks(feature);
-            for (Map.Entry<String, LogFactory> logFactory : feature.getLogFactories().entrySet())
-                mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
+            if (feature.getLogFactories() != null) {
+                for (Map.Entry<String, LogFactory> logFactory : feature.getLogFactories().entrySet())
+                    mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
+            }
             mFeatures.add(feature);
             feature.onChannelReady(mChannel);
         }
+    }
+
+    @VisibleForTesting
+    Set<AvalancheFeature> getFeatures() {
+        return mFeatures;
+    }
+
+    @VisibleForTesting
+    Application getApplication() {
+        return mApplicationWeakReference.get();
     }
 }
