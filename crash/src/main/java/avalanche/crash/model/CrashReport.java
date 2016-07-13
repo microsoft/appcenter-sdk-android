@@ -99,7 +99,7 @@ public class CrashReport implements Serializable {
     }
 
     public static CrashReport fromFile(File file) throws IOException, ClassNotFoundException {
-        return InternalStorage.readObject(file, CrashReport.class);
+        return InternalStorage.readObject(file);
     }
 
     public void writeCrashReport() {

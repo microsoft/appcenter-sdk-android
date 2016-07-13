@@ -40,7 +40,6 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class DeviceInfoHelperTest {
 
     @Test
-    @SuppressWarnings("WrongConstant")
     public void getDeviceInfo() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
 
         /* Mock data. */
@@ -78,6 +77,7 @@ public class DeviceInfoHelperTest {
         when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
         when(contextMock.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(telephonyManagerMock);
         when(contextMock.getSystemService(Context.WINDOW_SERVICE)).thenReturn(windowManagerMock);
+        //noinspection WrongConstant
         when(packageManagerMock.getPackageInfo(anyString(), eq(0))).thenReturn(packageInfoMock);
         when(telephonyManagerMock.getNetworkCountryIso()).thenReturn(carrierCountry);
         when(telephonyManagerMock.getNetworkOperatorName()).thenReturn(carrierName);
@@ -143,7 +143,6 @@ public class DeviceInfoHelperTest {
     }
 
     @Test(expected = DeviceInfoHelper.DeviceInfoException.class)
-    @SuppressWarnings("WrongConstant")
     public void getDeviceInfoWithException() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
 
         /* Mocking instances. */
@@ -152,6 +151,7 @@ public class DeviceInfoHelperTest {
 
         /* Delegates to mock instances. */
         when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
+        //noinspection WrongConstant
         when(packageManagerMock.getPackageInfo(anyString(), eq(0))).thenThrow(new PackageManager.NameNotFoundException());
 
         DeviceInfoHelper.getDeviceInfo(contextMock);
