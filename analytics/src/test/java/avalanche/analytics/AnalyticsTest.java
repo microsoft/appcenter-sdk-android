@@ -30,7 +30,7 @@ public class AnalyticsTest {
 
     @Before
     public void setUp() {
-        Analytics.setInstance(null);
+        Analytics.unsetInstance();
     }
 
     @Test
@@ -54,7 +54,7 @@ public class AnalyticsTest {
         Analytics.sendPage("test", new HashMap<String, String>());
     }
 
-    public void activityResumed(final String expectedName, android.app.Activity activity) {
+    private void activityResumed(final String expectedName, android.app.Activity activity) {
         Analytics analytics = Analytics.getInstance();
         AvalancheChannel channel = mock(AvalancheChannel.class);
         analytics.onChannelReady(channel);

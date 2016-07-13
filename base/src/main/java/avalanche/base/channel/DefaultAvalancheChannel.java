@@ -142,9 +142,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         mAppKey = appKey;
         mInstallId = IdHelper.getInstallId();
         mPersistence = new AvalancheDatabasePersistence();
-        AvalancheIngestionHttp api = new AvalancheIngestionHttp();
-        api.setUrlConnectionFactory(new DefaultUrlConnectionFactory());
-        api.setLogSerializer(logSerializer);
+        AvalancheIngestionHttp api = new AvalancheIngestionHttp(new DefaultUrlConnectionFactory(), logSerializer);
         api.setBaseUrl("http://avalanche-perf.westus.cloudapp.azure.com:8081"); //TODO make that a parameter
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(api);
         mIngestion = new AvalancheIngestionNetworkStateHandler(retryer, NetworkStateHelper.getSharedInstance(context));

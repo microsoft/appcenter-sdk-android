@@ -11,6 +11,7 @@ import java.util.List;
 import avalanche.sasquatch.R;
 import avalanche.sasquatch.activities.DeviceInfoActivity;
 import avalanche.sasquatch.activities.EventActivity;
+import avalanche.sasquatch.activities.DummyActivity;
 
 public final class TestFeatures {
     private static List<TestFeatureModel> sTestFeatureModel;
@@ -31,6 +32,7 @@ public final class TestFeatures {
         }));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_event, R.string.description_event, EventActivity.class));
+        sTestFeatureModel.add(new TestFeatureModel(R.string.title_generate_page_log, R.string.description_generate_page_log, DummyActivity.class));
     }
 
     public static List<TestFeatureModel> getAvailableControls() {
@@ -47,7 +49,7 @@ public final class TestFeatures {
         };
     }
 
-    private static View.OnClickListener getDefalutOnClickListener(final Class<? extends Activity> clazz) {
+    private static View.OnClickListener getDefaultOnClickListener(final Class<? extends Activity> clazz) {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -57,12 +59,12 @@ public final class TestFeatures {
     }
 
     public static class TestFeatureModel {
-        private String mTitle;
-        private String mDescription;
-        private View.OnClickListener mOnClickListener;
+        private final String mTitle;
+        private final String mDescription;
+        private final View.OnClickListener mOnClickListener;
 
         public TestFeatureModel(int title, int description, Class<? extends Activity> clazz) {
-            this(title, description, getDefalutOnClickListener(clazz));
+            this(title, description, getDefaultOnClickListener(clazz));
         }
 
         public TestFeatureModel(int title, int description, View.OnClickListener listener) {

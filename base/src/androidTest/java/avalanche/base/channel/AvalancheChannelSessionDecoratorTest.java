@@ -37,8 +37,7 @@ public class AvalancheChannelSessionDecoratorTest {
         PackageInfo packageInfo = mock(PackageInfo.class);
         //noinspection WrongConstant
         when(packageManager.getPackageInfo(any(String.class), anyInt())).thenReturn(packageInfo);
-        AvalancheChannelSessionDecorator sessionChannel = new AvalancheChannelSessionDecorator(context, channel);
-        sessionChannel.setSessionTimeout(20);
+        AvalancheChannelSessionDecorator sessionChannel = new AvalancheChannelSessionDecorator(context, channel, 20);
 
         /* Application is in background, send a log, verify decoration. */
         UUID expectedSid;

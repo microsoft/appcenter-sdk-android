@@ -1,6 +1,5 @@
 package avalanche.base.utils;
 
-import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
@@ -17,15 +16,10 @@ import static org.junit.Assert.assertNotEquals;
 public class IdHelperTest {
 
     private static final String TAG = "IdHelper";
-    /**
-     * Context instance.
-     */
-    private static Context sContext;
 
     @BeforeClass
     public static void setUpClass() {
-        sContext = InstrumentationRegistry.getTargetContext();
-        StorageHelper.initialize(sContext);
+        StorageHelper.initialize(InstrumentationRegistry.getTargetContext());
     }
 
 

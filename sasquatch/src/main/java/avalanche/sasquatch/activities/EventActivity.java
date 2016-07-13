@@ -16,7 +16,7 @@ public class EventActivity extends AppCompatActivity {
         setContentView(R.layout.activity_send_event);
     }
 
-    public void sendEvent(View view) {
+    public void sendEvent(@SuppressWarnings("UnusedParameters") View view) {
         String name = ((TextView) findViewById(R.id.event_name)).getText().toString();
         Analytics.sendEvent(name, null);
     }
