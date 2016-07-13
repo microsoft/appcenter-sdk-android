@@ -298,9 +298,11 @@ public class DatabaseManager implements Closeable {
             }
             return mIMDB.get(((Number) value).longValue());
         } else {
-            for (ContentValues values : mIMDB.values())
-                if (values.get(key).equals(value))
+            for (ContentValues values : mIMDB.values()) {
+                Object object = values.get(key);
+                if (object != null && object.equals(value))
                     return values;
+            }
         }
 
         return null;
