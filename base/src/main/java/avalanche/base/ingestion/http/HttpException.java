@@ -2,7 +2,7 @@ package avalanche.base.ingestion.http;
 
 import java.io.IOException;
 
-public class HttpException extends IOException {
+class HttpException extends IOException {
 
     private final int statusCode;
 

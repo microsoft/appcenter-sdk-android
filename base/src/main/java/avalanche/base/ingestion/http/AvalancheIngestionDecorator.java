@@ -4,11 +4,11 @@ import java.io.IOException;
 
 import avalanche.base.ingestion.AvalancheIngestion;
 
-public abstract class AvalancheIngestionDecorator implements AvalancheIngestion {
+abstract class AvalancheIngestionDecorator implements AvalancheIngestion {
 
-    protected final AvalancheIngestion mDecoratedApi;
+    final AvalancheIngestion mDecoratedApi;
 
-    public AvalancheIngestionDecorator(AvalancheIngestion decoratedApi) {
+    AvalancheIngestionDecorator(AvalancheIngestion decoratedApi) {
         this.mDecoratedApi = decoratedApi;
     }
 

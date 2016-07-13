@@ -1,6 +1,7 @@
 package avalanche.base.ingestion.http;
 
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,27 +26,27 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     /**
      * API Path.
      */
-    public static final String API_PATH = "/logs?api-version=1.0.0-preview20160708";
+    private static final String API_PATH = "/logs?api-version=1.0.0-preview20160708";
 
     /**
      * Content type header value.
      */
-    public static final String CONTENT_TYPE_VALUE = "application/json";
+    private static final String CONTENT_TYPE_VALUE = "application/json";
 
     /**
      * Application identifier HTTP Header.
      */
-    public static final String APP_KEY = "App-Key";
+    private static final String APP_KEY = "App-Key";
 
     /**
      * Installation identifier HTTP Header.
      */
-    public static final String INSTALL_ID = "Install-ID";
+    private static final String INSTALL_ID = "Install-ID";
 
     /**
      * Default string builder capacity.
      */
-    public static final int DEFAULT_STRING_BUILDER_CAPACITY = 16;
+    private static final int DEFAULT_STRING_BUILDER_CAPACITY = 16;
 
     /**
      * Log tag for POST payload.
@@ -76,21 +77,29 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
      * HTTP read timeout.
      */
     private static final int READ_TIMEOUT = 20000;
-
+    /**
+     * Url connection factory.
+     */
+    private final UrlConnectionFactory mUrlConnectionFactory;
+    /**
+     * Log serializer.
+     */
+    private final LogSerializer mLogSerializer;
     /**
      * API base URL (scheme + authority).
      */
     private String mBaseUrl;
 
     /**
-     * Url connection factory.
+     * Init.
+     *
+     * @param urlConnectionFactory url connection factory.
+     * @param logSerializer        log serializer.
      */
-    private UrlConnectionFactory mUrlConnectionFactory;
-
-    /**
-     * Log serializer.
-     */
-    private LogSerializer mLogSerializer;
+    public AvalancheIngestionHttp(@NonNull UrlConnectionFactory urlConnectionFactory, @NonNull LogSerializer logSerializer) {
+        mUrlConnectionFactory = urlConnectionFactory;
+        mLogSerializer = logSerializer;
+    }
 
     /**
      * Set the base url.
@@ -101,33 +110,10 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
         mBaseUrl = baseUrl;
     }
 
-    /**
-     * Set URL connection factory.
-     *
-     * @param urlConnectionFactory URL connection factory.
-     */
-    public void setUrlConnectionFactory(UrlConnectionFactory urlConnectionFactory) {
-        mUrlConnectionFactory = urlConnectionFactory;
-    }
-
-    /**
-     * Set the log serializer.
-     * It is expected that the caller of this method is responsible for adding the factories to the serializer.
-     *
-     * @param logSerializer log serializer
-     */
-    public void setLogSerializer(LogSerializer logSerializer) {
-        mLogSerializer = logSerializer;
-    }
-
     @Override
     public ServiceCall sendAsync(final UUID appKey, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         if (mBaseUrl == null)
             throw new IllegalStateException("baseUrl not configured");
-        if (mUrlConnectionFactory == null)
-            throw new IllegalStateException("urlConnectionFactory not configured");
-        if (mLogSerializer == null)
-            throw new IllegalStateException("logSerializer not configured");
         final AsyncTask<Void, Void, Exception> call = new AsyncTask<Void, Void, Exception>() {
 
             @Override

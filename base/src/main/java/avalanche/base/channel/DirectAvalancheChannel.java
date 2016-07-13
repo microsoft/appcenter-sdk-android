@@ -40,9 +40,7 @@ public class DirectAvalancheChannel implements AvalancheChannel {
     public DirectAvalancheChannel(@NonNull Context context, @NonNull UUID appKey, @NonNull LogSerializer logSerializer) {
         mAppKey = appKey;
         mInstallId = IdHelper.getInstallId();
-        AvalancheIngestionHttp api = new AvalancheIngestionHttp();
-        api.setUrlConnectionFactory(new DefaultUrlConnectionFactory());
-        api.setLogSerializer(logSerializer);
+        AvalancheIngestionHttp api = new AvalancheIngestionHttp(new DefaultUrlConnectionFactory(), logSerializer);
         api.setBaseUrl("http://avalanche-perf.westus.cloudapp.azure.com:8081"); //TODO make that a parameter
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(api);
         mIngestion = new AvalancheIngestionNetworkStateHandler(retryer, NetworkStateHelper.getSharedInstance(context));

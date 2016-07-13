@@ -8,7 +8,7 @@ import avalanche.crash.ingestion.models.ThreadFrame;
 
 public class ThreadFrameFactory implements ModelFactory<ThreadFrame> {
 
-    private static ThreadFrameFactory sInstance = new ThreadFrameFactory();
+    private static final ThreadFrameFactory sInstance = new ThreadFrameFactory();
 
     private ThreadFrameFactory() {
     }

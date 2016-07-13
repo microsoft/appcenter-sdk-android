@@ -51,10 +51,9 @@ public final class Avalanche {
      * @param application Your application object.
      * @param appKey      The app key to use (application/environment).
      * @param features    Vararg list of feature classes to auto-use.
-     * @return The Avalanche SDK, configured with your selected features.
      */
     @SafeVarargs
-    public static Avalanche useFeatures(Application application, String appKey, Class<? extends AvalancheFeature>... features) {
+    public static void useFeatures(Application application, String appKey, Class<? extends AvalancheFeature>... features) {
         List<AvalancheFeature> featureList = new ArrayList<>();
         if (features != null && features.length > 0) {
             for (Class<? extends AvalancheFeature> featureClass : features) {
@@ -64,8 +63,7 @@ public final class Avalanche {
                 }
             }
         }
-
-        return useFeatures(application, appKey, featureList.toArray(new AvalancheFeature[featureList.size()]));
+        useFeatures(application, appKey, featureList.toArray(new AvalancheFeature[featureList.size()]));
     }
 
     /**
@@ -74,16 +72,14 @@ public final class Avalanche {
      * @param application Your application object.
      * @param appKey      The app key to use (application/environment).
      * @param features    Vararg list of configured features to enable.
-     * @return The Avalanche SDK, configured with the selected feature instances.
      */
-    public static Avalanche useFeatures(Application application, String appKey, AvalancheFeature... features) {
+    public static void useFeatures(Application application, String appKey, AvalancheFeature... features) {
         Avalanche avalancheHub = getSharedInstance().initialize(application, UUID.fromString(appKey));
         if (features != null && features.length > 0) {
             for (AvalancheFeature feature : features) {
                 avalancheHub.addFeature(feature);
             }
         }
-        return avalancheHub;
     }
 
     /**

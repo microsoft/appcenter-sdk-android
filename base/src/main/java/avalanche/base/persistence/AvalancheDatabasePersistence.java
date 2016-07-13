@@ -57,17 +57,17 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
     /**
      * Database storage instance to access persistence database.
      */
-    DatabaseStorage mDatabaseStorage;
+    final DatabaseStorage mDatabaseStorage;
 
     /**
      * Pending log groups. Key is a UUID and value is a list of database identifiers.
      */
-    private Map<String, List<Long>> mPendingDbIdentifiersGroups;
+    private final Map<String, List<Long>> mPendingDbIdentifiersGroups;
 
     /**
      * Pending logs across all groups.
      */
-    private Set<Long> mPendingDbIdentifiers;
+    private final Set<Long> mPendingDbIdentifiers;
 
     /**
      * Initializes variables.
@@ -166,8 +166,8 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
         /* Add logs to output parameter after deserialization if logs are not already sent. */
         int count = 0;
         Map<Long, Log> candidates = new TreeMap<>();
-        for (Iterator<ContentValues> iter = scanner.iterator(); iter.hasNext() && count < limit; ) {
-            ContentValues values = iter.next();
+        for (Iterator<ContentValues> iterator = scanner.iterator(); iterator.hasNext() && count < limit; ) {
+            ContentValues values = iterator.next();
             Long dbIdentifier = values.getAsLong(DatabaseManager.PRIMARY_KEY);
 
             /* If the log is already in pending state, then skip. Otherwise put the log to candidate container. */

@@ -10,37 +10,37 @@ import avalanche.base.ingestion.models.LogContainer;
 /**
  * Helper class used to share logic with multiple decorators.
  */
-public abstract class AvalancheIngestionCallDecorator implements Runnable, ServiceCall, ServiceCallback {
+abstract class AvalancheIngestionCallDecorator implements Runnable, ServiceCall, ServiceCallback {
 
     /**
      * Decorated API.
      */
-    protected final AvalancheIngestion mDecoratedApi;
+    final AvalancheIngestion mDecoratedApi;
 
     /**
      * Application identifier.
      */
-    protected final UUID mAppKey;
+    final UUID mAppKey;
 
     /**
      * Installation identifier.
      */
-    protected final UUID mInstallId;
+    final UUID mInstallId;
 
     /**
      * Log container.
      */
-    protected final LogContainer mLogContainer;
+    final LogContainer mLogContainer;
 
     /**
      * Callback.
      */
-    protected final ServiceCallback mServiceCallback;
+    final ServiceCallback mServiceCallback;
 
     /**
      * Call.
      */
-    protected ServiceCall mServiceCall;
+    ServiceCall mServiceCall;
 
     public AvalancheIngestionCallDecorator(AvalancheIngestion decoratedApi, UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
         mDecoratedApi = decoratedApi;
