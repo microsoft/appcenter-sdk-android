@@ -7,7 +7,6 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import avalanche.core.ingestion.AvalancheIngestion;
@@ -78,11 +77,11 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * ArrayList of batchIds for error batches.
      */
-    private final List<String> mErrorBatchIds = new ArrayList<>(0);
+    private final ArrayList<String> mErrorBatchIds = new ArrayList<>(0);
     /**
      * ArrayList of batchIds for analytics batches.
      */
-    private final List<String> mAnalyticsBatchIds = new ArrayList<>(0);
+    private final ArrayList<String> mAnalyticsBatchIds = new ArrayList<>(0);
     /**
      * Handler for triggering ingestion of events.
      */
@@ -179,6 +178,10 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         mDisabled = disabled;
     }
 
+    /**
+     * Reset the counter for a group and restart the timer.
+     * @param groupName The group name
+     */
     private void resetThresholds(@GroupNameDef String groupName) {
         synchronized (LOCK) {
             if (groupName.equals(ANALYTICS_GROUP)) {
@@ -306,7 +309,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
                 //if we have sent a batch that was the maximum amount of logs, we trigger sending once more
                 //to make sure we send data that was stored on disc
                 if (list.size() == limit) {
-                    triggerIngestion();
+                    triggerIngestion(groupName);
                 }
             }
         }
@@ -365,7 +368,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param t         the error
      */
     private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, @NonNull final Throwable t) {
-        synchronized (LOCK) {
             final boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
 
             boolean removeBatchIdSuccessful;
@@ -384,7 +386,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
                 triggerIngestion(groupName);
             }
-        }
+//        }
     }
 
     /**
@@ -399,14 +401,12 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             mPersistence.putLog(queueName, log);
 
             //Increment counters and schedule ingestion if we are not disabled
-            synchronized (LOCK) {
                 if (mDisabled) {
                     AvalancheLog.warn(TAG, "Channel is disabled, event was saved to disk.");
                 }
             else {
                     scheduleIngestion(queueName);
                 }
-            }
         } catch (AvalanchePersistence.PersistenceException e) {
             //TODO (bereimol) add error handling?
             AvalancheLog.warn(TAG, "Error persisting event with exception: " + e.toString());
