@@ -573,4 +573,65 @@ public class DefaultAvalancheChannelTest {
         //Verify that we have called deleteLogs on the persistence 5 times
         verify(newPersistence, times(5)).deleteLog(any(String.class), any(String.class));
     }
+
+
+    @Test
+    public void handlerInvoked() throws AvalanchePersistence.PersistenceException, InterruptedException {
+        AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
+
+        //Stubbing getLogs so Persistence returns a batchID and adds N logs to the list, return null for all other calls
+        //noinspection unchecked
+        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(new Answer<String>() {
+            @SuppressWarnings("unchecked")
+            public String answer(InvocationOnMock invocation) throws Throwable {
+                Object[] args = invocation.getArguments();
+                if (args[2] instanceof ArrayList) {
+                    ArrayList logs = (ArrayList) args[2];
+                    int size = (int) args[1];
+                    for (int i = 0; i < size; i++) {
+                        logs.add(sDeviceLog);
+                    }
+                }
+                return UUID.randomUUID().toString();
+            }
+        }).then(new Answer<String>() {
+            @SuppressWarnings("unchecked")
+            public String answer(InvocationOnMock invocation) throws Throwable {
+                return null;
+            }
+        });
+
+        AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
+
+        when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                Object[] args = invocation.getArguments();
+                if (args[3] instanceof ServiceCallback) {
+                    ((ServiceCallback) invocation.getArguments()[3]).success();
+                }
+                return null;
+            }
+        });
+
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), mockIngestion, mockPersistence, sLogSerializer);
+
+        //Enqueuing 20 events.
+        for (int i = 0; i < 20; i++) {
+            sut.enqueue(sDeviceLog, ANALYTICS_GROUP);
+        }
+
+        //Verifying that 5 items have been persisted.
+        verify(mockPersistence, times(20)).putLog(ANALYTICS_GROUP, sDeviceLog);
+
+        Thread.sleep(4000);
+
+        //Verify that we have called sendAsync on the ingestion
+        verify(mockIngestion, times(1)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+
+        //Verify that we have called deleteLogs on the persistence
+        verify(mockPersistence, times(1)).deleteLog(any(String.class), any(String.class));
+
+        //The counter should be 0 now as we sent data.
+        assertEquals(0, sut.getAnalyticsCounter());
+    }
 }
