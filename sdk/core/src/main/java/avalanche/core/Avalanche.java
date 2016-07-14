@@ -16,7 +16,7 @@ import java.util.UUID;
 
 import avalanche.core.channel.AvalancheChannel;
 import avalanche.core.channel.AvalancheChannelSessionDecorator;
-import avalanche.core.channel.DirectAvalancheChannel;
+import avalanche.core.channel.DefaultAvalancheChannel;
 import avalanche.core.ingestion.models.json.DefaultLogSerializer;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.ingestion.models.json.LogSerializer;
@@ -196,7 +196,7 @@ public final class Avalanche {
             Context context = application.getApplicationContext();
             Constants.loadFromContext(context);
             StorageHelper.initialize(context);
-            AvalancheChannel channel = new DirectAvalancheChannel(context, mAppKey, mLogSerializer); // TODO replace direct by default impl once problems there are fixed
+            AvalancheChannel channel = new DefaultAvalancheChannel(context, mAppKey, mLogSerializer);
             AvalancheChannelSessionDecorator sessionChannel = new AvalancheChannelSessionDecorator(context, channel);
             application.registerActivityLifecycleCallbacks(sessionChannel);
             mChannel = sessionChannel;
