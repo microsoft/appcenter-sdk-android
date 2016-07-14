@@ -6,11 +6,11 @@ import org.json.JSONStringer;
 
 import java.util.UUID;
 
-import avalanche.base.ingestion.models.LogWithProperties;
-import avalanche.base.ingestion.models.utils.LogUtils;
+import avalanche.core.ingestion.models.LogWithProperties;
+import avalanche.core.ingestion.models.utils.LogUtils;
 
-import static avalanche.base.ingestion.models.CommonProperties.ID;
-import static avalanche.base.ingestion.models.CommonProperties.NAME;
+import static avalanche.core.ingestion.models.CommonProperties.ID;
+import static avalanche.core.ingestion.models.CommonProperties.NAME;
 
 /**
  * Event log.

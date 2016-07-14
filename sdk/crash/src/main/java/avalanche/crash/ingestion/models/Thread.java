@@ -6,13 +6,13 @@ import org.json.JSONStringer;
 
 import java.util.List;
 
-import avalanche.base.ingestion.models.Model;
-import avalanche.base.ingestion.models.json.JSONUtils;
-import avalanche.base.ingestion.models.utils.LogUtils;
+import avalanche.core.ingestion.models.Model;
+import avalanche.core.ingestion.models.json.JSONUtils;
+import avalanche.core.ingestion.models.utils.LogUtils;
 import avalanche.crash.ingestion.models.json.ThreadFrameFactory;
 
-import static avalanche.base.ingestion.models.CommonProperties.FRAMES;
-import static avalanche.base.ingestion.models.CommonProperties.ID;
+import static avalanche.core.ingestion.models.CommonProperties.FRAMES;
+import static avalanche.core.ingestion.models.CommonProperties.ID;
 
 /**
  * The Thread model.

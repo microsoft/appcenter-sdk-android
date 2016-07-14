@@ -6,8 +6,8 @@ import org.json.JSONStringer;
 
 import java.util.Map;
 
-import avalanche.base.ingestion.models.Model;
-import avalanche.base.ingestion.models.json.JSONUtils;
+import avalanche.core.ingestion.models.Model;
+import avalanche.core.ingestion.models.json.JSONUtils;
 
 /**
  * The ThreadFrame model.

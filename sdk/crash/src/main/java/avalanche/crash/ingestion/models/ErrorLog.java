@@ -7,14 +7,14 @@ import org.json.JSONStringer;
 import java.util.List;
 import java.util.UUID;
 
-import avalanche.base.ingestion.models.LogWithProperties;
-import avalanche.base.ingestion.models.json.JSONUtils;
-import avalanche.base.ingestion.models.utils.LogUtils;
+import avalanche.core.ingestion.models.LogWithProperties;
+import avalanche.core.ingestion.models.json.JSONUtils;
+import avalanche.core.ingestion.models.utils.LogUtils;
 import avalanche.crash.ingestion.models.json.BinaryFactory;
 import avalanche.crash.ingestion.models.json.ExceptionFactory;
 import avalanche.crash.ingestion.models.json.ThreadFactory;
 
-import static avalanche.base.ingestion.models.CommonProperties.ID;
+import static avalanche.core.ingestion.models.CommonProperties.ID;
 
 /**
  * Error log.

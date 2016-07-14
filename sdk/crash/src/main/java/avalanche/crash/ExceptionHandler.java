@@ -10,11 +10,11 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Date;
 import java.util.UUID;
 
-import avalanche.base.Constants;
-import avalanche.base.utils.AvalancheLog;
+import avalanche.core.Constants;
+import avalanche.core.utils.AvalancheLog;
 import avalanche.crash.model.CrashReport;
 
-import static avalanche.base.utils.StorageHelper.InternalStorage;
+import static avalanche.core.utils.StorageHelper.InternalStorage;
 
 /**
  * <h3>Description</h3>
@@ -36,11 +36,16 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
         mCrashesListener = listener;
     }
 
+    private static String limitedString(String string) {
+        if (!TextUtils.isEmpty(string) && string.length() > 255) {
+            string = string.substring(0, 255);
+        }
+        return string;
+    }
+
     public void setListener(CrashesListener listener) {
         mCrashesListener = listener;
     }
-
-
 
     /**
      * Save a caught exception to disk.
@@ -198,12 +203,5 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
                 System.exit(10);
             }
         }
-    }
-
-    private static String limitedString(String string) {
-        if (!TextUtils.isEmpty(string) && string.length() > 255) {
-            string = string.substring(0, 255);
-        }
-        return string;
     }
 }
