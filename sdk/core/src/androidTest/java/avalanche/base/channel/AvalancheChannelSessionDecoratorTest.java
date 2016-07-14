@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import avalanche.base.ingestion.models.Device;
 import avalanche.base.ingestion.models.Log;
+import avalanche.base.ingestion.models.StartSessionLog;
 import avalanche.base.ingestion.models.json.MockLog;
 
 import static avalanche.base.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
@@ -42,6 +43,7 @@ public class AvalancheChannelSessionDecoratorTest {
         /* Application is in background, send a log, verify decoration. */
         UUID expectedSid;
         Device expectedDevice;
+        StartSessionLog expectedStartSessionLog = new StartSessionLog();
         {
             Log log = new MockLog();
             sessionChannel.enqueue(log, ANALYTICS_GROUP);
@@ -50,6 +52,9 @@ public class AvalancheChannelSessionDecoratorTest {
             verify(channel).enqueue(log, ANALYTICS_GROUP);
             expectedSid = log.getSid();
             expectedDevice = log.getDevice();
+            expectedStartSessionLog.setSid(expectedSid);
+            expectedStartSessionLog.setDevice(expectedDevice);
+            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
         }
 
         /* Verify session reused for second log. */
@@ -58,6 +63,7 @@ public class AvalancheChannelSessionDecoratorTest {
             sessionChannel.enqueue(log, ANALYTICS_GROUP);
             assertEquals(expectedSid, log.getSid());
             assertEquals(expectedDevice, log.getDevice());
+            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
         }
 
         /* No usage from background for a long time. */
@@ -70,6 +76,9 @@ public class AvalancheChannelSessionDecoratorTest {
             assertNotEquals(expectedDevice, log.getDevice());
             expectedSid = log.getSid();
             expectedDevice = log.getDevice();
+            expectedStartSessionLog.setSid(expectedSid);
+            expectedStartSessionLog.setDevice(expectedDevice);
+            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
         }
 
         /* App comes to foreground and sends a log, still session. */
@@ -79,6 +88,7 @@ public class AvalancheChannelSessionDecoratorTest {
             sessionChannel.enqueue(log, ANALYTICS_GROUP);
             assertEquals(expectedSid, log.getSid());
             assertEquals(expectedDevice, log.getDevice());
+            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
         }
 
         /* Switch to another activity. */
@@ -91,6 +101,7 @@ public class AvalancheChannelSessionDecoratorTest {
             sessionChannel.enqueue(log, ANALYTICS_GROUP);
             assertEquals(expectedSid, log.getSid());
             assertEquals(expectedDevice, log.getDevice());
+            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
         }
 
         /* We are in foreground, even after timeout a log is still in session. */
@@ -100,6 +111,7 @@ public class AvalancheChannelSessionDecoratorTest {
             sessionChannel.enqueue(log, ANALYTICS_GROUP);
             assertEquals(expectedSid, log.getSid());
             assertEquals(expectedDevice, log.getDevice());
+            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
         }
 
         /* Background for a short time and send log: still in session. */
@@ -111,6 +123,7 @@ public class AvalancheChannelSessionDecoratorTest {
             sessionChannel.enqueue(log, ANALYTICS_GROUP);
             assertEquals(expectedSid, log.getSid());
             assertEquals(expectedDevice, log.getDevice());
+            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
         }
 
         /* Background for a long time and coming back to foreground: new session. */
@@ -122,6 +135,11 @@ public class AvalancheChannelSessionDecoratorTest {
             sessionChannel.enqueue(log, ANALYTICS_GROUP);
             assertNotEquals(expectedSid, log.getSid());
             assertNotEquals(expectedDevice, log.getDevice());
+            expectedSid = log.getSid();
+            expectedDevice = log.getDevice();
+            expectedStartSessionLog.setSid(expectedSid);
+            expectedStartSessionLog.setDevice(expectedDevice);
+            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
         }
     }
 

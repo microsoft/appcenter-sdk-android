@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import avalanche.base.ingestion.models.Device;
 import avalanche.base.ingestion.models.Log;
+import avalanche.base.ingestion.models.StartSessionLog;
 import avalanche.base.utils.AvalancheLog;
 import avalanche.base.utils.DeviceInfoHelper;
 
@@ -106,16 +107,26 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
                 AvalancheLog.error("Device log cannot be generated", e);
                 return;
             }
+
+            /* Enqueue a start session log. */
+            decorateAndEnqueue(new StartSessionLog(), queueName);
         }
 
         /* Each log has a session identifier and device properties. */
+        decorateAndEnqueue(log, queueName);
+        mLastQueuedLogTime = SystemClock.elapsedRealtime();
+    }
+
+    /**
+     * Add common attributes to logs before forwarding to delegate channel.
+     *
+     * @param log       log.
+     * @param queueName queue.
+     */
+    private void decorateAndEnqueue(@NonNull Log log, @NonNull @GroupNameDef String queueName) {
         log.setSid(mSid);
         log.setDevice(mDevice);
-        // TODO log.setToffset(now); // use absolute time for persistence, will be converted before sending
-
-        /* Forward decorated log to channel, record queue time for session timeout management. */
         mChannel.enqueue(log, queueName);
-        mLastQueuedLogTime = SystemClock.elapsedRealtime();
     }
 
     /**
