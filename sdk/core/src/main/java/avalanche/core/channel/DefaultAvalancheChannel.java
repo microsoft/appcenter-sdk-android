@@ -117,7 +117,9 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     private final Runnable mAnalyticsRunnable = new Runnable() {
         @Override
         public void run() {
-            triggerIngestion(ANALYTICS_GROUP);
+            if (getAnalyticsCounter() > 0) {
+                triggerIngestion(ANALYTICS_GROUP);
+            }
             mIngestionHandler.postDelayed(this, ANALYTICS_INTERVAL);
         }
     };
@@ -128,7 +130,9 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     private final Runnable mErrorRunnable = new Runnable() {
         @Override
         public void run() {
-            triggerIngestion(ERROR_GROUP);
+            if (getAnalyticsCounter() > 0) {
+                triggerIngestion(ERROR_GROUP);
+            }
             mIngestionHandler.postDelayed(this, ERROR_INTERVAL);
         }
     };
@@ -140,6 +144,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         mAppKey = appKey;
         mInstallId = IdHelper.getInstallId();
         mPersistence = new AvalancheDatabasePersistence();
+        mPersistence.setLogSerializer(logSerializer);
         AvalancheIngestionHttp api = new AvalancheIngestionHttp(new DefaultUrlConnectionFactory(), logSerializer);
         api.setBaseUrl("http://avalanche-perf.westus.cloudapp.azure.com:8081"); //TODO make that a parameter
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(api);
