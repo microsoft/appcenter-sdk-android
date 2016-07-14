@@ -149,6 +149,12 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         mDisabled = false;
     }
 
+    public DefaultAvalancheChannel(@NonNull Context context, @NonNull UUID appKey, @NonNull AvalancheIngestion ingestion, @NonNull AvalanchePersistence persistence, @NonNull LogSerializer logSerializer) {
+        this(context, appKey, logSerializer);
+        mPersistence = persistence;
+        mIngestion = ingestion;
+    }
+
     public void setPersistence(AvalanchePersistence mPersistence) {
         this.mPersistence = mPersistence;
     }
@@ -315,16 +321,15 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
 
     private void ingestLogs(@NonNull final String groupName, @NonNull final String batchId, @NonNull LogContainer logContainer) {
-        final int size = logContainer.getLogs().size();
         mIngestion.sendAsync(mAppKey, mInstallId, logContainer, new ServiceCallback() {
                     @Override
                     public void success() {
-                        handleSendingSuccess(groupName, batchId, size);
+                        handleSendingSuccess(groupName, batchId);
                     }
 
                     @Override
                     public void failure(Throwable t) {
-                        handleSendingFailure(groupName, batchId, size, t);
+                        handleSendingFailure(groupName, batchId, t);
                     }
                 }
         );
@@ -336,7 +341,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param groupName The group name
      * @param batchId   The batch ID
      */
-    private void handleSendingSuccess(@NonNull final String groupName, @NonNull final String batchId, int size) {
+    private void handleSendingSuccess(@NonNull final String groupName, @NonNull final String batchId) {
         synchronized (LOCK) {
             final boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
 
@@ -359,7 +364,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param batchId   the batch ID
      * @param t         the error
      */
-    private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, int size, @NonNull final Throwable t) {
+    private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, @NonNull final Throwable t) {
         synchronized (LOCK) {
             final boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
 
@@ -396,8 +401,10 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             //Increment counters and schedule ingestion if we are not disabled
             synchronized (LOCK) {
                 if (mDisabled) {
-                    scheduleIngestion(queueName);
                     AvalancheLog.warn(TAG, "Channel is disabled, event was saved to disk.");
+                }
+            else {
+                    scheduleIngestion(queueName);
                 }
             }
         } catch (AvalanchePersistence.PersistenceException e) {
@@ -409,13 +416,11 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * This will check the counters for each event group and will either trigger ingestion immediately or schedule ingestion at the
      * interval specified for the group.
-     * Intended to be used from inside a synchronized-block.
      *
      * @param groupName the group name
      */
     private void scheduleIngestion(@GroupNameDef String groupName) {
         synchronized (LOCK) {
-
             boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
 
             int counter = isAnalytics ? mAnalyticsCounter : mErrorCounter;

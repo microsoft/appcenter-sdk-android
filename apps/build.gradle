@@ -5,18 +5,9 @@
 subprojects {
     apply plugin: 'com.android.application'
 
-    def supportLibVersion = rootProject.ext.supportLibVersion
-
     android {
-        compileSdkVersion rootProject.ext.compileSdkVersion
         buildToolsVersion rootProject.ext.buildToolsVersion
-        defaultConfig {
-            minSdkVersion rootProject.ext.minSdkVersion
-            targetSdkVersion rootProject.ext.targetSdkVersion
-            versionCode rootProject.ext.versionCode
-            versionName rootProject.ext.versionName
-            testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        }
+
         buildTypes {
             release {
                 minifyEnabled false
@@ -26,7 +17,7 @@ subprojects {
     }
 
     dependencies {
-        compile "com.android.support:appcompat-v7:$supportLibVersion"
+        compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
         compile project(':sdk:analytics')
         compile project(':sdk:crash')
     }
