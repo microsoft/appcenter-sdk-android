@@ -360,6 +360,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
 
     private void ingestLogs(@NonNull final String groupName, @NonNull final String batchId, @NonNull LogContainer logContainer) {
+        AvalancheLog.debug(TAG, "ingestLogs(" + groupName + ","+ batchId + ")");
         mIngestion.sendAsync(mAppKey, mInstallId, logContainer, new ServiceCallback() {
                     @Override
                     public void success() {
