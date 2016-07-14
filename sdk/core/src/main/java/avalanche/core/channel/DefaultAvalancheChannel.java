@@ -111,17 +111,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     private boolean mDisabled;
     /**
-     * Runnable that triggers ingestion of error data and triggers itself in ERROR_INTERVAL
-     * amount of ms.
-     */
-    private final Runnable mErrorRunnable = new Runnable() {
-        @Override
-        public void run() {
-            triggerIngestion(ERROR_GROUP);
-            mIngestionHandler.postDelayed(this, ERROR_INTERVAL);
-        }
-    };
-    /**
      * Runnable that triggers ingestion of analytics data and triggers itself in ANALYTICS_INTERVAL
      * amount of ms.
      */
@@ -130,6 +119,17 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         public void run() {
             triggerIngestion(ANALYTICS_GROUP);
             mIngestionHandler.postDelayed(this, ANALYTICS_INTERVAL);
+        }
+    };
+    /**
+     * Runnable that triggers ingestion of error data and triggers itself in ERROR_INTERVAL
+     * amount of ms.
+     */
+    private final Runnable mErrorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            triggerIngestion(ERROR_GROUP);
+            mIngestionHandler.postDelayed(this, ERROR_INTERVAL);
         }
     };
 
@@ -148,13 +148,27 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         mDisabled = false;
     }
 
-    public DefaultAvalancheChannel(@NonNull Context context, @NonNull UUID appKey, @NonNull AvalancheIngestion ingestion, @NonNull AvalanchePersistence persistence, @NonNull LogSerializer logSerializer) {
+    /**
+     * Overloaded constructor with limited visibility that allows for dependency injection.
+     *
+     * @param context       the ontext
+     * @param appKey        the appKey
+     * @param ingestion     ingestion object for dependency injection
+     * @param persistence   persistence object for dependency injection
+     * @param logSerializer logserializer object for dependency injection
+     */
+    DefaultAvalancheChannel(@NonNull Context context, @NonNull UUID appKey, @NonNull AvalancheIngestion ingestion, @NonNull AvalanchePersistence persistence, @NonNull LogSerializer logSerializer) {
         this(context, appKey, logSerializer);
         mPersistence = persistence;
         mIngestion = ingestion;
     }
 
-    public void setPersistence(AvalanchePersistence mPersistence) {
+    /**
+     * Setter for persistence object, to be used for dependency injection
+     *
+     * @param mPersistence the persistence object.
+     */
+    void setPersistence(AvalanchePersistence mPersistence) {
         this.mPersistence = mPersistence;
     }
 
@@ -180,7 +194,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
     /**
      * Reset the counter for a group and restart the timer.
-     * @param groupName The group name
+     *
+     * @param groupName the group name
      */
     private void resetThresholds(@GroupNameDef String groupName) {
         synchronized (LOCK) {
@@ -207,7 +222,13 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         }
     }
 
-    void setErrorCounter(int errorCounter) {
+
+    /**
+     * Setter for error counter.
+     *
+     * @param errorCounter
+     */
+    private void setErrorCounter(int errorCounter) {
         synchronized (LOCK) {
             mErrorCounter = errorCounter;
         }
@@ -224,12 +245,22 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         }
     }
 
-    void setAnalyticsCounter(int analyticsCounter) {
+    /**
+     * Setter for the analytics counter
+     *
+     * @param analyticsCounter the analytics count
+     */
+    private void setAnalyticsCounter(int analyticsCounter) {
         synchronized (LOCK) {
             mAnalyticsCounter = analyticsCounter;
         }
     }
 
+    /**
+     * Setter for ingestion dependency, intended to be used for dependency injection.
+     *
+     * @param ingestion the ingestion object.
+     */
     void setIngestion(AvalancheIngestion ingestion) {
         this.mIngestion = ingestion;
     }
@@ -368,25 +399,24 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param t         the error
      */
     private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, @NonNull final Throwable t) {
-            final boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
+        final boolean isAnalytics = groupName.equals(ANALYTICS_GROUP);
 
-            boolean removeBatchIdSuccessful;
-            if (HttpUtils.isRecoverableError(t)) {
-                removeBatchIdSuccessful = isAnalytics ? mAnalyticsBatchIds.remove(batchId) : mErrorBatchIds.remove(batchId);
-                if (!removeBatchIdSuccessful) {
-                    AvalancheLog.warn(TAG, "Error removing batchId after recoverable error");
-                }
-                mDisabled = true;
-            } else {
-                mPersistence.deleteLog(groupName, batchId);
-                removeBatchIdSuccessful = isAnalytics ? mAnalyticsBatchIds.remove(batchId) : mErrorBatchIds.remove(batchId);
-                if (!removeBatchIdSuccessful) {
-                    AvalancheLog.warn(TAG, "Error removing batchId after non-recoverable error sending data");
-                }
-
-                triggerIngestion(groupName);
+        boolean removeBatchIdSuccessful;
+        if (HttpUtils.isRecoverableError(t)) {
+            removeBatchIdSuccessful = isAnalytics ? mAnalyticsBatchIds.remove(batchId) : mErrorBatchIds.remove(batchId);
+            if (!removeBatchIdSuccessful) {
+                AvalancheLog.warn(TAG, "Error removing batchId after recoverable error");
             }
-//        }
+            mDisabled = true;
+        } else {
+            mPersistence.deleteLog(groupName, batchId);
+            removeBatchIdSuccessful = isAnalytics ? mAnalyticsBatchIds.remove(batchId) : mErrorBatchIds.remove(batchId);
+            if (!removeBatchIdSuccessful) {
+                AvalancheLog.warn(TAG, "Error removing batchId after non-recoverable error sending data");
+            }
+
+            triggerIngestion(groupName);
+        }
     }
 
     /**
@@ -401,15 +431,13 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             mPersistence.putLog(queueName, log);
 
             //Increment counters and schedule ingestion if we are not disabled
-                if (mDisabled) {
-                    AvalancheLog.warn(TAG, "Channel is disabled, event was saved to disk.");
-                }
-            else {
-                    scheduleIngestion(queueName);
-                }
+            if (mDisabled) {
+                AvalancheLog.warn(TAG, "Channel is disabled, event was saved to disk.");
+            } else {
+                scheduleIngestion(queueName);
+            }
         } catch (AvalanchePersistence.PersistenceException e) {
-            //TODO (bereimol) add error handling?
-            AvalancheLog.warn(TAG, "Error persisting event with exception: " + e.toString());
+            AvalancheLog.error(TAG, "Error persisting event with exception: " + e.toString());
         }
     }
 
