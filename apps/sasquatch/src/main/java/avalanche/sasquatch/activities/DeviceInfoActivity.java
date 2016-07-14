@@ -13,10 +13,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import avalanche.base.ingestion.models.Device;
-import avalanche.base.utils.AvalancheLog;
-import avalanche.base.utils.DeviceInfoHelper;
-import avalanche.base.utils.NetworkStateHelper;
+import avalanche.core.ingestion.models.Device;
+import avalanche.core.utils.AvalancheLog;
+import avalanche.core.utils.DeviceInfoHelper;
+import avalanche.core.utils.NetworkStateHelper;
 import avalanche.sasquatch.R;
 
 public class DeviceInfoActivity extends AppCompatActivity implements NetworkStateHelper.Listener {

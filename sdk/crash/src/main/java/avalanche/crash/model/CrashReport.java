@@ -10,10 +10,10 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Date;
 
-import avalanche.base.Constants;
-import avalanche.base.utils.AvalancheLog;
+import avalanche.core.Constants;
+import avalanche.core.utils.AvalancheLog;
 
-import static avalanche.base.utils.StorageHelper.InternalStorage;
+import static avalanche.core.utils.StorageHelper.InternalStorage;
 
 public class CrashReport implements Serializable {
 

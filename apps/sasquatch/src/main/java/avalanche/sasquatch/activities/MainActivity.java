@@ -8,8 +8,8 @@ import android.widget.ListView;
 import java.util.UUID;
 
 import avalanche.analytics.Analytics;
-import avalanche.base.Avalanche;
-import avalanche.base.utils.AvalancheLog;
+import avalanche.core.Avalanche;
+import avalanche.core.utils.AvalancheLog;
 import avalanche.crash.Crashes;
 import avalanche.sasquatch.R;
 import avalanche.sasquatch.features.TestFeatures;

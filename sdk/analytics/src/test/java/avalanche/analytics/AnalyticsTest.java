@@ -13,11 +13,11 @@ import avalanche.analytics.ingestion.models.EventLog;
 import avalanche.analytics.ingestion.models.PageLog;
 import avalanche.analytics.ingestion.models.json.EventLogFactory;
 import avalanche.analytics.ingestion.models.json.PageLogFactory;
-import avalanche.base.channel.AvalancheChannel;
-import avalanche.base.ingestion.models.Log;
-import avalanche.base.ingestion.models.json.LogFactory;
+import avalanche.core.channel.AvalancheChannel;
+import avalanche.core.ingestion.models.Log;
+import avalanche.core.ingestion.models.json.LogFactory;
 
-import static avalanche.base.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
+import static avalanche.core.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
