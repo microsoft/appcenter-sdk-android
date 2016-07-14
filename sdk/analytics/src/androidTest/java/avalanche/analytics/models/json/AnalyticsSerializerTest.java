@@ -10,17 +10,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-import avalanche.analytics.ingestion.models.EndSessionLog;
 import avalanche.analytics.ingestion.models.EventLog;
 import avalanche.analytics.ingestion.models.PageLog;
-import avalanche.analytics.ingestion.models.json.EndSessionLogFactory;
 import avalanche.analytics.ingestion.models.json.EventLogFactory;
 import avalanche.analytics.ingestion.models.json.PageLogFactory;
 import avalanche.base.ingestion.models.Device;
 import avalanche.base.ingestion.models.Log;
 import avalanche.base.ingestion.models.LogContainer;
+import avalanche.base.ingestion.models.StartSessionLog;
 import avalanche.base.ingestion.models.json.DefaultLogSerializer;
 import avalanche.base.ingestion.models.json.LogSerializer;
+import avalanche.base.ingestion.models.json.StartSessionLogFactory;
 
 public class AnalyticsSerializerTest {
 
@@ -42,6 +42,9 @@ public class AnalyticsSerializerTest {
         device.setAppVersion("3.2.1");
         device.setAppBuild("42");
         List<Log> logs = new ArrayList<>();
+        {
+            logs.add(new StartSessionLog());
+        }
         expectedContainer.setLogs(logs);
         {
             PageLog pageLog = new PageLog();
@@ -73,16 +76,13 @@ public class AnalyticsSerializerTest {
             }});
             logs.add(eventLog);
         }
-        {
-            logs.add(new EndSessionLog());
-        }
         UUID sid = UUID.randomUUID();
         for (Log log : logs) {
             log.setSid(sid);
             log.setDevice(device);
         }
         LogSerializer serializer = new DefaultLogSerializer();
-        serializer.addLogFactory(EndSessionLog.TYPE, new EndSessionLogFactory());
+        serializer.addLogFactory(StartSessionLog.TYPE, new StartSessionLogFactory());
         serializer.addLogFactory(PageLog.TYPE, new PageLogFactory());
         serializer.addLogFactory(EventLog.TYPE, new EventLogFactory());
         String payload = serializer.serializeContainer(expectedContainer);

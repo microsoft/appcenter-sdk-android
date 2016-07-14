@@ -9,10 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import avalanche.analytics.ingestion.models.EndSessionLog;
 import avalanche.analytics.ingestion.models.EventLog;
 import avalanche.analytics.ingestion.models.PageLog;
-import avalanche.analytics.ingestion.models.json.EndSessionLogFactory;
 import avalanche.analytics.ingestion.models.json.EventLogFactory;
 import avalanche.analytics.ingestion.models.json.PageLogFactory;
 import avalanche.base.AbstractAvalancheFeature;
@@ -47,7 +45,6 @@ public class Analytics extends AbstractAvalancheFeature {
      */
     private Analytics() {
         mFactories = new HashMap<>();
-        mFactories.put(EndSessionLog.TYPE, new EndSessionLogFactory());
         mFactories.put(PageLog.TYPE, new PageLogFactory());
         mFactories.put(EventLog.TYPE, new EventLogFactory());
     }

@@ -9,10 +9,8 @@ import org.mockito.ArgumentMatcher;
 import java.util.HashMap;
 import java.util.Map;
 
-import avalanche.analytics.ingestion.models.EndSessionLog;
 import avalanche.analytics.ingestion.models.EventLog;
 import avalanche.analytics.ingestion.models.PageLog;
-import avalanche.analytics.ingestion.models.json.EndSessionLogFactory;
 import avalanche.analytics.ingestion.models.json.EventLogFactory;
 import avalanche.analytics.ingestion.models.json.PageLogFactory;
 import avalanche.base.channel.AvalancheChannel;
@@ -47,7 +45,6 @@ public class AnalyticsTest {
         Map<String, LogFactory> factories = Analytics.getInstance().getLogFactories();
         assertTrue(factories.remove(PageLog.TYPE) instanceof PageLogFactory);
         assertTrue(factories.remove(EventLog.TYPE) instanceof EventLogFactory);
-        assertTrue(factories.remove(EndSessionLog.TYPE) instanceof EndSessionLogFactory);
         assertTrue(factories.isEmpty());
     }
 
