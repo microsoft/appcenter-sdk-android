@@ -15,13 +15,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import avalanche.base.AbstractAvalancheFeature;
-import avalanche.base.Avalanche;
-import avalanche.base.Constants;
-import avalanche.base.ingestion.models.json.LogFactory;
-import avalanche.base.utils.AvalancheLog;
-import avalanche.base.utils.HttpURLConnectionBuilder;
-import avalanche.base.utils.Util;
+import avalanche.core.AbstractAvalancheFeature;
+import avalanche.core.Avalanche;
+import avalanche.core.Constants;
+import avalanche.core.ingestion.models.json.LogFactory;
+import avalanche.core.utils.AvalancheLog;
+import avalanche.core.utils.HttpURLConnectionBuilder;
+import avalanche.core.utils.Util;
 import avalanche.crash.ingestion.models.ErrorLog;
 import avalanche.crash.ingestion.models.json.ErrorLogFactory;
 import avalanche.crash.model.CrashMetaData;
@@ -29,8 +29,8 @@ import avalanche.crash.model.CrashReport;
 import avalanche.crash.model.CrashesUserInput;
 
 import static android.text.TextUtils.isEmpty;
-import static avalanche.base.utils.StorageHelper.InternalStorage;
-import static avalanche.base.utils.StorageHelper.PreferencesStorage;
+import static avalanche.core.utils.StorageHelper.InternalStorage;
+import static avalanche.core.utils.StorageHelper.PreferencesStorage;
 
 
 public class Crashes extends AbstractAvalancheFeature {

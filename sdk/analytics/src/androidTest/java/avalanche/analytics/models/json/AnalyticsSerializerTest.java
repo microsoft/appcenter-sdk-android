@@ -14,13 +14,13 @@ import avalanche.analytics.ingestion.models.EventLog;
 import avalanche.analytics.ingestion.models.PageLog;
 import avalanche.analytics.ingestion.models.json.EventLogFactory;
 import avalanche.analytics.ingestion.models.json.PageLogFactory;
-import avalanche.base.ingestion.models.Device;
-import avalanche.base.ingestion.models.Log;
-import avalanche.base.ingestion.models.LogContainer;
-import avalanche.base.ingestion.models.StartSessionLog;
-import avalanche.base.ingestion.models.json.DefaultLogSerializer;
-import avalanche.base.ingestion.models.json.LogSerializer;
-import avalanche.base.ingestion.models.json.StartSessionLogFactory;
+import avalanche.core.ingestion.models.Device;
+import avalanche.core.ingestion.models.Log;
+import avalanche.core.ingestion.models.LogContainer;
+import avalanche.core.ingestion.models.StartSessionLog;
+import avalanche.core.ingestion.models.json.DefaultLogSerializer;
+import avalanche.core.ingestion.models.json.LogSerializer;
+import avalanche.core.ingestion.models.json.StartSessionLogFactory;
 
 public class AnalyticsSerializerTest {
 
