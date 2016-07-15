@@ -23,19 +23,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Avalanche.useFeatures(getApplication(), UUID.randomUUID().toString(), Analytics.class, Crashes.class);
-
         AvalancheLog.setLogLevel(Log.VERBOSE);
 
-        boolean crashManagerAvailable = Avalanche.isFeatureAvailable(Crashes.class.getName());
-
-        AvalancheLog.info("crash available: " + crashManagerAvailable);
-
-        boolean crashManagerEnabled = Avalanche.isFeatureEnabled(Crashes.class.getName());
-
-        AvalancheLog.info("crash enabled: " + crashManagerEnabled);
-
         TestFeatures.initialize(this);
-
         ListView listView = (ListView) findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
