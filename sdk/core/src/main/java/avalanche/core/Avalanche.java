@@ -1,11 +1,8 @@
 package avalanche.core;
 
 import android.app.Application;
-import android.content.Context;
 import android.support.annotation.VisibleForTesting;
 
-import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -16,7 +13,7 @@ import java.util.UUID;
 
 import avalanche.core.channel.AvalancheChannel;
 import avalanche.core.channel.AvalancheChannelSessionDecorator;
-import avalanche.core.channel.DirectAvalancheChannel;
+import avalanche.core.channel.DefaultAvalancheChannel;
 import avalanche.core.ingestion.models.json.DefaultLogSerializer;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.ingestion.models.json.LogSerializer;
@@ -26,25 +23,41 @@ import avalanche.core.utils.StorageHelper;
 
 public final class Avalanche {
 
-    private static Avalanche sharedInstance;
-    private final Set<AvalancheFeature> mFeatures;
-    private final LogSerializer mLogSerializer = new DefaultLogSerializer();
-    private UUID mAppKey;
-    private WeakReference<Application> mApplicationWeakReference;
-    private boolean mEnabled;
-    private AvalancheChannel mChannel;
+    /**
+     * Share instance.
+     */
+    private static Avalanche sInstance;
 
-    private Avalanche() {
-        mEnabled = true;
-        mFeatures = new HashSet<>();
-    }
+    /**
+     * Application context.
+     */
+    private Application mApplication;
+
+    /**
+     * Configured features.
+     */
+    private Set<AvalancheFeature> mFeatures;
+
+    /**
+     * Enabled state.
+     */
+    private boolean mEnabled = true;
+
+    /**
+     * Log serializer.
+     */
+    private LogSerializer mLogSerializer;
+
+    /**
+     * Channel.
+     */
+    private AvalancheChannelSessionDecorator mChannel;
 
     @VisibleForTesting
-    static Avalanche getSharedInstance() {
-        if (sharedInstance == null) {
-            sharedInstance = new Avalanche();
-        }
-        return sharedInstance;
+    static Avalanche getInstance() {
+        if (sInstance == null)
+            sInstance = new Avalanche();
+        return sInstance;
     }
 
     /**
@@ -57,14 +70,12 @@ public final class Avalanche {
     @SafeVarargs
     public static void useFeatures(Application application, String appKey, Class<? extends AvalancheFeature>... features) {
         List<AvalancheFeature> featureList = new ArrayList<>();
-        if (features != null && features.length > 0) {
-            for (Class<? extends AvalancheFeature> featureClass : features) {
+        for (Class<? extends AvalancheFeature> featureClass : features)
+            if (featureClass != null) {
                 AvalancheFeature feature = instantiateFeature(featureClass);
-                if (feature != null) {
+                if (feature != null)
                     featureList.add(feature);
-                }
             }
-        }
         useFeatures(application, appKey, featureList.toArray(new AvalancheFeature[featureList.size()]));
     }
 
@@ -75,85 +86,33 @@ public final class Avalanche {
      * @param appKey      The app key to use (application/environment).
      * @param features    Vararg list of configured features to enable.
      */
+    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
     public static void useFeatures(Application application, String appKey, AvalancheFeature... features) {
-        Avalanche avalancheHub = getSharedInstance().initialize(application, appKey);
-        if (features != null && features.length > 0) {
-            for (AvalancheFeature feature : features) {
-                avalancheHub.addFeature(feature);
-            }
+        Avalanche instance = getInstance();
+        synchronized (instance) {
+            boolean initializedSuccessfully = instance.initialize(application, appKey);
+            if (initializedSuccessfully)
+                for (AvalancheFeature feature : features)
+                    instance.addFeature(feature);
         }
     }
 
-    /**
-     * Checks whether a feature is available at runtime or not.
-     *
-     * @param featureName The name of the feature you want to check for.
-     * @return Whether the feature is available.
-     */
-    public static boolean isFeatureAvailable(String featureName) {
-        return getClassForFeature(featureName) != null;
-    }
-
-    private static Class<? extends AvalancheFeature> getClassForFeature(String featureName) {
+    private static AvalancheFeature instantiateFeature(Class<? extends AvalancheFeature> type) {
         try {
-            //noinspection unchecked
-            return (Class<? extends AvalancheFeature>) Class.forName(featureName);
-        } catch (ClassCastException e) {
-            // If the class can be resolved but can't be cast to AvalancheFeature, this is no valid feature
-            return null;
-        } catch (ClassNotFoundException e) {
-            // If the class can not be resolved, the feature in question is not available.
+            Method getInstance = type.getMethod("getInstance");
+            return (AvalancheFeature) getInstance.invoke(null);
+        } catch (Exception e) {
+            AvalancheLog.error("Failed to instantiate feature '" + type.getName() + "'", e);
             return null;
         }
     }
 
-    private static AvalancheFeature instantiateFeature(Class<? extends AvalancheFeature> clazz) {
-        //noinspection TryWithIdenticalCatches
-        try {
-            Method getSharedInstanceMethod = clazz.getMethod("getInstance");
-            return (AvalancheFeature) getSharedInstanceMethod.invoke(null);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new IllegalArgumentException("AvalancheFeature subclass must provide public static accessible method getInstance()", e);
-        } catch (InvocationTargetException e) {
-            throw new IllegalArgumentException("AvalancheFeature subclass must provide public static accessible method getInstance()", e);
-        }
+    public static boolean isEnabled() {
+        return getInstance().mIsEnabled();
     }
 
-    /**
-     * Check whether a feature is enabled.
-     *
-     * @param feature Name of the feature to check.
-     * @return Whether the feature is enabled.
-     */
-    public static boolean isFeatureEnabled(String feature) {
-        Class<? extends AvalancheFeature> clazz = getClassForFeature(feature);
-        return clazz != null && isFeatureEnabled(clazz);
-    }
-
-    /**
-     * Check whether a feature class is enabled.
-     *
-     * @param feature The feature class to check for.
-     * @return Whether the feature is enabled.
-     */
-    public static boolean isFeatureEnabled(Class<? extends AvalancheFeature> feature) {
-        for (AvalancheFeature aFeature : getSharedInstance().mFeatures) {
-            if (aFeature.getClass().equals(feature)) {
-                return aFeature.isEnabled();
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Get the configured app key.
-     *
-     * @return The app key or null if not set or an invalid value was used when calling {@link #useFeatures(Application, String, AvalancheFeature...)}.
-     */
-    public static UUID getAppKey() {
-        return getSharedInstance().mAppKey;
+    public static void setEnabled(boolean enabled) {
+        getInstance().mSetEnabled(enabled);
     }
 
     /**
@@ -165,43 +124,79 @@ public final class Avalanche {
         return IdHelper.getInstallId();
     }
 
-    public static boolean isEnabled() {
-        return getSharedInstance().mEnabled;
+    @VisibleForTesting
+    static void unsetInstance() {
+        sInstance = null;
     }
 
-    public static void setEnabled(boolean enabled) {
-        Avalanche avalanche = getSharedInstance();
-        avalanche.mEnabled = enabled;
+    private synchronized boolean mIsEnabled() {
+        return mEnabled;
+    }
 
-        // Set enabled state for every module
-        for (AvalancheFeature feature : avalanche.mFeatures) {
-            feature.setEnabled(avalanche.mEnabled);
+    private synchronized void mSetEnabled(boolean enabled) {
+
+        /* Un-subscribe app callbacks if we were enabled and now disabled. */
+        boolean switchToDisabled = mEnabled && !enabled;
+        boolean switchToEnabled = !mEnabled && enabled;
+        if (switchToDisabled)
+            mApplication.unregisterActivityLifecycleCallbacks(mChannel);
+        else if (switchToEnabled)
+            mApplication.registerActivityLifecycleCallbacks(mChannel);
+
+        /* Apply change to features. */
+        for (AvalancheFeature feature : mFeatures) {
+
+            /* Add or remove callbacks depending on state change. */
+            if (switchToDisabled)
+                mApplication.unregisterActivityLifecycleCallbacks(feature);
+            else if (switchToEnabled)
+                mApplication.registerActivityLifecycleCallbacks(feature);
+
+            /* Forward status change. */
+            if (feature.isEnabled() != enabled)
+                feature.setEnabled(enabled);
         }
+
+        /* Update state. */
+        mEnabled = enabled;
     }
 
-    private Avalanche initialize(Application application, String appKey) {
+    private boolean initialize(Application application, String appKey) {
+
+        /* Parse and store parameters. */
+        if (mApplication != null) {
+            AvalancheLog.warn("Avalanche may only be init once");
+            return false;
+        }
         if (application == null) {
-            throw new IllegalArgumentException("Application must not be null!");
+            AvalancheLog.error("application may not be null");
+            return false;
         }
+        if (appKey == null) {
+            AvalancheLog.error("appKey may not be null");
+            return false;
+        }
+        UUID appKeyUUID;
         try {
-            mAppKey = UUID.fromString(appKey);
-        } catch (NullPointerException e) {
-            AvalancheLog.error("App Key must be set for initializing the Avalanche SDK!");
+            appKeyUUID = UUID.fromString(appKey);
         } catch (IllegalArgumentException e) {
-            AvalancheLog.error("App Key is not valid!", e);
+            AvalancheLog.error("appKey is invalid", e);
+            return false;
         }
-        mApplicationWeakReference = new WeakReference<>(application);
-        mFeatures.clear();
-        if (mChannel == null) { // TODO we must rethink this multiple useFeatures calls
-            Context context = application.getApplicationContext();
-            Constants.loadFromContext(context);
-            StorageHelper.initialize(context);
-            AvalancheChannel channel = new DirectAvalancheChannel(context, mAppKey, mLogSerializer); // TODO replace direct by default impl once problems there are fixed
-            AvalancheChannelSessionDecorator sessionChannel = new AvalancheChannelSessionDecorator(context, channel);
-            application.registerActivityLifecycleCallbacks(sessionChannel);
-            mChannel = sessionChannel;
-        }
-        return this;
+        mApplication = application;
+
+        /* If parameters are valid, init context related resources. */
+        Constants.loadFromContext(application);
+        StorageHelper.initialize(application);
+        mFeatures = new HashSet<>();
+
+        /* Init channel. */
+        mLogSerializer = new DefaultLogSerializer();
+        AvalancheChannel channel = new DefaultAvalancheChannel(application, appKeyUUID, mLogSerializer);
+        AvalancheChannelSessionDecorator sessionChannel = new AvalancheChannelSessionDecorator(application, channel);
+        application.registerActivityLifecycleCallbacks(sessionChannel);
+        mChannel = sessionChannel;
+        return true;
     }
 
     /**
@@ -209,27 +204,17 @@ public final class Avalanche {
      *
      * @param feature feature to add.
      */
-    @VisibleForTesting
-    void addFeature(AvalancheFeature feature) {
+    private void addFeature(AvalancheFeature feature) {
         if (feature == null)
             return;
-        Application application = mApplicationWeakReference.get();
-        if (application != null) {
-
-            /*
-             * FIXME feature is a list in android so we can have duplicates,
-             * anyway we should avoid double initializations when calling useFeatures the second time,
-             * we need to make a diff and release removed modules.
-             */
-            application.unregisterActivityLifecycleCallbacks(feature);
-            application.registerActivityLifecycleCallbacks(feature);
-            if (feature.getLogFactories() != null) {
-                for (Map.Entry<String, LogFactory> logFactory : feature.getLogFactories().entrySet())
-                    mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
-            }
-            mFeatures.add(feature);
-            feature.onChannelReady(mChannel);
+        Map<String, LogFactory> logFactories = feature.getLogFactories();
+        if (logFactories != null) {
+            for (Map.Entry<String, LogFactory> logFactory : logFactories.entrySet())
+                mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
         }
+        mFeatures.add(feature);
+        feature.onChannelReady(mChannel);
+        mApplication.registerActivityLifecycleCallbacks(feature);
     }
 
     @VisibleForTesting
@@ -239,6 +224,6 @@ public final class Avalanche {
 
     @VisibleForTesting
     Application getApplication() {
-        return mApplicationWeakReference.get();
+        return mApplication;
     }
 }

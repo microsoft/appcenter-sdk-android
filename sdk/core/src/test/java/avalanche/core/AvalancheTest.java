@@ -1,18 +1,20 @@
 package avalanche.core;
 
 import android.app.Application;
-import android.content.Context;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
+import avalanche.core.channel.AvalancheChannel;
+import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.IdHelper;
 import avalanche.core.utils.StorageHelper;
@@ -20,10 +22,17 @@ import avalanche.core.utils.StorageHelper;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertSame;
 import static junit.framework.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
@@ -33,14 +42,15 @@ public class AvalancheTest {
     private static final String DUMMY_APP_KEY = "123e4567-e89b-12d3-a456-426655440000";
 
     private Application application;
-    private Context context;
 
     @Before
     public void setUp() throws Exception {
-        application = mock(Application.class);
-        context = mock(Context.class);
+        Avalanche.unsetInstance();
+        DummyFeature.sharedInstance = null;
+        AnotherDummyFeature.sharedInstance = null;
 
-        when(application.getApplicationContext()).thenReturn(context);
+        application = mock(Application.class);
+        when(application.getApplicationContext()).thenReturn(application);
 
         PowerMockito.mockStatic(Constants.class);
         PowerMockito.mockStatic(AvalancheLog.class);
@@ -49,17 +59,27 @@ public class AvalancheTest {
     }
 
     @Test
-    public void avalancheInstanceTest() {
-        assertNotNull(Avalanche.getSharedInstance());
+    public void singleton() {
+        assertNotNull(Avalanche.getInstance());
+        assertSame(Avalanche.getInstance(), Avalanche.getInstance());
     }
 
     @Test
-    public void avalancheUseDefaultFeaturesTest() {
+    public void nullVarargClass() {
+        Avalanche.useFeatures(application, DUMMY_APP_KEY, (Class<? extends AvalancheFeature>) null);
+
+        // Verify that no modules have been auto-loaded since none are configured for this
+        assertEquals(0, Avalanche.getInstance().getFeatures().size());
+        assertEquals(application, Avalanche.getInstance().getApplication());
+    }
+
+    @Test
+    public void nullVarargFeatures() {
         Avalanche.useFeatures(application, DUMMY_APP_KEY, (AvalancheFeature) null);
 
         // Verify that no modules have been auto-loaded since none are configured for this
-        assertEquals(0, Avalanche.getSharedInstance().getFeatures().size());
-        assertEquals(application, Avalanche.getSharedInstance().getApplication());
+        assertEquals(0, Avalanche.getInstance().getFeatures().size());
+        assertEquals(application, Avalanche.getInstance().getApplication());
     }
 
     @Test
@@ -67,8 +87,26 @@ public class AvalancheTest {
         Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class);
 
         // Verify that single module has been loaded and configured
-        assertEquals(1, Avalanche.getSharedInstance().getFeatures().size());
-        assertTrue(Avalanche.getSharedInstance().getFeatures().contains(DummyFeature.getInstance()));
+        assertEquals(1, Avalanche.getInstance().getFeatures().size());
+        DummyFeature feature = DummyFeature.getInstance();
+        assertTrue(Avalanche.getInstance().getFeatures().contains(feature));
+        verify(feature).getLogFactories();
+        verify(feature).onChannelReady(notNull(AvalancheChannel.class));
+        verify(application).registerActivityLifecycleCallbacks(feature);
+    }
+
+    @Test
+    public void avalancheUseFeaturesTwiceTest() {
+        Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class);
+        Avalanche.useFeatures(application, DUMMY_APP_KEY, AnotherDummyFeature.class); //ignored
+
+        // Verify that single module has been loaded and configured
+        assertEquals(1, Avalanche.getInstance().getFeatures().size());
+        DummyFeature feature = DummyFeature.getInstance();
+        assertTrue(Avalanche.getInstance().getFeatures().contains(feature));
+        verify(feature).getLogFactories();
+        verify(feature).onChannelReady(notNull(AvalancheChannel.class));
+        verify(application).registerActivityLifecycleCallbacks(feature);
     }
 
     @Test
@@ -76,30 +114,19 @@ public class AvalancheTest {
         Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
 
         // Verify that the right amount of modules have been loaded and configured
-        assertEquals(2, Avalanche.getSharedInstance().getFeatures().size());
-        assertTrue(Avalanche.getSharedInstance().getFeatures().contains(DummyFeature.getInstance()));
-        assertTrue(Avalanche.getSharedInstance().getFeatures().contains(AnotherDummyFeature.getInstance()));
-    }
-
-    @Test
-    public void avalancheAddFeaturesTest() {
-        Avalanche.useFeatures(application, DUMMY_APP_KEY, (AvalancheFeature) null);
-
-        // Verify that no initial modules are loaded and configured
-        assertEquals(0, Avalanche.getSharedInstance().getFeatures().size());
-
-        Avalanche.getSharedInstance().addFeature(DummyFeature.getInstance());
-        assertEquals(1, Avalanche.getSharedInstance().getFeatures().size());
-        assertTrue(Avalanche.getSharedInstance().getFeatures().contains(DummyFeature.getInstance()));
-
-        // Verify that adding a module only gets added once
-        Avalanche.getSharedInstance().addFeature(DummyFeature.getInstance());
-        assertEquals(1, Avalanche.getSharedInstance().getFeatures().size());
-
-        Avalanche.getSharedInstance().addFeature(AnotherDummyFeature.getInstance());
-        assertEquals(2, Avalanche.getSharedInstance().getFeatures().size());
-        assertTrue(Avalanche.getSharedInstance().getFeatures().contains(DummyFeature.getInstance()));
-        assertTrue(Avalanche.getSharedInstance().getFeatures().contains(AnotherDummyFeature.getInstance()));
+        assertEquals(2, Avalanche.getInstance().getFeatures().size());
+        {
+            assertTrue(Avalanche.getInstance().getFeatures().contains(DummyFeature.getInstance()));
+            verify(DummyFeature.getInstance()).getLogFactories();
+            verify(DummyFeature.getInstance()).onChannelReady(notNull(AvalancheChannel.class));
+            verify(application).registerActivityLifecycleCallbacks(DummyFeature.getInstance());
+        }
+        {
+            assertTrue(Avalanche.getInstance().getFeatures().contains(AnotherDummyFeature.getInstance()));
+            verify(AnotherDummyFeature.getInstance()).getLogFactories();
+            verify(AnotherDummyFeature.getInstance()).onChannelReady(notNull(AvalancheChannel.class));
+            verify(application).registerActivityLifecycleCallbacks(AnotherDummyFeature.getInstance());
+        }
     }
 
     @Test
@@ -107,28 +134,34 @@ public class AvalancheTest {
         Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
 
         // Verify modules are enabled by default
-        Avalanche avalanche = Avalanche.getSharedInstance();
+        Avalanche avalanche = Avalanche.getInstance();
         Set<AvalancheFeature> features = avalanche.getFeatures();
-
         assertTrue(Avalanche.isEnabled());
+        DummyFeature dummyFeature = DummyFeature.getInstance();
+        AnotherDummyFeature anotherDummyFeature = AnotherDummyFeature.getInstance();
         for (AvalancheFeature feature : features) {
             assertTrue(feature.isEnabled());
         }
 
-        assertTrue(Avalanche.getSharedInstance().isFeatureEnabled(DummyFeature.class));
-        assertTrue(Avalanche.getSharedInstance().isFeatureEnabled(AnotherDummyFeature.class));
-        assertFalse(Avalanche.getSharedInstance().isFeatureEnabled(InvalidFeature.class));
+        // Explicit set enabled should not change that
+        Avalanche.setEnabled(true);
+        assertTrue(Avalanche.isEnabled());
+        for (AvalancheFeature feature : features) {
+            assertTrue(feature.isEnabled());
+        }
+        verify(dummyFeature, never()).setEnabled(anyBoolean());
+        verify(anotherDummyFeature, never()).setEnabled(anyBoolean());
 
         // Verify disabling base disables all modules
         Avalanche.setEnabled(false);
-
         assertFalse(Avalanche.isEnabled());
         for (AvalancheFeature feature : features) {
             assertFalse(feature.isEnabled());
         }
-
-        assertFalse(Avalanche.getSharedInstance().isFeatureEnabled(DummyFeature.class));
-        assertFalse(Avalanche.getSharedInstance().isFeatureEnabled(AnotherDummyFeature.class));
+        verify(dummyFeature).setEnabled(false);
+        verify(anotherDummyFeature).setEnabled(false);
+        verify(application).unregisterActivityLifecycleCallbacks(dummyFeature);
+        verify(application).unregisterActivityLifecycleCallbacks(anotherDummyFeature);
 
         // Verify re-enabling base re-enables all modules
         Avalanche.setEnabled(true);
@@ -136,29 +169,68 @@ public class AvalancheTest {
         for (AvalancheFeature feature : features) {
             assertTrue(feature.isEnabled());
         }
+        verify(dummyFeature).setEnabled(true);
+        verify(anotherDummyFeature).setEnabled(true);
+        verify(application, times(2)).registerActivityLifecycleCallbacks(dummyFeature);
+        verify(application, times(2)).registerActivityLifecycleCallbacks(anotherDummyFeature);
 
         // Verify that disabling one module leaves base and other modules enabled
-        DummyFeature.getInstance().setEnabled(false);
-        assertFalse(DummyFeature.getInstance().isEnabled());
-        assertTrue(Avalanche.getSharedInstance().isEnabled());
-        assertTrue(AnotherDummyFeature.getInstance().isEnabled());
-    }
+        dummyFeature.setEnabled(false);
+        assertFalse(dummyFeature.isEnabled());
+        assertTrue(Avalanche.isEnabled());
+        assertTrue(anotherDummyFeature.isEnabled());
 
-    @Test(expected = IllegalArgumentException.class)
-    public void avalancheInvalidFeatureTest() {
-        Avalanche.useFeatures(application, DUMMY_APP_KEY, InvalidFeature.class);
-    }
+        /* Enable back via main class. */
+        Avalanche.setEnabled(true);
+        assertTrue(Avalanche.isEnabled());
+        for (AvalancheFeature feature : features) {
+            assertTrue(feature.isEnabled());
+        }
+        verify(dummyFeature, times(2)).setEnabled(true);
+        verify(anotherDummyFeature).setEnabled(true);
 
-    @Test(expected = IllegalArgumentException.class)
-    public void avalancheNullApplicationTest() {
-        Avalanche.useFeatures(null, DUMMY_APP_KEY, DummyFeature.class);
+        /* Enable 1 feature only after disable all. */
+        Avalanche.setEnabled(false);
+        assertFalse(Avalanche.isEnabled());
+        for (AvalancheFeature feature : features) {
+            assertFalse(feature.isEnabled());
+        }
+        dummyFeature.setEnabled(true);
+        assertTrue(dummyFeature.isEnabled());
+        assertFalse(Avalanche.isEnabled());
+        assertFalse(anotherDummyFeature.isEnabled());
+
+        /* Disable back via main class. */
+        Avalanche.setEnabled(false);
+        assertFalse(Avalanche.isEnabled());
+        for (AvalancheFeature feature : features) {
+            assertFalse(feature.isEnabled());
+        }
+
+        /* Check factories / channel only once interactions. */
+        verify(dummyFeature).getLogFactories();
+        verify(dummyFeature).onChannelReady(notNull(AvalancheChannel.class));
+        verify(anotherDummyFeature).getLogFactories();
+        verify(anotherDummyFeature).onChannelReady(notNull(AvalancheChannel.class));
     }
 
     @Test
-    @Ignore //FIXME broken when running inside AS
+    public void avalancheInvalidFeatureTest() {
+        Avalanche.useFeatures(application, DUMMY_APP_KEY, InvalidFeature.class);
+        PowerMockito.verifyStatic();
+        AvalancheLog.error(anyString(), any(NoSuchMethodException.class));
+    }
+
+    @Test
+    public void avalancheNullApplicationTest() {
+        Avalanche.useFeatures(null, DUMMY_APP_KEY, DummyFeature.class);
+        PowerMockito.verifyStatic();
+        AvalancheLog.error(anyString());
+    }
+
+    @Test
     public void avalancheNullAppIdentifierTest() {
         Avalanche.useFeatures(application, null, DummyFeature.class);
-
         PowerMockito.verifyStatic();
         AvalancheLog.error(anyString());
     }
@@ -166,7 +238,6 @@ public class AvalancheTest {
     @Test
     public void avalancheEmptyAppIdentifierTest() {
         Avalanche.useFeatures(application, "", DummyFeature.class);
-
         PowerMockito.verifyStatic();
         AvalancheLog.error(anyString(), any(IllegalArgumentException.class));
     }
@@ -174,7 +245,6 @@ public class AvalancheTest {
     @Test
     public void avalancheTooShortAppIdentifierTest() {
         Avalanche.useFeatures(application, "too-short", DummyFeature.class);
-
         PowerMockito.verifyStatic();
         AvalancheLog.error(anyString(), any(IllegalArgumentException.class));
     }
@@ -186,34 +256,37 @@ public class AvalancheTest {
         AvalancheLog.error(anyString(), any(NumberFormatException.class));
     }
 
-    static class DummyFeature extends AbstractAvalancheFeature {
+    private static class DummyFeature extends AbstractAvalancheFeature {
 
-        private static DummyFeature sharedInstance = null;
+        private static DummyFeature sharedInstance;
 
         public static DummyFeature getInstance() {
             if (sharedInstance == null) {
-                sharedInstance = new DummyFeature();
+                sharedInstance = spy(new DummyFeature());
             }
             return sharedInstance;
         }
-
     }
 
-    static class AnotherDummyFeature extends AbstractAvalancheFeature {
+    private static class AnotherDummyFeature extends AbstractAvalancheFeature {
 
         private static AnotherDummyFeature sharedInstance;
 
         public static AnotherDummyFeature getInstance() {
             if (sharedInstance == null) {
-                sharedInstance = new AnotherDummyFeature();
+                sharedInstance = spy(new AnotherDummyFeature());
             }
             return sharedInstance;
         }
+
+        @Override
+        public Map<String, LogFactory> getLogFactories() {
+            HashMap<String, LogFactory> logFactories = new HashMap<>();
+            logFactories.put("mock", mock(LogFactory.class));
+            return logFactories;
+        }
     }
 
-    static class InvalidFeature extends AbstractAvalancheFeature {
-
+    private static class InvalidFeature extends AbstractAvalancheFeature {
     }
-
-
 }
