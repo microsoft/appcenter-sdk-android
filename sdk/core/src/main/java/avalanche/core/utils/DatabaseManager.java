@@ -10,6 +10,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.VisibleForTesting;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -71,6 +72,7 @@ public class DatabaseManager implements Closeable {
     /**
      * In-memory database if SQLite cannot be used.
      */
+    @SuppressWarnings("SpellCheckingInspection")
     private Map<Long, ContentValues> mIMDB;
 
     /**
@@ -410,7 +412,8 @@ public class DatabaseManager implements Closeable {
      * @return SQLite database.
      * @throws RuntimeException if an error occurs.
      */
-    private SQLiteDatabase getDatabase() throws RuntimeException {
+    @VisibleForTesting
+    SQLiteDatabase getDatabase() throws RuntimeException {
         /* Try opening database. */
         try {
             return mSQLiteOpenHelper.getWritableDatabase();
@@ -424,12 +427,13 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Switches to in-memory management, triggers error listener.
+     * Switches to in-memory management, triggers error listener. This is TEST PURPOSE ONLY.
      *
      * @param operation The operation that triggered the error.
      * @param exception The exception that triggered the switch.
      */
-    private void switchToInMemory(String operation, RuntimeException exception) {
+    @VisibleForTesting
+    void switchToInMemory(String operation, RuntimeException exception) {
         /* Create an in-memory database. */
         mIMDB = new LinkedHashMap<Long, ContentValues>() {
             @Override

@@ -25,19 +25,25 @@ import avalanche.core.ingestion.models.Device;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Build.class, Locale.class, TimeZone.class, DeviceInfoHelper.class})
+@PrepareForTest({Build.class})
 public class DeviceInfoHelperTest {
+
+    /**
+     * This method is to go through the code that intentionally ignores exceptions.
+     */
+    @Test
+    public void deviceInfoHelperForCoverage() {
+        new DeviceInfoHelper();
+    }
 
     @Test
     public void getDeviceInfo() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
@@ -45,6 +51,7 @@ public class DeviceInfoHelperTest {
         /* Mock data. */
         final String appVersion = "1.0";
         final String appBuild = "1";
+        //noinspection SpellCheckingInspection
         final String appNamespace = "com.contoso.app";
         final String carrierCountry = "us";
         final String carrierName = "mock-service";
@@ -56,8 +63,11 @@ public class DeviceInfoHelperTest {
         final String osVersion = "mock-version";
         final String screenSizeLandscape = "100x200";
         final String screenSizePortrait = "200x100";
-        final Integer timeZoneOffset = -300;
-        final int MIN_IN_MILLI = 60 * 1000;
+        final TimeZone timeZone = TimeZone.getTimeZone("KST");
+        final Integer timeZoneOffset = timeZone.getOffset(System.currentTimeMillis());
+
+        Locale.setDefault(locale);
+        TimeZone.setDefault(timeZone);
 
         /* Mocking instances. */
         Context contextMock = mock(Context.class);
@@ -66,26 +76,20 @@ public class DeviceInfoHelperTest {
         WindowManager windowManagerMock = mock(WindowManager.class);
         TelephonyManager telephonyManagerMock = mock(TelephonyManager.class);
         Display displayMock = mock(Display.class);
-        TimeZone timeZoneMock = mock(TimeZone.class);
-
-        /* Mocking static classes. */
-        mockStatic(Locale.class);
-        mockStatic(TimeZone.class);
 
         /* Delegates to mock instances. */
         when(contextMock.getPackageName()).thenReturn(appNamespace);
         when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
-        when(contextMock.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(telephonyManagerMock);
-        when(contextMock.getSystemService(Context.WINDOW_SERVICE)).thenReturn(windowManagerMock);
+        //noinspection WrongConstant
+        when(contextMock.getSystemService(eq(Context.TELEPHONY_SERVICE))).thenReturn(telephonyManagerMock);
+        //noinspection WrongConstant
+        when(contextMock.getSystemService(eq(Context.WINDOW_SERVICE))).thenReturn(windowManagerMock);
         //noinspection WrongConstant
         when(packageManagerMock.getPackageInfo(anyString(), eq(0))).thenReturn(packageInfoMock);
         when(telephonyManagerMock.getNetworkCountryIso()).thenReturn(carrierCountry);
         when(telephonyManagerMock.getNetworkOperatorName()).thenReturn(carrierName);
         when(windowManagerMock.getDefaultDisplay()).thenReturn(displayMock);
         when(displayMock.getRotation()).thenReturn(Surface.ROTATION_0, Surface.ROTATION_90, Surface.ROTATION_180, Surface.ROTATION_270);
-        when(Locale.getDefault()).thenReturn(locale);
-        when(TimeZone.getDefault()).thenReturn(timeZoneMock);
-        when(timeZoneMock.getOffset(anyLong())).thenReturn(timeZoneOffset * MIN_IN_MILLI);
         doAnswer(new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
