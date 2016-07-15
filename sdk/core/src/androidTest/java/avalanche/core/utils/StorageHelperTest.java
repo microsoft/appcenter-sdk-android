@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static avalanche.core.utils.StorageHelper.DatabaseStorage;
@@ -287,18 +286,18 @@ public class StorageHelperTest {
         final String prefix = Long.toString(System.currentTimeMillis());
 
         /* Create a mock data. */
-        String filename1 = prefix + "-" + UUID.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION;
+        String filename1 = prefix + "-" + UUIDUtils.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION;
         String contents1 = "java.lang.NullPointerException: Attempt to invoke virtual method 'boolean java.lang.String.isEmpty()' on a null object reference\n" +
                 "at avalanche.base.utils.StorageHelperTest.internalStorage(StorageHelperTest.java:124)\n" +
                 "at java.lang.reflect.Method.invoke(Native Method)\n" +
                 "at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)";
-        String filename2 = prefix + "-" + UUID.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION;
+        String filename2 = prefix + "-" + UUIDUtils.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION;
         String contents2 = "java.io.FileNotFoundException: 6c1b1c58-1c2f-47d9-8f04-52639c3a804d: open failed: EROFS (Read-only file system)\n" +
                 "at libcore.io.IoBridge.open(IoBridge.java:452)\n" +
                 "at java.io.FileOutputStream.<init>(FileOutputStream.java:87)\n" +
                 "at java.io.FileOutputStream.<init>(FileOutputStream.java:72)\n" +
                 "at java.io.FileWriter.<init>(FileWriter.java:42)";
-        String filename3 = prefix + "-" + UUID.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION;
+        String filename3 = prefix + "-" + UUIDUtils.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION;
 
         /* FilenameFilter to look up files that are created in current test. */
         FilenameFilter filter = new FilenameFilter() {
@@ -361,7 +360,7 @@ public class StorageHelperTest {
     public void internalStorageForObject() throws IOException, ClassNotFoundException {
         Log.i(TAG, "Testing Internal Storage object serialization");
 
-        File file = new File(sAndroidFilesPath + "/" + UUID.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION);
+        File file = new File(sAndroidFilesPath + "/" + UUIDUtils.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION);
 
         /* Create a mock object. */
         DataModel model = new DataModel(10, "Model", true);

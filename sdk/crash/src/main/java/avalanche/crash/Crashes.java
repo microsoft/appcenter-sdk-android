@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 import avalanche.core.AbstractAvalancheFeature;
-import avalanche.core.Avalanche;
 import avalanche.core.Constants;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
@@ -588,7 +587,7 @@ public class Crashes extends AbstractAvalancheFeature {
     }
 
     private String getURLString() {
-        return mEndpointUrl + "api/2/apps/" + Avalanche.getAppKey() + "/crashes/";
+        return mEndpointUrl + "api/2/apps/560eb1f4ada02d23d8c843682b867fca/crashes/";
     }
 
     @Override

@@ -7,7 +7,6 @@ import android.support.annotation.VisibleForTesting;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import avalanche.analytics.ingestion.models.EventLog;
 import avalanche.analytics.ingestion.models.PageLog;
@@ -17,6 +16,7 @@ import avalanche.core.AbstractAvalancheFeature;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
+import avalanche.core.utils.UUIDUtils;
 
 import static avalanche.core.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
 
@@ -67,23 +67,23 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     /**
-     * Send a page.
+     * Track a page.
      *
      * @param name       page name.
      * @param properties optional properties.
      */
-    public static void sendPage(@NonNull String name, @Nullable Map<String, String> properties) {
-        getInstance().mSendPage(name, properties);
+    public static void trackPage(@NonNull String name, @Nullable Map<String, String> properties) {
+        getInstance().queuePage(name, properties);
     }
 
     /**
-     * Send an event.
+     * Track an event.
      *
      * @param name       event name.
      * @param properties optional properties.
      */
-    public static void sendEvent(@NonNull String name, @Nullable Map<String, String> properties) {
-        getInstance().mSendEvent(name, properties);
+    public static void trackEvent(@NonNull String name, @Nullable Map<String, String> properties) {
+        getInstance().queueEvent(name, properties);
     }
 
     /**
@@ -108,7 +108,7 @@ public class Analytics extends AbstractAvalancheFeature {
 
     @Override
     public void onActivityResumed(Activity activity) {
-        mSendPage(generatePageName(activity.getClass()), null);
+        queuePage(generatePageName(activity.getClass()), null);
     }
 
     /**
@@ -129,7 +129,7 @@ public class Analytics extends AbstractAvalancheFeature {
      * @param name       page name.
      * @param properties optional properties.
      */
-    private void mSendPage(@NonNull String name, @Nullable Map<String, String> properties) {
+    private void queuePage(@NonNull String name, @Nullable Map<String, String> properties) {
         if (!isEnabled())
             return;
         PageLog pageLog = new PageLog();
@@ -144,11 +144,11 @@ public class Analytics extends AbstractAvalancheFeature {
      * @param name       event name.
      * @param properties optional properties.
      */
-    private void mSendEvent(@NonNull String name, @Nullable Map<String, String> properties) {
+    private void queueEvent(@NonNull String name, @Nullable Map<String, String> properties) {
         if (!isEnabled())
             return;
         EventLog eventLog = new EventLog();
-        eventLog.setId(UUID.randomUUID());
+        eventLog.setId(UUIDUtils.randomUUID());
         eventLog.setName(name);
         eventLog.setProperties(properties);
         send(eventLog);

@@ -18,6 +18,6 @@ public class EventActivity extends AppCompatActivity {
 
     public void sendEvent(@SuppressWarnings("UnusedParameters") View view) {
         String name = ((TextView) findViewById(R.id.event_name)).getText().toString();
-        Analytics.sendEvent(name, null);
+        Analytics.trackEvent(name, null);
     }
 }

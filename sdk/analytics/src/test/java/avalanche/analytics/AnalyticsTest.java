@@ -52,7 +52,7 @@ public class AnalyticsTest {
     public void notInit() {
 
         /* Just check log is discarded without throwing any exception. */
-        Analytics.sendPage("test", new HashMap<String, String>());
+        Analytics.trackPage("test", new HashMap<String, String>());
     }
 
     private void activityResumed(final String expectedName, android.app.Activity activity) {
@@ -90,14 +90,14 @@ public class AnalyticsTest {
     }
 
     @Test
-    public void sendEvent() {
+    public void trackEvent() {
         Analytics analytics = Analytics.getInstance();
         AvalancheChannel channel = mock(AvalancheChannel.class);
         analytics.onChannelReady(channel);
         final String name = "testEvent";
         final HashMap<String, String> properties = new HashMap<>();
         properties.put("a", "b");
-        Analytics.sendEvent(name, properties);
+        Analytics.trackEvent(name, properties);
         //noinspection WrongConstant (well its not a wrong constant but something is odd with compiler here)
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -118,21 +118,21 @@ public class AnalyticsTest {
         AvalancheChannel channel = mock(AvalancheChannel.class);
         analytics.setEnabled(false);
         analytics.onChannelReady(channel);
-        Analytics.sendEvent("test", null);
-        Analytics.sendPage("test", null);
+        Analytics.trackEvent("test", null);
+        Analytics.trackPage("test", null);
         verifyZeroInteractions(channel);
 
         /* Enable back. */
         analytics.setEnabled(true);
-        Analytics.sendEvent("test", null);
-        Analytics.sendPage("test", null);
+        Analytics.trackEvent("test", null);
+        Analytics.trackPage("test", null);
         //noinspection WrongConstant
         verify(channel, times(2)).enqueue(any(Log.class), eq(ANALYTICS_GROUP));
 
         /* Disable again. */
         analytics.setEnabled(false);
-        Analytics.sendEvent("test", null);
-        Analytics.sendPage("test", null);
+        Analytics.trackEvent("test", null);
+        Analytics.trackPage("test", null);
         verifyNoMoreInteractions(channel);
     }
 

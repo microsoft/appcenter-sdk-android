@@ -21,6 +21,7 @@ import avalanche.core.ingestion.models.StartSessionLog;
 import avalanche.core.ingestion.models.json.DefaultLogSerializer;
 import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.ingestion.models.json.StartSessionLogFactory;
+import avalanche.core.utils.UUIDUtils;
 
 public class AnalyticsSerializerTest {
 
@@ -62,13 +63,13 @@ public class AnalyticsSerializerTest {
         }
         {
             EventLog eventLog = new EventLog();
-            eventLog.setId(UUID.randomUUID());
+            eventLog.setId(UUIDUtils.randomUUID());
             eventLog.setName("subscribe");
             logs.add(eventLog);
         }
         {
             EventLog eventLog = new EventLog();
-            eventLog.setId(UUID.randomUUID());
+            eventLog.setId(UUIDUtils.randomUUID());
             eventLog.setName("click");
             eventLog.setProperties(new HashMap<String, String>() {{
                 put("x", "1");
@@ -76,7 +77,7 @@ public class AnalyticsSerializerTest {
             }});
             logs.add(eventLog);
         }
-        UUID sid = UUID.randomUUID();
+        UUID sid = UUIDUtils.randomUUID();
         for (Log log : logs) {
             log.setSid(sid);
             log.setDevice(device);

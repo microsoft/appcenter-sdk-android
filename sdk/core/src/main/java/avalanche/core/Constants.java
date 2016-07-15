@@ -14,9 +14,9 @@ import android.text.TextUtils;
 import java.io.File;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.UUID;
 
 import avalanche.core.utils.AvalancheLog;
+import avalanche.core.utils.UUIDUtils;
 
 /**
  * <h3>Description</h3>
@@ -205,7 +205,7 @@ public class Constants {
         if (deviceIdentifier != null) {
             String deviceIdentifierAnonymized = tryHashStringSha256(context, deviceIdentifier);
             // if anonymized device identifier is null we should use a random UUID
-            Constants.DEVICE_IDENTIFIER = deviceIdentifierAnonymized != null ? deviceIdentifierAnonymized : UUID.randomUUID().toString();
+            Constants.DEVICE_IDENTIFIER = deviceIdentifierAnonymized != null ? deviceIdentifierAnonymized : UUIDUtils.randomUUID().toString();
         }
     }
 

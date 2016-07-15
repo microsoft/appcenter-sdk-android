@@ -17,7 +17,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
-import java.util.UUID;
 
 import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.Log;
@@ -28,6 +27,7 @@ import avalanche.core.ingestion.models.json.MockLogFactory;
 import avalanche.core.persistence.AvalanchePersistence.PersistenceException;
 import avalanche.core.utils.StorageHelper;
 import avalanche.core.utils.StorageHelper.DatabaseStorage.DatabaseScanner;
+import avalanche.core.utils.UUIDUtils;
 
 import static avalanche.core.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 import static org.junit.Assert.assertEquals;
@@ -86,7 +86,7 @@ public class AvalancheDatabasePersistenceTest {
         device.setAppNamespace("com.microsoft.unittest");
 
         Log log = new MockLog();
-        log.setSid(UUID.randomUUID());
+        log.setSid(UUIDUtils.randomUUID());
         log.setDevice(device);
         return log;
     }

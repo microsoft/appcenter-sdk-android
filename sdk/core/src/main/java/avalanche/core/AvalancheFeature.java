@@ -9,8 +9,6 @@ import avalanche.core.ingestion.models.json.LogFactory;
 
 public interface AvalancheFeature extends Application.ActivityLifecycleCallbacks {
 
-    String getName();
-
     boolean isEnabled();
 
     void setEnabled(boolean enabled);

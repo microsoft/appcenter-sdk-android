@@ -15,6 +15,7 @@ import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.StartSessionLog;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.DeviceInfoHelper;
+import avalanche.core.utils.UUIDUtils;
 
 /**
  * Decorator for channel, adding session semantic to logs.
@@ -98,7 +99,7 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
         if (mSid == null || hasSessionTimedOut()) {
 
             /* New session: generate a new identifier. */
-            mSid = UUID.randomUUID();
+            mSid = UUIDUtils.randomUUID();
 
             /* And generate a new device property bag, keep the same for all the session duration. */
             try {

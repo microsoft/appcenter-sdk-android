@@ -15,11 +15,6 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
     private boolean mEnabled = true;
 
     @Override
-    public String getName() {
-        return getClass().getName();
-    }
-
-    @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
     }
 
