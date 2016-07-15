@@ -1,5 +1,7 @@
 package avalanche.core.utils;
 
+import android.support.annotation.VisibleForTesting;
+
 import java.util.Random;
 import java.util.UUID;
 
@@ -7,6 +9,15 @@ import java.util.UUID;
  * UUID utils.
  */
 public final class UUIDUtils {
+
+    @VisibleForTesting
+    static Implementation sImplementation = new Implementation() {
+
+        @Override
+        public UUID randomUUID() {
+            return UUID.randomUUID();
+        }
+    };
 
     /**
      * Random used when SecureRandom fails to initialize on some devices...
@@ -26,7 +37,7 @@ public final class UUIDUtils {
      */
     public static UUID randomUUID() {
         try {
-            return UUID.randomUUID();
+            return sImplementation.randomUUID();
         } catch (SecurityException e) {
 
             /* Some devices can crash while allocating a SecureRandom, used by UUID, fall back... */
@@ -40,5 +51,10 @@ public final class UUIDUtils {
             long lowest = (sRandom.nextLong() & 4611686018427387903L) | -9223372036854775808L;
             return new UUID(highest, lowest);
         }
+    }
+
+    @VisibleForTesting
+    interface Implementation {
+        UUID randomUUID();
     }
 }
