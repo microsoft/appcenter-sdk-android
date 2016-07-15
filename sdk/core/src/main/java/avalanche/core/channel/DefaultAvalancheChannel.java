@@ -111,19 +111,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     private boolean mDisabled;
     /**
-     * Runnable that triggers ingestion of analytics data and triggers itself in ANALYTICS_INTERVAL
-     * amount of ms.
-     */
-    private final Runnable mAnalyticsRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (getAnalyticsCounter() > 0) {
-                triggerIngestion(ANALYTICS_GROUP);
-            }
-            mIngestionHandler.postDelayed(this, ANALYTICS_INTERVAL);
-        }
-    };
-    /**
      * Runnable that triggers ingestion of error data and triggers itself in ERROR_INTERVAL
      * amount of ms.
      */
@@ -134,6 +121,19 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
                 triggerIngestion(ERROR_GROUP);
             }
             mIngestionHandler.postDelayed(this, ERROR_INTERVAL);
+        }
+    };
+    /**
+     * Runnable that triggers ingestion of analytics data and triggers itself in ANALYTICS_INTERVAL
+     * amount of ms.
+     */
+    private final Runnable mAnalyticsRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (getAnalyticsCounter() > 0) {
+                triggerIngestion(ANALYTICS_GROUP);
+            }
+            mIngestionHandler.postDelayed(this, ANALYTICS_INTERVAL);
         }
     };
 
@@ -231,7 +231,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * Setter for error counter.
      *
-     * @param errorCounter
+     * @param errorCounter the error counter.
      */
     private void setErrorCounter(int errorCounter) {
         synchronized (LOCK) {
@@ -360,7 +360,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
 
     private void ingestLogs(@NonNull final String groupName, @NonNull final String batchId, @NonNull LogContainer logContainer) {
-        AvalancheLog.debug(TAG, "ingestLogs(" + groupName + ","+ batchId + ")");
+        AvalancheLog.debug(TAG, "ingestLogs(" + groupName + "," + batchId + ")");
         mIngestion.sendAsync(mAppKey, mInstallId, logContainer, new ServiceCallback() {
                     @Override
                     public void success() {
@@ -434,6 +434,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     @Override
     public void enqueue(@NonNull Log log, @NonNull @GroupNameDef String queueName) {
         try {
+            // persist log with an absolute timestamp, we'll convert to relative just before sending
+            log.setToffset(System.currentTimeMillis());
             mPersistence.putLog(queueName, log);
 
             //Increment counters and schedule ingestion if we are not disabled
