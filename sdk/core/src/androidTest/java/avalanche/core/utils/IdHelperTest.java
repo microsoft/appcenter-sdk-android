@@ -26,7 +26,7 @@ public class IdHelperTest {
     @Test
     public void getInstallId() {
         Log.i(TAG, "Testing installId-shortcut");
-        UUID expected = UUID.randomUUID();
+        UUID expected = UUIDUtils.randomUUID();
         StorageHelper.PreferencesStorage.putString(PrefStorageConstants.KEY_INSTALL_ID, expected.toString());
 
         UUID actual = IdHelper.getInstallId();

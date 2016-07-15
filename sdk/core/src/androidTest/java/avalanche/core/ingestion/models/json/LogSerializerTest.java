@@ -8,11 +8,11 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.LogContainer;
+import avalanche.core.utils.UUIDUtils;
 
 import static avalanche.core.TestUtils.TAG;
 import static avalanche.core.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
@@ -55,7 +55,7 @@ public class LogSerializerTest {
         device.setAppBuild("42");
         Log log = new MockLog();
         log.setDevice(device);
-        log.setSid(UUID.randomUUID());
+        log.setSid(UUIDUtils.randomUUID());
         List<Log> logs = new ArrayList<>();
         logs.add(log);
         expectedContainer.setLogs(logs);
