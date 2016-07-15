@@ -7,7 +7,6 @@ import android.support.annotation.VisibleForTesting;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import avalanche.analytics.ingestion.models.EventLog;
 import avalanche.analytics.ingestion.models.PageLog;
@@ -17,6 +16,7 @@ import avalanche.core.AbstractAvalancheFeature;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
+import avalanche.core.utils.UUIDUtils;
 
 import static avalanche.core.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
 
@@ -148,7 +148,7 @@ public class Analytics extends AbstractAvalancheFeature {
         if (!isEnabled())
             return;
         EventLog eventLog = new EventLog();
-        eventLog.setId(UUID.randomUUID());
+        eventLog.setId(UUIDUtils.randomUUID());
         eventLog.setName(name);
         eventLog.setProperties(properties);
         send(eventLog);

@@ -18,11 +18,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.UUID;
 
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.DatabaseManager;
+import avalanche.core.utils.UUIDUtils;
 
 import static avalanche.core.utils.StorageHelper.DatabaseStorage;
 
@@ -184,7 +184,7 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
         }
 
         /* Generate an ID. */
-        String id = UUID.randomUUID().toString();
+        String id = UUIDUtils.randomUUID().toString();
 
         /* Log. */
         AvalancheLog.info("Returning " + candidates.size() + " log(s) with an ID, " + id);

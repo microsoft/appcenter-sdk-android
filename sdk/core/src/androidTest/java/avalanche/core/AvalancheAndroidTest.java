@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import avalanche.core.utils.PrefStorageConstants;
 import avalanche.core.utils.StorageHelper;
+import avalanche.core.utils.UUIDUtils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -20,7 +21,7 @@ public class AvalancheAndroidTest {
     @Test
     public void getInstallId() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
         Application application = Instrumentation.newApplication(Application.class, InstrumentationRegistry.getTargetContext());
-        Avalanche.useFeatures(application, UUID.randomUUID().toString(), new AvalancheFeature[]{});
+        Avalanche.useFeatures(application, UUIDUtils.randomUUID().toString(), new AvalancheFeature[]{});
         StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
         UUID installId = Avalanche.getInstallId();
         assertNotNull(installId);
