@@ -8,10 +8,10 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Date;
-import java.util.UUID;
 
 import avalanche.core.Constants;
 import avalanche.core.utils.AvalancheLog;
+import avalanche.core.utils.UUIDUtils;
 import avalanche.crash.model.CrashReport;
 
 import static avalanche.core.utils.StorageHelper.InternalStorage;
@@ -61,7 +61,7 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
         final PrintWriter printWriter = new PrintWriter(result);
         exception.printStackTrace(printWriter);
 
-        String filename = UUID.randomUUID().toString();
+        String filename = UUIDUtils.randomUUID().toString();
 
         CrashReport crashReport = new CrashReport(filename, exception);
         crashReport.setAppPackage(Constants.APP_PACKAGE);
@@ -117,7 +117,7 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
         // In case there is no managedExceptionString, we just forward the java exception
         if (!TextUtils.isEmpty(managedExceptionString)) {
             String[] splits = managedExceptionString.split("--- End of managed exception stack trace ---", 2);
-            if (splits != null && splits.length > 0) {
+            if (splits.length > 0) {
                 managedExceptionString = splits[0];
             }
         }
@@ -140,7 +140,7 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
     //TODO (bereimol) refacture so we don't have duplicate code
     private void saveXamarinException(Throwable exception, Thread thread, String additionalManagedException, Boolean isManagedException, CrashesListener listener) {
         final Date startDate = new Date(mCrashes.getInitializeTimestamp());
-        String filename = UUID.randomUUID().toString();
+        String filename = UUIDUtils.randomUUID().toString();
         final Date now = new Date();
 
         final Writer result = new StringWriter();

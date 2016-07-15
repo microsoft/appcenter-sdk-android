@@ -14,6 +14,7 @@ import avalanche.core.ingestion.ServiceCall;
 import avalanche.core.ingestion.ServiceCallback;
 import avalanche.core.ingestion.models.LogContainer;
 import avalanche.core.utils.NetworkStateHelper;
+import avalanche.core.utils.UUIDUtils;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -30,8 +31,8 @@ public class AvalancheNetworkStateHandlerTest {
     public void success() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        UUID appKey = UUID.randomUUID();
-        UUID installId = UUID.randomUUID();
+        UUID appKey = UUIDUtils.randomUUID();
+        UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
@@ -67,8 +68,8 @@ public class AvalancheNetworkStateHandlerTest {
     public void failure() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        UUID appKey = UUID.randomUUID();
-        UUID installId = UUID.randomUUID();
+        UUID appKey = UUIDUtils.randomUUID();
+        UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
@@ -104,8 +105,8 @@ public class AvalancheNetworkStateHandlerTest {
     public void networkDownBecomesUp() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        UUID appKey = UUID.randomUUID();
-        UUID installId = UUID.randomUUID();
+        UUID appKey = UUIDUtils.randomUUID();
+        UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
@@ -145,8 +146,8 @@ public class AvalancheNetworkStateHandlerTest {
     public void networkDownCancelBeforeUp() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        UUID appKey = UUID.randomUUID();
-        UUID installId = UUID.randomUUID();
+        UUID appKey = UUIDUtils.randomUUID();
+        UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
@@ -183,8 +184,8 @@ public class AvalancheNetworkStateHandlerTest {
     public void cancelRunningCall() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        UUID appKey = UUID.randomUUID();
-        UUID installId = UUID.randomUUID();
+        UUID appKey = UUIDUtils.randomUUID();
+        UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
@@ -248,8 +249,8 @@ public class AvalancheNetworkStateHandlerTest {
     public void cancelRunningCallByClosing() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        UUID appKey = UUID.randomUUID();
-        UUID installId = UUID.randomUUID();
+        UUID appKey = UUIDUtils.randomUUID();
+        UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
@@ -310,8 +311,8 @@ public class AvalancheNetworkStateHandlerTest {
     public void networkLossDuringCall() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        UUID appKey = UUID.randomUUID();
-        UUID installId = UUID.randomUUID();
+        UUID appKey = UUIDUtils.randomUUID();
+        UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);

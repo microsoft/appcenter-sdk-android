@@ -27,6 +27,7 @@ import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.ingestion.models.json.MockLog;
 import avalanche.core.ingestion.models.json.MockLogFactory;
 import avalanche.core.utils.AvalancheLog;
+import avalanche.core.utils.UUIDUtils;
 
 import static avalanche.core.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 import static org.mockito.Matchers.eq;
@@ -63,7 +64,7 @@ public class AvalancheIngestionHttpTest {
         device.setAppBuild("42");
         Log log = new MockLog();
         log.setDevice(device);
-        log.setSid(UUID.randomUUID());
+        log.setSid(UUIDUtils.randomUUID());
         List<Log> logs = new ArrayList<>();
         logs.add(log);
         container.setLogs(logs);
@@ -84,8 +85,8 @@ public class AvalancheIngestionHttpTest {
         httpClient.setBaseUrl("http://mock");
 
         /* Test calling code. */
-        UUID appKey = UUID.randomUUID();
-        UUID installId = UUID.randomUUID();
+        UUID appKey = UUIDUtils.randomUUID();
+        UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         httpClient.sendAsync(appKey, installId, container, serviceCallback);
         verify(serviceCallback, timeout(1000)).success();
@@ -116,7 +117,7 @@ public class AvalancheIngestionHttpTest {
         device.setAppBuild("42");
         Log log = new MockLog();
         log.setDevice(device);
-        log.setSid(UUID.randomUUID());
+        log.setSid(UUIDUtils.randomUUID());
         List<Log> logs = new ArrayList<>();
         logs.add(log);
         container.setLogs(logs);
@@ -137,8 +138,8 @@ public class AvalancheIngestionHttpTest {
         httpClient.setBaseUrl("http://mock");
 
         /* Test calling code. */
-        UUID appKey = UUID.randomUUID();
-        UUID installId = UUID.randomUUID();
+        UUID appKey = UUIDUtils.randomUUID();
+        UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         httpClient.sendAsync(appKey, installId, container, serviceCallback);
         verify(serviceCallback, timeout(1000)).failure(new HttpException(503));
@@ -153,7 +154,7 @@ public class AvalancheIngestionHttpTest {
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp(mock(UrlConnectionFactory.class), serializer);
         httpClient.setBaseUrl("http://mock");
         final Semaphore semaphore = new Semaphore(0);
-        ServiceCall call = httpClient.sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), new ServiceCallback() {
+        ServiceCall call = httpClient.sendAsync(UUIDUtils.randomUUID(), UUIDUtils.randomUUID(), new LogContainer(), new ServiceCallback() {
 
             @Override
             public void success() {
@@ -174,7 +175,7 @@ public class AvalancheIngestionHttpTest {
 
     @Test(expected = IllegalStateException.class)
     public void noUrl() {
-        new AvalancheIngestionHttp(mock(UrlConnectionFactory.class), mock(LogSerializer.class)).sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
+        new AvalancheIngestionHttp(mock(UrlConnectionFactory.class), mock(LogSerializer.class)).sendAsync(UUIDUtils.randomUUID(), UUIDUtils.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
     }
 
     @Test
@@ -185,7 +186,7 @@ public class AvalancheIngestionHttpTest {
         IOException exception = new IOException("mock");
         when(urlConnectionFactory.openConnection(any(URL.class))).thenThrow(exception);
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        httpClient.sendAsync(UUID.randomUUID(), UUID.randomUUID(), new LogContainer(), serviceCallback);
+        httpClient.sendAsync(UUIDUtils.randomUUID(), UUIDUtils.randomUUID(), new LogContainer(), serviceCallback);
         verify(serviceCallback, timeout(1000)).failure(exception);
         verifyNoMoreInteractions(serviceCallback);
     }

@@ -17,7 +17,7 @@ public class IdHelper {
         }
         catch (Exception e) {
             AvalancheLog.warn("Unable to get installID from Shared Preferences");
-            installId = UUID.randomUUID();
+            installId = UUIDUtils.randomUUID();
             StorageHelper.PreferencesStorage.putString(KEY_INSTALL_ID, installId.toString());
         }
         return installId;

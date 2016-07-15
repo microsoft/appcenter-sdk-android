@@ -26,6 +26,7 @@ import avalanche.core.persistence.AvalancheDatabasePersistence;
 import avalanche.core.persistence.AvalanchePersistence;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.StorageHelper;
+import avalanche.core.utils.UUIDUtils;
 
 import static avalanche.core.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
 import static avalanche.core.channel.DefaultAvalancheChannel.ERROR_GROUP;
@@ -53,7 +54,7 @@ public class DefaultAvalancheChannelTest {
         StorageHelper.initialize(sContext);
 
         sDeviceLog = new MockLog();
-        sDeviceLog.setSid(UUID.randomUUID());
+        sDeviceLog.setSid(UUIDUtils.randomUUID());
         Device device = new Device();
         device.setSdkVersion("1.2.3");
         device.setModel("S5");
@@ -73,7 +74,7 @@ public class DefaultAvalancheChannelTest {
 
     @Test
     public void creationWorks() {
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), sLogSerializer);
         assertNotNull(sut);
     }
 
@@ -121,7 +122,7 @@ public class DefaultAvalancheChannelTest {
                         logs.add(sDeviceLog);
                     }
                 }
-                return UUID.randomUUID().toString();
+                return UUIDUtils.randomUUID().toString();
             }
         }).then(new Answer<String>() {
             @SuppressWarnings("unchecked")
@@ -142,7 +143,7 @@ public class DefaultAvalancheChannelTest {
             }
         });
 
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), sLogSerializer);
         sut.setPersistence(mockPersistence);
         sut.setIngestion(mockIngestion);
 
@@ -184,7 +185,7 @@ public class DefaultAvalancheChannelTest {
                                 logs.add(sDeviceLog);
                             }
                         }
-                        uuidString = UUID.randomUUID().toString();
+                        uuidString = UUIDUtils.randomUUID().toString();
                     }
 
                 }
@@ -206,7 +207,7 @@ public class DefaultAvalancheChannelTest {
         });
 
         //don't provide a UUID to prevent sending
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), mockIngestion, mockPersistence, sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), mockIngestion, mockPersistence, sLogSerializer);
 
         //Enqueuing 50 events.
         for (int i = 0; i < 50; i++) {
@@ -249,6 +250,7 @@ public class DefaultAvalancheChannelTest {
 
         //Use a fresh persistence, that will return 50 objects, then another 20 objects.
         AvalancheDatabasePersistence newPersistence = mock(AvalancheDatabasePersistence.class);
+        //noinspection unchecked
         when(newPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(new Answer<String>() {
             @SuppressWarnings("unchecked")
             public String answer(InvocationOnMock invocation) throws Throwable {
@@ -260,7 +262,7 @@ public class DefaultAvalancheChannelTest {
                         logs.add(sDeviceLog);
                     }
                 }
-                return UUID.randomUUID().toString();
+                return UUIDUtils.randomUUID().toString();
             }
         }).then(new Answer<String>() {
             @SuppressWarnings("unchecked")
@@ -273,7 +275,7 @@ public class DefaultAvalancheChannelTest {
                         logs.add(sDeviceLog);
                     }
                 }
-                return UUID.randomUUID().toString();
+                return UUIDUtils.randomUUID().toString();
             }
         }).then(new Answer<String>() {
             @SuppressWarnings("unchecked")
@@ -285,7 +287,7 @@ public class DefaultAvalancheChannelTest {
                         logs.add(sDeviceLog);
                     }
                 }
-                return UUID.randomUUID().toString();
+                return UUIDUtils.randomUUID().toString();
             }
         }).then(new Answer<String>() {
             @SuppressWarnings("unchecked")
@@ -348,7 +350,7 @@ public class DefaultAvalancheChannelTest {
                     ArrayList logs = (ArrayList) args[2];
                     logs.add(sDeviceLog);
                 }
-                return UUID.randomUUID().toString();
+                return UUIDUtils.randomUUID().toString();
             }
         }).then(new Answer<String>() {
             @Override
@@ -370,7 +372,7 @@ public class DefaultAvalancheChannelTest {
             }
         });
 
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), sLogSerializer);
         sut.setIngestion(mockIngestion);
         sut.setPersistence(mockPersistence);
 
@@ -407,7 +409,7 @@ public class DefaultAvalancheChannelTest {
                             ArrayList logs = (ArrayList) args[2];
                             logs.add(sDeviceLog);
                         }
-                        uuidString = UUID.randomUUID().toString();
+                        uuidString = UUIDUtils.randomUUID().toString();
                     }
 
                 }
@@ -427,7 +429,7 @@ public class DefaultAvalancheChannelTest {
             }
         });
 
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), mockIngestion, mockPersistence, sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), mockIngestion, mockPersistence, sLogSerializer);
 
         //Enqueuing 1 error.
         sut.enqueue(sDeviceLog, ERROR_GROUP);
@@ -462,7 +464,7 @@ public class DefaultAvalancheChannelTest {
         //Stubbing getLogs so Persistence returns a batchID and adds 1 log to the list for ERROR_GROUP and nothing for ANALYTICS_GROUP
         //NOTE: the newIngestion-mock responds 6x with something. We only want 5 error logs, so why have 6 then-clauses?
         // because triggerIngestion() will also trigger one request to the persistence for a analytics log, so we need to
-        // stubg a total of 6 calls until the mocked persistence returns null.
+        // stub a total of 6 calls until the mocked persistence returns null.
         //noinspection unchecked
         when(newPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(new Answer<String>() {
             @SuppressWarnings("unchecked")
@@ -474,7 +476,7 @@ public class DefaultAvalancheChannelTest {
                             ArrayList logs = (ArrayList) args[2];
                             logs.add(sDeviceLog);
                         }
-                        return UUID.randomUUID().toString();
+                        return UUIDUtils.randomUUID().toString();
                     }
                 }
                 return null;
@@ -489,7 +491,7 @@ public class DefaultAvalancheChannelTest {
                             ArrayList logs = (ArrayList) args[2];
                             logs.add(sDeviceLog);
                         }
-                        return UUID.randomUUID().toString();
+                        return UUIDUtils.randomUUID().toString();
                     }
                 }
                 return null;
@@ -504,7 +506,7 @@ public class DefaultAvalancheChannelTest {
                             ArrayList logs = (ArrayList) args[2];
                             logs.add(sDeviceLog);
                         }
-                        return UUID.randomUUID().toString();
+                        return UUIDUtils.randomUUID().toString();
                     }
                 }
                 return null;
@@ -519,7 +521,7 @@ public class DefaultAvalancheChannelTest {
                             ArrayList logs = (ArrayList) args[2];
                             logs.add(sDeviceLog);
                         }
-                        return UUID.randomUUID().toString();
+                        return UUIDUtils.randomUUID().toString();
                     }
                 }
                 return null;
@@ -534,7 +536,7 @@ public class DefaultAvalancheChannelTest {
                             ArrayList logs = (ArrayList) args[2];
                             logs.add(sDeviceLog);
                         }
-                        return UUID.randomUUID().toString();
+                        return UUIDUtils.randomUUID().toString();
                     }
                 }
                 return null;
@@ -549,7 +551,7 @@ public class DefaultAvalancheChannelTest {
                             ArrayList logs = (ArrayList) args[2];
                             logs.add(sDeviceLog);
                         }
-                        return UUID.randomUUID().toString();
+                        return UUIDUtils.randomUUID().toString();
                     }
                 }
                 return null;
@@ -592,7 +594,7 @@ public class DefaultAvalancheChannelTest {
                         logs.add(sDeviceLog);
                     }
                 }
-                return UUID.randomUUID().toString();
+                return UUIDUtils.randomUUID().toString();
             }
         }).then(new Answer<String>() {
             @SuppressWarnings("unchecked")
@@ -613,7 +615,7 @@ public class DefaultAvalancheChannelTest {
             }
         });
 
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUID.randomUUID(), mockIngestion, mockPersistence, sLogSerializer);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), mockIngestion, mockPersistence, sLogSerializer);
 
         //Enqueuing 20 events.
         for (int i = 0; i < 20; i++) {
