@@ -30,6 +30,9 @@ import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.UUIDUtils;
 
 import static avalanche.core.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
@@ -49,6 +52,7 @@ public class AvalancheIngestionHttpTest {
     public void success() throws JSONException, InterruptedException, IOException {
 
         /* Build some payload. */
+        long toffset = System.currentTimeMillis();
         LogContainer container = new LogContainer();
         Device device = new Device();
         device.setSdkVersion("1.2.3");
@@ -65,6 +69,7 @@ public class AvalancheIngestionHttpTest {
         Log log = new MockLog();
         log.setDevice(device);
         log.setSid(UUIDUtils.randomUUID());
+        log.setToffset(toffset);
         List<Log> logs = new ArrayList<>();
         logs.add(log);
         container.setLogs(logs);
@@ -94,8 +99,22 @@ public class AvalancheIngestionHttpTest {
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Key", appKey.toString());
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
-        Assert.assertEquals(serializer.serializeContainer(container), buffer.toString("UTF-8"));
         verify(urlConnection).disconnect();
+        httpClient.close();
+
+        /* Verify payload and toffset manipulation. */
+        assertEquals(toffset, log.getToffset());
+        String sentPayload = buffer.toString("UTF-8");
+        LogContainer sentContainer = serializer.deserializeContainer(sentPayload);
+        assertNotNull(sentContainer);
+        List<Log> sentLogs = sentContainer.getLogs();
+        assertNotNull(sentLogs);
+        assertEquals(1, sentLogs.size());
+        Log sentLog = sentLogs.get(0);
+        assertTrue(sentLog instanceof MockLog);
+        assertTrue(sentLog.getToffset() >= 0 && sentLog.getToffset() <= 1000);
+        sentLog.setToffset(toffset);
+        assertEquals(container, sentContainer);
     }
 
     @Test
@@ -189,5 +208,39 @@ public class AvalancheIngestionHttpTest {
         httpClient.sendAsync(UUIDUtils.randomUUID(), UUIDUtils.randomUUID(), new LogContainer(), serviceCallback);
         verify(serviceCallback, timeout(1000)).failure(exception);
         verifyNoMoreInteractions(serviceCallback);
+    }
+
+    @Test
+    public void failedSerialization() throws IOException {
+
+        /* Serialization will fail on invalid JSON (required fields). */
+        long toffset = System.currentTimeMillis();
+        LogContainer container = new LogContainer();
+        Log log = new MockLog();
+        log.setToffset(toffset);
+        List<Log> logs = new ArrayList<>();
+        logs.add(log);
+        container.setLogs(logs);
+
+        /* Configure mock HTTP. */
+        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        UrlConnectionFactory urlConnectionFactory = mock(UrlConnectionFactory.class);
+        when(urlConnectionFactory.openConnection(any(URL.class))).thenReturn(urlConnection);
+
+        /* Configure API client. */
+        LogSerializer serializer = new DefaultLogSerializer();
+        serializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp(urlConnectionFactory, serializer);
+        httpClient.setBaseUrl("http://mock");
+
+        /* Test calling code. */
+        UUID appKey = UUID.randomUUID();
+        UUID installId = UUID.randomUUID();
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        httpClient.sendAsync(appKey, installId, container, serviceCallback);
+        verify(serviceCallback, timeout(1000)).failure(any(JSONException.class));
+        verifyNoMoreInteractions(serviceCallback);
+        verify(urlConnection).disconnect();
+        assertEquals(toffset, log.getToffset());
     }
 }

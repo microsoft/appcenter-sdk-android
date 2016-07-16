@@ -9,11 +9,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 import java.util.UUID;
 
 import avalanche.core.ingestion.AvalancheIngestion;
 import avalanche.core.ingestion.ServiceCall;
 import avalanche.core.ingestion.ServiceCallback;
+import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.LogContainer;
 import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.utils.AvalancheLog;
@@ -156,13 +158,12 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     private void doCall(UUID appKey, UUID installId, LogContainer logContainer) throws Exception {
 
         /* HTTP session. */
-        HttpURLConnection urlConnection = null;
+        URL url = new URL(mBaseUrl + API_PATH);
+        AvalancheLog.verbose(LOG_TAG, "Calling " + url + " ...");
+        HttpURLConnection urlConnection = mUrlConnectionFactory.openConnection(url);
         try {
 
-            /* Init connection. */
-            URL url = new URL(mBaseUrl + API_PATH);
-            AvalancheLog.verbose(LOG_TAG, "Calling " + url + " ...");
-            urlConnection = mUrlConnectionFactory.openConnection(url);
+            /* Configure connection timeouts. */
             urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
             urlConnection.setReadTimeout(READ_TIMEOUT);
 
@@ -172,13 +173,32 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             urlConnection.setRequestProperty(INSTALL_ID, installId.toString());
             AvalancheLog.verbose(LOG_TAG, "Headers: " + urlConnection.getRequestProperties());
 
+            /* Timestamps need to be as accurate as possible so we convert absolute time to relative now. Save times. */
+            List<Log> logs = logContainer.getLogs();
+            int size = logs.size();
+            long[] absoluteTimes = new long[size];
+            for (int i = 0; i < size; i++) {
+                Log log = logs.get(i);
+                long toffset = log.getToffset();
+                absoluteTimes[i] = toffset;
+                log.setToffset(System.currentTimeMillis() - toffset);
+            }
+
             /* Serialize payload. */
-            urlConnection.setDoOutput(true);
-            String payload = mLogSerializer.serializeContainer(logContainer);
+            String payload;
+            try {
+                payload = mLogSerializer.serializeContainer(logContainer);
+            } finally {
+
+                /* Restore original times, could be retried later. */
+                for (int i = 0; i < size; i++)
+                    logs.get(i).setToffset(absoluteTimes[i]);
+            }
             AvalancheLog.verbose(LOG_TAG, payload);
 
             /* Send payload through the wire. */
             byte[] binaryPayload = payload.getBytes(CHARSET_NAME);
+            urlConnection.setDoOutput(true);
             urlConnection.setFixedLengthStreamingMode(binaryPayload.length);
             OutputStream out = urlConnection.getOutputStream();
             out.write(binaryPayload);
@@ -195,8 +215,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
         } finally {
 
             /* Release connection. */
-            if (urlConnection != null)
-                urlConnection.disconnect();
+            urlConnection.disconnect();
         }
     }
 

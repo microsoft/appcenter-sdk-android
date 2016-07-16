@@ -90,6 +90,7 @@ public class DefaultAvalancheChannelTest {
         //Enqueuing 49 events.
         for (int i = 0; i < 49; i++) {
             sut.enqueue(sDeviceLog, ANALYTICS_GROUP);
+            assertTrue(System.currentTimeMillis() - sDeviceLog.getToffset() <= 100);
         }
 
         //Check if our counter is equal the number of events.
@@ -318,13 +319,14 @@ public class DefaultAvalancheChannelTest {
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
         //don't provide a UUID to prevent sending
-        @SuppressWarnings("ConstantConditions") DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, null, mockIngestion, mockPersistence, sLogSerializer);
+        @SuppressWarnings("ConstantConditions")
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, null, mockIngestion, mockPersistence, sLogSerializer);
 
         //Enqueuing 4 events.
-        sut.enqueue(sDeviceLog, ERROR_GROUP);
-        sut.enqueue(sDeviceLog, ERROR_GROUP);
-        sut.enqueue(sDeviceLog, ERROR_GROUP);
-        sut.enqueue(sDeviceLog, ERROR_GROUP);
+        for (int i = 0; i < 4; i++) {
+            sut.enqueue(sDeviceLog, ERROR_GROUP);
+            assertTrue(System.currentTimeMillis() - sDeviceLog.getToffset() <= 100);
+        }
 
         //The counter should have been 0 now as we have reached the limit
         assertEquals(0, sut.getErrorCounter());
