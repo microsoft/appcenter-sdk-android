@@ -259,8 +259,8 @@ public final class StorageHelper {
         /**
          * Reads an object from the file (deserialization).
          *
-         * @param file  The file instance.
-         * @return The deserialized instance.
+         * @param file The file instance.
+         * @return The de-serialized instance.
          * @throws IOException
          * @throws ClassNotFoundException
          */
@@ -367,7 +367,7 @@ public final class StorageHelper {
          *
          * @param path An absolute path for directory.
          */
-        @SuppressWarnings("ResultOfMethodCallIgnored")
+        @SuppressWarnings({"ResultOfMethodCallIgnored", "SpellCheckingInspection"})
         public static void mkdir(@NonNull String path) {
             File dir = new File(path);
             dir.mkdirs();

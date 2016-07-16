@@ -38,7 +38,7 @@ import static org.junit.Assert.assertTrue;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class StorageHelperTest {
+public class StorageHelperAndroidTest {
     /**
      * Log tag.
      */
@@ -74,7 +74,7 @@ public class StorageHelperTest {
         InternalStorage.mkdir(sAndroidFilesPath);
 
         /* Create a test schema. */
-        mSchema = getContentValues();
+        mSchema = generateContentValues();
     }
 
     @AfterClass
@@ -109,6 +109,7 @@ public class StorageHelperTest {
         /* Delete database. */
         sContext.deleteDatabase("test-databaseStorage");
         sContext.deleteDatabase("test-databaseStorageUpgrade");
+        sContext.deleteDatabase("test-putTooManyLogs");
         sContext.deleteDatabase("test-databaseStorageScannerRemove");
         sContext.deleteDatabase("test-databaseStorageScannerNext");
         sContext.deleteDatabase("test-databaseStorageInMemoryDB");
@@ -175,7 +176,7 @@ public class StorageHelperTest {
         return testData;
     }
 
-    private static ContentValues getContentValues() {
+    private static ContentValues generateContentValues() {
         Random random = new Random(System.currentTimeMillis());
         byte[] randomBytes = new byte[10];
         random.nextBytes(randomBytes);
@@ -205,16 +206,27 @@ public class StorageHelperTest {
         assertArrayEquals(expected.getAsByteArray("COL_BYTE_ARRAY"), actual.getAsByteArray("COL_BYTE_ARRAY"));
     }
 
-    private static void runDatabaseStorageTest(DatabaseStorage databaseStorage) {
-        ContentValues firstValue = getContentValues();
-        ContentValues secondValue = getContentValues();
-        ContentValues thirdValue = getContentValues();
+    @SuppressWarnings("SpellCheckingInspection")
+    private static void runDatabaseStorageTest(DatabaseStorage databaseStorage, boolean imdbTest) {
+        ContentValues firstValue = generateContentValues();
+        ContentValues secondValue = generateContentValues();
+        ContentValues thirdValue = generateContentValues();
 
         /* Put. */
         Long firstValueId = databaseStorage.put(firstValue);
-        Long secondValueId = databaseStorage.put(secondValue);
-
         assertNotNull(firstValueId);
+
+
+        /* Get for in-memory database test. */
+        if (imdbTest) {
+            ContentValues firstValueFromDatabase = databaseStorage.get("COL_STRING", firstValue.getAsString("COL_STRING"));
+            assertContentValuesEquals(firstValue, firstValueFromDatabase);
+            firstValueFromDatabase = databaseStorage.get("COL_STRING", firstValue.getAsString("COL_STRING") + "X");
+            assertNull(firstValueFromDatabase);
+        }
+
+        /* Put another. */
+        Long secondValueId = databaseStorage.put(secondValue);
         assertNotNull(secondValueId);
 
         /* Generate an ID that is neither firstValueId nor secondValueId. */
@@ -288,10 +300,11 @@ public class StorageHelperTest {
         /* Create a mock data. */
         String filename1 = prefix + "-" + UUIDUtils.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION;
         String contents1 = "java.lang.NullPointerException: Attempt to invoke virtual method 'boolean java.lang.String.isEmpty()' on a null object reference\n" +
-                "at avalanche.base.utils.StorageHelperTest.internalStorage(StorageHelperTest.java:124)\n" +
+                "at avalanche.base.utils.StorageHelperAndroidTest.internalStorage(StorageHelperAndroidTest.java:124)\n" +
                 "at java.lang.reflect.Method.invoke(Native Method)\n" +
                 "at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)";
         String filename2 = prefix + "-" + UUIDUtils.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION;
+        //noinspection SpellCheckingInspection
         String contents2 = "java.io.FileNotFoundException: 6c1b1c58-1c2f-47d9-8f04-52639c3a804d: open failed: EROFS (Read-only file system)\n" +
                 "at libcore.io.IoBridge.open(IoBridge.java:452)\n" +
                 "at java.io.FileOutputStream.<init>(FileOutputStream.java:87)\n" +
@@ -371,7 +384,7 @@ public class StorageHelperTest {
         /* Read the file. */
         DataModel actual = InternalStorage.readObject(file);
 
-        /* Verify the deserialized instance and original instance are same. */
+        /* Verify the de-serialized instance and original instance are same. */
         assertNotNull(actual);
         assertEquals(model.number, actual.number);
         assertEquals(model.object.text, actual.object.text);
@@ -396,7 +409,7 @@ public class StorageHelperTest {
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
-            runDatabaseStorageTest(databaseStorage);
+            runDatabaseStorageTest(databaseStorage, false);
         } finally {
             /* Close. */
             databaseStorage.close();
@@ -441,6 +454,41 @@ public class StorageHelperTest {
 
         try {
             assertEquals(10, databaseStorage.getColumnNames().length);
+        } finally {
+            /* Close. */
+            databaseStorage.close();
+        }
+    }
+
+    @Test
+    public void putTooManyLogs() throws IOException {
+        Log.i(TAG, "Testing Database Storage Capacity");
+
+        /* Get instance to access database. */
+        final int capacity = 2;
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-putTooManyLogs", "putTooManyLogs", 1, mSchema, capacity, new DatabaseStorage.DatabaseErrorListener() {
+            @Override
+            public void onError(String operation, RuntimeException e) {
+                throw e;
+            }
+        });
+
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
+        try {
+            ContentValues firstValue = generateContentValues();
+            ContentValues secondValue = generateContentValues();
+            ContentValues thirdValue = generateContentValues();
+
+            /* Put. */
+            Long firstValueId = databaseStorage.put(firstValue);
+            Long secondValueId = databaseStorage.put(secondValue);
+            Long thirdValueId = databaseStorage.put(thirdValue);
+
+            assertNotNull(firstValueId);
+            assertNotNull(secondValueId);
+            assertNotNull(thirdValueId);
+
+            assertEquals(capacity, databaseStorage.getRowCount());
         } finally {
             /* Close. */
             databaseStorage.close();
@@ -507,49 +555,7 @@ public class StorageHelperTest {
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
-            runDatabaseStorageTest(databaseStorage);
-        } finally {
-            /* Close. */
-            databaseStorage.close();
-        }
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void databaseStorageScannerRemoveInMemoryDB() throws IOException {
-        Log.i(TAG, "Testing Database Storage Exceptions");
-
-        /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageInMemoryDB", "test.databaseStorageInMemoryDB", 1, mSchema, new DatabaseStorage.DatabaseErrorListener() {
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                /* Do not handle any errors. This is simulating errors so this is expected. */
-            }
-        });
-
-        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
-        try {
-            databaseStorage.getScanner().iterator().remove();
-        } finally {
-            /* Close. */
-            databaseStorage.close();
-        }
-    }
-
-    @Test(expected = NoSuchElementException.class)
-    public void databaseStorageScannerNextInMemoryDB() throws IOException {
-        Log.i(TAG, "Testing Database Storage Exceptions");
-
-        /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageInMemoryDB", "databaseStorageInMemoryDB", 1, mSchema, new DatabaseStorage.DatabaseErrorListener() {
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                /* Do not handle any errors. This is simulating errors so this is expected. */
-            }
-        });
-
-        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
-        try {
-            databaseStorage.getScanner().iterator().next();
+            runDatabaseStorageTest(databaseStorage, true);
         } finally {
             /* Close. */
             databaseStorage.close();
