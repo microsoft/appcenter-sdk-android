@@ -135,6 +135,9 @@ public final class Avalanche {
 
     private synchronized void mSetEnabled(boolean enabled) {
 
+        /* Update channel state. */
+        mChannel.setEnabled(enabled);
+
         /* Un-subscribe app callbacks if we were enabled and now disabled. */
         boolean switchToDisabled = mEnabled && !enabled;
         boolean switchToEnabled = !mEnabled && enabled;
@@ -225,5 +228,10 @@ public final class Avalanche {
     @VisibleForTesting
     Application getApplication() {
         return mApplication;
+    }
+
+    @VisibleForTesting
+    void setChannel(AvalancheChannelSessionDecorator channel) {
+        mChannel = channel;
     }
 }

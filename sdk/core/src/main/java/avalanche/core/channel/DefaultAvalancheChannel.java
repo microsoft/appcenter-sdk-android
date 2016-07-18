@@ -161,12 +161,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         this.mPersistence = mPersistence;
     }
 
-    /**
-     * Flag to check if the channel was disabled.
-     *
-     * @return true if channel is enabled, false otherwise.
-     */
-    boolean isEnabled() {
+    @Override
+    public boolean isEnabled() {
         return mEnabled;
     }
 
@@ -177,7 +173,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      *
      * @param enabled flag to enable or disable the channel.
      */
-    void setEnabled(boolean enabled) {
+    @Override
+    public void setEnabled(boolean enabled) {
         mEnabled = enabled;
     }
 

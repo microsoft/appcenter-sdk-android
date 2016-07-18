@@ -118,6 +118,16 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
         mLastQueuedLogTime = SystemClock.elapsedRealtime();
     }
 
+    @Override
+    public boolean isEnabled() {
+        return mChannel.isEnabled();
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        mChannel.setEnabled(enabled);
+    }
+
     /**
      * Add common attributes to logs before forwarding to delegate channel.
      *

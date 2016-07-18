@@ -15,8 +15,10 @@ import avalanche.core.ingestion.models.json.MockLog;
 
 import static avalanche.core.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
@@ -157,5 +159,30 @@ public class AvalancheChannelSessionDecoratorTest {
         AvalancheChannel sessionChannel = new AvalancheChannelSessionDecorator(context, channel);
         sessionChannel.enqueue(new MockLog(), ANALYTICS_GROUP);
         verifyZeroInteractions(channel);
+    }
+
+    @Test
+    public void enableAndDisable() {
+
+        /* Setup mock. */
+        AvalancheChannel channel = mock(AvalancheChannel.class);
+        AvalancheChannel sessionChannel = new AvalancheChannelSessionDecorator(mock(Context.class), channel);
+
+        /* Check initial state is enabled. */
+        when(channel.isEnabled()).thenReturn(true);
+        assertTrue(sessionChannel.isEnabled());
+        verify(channel).isEnabled();
+
+        /* Check disabling. */
+        sessionChannel.setEnabled(false);
+        verify(channel).setEnabled(false);
+        when(channel.isEnabled()).thenReturn(false);
+        assertFalse(sessionChannel.isEnabled());
+
+        /* Check enabling. */
+        sessionChannel.setEnabled(true);
+        verify(channel).setEnabled(true);
+        when(channel.isEnabled()).thenReturn(true);
+        assertTrue(sessionChannel.isEnabled());
     }
 }
