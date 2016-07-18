@@ -34,6 +34,7 @@ import static avalanche.core.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
@@ -225,7 +226,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockPersistence, times(0)).deleteLog(any(String.class), any(String.class));
 
         //Verify that the Channel is disabled
-        assertTrue(sut.isDisabled());
+        assertFalse(sut.isEnabled());
 
         //Enqueuing 20 more events.
         for (int i = 0; i < 20; i++) {
@@ -299,7 +300,7 @@ public class DefaultAvalancheChannelTest {
 
         sut.setPersistence(newPersistence);
 
-        sut.setDisabled(false);
+        sut.setEnabled(true);
         sut.triggerIngestion();
 
         //The counter should back to 0 now.
@@ -446,7 +447,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockPersistence, times(0)).deleteLog(any(String.class), any(String.class));
 
         //Verify that the Channel is disabled
-        assertTrue(sut.isDisabled());
+        assertFalse(sut.isEnabled());
 
         //Using a fresh ingestion object to change our stub to use the analyticsSuccess()-callback
         AvalancheIngestion newIngestion = mock(AvalancheIngestion.class);
@@ -567,7 +568,7 @@ public class DefaultAvalancheChannelTest {
 
         sut.setPersistence(newPersistence);
 
-        sut.setDisabled(false);
+        sut.setEnabled(true);
         sut.triggerIngestion();
 
 
