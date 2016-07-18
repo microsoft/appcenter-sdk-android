@@ -79,7 +79,7 @@ public class DefaultAvalancheChannelTest {
     }
 
     @Test
-    public void persistAnalytics() throws AvalanchePersistence.PersistenceException, InterruptedException {
+    public void persistAnalytics() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
@@ -94,20 +94,20 @@ public class DefaultAvalancheChannelTest {
         }
 
         //Check if our counter is equal the number of events.
-        assertEquals(49, sut.getAnalyticsCounter());
+        assertEquals(49, sut.getCounter(ANALYTICS_GROUP));
 
         //Enqueue another event.
         sut.enqueue(sDeviceLog, ANALYTICS_GROUP);
 
         //The counter should be 0 as we reset the counter after reaching the limit of 50.
-        assertEquals(0, sut.getAnalyticsCounter());
+        assertEquals(0, sut.getCounter(ANALYTICS_GROUP));
 
         //Verifying that 5 items have been persisted.
         verify(mockPersistence, times(50)).putLog(ANALYTICS_GROUP, sDeviceLog);
     }
 
     @Test
-    public void analyticsSuccess() throws AvalanchePersistence.PersistenceException, InterruptedException {
+    public void analyticsSuccess() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
 
         //Stubbing getLogs so Persistence returns a batchID and adds N logs to the list, return null for all other calls
@@ -163,7 +163,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockPersistence, times(1)).deleteLog(any(String.class), any(String.class));
 
         //The counter should be 0 now as we sent data.
-        assertEquals(0, sut.getAnalyticsCounter());
+        assertEquals(0, sut.getCounter(ANALYTICS_GROUP));
     }
 
     @Test
@@ -233,7 +233,7 @@ public class DefaultAvalancheChannelTest {
         }
 
         //The counter should have been 0 now as we are disabled and the counter is not increased.
-        assertEquals(0, sut.getAnalyticsCounter());
+        assertEquals(0, sut.getCounter(ANALYTICS_GROUP));
 
         //Using a fresh ingestion object to change our stub to use the analyticsSuccess()-callback
         AvalancheIngestionHttp newIngestion = mock(AvalancheIngestionHttp.class);
@@ -303,7 +303,7 @@ public class DefaultAvalancheChannelTest {
         sut.triggerIngestion();
 
         //The counter should back to 0 now.
-        assertEquals(0, sut.getAnalyticsCounter());
+        assertEquals(0, sut.getCounter(ANALYTICS_GROUP));
 
         //Verify that we have called sendAsync on the ingestion 5 times total.
         verify(newIngestion, times(3)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -313,7 +313,7 @@ public class DefaultAvalancheChannelTest {
     }
 
     @Test
-    public void persistErrorLog() throws AvalanchePersistence.PersistenceException, InterruptedException {
+    public void persistErrorLog() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
 
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
@@ -329,7 +329,7 @@ public class DefaultAvalancheChannelTest {
         }
 
         //The counter should have been 0 now as we have reached the limit
-        assertEquals(0, sut.getErrorCounter());
+        assertEquals(0, sut.getCounter(ERROR_GROUP));
 
         //Enqueue another event.
         sut.enqueue(sDeviceLog, ERROR_GROUP);
@@ -391,7 +391,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockPersistence, times(1)).deleteLog(any(String.class), any(String.class));
 
         //The counter should be 0 now as we sent data.
-        assertEquals(0, sut.getErrorCounter());
+        assertEquals(0, sut.getCounter(ERROR_GROUP));
     }
 
     @Test
@@ -636,6 +636,6 @@ public class DefaultAvalancheChannelTest {
         verify(mockPersistence, times(1)).deleteLog(any(String.class), any(String.class));
 
         //The counter should be 0 now as we sent data.
-        assertEquals(0, sut.getAnalyticsCounter());
+        assertEquals(0, sut.getCounter(ANALYTICS_GROUP));
     }
 }
