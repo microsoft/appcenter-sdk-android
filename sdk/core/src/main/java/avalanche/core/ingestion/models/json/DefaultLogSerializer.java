@@ -5,15 +5,18 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import avalanche.core.BuildConfig;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.LogContainer;
 import avalanche.core.ingestion.models.StartSessionLog;
 import avalanche.core.ingestion.models.utils.LogUtils;
+import avalanche.core.utils.AvalancheLog;
 
 import static avalanche.core.ingestion.models.CommonProperties.TYPE;
 
@@ -59,12 +62,29 @@ public class DefaultLogSerializer implements LogSerializer {
 
     @Override
     public String serializeContainer(LogContainer logContainer) throws JSONException {
+
+        /* Check log container is set. */
         try {
             LogUtils.checkNotNull(LOGS, logContainer.getLogs());
         } catch (IllegalArgumentException e) {
             throw new JSONException(e.getMessage());
         }
-        JSONStringer writer = new JSONStringer();
+
+        /* Init JSON serializer, in debug/verbose: try to make it pretty. */
+        JSONStringer writer = null;
+        if (BuildConfig.DEBUG && AvalancheLog.getLogLevel() <= android.util.Log.VERBOSE) {
+            try {
+                Constructor<JSONStringer> constructor = JSONStringer.class.getDeclaredConstructor(int.class);
+                constructor.setAccessible(true);
+                writer = constructor.newInstance(2);
+            } catch (Exception e) {
+                AvalancheLog.error("Failed to setup pretty json, falling back to default one", e);
+            }
+        }
+        if (writer == null)
+            writer = new JSONStringer();
+
+        /* Start writing JSON. */
         writer.object();
         writer.key(LOGS).array();
         for (Log log : logContainer.getLogs())
