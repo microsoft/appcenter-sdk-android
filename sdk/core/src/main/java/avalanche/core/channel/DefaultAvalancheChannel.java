@@ -144,6 +144,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param persistence   persistence object for dependency injection
      * @param logSerializer log serializer object for dependency injection
      */
+    @VisibleForTesting
     DefaultAvalancheChannel(@NonNull Context context, @NonNull UUID appKey, @NonNull AvalancheIngestion ingestion, @NonNull AvalanchePersistence persistence, @NonNull LogSerializer logSerializer) {
         this(context, appKey, logSerializer);
         mPersistence = persistence;
@@ -151,10 +152,11 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     }
 
     /**
-     * Setter for persistence object, to be used for dependency injection
+     * Setter for persistence object, to be used for dependency injection.
      *
      * @param mPersistence the persistence object.
      */
+    @VisibleForTesting
     void setPersistence(AvalanchePersistence mPersistence) {
         this.mPersistence = mPersistence;
     }
@@ -182,7 +184,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * Reset the counter for a group and restart the timer.
      *
-     * @param groupName the group mName
+     * @param groupName the group name.
      */
     private void resetThresholds(@GroupNameDef String groupName) {
         synchronized (LOCK) {
@@ -256,8 +258,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
             //Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending.
             //condition to stop recursion
-            if (groupState.mSendingBatches.size() == groupState.mMaxParallelRequests) {
-                AvalancheLog.debug(TAG, "Already sending " + groupState.mMaxParallelRequests + " batches of analytics data to the server.");
+            if (groupState.mSendingBatches.size() == groupState.mMaxParallelBatches) {
+                AvalancheLog.debug(TAG, "Already sending " + groupState.mMaxParallelBatches + " batches of analytics data to the server.");
                 return;
             }
 
@@ -409,17 +411,41 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         }
     }
 
+    /**
+     * State for a specific log group.
+     */
     private class GroupState {
 
+        /**
+         * Group name
+         */
         final String mName;
 
+        /**
+         * Maximum log count per batch.
+         */
         final int mMaxLogsPerBatch;
 
+        /**
+         * Time to wait before 2 batches, in ms.
+         */
         final int mBatchTimeInterval;
 
-        final int mMaxParallelRequests;
+        /**
+         * Maximum number of batches in parallel.
+         */
+        final int mMaxParallelBatches;
+
+        /**
+         * Batches being currently sent to ingestion.
+         */
         final Collection<String> mSendingBatches = new ArrayList<>();
+
+        /**
+         * Pending log count not part of a batch yet.
+         */
         int mPendingLogCount;
+
         /**
          * Runnable that triggers ingestion of this group data
          * and triggers itself in {@link #mBatchTimeInterval} ms.
@@ -434,11 +460,19 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             }
         };
 
-        GroupState(String name, int maxLogsPerBatch, int batchTimeInterval, int maxParallelRequests) {
+        /**
+         * Init.
+         *
+         * @param name               group name.
+         * @param maxLogsPerBatch    max batch size.
+         * @param batchTimeInterval  batch interval in ms.
+         * @param maxParallelBatches max number of parallel batches.
+         */
+        GroupState(String name, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches) {
             mName = name;
             mMaxLogsPerBatch = maxLogsPerBatch;
             mBatchTimeInterval = batchTimeInterval;
-            mMaxParallelRequests = maxParallelRequests;
+            mMaxParallelBatches = maxParallelBatches;
         }
     }
 }
