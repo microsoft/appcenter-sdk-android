@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import avalanche.core.BuildConfig;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.LogContainer;
 import avalanche.core.ingestion.models.StartSessionLog;
@@ -72,7 +71,7 @@ public class DefaultLogSerializer implements LogSerializer {
 
         /* Init JSON serializer, in debug/verbose: try to make it pretty. */
         JSONStringer writer = null;
-        if (BuildConfig.DEBUG && AvalancheLog.getLogLevel() <= android.util.Log.VERBOSE) {
+        if (AvalancheLog.getLogLevel() <= android.util.Log.VERBOSE) {
             try {
                 Constructor<JSONStringer> constructor = JSONStringer.class.getDeclaredConstructor(int.class);
                 constructor.setAccessible(true);
