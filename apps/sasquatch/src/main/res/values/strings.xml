@@ -11,6 +11,11 @@
     <string name="error_device_info">Couldn\'t retrieve device information</string>
     <string name="title_event">Events</string>
     <string name="description_event">Send a custom event</string>
+    <string name="title_page">Pages</string>
+    <string name="description_page">Send custom pages</string>
     <string name="send">Send</string>
     <string name="name">Name</string>
+    <string name="properties">Properties</string>
+    <string name="key">Key</string>
+    <string name="value">Value</string>
 </resources>
