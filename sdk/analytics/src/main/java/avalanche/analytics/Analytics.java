@@ -41,6 +41,11 @@ public class Analytics extends AbstractAvalancheFeature {
     private final Map<String, LogFactory> mFactories;
 
     /**
+     * Automatic page tracking flag.
+     */
+    private boolean mAutoPageTrackingEnabled = true;
+
+    /**
      * Init.
      */
     private Analytics() {
@@ -64,6 +69,17 @@ public class Analytics extends AbstractAvalancheFeature {
     @VisibleForTesting
     static void unsetInstance() {
         sInstance = null;
+    }
+
+    /**
+     * If enabled (which is the default), automatic page tracking will call {@link #trackPage(String, Map)}
+     * automatically every time an activity is resumed, with a generated name and no properties.
+     * Call this method with false if you want to track pages yourself in your application.
+     *
+     * @param autoPageTrackingEnabled true to let the module track pages automatically, false otherwise (default state is true).
+     */
+    public static void setAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
+        getInstance().setAutoPageTrackingEnabledState(autoPageTrackingEnabled);
     }
 
     /**
@@ -101,6 +117,13 @@ public class Analytics extends AbstractAvalancheFeature {
             return name;
     }
 
+    /**
+     * Implements {@link #setAutoPageTrackingEnabled(boolean)}.
+     */
+    private void setAutoPageTrackingEnabledState(boolean autoPageTrackingEnabled) {
+        mAutoPageTrackingEnabled = autoPageTrackingEnabled;
+    }
+
     @Override
     public Map<String, LogFactory> getLogFactories() {
         return mFactories;
@@ -108,7 +131,8 @@ public class Analytics extends AbstractAvalancheFeature {
 
     @Override
     public void onActivityResumed(Activity activity) {
-        queuePage(generatePageName(activity.getClass()), null);
+        if (mAutoPageTrackingEnabled)
+            queuePage(generatePageName(activity.getClass()), null);
     }
 
     /**
