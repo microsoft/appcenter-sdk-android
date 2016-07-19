@@ -43,17 +43,17 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
     }
 
     @Override
-    public boolean isEnabled() {
+    public synchronized boolean isEnabled() {
         return mEnabled;
     }
 
     @Override
-    public void setEnabled(boolean enabled) {
+    public synchronized void setEnabled(boolean enabled) {
         mEnabled = enabled;
     }
 
     @Override
-    public void onChannelReady(AvalancheChannel channel) {
+    public synchronized void onChannelReady(AvalancheChannel channel) {
         mChannel = channel;
     }
 

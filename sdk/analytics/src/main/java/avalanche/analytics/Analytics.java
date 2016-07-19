@@ -59,7 +59,7 @@ public class Analytics extends AbstractAvalancheFeature {
      *
      * @return shared instance.
      */
-    public static Analytics getInstance() {
+    public synchronized static Analytics getInstance() {
         if (sInstance == null) {
             sInstance = new Analytics();
         }
@@ -67,7 +67,7 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     @VisibleForTesting
-    static void unsetInstance() {
+    synchronized static void unsetInstance() {
         sInstance = null;
     }
 
@@ -120,7 +120,7 @@ public class Analytics extends AbstractAvalancheFeature {
     /**
      * Implements {@link #setAutoPageTrackingEnabled(boolean)}.
      */
-    private void setAutoPageTrackingEnabledState(boolean autoPageTrackingEnabled) {
+    private synchronized void setAutoPageTrackingEnabledState(boolean autoPageTrackingEnabled) {
         mAutoPageTrackingEnabled = autoPageTrackingEnabled;
     }
 
@@ -130,7 +130,7 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     @Override
-    public void onActivityResumed(Activity activity) {
+    public synchronized void onActivityResumed(Activity activity) {
         if (mAutoPageTrackingEnabled)
             queuePage(generatePageName(activity.getClass()), null);
     }
@@ -140,7 +140,7 @@ public class Analytics extends AbstractAvalancheFeature {
      *
      * @param log log to send.
      */
-    private void send(Log log) {
+    private synchronized void send(Log log) {
         if (mChannel == null)
             AvalancheLog.error("Analytics feature not initialized, discarding calls.");
         else
