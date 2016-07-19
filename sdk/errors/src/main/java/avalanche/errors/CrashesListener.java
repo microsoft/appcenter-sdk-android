@@ -1,4 +1,4 @@
-package avalanche.crash;
+package avalanche.errors;
 
 /**
  * <h3>Description</h3>

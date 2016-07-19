@@ -1,4 +1,4 @@
-package avalanche.crash.model;
+package avalanche.errors.model;
 
 /**
  * This class provides properties that can be attached to a crash report via a custom alert view flow

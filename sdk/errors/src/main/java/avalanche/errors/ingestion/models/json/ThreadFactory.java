@@ -1,10 +1,10 @@
-package avalanche.crash.ingestion.models.json;
+package avalanche.errors.ingestion.models.json;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import avalanche.core.ingestion.models.json.ModelFactory;
-import avalanche.crash.ingestion.models.Thread;
+import avalanche.errors.ingestion.models.Thread;
 
 public class ThreadFactory implements ModelFactory<Thread> {
 

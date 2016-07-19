@@ -1,4 +1,4 @@
-package avalanche.crash.ingestion.models;
+package avalanche.errors.ingestion.models;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -9,8 +9,8 @@ import java.util.List;
 import avalanche.core.ingestion.models.Model;
 import avalanche.core.ingestion.models.json.JSONUtils;
 import avalanche.core.ingestion.models.utils.LogUtils;
-import avalanche.crash.ingestion.models.json.ExceptionFactory;
-import avalanche.crash.ingestion.models.json.ThreadFrameFactory;
+import avalanche.errors.ingestion.models.json.ExceptionFactory;
+import avalanche.errors.ingestion.models.json.ThreadFrameFactory;
 
 import static avalanche.core.ingestion.models.CommonProperties.FRAMES;
 import static avalanche.core.ingestion.models.CommonProperties.ID;

@@ -1,4 +1,4 @@
-package avalanche.crash;
+package avalanche.errors;
 
 import android.text.TextUtils;
 
@@ -12,7 +12,7 @@ import java.util.Date;
 import avalanche.core.Constants;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.UUIDUtils;
-import avalanche.crash.model.CrashReport;
+import avalanche.errors.model.CrashReport;
 
 import static avalanche.core.utils.StorageHelper.InternalStorage;
 

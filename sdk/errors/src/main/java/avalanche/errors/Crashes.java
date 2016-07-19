@@ -1,4 +1,4 @@
-package avalanche.crash;
+package avalanche.errors;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -21,11 +21,11 @@ import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.HttpURLConnectionBuilder;
 import avalanche.core.utils.Util;
-import avalanche.crash.ingestion.models.ErrorLog;
-import avalanche.crash.ingestion.models.json.ErrorLogFactory;
-import avalanche.crash.model.CrashMetaData;
-import avalanche.crash.model.CrashReport;
-import avalanche.crash.model.CrashesUserInput;
+import avalanche.errors.ingestion.models.ErrorLog;
+import avalanche.errors.ingestion.models.json.ErrorLogFactory;
+import avalanche.errors.model.CrashMetaData;
+import avalanche.errors.model.CrashReport;
+import avalanche.errors.model.CrashesUserInput;
 
 import static android.text.TextUtils.isEmpty;
 import static avalanche.core.utils.StorageHelper.InternalStorage;

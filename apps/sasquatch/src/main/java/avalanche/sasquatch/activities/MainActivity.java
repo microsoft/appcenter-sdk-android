@@ -11,7 +11,7 @@ import android.widget.ListView;
 import avalanche.analytics.Analytics;
 import avalanche.core.Avalanche;
 import avalanche.core.utils.UUIDUtils;
-import avalanche.crash.Crashes;
+import avalanche.errors.Crashes;
 import avalanche.sasquatch.R;
 import avalanche.sasquatch.features.TestFeatures;
 import avalanche.sasquatch.features.TestFeaturesListAdapter;

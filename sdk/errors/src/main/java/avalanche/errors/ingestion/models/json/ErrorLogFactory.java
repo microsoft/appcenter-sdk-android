@@ -1,7 +1,7 @@
-package avalanche.crash.ingestion.models.json;
+package avalanche.errors.ingestion.models.json;
 
 import avalanche.core.ingestion.models.json.LogFactory;
-import avalanche.crash.ingestion.models.ErrorLog;
+import avalanche.errors.ingestion.models.ErrorLog;
 
 public class ErrorLogFactory implements LogFactory {
 
