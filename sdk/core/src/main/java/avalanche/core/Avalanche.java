@@ -141,10 +141,13 @@ public final class Avalanche {
         /* Un-subscribe app callbacks if we were enabled and now disabled. */
         boolean switchToDisabled = mEnabled && !enabled;
         boolean switchToEnabled = !mEnabled && enabled;
-        if (switchToDisabled)
+        if (switchToDisabled) {
             mApplication.unregisterActivityLifecycleCallbacks(mChannel);
-        else if (switchToEnabled)
+            AvalancheLog.info("Avalanche disabled");
+        } else if (switchToEnabled) {
             mApplication.registerActivityLifecycleCallbacks(mChannel);
+            AvalancheLog.info("Avalanche enabled");
+        }
 
         /* Apply change to features. */
         for (AvalancheFeature feature : mFeatures) {

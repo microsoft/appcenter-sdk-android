@@ -21,6 +21,7 @@
         <activity android:name=".activities.DeviceInfoActivity" />
         <activity android:name=".activities.EventActivity" />
         <activity android:name=".activities.DummyActivity" />
+        <activity android:name=".activities.SettingsActivity"/>
     </application>
 
 </manifest>
