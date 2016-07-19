@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -82,19 +83,24 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     private static final int ERROR_MAX_PARALLEL_REQUESTS = 3;
 
     /**
+     * The appKey that's required for forwarding to ingestion.
+     */
+    private final UUID mAppKey;
+
+    /**
      * The installId that's required for forwarding to ingestion.
      */
     private final UUID mInstallId;
 
     /**
-     * Channel state per log group.
-     */
-    private final Map<String, GroupState> mGroupStates;
-
-    /**
      * Handler for triggering ingestion of events.
      */
     private final Handler mIngestionHandler;
+
+    /**
+     * Channel state per log group.
+     */
+    private final Map<String, GroupState> mGroupStates;
 
     /**
      * The persistence object used to store events in the local storage.
@@ -107,14 +113,9 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     private AvalancheIngestion mIngestion;
 
     /**
-     * The appKey that's required for forwarding to ingestion.
+     * Is channel enabled?
      */
-    private UUID mAppKey = null;
-
-    /**
-     * Property that indicates disabled channel.
-     */
-    private boolean mDisabled;
+    private boolean mEnabled;
 
     /**
      * Creates and initializes a new instance.
@@ -129,10 +130,10 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(api);
         mIngestion = new AvalancheIngestionNetworkStateHandler(retryer, NetworkStateHelper.getSharedInstance(context));
         mIngestionHandler = new Handler(Looper.getMainLooper());
-        mDisabled = false;
         mGroupStates = new LinkedHashMap<>(); // FIXME unit tests seems to make an assumption about order of triggerIngestion calls in triggerIngestion
         mGroupStates.put(ANALYTICS_GROUP, new GroupState(ANALYTICS_GROUP, ANALYTICS_COUNT, ANALYTICS_INTERVAL, ANALYTICS_MAX_PARALLEL_REQUESTS));
         mGroupStates.put(ERROR_GROUP, new GroupState(ERROR_GROUP, ERROR_COUNT, ERROR_INTERVAL, ERROR_MAX_PARALLEL_REQUESTS));
+        mEnabled = true;
     }
 
     /**
@@ -161,24 +162,32 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         this.mPersistence = mPersistence;
     }
 
-    /**
-     * Flag to check if the channel was disabled.
-     *
-     * @return isDisabled.
-     */
-    boolean isDisabled() {
-        return mDisabled;
+    @Override
+    public boolean isEnabled() {
+        return mEnabled;
     }
 
     /**
-     * Set the disabled flag. If true, the channel will continue to persist data but not forward any item to ingestion.
-     * The most common use-case would be to set it to true and enable sending again after the channel has disabled itself after receiving
+     * Set the enabled flag. If false, the channel will continue to persist data but not forward any item to ingestion.
+     * The most common use-case would be to set it to false and enable sending again after the channel has disabled itself after receiving
      * a recoverable error (most likely related to a server issue).
      *
-     * @param disabled flag to disable the Channel.
+     * @param enabled flag to enable or disable the channel.
      */
-    void setDisabled(boolean disabled) {
-        mDisabled = disabled;
+    @Override
+    public void setEnabled(boolean enabled) {
+        synchronized (LOCK) {
+            mEnabled = enabled;
+            if (!mEnabled) {
+                for (String groupName : mGroupStates.keySet())
+                    resetThresholds(groupName);
+                try {
+                    mIngestion.close();
+                } catch (IOException e) {
+                    AvalancheLog.error("Failed to close ingestion", e);
+                }
+            }
+        }
     }
 
     /**
@@ -191,7 +200,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             GroupState groupState = mGroupStates.get(groupName);
             setCounter(groupName, 0);
             mIngestionHandler.removeCallbacks(groupState.mRunnable);
-            mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
+            if (mEnabled)
+                mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
         }
     }
 
@@ -228,7 +238,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     public void triggerIngestion() {
         synchronized (LOCK) {
-            if (!mDisabled) {
+            if (mEnabled) {
                 for (String groupName : mGroupStates.keySet())
                     triggerIngestion(groupName);
             }
@@ -247,7 +257,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         synchronized (LOCK) {
             AvalancheLog.debug("triggerIngestion(" + groupName + ")");
 
-            if (TextUtils.isEmpty(groupName) || (mAppKey == null) || (mInstallId == null) || mDisabled) {
+            if (TextUtils.isEmpty(groupName) || (mAppKey == null) || (mInstallId == null) || !mEnabled) {
                 return;
             }
 
@@ -291,7 +301,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param batchId      the ID of the batch
      * @param logContainer a LogContainer object containing several logs
      */
-
     private void ingestLogs(@NonNull final String groupName, @NonNull final String batchId, @NonNull LogContainer logContainer) {
         AvalancheLog.debug(TAG, "ingestLogs(" + groupName + "," + batchId + ")");
         mIngestion.sendAsync(mAppKey, mInstallId, logContainer, new ServiceCallback() {
@@ -345,7 +354,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             if (!removeBatchIdSuccessful) {
                 AvalancheLog.warn(TAG, "Error removing batchId after recoverable error");
             }
-            mDisabled = true;
+            setEnabled(false);
         } else {
             mPersistence.deleteLog(groupName, batchId);
             removeBatchIdSuccessful = groupState.mSendingBatches.remove(batchId);
@@ -370,7 +379,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             mPersistence.putLog(queueName, log);
 
             //Increment counters and schedule ingestion if we are not disabled
-            if (mDisabled) {
+            if (!mEnabled) {
                 AvalancheLog.warn(TAG, "Channel is disabled, event was saved to disk.");
             } else {
                 scheduleIngestion(queueName);
@@ -401,7 +410,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             if (counter == maxCount) {
                 counter = 0;
                 //We have reached the max batch count or a multiple of it. Trigger ingestion.
-                if (!mDisabled) {
+                if (mEnabled) {
                     triggerIngestion(groupName);
                 }
             }
@@ -425,17 +434,14 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
          * Maximum log count per batch.
          */
         final int mMaxLogsPerBatch;
-
         /**
          * Time to wait before 2 batches, in ms.
          */
         final int mBatchTimeInterval;
-
         /**
          * Maximum number of batches in parallel.
          */
         final int mMaxParallelBatches;
-
         /**
          * Batches being currently sent to ingestion.
          */
@@ -451,6 +457,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
          * and triggers itself in {@link #mBatchTimeInterval} ms.
          */
         final Runnable mRunnable = new Runnable() {
+
             @Override
             public void run() {
                 if (mPendingLogCount > 0) {

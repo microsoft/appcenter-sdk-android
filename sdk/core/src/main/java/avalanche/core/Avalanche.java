@@ -135,13 +135,19 @@ public final class Avalanche {
 
     private synchronized void mSetEnabled(boolean enabled) {
 
+        /* Update channel state. */
+        mChannel.setEnabled(enabled);
+
         /* Un-subscribe app callbacks if we were enabled and now disabled. */
         boolean switchToDisabled = mEnabled && !enabled;
         boolean switchToEnabled = !mEnabled && enabled;
-        if (switchToDisabled)
+        if (switchToDisabled) {
             mApplication.unregisterActivityLifecycleCallbacks(mChannel);
-        else if (switchToEnabled)
+            AvalancheLog.info("Avalanche disabled");
+        } else if (switchToEnabled) {
             mApplication.registerActivityLifecycleCallbacks(mChannel);
+            AvalancheLog.info("Avalanche enabled");
+        }
 
         /* Apply change to features. */
         for (AvalancheFeature feature : mFeatures) {
@@ -225,5 +231,10 @@ public final class Avalanche {
     @VisibleForTesting
     Application getApplication() {
         return mApplication;
+    }
+
+    @VisibleForTesting
+    void setChannel(AvalancheChannelSessionDecorator channel) {
+        mChannel = channel;
     }
 }

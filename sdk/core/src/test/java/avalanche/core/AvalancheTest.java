@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 import avalanche.core.channel.AvalancheChannel;
+import avalanche.core.channel.AvalancheChannelSessionDecorator;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.IdHelper;
@@ -132,9 +133,11 @@ public class AvalancheTest {
     @Test
     public void avalancheFeaturesEnableTest() {
         Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
+        AvalancheChannelSessionDecorator channel = mock(AvalancheChannelSessionDecorator.class);
+        Avalanche avalanche = Avalanche.getInstance();
+        avalanche.setChannel(channel);
 
         // Verify modules are enabled by default
-        Avalanche avalanche = Avalanche.getInstance();
         Set<AvalancheFeature> features = avalanche.getFeatures();
         assertTrue(Avalanche.isEnabled());
         DummyFeature dummyFeature = DummyFeature.getInstance();
@@ -151,6 +154,7 @@ public class AvalancheTest {
         }
         verify(dummyFeature, never()).setEnabled(anyBoolean());
         verify(anotherDummyFeature, never()).setEnabled(anyBoolean());
+        verify(channel).setEnabled(true);
 
         // Verify disabling base disables all modules
         Avalanche.setEnabled(false);
@@ -162,6 +166,7 @@ public class AvalancheTest {
         verify(anotherDummyFeature).setEnabled(false);
         verify(application).unregisterActivityLifecycleCallbacks(dummyFeature);
         verify(application).unregisterActivityLifecycleCallbacks(anotherDummyFeature);
+        verify(channel).setEnabled(false);
 
         // Verify re-enabling base re-enables all modules
         Avalanche.setEnabled(true);
@@ -173,6 +178,7 @@ public class AvalancheTest {
         verify(anotherDummyFeature).setEnabled(true);
         verify(application, times(2)).registerActivityLifecycleCallbacks(dummyFeature);
         verify(application, times(2)).registerActivityLifecycleCallbacks(anotherDummyFeature);
+        verify(channel, times(2)).setEnabled(true);
 
         // Verify that disabling one module leaves base and other modules enabled
         dummyFeature.setEnabled(false);
@@ -188,6 +194,7 @@ public class AvalancheTest {
         }
         verify(dummyFeature, times(2)).setEnabled(true);
         verify(anotherDummyFeature).setEnabled(true);
+        verify(channel, times(3)).setEnabled(true);
 
         /* Enable 1 feature only after disable all. */
         Avalanche.setEnabled(false);
@@ -199,6 +206,7 @@ public class AvalancheTest {
         assertTrue(dummyFeature.isEnabled());
         assertFalse(Avalanche.isEnabled());
         assertFalse(anotherDummyFeature.isEnabled());
+        verify(channel, times(2)).setEnabled(false);
 
         /* Disable back via main class. */
         Avalanche.setEnabled(false);
@@ -206,12 +214,13 @@ public class AvalancheTest {
         for (AvalancheFeature feature : features) {
             assertFalse(feature.isEnabled());
         }
+        verify(channel, times(3)).setEnabled(false);
 
         /* Check factories / channel only once interactions. */
         verify(dummyFeature).getLogFactories();
-        verify(dummyFeature).onChannelReady(notNull(AvalancheChannel.class));
+        verify(dummyFeature).onChannelReady(any(AvalancheChannelSessionDecorator.class));
         verify(anotherDummyFeature).getLogFactories();
-        verify(anotherDummyFeature).onChannelReady(notNull(AvalancheChannel.class));
+        verify(anotherDummyFeature).onChannelReady(any(AvalancheChannelSessionDecorator.class));
     }
 
     @Test
