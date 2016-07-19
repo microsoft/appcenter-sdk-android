@@ -44,7 +44,7 @@ subprojects {
         androidTestCompile 'com.android.support.test:rules:0.5'
     }
 
-    task jacocoTestReport(type: JacocoReport, dependsOn: ['createDebugCoverageReport', 'testDebugUnitTest']) {
+    task coverageReport(type: JacocoReport, dependsOn: ['createDebugCoverageReport', 'testDebugUnitTest']) {
 
         reports {
             xml.enabled = false
