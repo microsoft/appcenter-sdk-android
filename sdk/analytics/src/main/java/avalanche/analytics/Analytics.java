@@ -72,6 +72,16 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     /**
+     * Check if automatic page tracking is enabled.
+     *
+     * @return true if automatic page tracking is enabled. false otherwise.
+     * @see #setAutoPageTrackingEnabled(boolean)
+     */
+    public static boolean isAutoPageTrackingEnabled() {
+        return getInstance().isAutoPageTrackingStateEnabled();
+    }
+
+    /**
      * If enabled (which is the default), automatic page tracking will call {@link #trackPage(String, Map)}
      * automatically every time an activity is resumed, with a generated name and no properties.
      * Call this method with false if you want to track pages yourself in your application.
@@ -79,7 +89,7 @@ public class Analytics extends AbstractAvalancheFeature {
      * @param autoPageTrackingEnabled true to let the module track pages automatically, false otherwise (default state is true).
      */
     public static void setAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
-        getInstance().setAutoPageTrackingEnabledState(autoPageTrackingEnabled);
+        getInstance().setAutoPageTrackingStateEnabled(autoPageTrackingEnabled);
     }
 
     /**
@@ -118,9 +128,16 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     /**
+     * Implements {@link #isAutoPageTrackingEnabled()}.
+     */
+    private boolean isAutoPageTrackingStateEnabled() {
+        return mAutoPageTrackingEnabled;
+    }
+
+    /**
      * Implements {@link #setAutoPageTrackingEnabled(boolean)}.
      */
-    private synchronized void setAutoPageTrackingEnabledState(boolean autoPageTrackingEnabled) {
+    private synchronized void setAutoPageTrackingStateEnabled(boolean autoPageTrackingEnabled) {
         mAutoPageTrackingEnabled = autoPageTrackingEnabled;
     }
 

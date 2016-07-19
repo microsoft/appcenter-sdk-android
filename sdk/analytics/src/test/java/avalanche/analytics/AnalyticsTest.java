@@ -18,6 +18,7 @@ import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.json.LogFactory;
 
 import static avalanche.core.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -94,12 +95,15 @@ public class AnalyticsTest {
     @Test
     public void disableAutomaticPageTracking() {
         Analytics analytics = Analytics.getInstance();
+        assertTrue(Analytics.isAutoPageTrackingEnabled());
         Analytics.setAutoPageTrackingEnabled(false);
+        assertFalse(Analytics.isAutoPageTrackingEnabled());
         AvalancheChannel channel = mock(AvalancheChannel.class);
         analytics.onChannelReady(channel);
         analytics.onActivityResumed(new MyActivity());
         verify(channel, never()).enqueue(any(Log.class), anyString());
         Analytics.setAutoPageTrackingEnabled(true);
+        assertTrue(Analytics.isAutoPageTrackingEnabled());
         analytics.onActivityResumed(new SomeScreen());
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 

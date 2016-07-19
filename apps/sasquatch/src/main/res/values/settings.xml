@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="avalanche_state_key">avalanche_state_key</string>
+    <string name="avalanche_state_title">Avalanche state</string>
+    <string name="avalanche_state_summary_enabled">Avalanche is enabled</string>
+    <string name="avalanche_state_summary_disabled">Avalanche is disabled</string>
+
+    <string name="avalanche_auto_page_tracking_key">avalanche_auto_page_tracking_key</string>
+    <string name="avalanche_auto_page_tracking_title">Analytics automatic page tracking</string>
+    <string name="avalanche_auto_page_tracking_enabled">Automatic page tracking is enabled</string>
+    <string name="avalanche_auto_page_tracking_disabled">Automatic page tracking is disabled</string>
+</resources>
