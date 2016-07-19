@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -175,7 +176,18 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     @Override
     public void setEnabled(boolean enabled) {
-        mEnabled = enabled;
+        synchronized (LOCK) {
+            mEnabled = enabled;
+            if (!mEnabled) {
+                for (String groupName : mGroupStates.keySet())
+                    resetThresholds(groupName);
+                try {
+                    mIngestion.close();
+                } catch (IOException e) {
+                    AvalancheLog.error("Failed to close ingestion", e);
+                }
+            }
+        }
     }
 
     /**
@@ -188,7 +200,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             GroupState groupState = mGroupStates.get(groupName);
             setCounter(groupName, 0);
             mIngestionHandler.removeCallbacks(groupState.mRunnable);
-            mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
+            if (mEnabled)
+                mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
         }
     }
 
@@ -341,7 +354,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             if (!removeBatchIdSuccessful) {
                 AvalancheLog.warn(TAG, "Error removing batchId after recoverable error");
             }
-            mEnabled = false;
+            setEnabled(false);
         } else {
             mPersistence.deleteLog(groupName, batchId);
             removeBatchIdSuccessful = groupState.mSendingBatches.remove(batchId);
@@ -444,6 +457,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
          * and triggers itself in {@link #mBatchTimeInterval} ms.
          */
         final Runnable mRunnable = new Runnable() {
+
             @Override
             public void run() {
                 if (mPendingLogCount > 0) {

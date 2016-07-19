@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.io.IOException;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -37,7 +38,11 @@ import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -638,5 +643,44 @@ public class DefaultAvalancheChannelTest {
 
         //The counter should be 0 now as we sent data.
         assertEquals(0, sut.getCounter(ANALYTICS_GROUP));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void setEnabled() throws IOException, InterruptedException {
+        AvalancheIngestion ingestion = mock(AvalancheIngestion.class);
+        doThrow(new IOException()).when(ingestion).close();
+        AvalanchePersistence persistence = mock(AvalanchePersistence.class);
+        when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(new Answer<String>() {
+
+            @Override
+            public String answer(InvocationOnMock invocationOnMock) throws Throwable {
+                Object[] args = invocationOnMock.getArguments();
+                if (args[2] instanceof ArrayList) {
+                    ArrayList logs = (ArrayList) args[2];
+                    int size = (int) args[1];
+                    for (int i = 0; i < size; i++) {
+                        logs.add(sDeviceLog);
+                    }
+                }
+                return UUIDUtils.randomUUID().toString();
+            }
+        }).thenAnswer(new Answer<String>() {
+
+            @Override
+            public String answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return null;
+            }
+        });
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), ingestion, persistence, sLogSerializer);
+        sut.enqueue(sDeviceLog, ANALYTICS_GROUP);
+        sut.setEnabled(false);
+        verify(ingestion).close();
+        Thread.sleep(4000);
+        verify(ingestion, never()).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        sut.setEnabled(true);
+        sut.enqueue(sDeviceLog, ANALYTICS_GROUP);
+        Thread.sleep(4000);
+        verify(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 }
