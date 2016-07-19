@@ -18,16 +18,20 @@ import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.json.LogFactory;
 
 import static avalanche.core.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
+@SuppressWarnings("WrongConstant")
 public class AnalyticsTest {
 
     @Before
@@ -60,7 +64,6 @@ public class AnalyticsTest {
         AvalancheChannel channel = mock(AvalancheChannel.class);
         analytics.onChannelReady(channel);
         analytics.onActivityResumed(activity);
-        //noinspection WrongConstant (well its not a wrong constant but something is odd with compiler here)
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
@@ -90,6 +93,32 @@ public class AnalyticsTest {
     }
 
     @Test
+    public void disableAutomaticPageTracking() {
+        Analytics analytics = Analytics.getInstance();
+        assertTrue(Analytics.isAutoPageTrackingEnabled());
+        Analytics.setAutoPageTrackingEnabled(false);
+        assertFalse(Analytics.isAutoPageTrackingEnabled());
+        AvalancheChannel channel = mock(AvalancheChannel.class);
+        analytics.onChannelReady(channel);
+        analytics.onActivityResumed(new MyActivity());
+        verify(channel, never()).enqueue(any(Log.class), anyString());
+        Analytics.setAutoPageTrackingEnabled(true);
+        assertTrue(Analytics.isAutoPageTrackingEnabled());
+        analytics.onActivityResumed(new SomeScreen());
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof PageLog) {
+                    PageLog pageLog = (PageLog) item;
+                    return "SomeScreen".equals(pageLog.getName());
+                }
+                return false;
+            }
+        }), eq(ANALYTICS_GROUP));
+    }
+
+    @Test
     public void trackEvent() {
         Analytics analytics = Analytics.getInstance();
         AvalancheChannel channel = mock(AvalancheChannel.class);
@@ -98,7 +127,6 @@ public class AnalyticsTest {
         final HashMap<String, String> properties = new HashMap<>();
         properties.put("a", "b");
         Analytics.trackEvent(name, properties);
-        //noinspection WrongConstant (well its not a wrong constant but something is odd with compiler here)
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
@@ -126,7 +154,6 @@ public class AnalyticsTest {
         analytics.setEnabled(true);
         Analytics.trackEvent("test", null);
         Analytics.trackPage("test", null);
-        //noinspection WrongConstant
         verify(channel, times(2)).enqueue(any(Log.class), eq(ANALYTICS_GROUP));
 
         /* Disable again. */

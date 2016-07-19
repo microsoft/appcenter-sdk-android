@@ -4,10 +4,10 @@ import java.util.Map;
 
 import avalanche.analytics.Analytics;
 
-public class EventActivity extends LogActivity {
+public class PageActivity extends LogActivity {
 
     @Override
     protected void trackLog(String name, Map<String, String> properties) {
-        Analytics.trackEvent(name, properties);
+        Analytics.trackPage(name, properties);
     }
 }
