@@ -1,4 +1,4 @@
-package avalanche.crash.ingestion.models;
+package avalanche.errors.ingestion.models;
 
 import org.json.JSONException;
 import org.json.JSONObject;

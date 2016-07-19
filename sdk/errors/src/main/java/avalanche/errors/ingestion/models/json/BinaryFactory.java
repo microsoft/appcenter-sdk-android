@@ -1,10 +1,10 @@
-package avalanche.crash.ingestion.models.json;
+package avalanche.errors.ingestion.models.json;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import avalanche.core.ingestion.models.json.ModelFactory;
-import avalanche.crash.ingestion.models.Binary;
+import avalanche.errors.ingestion.models.Binary;
 
 public class BinaryFactory implements ModelFactory<Binary> {
 

@@ -1,4 +1,4 @@
-package avalanche.crash.model;
+package avalanche.errors.model;
 
 import android.text.TextUtils;
 
