@@ -42,6 +42,10 @@ allprojects {
             )
         }
     }
+
+    task clean(type: Delete) {
+        delete project.buildDir
+    }
 }
 
 subprojects {
@@ -63,10 +67,6 @@ subprojects {
                 config.testInstrumentationRunner ext.testInstrumentationRunner
         }
     }
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
 }
 
 ext {
