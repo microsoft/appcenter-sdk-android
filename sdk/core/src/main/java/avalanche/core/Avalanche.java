@@ -1,6 +1,7 @@
 package avalanche.core;
 
 import android.app.Application;
+import android.support.annotation.IntRange;
 import android.support.annotation.VisibleForTesting;
 
 import java.lang.reflect.Method;
@@ -20,6 +21,9 @@ import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.IdHelper;
 import avalanche.core.utils.StorageHelper;
+
+import static android.util.Log.ASSERT;
+import static android.util.Log.VERBOSE;
 
 public final class Avalanche {
 
@@ -54,10 +58,15 @@ public final class Avalanche {
     private AvalancheChannelSessionDecorator mChannel;
 
     @VisibleForTesting
-    static Avalanche getInstance() {
+    static synchronized Avalanche getInstance() {
         if (sInstance == null)
             sInstance = new Avalanche();
         return sInstance;
+    }
+
+    @VisibleForTesting
+    static synchronized void unsetInstance() {
+        sInstance = null;
     }
 
     /**
@@ -86,8 +95,9 @@ public final class Avalanche {
      * @param appKey      The app key to use (application/environment).
      * @param features    Vararg list of configured features to enable.
      */
+    @VisibleForTesting
     @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-    public static void useFeatures(Application application, String appKey, AvalancheFeature... features) {
+    static void useFeatures(Application application, String appKey, AvalancheFeature... features) {
         Avalanche instance = getInstance();
         synchronized (instance) {
             boolean initializedSuccessfully = instance.initialize(application, appKey);
@@ -107,10 +117,22 @@ public final class Avalanche {
         }
     }
 
+    /**
+     * Check whether the SDK is enabled or not as a whole.
+     *
+     * @return true if enabled, false otherwise.
+     */
     public static boolean isEnabled() {
         return getInstance().mIsEnabled();
     }
 
+    /**
+     * Enable or disable the SDK as a whole. In addition to the core resources,
+     * it will also enable or disable
+     * all features registered via {@link #useFeatures(Application, String, Class[])}.
+     *
+     * @param enabled true to enable, false to disable.
+     */
     public static void setEnabled(boolean enabled) {
         getInstance().mSetEnabled(enabled);
     }
@@ -124,15 +146,35 @@ public final class Avalanche {
         return IdHelper.getInstallId();
     }
 
-    @VisibleForTesting
-    static void unsetInstance() {
-        sInstance = null;
+    /**
+     * Return log level filter for logs coming from this SDK.
+     *
+     * @return log level as defined by {@link android.util.Log}.
+     */
+    @IntRange(from = VERBOSE, to = ASSERT)
+    public static int getLogLevel() {
+        return AvalancheLog.getLogLevel();
     }
 
+    /**
+     * Set log level filter for logs coming from this SDK.
+     *
+     * @param logLevel log level as defined by {@link android.util.Log}.
+     */
+    public static void setLogLevel(@IntRange(from = VERBOSE, to = ASSERT) int logLevel) {
+        AvalancheLog.setLogLevel(logLevel);
+    }
+
+    /**
+     * Implements {@link #isEnabled()}.
+     */
     private synchronized boolean mIsEnabled() {
         return mEnabled;
     }
 
+    /**
+     * Implements {@link #setEnabled(boolean)}}.
+     */
     private synchronized void mSetEnabled(boolean enabled) {
 
         /* Update channel state. */
@@ -167,6 +209,13 @@ public final class Avalanche {
         mEnabled = enabled;
     }
 
+    /**
+     * Initialize the SDK.
+     *
+     * @param application application context.
+     * @param appKey      application key.
+     * @return true if init was successful, false otherwise.
+     */
     private boolean initialize(Application application, String appKey) {
 
         /* Parse and store parameters. */
@@ -206,7 +255,7 @@ public final class Avalanche {
     }
 
     /**
-     * Add and enable a configured feature.
+     * Add a feature.
      *
      * @param feature feature to add.
      */

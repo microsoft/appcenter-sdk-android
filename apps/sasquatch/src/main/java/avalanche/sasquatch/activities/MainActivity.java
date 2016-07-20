@@ -10,7 +10,6 @@ import android.widget.ListView;
 
 import avalanche.analytics.Analytics;
 import avalanche.core.Avalanche;
-import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.UUIDUtils;
 import avalanche.crash.Crashes;
 import avalanche.sasquatch.R;
@@ -25,8 +24,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Avalanche.useFeatures(getApplication(), UUIDUtils.randomUUID().toString(), Analytics.class, Crashes.class);
-
-        AvalancheLog.setLogLevel(Log.VERBOSE);
+        Avalanche.setLogLevel(Log.VERBOSE);
 
         TestFeatures.initialize(this);
         ListView listView = (ListView) findViewById(R.id.list);
