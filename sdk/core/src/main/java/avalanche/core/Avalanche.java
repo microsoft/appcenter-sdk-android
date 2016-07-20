@@ -21,7 +21,7 @@ import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.IdHelper;
 import avalanche.core.utils.StorageHelper;
 
-public final class Avalanche {
+public final class Avalanche { 
 
     /**
      * Share instance.

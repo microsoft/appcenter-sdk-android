@@ -2,6 +2,12 @@
 // :sdk
 //
 
+apply plugin: 'jacoco'
+
+jacoco {
+    toolVersion = '0.7.4.+'
+}
+
 subprojects {
     apply plugin: 'com.android.library'
     apply plugin: 'jacoco'
@@ -27,7 +33,7 @@ subprojects {
     }
 
     jacoco {
-        toolVersion = "0.7.4.+"
+        toolVersion = '0.7.4.+'
     }
 
     dependencies {
@@ -45,7 +51,6 @@ subprojects {
     }
 
     task coverageReport(type: JacocoReport, dependsOn: ['createDebugCoverageReport', 'testDebugUnitTest']) {
-
         reports {
             xml.enabled = false
             html.enabled = true
@@ -60,4 +65,24 @@ subprojects {
         executionData = files(["${buildDir}/jacoco/testDebugUnitTest.exec",
                                "${buildDir}/outputs/code-coverage/connected/coverage.ec"])
     }
+}
+
+task coverageReport(type: JacocoReport, dependsOn: subprojects.tasks.coverageReport) {
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+
+    // Remove files from the list if file does not exist.
+    def availableExecutionData = [];
+    subprojects.coverageReport.executionData.each { files ->
+        files.each { file ->
+            if (file.exists())
+                availableExecutionData << file
+        }
+    }
+
+    sourceDirectories = files(subprojects.coverageReport.sourceDirectories)
+    classDirectories = files(subprojects.coverageReport.classDirectories)
+    executionData = files(availableExecutionData)
 }
