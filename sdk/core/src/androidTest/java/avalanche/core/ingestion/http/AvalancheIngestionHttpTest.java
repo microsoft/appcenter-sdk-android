@@ -1,5 +1,7 @@
 package avalanche.core.ingestion.http;
 
+import android.support.annotation.VisibleForTesting;
+
 import junit.framework.Assert;
 
 import org.json.JSONException;
@@ -36,6 +38,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -92,9 +95,11 @@ public class AvalancheIngestionHttpTest {
         /* Test calling code. */
         UUID appKey = UUIDUtils.randomUUID();
         UUID installId = UUIDUtils.randomUUID();
-        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        Semaphore lock = new Semaphore(0);
+        ServiceCallback serviceCallback = spy(new LockServiceCallback(lock));
         httpClient.sendAsync(appKey, installId, container, serviceCallback);
-        verify(serviceCallback, timeout(1000)).success();
+        lock.acquire();
+        verify(serviceCallback).success();
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Key", appKey.toString());
@@ -112,7 +117,7 @@ public class AvalancheIngestionHttpTest {
         assertEquals(1, sentLogs.size());
         Log sentLog = sentLogs.get(0);
         assertTrue(sentLog instanceof MockLog);
-        assertTrue(sentLog.getToffset() >= 0 && sentLog.getToffset() <= 1000);
+        assertTrue(sentLog.getToffset() >= 0 && sentLog.getToffset() <= 100000);
         sentLog.setToffset(toffset);
         assertEquals(container, sentContainer);
     }
@@ -242,5 +247,25 @@ public class AvalancheIngestionHttpTest {
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
         assertEquals(toffset, log.getToffset());
+    }
+
+    @VisibleForTesting // Mockito.spy
+    public static class LockServiceCallback implements ServiceCallback {
+
+        private final Semaphore mLock;
+
+        LockServiceCallback(Semaphore lock) {
+            mLock = lock;
+        }
+
+        @Override
+        public void success() {
+            mLock.release();
+        }
+
+        @Override
+        public void failure(Throwable t) {
+            mLock.release();
+        }
     }
 }
