@@ -35,11 +35,13 @@ allprojects {
     }
 
     task checkstyleReport(dependsOn: 'checkstyle') {
-        if (file("build/outputs/reports/checkstyle-results.xml").exists()) {
-            ant.xslt(in: "build/outputs/reports/checkstyle-results.xml",
-                    style: "${rootDir}/config/checkstyle/checkstyle.xsl",
-                    out: "build/outputs/reports/checkstyle-results.html"
-            )
+        doLast {
+            if (file("build/outputs/reports/checkstyle-results.xml").exists()) {
+                ant.xslt(in: "build/outputs/reports/checkstyle-results.xml",
+                        style: "${rootDir}/config/checkstyle/checkstyle.xsl",
+                        out: "build/outputs/reports/checkstyle-results.html"
+                )
+            }
         }
     }
 
