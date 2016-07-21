@@ -1,11 +1,15 @@
 package avalanche.core.utils;
 
 
+import android.support.annotation.IntRange;
 import android.util.Log;
+
+import static android.util.Log.ASSERT;
+import static android.util.Log.VERBOSE;
 
 /**
  * <h3>Description</h3>
- *
+ * <p/>
  * Wrapper class for logging in the SDK as well as
  * setting the desired log level for end users.
  * Log levels correspond to those of android.util.Log.
@@ -13,16 +17,17 @@ import android.util.Log;
  * @see Log
  */
 public class AvalancheLog {
-    public static final String AVALANCHE_TAG = "Avalanche";
+    private static final String AVALANCHE_TAG = "Avalanche";
 
-    private static int sLogLevel = Log.ERROR;
+    private static int sLogLevel = Log.ASSERT;
 
     /**
      * Get the log level to find out how much data the AvalancheSDK spews into LogCat. The Default will be
-     * LOG_LEVEL.ERROR so only errors show up in LogCat.
+     * LOG_LEVEL.ASSERT so nothing shows up in LogCat.
      *
      * @return the log level
      */
+    @IntRange(from = VERBOSE, to = ASSERT)
     public static int getLogLevel() {
         return sLogLevel;
     }
@@ -32,6 +37,7 @@ public class AvalancheLog {
      *
      * @param avalancheLogLevel The log level for AvalancheSDK logging
      */
+    @IntRange(from = VERBOSE, to = ASSERT)
     public static void setLogLevel(int avalancheLogLevel) {
         sLogLevel = avalancheLogLevel;
     }
@@ -274,7 +280,7 @@ public class AvalancheLog {
      * @return a sanitized TAG, defaults to 'Avalanche' in case the log tag for your message is null, empty or longer than
      * 23 characters.
      */
-    static String sanitizeTag(String tag) {
+    private static String sanitizeTag(String tag) {
         if ((tag == null) || (tag.length() == 0) || (tag.length() > 23)) {
             tag = AVALANCHE_TAG;
         }

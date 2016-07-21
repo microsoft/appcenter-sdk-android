@@ -59,7 +59,7 @@ public class Analytics extends AbstractAvalancheFeature {
      *
      * @return shared instance.
      */
-    public synchronized static Analytics getInstance() {
+    public static synchronized Analytics getInstance() {
         if (sInstance == null) {
             sInstance = new Analytics();
         }
@@ -67,7 +67,7 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     @VisibleForTesting
-    synchronized static void unsetInstance() {
+    static synchronized void unsetInstance() {
         sInstance = null;
     }
 
