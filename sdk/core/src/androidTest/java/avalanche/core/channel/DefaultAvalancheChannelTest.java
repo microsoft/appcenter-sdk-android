@@ -233,6 +233,8 @@ public class DefaultAvalancheChannelTest {
 
         //Verify that the Channel is disabled
         assertFalse(sut.isEnabled());
+        verify(mockPersistence).clearIds();
+        verify(mockPersistence, never()).clear();
 
         //Enqueuing 20 more events.
         for (int i = 0; i < 20; i++) {
@@ -341,7 +343,6 @@ public class DefaultAvalancheChannelTest {
                         }
                         uuidString = UUIDUtils.randomUUID().toString();
                     }
-
                 }
                 return uuidString;
             }
@@ -371,13 +372,15 @@ public class DefaultAvalancheChannelTest {
         verify(mockPersistence, times(50)).putLog(ANALYTICS_GROUP, sDeviceLog);
 
         //Verify that we have called sendAsync on the ingestion
-        verify(mockIngestion, times(1)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have deleted the failed batch
-        verify(mockPersistence, times(1)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence).deleteLog(any(String.class), any(String.class));
 
         //Verify that the Channel is disabled
         assertFalse(sut.isEnabled());
+        verify(mockPersistence).clearIds();
+        verify(mockPersistence, never()).clear();
 
         //Enqueuing 20 more events.
         for (int i = 0; i < 20; i++) {
@@ -599,6 +602,8 @@ public class DefaultAvalancheChannelTest {
 
         //Verify that the Channel is disabled
         assertFalse(sut.isEnabled());
+        verify(mockPersistence).clearIds();
+        verify(mockPersistence, never()).clear();
 
         //Using a fresh ingestion object to change our stub to use the analyticsSuccess()-callback
         AvalancheIngestion newIngestion = mock(AvalancheIngestion.class);
