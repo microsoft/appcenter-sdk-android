@@ -33,6 +33,8 @@ import static avalanche.core.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -290,19 +292,38 @@ public class AvalancheDatabasePersistenceTest {
                 persistence.putLog("test", log);
 
             /* Get. */
+            getAllLogs(persistence, "test", numberOfLogs, sizeForGetLogs);
+
+            /* Clear ids, we should be able to get the logs again in the same sequence. */
+            persistence.clearPendingLogState();
+            getAllLogs(persistence, "test", numberOfLogs, sizeForGetLogs);
+
+            /* Clear. Nothing to get after. */
+            persistence.clear();
             List<Log> outputLogs = new ArrayList<>();
-            int expected = 0;
-            do {
-                numberOfLogs -= expected;
-                persistence.getLogs("test", sizeForGetLogs, outputLogs);
-                expected = Math.min(Math.max(numberOfLogs, 0), sizeForGetLogs);
-                assertEquals(expected, outputLogs.size());
-                outputLogs.clear();
-            } while (numberOfLogs > 0);
+            assertNull(persistence.getLogs("test", sizeForGetLogs, outputLogs));
+            assertTrue(outputLogs.isEmpty());
         } finally {
+
             /* Close. */
             persistence.close();
         }
+    }
+
+    private void getAllLogs(AvalancheDatabasePersistence persistence, String key, int numberOfLogs, int sizeForGetLogs) {
+        List<Log> outputLogs = new ArrayList<>();
+        int expected = 0;
+        do {
+            numberOfLogs -= expected;
+            persistence.getLogs(key, sizeForGetLogs, outputLogs);
+            expected = Math.min(Math.max(numberOfLogs, 0), sizeForGetLogs);
+            assertEquals(expected, outputLogs.size());
+            outputLogs.clear();
+        } while (numberOfLogs > 0);
+
+        /* Get should be 0 now. */
+        persistence.getLogs(key, sizeForGetLogs, outputLogs);
+        assertEquals(0, outputLogs.size());
     }
 
     @Test
