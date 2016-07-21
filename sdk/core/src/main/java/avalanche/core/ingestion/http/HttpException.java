@@ -1,8 +1,11 @@
 package avalanche.core.ingestion.http;
 
+import android.support.annotation.VisibleForTesting;
+
 import java.io.IOException;
 
-class HttpException extends IOException {
+@VisibleForTesting
+public class HttpException extends IOException {
 
     private final int statusCode;
 
