@@ -233,7 +233,7 @@ public class DefaultAvalancheChannelTest {
 
         //Verify that the Channel is disabled
         assertFalse(sut.isEnabled());
-        verify(mockPersistence).clearIds();
+        verify(mockPersistence).clearPendingLogState();
         verify(mockPersistence, never()).clear();
 
         //Enqueuing 20 more events.
@@ -379,7 +379,7 @@ public class DefaultAvalancheChannelTest {
 
         //Verify that the Channel is disabled
         assertFalse(sut.isEnabled());
-        verify(mockPersistence).clearIds();
+        verify(mockPersistence).clearPendingLogState();
         verify(mockPersistence, never()).clear();
 
         //Enqueuing 20 more events.
@@ -602,7 +602,7 @@ public class DefaultAvalancheChannelTest {
 
         //Verify that the Channel is disabled
         assertFalse(sut.isEnabled());
-        verify(mockPersistence).clearIds();
+        verify(mockPersistence).clearPendingLogState();
         verify(mockPersistence, never()).clear();
 
         //Using a fresh ingestion object to change our stub to use the analyticsSuccess()-callback

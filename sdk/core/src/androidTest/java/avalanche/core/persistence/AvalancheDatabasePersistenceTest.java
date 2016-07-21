@@ -295,7 +295,7 @@ public class AvalancheDatabasePersistenceTest {
             getAllLogs(persistence, "test", numberOfLogs, sizeForGetLogs);
 
             /* Clear ids, we should be able to get the logs again in the same sequence. */
-            persistence.clearIds();
+            persistence.clearPendingLogState();
             getAllLogs(persistence, "test", numberOfLogs, sizeForGetLogs);
 
             /* Clear. Nothing to get after. */

@@ -56,7 +56,7 @@ public abstract class AvalanchePersistence {
     /**
      * Clear all associations between logs and ids returned by {@link #getLogs(String, int, List)} ()}.
      */
-    public abstract void clearIds();
+    public abstract void clearPendingLogState();
 
     /**
      * Delete all logs.

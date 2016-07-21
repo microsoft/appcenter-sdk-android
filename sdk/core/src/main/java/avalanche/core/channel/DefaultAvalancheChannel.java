@@ -204,7 +204,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             if (deleteLogs)
                 mPersistence.clear();
             else
-                mPersistence.clearIds();
+                mPersistence.clearPendingLogState();
         }
     }
 
