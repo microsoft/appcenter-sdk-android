@@ -54,6 +54,16 @@ public abstract class AvalanchePersistence {
     public abstract String getLogs(@NonNull String key, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs);
 
     /**
+     * Clear all associations between logs and ids returned by {@link #getLogs(String, int, List)} ()}.
+     */
+    public abstract void clearIds();
+
+    /**
+     * Delete all logs.
+     */
+    public abstract void clear();
+
+    /**
      * Gets a {@link LogSerializer}.
      *
      * @return The log serializer instance.

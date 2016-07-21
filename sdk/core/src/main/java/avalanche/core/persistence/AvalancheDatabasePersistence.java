@@ -214,6 +214,19 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
     }
 
     @Override
+    public void clearIds() {
+        AvalancheLog.info("Deleting all log identifiers");
+        mPendingDbIdentifiersGroups.clear();
+    }
+
+    @Override
+    public void clear() {
+        clearIds();
+        AvalancheLog.info("Deleting logs from the persistence database");
+        mDatabaseStorage.clear();
+    }
+
+    @Override
     public void close() throws IOException {
         mDatabaseStorage.close();
     }

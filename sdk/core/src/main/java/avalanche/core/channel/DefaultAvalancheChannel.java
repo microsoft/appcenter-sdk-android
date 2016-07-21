@@ -177,16 +177,34 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     @Override
     public void setEnabled(boolean enabled) {
         synchronized (LOCK) {
-            mEnabled = enabled;
-            if (!mEnabled) {
-                for (String groupName : mGroupStates.keySet())
-                    resetThresholds(groupName);
-                try {
-                    mIngestion.close();
-                } catch (IOException e) {
-                    AvalancheLog.error("Failed to close ingestion", e);
-                }
+            if (enabled)
+                mEnabled = true;
+            else
+                suspend(true);
+        }
+    }
+
+    /**
+     * Stop sending logs until app restarted or the channel is enabled again.
+     *
+     * @param deleteLogs in addition to suspending, if this is true, delete all logs from persistence.
+     */
+    private void suspend(boolean deleteLogs) {
+        synchronized (LOCK) {
+            mEnabled = false;
+            for (GroupState groupState : mGroupStates.values()) {
+                resetThresholds(groupState.mName);
+                groupState.mSendingBatches.clear();
             }
+            try {
+                mIngestion.close();
+            } catch (IOException e) {
+                AvalancheLog.error("Failed to close ingestion", e);
+            }
+            if (deleteLogs)
+                mPersistence.clear();
+            else
+                mPersistence.clearIds();
         }
     }
 
@@ -347,22 +365,11 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param t         the error
      */
     private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, @NonNull final Throwable t) {
-        GroupState groupState = mGroupStates.get(groupName);
-        boolean removeBatchIdSuccessful;
-        if (HttpUtils.isRecoverableError(t)) {
-            removeBatchIdSuccessful = groupState.mSendingBatches.remove(batchId);
-            if (!removeBatchIdSuccessful) {
-                AvalancheLog.warn(TAG, "Error removing batchId after recoverable error");
-            }
-            setEnabled(false);
-        } else {
+        if (!HttpUtils.isRecoverableError(t))
             mPersistence.deleteLog(groupName, batchId);
-            removeBatchIdSuccessful = groupState.mSendingBatches.remove(batchId);
-            if (!removeBatchIdSuccessful) {
-                AvalancheLog.warn(TAG, "Error removing batchId after non-recoverable error sending data");
-            }
-            triggerIngestion(groupName);
-        }
+        if (!mGroupStates.get(groupName).mSendingBatches.remove(batchId))
+            AvalancheLog.warn(TAG, "Error removing batchId after sending failure.");
+        suspend(false);
     }
 
     /**
