@@ -598,7 +598,7 @@ public class Crashes extends AbstractAvalancheFeature {
     @Override
     public Map<String, LogFactory> getLogFactories() {
         HashMap<String, LogFactory> factories = new HashMap<>();
-        factories.put(ErrorLog.TYPE, new ErrorLogFactory());
+        factories.put(ErrorLog.TYPE, ErrorLogFactory.getInstance());
         return factories;
     }
 
