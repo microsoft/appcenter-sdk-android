@@ -51,7 +51,7 @@ public class AvalancheIngestionRetryerTest {
     }
 
     @Test
-    public void success() throws InterruptedException {
+    public void success() {
         final ServiceCall call = mock(ServiceCall.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         AvalancheIngestion ingestion = mock(AvalancheIngestion.class);
@@ -71,7 +71,7 @@ public class AvalancheIngestionRetryerTest {
     }
 
     @Test
-    public void successAfterOneRetry() throws Exception {
+    public void successAfterOneRetry() {
         final ServiceCallback callback = mock(ServiceCallback.class);
         AvalancheIngestion ingestion = mock(AvalancheIngestion.class);
         doAnswer(new Answer<ServiceCall>() {
@@ -100,7 +100,7 @@ public class AvalancheIngestionRetryerTest {
     }
 
     @Test
-    public void retryOnceThenFail() throws InterruptedException {
+    public void retryOnceThenFail() {
         final HttpException expectedException = new HttpException(403);
         final ServiceCallback callback = mock(ServiceCallback.class);
         AvalancheIngestion ingestion = mock(AvalancheIngestion.class);
@@ -131,7 +131,7 @@ public class AvalancheIngestionRetryerTest {
     }
 
     @Test
-    public void exhaustRetries() throws InterruptedException {
+    public void exhaustRetries() {
         final ServiceCall call = mock(ServiceCall.class);
         ServiceCallback callback = mock(ServiceCallback.class);
         AvalancheIngestion ingestion = mock(AvalancheIngestion.class);
