@@ -247,7 +247,7 @@ public class StorageHelperAndroidTest {
         /* Delete. */
         databaseStorage.delete(firstValueId);
         assertNull(databaseStorage.get(firstValueId));
-        assertEquals(1, databaseStorage.getRowCount());
+        assertEquals(1, databaseStorage.size());
 
         /* Put logs to delete multiple IDs. */
         ContentValues fourthValue = generateContentValues();
@@ -261,11 +261,11 @@ public class StorageHelperAndroidTest {
         databaseStorage.delete(Arrays.asList(new Long[]{fourthValueId, fifthValueId}));
         assertNull(databaseStorage.get(fourthValueId));
         assertNull(databaseStorage.get(fifthValueId));
-        assertEquals(1, databaseStorage.getRowCount());
+        assertEquals(1, databaseStorage.size());
 
         /* Clear. */
         databaseStorage.clear();
-        assertEquals(0, databaseStorage.getRowCount());
+        assertEquals(0, databaseStorage.size());
     }
 
     /**
@@ -501,7 +501,7 @@ public class StorageHelperAndroidTest {
             assertNotNull(secondValueId);
             assertNotNull(thirdValueId);
 
-            assertEquals(capacity, databaseStorage.getRowCount());
+            assertEquals(capacity, databaseStorage.size());
         } finally {
             /* Close. */
             databaseStorage.close();

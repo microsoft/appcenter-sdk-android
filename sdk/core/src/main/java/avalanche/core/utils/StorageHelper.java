@@ -541,8 +541,7 @@ public final class StorageHelper {
          *
          * @return The number of records in the table.
          */
-        @VisibleForTesting
-        public long getRowCount() {
+        public long size() {
             return mDatabaseManager.getRowCount();
         }
 
