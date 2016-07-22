@@ -37,14 +37,6 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @PrepareForTest({Build.class})
 public class DeviceInfoHelperTest {
 
-    /**
-     * This method is to go through the code that intentionally ignores exceptions.
-     */
-    @Test
-    public void deviceInfoHelperForCoverage() {
-        new DeviceInfoHelper();
-    }
-
     @Test
     public void getDeviceInfo() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
 

@@ -268,18 +268,6 @@ public class StorageHelperAndroidTest {
         assertEquals(0, databaseStorage.size());
     }
 
-    /**
-     * This method is to go through the code that intentionally ignores exceptions.
-     */
-    @Test
-    public void storageHelperForCoverage() throws IOException {
-        Log.i(TAG, "Testing StorageHelper for code coverage");
-
-        new StorageHelper();
-        new PreferencesStorage();
-        new InternalStorage();
-    }
-
     @Test
     public void sharedPreferences() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         Log.i(TAG, "Testing Shared Preference");
