@@ -160,6 +160,7 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
         /* Add logs to output parameter after deserialization if logs are not already sent. */
         int count = 0;
         Map<Long, Log> candidates = new TreeMap<>();
+        List<Long> failedDbIdentifiers = new ArrayList<>();
         for (Iterator<ContentValues> iterator = scanner.iterator(); iterator.hasNext() && count < limit; ) {
             ContentValues values = iterator.next();
             Long dbIdentifier = values.getAsLong(DatabaseManager.PRIMARY_KEY);
@@ -171,10 +172,19 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
                     candidates.put(dbIdentifier, getLogSerializer().deserializeLog(values.getAsString(COLUMN_LOG)));
                     count++;
                 } catch (JSONException e) {
-                    /* If it is not able to deserialize, ignore and get another log. */
+                    /* If it is not able to deserialize, delete and get another log. */
                     AvalancheLog.error("Cannot deserialize a log in the database", e);
+
+                    /* Put the failed identifier to delete. */
+                    failedDbIdentifiers.add(dbIdentifier);
                 }
             }
+        }
+
+        /* Delete any logs that cannot be deserialized. */
+        if (failedDbIdentifiers.size() > 0) {
+            mDatabaseStorage.delete(failedDbIdentifiers);
+            AvalancheLog.info("Deleted logs that cannot be deserialized");
         }
 
         /* No logs found. */

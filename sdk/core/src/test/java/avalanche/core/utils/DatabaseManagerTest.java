@@ -5,10 +5,13 @@ import android.content.ContentValues;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -50,6 +53,15 @@ public class DatabaseManagerTest {
         /* Delete. */
         databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.delete(0);
+        verify(databaseManagerMock).switchToInMemory(eq("delete"), any(RuntimeException.class));
+
+
+        /* Delete multiple IDs. */
+        databaseManagerMock = getDatabaseManagerMock();
+        databaseManagerMock.delete(new ArrayList<Long>());
+        verify(databaseManagerMock, never()).switchToInMemory(eq("delete"), any(RuntimeException.class));
+        databaseManagerMock = getDatabaseManagerMock();
+        databaseManagerMock.delete(Arrays.asList(new Long[]{0L, 1L}));
         verify(databaseManagerMock).switchToInMemory(eq("delete"), any(RuntimeException.class));
 
         /* Clear. */
