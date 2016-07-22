@@ -25,7 +25,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     private WeakReference<Context> mContextWeakReference;
     private long mInitializeTimestamp;
-    private Thread.UncaughtExceptionHandler mPreviousUncaughtExceptionHandler;
+    private UncaughtExceptionHandler mUncaughtExceptionHandler;
 
     private ErrorReporting() {
         mFactories = new HashMap<>();
@@ -61,7 +61,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     public static void register(@NonNull Context context, @Nullable ErrorReportingListener listener) {
         ErrorReporting errorReporting = getInstance();
-        errorReporting.mContextWeakReference = new WeakReference<Context>(context);
+        errorReporting.mContextWeakReference = new WeakReference<>(context);
         errorReporting.initialize();
     }
 
@@ -69,11 +69,22 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         boolean enabled = isEnabled();
         mInitializeTimestamp = enabled ? System.currentTimeMillis() : -1;
 
-        registerExceptionHandler();
+        if (!enabled) {
+            if (mUncaughtExceptionHandler != null) {
+                mUncaughtExceptionHandler.unregister();
+            }
+            return;
+        }
+
+        mUncaughtExceptionHandler = new UncaughtExceptionHandler();
     }
 
     private void queuePendingCrashes() {
-        // Add the pending crashes to the corresponding log
+        // TODO Add the pending crashes to the corresponding log
+    }
+
+    protected long getInitializeTimestamp() {
+        return mInitializeTimestamp;
     }
 
 }
