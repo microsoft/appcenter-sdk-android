@@ -22,21 +22,17 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
     /**
      * Retry intervals to use, array index is to use the value for each retry. When we used all the array values, we give up and forward the last error.
      */
-    private static final long[] RETRY_INTERVALS = new long[]{
+    @VisibleForTesting
+    static final long[] RETRY_INTERVALS = new long[]{
             TimeUnit.SECONDS.toMillis(10),
             TimeUnit.MINUTES.toMillis(5),
             TimeUnit.MINUTES.toMillis(20)
     };
 
     /**
-     * Retry intervals for this instance.
-     */
-    private final long[] mRetryIntervals;
-
-    /**
      * Android "timer" using the main thread loop.
      */
-    private final Handler mHandler = new Handler(Looper.getMainLooper());
+    private final Handler mHandler;
 
     /**
      * Random object for interval randomness.
@@ -49,19 +45,19 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
      * @param decoratedApi API to decorate.
      */
     public AvalancheIngestionRetryer(AvalancheIngestion decoratedApi) {
-        this(decoratedApi, RETRY_INTERVALS);
+        this(decoratedApi, new Handler(Looper.getMainLooper()));
     }
 
     /**
      * Init.
      *
-     * @param decoratedApi   API to decorate.
-     * @param retryIntervals retry intervals, array index is to use the value for each retry. When we used all the array values, we give up and forward the last error.
+     * @param decoratedApi API to decorate.
+     * @param handler      handler for timed retries.
      */
     @VisibleForTesting
-    AvalancheIngestionRetryer(AvalancheIngestion decoratedApi, long... retryIntervals) {
+    AvalancheIngestionRetryer(AvalancheIngestion decoratedApi, Handler handler) {
         super(decoratedApi);
-        mRetryIntervals = retryIntervals;
+        mHandler = handler;
     }
 
     @Override
@@ -95,8 +91,8 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
 
         @Override
         public void failure(Throwable t) {
-            if (mRetryCount < mRetryIntervals.length && HttpUtils.isRecoverableError(t)) {
-                long delay = mRetryIntervals[mRetryCount++] / 2;
+            if (mRetryCount < RETRY_INTERVALS.length && HttpUtils.isRecoverableError(t)) {
+                long delay = RETRY_INTERVALS[mRetryCount++] / 2;
                 delay += mRandom.nextInt((int) delay);
                 AvalancheLog.warn("Try #" + mRetryCount + " failed and will be retried in " + delay + " ms", t);
                 mHandler.postDelayed(this, delay);
