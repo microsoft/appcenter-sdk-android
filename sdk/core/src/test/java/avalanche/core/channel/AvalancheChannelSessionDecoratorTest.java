@@ -3,15 +3,20 @@ package avalanche.core.channel;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.SystemClock;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.UUID;
 
+import avalanche.core.ingestion.models.AbstractLog;
 import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.StartSessionLog;
-import avalanche.core.ingestion.models.json.MockLog;
 
 import static avalanche.core.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
 import static org.junit.Assert.assertEquals;
@@ -26,12 +31,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(SystemClock.class)
 public class AvalancheChannelSessionDecoratorTest {
 
     @Test
     public void session() throws PackageManager.NameNotFoundException, InterruptedException {
 
         /* Setup mocking. */
+        long mockTime = System.currentTimeMillis();
+        PowerMockito.mockStatic(SystemClock.class);
+        when(SystemClock.elapsedRealtime()).thenReturn(mockTime);
         AvalancheChannel channel = mock(AvalancheChannel.class);
         Context context = mock(Context.class);
         PackageManager packageManager = mock(PackageManager.class);
@@ -70,7 +80,8 @@ public class AvalancheChannelSessionDecoratorTest {
 
         /* No usage from background for a long time. */
         {
-            Thread.sleep(30);
+            mockTime += 30;
+            when(SystemClock.elapsedRealtime()).thenReturn(mockTime);
             packageInfo.versionCode++; // make any change in device properties
             Log log = new MockLog();
             sessionChannel.enqueue(log, ANALYTICS_GROUP);
@@ -95,9 +106,11 @@ public class AvalancheChannelSessionDecoratorTest {
 
         /* Switch to another activity. */
         {
-            Thread.sleep(2);
+            mockTime += 2;
+            when(SystemClock.elapsedRealtime()).thenReturn(mockTime);
             sessionChannel.onActivityPaused(null);
-            Thread.sleep(2);
+            mockTime += 2;
+            when(SystemClock.elapsedRealtime()).thenReturn(mockTime);
             sessionChannel.onActivityResumed(null);
             Log log = new MockLog();
             sessionChannel.enqueue(log, ANALYTICS_GROUP);
@@ -108,7 +121,8 @@ public class AvalancheChannelSessionDecoratorTest {
 
         /* We are in foreground, even after timeout a log is still in session. */
         {
-            Thread.sleep(30);
+            mockTime += 30;
+            when(SystemClock.elapsedRealtime()).thenReturn(mockTime);
             Log log = new MockLog();
             sessionChannel.enqueue(log, ANALYTICS_GROUP);
             assertEquals(expectedSid, log.getSid());
@@ -118,9 +132,11 @@ public class AvalancheChannelSessionDecoratorTest {
 
         /* Background for a short time and send log: still in session. */
         {
-            Thread.sleep(2);
+            mockTime += 2;
+            when(SystemClock.elapsedRealtime()).thenReturn(mockTime);
             sessionChannel.onActivityPaused(null);
-            Thread.sleep(2);
+            mockTime += 2;
+            when(SystemClock.elapsedRealtime()).thenReturn(mockTime);
             Log log = new MockLog();
             sessionChannel.enqueue(log, ANALYTICS_GROUP);
             assertEquals(expectedSid, log.getSid());
@@ -130,7 +146,8 @@ public class AvalancheChannelSessionDecoratorTest {
 
         /* Background for a long time and coming back to foreground: new session. */
         {
-            Thread.sleep(30);
+            mockTime += 30;
+            when(SystemClock.elapsedRealtime()).thenReturn(mockTime);
             packageInfo.versionCode++; // make any change in device properties
             sessionChannel.onActivityResumed(null);
             Log log = new MockLog();
@@ -184,5 +201,13 @@ public class AvalancheChannelSessionDecoratorTest {
         verify(channel).setEnabled(true);
         when(channel.isEnabled()).thenReturn(true);
         assertTrue(sessionChannel.isEnabled());
+    }
+
+    private static class MockLog extends AbstractLog {
+
+        @Override
+        public String getType() {
+            return "mock";
+        }
     }
 }
