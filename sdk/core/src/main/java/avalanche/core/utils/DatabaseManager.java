@@ -11,11 +11,13 @@ import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
+import android.text.TextUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -264,6 +266,31 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
+     * Deletes the entries by the identifier from the database.
+     *
+     * @param idList The list of database identifiers.
+     */
+    public void delete(@NonNull List<Long> idList) {
+        if (idList.size() <= 0)
+            return;
+
+        /* Try SQLite. */
+        if (mIMDB == null) {
+            try {
+                getDatabase().execSQL(String.format("DELETE FROM " + mTable + " WHERE " + PRIMARY_KEY + " IN (%s);", TextUtils.join(", ", idList)));
+            } catch (RuntimeException e) {
+                switchToInMemory("delete", e);
+            }
+        }
+
+        /* Deletes the values from in-memory database. */
+        else {
+            for (Long id : idList)
+                mIMDB.remove(id);
+        }
+    }
+
+    /**
      * Gets the entry by the identifier.
      *
      * @param id The database identifier.
@@ -368,7 +395,7 @@ public class DatabaseManager implements Closeable {
      *
      * @return The number of records in the table.
      */
-    long getRowCount() {
+    public final long getRowCount() {
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
@@ -427,7 +454,7 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Switches to in-memory management, triggers error listener. This is TEST PURPOSE ONLY.
+     * Switches to in-memory management, triggers error listener.
      *
      * @param operation The operation that triggered the error.
      * @param exception The exception that triggered the switch.

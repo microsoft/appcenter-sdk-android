@@ -24,6 +24,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -260,7 +261,7 @@ public final class StorageHelper {
          * Reads an object from the file (deserialization).
          *
          * @param file The file instance.
-         * @return The de-serialized instance.
+         * @return The deserialized instance.
          * @throws IOException
          * @throws ClassNotFoundException
          */
@@ -469,6 +470,15 @@ public final class StorageHelper {
         }
 
         /**
+         * Deletes the entries by the identifier from the database.
+         *
+         * @param idList The list of database identifiers.
+         */
+        public void delete(@NonNull List<Long> idList) {
+            mDatabaseManager.delete(idList);
+        }
+
+        /**
          * Gets the entry by the identifier.
          *
          * @param id The database identifier.
@@ -527,17 +537,16 @@ public final class StorageHelper {
         }
 
         /**
-         * Gets the count of records in the table. This is TEST PURPOSE ONLY.
+         * Gets the count of records in the table.
          *
          * @return The number of records in the table.
          */
-        @VisibleForTesting
-        long getRowCount() {
+        public long size() {
             return mDatabaseManager.getRowCount();
         }
 
         /**
-         * Gets an array of column names in the table. This is TEST PURPOSE ONLY.
+         * Gets an array of column names in the table.
          *
          * @return An array of column names.
          */

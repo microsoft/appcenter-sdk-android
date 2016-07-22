@@ -363,6 +363,7 @@ public class AvalancheDatabasePersistenceTest {
             List<Log> outputLogs = new ArrayList<>();
             persistence.getLogs("test", 10, outputLogs);
             assertEquals(numberOfLogs / 2, outputLogs.size());
+            assertEquals(2, persistence.mDatabaseStorage.size());
         } finally {
             /* Close. */
             persistence.close();

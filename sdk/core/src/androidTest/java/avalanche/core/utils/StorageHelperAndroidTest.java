@@ -216,7 +216,6 @@ public class StorageHelperAndroidTest {
         Long firstValueId = databaseStorage.put(firstValue);
         assertNotNull(firstValueId);
 
-
         /* Get for in-memory database test. */
         if (imdbTest) {
             ContentValues firstValueFromDatabase = databaseStorage.get("COL_STRING", firstValue.getAsString("COL_STRING"));
@@ -248,11 +247,25 @@ public class StorageHelperAndroidTest {
         /* Delete. */
         databaseStorage.delete(firstValueId);
         assertNull(databaseStorage.get(firstValueId));
-        assertEquals(1, databaseStorage.getRowCount());
+        assertEquals(1, databaseStorage.size());
+
+        /* Put logs to delete multiple IDs. */
+        ContentValues fourthValue = generateContentValues();
+        ContentValues fifthValue = generateContentValues();
+        Long fourthValueId = databaseStorage.put(fourthValue);
+        Long fifthValueId = databaseStorage.put(fifthValue);
+        assertNotNull(fourthValueId);
+        assertNotNull(fifthValueId);
+
+        /* Delete multiple logs. */
+        databaseStorage.delete(Arrays.asList(new Long[]{fourthValueId, fifthValueId}));
+        assertNull(databaseStorage.get(fourthValueId));
+        assertNull(databaseStorage.get(fifthValueId));
+        assertEquals(1, databaseStorage.size());
 
         /* Clear. */
         databaseStorage.clear();
-        assertEquals(0, databaseStorage.getRowCount());
+        assertEquals(0, databaseStorage.size());
     }
 
     /**
@@ -384,7 +397,7 @@ public class StorageHelperAndroidTest {
         /* Read the file. */
         DataModel actual = InternalStorage.readObject(file);
 
-        /* Verify the de-serialized instance and original instance are same. */
+        /* Verify the deserialized instance and original instance are same. */
         assertNotNull(actual);
         assertEquals(model.number, actual.number);
         assertEquals(model.object.text, actual.object.text);
@@ -488,7 +501,7 @@ public class StorageHelperAndroidTest {
             assertNotNull(secondValueId);
             assertNotNull(thirdValueId);
 
-            assertEquals(capacity, databaseStorage.getRowCount());
+            assertEquals(capacity, databaseStorage.size());
         } finally {
             /* Close. */
             databaseStorage.close();
