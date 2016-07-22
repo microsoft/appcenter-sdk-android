@@ -1,7 +1,9 @@
 package avalanche.core.ingestion.http;
 
-import org.junit.BeforeClass;
+import android.os.Handler;
+
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -13,25 +15,43 @@ import avalanche.core.ingestion.AvalancheIngestion;
 import avalanche.core.ingestion.ServiceCall;
 import avalanche.core.ingestion.ServiceCallback;
 import avalanche.core.ingestion.models.LogContainer;
-import avalanche.core.utils.AvalancheLog;
 
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.longThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class AvalancheIngestionRetryerTest {
 
-    @BeforeClass
-    public static void setUpBeforeClass() {
-        AvalancheLog.setLogLevel(android.util.Log.VERBOSE);
+    private static void simulateRetryAfterDelay(Handler handler) {
+        doAnswer(new Answer() {
+
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                Runnable runnable = (Runnable) invocation.getArguments()[0];
+                runnable.run();
+                return null;
+            }
+        }).when(handler).postDelayed(any(Runnable.class), anyLong());
+    }
+
+    private static void verifyDelay(Handler handler, final int retryIndex) {
+        verify(handler).postDelayed(any(Runnable.class), longThat(new ArgumentMatcher<Long>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                long interval = (Long) argument;
+                long retryInterval = AvalancheIngestionRetryer.RETRY_INTERVALS[retryIndex];
+                return interval >= retryInterval / 2 && interval <= retryInterval;
+            }
+        }));
     }
 
     @Test
-    public void success() throws InterruptedException {
+    public void success() {
         final ServiceCall call = mock(ServiceCall.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         AvalancheIngestion ingestion = mock(AvalancheIngestion.class);
@@ -51,7 +71,7 @@ public class AvalancheIngestionRetryerTest {
     }
 
     @Test
-    public void successAfterOneRetry() throws InterruptedException {
+    public void successAfterOneRetry() {
         final ServiceCallback callback = mock(ServiceCallback.class);
         AvalancheIngestion ingestion = mock(AvalancheIngestion.class);
         doAnswer(new Answer<ServiceCall>() {
@@ -69,16 +89,18 @@ public class AvalancheIngestionRetryerTest {
                 return mock(ServiceCall.class);
             }
         }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        AvalancheIngestion retryer = new AvalancheIngestionRetryer(ingestion, 100);
+        Handler handler = mock(Handler.class);
+        AvalancheIngestion retryer = new AvalancheIngestionRetryer(ingestion, handler);
+        simulateRetryAfterDelay(handler);
         retryer.sendAsync(null, null, null, callback);
-        Thread.sleep(40);
-        verify(callback, times(0)).success();
-        verify(callback, timeout(70)).success();
+        verifyDelay(handler, 0);
+        verifyNoMoreInteractions(handler);
+        verify(callback).success();
         verifyNoMoreInteractions(callback);
     }
 
     @Test
-    public void retryOnceThenFail() throws InterruptedException {
+    public void retryOnceThenFail() {
         final HttpException expectedException = new HttpException(403);
         final ServiceCallback callback = mock(ServiceCallback.class);
         AvalancheIngestion ingestion = mock(AvalancheIngestion.class);
@@ -97,16 +119,19 @@ public class AvalancheIngestionRetryerTest {
                 return mock(ServiceCall.class);
             }
         }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        AvalancheIngestion retryer = new AvalancheIngestionRetryer(ingestion, 100, 200);
+        Handler handler = mock(Handler.class);
+        AvalancheIngestion retryer = new AvalancheIngestionRetryer(ingestion, handler);
+        simulateRetryAfterDelay(handler);
         retryer.sendAsync(null, null, null, callback);
-        Thread.sleep(40);
-        verify(callback, times(0)).failure(any(Throwable.class));
-        verify(callback, timeout(70)).failure(expectedException);
+        verifyDelay(handler, 0);
+        verifyNoMoreInteractions(handler);
+        verify(callback).failure(any(Throwable.class));
+        verify(callback).failure(expectedException);
         verifyNoMoreInteractions(callback);
     }
 
     @Test
-    public void exhaustRetries() throws InterruptedException {
+    public void exhaustRetries() {
         final ServiceCall call = mock(ServiceCall.class);
         ServiceCallback callback = mock(ServiceCallback.class);
         AvalancheIngestion ingestion = mock(AvalancheIngestion.class);
@@ -118,9 +143,14 @@ public class AvalancheIngestionRetryerTest {
                 return call;
             }
         }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        AvalancheIngestion retryer = new AvalancheIngestionRetryer(ingestion, 100, 200);
+        Handler handler = mock(Handler.class);
+        AvalancheIngestion retryer = new AvalancheIngestionRetryer(ingestion, handler);
+        simulateRetryAfterDelay(handler);
         retryer.sendAsync(null, null, null, callback);
-        Thread.sleep(500);
+        verifyDelay(handler, 0);
+        verifyDelay(handler, 1);
+        verifyDelay(handler, 2);
+        verifyNoMoreInteractions(handler);
         verify(callback).failure(new HttpException(429));
         verifyNoMoreInteractions(callback);
         verifyNoMoreInteractions(call);
@@ -139,7 +169,8 @@ public class AvalancheIngestionRetryerTest {
                 return call;
             }
         }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        AvalancheIngestion retryer = new AvalancheIngestionRetryer(ingestion, 100, 200);
+        Handler handler = mock(Handler.class);
+        AvalancheIngestion retryer = new AvalancheIngestionRetryer(ingestion, handler);
         retryer.sendAsync(null, null, null, callback).cancel();
         Thread.sleep(500);
         verifyNoMoreInteractions(callback);
