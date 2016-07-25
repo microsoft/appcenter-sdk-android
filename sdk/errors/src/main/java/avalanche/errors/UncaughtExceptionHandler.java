@@ -2,11 +2,21 @@ package avalanche.errors;
 
 import android.os.Process;
 
-import java.util.Set;
+import org.json.JSONException;
+import org.json.JSONStringer;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import avalanche.core.Constants;
+import avalanche.core.utils.StorageHelper;
 import avalanche.core.utils.UUIDUtils;
 import avalanche.errors.ingestion.models.ErrorLog;
+import avalanche.errors.ingestion.models.Exception;
+import avalanche.errors.ingestion.models.ThreadFrame;
 
 public class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
@@ -17,12 +27,62 @@ public class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler
         register();
     }
 
+    private static Exception getExceptionFromThrowable(Throwable t) {
+        return getExceptionFromThrowable(t, 0);
+    }
+
+    private static Exception getExceptionFromThrowable(Throwable t, int id) {
+        Exception result = new Exception();
+        result.setId(id);
+        result.setFrames(getThreadFramesFromStackTrace(t.getStackTrace()));
+        result.setLanguage("Java");
+        result.setReason(t.getMessage());
+
+        if (t.getCause() != null) {
+            List<Exception> innerExceptions = new ArrayList<>();
+            innerExceptions.add(getExceptionFromThrowable(t.getCause(), id + 1));
+            result.setInnerExceptions(innerExceptions);
+        }
+
+        return result;
+    }
+
+    private static List<ThreadFrame> getThreadFramesFromStackTrace(StackTraceElement[] stackTrace) {
+        List<ThreadFrame> threadFrames = new ArrayList<>();
+        for (StackTraceElement e : stackTrace) {
+            ThreadFrame frame = new ThreadFrame();
+            frame.setSymbol(e.toString());
+            threadFrames.add(frame);
+        }
+        return threadFrames;
+    }
+
+    private static void writeErrorLog(ErrorLog log) throws JSONException, IOException {
+        JSONStringer writer = new JSONStringer();
+        writer.object();
+        log.write(writer);
+        try {
+            log.validate();
+        } catch (IllegalArgumentException e) {
+            throw new JSONException(e.getMessage());
+        }
+        writer.endObject();
+
+        File crashesTemp = new File(Constants.FILES_PATH, "crash");
+        if (!StorageHelper.InternalStorage.mkdir(crashesTemp.getAbsolutePath())) {
+            // Could not create crashes temporary directory, can't write error log
+            return;
+        }
+        File logFile = new File(crashesTemp, log.getId().toString() + ".json");
+        StorageHelper.InternalStorage.write(logFile, writer.toString());
+    }
+
     @Override
     public void uncaughtException(Thread thread, Throwable exception) {
         if (Constants.FILES_PATH == null && mDefaultUncaughtExceptionHandler != null) {
             mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
         } else {
-            saveException(thread, exception);
+            saveException(thread, exception, Thread.getAllStackTraces());
 
             if (!mIgnoreDefaultExceptionHandler && mDefaultUncaughtExceptionHandler != null) {
                 mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
@@ -33,7 +93,7 @@ public class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler
         }
     }
 
-    private void saveException(Thread thread, Throwable exception) {
+    public void saveException(final Thread thread, final Throwable exception, final Map<Thread, StackTraceElement[]> allStackTraces) {
         ErrorLog errorLog = new ErrorLog();
         errorLog.setId(UUIDUtils.randomUUID());
         /*
@@ -50,9 +110,23 @@ public class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler
         errorLog.setExceptionReason(exception.getMessage());
         errorLog.setFatal(true);
 
-        Set<Thread> allLiveThreads = Thread.getAllStackTraces().keySet();
-        for (Thread t : allLiveThreads) {
+        for (Map.Entry<Thread, StackTraceElement[]> entry : allStackTraces.entrySet()) {
+            avalanche.errors.ingestion.models.Thread t = new avalanche.errors.ingestion.models.Thread();
+            t.setId((int) entry.getKey().getId());
+            t.setFrames(getThreadFramesFromStackTrace(entry.getValue()));
+        }
 
+        List<Exception> exceptions = new ArrayList<>();
+        exceptions.add(getExceptionFromThrowable(exception));
+        errorLog.setExceptions(exceptions);
+
+        //noinspection TryWithIdenticalCatches
+        try {
+            writeErrorLog(errorLog);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
     }
