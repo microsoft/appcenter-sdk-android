@@ -17,6 +17,10 @@ public class AbstractAvalancheFeatureTest {
     @Before
     public void setUp() {
         feature = new AbstractAvalancheFeature() {
+            @Override
+            protected String getGroupName() {
+                return "group_test";
+            }
         };
     }
 
@@ -73,5 +77,10 @@ public class AbstractAvalancheFeatureTest {
         feature.onChannelReady(channel);
 
         Assert.assertSame(channel, feature.mChannel);
+    }
+
+    @Test
+    public void getGroupName() {
+        Assert.assertEquals("group_test", feature.getGroupName());
     }
 }

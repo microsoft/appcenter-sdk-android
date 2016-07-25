@@ -146,18 +146,21 @@ public class AnalyticsTest {
         AvalancheChannel channel = mock(AvalancheChannel.class);
         analytics.setEnabled(false);
         analytics.onChannelReady(channel);
+        verify(channel).clear(analytics.getGroupName());
         Analytics.trackEvent("test", null);
         Analytics.trackPage("test", null);
         verifyZeroInteractions(channel);
 
         /* Enable back. */
         analytics.setEnabled(true);
+        verifyZeroInteractions(channel);
         Analytics.trackEvent("test", null);
         Analytics.trackPage("test", null);
         verify(channel, times(2)).enqueue(any(Log.class), eq(ANALYTICS_GROUP));
 
         /* Disable again. */
         analytics.setEnabled(false);
+        verify(channel, times(2)).clear(analytics.getGroupName());
         Analytics.trackEvent("test", null);
         Analytics.trackPage("test", null);
         verifyNoMoreInteractions(channel);

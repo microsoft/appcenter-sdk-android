@@ -34,6 +34,11 @@ import static avalanche.core.utils.StorageHelper.PreferencesStorage;
 
 public class Crashes extends AbstractAvalancheFeature {
 
+    /**
+     * Constant marking event of the error group.
+     */
+    public static final String ERROR_GROUP = "group_error";
+
     private static final String ALWAYS_SEND_KEY = "always_send_crash_reports";
 
     private static final int STACK_TRACES_FOUND_NONE = 0;
@@ -595,5 +600,10 @@ public class Crashes extends AbstractAvalancheFeature {
         HashMap<String, LogFactory> factories = new HashMap<>();
         factories.put(ErrorLog.TYPE, new ErrorLogFactory());
         return factories;
+    }
+
+    @Override
+    protected String getGroupName() {
+        return ERROR_GROUP;
     }
 }

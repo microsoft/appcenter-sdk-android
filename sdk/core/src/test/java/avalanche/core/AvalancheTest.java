@@ -275,6 +275,11 @@ public class AvalancheTest {
             }
             return sharedInstance;
         }
+
+        @Override
+        protected String getGroupName() {
+            return "group_dummy";
+        }
     }
 
     private static class AnotherDummyFeature extends AbstractAvalancheFeature {
@@ -294,8 +299,18 @@ public class AvalancheTest {
             logFactories.put("mock", mock(LogFactory.class));
             return logFactories;
         }
+
+        @Override
+        protected String getGroupName() {
+            return "group_another_dummy";
+        }
     }
 
     private static class InvalidFeature extends AbstractAvalancheFeature {
+
+        @Override
+        protected String getGroupName() {
+            return "group_invalid";
+        }
     }
 }

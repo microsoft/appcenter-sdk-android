@@ -128,6 +128,11 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
         mChannel.setEnabled(enabled);
     }
 
+    @Override
+    public void clear(String groupName) {
+        mChannel.clear(groupName);
+    }
+
     /**
      * Add common attributes to logs before forwarding to delegate channel.
      *
