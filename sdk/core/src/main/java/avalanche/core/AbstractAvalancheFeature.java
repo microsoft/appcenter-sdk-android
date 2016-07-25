@@ -50,10 +50,17 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
     @Override
     public synchronized void setEnabled(boolean enabled) {
         mEnabled = enabled;
+
+        /* Clear all persisted logs for the feature if the feature is disabled after the channel is ready. */
+        if (!mEnabled && mChannel != null)
+            mChannel.clear(getGroupName());
     }
 
     @Override
     public synchronized void onChannelReady(AvalancheChannel channel) {
+        /* Clear all persisted logs for the feature if it wan't cleared in previous setEnabled(false) call. */
+        if (!mEnabled && mChannel == null)
+            channel.clear(getGroupName());
         mChannel = channel;
     }
 
@@ -61,4 +68,11 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
     public Map<String, LogFactory> getLogFactories() {
         return null;
     }
+
+    /**
+     * Gets a name of group for the feature.
+     *
+     * @return The group name.
+     */
+    public abstract String getGroupName();
 }

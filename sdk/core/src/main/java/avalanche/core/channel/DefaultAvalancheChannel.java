@@ -32,14 +32,8 @@ import avalanche.core.utils.NetworkStateHelper;
 
 public class DefaultAvalancheChannel implements AvalancheChannel {
 
-    /**
-     * Constant marking event of the error group.
-     */
+    /* TODO: Moved to feature class. Use getGroupName() instead. Will be removed soon. */
     public static final String ERROR_GROUP = "group_error";
-
-    /**
-     * Constant marking event of the analytics group.
-     */
     public static final String ANALYTICS_GROUP = "group_analytics";
 
     /**
@@ -182,6 +176,16 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             else
                 suspend(true);
         }
+    }
+
+    /**
+     * Clear all persisted logs for the given group.
+     *
+     * @param groupName the group name.
+     */
+    @Override
+    public void clear(String groupName) {
+        mPersistence.deleteLog(AvalancheDatabasePersistence.COLUMN_KEY, groupName);
     }
 
     /**

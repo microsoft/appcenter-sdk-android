@@ -30,4 +30,11 @@ public interface AvalancheChannel {
      * @param enabled true to enable, false to disable.
      */
     void setEnabled(boolean enabled);
+
+    /**
+     * Clear all persisted logs for the given group.
+     *
+     * @param groupName the group name.
+     */
+    void clear(String groupName);
 }

@@ -18,12 +18,15 @@ import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.UUIDUtils;
 
-import static avalanche.core.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
-
 /**
  * Analytics feature.
  */
 public class Analytics extends AbstractAvalancheFeature {
+
+    /**
+     * Constant marking event of the analytics group.
+     */
+    public static final String ANALYTICS_GROUP = "group_analytics";
 
     /**
      * Activity suffix to exclude from generated page names.
@@ -150,6 +153,11 @@ public class Analytics extends AbstractAvalancheFeature {
     public synchronized void onActivityResumed(Activity activity) {
         if (mAutoPageTrackingEnabled)
             queuePage(generatePageName(activity.getClass()), null);
+    }
+
+    @Override
+    public String getGroupName() {
+        return ANALYTICS_GROUP;
     }
 
     /**

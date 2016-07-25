@@ -31,8 +31,7 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
     /**
      * Name of key column in the table.
      */
-    @VisibleForTesting
-    static final String COLUMN_KEY = "key";
+    public static final String COLUMN_KEY = "key";
 
     /**
      * Name of log column in the table.
