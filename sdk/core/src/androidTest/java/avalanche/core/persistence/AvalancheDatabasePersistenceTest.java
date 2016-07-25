@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import avalanche.core.TestUtils;
 import avalanche.core.ingestion.models.Log;
@@ -197,7 +198,7 @@ public class AvalancheDatabasePersistenceTest {
             assertEquals(1, outputLogs3.size());
 
             /* Delete. */
-            persistence.deleteLog("", id);
+            persistence.deleteLogs("", id);
 
             /* Access DatabaseStorage directly to verify the deletions. */
             DatabaseScanner scanner1 = persistence.mDatabaseStorage.getScanner(AvalancheDatabasePersistence.COLUMN_GROUP, "test-p1");
@@ -218,7 +219,7 @@ public class AvalancheDatabasePersistenceTest {
             }
 
             /* Delete. */
-            persistence.deleteLog("test-p1", id);
+            persistence.deleteLogs("test-p1", id);
 
             /* Access DatabaseStorage directly to verify the deletions. */
             DatabaseScanner scanner4 = persistence.mDatabaseStorage.getScanner(AvalancheDatabasePersistence.COLUMN_GROUP, "test-p1");
@@ -232,6 +233,64 @@ public class AvalancheDatabasePersistenceTest {
                 scanner4.close();
             }
 
+        } finally {
+            /* Close. */
+            persistence.close();
+        }
+    }
+
+    @Test
+    public void deleteLogsForGroup() throws PersistenceException, IOException {
+        android.util.Log.i(TAG, "Testing Database Persistence deleteLogs for group");
+
+        /* Initialize database persistence. */
+        AvalancheDatabasePersistence persistence = new AvalancheDatabasePersistence("test-persistence", "deleteLogsForGroup", 1);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+
+        try {
+            /* Generate a log and persist. */
+            Log log1 = TestUtils.generateMockLog();
+            Log log2 = TestUtils.generateMockLog();
+            Log log3 = TestUtils.generateMockLog();
+            Log log4 = TestUtils.generateMockLog();
+            persistence.putLog("test-p1", log1);
+            persistence.putLog("test-p1", log2);
+            persistence.putLog("test-p2", log3);
+            persistence.putLog("test-p3", log4);
+
+            /* Get a log from persistence. */
+            List<Log> outputLogs = new ArrayList<>();
+            String id1 = persistence.getLogs("test-p1", 5, outputLogs);
+            String id2 = persistence.getLogs("test-p2", 5, outputLogs);
+            assertNotNull(id1);
+            assertNotNull(id2);
+
+            /* Delete. */
+            persistence.deleteLogs("test-p1");
+            persistence.deleteLogs("test-p3");
+
+            /* Try another get for verification. */
+            outputLogs.clear();
+            persistence.getLogs("test-p3", 5, outputLogs);
+
+            /* Verify. */
+            Map<String, List<Long>> pendingGroups = persistence.getPendingDbIdentifiersGroups();
+            assertNull(pendingGroups.get("test-p1" + id1));
+            assertEquals(1, pendingGroups.get("test-p2" + id2).size());
+            assertEquals(1, pendingGroups.size());
+            assertEquals(0, outputLogs.size());
+            assertEquals(1, persistence.mDatabaseStorage.size());
+
+            /* Verify one log still persists in the database. */
+            persistence.clearPendingLogState();
+            outputLogs.clear();
+            persistence.getLogs("test-p2", 5, outputLogs);
+            assertEquals(1, outputLogs.size());
+            assertEquals(log3, outputLogs.get(0));
         } finally {
             /* Close. */
             persistence.close();
@@ -277,7 +336,6 @@ public class AvalancheDatabasePersistenceTest {
             assertNull(persistence.getLogs("test", sizeForGetLogs, outputLogs));
             assertTrue(outputLogs.isEmpty());
         } finally {
-
             /* Close. */
             persistence.close();
         }
