@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import avalanche.core.AbstractAvalancheFeature;
-import avalanche.core.Avalanche;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.Util;
 
@@ -40,10 +39,14 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         return sInstance;
     }
 
-    @Override
-    public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
-        initialize();
+    public static void register(@NonNull Context context) {
+        register(context, null);
+    }
+
+    public static void register(@NonNull Context context, @Nullable ErrorReportingListener listener) {
+        ErrorReporting errorReporting = getInstance();
+        errorReporting.mContextWeakReference = new WeakReference<>(context);
+        errorReporting.initialize();
     }
 
     @Override
@@ -55,14 +58,10 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         }
     }
 
-    public static void register(@NonNull Context context) {
-        register(context, null);
-    }
-
-    public static void register(@NonNull Context context, @Nullable ErrorReportingListener listener) {
-        ErrorReporting errorReporting = getInstance();
-        errorReporting.mContextWeakReference = new WeakReference<>(context);
-        errorReporting.initialize();
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        initialize();
     }
 
     private void initialize() {
