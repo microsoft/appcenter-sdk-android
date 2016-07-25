@@ -15,19 +15,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
-import java.util.Random;
 
-import avalanche.core.ingestion.models.Device;
+import avalanche.core.TestUtils;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.json.DefaultLogSerializer;
 import avalanche.core.ingestion.models.json.LogSerializer;
-import avalanche.core.ingestion.models.json.MockLog;
 import avalanche.core.ingestion.models.json.MockLogFactory;
 import avalanche.core.persistence.AvalanchePersistence.PersistenceException;
 import avalanche.core.utils.StorageHelper;
 import avalanche.core.utils.StorageHelper.DatabaseStorage.DatabaseScanner;
-import avalanche.core.utils.UUIDUtils;
 
 import static avalanche.core.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 import static org.junit.Assert.assertEquals;
@@ -70,29 +66,6 @@ public class AvalancheDatabasePersistenceTest {
         sContext.deleteDatabase("test-persistence");
     }
 
-    private static Log generateLog() {
-        Random random = new Random(System.currentTimeMillis());
-
-        Device device = new Device();
-        device.setSdkVersion(String.format(Locale.ENGLISH, "%d.%d.%d", (random.nextInt(5) + 1), random.nextInt(10), random.nextInt(100)));
-        device.setModel("S5");
-        device.setOemName("HTC");
-        device.setOsName("Android");
-        device.setOsVersion(String.format(Locale.ENGLISH, "%d.%d.%d", (random.nextInt(5) + 1), random.nextInt(10), random.nextInt(100)));
-        device.setOsApiLevel(random.nextInt(9) + 15);
-        device.setLocale("en_US");
-        device.setTimeZoneOffset(random.nextInt(52) * 30 - 720);
-        device.setScreenSize(String.format(Locale.ENGLISH, "%dx%d", (random.nextInt(4) + 1) * 1000, (random.nextInt(10) + 1) * 100));
-        device.setAppVersion(String.format(Locale.ENGLISH, "%d.%d.%d", (random.nextInt(5) + 1), random.nextInt(10), random.nextInt(100)));
-        device.setAppBuild(Integer.toString(random.nextInt(1000) + 1));
-        device.setAppNamespace("com.microsoft.unittest");
-
-        Log log = new MockLog();
-        log.setSid(UUIDUtils.randomUUID());
-        log.setDevice(device);
-        return log;
-    }
-
     private static int getIteratorSize(Iterator iterator) {
         int count = 0;
         for (; iterator.hasNext(); iterator.next())
@@ -114,7 +87,7 @@ public class AvalancheDatabasePersistenceTest {
 
         try {
             /* Generate a log and persist. */
-            Log log = generateLog();
+            Log log = TestUtils.generateMockLog();
             persistence.putLog("test-p1", log);
 
             /* Get a log from persistence. */
@@ -142,10 +115,10 @@ public class AvalancheDatabasePersistenceTest {
 
         try {
             /* Generate too many logs and persist. */
-            Log log1 = generateLog();
-            Log log2 = generateLog();
-            Log log3 = generateLog();
-            Log log4 = generateLog();
+            Log log1 = TestUtils.generateMockLog();
+            Log log2 = TestUtils.generateMockLog();
+            Log log3 = TestUtils.generateMockLog();
+            Log log4 = TestUtils.generateMockLog();
             persistence.putLog("test-p1", log1);
             persistence.putLog("test-p1", log2);
             persistence.putLog("test-p1", log3);
@@ -177,7 +150,7 @@ public class AvalancheDatabasePersistenceTest {
 
         try {
             /* Generate a log and persist. */
-            Log log = generateLog();
+            Log log = TestUtils.generateMockLog();
             persistence.putLog("test-p1", log);
         } finally {
             /* Close. */
@@ -199,10 +172,10 @@ public class AvalancheDatabasePersistenceTest {
 
         try {
             /* Generate a log and persist. */
-            Log log1 = generateLog();
-            Log log2 = generateLog();
-            Log log3 = generateLog();
-            Log log4 = generateLog();
+            Log log1 = TestUtils.generateMockLog();
+            Log log2 = TestUtils.generateMockLog();
+            Log log3 = TestUtils.generateMockLog();
+            Log log4 = TestUtils.generateMockLog();
             persistence.putLog("test-p1", log1);
             persistence.putLog("test-p1", log2);
             persistence.putLog("test-p2", log3);
@@ -285,7 +258,7 @@ public class AvalancheDatabasePersistenceTest {
             /* Generate a log and persist. */
             Log[] logs = new Log[numberOfLogs];
             for (int i = 0; i < logs.length; i++)
-                logs[i] = generateLog();
+                logs[i] = TestUtils.generateMockLog();
 
             /* Put. */
             for (Log log : logs)
@@ -338,11 +311,11 @@ public class AvalancheDatabasePersistenceTest {
         /* Throw a JSON exception for the first call. */
         doThrow(new JSONException("JSON exception"))
                 /* Return a normal log for the second call. */
-                .doReturn(generateLog())
+                .doReturn(TestUtils.generateMockLog())
                 /* Throw a JSON exception for the third call. */
                 .doThrow(new JSONException("JSON exception"))
                 /* Return a normal log for further calls. */
-                .doReturn(generateLog())
+                .doReturn(TestUtils.generateMockLog())
                 .when(logSerializer).deserializeLog(anyString());
         persistence.setLogSerializer(logSerializer);
 
@@ -353,7 +326,7 @@ public class AvalancheDatabasePersistenceTest {
             /* Generate a log and persist. */
             Log[] logs = new Log[numberOfLogs];
             for (int i = 0; i < logs.length; i++)
-                logs[i] = generateLog();
+                logs[i] = TestUtils.generateMockLog();
 
             /* Put. */
             for (Log log : logs)
