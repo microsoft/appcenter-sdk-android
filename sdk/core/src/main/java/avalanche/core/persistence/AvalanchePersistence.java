@@ -26,32 +26,32 @@ public abstract class AvalanchePersistence {
     private LogSerializer mLogSerializer;
 
     /**
-     * Writes a log to the storage with the given {@code key}.
+     * Writes a log to the storage with the given {@code group}.
      *
-     * @param key The key of the storage for the log.
+     * @param group The group of the storage for the log.
      * @param log The log to be placed in the storage.
      * @throws PersistenceException Exception will be thrown if persistence cannot write a log to the storage.
      */
-    public abstract void putLog(@NonNull String key, @NonNull Log log) throws PersistenceException;
+    public abstract void putLog(@NonNull String group, @NonNull Log log) throws PersistenceException;
 
     /**
-     * Deletes a log with the give ID from the {@code key}.
+     * Deletes a log with the give ID from the {@code group}.
      *
-     * @param key The key of the storage for the log.
+     * @param group The group of the storage for the log.
      * @param id  The ID for a set of logs.
      */
-    public abstract void deleteLog(@NonNull String key, @NonNull String id);
+    public abstract void deleteLog(@NonNull String group, @NonNull String id);
 
     /**
-     * Gets an array of logs for the given {@code key}.
+     * Gets an array of logs for the given {@code group}.
      *
-     * @param key     The key of the storage for the log.
+     * @param group     The group of the storage for the log.
      * @param limit   The max number of logs to be returned. {@code 0} for all logs in the storage.
      * @param outLogs A list to receive {@link Log} objects.
      * @return An ID for {@code outLogs}. {@code null} if no logs exist.
      */
     @Nullable
-    public abstract String getLogs(@NonNull String key, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs);
+    public abstract String getLogs(@NonNull String group, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs);
 
     /**
      * Clear all associations between logs and ids returned by {@link #getLogs(String, int, List)} ()}.

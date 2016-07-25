@@ -185,7 +185,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     @Override
     public void clear(String groupName) {
-        mPersistence.deleteLog(AvalancheDatabasePersistence.COLUMN_KEY, groupName);
+        mPersistence.deleteLog(AvalancheDatabasePersistence.COLUMN_GROUP, groupName);
     }
 
     /**

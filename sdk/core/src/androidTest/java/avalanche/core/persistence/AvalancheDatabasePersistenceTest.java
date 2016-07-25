@@ -200,9 +200,9 @@ public class AvalancheDatabasePersistenceTest {
             persistence.deleteLog("", id);
 
             /* Access DatabaseStorage directly to verify the deletions. */
-            DatabaseScanner scanner1 = persistence.mDatabaseStorage.getScanner(AvalancheDatabasePersistence.COLUMN_KEY, "test-p1");
-            DatabaseScanner scanner2 = persistence.mDatabaseStorage.getScanner(AvalancheDatabasePersistence.COLUMN_KEY, "test-p2");
-            DatabaseScanner scanner3 = persistence.mDatabaseStorage.getScanner(AvalancheDatabasePersistence.COLUMN_KEY, "test-p3");
+            DatabaseScanner scanner1 = persistence.mDatabaseStorage.getScanner(AvalancheDatabasePersistence.COLUMN_GROUP, "test-p1");
+            DatabaseScanner scanner2 = persistence.mDatabaseStorage.getScanner(AvalancheDatabasePersistence.COLUMN_GROUP, "test-p2");
+            DatabaseScanner scanner3 = persistence.mDatabaseStorage.getScanner(AvalancheDatabasePersistence.COLUMN_GROUP, "test-p3");
 
             //noinspection TryFinallyCanBeTryWithResources
             try {
@@ -221,7 +221,7 @@ public class AvalancheDatabasePersistenceTest {
             persistence.deleteLog("test-p1", id);
 
             /* Access DatabaseStorage directly to verify the deletions. */
-            DatabaseScanner scanner4 = persistence.mDatabaseStorage.getScanner(AvalancheDatabasePersistence.COLUMN_KEY, "test-p1");
+            DatabaseScanner scanner4 = persistence.mDatabaseStorage.getScanner(AvalancheDatabasePersistence.COLUMN_GROUP, "test-p1");
 
             //noinspection TryFinallyCanBeTryWithResources
             try {
@@ -283,19 +283,19 @@ public class AvalancheDatabasePersistenceTest {
         }
     }
 
-    private void getAllLogs(AvalancheDatabasePersistence persistence, String key, int numberOfLogs, int sizeForGetLogs) {
+    private void getAllLogs(AvalancheDatabasePersistence persistence, String group, int numberOfLogs, int sizeForGetLogs) {
         List<Log> outputLogs = new ArrayList<>();
         int expected = 0;
         do {
             numberOfLogs -= expected;
-            persistence.getLogs(key, sizeForGetLogs, outputLogs);
+            persistence.getLogs(group, sizeForGetLogs, outputLogs);
             expected = Math.min(Math.max(numberOfLogs, 0), sizeForGetLogs);
             assertEquals(expected, outputLogs.size());
             outputLogs.clear();
         } while (numberOfLogs > 0);
 
         /* Get should be 0 now. */
-        persistence.getLogs(key, sizeForGetLogs, outputLogs);
+        persistence.getLogs(group, sizeForGetLogs, outputLogs);
         assertEquals(0, outputLogs.size());
     }
 

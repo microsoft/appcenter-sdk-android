@@ -4,7 +4,6 @@ import android.content.ContentValues;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.annotation.VisibleForTesting;
 
 import org.json.JSONException;
 
@@ -29,9 +28,9 @@ import static avalanche.core.utils.StorageHelper.DatabaseStorage;
 public class AvalancheDatabasePersistence extends AvalanchePersistence implements Closeable {
 
     /**
-     * Name of key column in the table.
+     * Name of group column in the table.
      */
-    public static final String COLUMN_KEY = "key";
+    public static final String COLUMN_GROUP = "group";
 
     /**
      * Name of log column in the table.
@@ -109,35 +108,35 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
     /**
      * Instantiates {@link ContentValues} with the give values.
      *
-     * @param key  The key of the storage for the log.
+     * @param group  The group of the storage for the log.
      * @param logJ The JSON string for a log.
      * @return A {@link ContentValues} instance.
      */
-    private static ContentValues getContentValues(@Nullable String key, @Nullable String logJ) {
+    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ) {
         ContentValues values = new ContentValues();
-        values.put(COLUMN_KEY, key);
+        values.put(COLUMN_GROUP, group);
         values.put(COLUMN_LOG, logJ);
         return values;
     }
 
     @Override
-    public void putLog(@NonNull String key, @NonNull Log log) throws PersistenceException {
+    public void putLog(@NonNull String group, @NonNull Log log) throws PersistenceException {
         /* Convert log to JSON string and put in the database. */
         try {
             AvalancheLog.debug("Storing a log to the persistence database for log type " + log.getType() + " with " + log.getSid());
-            mDatabaseStorage.put(getContentValues(key, getLogSerializer().serializeLog(log)));
+            mDatabaseStorage.put(getContentValues(group, getLogSerializer().serializeLog(log)));
         } catch (JSONException e) {
             throw new PersistenceException("Cannot convert to JSON string", e);
         }
     }
 
     @Override
-    public void deleteLog(@NonNull String key, @NonNull String id) {
+    public void deleteLog(@NonNull String group, @NonNull String id) {
         /* Log. */
-        AvalancheLog.info("Deleting logs from the persistence database for " + key + " with " + id);
+        AvalancheLog.info("Deleting logs from the persistence database for " + group + " with " + id);
         AvalancheLog.debug("The IDs for deleting log(s) is/are:");
 
-        List<Long> dbIdentifiers = mPendingDbIdentifiersGroups.remove(key + id);
+        List<Long> dbIdentifiers = mPendingDbIdentifiersGroups.remove(group + id);
         if (dbIdentifiers != null) {
             for (Long dbIdentifier : dbIdentifiers) {
                 AvalancheLog.debug("\t" + dbIdentifier);
@@ -149,12 +148,12 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
 
     @Override
     @Nullable
-    public String getLogs(@NonNull String key, @IntRange(from = 1) int limit, @NonNull List<Log> outLogs) {
+    public String getLogs(@NonNull String group, @IntRange(from = 1) int limit, @NonNull List<Log> outLogs) {
         /* Log. */
-        AvalancheLog.info("Trying to get " + limit + " logs from the persistence database for " + key);
+        AvalancheLog.info("Trying to get " + limit + " logs from the persistence database for " + group);
 
         /* Query database and get scanner. */
-        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_KEY, key);
+        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group);
 
         /* Add logs to output parameter after deserialization if logs are not already sent. */
         int count = 0;
@@ -217,7 +216,7 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
         }
 
         /* Update pending IDs. */
-        mPendingDbIdentifiersGroups.put(key + id, pendingDbIdentifiersGroup);
+        mPendingDbIdentifiersGroups.put(group + id, pendingDbIdentifiersGroup);
 
         return id;
     }
