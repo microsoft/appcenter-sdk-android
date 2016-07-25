@@ -603,7 +603,7 @@ public class Crashes extends AbstractAvalancheFeature {
     }
 
     @Override
-    public String getGroupName() {
+    protected String getGroupName() {
         return ERROR_GROUP;
     }
 }

@@ -59,7 +59,7 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
     @Override
     public synchronized void onChannelReady(AvalancheChannel channel) {
         /* Clear all persisted logs for the feature if it wan't cleared in previous setEnabled(false) call. */
-        if (!mEnabled && mChannel == null)
+        if (!mEnabled)
             channel.clear(getGroupName());
         mChannel = channel;
     }
@@ -74,5 +74,5 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
      *
      * @return The group name.
      */
-    public abstract String getGroupName();
+    protected abstract String getGroupName();
 }

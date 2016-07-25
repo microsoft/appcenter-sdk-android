@@ -277,7 +277,7 @@ public class AvalancheTest {
         }
 
         @Override
-        public String getGroupName() {
+        protected String getGroupName() {
             return "group_dummy";
         }
     }
@@ -301,7 +301,7 @@ public class AvalancheTest {
         }
 
         @Override
-        public String getGroupName() {
+        protected String getGroupName() {
             return "group_another_dummy";
         }
     }
@@ -309,7 +309,7 @@ public class AvalancheTest {
     private static class InvalidFeature extends AbstractAvalancheFeature {
 
         @Override
-        public String getGroupName() {
+        protected String getGroupName() {
             return "group_invalid";
         }
     }

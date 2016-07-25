@@ -156,7 +156,7 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     @Override
-    public String getGroupName() {
+    protected String getGroupName() {
         return ANALYTICS_GROUP;
     }
 

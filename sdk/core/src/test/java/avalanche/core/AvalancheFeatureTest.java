@@ -25,7 +25,7 @@ public class AvalancheFeatureTest {
 
     static class TestAvalancheFeature extends AbstractAvalancheFeature {
         @Override
-        public String getGroupName() {
+        protected String getGroupName() {
             return "group_test";
         }
     }

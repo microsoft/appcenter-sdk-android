@@ -18,7 +18,7 @@ public class AbstractAvalancheFeatureTest {
     public void setUp() {
         feature = new AbstractAvalancheFeature() {
             @Override
-            public String getGroupName() {
+            protected String getGroupName() {
                 return "group_test";
             }
         };
