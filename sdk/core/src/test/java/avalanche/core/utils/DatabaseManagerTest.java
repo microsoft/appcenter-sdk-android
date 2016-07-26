@@ -83,6 +83,18 @@ public class DatabaseManagerTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    public void deleteException() {
+        DatabaseManager databaseManagerMock;
+
+        /* Switch over to in-memory database. */
+        databaseManagerMock = getDatabaseManagerMock();
+        databaseManagerMock.get(0);
+
+        /* Get. */
+        databaseManagerMock.delete(DatabaseManager.PRIMARY_KEY, "non-number");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
     public void getException() {
         DatabaseManager databaseManagerMock;
 

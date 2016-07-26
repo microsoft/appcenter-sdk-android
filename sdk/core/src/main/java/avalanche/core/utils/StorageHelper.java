@@ -479,6 +479,16 @@ public final class StorageHelper {
         }
 
         /**
+         * Deletes the entries that matches key == value.
+         *
+         * @param key   The optional key for query.
+         * @param value The optional value for query.
+         */
+        public void delete(@Nullable String key, @Nullable Object value) {
+            mDatabaseManager.delete(key, value);
+        }
+
+        /**
          * Gets the entry by the identifier.
          *
          * @param id The database identifier.

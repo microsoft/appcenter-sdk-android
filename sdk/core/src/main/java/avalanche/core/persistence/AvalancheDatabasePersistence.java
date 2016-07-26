@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.VisibleForTesting;
 
 import org.json.JSONException;
 
@@ -30,7 +31,8 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
     /**
      * Name of group column in the table.
      */
-    public static final String COLUMN_GROUP = "group";
+    @VisibleForTesting
+    static final String COLUMN_GROUP = "group";
 
     /**
      * Name of log column in the table.
@@ -108,8 +110,8 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
     /**
      * Instantiates {@link ContentValues} with the give values.
      *
-     * @param group  The group of the storage for the log.
-     * @param logJ The JSON string for a log.
+     * @param group The group of the storage for the log.
+     * @param logJ  The JSON string for a log.
      * @return A {@link ContentValues} instance.
      */
     private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ) {
@@ -131,7 +133,7 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
     }
 
     @Override
-    public void deleteLog(@NonNull String group, @NonNull String id) {
+    public void deleteLogs(@NonNull String group, @NonNull String id) {
         /* Log. */
         AvalancheLog.info("Deleting logs from the persistence database for " + group + " with " + id);
         AvalancheLog.debug("The IDs for deleting log(s) is/are:");
@@ -143,6 +145,22 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
                 mDatabaseStorage.delete(dbIdentifier);
                 mPendingDbIdentifiers.remove(dbIdentifier);
             }
+        }
+    }
+
+    @Override
+    public void deleteLogs(String group) {
+        /* Log. */
+        AvalancheLog.info("Deleting all logs from the persistence database for " + group);
+
+        /* Delete from database. */
+        mDatabaseStorage.delete(COLUMN_GROUP, group);
+
+        /* Delete from pending state. */
+        for (Iterator<String> iterator = mPendingDbIdentifiersGroups.keySet().iterator(); iterator.hasNext(); ) {
+            String key = iterator.next();
+            if (key.startsWith(group))
+                iterator.remove();
         }
     }
 
@@ -238,5 +256,10 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
     @Override
     public void close() throws IOException {
         mDatabaseStorage.close();
+    }
+
+    @VisibleForTesting
+    Map<String, List<Long>> getPendingDbIdentifiersGroups() {
+        return mPendingDbIdentifiersGroups;
     }
 }

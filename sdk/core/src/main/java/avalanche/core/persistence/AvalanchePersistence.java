@@ -29,7 +29,7 @@ public abstract class AvalanchePersistence {
      * Writes a log to the storage with the given {@code group}.
      *
      * @param group The group of the storage for the log.
-     * @param log The log to be placed in the storage.
+     * @param log   The log to be placed in the storage.
      * @throws PersistenceException Exception will be thrown if persistence cannot write a log to the storage.
      */
     public abstract void putLog(@NonNull String group, @NonNull Log log) throws PersistenceException;
@@ -38,14 +38,21 @@ public abstract class AvalanchePersistence {
      * Deletes a log with the give ID from the {@code group}.
      *
      * @param group The group of the storage for the log.
-     * @param id  The ID for a set of logs.
+     * @param id    The ID for a set of logs.
      */
-    public abstract void deleteLog(@NonNull String group, @NonNull String id);
+    public abstract void deleteLogs(@NonNull String group, @NonNull String id);
+
+    /**
+     * Deletes all logs for the given {@code group}
+     *
+     * @param group The group of the storage for the log.
+     */
+    public abstract void deleteLogs(String group);
 
     /**
      * Gets an array of logs for the given {@code group}.
      *
-     * @param group     The group of the storage for the log.
+     * @param group   The group of the storage for the log.
      * @param limit   The max number of logs to be returned. {@code 0} for all logs in the storage.
      * @param outLogs A list to receive {@link Log} objects.
      * @return An ID for {@code outLogs}. {@code null} if no logs exist.
@@ -54,12 +61,12 @@ public abstract class AvalanchePersistence {
     public abstract String getLogs(@NonNull String group, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs);
 
     /**
-     * Clear all associations between logs and ids returned by {@link #getLogs(String, int, List)} ()}.
+     * Clears all associations between logs and ids returned by {@link #getLogs(String, int, List)} ()}.
      */
     public abstract void clearPendingLogState();
 
     /**
-     * Delete all logs.
+     * Clears all logs.
      */
     public abstract void clear();
 

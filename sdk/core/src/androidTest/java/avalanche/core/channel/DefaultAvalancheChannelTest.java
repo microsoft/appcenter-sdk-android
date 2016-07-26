@@ -168,7 +168,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockIngestion, times(1)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have called deleteLogs on the persistence
-        verify(mockPersistence, times(1)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(1)).deleteLogs(any(String.class), any(String.class));
 
         //The counter should be 0 now as we sent data.
         assertEquals(0, sut.getCounter(ANALYTICS_GROUP));
@@ -230,7 +230,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockIngestion, times(1)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have not called deleteLogs on the persistence
-        verify(mockPersistence, times(0)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(0)).deleteLogs(any(String.class), any(String.class));
 
         //Verify that the Channel is disabled
         assertFalse(sut.isEnabled());
@@ -319,7 +319,7 @@ public class DefaultAvalancheChannelTest {
         verify(newIngestion, times(3)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have called deleteLogs on the persistence
-        verify(newPersistence, times(3)).deleteLog(any(String.class), any(String.class));
+        verify(newPersistence, times(3)).deleteLogs(any(String.class), any(String.class));
     }
 
     @Test
@@ -376,7 +376,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockIngestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have deleted the failed batch
-        verify(mockPersistence).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
         //Verify that the Channel is disabled
         assertFalse(sut.isEnabled());
@@ -465,7 +465,7 @@ public class DefaultAvalancheChannelTest {
         verify(newIngestion, times(3)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have called deleteLogs on the persistence
-        verify(newPersistence, times(3)).deleteLog(any(String.class), any(String.class));
+        verify(newPersistence, times(3)).deleteLogs(any(String.class), any(String.class));
     }
 
     @Test
@@ -544,7 +544,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockIngestion, times(1)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have called deleteLogs on the persistence
-        verify(mockPersistence, times(1)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(1)).deleteLogs(any(String.class), any(String.class));
 
         //The counter should be 0 now as we sent data.
         assertEquals(0, sut.getCounter(ERROR_GROUP));
@@ -599,7 +599,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockIngestion, times(1)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have not called deleteLogs on the persistence
-        verify(mockPersistence, times(0)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(0)).deleteLogs(any(String.class), any(String.class));
 
         //Verify that the Channel is disabled
         assertFalse(sut.isEnabled());
@@ -733,7 +733,7 @@ public class DefaultAvalancheChannelTest {
         verify(newIngestion, times(5)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have called deleteLogs on the persistence 5 times
-        verify(newPersistence, times(5)).deleteLog(any(String.class), any(String.class));
+        verify(newPersistence, times(5)).deleteLogs(any(String.class), any(String.class));
     }
 
 
@@ -791,7 +791,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockIngestion, times(1)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have called deleteLogs on the persistence
-        verify(mockPersistence, times(1)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(1)).deleteLogs(any(String.class), any(String.class));
 
         //The counter should be 0 now as we sent data.
         assertEquals(0, sut.getCounter(ANALYTICS_GROUP));
