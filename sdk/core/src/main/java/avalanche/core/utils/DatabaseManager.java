@@ -250,19 +250,7 @@ public class DatabaseManager implements Closeable {
      * @param id The database identifier.
      */
     public void delete(@IntRange(from = 0) long id) {
-        /* Try SQLite. */
-        if (mIMDB == null) {
-            try {
-                getDatabase().delete(mTable, PRIMARY_KEY_SELECTION, new String[]{String.valueOf(id)});
-            } catch (RuntimeException e) {
-                switchToInMemory("delete", e);
-            }
-        }
-
-        /* Deletes the values from in-memory database. */
-        else {
-            mIMDB.remove(id);
-        }
+        delete(PRIMARY_KEY, id);
     }
 
     /**
@@ -287,6 +275,38 @@ public class DatabaseManager implements Closeable {
         else {
             for (Long id : idList)
                 mIMDB.remove(id);
+        }
+    }
+
+    /**
+     * Deletes the entries that matches key == value.
+     *
+     * @param key   The optional key for query.
+     * @param value The optional value for query.
+     */
+    public void delete(@Nullable String key, @Nullable Object value) {
+        /* Try SQLite. */
+        if (mIMDB == null) {
+            try {
+                getDatabase().delete(mTable, key + " = ?", new String[]{String.valueOf(value)});
+            } catch (RuntimeException e) {
+                switchToInMemory("delete", e);
+            }
+        }
+
+        /* Deletes the values from in-memory database. */
+        else if (PRIMARY_KEY.equals(key)) {
+            if (value == null || !(value instanceof Number)) {
+                throw new IllegalArgumentException("Primary key should be a number type and cannot be null");
+            }
+            mIMDB.remove(((Number) value).longValue());
+        } else {
+            for (Iterator<Map.Entry<Long, ContentValues>> iterator = mIMDB.entrySet().iterator(); iterator.hasNext(); ) {
+                Map.Entry<Long, ContentValues> entry = iterator.next();
+                Object object = entry.getValue().get(key);
+                if (object != null && object.equals(value))
+                    iterator.remove();
+            }
         }
     }
 

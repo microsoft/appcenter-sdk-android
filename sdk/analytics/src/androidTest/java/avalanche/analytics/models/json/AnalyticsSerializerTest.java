@@ -23,6 +23,7 @@ import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.ingestion.models.json.StartSessionLogFactory;
 import avalanche.core.utils.UUIDUtils;
 
+@SuppressWarnings("unused")
 public class AnalyticsSerializerTest {
 
     private static final String TAG = "TestRunner";

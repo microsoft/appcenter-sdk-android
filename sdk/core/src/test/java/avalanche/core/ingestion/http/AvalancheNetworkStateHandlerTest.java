@@ -25,10 +25,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("unused")
 public class AvalancheNetworkStateHandlerTest {
 
     @Test
-    public void success() throws InterruptedException, IOException {
+    public void success() throws IOException {
 
         /* Configure mock wrapped API. */
         UUID appKey = UUIDUtils.randomUUID();
@@ -65,7 +66,7 @@ public class AvalancheNetworkStateHandlerTest {
     }
 
     @Test
-    public void failure() throws InterruptedException, IOException {
+    public void failure() throws IOException {
 
         /* Configure mock wrapped API. */
         UUID appKey = UUIDUtils.randomUUID();
@@ -102,7 +103,7 @@ public class AvalancheNetworkStateHandlerTest {
     }
 
     @Test
-    public void networkDownBecomesUp() throws InterruptedException, IOException {
+    public void networkDownBecomesUp() throws IOException {
 
         /* Configure mock wrapped API. */
         UUID appKey = UUIDUtils.randomUUID();
@@ -143,7 +144,7 @@ public class AvalancheNetworkStateHandlerTest {
     }
 
     @Test
-    public void networkDownCancelBeforeUp() throws InterruptedException, IOException {
+    public void networkDownCancelBeforeUp() throws IOException {
 
         /* Configure mock wrapped API. */
         UUID appKey = UUIDUtils.randomUUID();

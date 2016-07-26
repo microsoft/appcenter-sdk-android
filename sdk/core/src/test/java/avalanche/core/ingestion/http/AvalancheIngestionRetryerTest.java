@@ -24,6 +24,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+@SuppressWarnings("unused")
 public class AvalancheIngestionRetryerTest {
 
     private static void simulateRetryAfterDelay(Handler handler) {

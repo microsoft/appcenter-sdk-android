@@ -16,6 +16,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("unused")
 public class DatabaseManagerTest {
 
     private static DatabaseManager getDatabaseManagerMock() {
@@ -79,6 +80,18 @@ public class DatabaseManagerTest {
         databaseManagerMock.getRowCount();
         verify(databaseManagerMock).switchToInMemory(eq("count"), any(RuntimeException.class));
 
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void deleteException() {
+        DatabaseManager databaseManagerMock;
+
+        /* Switch over to in-memory database. */
+        databaseManagerMock = getDatabaseManagerMock();
+        databaseManagerMock.get(0);
+
+        /* Get. */
+        databaseManagerMock.delete(DatabaseManager.PRIMARY_KEY, "non-number");
     }
 
     @Test(expected = IllegalArgumentException.class)

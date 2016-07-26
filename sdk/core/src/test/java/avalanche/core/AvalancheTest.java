@@ -36,6 +36,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Constants.class, AvalancheLog.class, StorageHelper.class, IdHelper.class})
 public class AvalancheTest {
@@ -45,7 +46,7 @@ public class AvalancheTest {
     private Application application;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         Avalanche.unsetInstance();
         DummyFeature.sharedInstance = null;
         AnotherDummyFeature.sharedInstance = null;

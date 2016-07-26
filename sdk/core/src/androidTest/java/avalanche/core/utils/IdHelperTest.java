@@ -13,6 +13,7 @@ import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertNotEquals;
 
 
+@SuppressWarnings("unused")
 public class IdHelperTest {
 
     private static final String TAG = "IdHelper";

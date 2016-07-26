@@ -50,6 +50,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("unused")
 public class DefaultAvalancheChannelTest {
     private static Log sMockLog;
     private static LogSerializer sLogSerializer;
@@ -169,7 +170,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockIngestion, times(1)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have called deleteLogs on the persistence
-        verify(mockPersistence, times(1)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(1)).deleteLogs(any(String.class), any(String.class));
 
         //The counter should be 0 now as we sent data.
         assertEquals(0, sut.getCounter(ANALYTICS_GROUP));
@@ -222,11 +223,11 @@ public class DefaultAvalancheChannelTest {
         /* Verify all logs stored, N requests sent, not log deleted yet. */
         verify(mockPersistence, times(200)).putLog(ANALYTICS_GROUP, sMockLog);
         verify(mockIngestion, times(3)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        verify(mockPersistence, times(0)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(0)).deleteLogs(any(String.class), any(String.class));
 
         /* Make 1 of the call succeed. Verify log deleted. */
         callbacks.get(0).success();
-        verify(mockPersistence, times(1)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(1)).deleteLogs(any(String.class), any(String.class));
 
         /* The request N+1 is now unlocked. */
         verify(mockIngestion, times(4)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -234,7 +235,7 @@ public class DefaultAvalancheChannelTest {
         /* Unlock all requests and check logs deleted. */
         for (int i = 1; i < 4; i++)
             callbacks.get(i).success();
-        verify(mockPersistence, times(4)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(4)).deleteLogs(any(String.class), any(String.class));
 
         /* The counter should be 0 now as we sent data. */
         assertEquals(0, channel.getCounter(ANALYTICS_GROUP));
@@ -296,7 +297,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockIngestion, times(1)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have not called deleteLogs on the persistence
-        verify(mockPersistence, times(0)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(0)).deleteLogs(any(String.class), any(String.class));
 
         //Verify that the Channel is disabled
         assertFalse(sut.isEnabled());
@@ -385,7 +386,7 @@ public class DefaultAvalancheChannelTest {
         verify(newIngestion, times(3)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have called deleteLogs on the persistence
-        verify(newPersistence, times(3)).deleteLog(any(String.class), any(String.class));
+        verify(newPersistence, times(3)).deleteLogs(any(String.class), any(String.class));
     }
 
     @Test
@@ -442,7 +443,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockIngestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have deleted the failed batch
-        verify(mockPersistence).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
         //Verify that the Channel is disabled
         assertFalse(sut.isEnabled());
@@ -531,7 +532,7 @@ public class DefaultAvalancheChannelTest {
         verify(newIngestion, times(3)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have called deleteLogs on the persistence
-        verify(newPersistence, times(3)).deleteLog(any(String.class), any(String.class));
+        verify(newPersistence, times(3)).deleteLogs(any(String.class), any(String.class));
     }
 
     @Test
@@ -610,7 +611,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockIngestion, times(1)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have called deleteLogs on the persistence
-        verify(mockPersistence, times(1)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(1)).deleteLogs(any(String.class), any(String.class));
 
         //The counter should be 0 now as we sent data.
         assertEquals(0, sut.getCounter(ERROR_GROUP));
@@ -665,7 +666,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockIngestion, times(1)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have not called deleteLogs on the persistence
-        verify(mockPersistence, times(0)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(0)).deleteLogs(any(String.class), any(String.class));
 
         //Verify that the Channel is disabled
         assertFalse(sut.isEnabled());
@@ -799,7 +800,7 @@ public class DefaultAvalancheChannelTest {
         verify(newIngestion, times(5)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have called deleteLogs on the persistence 5 times
-        verify(newPersistence, times(5)).deleteLog(any(String.class), any(String.class));
+        verify(newPersistence, times(5)).deleteLogs(any(String.class), any(String.class));
     }
 
 
@@ -857,7 +858,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockIngestion, times(1)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         //Verify that we have called deleteLogs on the persistence
-        verify(mockPersistence, times(1)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(1)).deleteLogs(any(String.class), any(String.class));
 
         //The counter should be 0 now as we sent data.
         assertEquals(0, sut.getCounter(ANALYTICS_GROUP));
