@@ -369,9 +369,9 @@ public final class StorageHelper {
          * @param path An absolute path for directory.
          */
         @SuppressWarnings({"ResultOfMethodCallIgnored", "SpellCheckingInspection"})
-        public static void mkdir(@NonNull String path) {
+        public static boolean mkdir(@NonNull String path) {
             File dir = new File(path);
-            dir.mkdirs();
+            return (dir.exists() && dir.isDirectory()) || dir.mkdirs();
         }
     }
 
