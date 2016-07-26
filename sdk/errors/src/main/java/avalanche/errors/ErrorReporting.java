@@ -16,6 +16,8 @@ import avalanche.core.utils.Util;
 
 public class ErrorReporting extends AbstractAvalancheFeature {
 
+    public static final String ERROR_GROUP = "group_error";
+
     private static ErrorReporting sInstance = null;
 
     private final Map<String, LogFactory> mFactories;
@@ -62,6 +64,11 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
         initialize();
+    }
+
+    @Override
+    protected String getGroupName() {
+        return ERROR_GROUP;
     }
 
     private void initialize() {
