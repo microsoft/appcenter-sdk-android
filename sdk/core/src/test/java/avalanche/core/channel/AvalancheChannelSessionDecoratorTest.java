@@ -31,12 +31,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SystemClock.class)
 public class AvalancheChannelSessionDecoratorTest {
 
     @Test
-    public void session() throws PackageManager.NameNotFoundException, InterruptedException {
+    public void session() throws PackageManager.NameNotFoundException {
 
         /* Setup mocking. */
         long mockTime = System.currentTimeMillis();

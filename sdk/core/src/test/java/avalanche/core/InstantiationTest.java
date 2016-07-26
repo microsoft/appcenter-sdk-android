@@ -3,8 +3,6 @@ package avalanche.core;
 
 import org.junit.Test;
 
-import java.io.IOException;
-
 import avalanche.core.ingestion.models.utils.LogUtils;
 import avalanche.core.utils.DeviceInfoHelper;
 import avalanche.core.utils.StorageHelper;
@@ -13,9 +11,10 @@ import avalanche.core.utils.StorageHelper;
  * This class is to go through the code to get code coverage for constructors.
  * TODO: Temporary and need to be removed.
  */
+@SuppressWarnings("unused")
 public class InstantiationTest {
     @Test
-    public void storageHelper() throws IOException {
+    public void storageHelper() {
         new StorageHelper();
         new StorageHelper.PreferencesStorage();
         new StorageHelper.InternalStorage();

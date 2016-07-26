@@ -37,6 +37,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
+@SuppressWarnings("unused")
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class AvalancheDatabasePersistenceTest {

@@ -17,6 +17,7 @@ import avalanche.core.utils.UUIDUtils;
 import static avalanche.core.TestUtils.TAG;
 import static avalanche.core.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 
+@SuppressWarnings("unused")
 public class LogSerializerTest {
 
     @Test(expected = JSONException.class)

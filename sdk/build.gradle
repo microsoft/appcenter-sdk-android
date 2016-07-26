@@ -74,7 +74,10 @@ task coverageReport(type: JacocoReport, dependsOn: subprojects.coverageReport) {
         html.enabled = true
     }
 
+    //noinspection GroovyAssignabilityCheck
     sourceDirectories = files(subprojects.coverageReport.sourceDirectories)
+    //noinspection GroovyAssignabilityCheck
     classDirectories = files(subprojects.coverageReport.classDirectories)
+    //noinspection GroovyAssignabilityCheck
     executionData = files(subprojects.coverageReport.executionData)
 }

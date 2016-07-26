@@ -4,6 +4,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+@SuppressWarnings("unused")
 public class HttpExceptionTest {
     @Test
     public void equalsAndHashCode() {
