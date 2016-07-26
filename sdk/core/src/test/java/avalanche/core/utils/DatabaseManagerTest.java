@@ -16,6 +16,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("unused")
 public class DatabaseManagerTest {
 
     private static DatabaseManager getDatabaseManagerMock() {

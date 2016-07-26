@@ -36,6 +36,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings("unused")
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class StorageHelperAndroidTest {

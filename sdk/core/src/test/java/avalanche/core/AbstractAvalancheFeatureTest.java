@@ -9,6 +9,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import avalanche.core.channel.AvalancheChannel;
 
+@SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
 public class AbstractAvalancheFeatureTest {
 

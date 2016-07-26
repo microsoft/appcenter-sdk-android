@@ -15,6 +15,7 @@ import java.io.IOException;
 import avalanche.core.ingestion.models.json.MockLog;
 import avalanche.core.utils.StorageHelper;
 
+@SuppressWarnings("unused")
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class AvalanchePersistenceTest {

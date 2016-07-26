@@ -48,6 +48,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("unused")
 public class DefaultAvalancheChannelTest {
     private static Log sDeviceLog;
     private static LogSerializer sLogSerializer;
