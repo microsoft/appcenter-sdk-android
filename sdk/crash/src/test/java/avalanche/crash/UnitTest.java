@@ -1,11 +1,11 @@
 package avalanche.crash;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.modules.junit4.PowerMockRunner;
 
+@SuppressWarnings("unused")
 public class UnitTest {
 
+    @SuppressWarnings("EmptyMethod")
     @Test
     public void emptyTest() {
     }

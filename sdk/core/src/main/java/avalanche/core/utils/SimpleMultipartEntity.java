@@ -13,7 +13,6 @@ import java.util.Random;
  * To avoid external apache library "httpmime" this is a simple implementation for a MultipartEntity.
  * Please note that first all key value pairs have to be written and then at least one file part has to be added.
  * Otherwise the boundaries are not written correctly.
- *
  */
 public class SimpleMultipartEntity {
 
@@ -33,13 +32,13 @@ public class SimpleMultipartEntity {
         this.mOut = new ByteArrayOutputStream();
 
         /** Create boundary String */
-        final StringBuffer buffer = new StringBuffer();
+        final StringBuilder builder = new StringBuilder();
         final Random rand = new Random();
 
         for (int i = 0; i < 30; i++) {
-            buffer.append(BOUNDARY_CHARS[rand.nextInt(BOUNDARY_CHARS.length)]);
+            builder.append(BOUNDARY_CHARS[rand.nextInt(BOUNDARY_CHARS.length)]);
         }
-        this.mBoundary = buffer.toString();
+        this.mBoundary = builder.toString();
     }
 
     public String getBoundary() {
@@ -93,7 +92,7 @@ public class SimpleMultipartEntity {
             mOut.write("Content-Transfer-Encoding: binary\r\n\r\n".getBytes());
 
             final byte[] tmp = new byte[4096];
-            int l = 0;
+            int l;
             while ((l = fin.read(tmp)) != -1) {
                 mOut.write(tmp, 0, l);
             }

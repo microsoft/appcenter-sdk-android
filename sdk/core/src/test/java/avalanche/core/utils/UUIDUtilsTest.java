@@ -8,6 +8,7 @@ import static org.junit.Assert.assertEquals;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 
+@SuppressWarnings("unused")
 public class UUIDUtilsTest {
 
     @Test

@@ -44,6 +44,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("unused")
 public class AvalancheIngestionHttpTest {
 
     @BeforeClass
@@ -123,7 +124,7 @@ public class AvalancheIngestionHttpTest {
     }
 
     @Test
-    public void error503() throws JSONException, InterruptedException, IOException {
+    public void error503() throws IOException {
 
         /* Build some payload. */
         LogContainer container = new LogContainer();
@@ -172,7 +173,7 @@ public class AvalancheIngestionHttpTest {
     }
 
     @Test
-    public void cancel() throws JSONException, InterruptedException, IOException {
+    public void cancel() throws InterruptedException {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp(mock(UrlConnectionFactory.class), serializer);

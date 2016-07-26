@@ -18,6 +18,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
 
+@SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(Log.class)
 public class AvalancheLogTest {

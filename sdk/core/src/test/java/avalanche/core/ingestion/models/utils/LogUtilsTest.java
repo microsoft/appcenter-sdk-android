@@ -10,6 +10,7 @@ import java.util.List;
 
 import avalanche.core.ingestion.models.Device;
 
+@SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
 public class LogUtilsTest {
 
