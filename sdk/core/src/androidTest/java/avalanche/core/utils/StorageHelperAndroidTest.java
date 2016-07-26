@@ -209,60 +209,76 @@ public class StorageHelperAndroidTest {
 
     @SuppressWarnings("SpellCheckingInspection")
     private static void runDatabaseStorageTest(DatabaseStorage databaseStorage, boolean imdbTest) {
-        ContentValues firstValue = generateContentValues();
-        ContentValues secondValue = generateContentValues();
-        ContentValues thirdValue = generateContentValues();
+        ContentValues value1 = generateContentValues();
+        ContentValues value2 = generateContentValues();
+        ContentValues value3 = generateContentValues();
 
         /* Put. */
-        Long firstValueId = databaseStorage.put(firstValue);
-        assertNotNull(firstValueId);
+        Long value1Id = databaseStorage.put(value1);
+        assertNotNull(value1Id);
 
         /* Get for in-memory database test. */
         if (imdbTest) {
-            ContentValues firstValueFromDatabase = databaseStorage.get("COL_STRING", firstValue.getAsString("COL_STRING"));
-            assertContentValuesEquals(firstValue, firstValueFromDatabase);
-            firstValueFromDatabase = databaseStorage.get("COL_STRING", firstValue.getAsString("COL_STRING") + "X");
-            assertNull(firstValueFromDatabase);
+            ContentValues valueFromDatabase = databaseStorage.get("COL_STRING", value1.getAsString("COL_STRING"));
+            assertContentValuesEquals(value1, valueFromDatabase);
+            valueFromDatabase = databaseStorage.get("COL_STRING", value1.getAsString("COL_STRING") + "X");
+            assertNull(valueFromDatabase);
         }
 
         /* Put another. */
-        Long secondValueId = databaseStorage.put(secondValue);
-        assertNotNull(secondValueId);
+        Long value2Id = databaseStorage.put(value2);
+        assertNotNull(value2Id);
 
-        /* Generate an ID that is neither firstValueId nor secondValueId. */
+        /* Generate an ID that is neither value1Id nor value2Id. */
 
         /* Get. */
-        ContentValues firstValueFromDatabase = databaseStorage.get(firstValueId);
-        assertContentValuesEquals(firstValue, firstValueFromDatabase);
-        ContentValues secondValueFromDatabase = databaseStorage.get(DatabaseManager.PRIMARY_KEY, secondValueId);
-        assertContentValuesEquals(secondValue, secondValueFromDatabase);
-        @SuppressWarnings("ResourceType")
+        ContentValues value1FromDatabase = databaseStorage.get(value1Id);
+        assertContentValuesEquals(value1, value1FromDatabase);
+        ContentValues value2FromDatabase = databaseStorage.get(DatabaseManager.PRIMARY_KEY, value2Id);
+        assertContentValuesEquals(value2, value2FromDatabase);
+        //noinspection ResourceType
         ContentValues nullValueFromDatabase = databaseStorage.get(-1);
         assertNull(nullValueFromDatabase);
 
         /* Update. */
-        assertTrue(databaseStorage.update(firstValueId, thirdValue));
-        ContentValues thirdValueFromDatabase = databaseStorage.get(firstValueId);
-        assertContentValuesEquals(thirdValue, thirdValueFromDatabase);
+        assertTrue(databaseStorage.update(value1Id, value3));
+        ContentValues value3FromDatabase = databaseStorage.get(value1Id);
+        assertContentValuesEquals(value3, value3FromDatabase);
 
         /* Delete. */
-        databaseStorage.delete(firstValueId);
-        assertNull(databaseStorage.get(firstValueId));
+        databaseStorage.delete(value1Id);
+        assertNull(databaseStorage.get(value1Id));
         assertEquals(1, databaseStorage.size());
 
         /* Put logs to delete multiple IDs. */
-        ContentValues fourthValue = generateContentValues();
-        ContentValues fifthValue = generateContentValues();
-        Long fourthValueId = databaseStorage.put(fourthValue);
-        Long fifthValueId = databaseStorage.put(fifthValue);
-        assertNotNull(fourthValueId);
-        assertNotNull(fifthValueId);
+        ContentValues value4 = generateContentValues();
+        ContentValues value5 = generateContentValues();
+        Long value4Id = databaseStorage.put(value4);
+        Long value5Id = databaseStorage.put(value5);
+        assertNotNull(value4Id);
+        assertNotNull(value5Id);
 
         /* Delete multiple logs. */
-        databaseStorage.delete(Arrays.asList(new Long[]{fourthValueId, fifthValueId}));
-        assertNull(databaseStorage.get(fourthValueId));
-        assertNull(databaseStorage.get(fifthValueId));
+        databaseStorage.delete(Arrays.asList(new Long[]{value4Id, value5Id}));
+        assertNull(databaseStorage.get(value4Id));
+        assertNull(databaseStorage.get(value5Id));
         assertEquals(1, databaseStorage.size());
+
+        /* Put logs to delete with condition. */
+        ContentValues value6 = generateContentValues();
+        ContentValues value7 = generateContentValues();
+        value6.put("COL_STRING", value2.getAsString("COL_STRING"));
+        value7.put("COL_STRING", value2.getAsString("COL_STRING") + "A");
+        Long value6Id = databaseStorage.put(value6);
+        Long value7Id = databaseStorage.put(value7);
+        assertNotNull(value6Id);
+        assertNotNull(value7Id);
+
+        /* Delete logs with condition. */
+        databaseStorage.delete("COL_STRING", value2.getAsString("COL_STRING"));
+        assertEquals(1, databaseStorage.size());
+        ContentValues value7FromDatabase = databaseStorage.get(value7Id);
+        assertContentValuesEquals(value7, value7FromDatabase);
 
         /* Clear. */
         databaseStorage.clear();
@@ -477,18 +493,18 @@ public class StorageHelperAndroidTest {
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
-            ContentValues firstValue = generateContentValues();
-            ContentValues secondValue = generateContentValues();
-            ContentValues thirdValue = generateContentValues();
+            ContentValues value1 = generateContentValues();
+            ContentValues value2 = generateContentValues();
+            ContentValues value3 = generateContentValues();
 
             /* Put. */
-            Long firstValueId = databaseStorage.put(firstValue);
-            Long secondValueId = databaseStorage.put(secondValue);
-            Long thirdValueId = databaseStorage.put(thirdValue);
+            Long value1Id = databaseStorage.put(value1);
+            Long value2Id = databaseStorage.put(value2);
+            Long value3Id = databaseStorage.put(value3);
 
-            assertNotNull(firstValueId);
-            assertNotNull(secondValueId);
-            assertNotNull(thirdValueId);
+            assertNotNull(value1Id);
+            assertNotNull(value2Id);
+            assertNotNull(value3Id);
 
             assertEquals(capacity, databaseStorage.size());
         } finally {
