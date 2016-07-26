@@ -31,7 +31,8 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
     /**
      * Name of group column in the table.
      */
-    public static final String COLUMN_GROUP = "group";
+    @VisibleForTesting
+    static final String COLUMN_GROUP = "group";
 
     /**
      * Name of log column in the table.
@@ -153,7 +154,7 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
         AvalancheLog.info("Deleting all logs from the persistence database for " + group);
 
         /* Delete from database. */
-        mDatabaseStorage.delete(AvalancheDatabasePersistence.COLUMN_GROUP, group);
+        mDatabaseStorage.delete(COLUMN_GROUP, group);
 
         /* Delete from pending state. */
         for (Iterator<String> iterator = mPendingDbIdentifiersGroups.keySet().iterator(); iterator.hasNext(); ) {
