@@ -223,11 +223,11 @@ public class DefaultAvalancheChannelTest {
         /* Verify all logs stored, N requests sent, not log deleted yet. */
         verify(mockPersistence, times(200)).putLog(ANALYTICS_GROUP, sMockLog);
         verify(mockIngestion, times(3)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        verify(mockPersistence, times(0)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(0)).deleteLogs(any(String.class), any(String.class));
 
         /* Make 1 of the call succeed. Verify log deleted. */
         callbacks.get(0).success();
-        verify(mockPersistence, times(1)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(1)).deleteLogs(any(String.class), any(String.class));
 
         /* The request N+1 is now unlocked. */
         verify(mockIngestion, times(4)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -235,7 +235,7 @@ public class DefaultAvalancheChannelTest {
         /* Unlock all requests and check logs deleted. */
         for (int i = 1; i < 4; i++)
             callbacks.get(i).success();
-        verify(mockPersistence, times(4)).deleteLog(any(String.class), any(String.class));
+        verify(mockPersistence, times(4)).deleteLogs(any(String.class), any(String.class));
 
         /* The counter should be 0 now as we sent data. */
         assertEquals(0, channel.getCounter(ANALYTICS_GROUP));
