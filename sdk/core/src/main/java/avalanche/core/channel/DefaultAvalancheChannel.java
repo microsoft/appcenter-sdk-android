@@ -179,13 +179,13 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     }
 
     /**
-     * Clear all persisted logs for the given group.
+     * Delete all persisted logs for the given group.
      *
      * @param groupName the group name.
      */
     @Override
     public void clear(String groupName) {
-        mPersistence.deleteLog(AvalancheDatabasePersistence.COLUMN_GROUP, groupName);
+        mPersistence.deleteLogs(groupName);
     }
 
     /**
@@ -349,7 +349,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         synchronized (LOCK) {
             GroupState groupState = mGroupStates.get(groupName);
 
-            mPersistence.deleteLog(groupName, batchId);
+            mPersistence.deleteLogs(groupName, batchId);
             boolean removeBatchIdSuccessful = groupState.mSendingBatches.remove(batchId);
             if (!removeBatchIdSuccessful) {
                 AvalancheLog.warn(TAG, "Error removing batchId after successfully sending data.");
@@ -370,7 +370,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, @NonNull final Throwable t) {
         if (!HttpUtils.isRecoverableError(t))
-            mPersistence.deleteLog(groupName, batchId);
+            mPersistence.deleteLogs(groupName, batchId);
         if (!mGroupStates.get(groupName).mSendingBatches.remove(batchId))
             AvalancheLog.warn(TAG, "Error removing batchId after sending failure.");
         suspend(false);

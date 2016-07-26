@@ -14,6 +14,7 @@ import static avalanche.core.ingestion.http.HttpUtils.isRecoverableError;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
+@SuppressWarnings("unused")
 public class HttpUtilsTest {
 
     @Test
