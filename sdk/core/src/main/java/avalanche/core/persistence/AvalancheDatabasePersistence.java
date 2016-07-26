@@ -32,7 +32,7 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
      * Name of group column in the table.
      */
     @VisibleForTesting
-    static final String COLUMN_GROUP = "group";
+    static final String COLUMN_GROUP = "persistence_group";
 
     /**
      * Name of log column in the table.
