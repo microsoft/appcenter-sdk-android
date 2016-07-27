@@ -10,7 +10,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import avalanche.core.AbstractAvalancheFeature;
+import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.json.LogFactory;
+import avalanche.core.utils.AvalancheLog;
+import avalanche.core.utils.DeviceInfoHelper;
 import avalanche.core.utils.Util;
 
 
@@ -27,6 +30,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     private WeakReference<Context> mContextWeakReference;
     private long mInitializeTimestamp;
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
+    private Device mDevice;
 
     private ErrorReporting() {
         mFactories = new HashMap<>();
@@ -48,6 +52,11 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     public static void register(@NonNull Context context, @Nullable ErrorReportingListener listener) {
         ErrorReporting errorReporting = getInstance();
         errorReporting.mContextWeakReference = new WeakReference<>(context);
+        try {
+            errorReporting.mDevice = DeviceInfoHelper.getDeviceInfo(context);
+        } catch (DeviceInfoHelper.DeviceInfoException e) {
+            e.printStackTrace();
+        }
         errorReporting.initialize();
     }
 
@@ -82,7 +91,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             return;
         }
 
-        mUncaughtExceptionHandler = new UncaughtExceptionHandler();
+        mUncaughtExceptionHandler = new UncaughtExceptionHandler(mDevice);
     }
 
     private void queuePendingCrashes() {
