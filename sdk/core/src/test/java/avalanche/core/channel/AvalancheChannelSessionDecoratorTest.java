@@ -18,7 +18,6 @@ import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.StartSessionLog;
 
-import static avalanche.core.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -35,6 +34,11 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SystemClock.class)
 public class AvalancheChannelSessionDecoratorTest {
+
+    /**
+     * TODO: Remove this and fix compile errors.
+     */
+    private final static String ANALYTICS_GROUP = "group_analytics";
 
     @Test
     public void session() throws PackageManager.NameNotFoundException {
