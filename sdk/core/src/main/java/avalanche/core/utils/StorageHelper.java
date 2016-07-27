@@ -503,34 +503,34 @@ public final class StorageHelper {
         }
 
         /**
-         * Gets a new instance of {@code DatabaseManager}.
+         * Get a new instance of {@code DatabaseManager}.
          *
          * @param database The database name.
          * @param table    The table name.
          * @param version  The version.
-         * @param schema   The schema of the database. If the database has tables more than 1,
-         *                 the schema should contain schemas for all the tables.
-         * @param listener The error listener
+         * @param schema   The schema of the database. If the database has more than one table,
+         *                 it should contain schemas for all the tables.
+         * @param listener The error listener.
          * @return database storage.
          */
         public static DatabaseStorage getDatabaseStorage(@NonNull String database,
                                                          @NonNull String table,
                                                          @IntRange(from = 1) int version,
                                                          @NonNull ContentValues schema,
-                                                         final DatabaseErrorListener listener) {
+                                                         @NonNull final DatabaseErrorListener listener) {
             return getDatabaseStorage(database, table, version, schema, 0, listener);
         }
 
         /**
-         * Gets a new instance of {@code DatabaseManager}.
+         * Get a new instance of {@code DatabaseManager}.
          *
          * @param database   The database name.
          * @param table      The table name.
          * @param version    The version.
-         * @param schema     The schema of the database. If the database has tables more than 1,
-         *                   the schema should contain schemas for all the tables.
+         * @param schema     The schema of the database. If the database has more than one table,
+         *                   it should contain schemas for all tables.
          * @param maxRecords The maximum number of records allowed in the table.
-         * @param listener   The error listener
+         * @param listener   The error listener.
          * @return database storage.
          */
         public static DatabaseStorage getDatabaseStorage(@NonNull String database,
@@ -548,30 +548,30 @@ public final class StorageHelper {
         }
 
         /**
-         * Stores the entry to the table.
+         * Store an entry in a table.
          *
          * @param values The entry to be stored.
-         * @return A database identifier
+         * @return The identifier of the created database entry.
          */
-        public Long put(@NonNull ContentValues values) {
+        public long put(@NonNull ContentValues values) {
             return mDatabaseManager.put(values);
         }
 
         /**
-         * Updates the entry for the identifier.
+         * Update an entry in a table.
          *
          * @param id     The existing database identifier.
-         * @param values The entry to be updated.
-         * @return true if the values updated successfully, false otherwise.
+         * @param values The value to update.
+         * @return {@code true} if the values were updated successfully, {@code false} otherwise.
          */
         public boolean update(@IntRange(from = 0) long id, @NonNull ContentValues values) {
             return mDatabaseManager.update(id, values);
         }
 
         /**
-         * Deletes the entry by the identifier from the database.
+         * Delete an entry in a table.
          *
-         * @param id The database identifier.
+         * @param id The identifier for the entry to be deleted.
          */
         public void delete(@IntRange(from = 0) long id) {
             mDatabaseManager.delete(id);
@@ -645,7 +645,7 @@ public final class StorageHelper {
         }
 
         /**
-         * Closes database and clean up in-memory database.
+         * Closes database and cleans up in-memory database.
          *
          * @throws IOException
          */
@@ -684,7 +684,7 @@ public final class StorageHelper {
         }
 
         /**
-         * Database scanner to iterate values.
+         * Database scanner to iterate over values.
          */
         public static class DatabaseScanner implements Iterable<ContentValues>, Closeable {
             private final DatabaseManager.Scanner mScanner;
