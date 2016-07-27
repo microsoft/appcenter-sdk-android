@@ -286,19 +286,19 @@ public final class StorageHelper {
      */
     public final static class InternalStorage {
         /**
-         * Reads contents from the file.
+         * Read contents from a file.
          *
-         * @param filename The name of the file.
+         * @param path The path of the file.
          * @return The contents of the file.
          */
-        public static String read(@NonNull String filename) {
-            return read(new File(filename));
+        public static String read(@NonNull String path) {
+            return read(new File(path));
         }
 
         /**
-         * Reads contents from the file.
+         * Read contents from a file.
          *
-         * @param file The file instance.
+         * @param file The file to read from.
          * @return The contents of the file.
          */
         public static String read(@NonNull File file) {
@@ -329,24 +329,24 @@ public final class StorageHelper {
         }
 
         /**
-         * Writes contents to the file.
+         * Write contents to a file.
          *
-         * @param filename The name of the file.
-         * @param contents The content to be written to the file.
+         * @param path The path of the file.
+         * @param contents The contents to be written to the file.
          * @throws IOException
          */
-        public static void write(@NonNull String filename, String contents) throws IOException {
-            write(new File(filename), contents);
+        public static void write(@NonNull String path, @NonNull String contents) throws IOException {
+            write(new File(path), contents);
         }
 
         /**
-         * Writes contents to the file.
+         * Write contents to a file.
          *
          * @param file     The file instance.
-         * @param contents The content to be written to the file.
+         * @param contents The content to be written to the file. Must not be empty or whitespace only.
          * @throws IOException
          */
-        public static void write(@NonNull File file, String contents) throws IOException {
+        public static void write(@NonNull File file, @NonNull String contents) throws IOException {
             if (TextUtils.isEmpty(contents) || TextUtils.getTrimmedLength(contents) <= 0) {
                 return;
             }
@@ -364,10 +364,10 @@ public final class StorageHelper {
         }
 
         /**
-         * Reads an object from the file (deserialization).
+         * Read an object from a file (deserialization).
          *
-         * @param file The file instance.
-         * @return The deserialized instance.
+         * @param file The file to read from.
+         * @return The de-serialized instance.
          * @throws IOException
          * @throws ClassNotFoundException
          */
@@ -387,13 +387,13 @@ public final class StorageHelper {
         }
 
         /**
-         * Writes and object to the file (serialization).
+         * Write an object to a file (serialization).
          *
-         * @param file   The file instance.
+         * @param file   The file to write to.
          * @param object The object to be written to the file.
          * @throws IOException
          */
-        public static <T extends Serializable> void writeObject(@NonNull File file, T object) throws IOException {
+        public static <T extends Serializable> void writeObject(@NonNull File file, @NonNull T object) throws IOException {
             ObjectOutputStream outputStream = null;
             try {
                 outputStream = new ObjectOutputStream(new FileOutputStream(file));
@@ -405,13 +405,14 @@ public final class StorageHelper {
         }
 
         /**
-         * Gets an array of filenames in the path.
+         * Get an array of filenames in the path.
          *
          * @param path   The directory path.
-         * @param filter The filter to match names against, may be {@code null}.
+         * @param filter The filter to match file names against, may be {@code null}.
          * @return An array of filename that doesn't include paths.
          */
-        public static String[] getFilenames(@NonNull String path, FilenameFilter filter) {
+        @NonNull
+        public static String[] getFilenames(@NonNull String path, @Nullable FilenameFilter filter) {
             File dir = new File(path);
             if (dir.exists()) {
                 return dir.list(filter);
@@ -421,13 +422,14 @@ public final class StorageHelper {
         }
 
         /**
-         * Gets the most recent file in the path.
+         * Get the most recently modified file in the directory specified.
          *
          * @param path   The directory path.
-         * @param filter The filter to match names against, may be {@code null}.
-         * @return A file instance, may be {@code null} if the directory is empty.
+         * @param filter The filter to match file names against, may be {@code null}.
+         * @return The last modified file in the directory matching the specified filter, if any matches. {@code null} otherwise.
          */
-        public static File lastModifiedFile(@NonNull String path, FilenameFilter filter) {
+        @Nullable
+        public static File lastModifiedFile(@NonNull String path, @Nullable FilenameFilter filter) {
             File dir = new File(path);
             if (dir.exists()) {
                 File[] files = dir.listFiles(filter);
@@ -450,19 +452,19 @@ public final class StorageHelper {
         }
 
         /**
-         * Deletes a file or directory with the given name.
+         * Delete a file or directory with the given path.
          *
-         * @param name The name of the file or directory.
+         * @param path The path of the file or directory.
          * @return {@code true} if it was deleted, {@code false} otherwise.
          */
-        public static boolean delete(@NonNull String name) {
-            return delete(new File(name));
+        public static boolean delete(@NonNull String path) {
+            return delete(new File(path));
         }
 
         /**
-         * Deletes the file.
+         * Delete a file or directory.
          *
-         * @param file The file instance.
+         * @param file The file or directory to delete.
          * @return {@code true} if it was deleted, {@code false} otherwise.
          */
         public static boolean delete(@NonNull File file) {
@@ -470,10 +472,10 @@ public final class StorageHelper {
         }
 
         /**
-         * Creates the directory if it does not already exist.
+         * Create a directory if it does not already exist.
+         * Will create the whole directory tree if necessary.
          *
-         * @param path An absolute path for directory.
-         * @return {@code true} if the directory was created, otherwise {@code false}.
+         * @param path An absolute path for the directory to be created.
          */
         @SuppressWarnings({"ResultOfMethodCallIgnored", "SpellCheckingInspection"})
         public static void mkdir(@NonNull String path) {
