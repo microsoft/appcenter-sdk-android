@@ -15,6 +15,7 @@ import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.DeviceInfoHelper;
 import avalanche.core.utils.Util;
+import avalanche.errors.ingestion.models.json.ErrorLogFactory;
 
 
 public class ErrorReporting extends AbstractAvalancheFeature {
@@ -34,7 +35,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     private ErrorReporting() {
         mFactories = new HashMap<>();
-        // Add crash log factory here
+        mFactories.put(ErrorLog.TYPE, ErrorLogFactory.getInstance());
     }
 
     @NonNull
@@ -43,6 +44,11 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             sInstance = new ErrorReporting();
         }
         return sInstance;
+    }
+
+    @Override
+    public Map<String, LogFactory> getLogFactories() {
+        return mFactories;
     }
 
     public static void register(@NonNull Context context) {
