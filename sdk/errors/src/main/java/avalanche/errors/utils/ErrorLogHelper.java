@@ -84,8 +84,8 @@ public final class ErrorLogHelper {
     }
 
     @NonNull
-    public static String[] getStoredErrorLogs() {
-        return StorageHelper.InternalStorage.getFilenames(getErrorStorageDirectory().getAbsolutePath(), new FilenameFilter() {
+    public static File[] getStoredErrorLogFiles() {
+        return getErrorStorageDirectory().listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String filename) {
                 return filename.endsWith(".json");
@@ -111,7 +111,7 @@ public final class ErrorLogHelper {
 
     @Nullable
     public static ErrorLog deserializeErrorLog(@NonNull String logfile) {
-        String logfileContents = StorageHelper.InternalStorage.read(new File(getErrorStorageDirectory(), logfile));
+        String logfileContents = StorageHelper.InternalStorage.read(logfile);
         if (TextUtils.isEmpty(logfileContents)) {
             return null;
         }
