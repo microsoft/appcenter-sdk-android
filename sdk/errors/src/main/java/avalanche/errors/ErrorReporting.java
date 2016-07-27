@@ -5,6 +5,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,8 +15,11 @@ import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.DeviceInfoHelper;
+import avalanche.core.utils.StorageHelper;
 import avalanche.core.utils.Util;
+import avalanche.errors.ingestion.models.ErrorLog;
 import avalanche.errors.ingestion.models.json.ErrorLogFactory;
+import avalanche.errors.utils.ErrorLogHelper;
 
 
 public class ErrorReporting extends AbstractAvalancheFeature {
@@ -98,10 +102,27 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         }
 
         mUncaughtExceptionHandler = new UncaughtExceptionHandler(mDevice);
+
+        queuePendingCrashes();
     }
 
     private void queuePendingCrashes() {
-        // TODO Add the pending crashes to the corresponding log
+        if (mChannel == null) {
+            AvalancheLog.error("Error feature not initialized, will not queue logs for delivery.");
+        }
+
+        for (File logfile : ErrorLogHelper.getStoredErrorLogFiles()) {
+            ErrorLog log = ErrorLogHelper.deserializeErrorLog(logfile.getAbsolutePath());
+            if (log != null) {
+                // Reset device and session id, so channel will provide those values
+                // TODO remove / rethink this approach
+                log.setDevice(null);
+                log.setSid(null);
+                mChannel.enqueue(log, ERROR_GROUP);
+            }
+            AvalancheLog.info("Deleting error log file " + logfile.getName());
+            StorageHelper.InternalStorage.delete(logfile);
+        }
     }
 
     protected long getInitializeTimestamp() {
