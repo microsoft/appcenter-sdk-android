@@ -12,7 +12,6 @@ import avalanche.analytics.Analytics;
 import avalanche.core.Avalanche;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.UUIDUtils;
-import avalanche.errors.Crashes;
 import avalanche.errors.ErrorReporting;
 import avalanche.sasquatch.R;
 import avalanche.sasquatch.features.TestFeatures;
