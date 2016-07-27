@@ -421,9 +421,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             if (counter == maxCount) {
                 counter = 0;
                 //We have reached the max batch count or a multiple of it. Trigger ingestion.
-                if (mEnabled) {
-                    triggerIngestion(groupName);
-                }
+                triggerIngestion(groupName);
             }
 
             //set the counter property
