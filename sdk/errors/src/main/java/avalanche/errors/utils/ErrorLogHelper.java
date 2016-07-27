@@ -111,7 +111,7 @@ public final class ErrorLogHelper {
 
     @Nullable
     public static ErrorLog deserializeErrorLog(@NonNull String logfile) {
-        String logfileContents = StorageHelper.InternalStorage.read(logfile);
+        String logfileContents = StorageHelper.InternalStorage.read(new File(getErrorStorageDirectory(), logfile));
         if (TextUtils.isEmpty(logfileContents)) {
             return null;
         }
