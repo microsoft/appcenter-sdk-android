@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import avalanche.core.TestUtils;
+import avalanche.core.AndroidTestUtils;
 import avalanche.core.ingestion.AvalancheIngestion;
 import avalanche.core.ingestion.ServiceCallback;
 import avalanche.core.ingestion.http.AvalancheIngestionHttp;
@@ -65,7 +65,7 @@ public class DefaultAvalancheChannelTest {
         sContext = InstrumentationRegistry.getTargetContext();
         StorageHelper.initialize(sContext);
 
-        sMockLog = TestUtils.generateMockLog();
+        sMockLog = AndroidTestUtils.generateMockLog();
         sLogSerializer = new DefaultLogSerializer();
         sLogSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
     }
