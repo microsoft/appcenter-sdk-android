@@ -558,17 +558,18 @@ public class DefaultAvalancheChannelTest {
         doThrow(new AvalanchePersistence.PersistenceException("mock", new IOException("mock"))).
                 when(mockPersistence).putLog(anyString(), any(Log.class));
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
-        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), sLogSerializer);
-        sut.setPersistence(mockPersistence);
-        sut.setIngestion(mockIngestion);
+        DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), sLogSerializer);
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+        channel.setPersistence(mockPersistence);
+        channel.setIngestion(mockIngestion);
 
         /* Verify no request is sent if persistence fails. */
         for (int i = 0; i < 50; i++) {
-            sut.enqueue(sMockLog, ANALYTICS_GROUP);
+            channel.enqueue(sMockLog, TEST_GROUP);
         }
-        verify(mockPersistence, times(50)).putLog(ANALYTICS_GROUP, sMockLog);
+        verify(mockPersistence, times(50)).putLog(TEST_GROUP, sMockLog);
         verify(mockIngestion, never()).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        assertEquals(0, sut.getCounter(ANALYTICS_GROUP));
+        assertEquals(0, channel.getCounter(TEST_GROUP));
     }
 
     @Test
