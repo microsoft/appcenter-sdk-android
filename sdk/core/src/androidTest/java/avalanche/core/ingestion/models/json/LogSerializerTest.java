@@ -14,7 +14,7 @@ import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.LogContainer;
 import avalanche.core.utils.UUIDUtils;
 
-import static avalanche.core.TestUtils.TAG;
+import static avalanche.core.AndroidTestUtils.TAG;
 import static avalanche.core.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 
 @SuppressWarnings("unused")
@@ -58,5 +58,6 @@ public class LogSerializerTest {
         android.util.Log.v(TAG, payload);
         LogContainer actualContainer = serializer.deserializeContainer(payload);
         Assert.assertEquals(expectedContainer, actualContainer);
+        Assert.assertEquals(expectedContainer.hashCode(), actualContainer.hashCode());
     }
 }
