@@ -551,6 +551,27 @@ public class DefaultAvalancheChannelTest {
     }
 
     @Test
+    public void enqueuePersistenceFailure() throws AvalanchePersistence.PersistenceException {
+        AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
+
+        /* Simulate persistence failing. */
+        doThrow(new AvalanchePersistence.PersistenceException("mock", new IOException("mock"))).
+                when(mockPersistence).putLog(anyString(), any(Log.class));
+        AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
+        DefaultAvalancheChannel sut = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), sLogSerializer);
+        sut.setPersistence(mockPersistence);
+        sut.setIngestion(mockIngestion);
+
+        /* Verify no request is sent if persistence fails. */
+        for (int i = 0; i < 50; i++) {
+            sut.enqueue(sMockLog, ANALYTICS_GROUP);
+        }
+        verify(mockPersistence, times(50)).putLog(ANALYTICS_GROUP, sMockLog);
+        verify(mockIngestion, never()).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        assertEquals(0, sut.getCounter(ANALYTICS_GROUP));
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     public void setEnabled() throws IOException, InterruptedException {
         AvalancheIngestion ingestion = mock(AvalancheIngestion.class);
