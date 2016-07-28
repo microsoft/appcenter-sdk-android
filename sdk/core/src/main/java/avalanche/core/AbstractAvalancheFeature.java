@@ -70,20 +70,38 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
 
     @Override
     public synchronized void setEnabled(boolean enabled) {
+        if (enabled == mEnabled)
+            return;
+
         mEnabled = enabled;
 
-        /* Clear all persisted logs for the feature if the feature is disabled after the channel is ready. */
-        if (!mEnabled && mChannel != null)
-            mChannel.clear(getGroupName());
+        if (mChannel != null) {
+            /* Add a group for the feature. */
+            if (mEnabled)
+                mChannel.addGroup(getGroupName(), getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
+
+            /* Otherwise, clear all persisted logs and remove a group for the feature. */
+            else {
+                /* TODO: Expose a method and do this in one place. */
+                mChannel.clear(getGroupName());
+                mChannel.removeGroup(getGroupName());
+            }
+        }
     }
 
     @Override
     public synchronized void onChannelReady(AvalancheChannel channel) {
-        /* Clear all persisted logs for the feature if it wan't cleared in previous setEnabled(false) call. */
-        if (!mEnabled)
+        channel.removeGroup(getGroupName());
+
+        /* Add a group to the channel if the feature is enabled */
+        if (mEnabled)
+            channel.addGroup(getGroupName(), getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
+
+        /* Otherwise, clear all persisted logs for the feature. */
+        else
             channel.clear(getGroupName());
+
         mChannel = channel;
-        mChannel.addGroup(getGroupName(), getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
     }
 
     @Override

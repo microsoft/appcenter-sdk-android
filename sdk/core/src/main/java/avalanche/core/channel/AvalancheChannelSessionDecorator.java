@@ -90,6 +90,11 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
     }
 
     @Override
+    public void removeGroup(String groupName) {
+        mChannel.removeGroup(groupName);
+    }
+
+    @Override
     public void enqueue(@NonNull Log log, @NonNull String queueName) {
 
         /*

@@ -126,6 +126,11 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     }
 
     @Override
+    public void removeGroup(String groupName) {
+        mGroupStates.remove(groupName);
+    }
+
+    @Override
     public boolean isEnabled() {
         return mEnabled;
     }
