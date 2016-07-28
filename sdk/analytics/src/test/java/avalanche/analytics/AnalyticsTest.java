@@ -17,10 +17,10 @@ import avalanche.core.channel.AvalancheChannel;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.json.LogFactory;
 
-import static avalanche.core.channel.DefaultAvalancheChannel.ANALYTICS_GROUP;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-@SuppressWarnings({"WrongConstant", "unused"})
+@SuppressWarnings("unused")
 public class AnalyticsTest {
 
     @Before
@@ -74,7 +74,7 @@ public class AnalyticsTest {
                 }
                 return false;
             }
-        }), eq(ANALYTICS_GROUP));
+        }), eq(analytics.getGroupName()));
     }
 
     @Test
@@ -115,7 +115,7 @@ public class AnalyticsTest {
                 }
                 return false;
             }
-        }), eq(ANALYTICS_GROUP));
+        }), eq(analytics.getGroupName()));
     }
 
     @Test
@@ -137,7 +137,7 @@ public class AnalyticsTest {
                 }
                 return false;
             }
-        }), eq(ANALYTICS_GROUP));
+        }), eq(analytics.getGroupName()));
     }
 
     @Test
@@ -147,20 +147,23 @@ public class AnalyticsTest {
         analytics.setEnabled(false);
         analytics.onChannelReady(channel);
         verify(channel).clear(analytics.getGroupName());
+        verify(channel).removeGroup(eq(analytics.getGroupName()));
         Analytics.trackEvent("test", null);
         Analytics.trackPage("test", null);
-        verifyZeroInteractions(channel);
+        verifyNoMoreInteractions(channel);
 
         /* Enable back. */
         analytics.setEnabled(true);
-        verifyZeroInteractions(channel);
+        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyInt(), anyInt(), any(AvalancheChannel.Listener.class));
         Analytics.trackEvent("test", null);
         Analytics.trackPage("test", null);
-        verify(channel, times(2)).enqueue(any(Log.class), eq(ANALYTICS_GROUP));
+        verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
         /* Disable again. */
         analytics.setEnabled(false);
+        /* clear and removeGroup are being called in this test method. */
         verify(channel, times(2)).clear(analytics.getGroupName());
+        verify(channel, times(2)).removeGroup(eq(analytics.getGroupName()));
         Analytics.trackEvent("test", null);
         Analytics.trackPage("test", null);
         verifyNoMoreInteractions(channel);
