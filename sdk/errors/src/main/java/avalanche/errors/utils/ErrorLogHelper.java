@@ -43,6 +43,7 @@ public final class ErrorLogHelper {
         errorLog.setProcessId(Process.myPid());
         errorLog.setCrashThread((int) thread.getId()); // TODO maybe redefine model value to be of type long
         errorLog.setAppLaunchTOffset(System.currentTimeMillis() - initializeTimestamp);
+        errorLog.setExceptionType(exception.getClass().getName());
         errorLog.setExceptionReason(exception.getMessage());
         errorLog.setFatal(true);
 
@@ -85,12 +86,14 @@ public final class ErrorLogHelper {
 
     @NonNull
     public static File[] getStoredErrorLogFiles() {
-        return getErrorStorageDirectory().listFiles(new FilenameFilter() {
+        File[] files = getErrorStorageDirectory().listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String filename) {
                 return filename.endsWith(".json");
             }
         });
+
+        return files != null ? files : new File[0];
     }
 
     @Nullable
@@ -162,14 +165,7 @@ public final class ErrorLogHelper {
         JSONStringer writer = new JSONStringer();
         writer.object();
         log.write(writer);
-        try {
-            log.validate();
-        } catch (IllegalArgumentException e) {
-            throw new JSONException(e.getMessage());
-        }
         writer.endObject();
-
-
         StorageHelper.InternalStorage.write(logfile, writer.toString());
     }
 
