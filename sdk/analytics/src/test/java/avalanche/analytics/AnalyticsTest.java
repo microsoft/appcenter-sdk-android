@@ -147,21 +147,23 @@ public class AnalyticsTest {
         analytics.setEnabled(false);
         analytics.onChannelReady(channel);
         verify(channel).clear(analytics.getGroupName());
-        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyInt(), anyInt(), any(AvalancheChannel.Listener.class));
+        verify(channel).removeGroup(eq(analytics.getGroupName()));
         Analytics.trackEvent("test", null);
         Analytics.trackPage("test", null);
         verifyNoMoreInteractions(channel);
 
         /* Enable back. */
         analytics.setEnabled(true);
-        verifyZeroInteractions(channel);
+        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyInt(), anyInt(), any(AvalancheChannel.Listener.class));
         Analytics.trackEvent("test", null);
         Analytics.trackPage("test", null);
         verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
         /* Disable again. */
         analytics.setEnabled(false);
+        /* clear and removeGroup are being called in this test method. */
         verify(channel, times(2)).clear(analytics.getGroupName());
+        verify(channel, times(2)).removeGroup(eq(analytics.getGroupName()));
         Analytics.trackEvent("test", null);
         Analytics.trackPage("test", null);
         verifyNoMoreInteractions(channel);
