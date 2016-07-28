@@ -5,6 +5,7 @@ import android.support.annotation.VisibleForTesting;
 import junit.framework.Assert;
 
 import org.json.JSONException;
+import org.json.JSONStringer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -222,7 +223,13 @@ public class AvalancheIngestionHttpTest {
         /* Serialization will fail on invalid JSON (required fields). */
         long toffset = System.currentTimeMillis();
         LogContainer container = new LogContainer();
-        Log log = new MockLog();
+        Log log = new MockLog() {
+
+            @Override
+            public void write(JSONStringer writer) throws JSONException {
+                throw new JSONException("mock");
+            }
+        };
         log.setToffset(toffset);
         List<Log> logs = new ArrayList<>();
         logs.add(log);
