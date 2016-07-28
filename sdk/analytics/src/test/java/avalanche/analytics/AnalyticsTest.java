@@ -31,7 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-@SuppressWarnings({"WrongConstant", "unused"})
+@SuppressWarnings("unused")
 public class AnalyticsTest {
 
     @Before
