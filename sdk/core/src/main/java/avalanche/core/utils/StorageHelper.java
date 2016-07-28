@@ -367,6 +367,7 @@ public final class StorageHelper {
          * Creates the directory if it does not already exist.
          *
          * @param path An absolute path for directory.
+         * @return {@code true} if the directory was created, otherwise {@code false}.
          */
         @SuppressWarnings({"ResultOfMethodCallIgnored", "SpellCheckingInspection"})
         public static boolean mkdir(@NonNull String path) {
