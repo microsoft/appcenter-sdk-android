@@ -78,9 +78,12 @@ public final class Avalanche {
      */
     @SafeVarargs
     public static void useFeatures(Application application, String appKey, Class<? extends AvalancheFeature>... features) {
+        Set<Class<? extends AvalancheFeature>> featureClassSet = new HashSet<>();
         List<AvalancheFeature> featureList = new ArrayList<>();
         for (Class<? extends AvalancheFeature> featureClass : features)
-            if (featureClass != null) {
+            /* Skip instantiation if the feature is already added. */
+            if (featureClass != null && !featureClassSet.contains(featureClass)) {
+                featureClassSet.add(featureClass);
                 AvalancheFeature feature = instantiateFeature(featureClass);
                 if (feature != null)
                     featureList.add(feature);

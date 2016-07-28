@@ -85,7 +85,17 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
     }
 
     @Override
-    public void enqueue(@NonNull Log log, @NonNull @GroupNameDef String queueName) {
+    public void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, Listener listener) {
+        mChannel.addGroup(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, listener);
+    }
+
+    @Override
+    public void removeGroup(String groupName) {
+        mChannel.removeGroup(groupName);
+    }
+
+    @Override
+    public void enqueue(@NonNull Log log, @NonNull String queueName) {
 
         /*
          * Generate a new session identifier if the first time or
@@ -133,31 +143,6 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
         mChannel.clear(groupName);
     }
 
-    /**
-     * Add common attributes to logs before forwarding to delegate channel.
-     *
-     * @param log       log.
-     * @param queueName queue.
-     */
-    private void decorateAndEnqueue(@NonNull Log log, @NonNull @GroupNameDef String queueName) {
-        log.setSid(mSid);
-        log.setDevice(mDevice);
-        mChannel.enqueue(log, queueName);
-    }
-
-    /**
-     * Check if current session has timed out.
-     *
-     * @return true if current session has timed out, false otherwise.
-     */
-    private boolean hasSessionTimedOut() {
-        long now = SystemClock.elapsedRealtime();
-        boolean noLogSentForLong = now - mLastQueuedLogTime >= mSessionTimeout;
-        boolean isBackgroundForLong = mLastPausedTime >= mLastResumedTime && now - mLastPausedTime >= mSessionTimeout;
-        boolean wasBackgroundForLong = mLastResumedTime - mLastPausedTime >= mSessionTimeout;
-        return noLogSentForLong && (isBackgroundForLong || wasBackgroundForLong);
-    }
-
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
     }
@@ -190,5 +175,30 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
 
     @Override
     public void onActivityDestroyed(Activity activity) {
+    }
+
+    /**
+     * Add common attributes to logs before forwarding to delegate channel.
+     *
+     * @param log       log.
+     * @param queueName queue.
+     */
+    private void decorateAndEnqueue(@NonNull Log log, @NonNull String queueName) {
+        log.setSid(mSid);
+        log.setDevice(mDevice);
+        mChannel.enqueue(log, queueName);
+    }
+
+    /**
+     * Check if current session has timed out.
+     *
+     * @return true if current session has timed out, false otherwise.
+     */
+    private boolean hasSessionTimedOut() {
+        long now = SystemClock.elapsedRealtime();
+        boolean noLogSentForLong = now - mLastQueuedLogTime >= mSessionTimeout;
+        boolean isBackgroundForLong = mLastPausedTime >= mLastResumedTime && now - mLastPausedTime >= mSessionTimeout;
+        boolean wasBackgroundForLong = mLastResumedTime - mLastPausedTime >= mSessionTimeout;
+        return noLogSentForLong && (isBackgroundForLong || wasBackgroundForLong);
     }
 }
