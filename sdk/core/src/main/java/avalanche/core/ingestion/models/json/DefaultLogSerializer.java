@@ -1,5 +1,7 @@
 package avalanche.core.ingestion.models.json;
 
+import android.support.annotation.NonNull;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,7 +16,6 @@ import java.util.Map;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.LogContainer;
 import avalanche.core.ingestion.models.StartSessionLog;
-import avalanche.core.ingestion.models.utils.LogUtils;
 import avalanche.core.utils.AvalancheLog;
 
 import static avalanche.core.ingestion.models.CommonProperties.TYPE;
@@ -33,11 +34,6 @@ public class DefaultLogSerializer implements LogSerializer {
     private JSONStringer writeLog(JSONStringer writer, Log log) throws JSONException {
         writer.object();
         log.write(writer);
-        try {
-            log.validate();
-        } catch (IllegalArgumentException e) {
-            throw new JSONException(e.getMessage());
-        }
         writer.endObject();
         return writer;
     }
@@ -50,24 +46,17 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @Override
-    public String serializeLog(Log log) throws JSONException {
+    public String serializeLog(@NonNull Log log) throws JSONException {
         return writeLog(new JSONStringer(), log).toString();
     }
 
     @Override
-    public Log deserializeLog(String json) throws JSONException {
+    public Log deserializeLog(@NonNull String json) throws JSONException {
         return readLog(new JSONObject(json));
     }
 
     @Override
-    public String serializeContainer(LogContainer logContainer) throws JSONException {
-
-        /* Check log container is set. */
-        try {
-            LogUtils.checkNotNull(LOGS, logContainer.getLogs());
-        } catch (IllegalArgumentException e) {
-            throw new JSONException(e.getMessage());
-        }
+    public String serializeContainer(@NonNull LogContainer logContainer) throws JSONException {
 
         /* Init JSON serializer, in debug/verbose: try to make it pretty. */
         JSONStringer writer = null;
@@ -94,7 +83,7 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @Override
-    public LogContainer deserializeContainer(String json) throws JSONException {
+    public LogContainer deserializeContainer(@NonNull String json) throws JSONException {
         JSONObject jContainer = new JSONObject(json);
         LogContainer container = new LogContainer();
         JSONArray jLogs = jContainer.getJSONArray(LOGS);
@@ -109,7 +98,7 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @Override
-    public void addLogFactory(String logType, LogFactory logFactory) {
+    public void addLogFactory(@NonNull String logType, @NonNull LogFactory logFactory) {
         mLogFactories.put(logType, logFactory);
     }
 }

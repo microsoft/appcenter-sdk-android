@@ -24,9 +24,9 @@ public class JSONUtilsTest {
         /* Write to JSON object. */
         JSONStringer writer = new JSONStringer();
         writer.object();
-        JSONUtils.write(writer, "int", 1, true);
-        JSONUtils.write(writer, "long", 1000000000L, true);
-        JSONUtils.write(writer, "boolean", true, true);
+        JSONUtils.write(writer, "int", 1);
+        JSONUtils.write(writer, "long", 1000000000L);
+        JSONUtils.write(writer, "boolean", true);
         writer.endObject();
 
         /* Convert to string. */

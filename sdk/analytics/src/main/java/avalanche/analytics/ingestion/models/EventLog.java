@@ -7,7 +7,6 @@ import org.json.JSONStringer;
 import java.util.UUID;
 
 import avalanche.core.ingestion.models.LogWithProperties;
-import avalanche.core.ingestion.models.utils.LogUtils;
 
 import static avalanche.core.ingestion.models.CommonProperties.ID;
 import static avalanche.core.ingestion.models.CommonProperties.NAME;
@@ -82,13 +81,6 @@ public class EventLog extends LogWithProperties {
         super.write(writer);
         writer.key(ID).value(getId());
         writer.key(NAME).value(getName());
-    }
-
-    @Override
-    public void validate() throws IllegalArgumentException {
-        super.validate();
-        LogUtils.checkNotNull(ID, getId());
-        LogUtils.checkNotNull(NAME, getName());
     }
 
     @Override

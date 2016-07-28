@@ -8,7 +8,6 @@ import java.util.List;
 
 import avalanche.core.ingestion.models.Model;
 import avalanche.core.ingestion.models.json.JSONUtils;
-import avalanche.core.ingestion.models.utils.LogUtils;
 import avalanche.crash.ingestion.models.json.ThreadFrameFactory;
 
 import static avalanche.core.ingestion.models.CommonProperties.FRAMES;
@@ -75,13 +74,6 @@ public class Thread implements Model {
     public void write(JSONStringer writer) throws JSONException {
         writer.key(ID).value(getId());
         JSONUtils.writeArray(writer, FRAMES, getFrames());
-    }
-
-    @Override
-    public void validate() throws IllegalArgumentException {
-        LogUtils.checkNotNull(ID, getId());
-        LogUtils.checkNotNull(FRAMES, getFrames());
-        LogUtils.validateArray(getFrames());
     }
 
     @Override

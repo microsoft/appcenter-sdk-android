@@ -9,6 +9,4 @@ public interface Model {
     void read(JSONObject object) throws JSONException;
 
     void write(JSONStringer writer) throws JSONException;
-
-    void validate() throws IllegalArgumentException;
 }
