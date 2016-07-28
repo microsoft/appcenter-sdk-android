@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import avalanche.core.TestUtils;
+import avalanche.core.AndroidTestUtils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -64,8 +64,8 @@ public class JSONUtilsTest {
     @Test
     public void writeReadArray() throws JSONException {
         /* Generate mock logs. */
-        MockLog firstLog = TestUtils.generateMockLog();
-        MockLog secondLog = TestUtils.generateMockLog();
+        MockLog firstLog = AndroidTestUtils.generateMockLog();
+        MockLog secondLog = AndroidTestUtils.generateMockLog();
 
         /* Create a test list. */
         final List<MockLog> list = new ArrayList<>();

@@ -7,11 +7,11 @@ import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.json.MockLog;
 import avalanche.core.utils.UUIDUtils;
 
-public final class TestUtils {
+public final class AndroidTestUtils {
 
     public static final String TAG = "TestRunner";
 
-    private TestUtils() {
+    private AndroidTestUtils() {
     }
 
     public static MockLog generateMockLog() {
