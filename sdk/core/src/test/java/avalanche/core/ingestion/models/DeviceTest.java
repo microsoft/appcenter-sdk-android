@@ -11,7 +11,7 @@ public class DeviceTest {
 
     @Test
     public void compareDifferentType() {
-        TestUtils.compareDifferentType(new Device());
+        TestUtils.compareSelfNullClass(new Device());
     }
 
     @Test
