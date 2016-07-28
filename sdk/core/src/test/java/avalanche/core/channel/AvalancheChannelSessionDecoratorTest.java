@@ -35,10 +35,7 @@ import static org.mockito.Mockito.when;
 @PrepareForTest(SystemClock.class)
 public class AvalancheChannelSessionDecoratorTest {
 
-    /**
-     * TODO: Remove this and fix compile errors.
-     */
-    private final static String ANALYTICS_GROUP = "group_analytics";
+    private final static String TEST_GROUP = "group_test";
 
     @Test
     public void session() throws PackageManager.NameNotFoundException {
@@ -63,24 +60,24 @@ public class AvalancheChannelSessionDecoratorTest {
         StartSessionLog expectedStartSessionLog = new StartSessionLog();
         {
             Log log = new MockLog();
-            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            sessionChannel.enqueue(log, TEST_GROUP);
             assertNotNull(log.getSid());
             assertNotNull(log.getDevice());
-            verify(channel).enqueue(log, ANALYTICS_GROUP);
+            verify(channel).enqueue(log, TEST_GROUP);
             expectedSid = log.getSid();
             expectedDevice = log.getDevice();
             expectedStartSessionLog.setSid(expectedSid);
             expectedStartSessionLog.setDevice(expectedDevice);
-            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
+            verify(channel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
 
         /* Verify session reused for second log. */
         {
             Log log = new MockLog();
-            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            sessionChannel.enqueue(log, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             assertEquals(expectedDevice, log.getDevice());
-            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
+            verify(channel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
 
         /* No usage from background for a long time. */
@@ -89,24 +86,24 @@ public class AvalancheChannelSessionDecoratorTest {
             when(SystemClock.elapsedRealtime()).thenReturn(mockTime);
             packageInfo.versionCode++; // make any change in device properties
             Log log = new MockLog();
-            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            sessionChannel.enqueue(log, TEST_GROUP);
             assertNotEquals(expectedSid, log.getSid());
             assertNotEquals(expectedDevice, log.getDevice());
             expectedSid = log.getSid();
             expectedDevice = log.getDevice();
             expectedStartSessionLog.setSid(expectedSid);
             expectedStartSessionLog.setDevice(expectedDevice);
-            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
+            verify(channel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
 
         /* App comes to foreground and sends a log, still session. */
         {
             sessionChannel.onActivityResumed(null);
             Log log = new MockLog();
-            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            sessionChannel.enqueue(log, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             assertEquals(expectedDevice, log.getDevice());
-            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
+            verify(channel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
 
         /* Switch to another activity. */
@@ -118,10 +115,10 @@ public class AvalancheChannelSessionDecoratorTest {
             when(SystemClock.elapsedRealtime()).thenReturn(mockTime);
             sessionChannel.onActivityResumed(null);
             Log log = new MockLog();
-            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            sessionChannel.enqueue(log, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             assertEquals(expectedDevice, log.getDevice());
-            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
+            verify(channel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
 
         /* We are in foreground, even after timeout a log is still in session. */
@@ -129,10 +126,10 @@ public class AvalancheChannelSessionDecoratorTest {
             mockTime += 30;
             when(SystemClock.elapsedRealtime()).thenReturn(mockTime);
             Log log = new MockLog();
-            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            sessionChannel.enqueue(log, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             assertEquals(expectedDevice, log.getDevice());
-            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
+            verify(channel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
 
         /* Background for a short time and send log: still in session. */
@@ -143,10 +140,10 @@ public class AvalancheChannelSessionDecoratorTest {
             mockTime += 2;
             when(SystemClock.elapsedRealtime()).thenReturn(mockTime);
             Log log = new MockLog();
-            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            sessionChannel.enqueue(log, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             assertEquals(expectedDevice, log.getDevice());
-            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
+            verify(channel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
 
         /* Background for a long time and coming back to foreground: new session. */
@@ -156,14 +153,14 @@ public class AvalancheChannelSessionDecoratorTest {
             packageInfo.versionCode++; // make any change in device properties
             sessionChannel.onActivityResumed(null);
             Log log = new MockLog();
-            sessionChannel.enqueue(log, ANALYTICS_GROUP);
+            sessionChannel.enqueue(log, TEST_GROUP);
             assertNotEquals(expectedSid, log.getSid());
             assertNotEquals(expectedDevice, log.getDevice());
             expectedSid = log.getSid();
             expectedDevice = log.getDevice();
             expectedStartSessionLog.setSid(expectedSid);
             expectedStartSessionLog.setDevice(expectedDevice);
-            verify(channel).enqueue(expectedStartSessionLog, ANALYTICS_GROUP);
+            verify(channel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
     }
 
@@ -179,7 +176,7 @@ public class AvalancheChannelSessionDecoratorTest {
         //noinspection WrongConstant
         when(packageManager.getPackageInfo(any(String.class), anyInt())).thenThrow(new PackageManager.NameNotFoundException());
         AvalancheChannel sessionChannel = new AvalancheChannelSessionDecorator(context, channel);
-        sessionChannel.enqueue(new MockLog(), ANALYTICS_GROUP);
+        sessionChannel.enqueue(new MockLog(), TEST_GROUP);
         verifyZeroInteractions(channel);
     }
 
