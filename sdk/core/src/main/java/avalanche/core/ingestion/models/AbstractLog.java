@@ -97,7 +97,9 @@ public abstract class AbstractLog implements Log {
     public void write(JSONStringer writer) throws JSONException {
         writer.key(TYPE).value(getType());
         writer.key(TOFFSET).value(getToffset());
-        writer.key(SID).value(getSid());
+        if (getSid() != null) {
+            writer.key(SID).value(getSid());
+        }
         if (getDevice() != null) {
             writer.key(DEVICE).object();
             getDevice().write(writer);
@@ -110,9 +112,15 @@ public abstract class AbstractLog implements Log {
         if (!object.getString(TYPE).equals(getType()))
             throw new JSONException("Invalid type");
         setToffset(object.getLong(TOFFSET));
-        setSid(UUID.fromString(object.getString(SID)));
+        String sid = object.optString(SID, null);
+        if (sid != null) {
+            setSid(UUID.fromString(sid));
+        }
         Device device = new Device();
-        device.read(object.getJSONObject(DEVICE));
+        JSONObject deviceMap = object.optJSONObject(DEVICE);
+        if (deviceMap != null) {
+            device.read(deviceMap);
+        }
         setDevice(device);
     }
 

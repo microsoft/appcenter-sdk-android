@@ -1,22 +1,19 @@
 package avalanche.errors;
 
-import android.app.Activity;
-import android.content.Context;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 
 import java.io.File;
-import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 
 import avalanche.core.AbstractAvalancheFeature;
+import avalanche.core.Avalanche;
+import avalanche.core.channel.AvalancheChannel;
 import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.DeviceInfoHelper;
 import avalanche.core.utils.StorageHelper;
-import avalanche.core.utils.Util;
 import avalanche.errors.ingestion.models.ErrorLog;
 import avalanche.errors.ingestion.models.json.ErrorLogFactory;
 import avalanche.errors.utils.ErrorLogHelper;
@@ -30,9 +27,6 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     private final Map<String, LogFactory> mFactories;
 
-    private ErrorReportingListener mListener;
-
-    private WeakReference<Context> mContextWeakReference;
     private long mInitializeTimestamp;
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
     private Device mDevice;
@@ -40,6 +34,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     private ErrorReporting() {
         mFactories = new HashMap<>();
         mFactories.put(ErrorLog.TYPE, ErrorLogFactory.getInstance());
+        initialize();
     }
 
     @NonNull
@@ -51,38 +46,23 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     }
 
     @Override
-    public Map<String, LogFactory> getLogFactories() {
-        return mFactories;
-    }
-
-    public static void register(@NonNull Context context) {
-        register(context, null);
-    }
-
-    public static void register(@NonNull Context context, @Nullable ErrorReportingListener listener) {
-        ErrorReporting errorReporting = getInstance();
-        errorReporting.mContextWeakReference = new WeakReference<>(context);
-        try {
-            errorReporting.mDevice = DeviceInfoHelper.getDeviceInfo(context);
-        } catch (DeviceInfoHelper.DeviceInfoException e) {
-            e.printStackTrace();
-        }
-        errorReporting.initialize();
-    }
-
-    @Override
-    public void onActivityResumed(Activity activity) {
-        super.onActivityResumed(activity);
-        if (mContextWeakReference == null && Util.isMainActivity(activity)) {
-            // Opinionated approach -> per default we will want to activate the crash reporting with the very first of your activities.
-            register(activity);
-        }
-    }
-
-    @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
         initialize();
+    }
+
+    @Override
+    public synchronized void onChannelReady(AvalancheChannel channel) {
+        super.onChannelReady(channel);
+
+        if (isEnabled() && mChannel != null) {
+            queuePendingCrashes();
+        }
+    }
+
+    @Override
+    public Map<String, LogFactory> getLogFactories() {
+        return mFactories;
     }
 
     @Override
@@ -101,23 +81,13 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             return;
         }
 
-        mUncaughtExceptionHandler = new UncaughtExceptionHandler(mDevice);
-
-        queuePendingCrashes();
+        mUncaughtExceptionHandler = new UncaughtExceptionHandler();
     }
 
     private void queuePendingCrashes() {
-        if (mChannel == null) {
-            AvalancheLog.error("Error feature not initialized, will not queue logs for delivery.");
-        }
-
         for (File logfile : ErrorLogHelper.getStoredErrorLogFiles()) {
             ErrorLog log = ErrorLogHelper.deserializeErrorLog(logfile.getAbsolutePath());
             if (log != null) {
-                // Reset device and session id, so channel will provide those values
-                // TODO remove / rethink this approach
-                log.setDevice(null);
-                log.setSid(null);
                 mChannel.enqueue(log, ERROR_GROUP);
             }
             AvalancheLog.info("Deleting error log file " + logfile.getName());
