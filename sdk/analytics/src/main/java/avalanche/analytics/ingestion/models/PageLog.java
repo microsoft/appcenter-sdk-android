@@ -5,7 +5,6 @@ import org.json.JSONObject;
 import org.json.JSONStringer;
 
 import avalanche.core.ingestion.models.LogWithProperties;
-import avalanche.core.ingestion.models.utils.LogUtils;
 
 import static avalanche.core.ingestion.models.CommonProperties.NAME;
 
@@ -54,12 +53,6 @@ public class PageLog extends LogWithProperties {
     public void write(JSONStringer writer) throws JSONException {
         super.write(writer);
         writer.key(NAME).value(getName());
-    }
-
-    @Override
-    public void validate() throws IllegalArgumentException {
-        super.validate();
-        LogUtils.checkNotNull(NAME, getName());
     }
 
     @Override

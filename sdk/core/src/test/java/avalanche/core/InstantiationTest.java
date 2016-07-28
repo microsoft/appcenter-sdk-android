@@ -3,7 +3,6 @@ package avalanche.core;
 
 import org.junit.Test;
 
-import avalanche.core.ingestion.models.utils.LogUtils;
 import avalanche.core.utils.DeviceInfoHelper;
 import avalanche.core.utils.StorageHelper;
 
@@ -13,6 +12,7 @@ import avalanche.core.utils.StorageHelper;
  */
 @SuppressWarnings("unused")
 public class InstantiationTest {
+
     @Test
     public void storageHelper() {
         new StorageHelper();
@@ -23,10 +23,5 @@ public class InstantiationTest {
     @Test
     public void deviceInfoHelper() {
         new DeviceInfoHelper();
-    }
-
-    @Test
-    public void logUtils() {
-        new LogUtils();
     }
 }

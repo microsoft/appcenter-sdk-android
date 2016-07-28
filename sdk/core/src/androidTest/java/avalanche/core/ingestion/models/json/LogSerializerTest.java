@@ -20,14 +20,6 @@ import static avalanche.core.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 @SuppressWarnings("unused")
 public class LogSerializerTest {
 
-    @Test(expected = JSONException.class)
-    public void nullFields() throws JSONException {
-        LogContainer expectedContainer = new LogContainer();
-        LogSerializer serializer = new DefaultLogSerializer();
-        String payload = serializer.serializeContainer(expectedContainer);
-        android.util.Log.v(TAG, payload);
-    }
-
     @Test
     public void emptyLogs() throws JSONException {
         LogContainer expectedContainer = new LogContainer();
