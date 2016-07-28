@@ -10,7 +10,6 @@ import android.text.TextUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -91,7 +90,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(api);
         mIngestion = new AvalancheIngestionNetworkStateHandler(retryer, NetworkStateHelper.getSharedInstance(context));
         mIngestionHandler = new Handler(Looper.getMainLooper());
-        mGroupStates = new LinkedHashMap<>();
+        mGroupStates = new HashMap<>();
         mEnabled = true;
     }
 
@@ -352,7 +351,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             Listener listener = mGroupStates.get(groupName).mListener;
             if (listener != null) {
                 for (Log log : removedLogsForBatchId)
-                    listener.onFailure(log);
+                    listener.onFailure(log, new Exception(t));
             }
         }
         suspend(false);
