@@ -9,7 +9,6 @@ import java.util.UUID;
 
 import avalanche.core.ingestion.models.LogWithProperties;
 import avalanche.core.ingestion.models.json.JSONUtils;
-import avalanche.core.ingestion.models.utils.LogUtils;
 import avalanche.crash.ingestion.models.json.BinaryFactory;
 import avalanche.crash.ingestion.models.json.ExceptionFactory;
 import avalanche.crash.ingestion.models.json.ThreadFactory;
@@ -452,33 +451,22 @@ public class ErrorLog extends LogWithProperties {
     @Override
     public void write(JSONStringer writer) throws JSONException {
         super.write(writer);
-        JSONUtils.write(writer, ID, getId(), true);
-        JSONUtils.write(writer, PROCESS, getProcess(), false);
-        JSONUtils.write(writer, PROCESS_ID, getProcessId(), false);
-        JSONUtils.write(writer, PARENT_PROCESS, getParentProcess(), false);
-        JSONUtils.write(writer, PARENT_PROCESS_ID, getParentProcessId(), false);
-        JSONUtils.write(writer, CRASH_THREAD, getCrashThread(), false);
-        JSONUtils.write(writer, APPLICATION_PATH, getApplicationPath(), false);
-        JSONUtils.write(writer, APP_LAUNCH_T_OFFSET, getAppLaunchTOffset(), false);
-        JSONUtils.write(writer, EXCEPTION_TYPE, getExceptionType(), true);
-        JSONUtils.write(writer, EXCEPTION_CODE, getExceptionCode(), false);
-        JSONUtils.write(writer, EXCEPTION_ADDRESS, getExceptionAddress(), false);
-        JSONUtils.write(writer, EXCEPTION_REASON, getExceptionReason(), true);
-        JSONUtils.write(writer, FATAL, getFatal(), false);
+        JSONUtils.write(writer, ID, getId());
+        JSONUtils.write(writer, PROCESS, getProcess());
+        JSONUtils.write(writer, PROCESS_ID, getProcessId());
+        JSONUtils.write(writer, PARENT_PROCESS, getParentProcess());
+        JSONUtils.write(writer, PARENT_PROCESS_ID, getParentProcessId());
+        JSONUtils.write(writer, CRASH_THREAD, getCrashThread());
+        JSONUtils.write(writer, APPLICATION_PATH, getApplicationPath());
+        JSONUtils.write(writer, APP_LAUNCH_T_OFFSET, getAppLaunchTOffset());
+        JSONUtils.write(writer, EXCEPTION_TYPE, getExceptionType());
+        JSONUtils.write(writer, EXCEPTION_CODE, getExceptionCode());
+        JSONUtils.write(writer, EXCEPTION_ADDRESS, getExceptionAddress());
+        JSONUtils.write(writer, EXCEPTION_REASON, getExceptionReason());
+        JSONUtils.write(writer, FATAL, getFatal());
         JSONUtils.writeArray(writer, THREADS, getThreads());
         JSONUtils.writeArray(writer, EXCEPTIONS, getExceptions());
         JSONUtils.writeArray(writer, BINARIES, getBinaries());
-    }
-
-    @Override
-    public void validate() throws IllegalArgumentException {
-        super.validate();
-        LogUtils.checkNotNull(ID, getId());
-        LogUtils.checkNotNull(EXCEPTION_TYPE, getExceptionType());
-        LogUtils.checkNotNull(EXCEPTION_REASON, getExceptionReason());
-        LogUtils.validateArray(getThreads());
-        LogUtils.validateArray(getExceptions());
-        LogUtils.validateArray(getBinaries());
     }
 
     @Override

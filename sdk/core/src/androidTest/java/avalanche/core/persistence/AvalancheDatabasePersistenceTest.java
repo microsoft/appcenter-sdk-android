@@ -17,7 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import avalanche.core.TestUtils;
+import avalanche.core.AndroidTestUtils;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.json.DefaultLogSerializer;
 import avalanche.core.ingestion.models.json.LogSerializer;
@@ -89,7 +89,7 @@ public class AvalancheDatabasePersistenceTest {
 
         try {
             /* Generate a log and persist. */
-            Log log = TestUtils.generateMockLog();
+            Log log = AndroidTestUtils.generateMockLog();
             persistence.putLog("test-p1", log);
 
             /* Get a log from persistence. */
@@ -117,10 +117,10 @@ public class AvalancheDatabasePersistenceTest {
 
         try {
             /* Generate too many logs and persist. */
-            Log log1 = TestUtils.generateMockLog();
-            Log log2 = TestUtils.generateMockLog();
-            Log log3 = TestUtils.generateMockLog();
-            Log log4 = TestUtils.generateMockLog();
+            Log log1 = AndroidTestUtils.generateMockLog();
+            Log log2 = AndroidTestUtils.generateMockLog();
+            Log log3 = AndroidTestUtils.generateMockLog();
+            Log log4 = AndroidTestUtils.generateMockLog();
             persistence.putLog("test-p1", log1);
             persistence.putLog("test-p1", log2);
             persistence.putLog("test-p1", log3);
@@ -152,7 +152,7 @@ public class AvalancheDatabasePersistenceTest {
 
         try {
             /* Generate a log and persist. */
-            Log log = TestUtils.generateMockLog();
+            Log log = AndroidTestUtils.generateMockLog();
             persistence.putLog("test-p1", log);
         } finally {
             /* Close. */
@@ -174,10 +174,10 @@ public class AvalancheDatabasePersistenceTest {
 
         try {
             /* Generate a log and persist. */
-            Log log1 = TestUtils.generateMockLog();
-            Log log2 = TestUtils.generateMockLog();
-            Log log3 = TestUtils.generateMockLog();
-            Log log4 = TestUtils.generateMockLog();
+            Log log1 = AndroidTestUtils.generateMockLog();
+            Log log2 = AndroidTestUtils.generateMockLog();
+            Log log3 = AndroidTestUtils.generateMockLog();
+            Log log4 = AndroidTestUtils.generateMockLog();
             persistence.putLog("test-p1", log1);
             persistence.putLog("test-p1", log2);
             persistence.putLog("test-p2", log3);
@@ -254,10 +254,10 @@ public class AvalancheDatabasePersistenceTest {
 
         try {
             /* Generate a log and persist. */
-            Log log1 = TestUtils.generateMockLog();
-            Log log2 = TestUtils.generateMockLog();
-            Log log3 = TestUtils.generateMockLog();
-            Log log4 = TestUtils.generateMockLog();
+            Log log1 = AndroidTestUtils.generateMockLog();
+            Log log2 = AndroidTestUtils.generateMockLog();
+            Log log3 = AndroidTestUtils.generateMockLog();
+            Log log4 = AndroidTestUtils.generateMockLog();
             persistence.putLog("test-p1", log1);
             persistence.putLog("test-p1", log2);
             persistence.putLog("test-p2", log3);
@@ -318,7 +318,7 @@ public class AvalancheDatabasePersistenceTest {
             /* Generate a log and persist. */
             Log[] logs = new Log[numberOfLogs];
             for (int i = 0; i < logs.length; i++)
-                logs[i] = TestUtils.generateMockLog();
+                logs[i] = AndroidTestUtils.generateMockLog();
 
             /* Put. */
             for (Log log : logs)
@@ -370,11 +370,11 @@ public class AvalancheDatabasePersistenceTest {
         /* Throw a JSON exception for the first call. */
         doThrow(new JSONException("JSON exception"))
                 /* Return a normal log for the second call. */
-                .doReturn(TestUtils.generateMockLog())
+                .doReturn(AndroidTestUtils.generateMockLog())
                 /* Throw a JSON exception for the third call. */
                 .doThrow(new JSONException("JSON exception"))
                 /* Return a normal log for further calls. */
-                .doReturn(TestUtils.generateMockLog())
+                .doReturn(AndroidTestUtils.generateMockLog())
                 .when(logSerializer).deserializeLog(anyString());
         persistence.setLogSerializer(logSerializer);
 
@@ -385,7 +385,7 @@ public class AvalancheDatabasePersistenceTest {
             /* Generate a log and persist. */
             Log[] logs = new Log[numberOfLogs];
             for (int i = 0; i < logs.length; i++)
-                logs[i] = TestUtils.generateMockLog();
+                logs[i] = AndroidTestUtils.generateMockLog();
 
             /* Put. */
             for (Log log : logs)

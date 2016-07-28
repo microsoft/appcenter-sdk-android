@@ -7,7 +7,6 @@ import org.json.JSONStringer;
 import java.util.UUID;
 
 import avalanche.core.ingestion.models.Model;
-import avalanche.core.ingestion.models.utils.LogUtils;
 
 import static avalanche.core.ingestion.models.CommonProperties.ID;
 
@@ -182,16 +181,6 @@ public class Binary implements Model {
         writer.key(NAME).value(getName());
         writer.key(ARCHITECTURE).value(getArchitecture());
         writer.key(PATH).value(getPath());
-    }
-
-    @Override
-    public void validate() throws IllegalArgumentException {
-        LogUtils.checkNotNull(ID, getId());
-        LogUtils.checkNotNull(START_ADDRESS, getStartAddress());
-        LogUtils.checkNotNull(END_ADDRESS, getEndAddress());
-        LogUtils.checkNotNull(NAME, getName());
-        LogUtils.checkNotNull(ARCHITECTURE, getArchitecture());
-        LogUtils.checkNotNull(PATH, getPath());
     }
 
     @Override

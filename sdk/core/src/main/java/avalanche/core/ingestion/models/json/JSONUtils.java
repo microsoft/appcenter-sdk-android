@@ -62,8 +62,8 @@ public final class JSONUtils {
         return array;
     }
 
-    public static void write(JSONStringer writer, String key, Object value, boolean required) throws JSONException {
-        if (value != null || required)
+    public static void write(JSONStringer writer, String key, Object value) throws JSONException {
+        if (value != null)
             writer.key(key).value(value);
     }
 
