@@ -1,4 +1,4 @@
-package avalanche.core.utils;
+package avalanche.analytics.utils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;

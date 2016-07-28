@@ -14,7 +14,7 @@ public class AbstractLogTest {
 
     @Test
     public void compareDifferentType() {
-        TestUtils.compareDifferentType(mock(AbstractLog.class));
+        TestUtils.compareSelfNullClass(mock(AbstractLog.class));
     }
 
     @Test
