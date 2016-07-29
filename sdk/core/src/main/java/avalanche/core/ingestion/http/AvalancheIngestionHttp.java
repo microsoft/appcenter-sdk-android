@@ -209,7 +209,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             String response = dump(urlConnection);
             AvalancheLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + response);
 
-            /* Generate exception on onCallFailed. */
+            /* Generate exception on failure. */
             if (status != 200)
                 throw new HttpException(status);
         } finally {

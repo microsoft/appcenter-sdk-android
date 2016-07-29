@@ -555,7 +555,7 @@ public class StorageHelperAndroidTest {
         }
     }
 
-    /* This is a hack to test database onCallFailed by passing a weird table name which is actually valid.
+    /* This is a hack to test database failure by passing a weird table name which is actually valid.
        SQLite database allows to create a table that contains period (.) but it doesn't actually create the table and doesn't raise any exceptions.
        This test method will then be able to test in-memory database by accessing a table which is not created.
        Only tested on emulator so it might not work in the future or on any other devices. */

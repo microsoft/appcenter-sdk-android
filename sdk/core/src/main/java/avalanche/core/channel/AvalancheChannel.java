@@ -60,6 +60,7 @@ public interface AvalancheChannel {
      * Channel listener specification.
      */
     interface Listener {
+
         /**
          * Called when the log is delivered successfully.
          *
@@ -71,7 +72,7 @@ public interface AvalancheChannel {
          * Called when the log is not delivered successfully.
          *
          * @param log The log that is not delivered.
-         * @param e   The exception for onCallFailed.
+         * @param e   The exception for failure.
          */
         void onFailure(Log log, Exception e);
     }
