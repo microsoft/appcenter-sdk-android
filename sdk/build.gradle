@@ -82,3 +82,7 @@ task coverageReport(type: JacocoReport, dependsOn: subprojects.coverageReport) {
     //noinspection GroovyAssignabilityCheck
     executionData = files(subprojects.coverageReport.executionData)
 }
+
+task clean(type: Delete) {
+    delete project.buildDir
+}

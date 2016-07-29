@@ -44,10 +44,6 @@ allprojects {
             }
         }
     }
-
-    task clean(type: Delete) {
-        delete project.buildDir
-    }
 }
 
 subprojects {
@@ -80,4 +76,8 @@ ext {
     buildToolsVersion = '23.0.3'
     supportLibVersion = '24.0.0'
     testInstrumentationRunner = 'android.support.test.runner.AndroidJUnitRunner'
+}
+
+task clean(type: Delete) {
+    delete project.buildDir
 }
