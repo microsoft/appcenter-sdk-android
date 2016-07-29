@@ -341,13 +341,12 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * The actual implementation to react to not being able to send a batch to the server.
      * Will disable the sender in case of a recoverable error.
      * Will delete batch of data in case of a non-recoverable error.
-     *
-     * @param groupName the group name
+     *  @param groupName the group name
      * @param batchId   the batch ID
-     * @param t         the error
+     * @param e         the exception
      */
-    private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, @NonNull final Throwable t) {
-        if (!HttpUtils.isRecoverableError(t))
+    private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, @NonNull final Exception e) {
+        if (!HttpUtils.isRecoverableError(e))
             mPersistence.deleteLogs(groupName, batchId);
         List<Log> removedLogsForBatchId = mGroupStates.get(groupName).mSendingBatches.remove(batchId);
         if (removedLogsForBatchId == null) {
@@ -356,7 +355,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             Listener listener = mGroupStates.get(groupName).mListener;
             if (listener != null) {
                 for (Log log : removedLogsForBatchId)
-                    listener.onFailure(log, new Exception(t));
+                    listener.onFailure(log, e);
             }
         }
         suspend(false);
