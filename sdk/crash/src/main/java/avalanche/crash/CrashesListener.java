@@ -98,7 +98,7 @@ public abstract class CrashesListener {
     /**
      * Called when the crash manager has found crash logs that were already
      * confirmed by the user or should have been auto uploaded, but the upload
-     * failed, e.g. in case of a network failure.
+     * failed, e.g. in case of a network onCallFailed.
      */
     public void onConfirmedCrashesFound() {
     }

@@ -8,12 +8,12 @@ public interface ServiceCallback {
     /**
      * Implement this method to handle successful REST call results.
      */
-    void success();
+    void onCallSucceeded();
 
     /**
      * Implement this method to handle REST call failures.
      *
-     * @param t the exception thrown from the pipeline.
+     * @param e the exception thrown from the pipeline.
      */
-    void failure(Throwable t);
+    void onCallFailed(Exception e);
 }

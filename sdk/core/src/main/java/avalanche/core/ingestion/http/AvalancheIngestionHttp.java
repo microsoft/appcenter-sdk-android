@@ -131,9 +131,9 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             @Override
             protected void onPostExecute(Exception e) {
                 if (e == null)
-                    serviceCallback.success();
+                    serviceCallback.onCallSucceeded();
                 else
-                    serviceCallback.failure(e);
+                    serviceCallback.onCallFailed(e);
             }
         };
         call.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
@@ -209,7 +209,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             String response = dump(urlConnection);
             AvalancheLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + response);
 
-            /* Generate exception on failure. */
+            /* Generate exception on onCallFailed. */
             if (status != 200)
                 throw new HttpException(status);
         } finally {

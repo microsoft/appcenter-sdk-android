@@ -61,7 +61,7 @@ abstract class AvalancheIngestionCallDecorator implements Runnable, ServiceCall,
     }
 
     @Override
-    public void success() {
-        mServiceCallback.success();
+    public void onCallSucceeded() {
+        mServiceCallback.onCallSucceeded();
     }
 }
