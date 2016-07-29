@@ -71,7 +71,7 @@ public interface AvalancheChannel {
          * Called when the log is not delivered successfully.
          *
          * @param log The log that is not delivered.
-         * @param e   The exception for failure.
+         * @param e   The exception for onCallFailed.
          */
         void onFailure(Log log, Exception e);
     }

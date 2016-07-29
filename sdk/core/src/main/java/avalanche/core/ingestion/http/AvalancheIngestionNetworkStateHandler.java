@@ -103,28 +103,28 @@ public class AvalancheIngestionNetworkStateHandler extends AvalancheIngestionDec
         }
 
         @Override
-        public void success() {
+        public void onCallSucceeded() {
 
             /**
              * Guard against multiple calls since this call can be retried on network state change.
              */
             synchronized (mCalls) {
                 if (mCalls.contains(this)) {
-                    super.success();
+                    super.onCallSucceeded();
                     mCalls.remove(this);
                 }
             }
         }
 
         @Override
-        public void failure(Throwable t) {
+        public void onCallFailed(Exception e) {
 
             /**
              * Guard against multiple calls since this call can be retried on network state change.
              */
             synchronized (mCalls) {
                 if (mCalls.contains(this)) {
-                    mServiceCallback.failure(t);
+                    mServiceCallback.onCallFailed(e);
                     mCalls.remove(this);
                 }
             }

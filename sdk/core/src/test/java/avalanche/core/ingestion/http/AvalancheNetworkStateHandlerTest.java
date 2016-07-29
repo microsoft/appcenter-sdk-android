@@ -43,8 +43,8 @@ public class AvalancheNetworkStateHandlerTest {
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
                 ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[3];
-                serviceCallback.success();
-                serviceCallback.success();
+                serviceCallback.onCallSucceeded();
+                serviceCallback.onCallSucceeded();
                 return call;
             }
         }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
@@ -57,7 +57,7 @@ public class AvalancheNetworkStateHandlerTest {
         AvalancheIngestion decorator = new AvalancheIngestionNetworkStateHandler(ingestion, networkStateHelper);
         decorator.sendAsync(appKey, installId, container, callback);
         verify(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
-        verify(callback).success();
+        verify(callback).onCallSucceeded();
         verifyNoMoreInteractions(callback);
 
         /* Close. */
@@ -80,8 +80,8 @@ public class AvalancheNetworkStateHandlerTest {
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
                 ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[3];
-                serviceCallback.failure(new HttpException(503));
-                serviceCallback.failure(new SocketException());
+                serviceCallback.onCallFailed(new HttpException(503));
+                serviceCallback.onCallFailed(new SocketException());
                 return call;
             }
         }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
@@ -94,7 +94,7 @@ public class AvalancheNetworkStateHandlerTest {
         AvalancheIngestion decorator = new AvalancheIngestionNetworkStateHandler(ingestion, networkStateHelper);
         decorator.sendAsync(appKey, installId, container, callback);
         verify(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
-        verify(callback).failure(new HttpException(503));
+        verify(callback).onCallFailed(new HttpException(503));
         verifyNoMoreInteractions(callback);
 
         /* Close. */
@@ -116,7 +116,7 @@ public class AvalancheNetworkStateHandlerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).success();
+                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
                 return call;
             }
         }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
@@ -131,12 +131,12 @@ public class AvalancheNetworkStateHandlerTest {
 
         /* Network is down: no call to target API must be done. */
         verify(ingestion, times(0)).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
-        verify(callback, times(0)).success();
+        verify(callback, times(0)).onCallSucceeded();
 
         /* Network now up: call must be done and succeed. */
         decorator.onNetworkStateUpdated(true);
         verify(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
-        verify(callback).success();
+        verify(callback).onCallSucceeded();
 
         /* Close. */
         decorator.close();
@@ -157,7 +157,7 @@ public class AvalancheNetworkStateHandlerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).success();
+                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
                 return call;
             }
         }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
@@ -202,7 +202,7 @@ public class AvalancheNetworkStateHandlerTest {
                     public void run() {
                         try {
                             sleep(200);
-                            ((ServiceCallback) invocationOnMock.getArguments()[3]).success();
+                            ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -267,7 +267,7 @@ public class AvalancheNetworkStateHandlerTest {
                     public void run() {
                         try {
                             sleep(200);
-                            ((ServiceCallback) invocationOnMock.getArguments()[3]).success();
+                            ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -329,7 +329,7 @@ public class AvalancheNetworkStateHandlerTest {
                     public void run() {
                         try {
                             sleep(200);
-                            ((ServiceCallback) invocationOnMock.getArguments()[3]).success();
+                            ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -372,7 +372,7 @@ public class AvalancheNetworkStateHandlerTest {
         decorator.onNetworkStateUpdated(true);
         verify(ingestion, times(2)).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
         Thread.sleep(300);
-        verify(callback).success();
+        verify(callback).onCallSucceeded();
         verifyNoMoreInteractions(callback);
 
         /* Close. */

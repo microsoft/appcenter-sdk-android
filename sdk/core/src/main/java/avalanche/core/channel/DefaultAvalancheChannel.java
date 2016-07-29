@@ -291,7 +291,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     }
 
     /**
-     * Forward LogContainer to Ingestion and implement callback to handle success or failure.
+     * Forward LogContainer to Ingestion and implement callback to handle onCallSucceeded or onCallFailed.
      *
      * @param groupName    the GroupName for each batch
      * @param batchId      the ID of the batch
@@ -301,13 +301,13 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         AvalancheLog.debug(TAG, "ingestLogs(" + groupName + "," + batchId + ")");
         mIngestion.sendAsync(mAppKey, mInstallId, logContainer, new ServiceCallback() {
                     @Override
-                    public void success() {
+                    public void onCallSucceeded() {
                         handleSendingSuccess(groupName, batchId);
                     }
 
                     @Override
-                    public void failure(Throwable t) {
-                        handleSendingFailure(groupName, batchId, t);
+                    public void onCallFailed(Exception e) {
+                        handleSendingFailure(groupName, batchId, e);
                     }
                 }
         );
@@ -351,7 +351,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             mPersistence.deleteLogs(groupName, batchId);
         List<Log> removedLogsForBatchId = mGroupStates.get(groupName).mSendingBatches.remove(batchId);
         if (removedLogsForBatchId == null) {
-            AvalancheLog.warn(TAG, "Error removing batchId after sending failure.");
+            AvalancheLog.warn(TAG, "Error removing batchId after sending onCallFailed.");
         } else {
             Listener listener = mGroupStates.get(groupName).mListener;
             if (listener != null) {
