@@ -85,6 +85,7 @@ public final class StorageHelper {
             return getFloat(key, 0f);
         }
 
+        @SuppressWarnings("SameParameterValue")
         public static float getFloat(@NonNull String key, float defValue) {
             return sSharedPreferences.getFloat(key, defValue);
         }
@@ -102,6 +103,7 @@ public final class StorageHelper {
             return getInt(key, 0);
         }
 
+        @SuppressWarnings("SameParameterValue")
         public static int getInt(@NonNull String key, int defValue) {
             return sSharedPreferences.getInt(key, defValue);
         }
@@ -119,6 +121,7 @@ public final class StorageHelper {
             return getLong(key, 0L);
         }
 
+        @SuppressWarnings("SameParameterValue")
         public static long getLong(@NonNull String key, long defValue) {
             return sSharedPreferences.getLong(key, defValue);
         }
@@ -153,6 +156,7 @@ public final class StorageHelper {
             return getStringSet(key, null);
         }
 
+        @SuppressWarnings("SameParameterValue")
         public static Set<String> getStringSet(@NonNull String key, Set<String> defValue) {
             return sSharedPreferences.getStringSet(key, defValue);
         }
@@ -566,7 +570,7 @@ public final class StorageHelper {
         }
 
         /**
-         * Listener specification, each callback is called only once per instance
+         * GroupListener specification, each callback is called only once per instance
          */
         public interface DatabaseErrorListener {
             /**

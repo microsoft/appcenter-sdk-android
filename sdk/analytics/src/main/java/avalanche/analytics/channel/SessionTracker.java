@@ -1,18 +1,16 @@
-package avalanche.core.channel;
+package avalanche.analytics.channel;
 
-import android.app.Activity;
-import android.app.Application;
 import android.content.Context;
-import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import java.util.UUID;
 
+import avalanche.analytics.ingestion.models.StartSessionLog;
+import avalanche.core.channel.AvalancheChannel;
 import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.Log;
-import avalanche.core.ingestion.models.StartSessionLog;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.DeviceInfoHelper;
 import avalanche.core.utils.UUIDUtils;
@@ -20,7 +18,7 @@ import avalanche.core.utils.UUIDUtils;
 /**
  * Decorator for channel, adding session semantic to logs.
  */
-public class AvalancheChannelSessionDecorator implements AvalancheChannel, Application.ActivityLifecycleCallbacks {
+public class SessionTracker implements AvalancheChannel.Listener {
 
     /**
      * Default session timeout in milliseconds.
@@ -73,29 +71,23 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
      * @param context any context.
      * @param channel channel to decorate.
      */
-    public AvalancheChannelSessionDecorator(Context context, AvalancheChannel channel) {
+    public SessionTracker(Context context, AvalancheChannel channel) {
         this(context, channel, SESSION_TIMEOUT);
     }
 
     @VisibleForTesting
-    AvalancheChannelSessionDecorator(Context context, AvalancheChannel channel, long sessionTimeout) {
+    SessionTracker(Context context, AvalancheChannel channel, long sessionTimeout) {
         mContext = context;
         mChannel = channel;
         mSessionTimeout = sessionTimeout;
     }
 
     @Override
-    public void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, Listener listener) {
-        mChannel.addGroup(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, listener);
-    }
+    public void onEnqueuingLog(@NonNull Log log, @NonNull String groupName) {
 
-    @Override
-    public void removeGroup(String groupName) {
-        mChannel.removeGroup(groupName);
-    }
-
-    @Override
-    public void enqueue(@NonNull Log log, @NonNull String queueName) {
+        /* Since we enqueue start session logs, skip them to avoid infinite loop. */
+        if (log instanceof StartSessionLog)
+            return;
 
         /*
          * Generate a new session identifier if the first time or
@@ -120,73 +112,36 @@ public class AvalancheChannelSessionDecorator implements AvalancheChannel, Appli
             }
 
             /* Enqueue a start session log. */
-            decorateAndEnqueue(new StartSessionLog(), queueName);
+            StartSessionLog startSessionLog = new StartSessionLog();
+            decorate(startSessionLog);
+            mChannel.enqueue(startSessionLog, groupName);
         }
 
         /* Each log has a session identifier and device properties. */
-        decorateAndEnqueue(log, queueName);
+        decorate(log);
         mLastQueuedLogTime = SystemClock.elapsedRealtime();
     }
 
-    @Override
-    public boolean isEnabled() {
-        return mChannel.isEnabled();
-    }
-
-    @Override
-    public void setEnabled(boolean enabled) {
-        mChannel.setEnabled(enabled);
-    }
-
-    @Override
-    public void clear(String groupName) {
-        mChannel.clear(groupName);
-    }
-
-    @Override
-    public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-    }
-
-    @Override
-    public void onActivityStarted(Activity activity) {
-    }
-
-    @Override
-    public void onActivityResumed(Activity activity) {
+    public void onActivityResumed() {
 
         /* Record resume time for session timeout management. */
         mLastResumedTime = SystemClock.elapsedRealtime();
     }
 
-    @Override
-    public void onActivityPaused(Activity activity) {
+    public void onActivityPaused() {
 
         /* Record pause time for session timeout management. */
         mLastPausedTime = SystemClock.elapsedRealtime();
     }
 
-    @Override
-    public void onActivityStopped(Activity activity) {
-    }
-
-    @Override
-    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-    }
-
-    @Override
-    public void onActivityDestroyed(Activity activity) {
-    }
-
     /**
-     * Add common attributes to logs before forwarding to delegate channel.
+     * Add common attributes to logs.
      *
-     * @param log       log.
-     * @param queueName queue.
+     * @param log log.
      */
-    private void decorateAndEnqueue(@NonNull Log log, @NonNull String queueName) {
+    private void decorate(@NonNull Log log) {
         log.setSid(mSid);
         log.setDevice(mDevice);
-        mChannel.enqueue(log, queueName);
     }
 
     /**

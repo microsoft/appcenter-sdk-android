@@ -9,7 +9,9 @@ import android.text.TextUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -63,6 +65,11 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     private final Map<String, GroupState> mGroupStates;
 
     /**
+     * Global listeners.
+     */
+    private final Collection<Listener> mListeners;
+
+    /**
      * The persistence object used to store events in the local storage.
      */
     private AvalanchePersistence mPersistence;
@@ -91,6 +98,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         mIngestion = new AvalancheIngestionNetworkStateHandler(retryer, NetworkStateHelper.getSharedInstance(context));
         mIngestionHandler = new Handler(Looper.getMainLooper());
         mGroupStates = new HashMap<>();
+        mListeners = new HashSet<>();
         mEnabled = true;
     }
 
@@ -121,8 +129,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     }
 
     @Override
-    public void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, Listener listener) {
-        mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, listener));
+    public void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
+        mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener));
     }
 
     @Override
@@ -202,6 +210,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     }
 
     @VisibleForTesting
+    @SuppressWarnings("SameParameterValue")
     int getCounter(@NonNull String groupName) {
         synchronized (LOCK) {
             return mGroupStates.get(groupName).mPendingLogCount;
@@ -353,10 +362,10 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         if (removedLogsForBatchId == null) {
             AvalancheLog.warn(TAG, "Error removing batchId after sending failure.");
         } else {
-            Listener listener = mGroupStates.get(groupName).mListener;
-            if (listener != null) {
+            GroupListener groupListener = mGroupStates.get(groupName).mListener;
+            if (groupListener != null) {
                 for (Log log : removedLogsForBatchId)
-                    listener.onFailure(log, new Exception(t));
+                    groupListener.onFailure(log, new Exception(t));
             }
         }
         suspend(false);
@@ -366,20 +375,26 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * Actual implementation of enqueue logic. Will increase counters, triggers of batching logic.
      *
      * @param log       the Log to be enqueued
-     * @param queueName the queue to use
+     * @param groupName the queue to use
      */
     @Override
-    public void enqueue(@NonNull Log log, @NonNull String queueName) {
+    public void enqueue(@NonNull Log log, @NonNull String groupName) {
+
+        /* Call listeners so that they can decorate the log. */
+        synchronized (LOCK) {
+            for (Listener listener : mListeners)
+                listener.onEnqueuingLog(log, groupName);
+        }
         try {
             // persist log with an absolute timestamp, we'll convert to relative just before sending
             log.setToffset(System.currentTimeMillis());
-            mPersistence.putLog(queueName, log);
+            mPersistence.putLog(groupName, log);
 
             //Increment counters and schedule ingestion if we are not disabled
             if (!mEnabled) {
                 AvalancheLog.warn(TAG, "Channel is disabled, event was saved to disk.");
             } else {
-                scheduleIngestion(queueName);
+                scheduleIngestion(groupName);
             }
         } catch (AvalanchePersistence.PersistenceException e) {
             AvalancheLog.error(TAG, "Error persisting event with exception: " + e.toString());
@@ -412,6 +427,20 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
             //set the counter property
             setCounter(groupName, counter);
+        }
+    }
+
+    @Override
+    public void addListener(Listener listener) {
+        synchronized (LOCK) {
+            mListeners.add(listener);
+        }
+    }
+
+    @Override
+    public void removeListener(Listener listener) {
+        synchronized (LOCK) {
+            mListeners.remove(listener);
         }
     }
 
@@ -448,7 +477,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         /**
          * A listener for a feature.
          */
-        final Listener mListener;
+        final GroupListener mListener;
 
         /**
          * Pending log count not part of a batch yet.
@@ -479,7 +508,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
          * @param maxParallelBatches max number of parallel batches.
          * @param listener           listener for a feature.
          */
-        GroupState(String name, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, Listener listener) {
+        GroupState(String name, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, GroupListener listener) {
             mName = name;
             mMaxLogsPerBatch = maxLogsPerBatch;
             mBatchTimeInterval = batchTimeInterval;
