@@ -164,17 +164,17 @@ public class DefaultAvalancheChannelTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void analyticsSuccess() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
-        //noinspection unchecked
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer()).then(getEmptyGetLogsAnswer());
 
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), sLogSerializer);
-        AvalancheChannel.Listener mockListener = mock(AvalancheChannel.Listener.class);
+        AvalancheChannel.GroupListener mockListener = mock(AvalancheChannel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
         channel.setPersistence(mockPersistence);
@@ -202,11 +202,11 @@ public class DefaultAvalancheChannelTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void maxRequests() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
-        //noinspection unchecked
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
 
         final List<ServiceCallback> callbacks = new ArrayList<>();
@@ -254,17 +254,17 @@ public class DefaultAvalancheChannelTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void analyticsRecoverable() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
-        //noinspection unchecked
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException()));
 
         //don't provide a UUID to prevent sending
         DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), mockIngestion, mockPersistence, sLogSerializer);
-        AvalancheChannel.Listener mockListener = mock(AvalancheChannel.Listener.class);
+        AvalancheChannel.GroupListener mockListener = mock(AvalancheChannel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
         //Enqueuing 50 events.
@@ -302,7 +302,6 @@ public class DefaultAvalancheChannelTest {
 
         //Use a fresh persistence, that will return 50 objects, then another 25 objects.
         AvalancheDatabasePersistence newPersistence = mock(AvalancheDatabasePersistence.class);
-        //noinspection unchecked
         when(newPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class)))
                 .then(getGetLogsAnswer())
                 .then(getGetLogsAnswer())
@@ -328,11 +327,11 @@ public class DefaultAvalancheChannelTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void analyticsFatal() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
-        //noinspection unchecked
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(403)));
 
@@ -374,7 +373,6 @@ public class DefaultAvalancheChannelTest {
 
         //Use a fresh persistence, that will return 50 objects, then another 25 objects.
         AvalancheDatabasePersistence newPersistence = mock(AvalancheDatabasePersistence.class);
-        //noinspection unchecked
         when(newPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class)))
                 .then(getGetLogsAnswer())
                 .then(getGetLogsAnswer())
@@ -423,16 +421,16 @@ public class DefaultAvalancheChannelTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void errorLogSuccess() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
         AvalancheIngestion mockIngestion = mock(AvalancheIngestion.class);
 
-        //noinspection unchecked
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer()).then(getEmptyGetLogsAnswer());
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), sLogSerializer);
-        AvalancheChannel.Listener mockListener = mock(AvalancheChannel.Listener.class);
+        AvalancheChannel.GroupListener mockListener = mock(AvalancheChannel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
         channel.setIngestion(mockIngestion);
@@ -458,16 +456,16 @@ public class DefaultAvalancheChannelTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void errorLogRecoverable() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
         AvalancheIngestion mockIngestion = mock(AvalancheIngestion.class);
 
-        //noinspection unchecked
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException()));
 
         DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), mockIngestion, mockPersistence, sLogSerializer);
-        AvalancheChannel.Listener mockListener = mock(AvalancheChannel.Listener.class);
+        AvalancheChannel.GroupListener mockListener = mock(AvalancheChannel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
         //Enqueuing 1 error.
@@ -497,7 +495,6 @@ public class DefaultAvalancheChannelTest {
         channel.setIngestion(newIngestion);
 
         AvalanchePersistence newPersistence = mock(AvalanchePersistence.class);
-        //noinspection unchecked
         when(newPersistence.getLogs(anyString(), anyInt(), any(ArrayList.class)))
                 .then(getGetLogsAnswer())
                 .then(getGetLogsAnswer())
@@ -519,11 +516,11 @@ public class DefaultAvalancheChannelTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void handlerInvoked() throws AvalanchePersistence.PersistenceException, InterruptedException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
-        //noinspection unchecked
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer()).then(getEmptyGetLogsAnswer());
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 

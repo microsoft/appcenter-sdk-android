@@ -1,6 +1,7 @@
 package avalanche.core;
 
 import android.app.Application;
+import android.content.Context;
 
 import java.util.Map;
 
@@ -15,5 +16,5 @@ public interface AvalancheFeature extends Application.ActivityLifecycleCallbacks
 
     Map<String, LogFactory> getLogFactories();
 
-    void onChannelReady(AvalancheChannel channel);
+    void onChannelReady(Context context, AvalancheChannel channel);
 }
