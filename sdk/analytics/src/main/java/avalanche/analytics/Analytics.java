@@ -190,7 +190,7 @@ public class Analytics extends AbstractAvalancheFeature {
 
         /* Delayed initialization once channel ready and enabled (both conditions). */
         if (enabled && mChannel != null && mSessionTracker == null) {
-            mSessionTracker = new SessionTracker(mContext, mChannel);
+            mSessionTracker = new SessionTracker(mChannel);
             mChannel.addListener(mSessionTracker);
         }
 
