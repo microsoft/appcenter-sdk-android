@@ -124,6 +124,7 @@ public class DeviceInfoHelper {
      */
     public static class DeviceInfoException extends Exception {
 
+        @SuppressWarnings("SameParameterValue")
         public DeviceInfoException(String detailMessage, Throwable throwable) {
             super(detailMessage, throwable);
         }

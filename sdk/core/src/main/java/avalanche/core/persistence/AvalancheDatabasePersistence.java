@@ -83,7 +83,7 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
      * @param table    The table name
      * @param version  The version of current schema.
      */
-    AvalancheDatabasePersistence(String database, String table, int version) {
+    AvalancheDatabasePersistence(String database, String table, @SuppressWarnings("SameParameterValue") int version) {
         this(database, table, version, AvalanchePersistence.DEFAULT_CAPACITY);
     }
 

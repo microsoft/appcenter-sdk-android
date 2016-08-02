@@ -1,7 +1,6 @@
 package avalanche.analytics;
 
 import android.app.Activity;
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
@@ -47,11 +46,6 @@ public class Analytics extends AbstractAvalancheFeature {
      * Log factories managed by this module.
      */
     private final Map<String, LogFactory> mFactories;
-
-    /**
-     * Application context.
-     */
-    private Context mContext;
 
     /**
      * Session tracker.
@@ -157,9 +151,8 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     @Override
-    public synchronized void onChannelReady(Context context, AvalancheChannel channel) {
-        super.onChannelReady(context, channel);
-        mContext = context;
+    public synchronized void onChannelReady(AvalancheChannel channel) {
+        super.onChannelReady(channel);
         applyEnabledState(isEnabled());
     }
 

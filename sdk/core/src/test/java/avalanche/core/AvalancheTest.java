@@ -1,7 +1,6 @@
 package avalanche.core;
 
 import android.app.Application;
-import android.content.Context;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -93,7 +92,7 @@ public class AvalancheTest {
         DummyFeature feature = DummyFeature.getInstance();
         assertTrue(Avalanche.getInstance().getFeatures().contains(feature));
         verify(feature).getLogFactories();
-        verify(feature).onChannelReady(any(Context.class), notNull(AvalancheChannel.class));
+        verify(feature).onChannelReady(notNull(AvalancheChannel.class));
         verify(application).registerActivityLifecycleCallbacks(feature);
     }
 
@@ -107,7 +106,7 @@ public class AvalancheTest {
         DummyFeature feature = DummyFeature.getInstance();
         assertTrue(Avalanche.getInstance().getFeatures().contains(feature));
         verify(feature).getLogFactories();
-        verify(feature).onChannelReady(any(Context.class), notNull(AvalancheChannel.class));
+        verify(feature).onChannelReady(notNull(AvalancheChannel.class));
         verify(application).registerActivityLifecycleCallbacks(feature);
     }
 
@@ -120,13 +119,13 @@ public class AvalancheTest {
         {
             assertTrue(Avalanche.getInstance().getFeatures().contains(DummyFeature.getInstance()));
             verify(DummyFeature.getInstance()).getLogFactories();
-            verify(DummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(AvalancheChannel.class));
+            verify(DummyFeature.getInstance()).onChannelReady(notNull(AvalancheChannel.class));
             verify(application).registerActivityLifecycleCallbacks(DummyFeature.getInstance());
         }
         {
             assertTrue(Avalanche.getInstance().getFeatures().contains(AnotherDummyFeature.getInstance()));
             verify(AnotherDummyFeature.getInstance()).getLogFactories();
-            verify(AnotherDummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(AvalancheChannel.class));
+            verify(AnotherDummyFeature.getInstance()).onChannelReady(notNull(AvalancheChannel.class));
             verify(application).registerActivityLifecycleCallbacks(AnotherDummyFeature.getInstance());
         }
     }
@@ -219,9 +218,9 @@ public class AvalancheTest {
 
         /* Check factories / channel only once interactions. */
         verify(dummyFeature).getLogFactories();
-        verify(dummyFeature).onChannelReady(any(Context.class), any(AvalancheChannel.class));
+        verify(dummyFeature).onChannelReady(any(AvalancheChannel.class));
         verify(anotherDummyFeature).getLogFactories();
-        verify(anotherDummyFeature).onChannelReady(any(Context.class), any(AvalancheChannel.class));
+        verify(anotherDummyFeature).onChannelReady(any(AvalancheChannel.class));
     }
 
     @Test

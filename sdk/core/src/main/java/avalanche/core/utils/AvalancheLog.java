@@ -71,6 +71,7 @@ public class AvalancheLog {
      * @param message   the log message
      * @param throwable the throwable you want to log
      */
+    @SuppressWarnings("SameParameterValue")
     public static void verbose(String message, Throwable throwable) {
         verbose(null, message, throwable);
     }
@@ -117,6 +118,7 @@ public class AvalancheLog {
      * @param message   the log message
      * @param throwable the throwable you want to log
      */
+    @SuppressWarnings("SameParameterValue")
     public static void debug(String message, Throwable throwable) {
         debug(null, message, throwable);
     }
@@ -163,6 +165,7 @@ public class AvalancheLog {
      * @param message   the log message
      * @param throwable the throwable you want to log
      */
+    @SuppressWarnings("SameParameterValue")
     public static void info(String message, Throwable throwable) {
         info(null, message, throwable);
     }

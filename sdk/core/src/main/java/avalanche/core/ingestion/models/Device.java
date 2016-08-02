@@ -116,6 +116,7 @@ public class Device implements Model {
      *
      * @return the sdkVersion value
      */
+    @SuppressWarnings("WeakerAccess")
     public String getSdkVersion() {
         return this.sdkVersion;
     }

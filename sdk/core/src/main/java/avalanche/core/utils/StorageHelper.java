@@ -64,6 +64,7 @@ public final class StorageHelper {
         /*
          * boolean value
          */
+        @SuppressWarnings("unused")
         public static boolean getBoolean(@NonNull String key) {
             return getBoolean(key, false);
         }
@@ -81,6 +82,7 @@ public final class StorageHelper {
         /*
          * float value
          */
+        @SuppressWarnings("unused")
         public static float getFloat(@NonNull String key) {
             return getFloat(key, 0f);
         }
@@ -90,6 +92,7 @@ public final class StorageHelper {
             return sSharedPreferences.getFloat(key, defValue);
         }
 
+        @SuppressWarnings("unused")
         public static void putFloat(@NonNull String key, float value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putFloat(key, value);
@@ -117,6 +120,7 @@ public final class StorageHelper {
         /*
          * long value
          */
+        @SuppressWarnings("unused")
         public static long getLong(@NonNull String key) {
             return getLong(key, 0L);
         }
@@ -126,6 +130,7 @@ public final class StorageHelper {
             return sSharedPreferences.getLong(key, defValue);
         }
 
+        @SuppressWarnings("unused")
         public static void putLong(@NonNull String key, long value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putLong(key, value);
@@ -135,6 +140,7 @@ public final class StorageHelper {
         /*
          * String value
          */
+        @SuppressWarnings("unused")
         public static String getString(@NonNull String key) {
             return getString(key, null);
         }
@@ -152,6 +158,7 @@ public final class StorageHelper {
         /*
          * Set<String> value
          */
+        @SuppressWarnings("unused")
         public static Set<String> getStringSet(@NonNull String key) {
             return getStringSet(key, null);
         }
@@ -161,6 +168,7 @@ public final class StorageHelper {
             return sSharedPreferences.getStringSet(key, defValue);
         }
 
+        @SuppressWarnings("unused")
         public static void putStringSet(@NonNull String key, Set<String> value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putStringSet(key, value);
