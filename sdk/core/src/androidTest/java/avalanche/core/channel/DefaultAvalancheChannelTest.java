@@ -1,6 +1,7 @@
 package avalanche.core.channel;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.support.test.InstrumentationRegistry;
 
 import org.junit.BeforeClass;
@@ -19,6 +20,7 @@ import avalanche.core.ingestion.AvalancheIngestion;
 import avalanche.core.ingestion.ServiceCallback;
 import avalanche.core.ingestion.http.AvalancheIngestionHttp;
 import avalanche.core.ingestion.http.HttpException;
+import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.LogContainer;
 import avalanche.core.ingestion.models.json.DefaultLogSerializer;
@@ -38,6 +40,7 @@ import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -132,6 +135,20 @@ public class DefaultAvalancheChannelTest {
     public void creationWorks() {
         DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), sLogSerializer);
         assertNotNull(channel);
+    }
+
+    @Test
+    public void invalidGroup() throws AvalanchePersistence.PersistenceException {
+        Log log = mock(Log.class);
+        AvalanchePersistence persistence = mock(AvalanchePersistence.class);
+        @SuppressWarnings("ConstantConditions")
+        DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, null, mock(AvalancheIngestionHttp.class), persistence, sLogSerializer);
+
+        /* Enqueue a log before group is registered = failure. */
+        channel.enqueue(log, "invalid");
+        verify(log, never()).setDevice(any(Device.class));
+        verify(log, never()).setToffset(anyLong());
+        verify(persistence, never()).putLog("invalid", log);
     }
 
     @Test
@@ -589,5 +606,45 @@ public class DefaultAvalancheChannelTest {
         channel.enqueue(sMockLog, TEST_GROUP);
         Thread.sleep(4000);
         verify(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void listener() throws AvalanchePersistence.PersistenceException {
+
+        @SuppressWarnings("ConstantConditions")
+        DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, null, mock(AvalancheIngestionHttp.class), mock(AvalanchePersistence.class), sLogSerializer);
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+        AvalancheChannel.Listener listener = mock(AvalancheChannel.Listener.class);
+        channel.addListener(listener);
+        channel.enqueue(sMockLog, TEST_GROUP);
+        verify(listener).onEnqueuingLog(sMockLog, TEST_GROUP);
+
+        /* Check no more calls after removing listener. */
+        channel.removeListener(listener);
+        channel.enqueue(sMockLog, TEST_GROUP);
+        verify(listener).onEnqueuingLog(sMockLog, TEST_GROUP);
+    }
+
+    @Test
+    public void packageManagerIsBroken() throws PackageManager.NameNotFoundException, AvalanchePersistence.PersistenceException {
+
+        /* Setup mocking to make device properties generation fail. */
+        Context context = mock(Context.class);
+        PackageManager packageManager = mock(PackageManager.class);
+        when(context.getApplicationContext()).thenReturn(context);
+        when(context.getPackageManager()).thenReturn(packageManager);
+        //noinspection WrongConstant
+        when(packageManager.getPackageInfo(any(String.class), anyInt())).thenThrow(new PackageManager.NameNotFoundException());
+        AvalanchePersistence persistence = mock(AvalanchePersistence.class);
+        @SuppressWarnings("ConstantConditions")
+        DefaultAvalancheChannel channel = new DefaultAvalancheChannel(context, null, mock(AvalancheIngestionHttp.class), persistence, sLogSerializer);
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+        AvalancheChannel.Listener listener = mock(AvalancheChannel.Listener.class);
+        channel.addListener(listener);
+
+        /* Enqueue a log: nothing will happen as device property generation fails. */
+        channel.enqueue(sMockLog, TEST_GROUP);
+        verify(listener, never()).onEnqueuingLog(sMockLog, TEST_GROUP);
+        verify(persistence, never()).putLog(TEST_GROUP, sMockLog);
     }
 }

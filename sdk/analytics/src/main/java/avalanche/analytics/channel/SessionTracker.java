@@ -1,6 +1,5 @@
 package avalanche.analytics.channel;
 
-import android.content.Context;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
@@ -9,10 +8,7 @@ import java.util.UUID;
 
 import avalanche.analytics.ingestion.models.StartSessionLog;
 import avalanche.core.channel.AvalancheChannel;
-import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.Log;
-import avalanche.core.utils.AvalancheLog;
-import avalanche.core.utils.DeviceInfoHelper;
 import avalanche.core.utils.UUIDUtils;
 
 /**
@@ -24,11 +20,6 @@ public class SessionTracker implements AvalancheChannel.Listener {
      * Default session timeout in milliseconds.
      */
     private static final long SESSION_TIMEOUT = 20000;
-
-    /**
-     * Application context.
-     */
-    private final Context mContext;
 
     /**
      * Decorated channel.
@@ -44,11 +35,6 @@ public class SessionTracker implements AvalancheChannel.Listener {
      * Current session identifier.
      */
     private UUID mSid;
-
-    /**
-     * Device properties for the current session.
-     */
-    private Device mDevice;
 
     /**
      * Timestamp of the last log queued to channel.
@@ -68,16 +54,14 @@ public class SessionTracker implements AvalancheChannel.Listener {
     /**
      * Init.
      *
-     * @param context any context.
      * @param channel channel to decorate.
      */
-    public SessionTracker(Context context, AvalancheChannel channel) {
-        this(context, channel, SESSION_TIMEOUT);
+    public SessionTracker(AvalancheChannel channel) {
+        this(channel, SESSION_TIMEOUT);
     }
 
     @VisibleForTesting
-    SessionTracker(Context context, AvalancheChannel channel, long sessionTimeout) {
-        mContext = context;
+    SessionTracker(AvalancheChannel channel, long sessionTimeout) {
         mChannel = channel;
         mSessionTimeout = sessionTimeout;
     }
@@ -103,22 +87,14 @@ public class SessionTracker implements AvalancheChannel.Listener {
             /* New session: generate a new identifier. */
             mSid = UUIDUtils.randomUUID();
 
-            /* And generate a new device property bag, keep the same for all the session duration. */
-            try {
-                mDevice = DeviceInfoHelper.getDeviceInfo(mContext);
-            } catch (DeviceInfoHelper.DeviceInfoException e) {
-                AvalancheLog.error("Device log cannot be generated", e);
-                return;
-            }
-
             /* Enqueue a start session log. */
             StartSessionLog startSessionLog = new StartSessionLog();
-            decorate(startSessionLog);
+            startSessionLog.setSid(mSid);
             mChannel.enqueue(startSessionLog, groupName);
         }
 
         /* Each log has a session identifier and device properties. */
-        decorate(log);
+        log.setSid(mSid);
         mLastQueuedLogTime = SystemClock.elapsedRealtime();
     }
 
@@ -132,16 +108,6 @@ public class SessionTracker implements AvalancheChannel.Listener {
 
         /* Record pause time for session timeout management. */
         mLastPausedTime = SystemClock.elapsedRealtime();
-    }
-
-    /**
-     * Add common attributes to logs.
-     *
-     * @param log log.
-     */
-    private void decorate(@NonNull Log log) {
-        log.setSid(mSid);
-        log.setDevice(mDevice);
     }
 
     /**

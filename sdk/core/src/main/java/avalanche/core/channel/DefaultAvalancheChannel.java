@@ -23,12 +23,14 @@ import avalanche.core.ingestion.http.AvalancheIngestionNetworkStateHandler;
 import avalanche.core.ingestion.http.AvalancheIngestionRetryer;
 import avalanche.core.ingestion.http.DefaultUrlConnectionFactory;
 import avalanche.core.ingestion.http.HttpUtils;
+import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.LogContainer;
 import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.persistence.AvalancheDatabasePersistence;
 import avalanche.core.persistence.AvalanchePersistence;
 import avalanche.core.utils.AvalancheLog;
+import avalanche.core.utils.DeviceInfoHelper;
 import avalanche.core.utils.IdHelper;
 import avalanche.core.utils.NetworkStateHelper;
 
@@ -43,6 +45,11 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * TAG used in logging.
      */
     private static final String TAG = "AvalancheChannel";
+
+    /**
+     * Application context.
+     */
+    private final Context mContext;
 
     /**
      * The appKey that's required for forwarding to ingestion.
@@ -85,9 +92,15 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     private boolean mEnabled;
 
     /**
+     * Device properties.
+     */
+    private Device mDevice;
+
+    /**
      * Creates and initializes a new instance.
      */
     public DefaultAvalancheChannel(@NonNull Context context, @NonNull UUID appKey, @NonNull LogSerializer logSerializer) {
+        mContext = context;
         mAppKey = appKey;
         mInstallId = IdHelper.getInstallId();
         mPersistence = new AvalancheDatabasePersistence();
@@ -379,25 +392,49 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     @Override
     public void enqueue(@NonNull Log log, @NonNull String groupName) {
-
-        /* Call listeners so that they can decorate the log. */
         synchronized (LOCK) {
+
+            /* Check group name is registered. */
+            if (mGroupStates.get(groupName) == null) {
+                AvalancheLog.error("Invalid group name:" + groupName);
+                return;
+            }
+
+            /* Generate device properties only once per process life time. */
+            if (mDevice == null) {
+                try {
+                    mDevice = DeviceInfoHelper.getDeviceInfo(mContext);
+                } catch (DeviceInfoHelper.DeviceInfoException e) {
+                    AvalancheLog.error("Device log cannot be generated", e);
+                    return;
+                }
+            }
+
+            /* Attach device properties to every log. */
+            log.setDevice(mDevice);
+
+            /* Call listeners so that they can decorate the log. */
             for (Listener listener : mListeners)
                 listener.onEnqueuingLog(log, groupName);
-        }
-        try {
-            // persist log with an absolute timestamp, we'll convert to relative just before sending
-            log.setToffset(System.currentTimeMillis());
-            mPersistence.putLog(groupName, log);
 
-            //Increment counters and schedule ingestion if we are not disabled
-            if (!mEnabled) {
-                AvalancheLog.warn(TAG, "Channel is disabled, event was saved to disk.");
-            } else {
-                scheduleIngestion(groupName);
+            /* Set an absolute timestamp, we'll convert to relative just before sending. */
+            log.setToffset(System.currentTimeMillis());
+
+            /* Persist log. */
+            try {
+
+                /* Save log in database. */
+                mPersistence.putLog(groupName, log);
+
+                /* Increment counters and schedule ingestion if we are not disabled. */
+                if (!mEnabled) {
+                    AvalancheLog.warn(TAG, "Channel is disabled, event was saved to disk.");
+                } else {
+                    scheduleIngestion(groupName);
+                }
+            } catch (AvalanchePersistence.PersistenceException e) {
+                AvalancheLog.error(TAG, "Error persisting event with exception: " + e.toString());
             }
-        } catch (AvalanchePersistence.PersistenceException e) {
-            AvalancheLog.error(TAG, "Error persisting event with exception: " + e.toString());
         }
     }
 
