@@ -230,7 +230,7 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
             outLogs.add(entry.getValue());
 
             /* Log. */
-            AvalancheLog.debug("\t" + entry.getValue().getSid().toString() + " / " + dbIdentifier);
+            AvalancheLog.debug("\t" + entry.getValue().getSid() + " / " + dbIdentifier);
         }
 
         /* Update pending IDs. */
