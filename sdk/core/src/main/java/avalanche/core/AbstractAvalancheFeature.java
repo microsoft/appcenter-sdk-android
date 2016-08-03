@@ -121,6 +121,7 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
      *
      * @return A number of logs.
      */
+    @SuppressWarnings("WeakerAccess")
     protected int getTriggerCount() {
         return DEFAULT_TRIGGER_COUNT;
     }
@@ -130,6 +131,7 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
      *
      * @return A maximum time interval in milliseconds.
      */
+    @SuppressWarnings("WeakerAccess")
     protected int getTriggerInterval() {
         return DEFAULT_TRIGGER_INTERVAL;
     }
@@ -139,6 +141,7 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
      *
      * @return A maximum number of requests.
      */
+    @SuppressWarnings("WeakerAccess")
     protected int getTriggerMaxParallelRequests() {
         return DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
     }
@@ -148,7 +151,8 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
      *
      * @return A listener for channel
      */
-    protected AvalancheChannel.Listener getChannelListener() {
+    @SuppressWarnings({"WeakerAccess", "SameReturnValue"})
+    protected AvalancheChannel.GroupListener getChannelListener() {
         return null;
     }
 }

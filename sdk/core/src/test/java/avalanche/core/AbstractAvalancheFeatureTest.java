@@ -4,10 +4,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import avalanche.core.channel.AvalancheChannel;
+
+import static org.mockito.Mockito.mock;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
@@ -74,7 +75,7 @@ public class AbstractAvalancheFeatureTest {
 
     @Test
     public void onChannelReady() {
-        AvalancheChannel channel = Mockito.mock(AvalancheChannel.class);
+        AvalancheChannel channel = mock(AvalancheChannel.class);
         feature.onChannelReady(channel);
 
         Assert.assertSame(channel, feature.mChannel);
