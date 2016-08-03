@@ -1,4 +1,6 @@
-package avalanche.core.ingestion.models;
+package avalanche.analytics.ingestion.models;
+
+import avalanche.core.ingestion.models.AbstractLog;
 
 /**
  * Start session log.

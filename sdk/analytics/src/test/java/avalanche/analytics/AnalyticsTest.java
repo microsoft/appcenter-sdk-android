@@ -1,18 +1,26 @@
 package avalanche.analytics;
 
+import android.os.SystemClock;
+
 import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import avalanche.analytics.channel.SessionTracker;
 import avalanche.analytics.ingestion.models.EventLog;
 import avalanche.analytics.ingestion.models.PageLog;
+import avalanche.analytics.ingestion.models.StartSessionLog;
 import avalanche.analytics.ingestion.models.json.EventLogFactory;
 import avalanche.analytics.ingestion.models.json.PageLogFactory;
+import avalanche.analytics.ingestion.models.json.StartSessionLogFactory;
 import avalanche.core.channel.AvalancheChannel;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.json.LogFactory;
@@ -29,14 +37,17 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @SuppressWarnings("unused")
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(SystemClock.class)
 public class AnalyticsTest {
 
     @Before
     public void setUp() {
         Analytics.unsetInstance();
+        mockStatic(SystemClock.class);
     }
 
     @Test
@@ -47,6 +58,7 @@ public class AnalyticsTest {
     @Test
     public void checkFactories() {
         Map<String, LogFactory> factories = Analytics.getInstance().getLogFactories();
+        assertTrue(factories.remove(StartSessionLog.TYPE) instanceof StartSessionLogFactory);
         assertTrue(factories.remove(PageLog.TYPE) instanceof PageLogFactory);
         assertTrue(factories.remove(EventLog.TYPE) instanceof EventLogFactory);
         assertTrue(factories.isEmpty());
@@ -64,6 +76,7 @@ public class AnalyticsTest {
         AvalancheChannel channel = mock(AvalancheChannel.class);
         analytics.onChannelReady(channel);
         analytics.onActivityResumed(activity);
+        analytics.onActivityPaused(activity);
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
@@ -144,6 +157,7 @@ public class AnalyticsTest {
     public void setEnabled() {
         Analytics analytics = Analytics.getInstance();
         AvalancheChannel channel = mock(AvalancheChannel.class);
+        analytics.setEnabled(true);
         analytics.setEnabled(false);
         analytics.onChannelReady(channel);
         verify(channel).clear(analytics.getGroupName());
@@ -152,9 +166,11 @@ public class AnalyticsTest {
         Analytics.trackPage("test", null);
         verifyNoMoreInteractions(channel);
 
-        /* Enable back. */
+        /* Enable back, testing double calls. */
         analytics.setEnabled(true);
-        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyInt(), anyInt(), any(AvalancheChannel.Listener.class));
+        analytics.setEnabled(true);
+        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyInt(), anyInt(), any(AvalancheChannel.GroupListener.class));
+        verify(channel).addListener(any(SessionTracker.class));
         Analytics.trackEvent("test", null);
         Analytics.trackPage("test", null);
         verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
@@ -164,6 +180,7 @@ public class AnalyticsTest {
         /* clear and removeGroup are being called in this test method. */
         verify(channel, times(2)).clear(analytics.getGroupName());
         verify(channel, times(2)).removeGroup(eq(analytics.getGroupName()));
+        verify(channel).removeListener(any(SessionTracker.class));
         Analytics.trackEvent("test", null);
         Analytics.trackPage("test", null);
         verifyNoMoreInteractions(channel);
