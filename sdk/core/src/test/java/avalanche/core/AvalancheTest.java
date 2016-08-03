@@ -5,6 +5,8 @@ import android.app.Application;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -20,6 +22,7 @@ import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.IdHelper;
 import avalanche.core.utils.StorageHelper;
 
+import static avalanche.core.utils.PrefStorageConstants.KEY_ENABLED;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
@@ -28,6 +31,7 @@ import static junit.framework.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -35,10 +39,11 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Constants.class, AvalancheLog.class, StorageHelper.class, IdHelper.class})
+@PrepareForTest({Constants.class, AvalancheLog.class, StorageHelper.class, StorageHelper.PreferencesStorage.class, IdHelper.class})
 public class AvalancheTest {
 
     private static final String DUMMY_APP_KEY = "123e4567-e89b-12d3-a456-426655440000";
@@ -54,10 +59,27 @@ public class AvalancheTest {
         application = mock(Application.class);
         when(application.getApplicationContext()).thenReturn(application);
 
-        PowerMockito.mockStatic(Constants.class);
-        PowerMockito.mockStatic(AvalancheLog.class);
-        PowerMockito.mockStatic(StorageHelper.class);
-        PowerMockito.mockStatic(IdHelper.class);
+        mockStatic(Constants.class);
+        mockStatic(AvalancheLog.class);
+        mockStatic(StorageHelper.class);
+        mockStatic(StorageHelper.PreferencesStorage.class);
+        mockStatic(IdHelper.class);
+
+        /* First call to avalanche.isEnabled shall return true, initial state. */
+        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(true);
+
+        /* Then simulate further changes to state. */
+        PowerMockito.doAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+
+                /* Whenever the new state is persisted, make further calls return the new state. */
+                boolean enabled = (Boolean) invocation.getArguments()[1];
+                when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(enabled);
+                return null;
+            }
+        }).when(StorageHelper.PreferencesStorage.class);
+        StorageHelper.PreferencesStorage.putBoolean(eq(KEY_ENABLED), anyBoolean());
     }
 
     @Test
@@ -222,6 +244,58 @@ public class AvalancheTest {
         verify(dummyFeature).onChannelReady(any(AvalancheChannelSessionDecorator.class));
         verify(anotherDummyFeature).getLogFactories();
         verify(anotherDummyFeature).onChannelReady(any(AvalancheChannelSessionDecorator.class));
+    }
+
+    @Test
+    public void disablePersisted() {
+        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
+        Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
+        AvalancheChannelSessionDecorator channel = mock(AvalancheChannelSessionDecorator.class);
+        Avalanche avalanche = Avalanche.getInstance();
+        avalanche.setChannel(channel);
+
+        /* Verify modules are enabled by default but core is disabled. */
+        assertFalse(Avalanche.isEnabled());
+        for (AvalancheFeature feature : avalanche.getFeatures()) {
+            assertTrue(feature.isEnabled());
+            verify(application, never()).registerActivityLifecycleCallbacks(feature);
+        }
+
+        /* Verify we can enable back. */
+        Avalanche.setEnabled(true);
+        assertTrue(Avalanche.isEnabled());
+        for (AvalancheFeature feature : avalanche.getFeatures()) {
+            assertTrue(feature.isEnabled());
+            verify(application).registerActivityLifecycleCallbacks(feature);
+            verify(application, never()).unregisterActivityLifecycleCallbacks(feature);
+        }
+    }
+
+    @Test
+    public void disablePersistedAndDisable() {
+        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
+        Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
+        AvalancheChannelSessionDecorator channel = mock(AvalancheChannelSessionDecorator.class);
+        Avalanche avalanche = Avalanche.getInstance();
+        avalanche.setChannel(channel);
+
+        /* Its already disabled so disable should have no effect on core but should disable features. */
+        Avalanche.setEnabled(false);
+        assertFalse(Avalanche.isEnabled());
+        for (AvalancheFeature feature : avalanche.getFeatures()) {
+            assertFalse(feature.isEnabled());
+            verify(application, never()).registerActivityLifecycleCallbacks(feature);
+            verify(application, never()).unregisterActivityLifecycleCallbacks(feature);
+        }
+
+        /* Verify we can enable the core back, should have no effect on features except registering the application life cycle callbacks. */
+        Avalanche.setEnabled(true);
+        assertTrue(Avalanche.isEnabled());
+        for (AvalancheFeature feature : avalanche.getFeatures()) {
+            assertTrue(feature.isEnabled());
+            verify(application).registerActivityLifecycleCallbacks(feature);
+            verify(application, never()).unregisterActivityLifecycleCallbacks(feature);
+        }
     }
 
     @Test
