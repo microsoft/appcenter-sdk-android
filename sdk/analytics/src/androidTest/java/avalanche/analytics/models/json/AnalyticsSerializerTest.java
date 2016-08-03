@@ -12,15 +12,15 @@ import java.util.UUID;
 
 import avalanche.analytics.ingestion.models.EventLog;
 import avalanche.analytics.ingestion.models.PageLog;
+import avalanche.analytics.ingestion.models.StartSessionLog;
 import avalanche.analytics.ingestion.models.json.EventLogFactory;
 import avalanche.analytics.ingestion.models.json.PageLogFactory;
+import avalanche.analytics.ingestion.models.json.StartSessionLogFactory;
 import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.LogContainer;
-import avalanche.core.ingestion.models.StartSessionLog;
 import avalanche.core.ingestion.models.json.DefaultLogSerializer;
 import avalanche.core.ingestion.models.json.LogSerializer;
-import avalanche.core.ingestion.models.json.StartSessionLogFactory;
 import avalanche.core.utils.UUIDUtils;
 
 @SuppressWarnings("unused")

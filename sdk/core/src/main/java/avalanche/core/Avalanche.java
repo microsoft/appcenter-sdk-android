@@ -13,7 +13,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import avalanche.core.channel.AvalancheChannel;
-import avalanche.core.channel.AvalancheChannelSessionDecorator;
 import avalanche.core.channel.DefaultAvalancheChannel;
 import avalanche.core.ingestion.models.json.DefaultLogSerializer;
 import avalanche.core.ingestion.models.json.LogFactory;
@@ -29,7 +28,7 @@ import static android.util.Log.VERBOSE;
 public final class Avalanche {
 
     /**
-     * Share instance.
+     * Shared instance.
      */
     private static Avalanche sInstance;
 
@@ -51,7 +50,7 @@ public final class Avalanche {
     /**
      * Channel.
      */
-    private AvalancheChannelSessionDecorator mChannel;
+    private AvalancheChannel mChannel;
 
     @VisibleForTesting
     static synchronized Avalanche getInstance() {
@@ -73,7 +72,7 @@ public final class Avalanche {
      * @param features    Vararg list of feature classes to auto-use.
      */
     @SafeVarargs
-    public static void useFeatures(Application application, String appKey, Class<? extends AvalancheFeature>... features) {
+    public static void start(Application application, String appKey, Class<? extends AvalancheFeature>... features) {
         Set<Class<? extends AvalancheFeature>> featureClassSet = new HashSet<>();
         List<AvalancheFeature> featureList = new ArrayList<>();
         for (Class<? extends AvalancheFeature> featureClass : features)
@@ -84,7 +83,7 @@ public final class Avalanche {
                 if (feature != null)
                     featureList.add(feature);
             }
-        useFeatures(application, appKey, featureList.toArray(new AvalancheFeature[featureList.size()]));
+        start(application, appKey, featureList.toArray(new AvalancheFeature[featureList.size()]));
     }
 
     /**
@@ -96,7 +95,7 @@ public final class Avalanche {
      */
     @VisibleForTesting
     @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-    static void useFeatures(Application application, String appKey, AvalancheFeature... features) {
+    static void start(Application application, String appKey, AvalancheFeature... features) {
         Avalanche instance = getInstance();
         synchronized (instance) {
             boolean initializedSuccessfully = instance.initialize(application, appKey);
@@ -128,7 +127,7 @@ public final class Avalanche {
     /**
      * Enable or disable the SDK as a whole. In addition to the core resources,
      * it will also enable or disable
-     * all features registered via {@link #useFeatures(Application, String, Class[])}.
+     * all features registered via {@link #start(Application, String, Class[])}.
      *
      * @param enabled true to enable, false to disable.
      */
@@ -184,10 +183,8 @@ public final class Avalanche {
         boolean switchToDisabled = previouslyEnabled && !enabled;
         boolean switchToEnabled = !previouslyEnabled && enabled;
         if (switchToDisabled) {
-            mApplication.unregisterActivityLifecycleCallbacks(mChannel);
             AvalancheLog.info("Avalanche disabled");
         } else if (switchToEnabled) {
-            mApplication.registerActivityLifecycleCallbacks(mChannel);
             AvalancheLog.info("Avalanche enabled");
         }
 
@@ -247,10 +244,7 @@ public final class Avalanche {
 
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
-        AvalancheChannel channel = new DefaultAvalancheChannel(application, appKeyUUID, mLogSerializer);
-        AvalancheChannelSessionDecorator sessionChannel = new AvalancheChannelSessionDecorator(application, channel);
-        application.registerActivityLifecycleCallbacks(sessionChannel);
-        mChannel = sessionChannel;
+        mChannel = new DefaultAvalancheChannel(application, appKeyUUID, mLogSerializer);
         mChannel.setEnabled(mIsEnabled());
         return true;
     }
@@ -285,7 +279,7 @@ public final class Avalanche {
     }
 
     @VisibleForTesting
-    void setChannel(AvalancheChannelSessionDecorator channel) {
+    void setChannel(AvalancheChannel channel) {
         mChannel = channel;
     }
 }
