@@ -23,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Avalanche.useFeatures(getApplication(), UUIDUtils.randomUUID().toString(), Analytics.class, Crashes.class);
+        Avalanche.start(getApplication(), UUIDUtils.randomUUID().toString(), Analytics.class, Crashes.class);
         Avalanche.setLogLevel(Log.VERBOSE);
 
         TestFeatures.initialize(this);
