@@ -9,8 +9,8 @@ import android.text.TextUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -32,10 +32,6 @@ import avalanche.core.utils.NetworkStateHelper;
 
 public class DefaultAvalancheChannel implements AvalancheChannel {
 
-    /* TODO: Moved to feature class. Use getGroupName() instead. Will be removed soon. */
-    public static final String ERROR_GROUP = "group_error";
-    public static final String ANALYTICS_GROUP = "group_analytics";
-
     /**
      * Synchronization lock.
      */
@@ -45,36 +41,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * TAG used in logging.
      */
     private static final String TAG = "AvalancheChannel";
-
-    /**
-     * Number of metrics queue items which will trigger synchronization with the persistence layer.
-     */
-    private static final int ANALYTICS_COUNT = 50;
-
-    /**
-     * Number of error queue items which will trigger synchronization with the persistence layer.
-     */
-    private static final int ERROR_COUNT = 1;
-
-    /**
-     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
-     */
-    private static final int ANALYTICS_INTERVAL = 3 * 1000;
-
-    /**
-     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
-     */
-    private static final int ERROR_INTERVAL = 3 * 1000;
-
-    /**
-     * Maximum number of requests being sent for analytics group.
-     */
-    private static final int ANALYTICS_MAX_PARALLEL_REQUESTS = 3;
-
-    /**
-     * Maximum number of requests being sent for error group.
-     */
-    private static final int ERROR_MAX_PARALLEL_REQUESTS = 3;
 
     /**
      * The appKey that's required for forwarding to ingestion.
@@ -124,9 +90,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(api);
         mIngestion = new AvalancheIngestionNetworkStateHandler(retryer, NetworkStateHelper.getSharedInstance(context));
         mIngestionHandler = new Handler(Looper.getMainLooper());
-        mGroupStates = new LinkedHashMap<>(); // FIXME unit tests seems to make an assumption about order of triggerIngestion calls in triggerIngestion
-        mGroupStates.put(ANALYTICS_GROUP, new GroupState(ANALYTICS_GROUP, ANALYTICS_COUNT, ANALYTICS_INTERVAL, ANALYTICS_MAX_PARALLEL_REQUESTS));
-        mGroupStates.put(ERROR_GROUP, new GroupState(ERROR_GROUP, ERROR_COUNT, ERROR_INTERVAL, ERROR_MAX_PARALLEL_REQUESTS));
+        mGroupStates = new HashMap<>();
         mEnabled = true;
     }
 
@@ -154,6 +118,16 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     @VisibleForTesting
     void setPersistence(AvalanchePersistence mPersistence) {
         this.mPersistence = mPersistence;
+    }
+
+    @Override
+    public void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, Listener listener) {
+        mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, listener));
+    }
+
+    @Override
+    public void removeGroup(String groupName) {
+        mGroupStates.remove(groupName);
     }
 
     @Override
@@ -217,7 +191,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      *
      * @param groupName the group name.
      */
-    private void resetThresholds(@GroupNameDef String groupName) {
+    private void resetThresholds(@NonNull String groupName) {
         synchronized (LOCK) {
             GroupState groupState = mGroupStates.get(groupName);
             setCounter(groupName, 0);
@@ -228,7 +202,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     }
 
     @VisibleForTesting
-    int getCounter(@GroupNameDef String groupName) {
+    int getCounter(@NonNull String groupName) {
         synchronized (LOCK) {
             return mGroupStates.get(groupName).mPendingLogCount;
         }
@@ -239,7 +213,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      *
      * @param counter new counter value.
      */
-    private void setCounter(@GroupNameDef String groupName, int counter) {
+    private void setCounter(@NonNull String groupName, int counter) {
         synchronized (LOCK) {
             mGroupStates.get(groupName).mPendingLogCount = counter;
         }
@@ -275,7 +249,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      *
      * @param groupName the group name
      */
-    private void triggerIngestion(@GroupNameDef @NonNull String groupName) {
+    private void triggerIngestion(@NonNull String groupName) {
         synchronized (LOCK) {
             AvalancheLog.debug("triggerIngestion(" + groupName + ")");
 
@@ -304,7 +278,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
                 LogContainer logContainer = new LogContainer();
                 logContainer.setLogs(list);
 
-                groupState.mSendingBatches.add(batchId);
+                groupState.mSendingBatches.put(batchId, list);
                 ingestLogs(groupName, batchId, logContainer);
 
                 //if we have sent a batch that was the maximum amount of logs, we trigger sending once more
@@ -350,11 +324,15 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             GroupState groupState = mGroupStates.get(groupName);
 
             mPersistence.deleteLogs(groupName, batchId);
-            boolean removeBatchIdSuccessful = groupState.mSendingBatches.remove(batchId);
-            if (!removeBatchIdSuccessful) {
+            List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
+            if (removedLogsForBatchId == null) {
                 AvalancheLog.warn(TAG, "Error removing batchId after successfully sending data.");
+            } else {
+                if (groupState.mListener != null) {
+                    for (Log log : removedLogsForBatchId)
+                        groupState.mListener.onSuccess(log);
+                }
             }
-
             triggerIngestion(groupName);
         }
     }
@@ -371,8 +349,16 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, @NonNull final Throwable t) {
         if (!HttpUtils.isRecoverableError(t))
             mPersistence.deleteLogs(groupName, batchId);
-        if (!mGroupStates.get(groupName).mSendingBatches.remove(batchId))
+        List<Log> removedLogsForBatchId = mGroupStates.get(groupName).mSendingBatches.remove(batchId);
+        if (removedLogsForBatchId == null) {
             AvalancheLog.warn(TAG, "Error removing batchId after sending failure.");
+        } else {
+            Listener listener = mGroupStates.get(groupName).mListener;
+            if (listener != null) {
+                for (Log log : removedLogsForBatchId)
+                    listener.onFailure(log, new Exception(t));
+            }
+        }
         suspend(false);
     }
 
@@ -383,7 +369,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param queueName the queue to use
      */
     @Override
-    public void enqueue(@NonNull Log log, @NonNull @GroupNameDef String queueName) {
+    public void enqueue(@NonNull Log log, @NonNull String queueName) {
         try {
             // persist log with an absolute timestamp, we'll convert to relative just before sending
             log.setToffset(System.currentTimeMillis());
@@ -406,7 +392,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      *
      * @param groupName the group name
      */
-    private void scheduleIngestion(@GroupNameDef String groupName) {
+    private void scheduleIngestion(@NonNull String groupName) {
         synchronized (LOCK) {
             GroupState groupState = mGroupStates.get(groupName);
             int counter = groupState.mPendingLogCount;
@@ -443,18 +429,26 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
          * Maximum log count per batch.
          */
         final int mMaxLogsPerBatch;
+
         /**
          * Time to wait before 2 batches, in ms.
          */
         final int mBatchTimeInterval;
+
         /**
          * Maximum number of batches in parallel.
          */
         final int mMaxParallelBatches;
+
         /**
          * Batches being currently sent to ingestion.
          */
-        final Collection<String> mSendingBatches = new ArrayList<>();
+        final Map<String, List<Log>> mSendingBatches = new HashMap<>();
+
+        /**
+         * A listener for a feature.
+         */
+        final Listener mListener;
 
         /**
          * Pending log count not part of a batch yet.
@@ -483,12 +477,14 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
          * @param maxLogsPerBatch    max batch size.
          * @param batchTimeInterval  batch interval in ms.
          * @param maxParallelBatches max number of parallel batches.
+         * @param listener           listener for a feature.
          */
-        GroupState(String name, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches) {
+        GroupState(String name, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, Listener listener) {
             mName = name;
             mMaxLogsPerBatch = maxLogsPerBatch;
             mBatchTimeInterval = batchTimeInterval;
             mMaxParallelBatches = maxParallelBatches;
+            mListener = listener;
         }
     }
 }
