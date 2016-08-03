@@ -8,11 +8,15 @@ import android.support.annotation.VisibleForTesting;
 import java.util.HashMap;
 import java.util.Map;
 
+import avalanche.analytics.channel.SessionTracker;
 import avalanche.analytics.ingestion.models.EventLog;
 import avalanche.analytics.ingestion.models.PageLog;
+import avalanche.analytics.ingestion.models.StartSessionLog;
 import avalanche.analytics.ingestion.models.json.EventLogFactory;
 import avalanche.analytics.ingestion.models.json.PageLogFactory;
+import avalanche.analytics.ingestion.models.json.StartSessionLogFactory;
 import avalanche.core.AbstractAvalancheFeature;
+import avalanche.core.channel.AvalancheChannel;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
@@ -26,7 +30,7 @@ public class Analytics extends AbstractAvalancheFeature {
     /**
      * Constant marking event of the analytics group.
      */
-    public static final String ANALYTICS_GROUP = "group_analytics";
+    private static final String ANALYTICS_GROUP = "group_analytics";
 
     /**
      * Activity suffix to exclude from generated page names.
@@ -44,6 +48,11 @@ public class Analytics extends AbstractAvalancheFeature {
     private final Map<String, LogFactory> mFactories;
 
     /**
+     * Session tracker.
+     */
+    private SessionTracker mSessionTracker;
+
+    /**
      * Automatic page tracking flag.
      */
     private boolean mAutoPageTrackingEnabled = true;
@@ -53,6 +62,7 @@ public class Analytics extends AbstractAvalancheFeature {
      */
     private Analytics() {
         mFactories = new HashMap<>();
+        mFactories.put(StartSessionLog.TYPE, new StartSessionLogFactory());
         mFactories.put(PageLog.TYPE, new PageLogFactory());
         mFactories.put(EventLog.TYPE, new EventLogFactory());
     }
@@ -130,18 +140,9 @@ public class Analytics extends AbstractAvalancheFeature {
             return name;
     }
 
-    /**
-     * Implements {@link #isAutoPageTrackingEnabled()}.
-     */
-    private boolean isAutoPageTrackingStateEnabled() {
-        return mAutoPageTrackingEnabled;
-    }
-
-    /**
-     * Implements {@link #setAutoPageTrackingEnabled(boolean)}.
-     */
-    private synchronized void setAutoPageTrackingStateEnabled(boolean autoPageTrackingEnabled) {
-        mAutoPageTrackingEnabled = autoPageTrackingEnabled;
+    @Override
+    protected String getGroupName() {
+        return ANALYTICS_GROUP;
     }
 
     @Override
@@ -150,14 +151,47 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     @Override
+    public synchronized void onChannelReady(AvalancheChannel channel) {
+        super.onChannelReady(channel);
+        applyEnabledState(isEnabled());
+    }
+
+    @Override
     public synchronized void onActivityResumed(Activity activity) {
+        mSessionTracker.onActivityResumed();
         if (mAutoPageTrackingEnabled)
             queuePage(generatePageName(activity.getClass()), null);
     }
 
     @Override
-    protected String getGroupName() {
-        return ANALYTICS_GROUP;
+    public synchronized void onActivityPaused(Activity activity) {
+        mSessionTracker.onActivityPaused();
+    }
+
+    @Override
+    public synchronized void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        applyEnabledState(enabled);
+    }
+
+    /**
+     * React to enable state change.
+     *
+     * @param enabled current state.
+     */
+    private synchronized void applyEnabledState(boolean enabled) {
+
+        /* Delayed initialization once channel ready and enabled (both conditions). */
+        if (enabled && mChannel != null && mSessionTracker == null) {
+            mSessionTracker = new SessionTracker(mChannel);
+            mChannel.addListener(mSessionTracker);
+        }
+
+        /* Release resources if disabled and enabled before with resources. */
+        else if (!enabled && mSessionTracker != null) {
+            mChannel.removeListener(mSessionTracker);
+            mSessionTracker = null;
+        }
     }
 
     /**
@@ -201,5 +235,19 @@ public class Analytics extends AbstractAvalancheFeature {
         eventLog.setName(name);
         eventLog.setProperties(properties);
         send(eventLog);
+    }
+
+    /**
+     * Implements {@link #isAutoPageTrackingEnabled()}.
+     */
+    private boolean isAutoPageTrackingStateEnabled() {
+        return mAutoPageTrackingEnabled;
+    }
+
+    /**
+     * Implements {@link #setAutoPageTrackingEnabled(boolean)}.
+     */
+    private synchronized void setAutoPageTrackingStateEnabled(boolean autoPageTrackingEnabled) {
+        mAutoPageTrackingEnabled = autoPageTrackingEnabled;
     }
 }

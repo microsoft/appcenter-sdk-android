@@ -15,7 +15,6 @@ import java.util.Map;
 
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.LogContainer;
-import avalanche.core.ingestion.models.StartSessionLog;
 import avalanche.core.utils.AvalancheLog;
 
 import static avalanche.core.ingestion.models.CommonProperties.TYPE;
@@ -24,12 +23,7 @@ public class DefaultLogSerializer implements LogSerializer {
 
     private static final String LOGS = "logs";
 
-    private final Map<String, LogFactory> mLogFactories;
-
-    public DefaultLogSerializer() {
-        mLogFactories = new HashMap<>();
-        mLogFactories.put(StartSessionLog.TYPE, new StartSessionLogFactory());
-    }
+    private final Map<String, LogFactory> mLogFactories = new HashMap<>();
 
     private JSONStringer writeLog(JSONStringer writer, Log log) throws JSONException {
         writer.object();
