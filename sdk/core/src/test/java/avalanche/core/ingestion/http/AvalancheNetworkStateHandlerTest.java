@@ -32,7 +32,7 @@ public class AvalancheNetworkStateHandlerTest {
     public void success() throws IOException {
 
         /* Configure mock wrapped API. */
-        UUID appKey = UUIDUtils.randomUUID();
+        UUID appSecret = UUIDUtils.randomUUID();
         UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
@@ -47,7 +47,7 @@ public class AvalancheNetworkStateHandlerTest {
                 serviceCallback.success();
                 return call;
             }
-        }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
 
         /* Simulate network is initially up. */
         NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
@@ -55,8 +55,8 @@ public class AvalancheNetworkStateHandlerTest {
 
         /* Test call. */
         AvalancheIngestion decorator = new AvalancheIngestionNetworkStateHandler(ingestion, networkStateHelper);
-        decorator.sendAsync(appKey, installId, container, callback);
-        verify(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        decorator.sendAsync(appSecret, installId, container, callback);
+        verify(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
         verify(callback).success();
         verifyNoMoreInteractions(callback);
 
@@ -69,7 +69,7 @@ public class AvalancheNetworkStateHandlerTest {
     public void failure() throws IOException {
 
         /* Configure mock wrapped API. */
-        UUID appKey = UUIDUtils.randomUUID();
+        UUID appSecret = UUIDUtils.randomUUID();
         UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
@@ -84,7 +84,7 @@ public class AvalancheNetworkStateHandlerTest {
                 serviceCallback.failure(new SocketException());
                 return call;
             }
-        }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
 
         /* Simulate network is initially up. */
         NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
@@ -92,8 +92,8 @@ public class AvalancheNetworkStateHandlerTest {
 
         /* Test call. */
         AvalancheIngestion decorator = new AvalancheIngestionNetworkStateHandler(ingestion, networkStateHelper);
-        decorator.sendAsync(appKey, installId, container, callback);
-        verify(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        decorator.sendAsync(appSecret, installId, container, callback);
+        verify(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
         verify(callback).failure(new HttpException(503));
         verifyNoMoreInteractions(callback);
 
@@ -106,7 +106,7 @@ public class AvalancheNetworkStateHandlerTest {
     public void networkDownBecomesUp() throws IOException {
 
         /* Configure mock wrapped API. */
-        UUID appKey = UUIDUtils.randomUUID();
+        UUID appSecret = UUIDUtils.randomUUID();
         UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
@@ -119,7 +119,7 @@ public class AvalancheNetworkStateHandlerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[3]).success();
                 return call;
             }
-        }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
 
         /* Simulate network down then becomes up. */
         NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
@@ -127,15 +127,15 @@ public class AvalancheNetworkStateHandlerTest {
 
         /* Test call. */
         AvalancheIngestionNetworkStateHandler decorator = new AvalancheIngestionNetworkStateHandler(ingestion, networkStateHelper);
-        decorator.sendAsync(appKey, installId, container, callback);
+        decorator.sendAsync(appSecret, installId, container, callback);
 
         /* Network is down: no call to target API must be done. */
-        verify(ingestion, times(0)).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        verify(ingestion, times(0)).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
         verify(callback, times(0)).success();
 
         /* Network now up: call must be done and succeed. */
         decorator.onNetworkStateUpdated(true);
-        verify(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        verify(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
         verify(callback).success();
 
         /* Close. */
@@ -147,7 +147,7 @@ public class AvalancheNetworkStateHandlerTest {
     public void networkDownCancelBeforeUp() throws IOException {
 
         /* Configure mock wrapped API. */
-        UUID appKey = UUIDUtils.randomUUID();
+        UUID appSecret = UUIDUtils.randomUUID();
         UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
@@ -160,7 +160,7 @@ public class AvalancheNetworkStateHandlerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[3]).success();
                 return call;
             }
-        }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
 
         /* Simulate network down then becomes up. */
         NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
@@ -168,7 +168,7 @@ public class AvalancheNetworkStateHandlerTest {
 
         /* Test call and cancel right away. */
         AvalancheIngestionNetworkStateHandler decorator = new AvalancheIngestionNetworkStateHandler(ingestion, networkStateHelper);
-        decorator.sendAsync(appKey, installId, container, callback).cancel();
+        decorator.sendAsync(appSecret, installId, container, callback).cancel();
 
         /* Network now up, verify no interaction with anything. */
         decorator.onNetworkStateUpdated(true);
@@ -185,7 +185,7 @@ public class AvalancheNetworkStateHandlerTest {
     public void cancelRunningCall() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        UUID appKey = UUIDUtils.randomUUID();
+        UUID appSecret = UUIDUtils.randomUUID();
         UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
@@ -212,7 +212,7 @@ public class AvalancheNetworkStateHandlerTest {
                 threadRef.set(thread);
                 return call;
             }
-        }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
         doAnswer(new Answer() {
 
             @Override
@@ -228,7 +228,7 @@ public class AvalancheNetworkStateHandlerTest {
 
         /* Test call. */
         AvalancheIngestionNetworkStateHandler decorator = new AvalancheIngestionNetworkStateHandler(ingestion, networkStateHelper);
-        ServiceCall decoratorCall = decorator.sendAsync(appKey, installId, container, callback);
+        ServiceCall decoratorCall = decorator.sendAsync(appSecret, installId, container, callback);
 
         /* Wait some time. */
         Thread.sleep(100);
@@ -237,7 +237,7 @@ public class AvalancheNetworkStateHandlerTest {
         decoratorCall.cancel();
 
         /* Verify that the call was attempted then canceled. */
-        verify(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        verify(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
         verify(call).cancel();
         verifyNoMoreInteractions(callback);
 
@@ -250,7 +250,7 @@ public class AvalancheNetworkStateHandlerTest {
     public void cancelRunningCallByClosing() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        UUID appKey = UUIDUtils.randomUUID();
+        UUID appSecret = UUIDUtils.randomUUID();
         UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
@@ -277,7 +277,7 @@ public class AvalancheNetworkStateHandlerTest {
                 threadRef.set(thread);
                 return call;
             }
-        }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
         doAnswer(new Answer() {
 
             @Override
@@ -293,7 +293,7 @@ public class AvalancheNetworkStateHandlerTest {
 
         /* Test call. */
         AvalancheIngestionNetworkStateHandler decorator = new AvalancheIngestionNetworkStateHandler(ingestion, networkStateHelper);
-        decorator.sendAsync(appKey, installId, container, callback);
+        decorator.sendAsync(appSecret, installId, container, callback);
 
         /* Wait some time. */
         Thread.sleep(100);
@@ -302,7 +302,7 @@ public class AvalancheNetworkStateHandlerTest {
         decorator.close();
 
         /* Verify that the call was attempted then canceled. */
-        verify(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        verify(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
         verify(ingestion).close();
         verify(call).cancel();
         verifyNoMoreInteractions(callback);
@@ -312,7 +312,7 @@ public class AvalancheNetworkStateHandlerTest {
     public void networkLossDuringCall() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        UUID appKey = UUIDUtils.randomUUID();
+        UUID appSecret = UUIDUtils.randomUUID();
         UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
@@ -339,7 +339,7 @@ public class AvalancheNetworkStateHandlerTest {
                 threadRef.set(thread);
                 return call;
             }
-        }).when(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
         doAnswer(new Answer() {
 
             @Override
@@ -355,7 +355,7 @@ public class AvalancheNetworkStateHandlerTest {
 
         /* Test call. */
         AvalancheIngestionNetworkStateHandler decorator = new AvalancheIngestionNetworkStateHandler(ingestion, networkStateHelper);
-        decorator.sendAsync(appKey, installId, container, callback);
+        decorator.sendAsync(appSecret, installId, container, callback);
 
         /* Wait some time. */
         Thread.sleep(100);
@@ -364,13 +364,13 @@ public class AvalancheNetworkStateHandlerTest {
         decorator.onNetworkStateUpdated(false);
 
         /* Verify that the call was attempted then canceled. */
-        verify(ingestion).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        verify(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
         verify(call).cancel();
         verifyNoMoreInteractions(callback);
 
         /* Then up again. */
         decorator.onNetworkStateUpdated(true);
-        verify(ingestion, times(2)).sendAsync(eq(appKey), eq(installId), eq(container), any(ServiceCallback.class));
+        verify(ingestion, times(2)).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
         Thread.sleep(300);
         verify(callback).success();
         verifyNoMoreInteractions(callback);

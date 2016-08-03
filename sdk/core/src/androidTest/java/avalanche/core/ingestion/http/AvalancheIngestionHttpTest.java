@@ -95,16 +95,16 @@ public class AvalancheIngestionHttpTest {
         httpClient.setBaseUrl("http://mock");
 
         /* Test calling code. */
-        UUID appKey = UUIDUtils.randomUUID();
+        UUID appSecret = UUIDUtils.randomUUID();
         UUID installId = UUIDUtils.randomUUID();
         Semaphore lock = new Semaphore(0);
         ServiceCallback serviceCallback = spy(new LockServiceCallback(lock));
-        httpClient.sendAsync(appKey, installId, container, serviceCallback);
+        httpClient.sendAsync(appSecret, installId, container, serviceCallback);
         lock.acquire();
         verify(serviceCallback).success();
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
-        verify(urlConnection).setRequestProperty("App-Key", appKey.toString());
+        verify(urlConnection).setRequestProperty("App-Secret", appSecret.toString());
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
         verify(urlConnection).disconnect();
         httpClient.close();
@@ -164,10 +164,10 @@ public class AvalancheIngestionHttpTest {
         httpClient.setBaseUrl("http://mock");
 
         /* Test calling code. */
-        UUID appKey = UUIDUtils.randomUUID();
+        UUID appSecret = UUIDUtils.randomUUID();
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        httpClient.sendAsync(appKey, installId, container, serviceCallback);
+        httpClient.sendAsync(appSecret, installId, container, serviceCallback);
         verify(serviceCallback, timeout(1000)).failure(new HttpException(503));
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
@@ -247,10 +247,10 @@ public class AvalancheIngestionHttpTest {
         httpClient.setBaseUrl("http://mock");
 
         /* Test calling code. */
-        UUID appKey = UUID.randomUUID();
+        UUID appSecret = UUID.randomUUID();
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        httpClient.sendAsync(appKey, installId, container, serviceCallback);
+        httpClient.sendAsync(appSecret, installId, container, serviceCallback);
         verify(serviceCallback, timeout(1000)).failure(any(JSONException.class));
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
