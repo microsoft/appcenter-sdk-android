@@ -121,7 +121,7 @@ public final class Avalanche {
      * @return true if enabled, false otherwise.
      */
     public static boolean isEnabled() {
-        return getInstance().mIsEnabled();
+        return getInstance().isInstanceEnabled();
     }
 
     /**
@@ -132,7 +132,7 @@ public final class Avalanche {
      * @param enabled true to enable, false to disable.
      */
     public static void setEnabled(boolean enabled) {
-        getInstance().mSetEnabled(enabled);
+        getInstance().setInstanceEnabled(enabled);
     }
 
     /**
@@ -166,20 +166,20 @@ public final class Avalanche {
     /**
      * Implements {@link #isEnabled()}.
      */
-    private synchronized boolean mIsEnabled() {
+    private synchronized boolean isInstanceEnabled() {
         return StorageHelper.PreferencesStorage.getBoolean(PrefStorageConstants.KEY_ENABLED, true);
     }
 
     /**
      * Implements {@link #setEnabled(boolean)}}.
      */
-    private synchronized void mSetEnabled(boolean enabled) {
+    private synchronized void setInstanceEnabled(boolean enabled) {
 
         /* Update channel state. */
         mChannel.setEnabled(enabled);
 
         /* Un-subscribe app callbacks if we were enabled and now disabled. */
-        boolean previouslyEnabled = mIsEnabled();
+        boolean previouslyEnabled = isInstanceEnabled();
         boolean switchToDisabled = previouslyEnabled && !enabled;
         boolean switchToEnabled = !previouslyEnabled && enabled;
         if (switchToDisabled) {
@@ -198,8 +198,8 @@ public final class Avalanche {
                 mApplication.registerActivityLifecycleCallbacks(feature);
 
             /* Forward status change. */
-            if (feature.isEnabled() != enabled)
-                feature.setEnabled(enabled);
+            if (feature.isInstanceEnabled() != enabled)
+                feature.setInstanceEnabled(enabled);
         }
 
         /* Update state. */
@@ -245,7 +245,7 @@ public final class Avalanche {
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
         mChannel = new DefaultAvalancheChannel(application, appKeyUUID, mLogSerializer);
-        mChannel.setEnabled(mIsEnabled());
+        mChannel.setEnabled(isInstanceEnabled());
         return true;
     }
 
@@ -264,7 +264,7 @@ public final class Avalanche {
         }
         mFeatures.add(feature);
         feature.onChannelReady(mChannel);
-        if (mIsEnabled())
+        if (isInstanceEnabled())
             mApplication.registerActivityLifecycleCallbacks(feature);
     }
 
