@@ -20,6 +20,7 @@ import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.IdHelper;
+import avalanche.core.utils.PrefStorageConstants;
 import avalanche.core.utils.StorageHelper;
 
 import static android.util.Log.ASSERT;
@@ -41,11 +42,6 @@ public final class Avalanche {
      * Configured features.
      */
     private Set<AvalancheFeature> mFeatures;
-
-    /**
-     * Enabled state.
-     */
-    private boolean mEnabled = true;
 
     /**
      * Log serializer.
@@ -172,7 +168,7 @@ public final class Avalanche {
      * Implements {@link #isEnabled()}.
      */
     private synchronized boolean mIsEnabled() {
-        return mEnabled;
+        return StorageHelper.PreferencesStorage.getBoolean(PrefStorageConstants.KEY_ENABLED, true);
     }
 
     /**
@@ -184,8 +180,9 @@ public final class Avalanche {
         mChannel.setEnabled(enabled);
 
         /* Un-subscribe app callbacks if we were enabled and now disabled. */
-        boolean switchToDisabled = mEnabled && !enabled;
-        boolean switchToEnabled = !mEnabled && enabled;
+        boolean previouslyEnabled = mIsEnabled();
+        boolean switchToDisabled = previouslyEnabled && !enabled;
+        boolean switchToEnabled = !previouslyEnabled && enabled;
         if (switchToDisabled) {
             mApplication.unregisterActivityLifecycleCallbacks(mChannel);
             AvalancheLog.info("Avalanche disabled");
@@ -209,7 +206,7 @@ public final class Avalanche {
         }
 
         /* Update state. */
-        mEnabled = enabled;
+        StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, enabled);
     }
 
     /**
@@ -254,6 +251,7 @@ public final class Avalanche {
         AvalancheChannelSessionDecorator sessionChannel = new AvalancheChannelSessionDecorator(application, channel);
         application.registerActivityLifecycleCallbacks(sessionChannel);
         mChannel = sessionChannel;
+        mChannel.setEnabled(mIsEnabled());
         return true;
     }
 
@@ -272,7 +270,8 @@ public final class Avalanche {
         }
         mFeatures.add(feature);
         feature.onChannelReady(mChannel);
-        mApplication.registerActivityLifecycleCallbacks(feature);
+        if (mIsEnabled())
+            mApplication.registerActivityLifecycleCallbacks(feature);
     }
 
     @VisibleForTesting
