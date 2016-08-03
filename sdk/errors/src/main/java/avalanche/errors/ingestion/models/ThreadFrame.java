@@ -99,13 +99,9 @@ public class ThreadFrame implements Model {
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        JSONUtils.write(writer, ADDRESS, getAddress(), true);
-        JSONUtils.write(writer, SYMBOL, getSymbol(), false);
+        JSONUtils.write(writer, ADDRESS, getAddress());
+        JSONUtils.write(writer, SYMBOL, getSymbol());
         JSONUtils.writeMap(writer, REGISTERS, getRegisters());
-    }
-
-    @Override
-    public void validate() throws IllegalArgumentException {
     }
 
     @Override

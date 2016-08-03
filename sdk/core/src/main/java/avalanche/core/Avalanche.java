@@ -77,15 +77,18 @@ public final class Avalanche {
      * @param features    Vararg list of feature classes to auto-use.
      */
     @SafeVarargs
-    public static void useFeatures(Application application, String appKey, Class<? extends AvalancheFeature>... features) {
+    public static void start(Application application, String appKey, Class<? extends AvalancheFeature>... features) {
+        Set<Class<? extends AvalancheFeature>> featureClassSet = new HashSet<>();
         List<AvalancheFeature> featureList = new ArrayList<>();
         for (Class<? extends AvalancheFeature> featureClass : features)
-            if (featureClass != null) {
+            /* Skip instantiation if the feature is already added. */
+            if (featureClass != null && !featureClassSet.contains(featureClass)) {
+                featureClassSet.add(featureClass);
                 AvalancheFeature feature = instantiateFeature(featureClass);
                 if (feature != null)
                     featureList.add(feature);
             }
-        useFeatures(application, appKey, featureList.toArray(new AvalancheFeature[featureList.size()]));
+        start(application, appKey, featureList.toArray(new AvalancheFeature[featureList.size()]));
     }
 
     /**
@@ -97,7 +100,7 @@ public final class Avalanche {
      */
     @VisibleForTesting
     @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-    static void useFeatures(Application application, String appKey, AvalancheFeature... features) {
+    static void start(Application application, String appKey, AvalancheFeature... features) {
         Avalanche instance = getInstance();
         synchronized (instance) {
             boolean initializedSuccessfully = instance.initialize(application, appKey);
@@ -129,7 +132,7 @@ public final class Avalanche {
     /**
      * Enable or disable the SDK as a whole. In addition to the core resources,
      * it will also enable or disable
-     * all features registered via {@link #useFeatures(Application, String, Class[])}.
+     * all features registered via {@link #start(Application, String, Class[])}.
      *
      * @param enabled true to enable, false to disable.
      */

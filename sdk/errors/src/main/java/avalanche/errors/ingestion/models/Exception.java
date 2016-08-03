@@ -8,7 +8,6 @@ import java.util.List;
 
 import avalanche.core.ingestion.models.Model;
 import avalanche.core.ingestion.models.json.JSONUtils;
-import avalanche.core.ingestion.models.utils.LogUtils;
 import avalanche.errors.ingestion.models.json.ExceptionFactory;
 import avalanche.errors.ingestion.models.json.ThreadFrameFactory;
 
@@ -152,17 +151,11 @@ public class Exception implements Model {
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        JSONUtils.write(writer, ID, getId(), false);
-        JSONUtils.write(writer, REASON, getReason(), false);
-        JSONUtils.write(writer, LANGUAGE, getLanguage(), false);
+        JSONUtils.write(writer, ID, getId());
+        JSONUtils.write(writer, REASON, getReason());
+        JSONUtils.write(writer, LANGUAGE, getLanguage());
         JSONUtils.writeArray(writer, FRAMES, getFrames());
         JSONUtils.writeArray(writer, INNER_EXCEPTIONS, getInnerExceptions());
-    }
-
-    @Override
-    public void validate() throws IllegalArgumentException {
-        LogUtils.validateArray(getFrames());
-        LogUtils.validateArray(getInnerExceptions());
     }
 
     @Override

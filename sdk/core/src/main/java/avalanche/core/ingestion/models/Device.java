@@ -5,7 +5,6 @@ import org.json.JSONObject;
 import org.json.JSONStringer;
 
 import avalanche.core.ingestion.models.json.JSONUtils;
-import avalanche.core.ingestion.models.utils.LogUtils;
 
 /**
  * Device characteristic log.
@@ -389,29 +388,15 @@ public class Device implements Model {
         writer.key(OEM_NAME).value(getOemName());
         writer.key(OS_NAME).value(getOsName());
         writer.key(OS_VERSION).value(getOsVersion());
-        JSONUtils.write(writer, OS_API_LEVEL, getOsApiLevel(), false);
+        JSONUtils.write(writer, OS_API_LEVEL, getOsApiLevel());
         writer.key(LOCALE).value(getLocale());
         writer.key(TIME_ZONE_OFFSET).value(getTimeZoneOffset());
         writer.key(SCREEN_SIZE).value(getScreenSize());
         writer.key(APP_VERSION).value(getAppVersion());
-        JSONUtils.write(writer, CARRIER_NAME, getCarrierName(), false);
-        JSONUtils.write(writer, CARRIER_COUNTRY, getCarrierCountry(), false);
+        JSONUtils.write(writer, CARRIER_NAME, getCarrierName());
+        JSONUtils.write(writer, CARRIER_COUNTRY, getCarrierCountry());
         writer.key(APP_BUILD).value(getAppBuild());
-        JSONUtils.write(writer, APP_NAMESPACE, getAppNamespace(), false);
-    }
-
-    @Override
-    public void validate() throws IllegalArgumentException {
-        LogUtils.checkNotNull(SDK_VERSION, getSdkVersion());
-        LogUtils.checkNotNull(MODEL, getModel());
-        LogUtils.checkNotNull(OEM_NAME, getOemName());
-        LogUtils.checkNotNull(OS_NAME, getOsName());
-        LogUtils.checkNotNull(OS_VERSION, getOsVersion());
-        LogUtils.checkNotNull(LOCALE, getLocale());
-        LogUtils.checkNotNull(TIME_ZONE_OFFSET, getTimeZoneOffset());
-        LogUtils.checkNotNull(SCREEN_SIZE, getScreenSize());
-        LogUtils.checkNotNull(APP_VERSION, getAppVersion());
-        LogUtils.checkNotNull(APP_BUILD, getAppBuild());
+        JSONUtils.write(writer, APP_NAMESPACE, getAppNamespace());
     }
 
     @Override

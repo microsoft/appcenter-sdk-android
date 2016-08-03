@@ -7,7 +7,7 @@ import org.json.JSONStringer;
 
 import java.util.UUID;
 
-import avalanche.core.ingestion.models.utils.LogUtils;
+import avalanche.core.ingestion.models.json.JSONUtils;
 
 import static avalanche.core.ingestion.models.CommonProperties.TYPE;
 
@@ -95,11 +95,9 @@ public abstract class AbstractLog implements Log {
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        writer.key(TYPE).value(getType());
-        writer.key(TOFFSET).value(getToffset());
-        if (getSid() != null) {
-            writer.key(SID).value(getSid());
-        }
+        JSONUtils.write(writer, TYPE, getType());
+        JSONUtils.write(writer, TOFFSET, getToffset());
+        JSONUtils.write(writer, SID, getSid());
         if (getDevice() != null) {
             writer.key(DEVICE).object();
             getDevice().write(writer);
@@ -112,25 +110,13 @@ public abstract class AbstractLog implements Log {
         if (!object.getString(TYPE).equals(getType()))
             throw new JSONException("Invalid type");
         setToffset(object.getLong(TOFFSET));
-        String sid = object.optString(SID, null);
-        if (sid != null) {
-            setSid(UUID.fromString(sid));
+        if (object.has(SID))
+            setSid(UUID.fromString(object.getString(SID)));
+        if (object.has(DEVICE)) {
+            Device device = new Device();
+            device.read(object.getJSONObject(DEVICE));
+            setDevice(device);
         }
-        Device device = new Device();
-        JSONObject deviceMap = object.optJSONObject(DEVICE);
-        if (deviceMap != null) {
-            device.read(deviceMap);
-        }
-        setDevice(device);
-    }
-
-    @Override
-    public void validate() throws IllegalArgumentException {
-        LogUtils.checkNotNull(TYPE, getType());
-        LogUtils.checkNotNull(TOFFSET, getToffset());
-        LogUtils.checkNotNull(SID, getSid());
-        LogUtils.checkNotNull(DEVICE, getDevice());
-        getDevice().validate();
     }
 
     @Override
