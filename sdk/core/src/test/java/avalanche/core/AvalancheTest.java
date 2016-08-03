@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Set;
 
 import avalanche.core.channel.AvalancheChannel;
-import avalanche.core.channel.AvalancheChannelSessionDecorator;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.IdHelper;
@@ -90,7 +89,7 @@ public class AvalancheTest {
 
     @Test
     public void nullVarargClass() {
-        Avalanche.useFeatures(application, DUMMY_APP_KEY, (Class<? extends AvalancheFeature>) null);
+        Avalanche.start(application, DUMMY_APP_KEY, (Class<? extends AvalancheFeature>) null);
 
         // Verify that no modules have been auto-loaded since none are configured for this
         assertEquals(0, Avalanche.getInstance().getFeatures().size());
@@ -99,7 +98,7 @@ public class AvalancheTest {
 
     @Test
     public void nullVarargFeatures() {
-        Avalanche.useFeatures(application, DUMMY_APP_KEY, (AvalancheFeature) null);
+        Avalanche.start(application, DUMMY_APP_KEY, (AvalancheFeature) null);
 
         // Verify that no modules have been auto-loaded since none are configured for this
         assertEquals(0, Avalanche.getInstance().getFeatures().size());
@@ -108,7 +107,7 @@ public class AvalancheTest {
 
     @Test
     public void avalancheUseDummyFeatureTest() {
-        Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class);
+        Avalanche.start(application, DUMMY_APP_KEY, DummyFeature.class);
 
         // Verify that single module has been loaded and configured
         assertEquals(1, Avalanche.getInstance().getFeatures().size());
@@ -121,8 +120,8 @@ public class AvalancheTest {
 
     @Test
     public void avalancheUseFeaturesTwiceTest() {
-        Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class);
-        Avalanche.useFeatures(application, DUMMY_APP_KEY, AnotherDummyFeature.class); //ignored
+        Avalanche.start(application, DUMMY_APP_KEY, DummyFeature.class);
+        Avalanche.start(application, DUMMY_APP_KEY, AnotherDummyFeature.class); //ignored
 
         // Verify that single module has been loaded and configured
         assertEquals(1, Avalanche.getInstance().getFeatures().size());
@@ -135,7 +134,7 @@ public class AvalancheTest {
 
     @Test
     public void avalancheUseDummyFeaturesTest() {
-        Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
+        Avalanche.start(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
 
         // Verify that the right amount of modules have been loaded and configured
         assertEquals(2, Avalanche.getInstance().getFeatures().size());
@@ -155,8 +154,8 @@ public class AvalancheTest {
 
     @Test
     public void avalancheFeaturesEnableTest() {
-        Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
-        AvalancheChannelSessionDecorator channel = mock(AvalancheChannelSessionDecorator.class);
+        Avalanche.start(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
+        AvalancheChannel channel = mock(AvalancheChannel.class);
         Avalanche avalanche = Avalanche.getInstance();
         avalanche.setChannel(channel);
 
@@ -241,16 +240,16 @@ public class AvalancheTest {
 
         /* Check factories / channel only once interactions. */
         verify(dummyFeature).getLogFactories();
-        verify(dummyFeature).onChannelReady(any(AvalancheChannelSessionDecorator.class));
+        verify(dummyFeature).onChannelReady(any(AvalancheChannel.class));
         verify(anotherDummyFeature).getLogFactories();
-        verify(anotherDummyFeature).onChannelReady(any(AvalancheChannelSessionDecorator.class));
+        verify(anotherDummyFeature).onChannelReady(any(AvalancheChannel.class));
     }
 
     @Test
     public void disablePersisted() {
         when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
-        Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
-        AvalancheChannelSessionDecorator channel = mock(AvalancheChannelSessionDecorator.class);
+        Avalanche.start(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
+        AvalancheChannel channel = mock(AvalancheChannel.class);
         Avalanche avalanche = Avalanche.getInstance();
         avalanche.setChannel(channel);
 
@@ -274,8 +273,8 @@ public class AvalancheTest {
     @Test
     public void disablePersistedAndDisable() {
         when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
-        Avalanche.useFeatures(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
-        AvalancheChannelSessionDecorator channel = mock(AvalancheChannelSessionDecorator.class);
+        Avalanche.start(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
+        AvalancheChannel channel = mock(AvalancheChannel.class);
         Avalanche avalanche = Avalanche.getInstance();
         avalanche.setChannel(channel);
 
@@ -300,42 +299,42 @@ public class AvalancheTest {
 
     @Test
     public void avalancheInvalidFeatureTest() {
-        Avalanche.useFeatures(application, DUMMY_APP_KEY, InvalidFeature.class);
+        Avalanche.start(application, DUMMY_APP_KEY, InvalidFeature.class);
         PowerMockito.verifyStatic();
         AvalancheLog.error(anyString(), any(NoSuchMethodException.class));
     }
 
     @Test
     public void avalancheNullApplicationTest() {
-        Avalanche.useFeatures(null, DUMMY_APP_KEY, DummyFeature.class);
+        Avalanche.start(null, DUMMY_APP_KEY, DummyFeature.class);
         PowerMockito.verifyStatic();
         AvalancheLog.error(anyString());
     }
 
     @Test
     public void avalancheNullAppIdentifierTest() {
-        Avalanche.useFeatures(application, null, DummyFeature.class);
+        Avalanche.start(application, null, DummyFeature.class);
         PowerMockito.verifyStatic();
         AvalancheLog.error(anyString());
     }
 
     @Test
     public void avalancheEmptyAppIdentifierTest() {
-        Avalanche.useFeatures(application, "", DummyFeature.class);
+        Avalanche.start(application, "", DummyFeature.class);
         PowerMockito.verifyStatic();
         AvalancheLog.error(anyString(), any(IllegalArgumentException.class));
     }
 
     @Test
     public void avalancheTooShortAppIdentifierTest() {
-        Avalanche.useFeatures(application, "too-short", DummyFeature.class);
+        Avalanche.start(application, "too-short", DummyFeature.class);
         PowerMockito.verifyStatic();
         AvalancheLog.error(anyString(), any(IllegalArgumentException.class));
     }
 
     @Test
     public void avalancheInvalidAppIdentifierTest() {
-        Avalanche.useFeatures(application, "123xyz12-3xyz-123x-yz12-3xyz123xyz12", DummyFeature.class);
+        Avalanche.start(application, "123xyz12-3xyz-123x-yz12-3xyz123xyz12", DummyFeature.class);
         PowerMockito.verifyStatic();
         AvalancheLog.error(anyString(), any(NumberFormatException.class));
     }

@@ -44,6 +44,7 @@ public interface Log extends Model {
      *
      * @return the device value
      */
+    @SuppressWarnings("unused")
     Device getDevice();
 
     /**
