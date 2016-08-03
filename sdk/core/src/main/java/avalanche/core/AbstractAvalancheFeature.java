@@ -2,13 +2,22 @@ package avalanche.core;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 
 import java.util.Map;
 
 import avalanche.core.channel.AvalancheChannel;
 import avalanche.core.ingestion.models.json.LogFactory;
+import avalanche.core.utils.StorageHelper;
+
+import static avalanche.core.utils.PrefStorageConstants.KEY_ENABLED;
 
 public abstract class AbstractAvalancheFeature implements AvalancheFeature {
+
+    /**
+     * Separator for preference key.
+     */
+    private static final String PREFERENCE_KEY_SEPARATOR = "_";
 
     /**
      * Number of metrics queue items which will trigger synchronization.
@@ -19,7 +28,6 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
      * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
      */
     private static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
-
     /**
      * Maximum number of requests being sent for the group.
      */
@@ -29,11 +37,6 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
      * Channel instance.
      */
     protected AvalancheChannel mChannel;
-
-    /**
-     * Flag that indicates the feature is enabled or not.
-     */
-    private boolean mEnabled = true;
 
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
@@ -64,20 +67,22 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
     }
 
     @Override
-    public synchronized boolean isEnabled() {
-        return mEnabled;
+    public synchronized boolean isInstanceEnabled() {
+        return StorageHelper.PreferencesStorage.getBoolean(getEnabledPreferenceKey(), true);
     }
 
     @Override
-    public synchronized void setEnabled(boolean enabled) {
-        if (enabled == mEnabled)
+    public synchronized void setInstanceEnabled(boolean enabled) {
+
+        /* Nothing to do if state does not change. */
+        if (enabled == isInstanceEnabled())
             return;
 
-        mEnabled = enabled;
-
+        /* If channel initialized. */
         if (mChannel != null) {
-            /* Add a group for the feature. */
-            if (mEnabled)
+
+            /* Register feature to channel on enabling. */
+            if (enabled)
                 mChannel.addGroup(getGroupName(), getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
 
             /* Otherwise, clear all persisted logs and remove a group for the feature. */
@@ -87,14 +92,17 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
                 mChannel.removeGroup(getGroupName());
             }
         }
+
+        /* Save new state. */
+        StorageHelper.PreferencesStorage.putBoolean(getEnabledPreferenceKey(), enabled);
     }
 
     @Override
-    public synchronized void onChannelReady(AvalancheChannel channel) {
+    public synchronized void onChannelReady(@NonNull AvalancheChannel channel) {
         channel.removeGroup(getGroupName());
 
         /* Add a group to the channel if the feature is enabled */
-        if (mEnabled)
+        if (isInstanceEnabled())
             channel.addGroup(getGroupName(), getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
 
         /* Otherwise, clear all persisted logs for the feature. */
@@ -115,6 +123,12 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
      * @return The group name.
      */
     protected abstract String getGroupName();
+
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
+    protected String getEnabledPreferenceKey() {
+        return KEY_ENABLED + PREFERENCE_KEY_SEPARATOR + getGroupName();
+    }
 
     /**
      * Gets a number of logs which will trigger synchronization.
