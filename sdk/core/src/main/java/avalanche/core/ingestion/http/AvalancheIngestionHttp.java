@@ -36,9 +36,9 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     private static final String CONTENT_TYPE_VALUE = "application/json";
 
     /**
-     * Application identifier HTTP Header.
+     * Application secret HTTP Header.
      */
-    private static final String APP_KEY = "App-Key";
+    private static final String APP_SECRET = "App-Secret";
 
     /**
      * Installation identifier HTTP Header.
@@ -113,7 +113,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     }
 
     @Override
-    public ServiceCall sendAsync(final UUID appKey, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(final UUID appSecret, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         if (mBaseUrl == null)
             throw new IllegalStateException("baseUrl not configured");
         final AsyncTask<Void, Void, Exception> call = new AsyncTask<Void, Void, Exception>() {
@@ -121,7 +121,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             @Override
             protected Exception doInBackground(Void... params) {
                 try {
-                    doCall(appKey, installId, logContainer);
+                    doCall(appSecret, installId, logContainer);
                 } catch (Exception e) {
                     return e;
                 }
@@ -131,9 +131,9 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             @Override
             protected void onPostExecute(Exception e) {
                 if (e == null)
-                    serviceCallback.success();
+                    serviceCallback.onCallSucceeded();
                 else
-                    serviceCallback.failure(e);
+                    serviceCallback.onCallFailed(e);
             }
         };
         call.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
@@ -150,12 +150,12 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     /**
      * Do the HTTP call now.
      *
-     * @param appKey       application identifier.
+     * @param appSecret    a unique and secret key used to identify the application.
      * @param installId    install identifier.
      * @param logContainer payload.
      * @throws Exception if an error occurs.
      */
-    private void doCall(UUID appKey, UUID installId, LogContainer logContainer) throws Exception {
+    private void doCall(UUID appSecret, UUID installId, LogContainer logContainer) throws Exception {
 
         /* HTTP session. */
         URL url = new URL(mBaseUrl + API_PATH);
@@ -169,7 +169,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
 
             /* Set headers. */
             urlConnection.setRequestProperty(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
-            urlConnection.setRequestProperty(APP_KEY, appKey.toString());
+            urlConnection.setRequestProperty(APP_SECRET, appSecret.toString());
             urlConnection.setRequestProperty(INSTALL_ID, installId.toString());
             AvalancheLog.verbose(LOG_TAG, "Headers: " + urlConnection.getRequestProperties());
 

@@ -60,13 +60,13 @@ public class AvalancheIngestionRetryerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).success();
+                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
                 return call;
             }
         }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         AvalancheIngestion retryer = new AvalancheIngestionRetryer(ingestion);
         retryer.sendAsync(null, null, null, callback);
-        verify(callback).success();
+        verify(callback).onCallSucceeded();
         verifyNoMoreInteractions(callback);
         verifyNoMoreInteractions(call);
     }
@@ -79,14 +79,14 @@ public class AvalancheIngestionRetryerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).failure(new SocketException());
+                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallFailed(new SocketException());
                 return mock(ServiceCall.class);
             }
         }).doAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).success();
+                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
                 return mock(ServiceCall.class);
             }
         }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -96,7 +96,7 @@ public class AvalancheIngestionRetryerTest {
         retryer.sendAsync(null, null, null, callback);
         verifyDelay(handler, 0);
         verifyNoMoreInteractions(handler);
-        verify(callback).success();
+        verify(callback).onCallSucceeded();
         verifyNoMoreInteractions(callback);
     }
 
@@ -109,14 +109,14 @@ public class AvalancheIngestionRetryerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).failure(new UnknownHostException());
+                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallFailed(new UnknownHostException());
                 return mock(ServiceCall.class);
             }
         }).doAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).failure(expectedException);
+                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallFailed(expectedException);
                 return mock(ServiceCall.class);
             }
         }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -126,8 +126,8 @@ public class AvalancheIngestionRetryerTest {
         retryer.sendAsync(null, null, null, callback);
         verifyDelay(handler, 0);
         verifyNoMoreInteractions(handler);
-        verify(callback).failure(any(Throwable.class));
-        verify(callback).failure(expectedException);
+        verify(callback).onCallFailed(any(Exception.class));
+        verify(callback).onCallFailed(expectedException);
         verifyNoMoreInteractions(callback);
     }
 
@@ -140,7 +140,7 @@ public class AvalancheIngestionRetryerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).failure(new HttpException(429));
+                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallFailed(new HttpException(429));
                 return call;
             }
         }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -152,7 +152,7 @@ public class AvalancheIngestionRetryerTest {
         verifyDelay(handler, 1);
         verifyDelay(handler, 2);
         verifyNoMoreInteractions(handler);
-        verify(callback).failure(new HttpException(429));
+        verify(callback).onCallFailed(new HttpException(429));
         verifyNoMoreInteractions(callback);
         verifyNoMoreInteractions(call);
     }
@@ -166,7 +166,7 @@ public class AvalancheIngestionRetryerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).failure(new HttpException(503));
+                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallFailed(new HttpException(503));
                 return call;
             }
         }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));

@@ -52,9 +52,9 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     private final Context mContext;
 
     /**
-     * The appKey that's required for forwarding to ingestion.
+     * The application secret for the ingestion service.
      */
-    private final UUID mAppKey;
+    private final UUID mAppSecret;
 
     /**
      * The installId that's required for forwarding to ingestion.
@@ -99,9 +99,9 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * Creates and initializes a new instance.
      */
-    public DefaultAvalancheChannel(@NonNull Context context, @NonNull UUID appKey, @NonNull LogSerializer logSerializer) {
+    public DefaultAvalancheChannel(@NonNull Context context, @NonNull UUID appSecret, @NonNull LogSerializer logSerializer) {
         mContext = context;
-        mAppKey = appKey;
+        mAppSecret = appSecret;
         mInstallId = IdHelper.getInstallId();
         mPersistence = new AvalancheDatabasePersistence();
         mPersistence.setLogSerializer(logSerializer);
@@ -118,15 +118,15 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * Overloaded constructor with limited visibility that allows for dependency injection.
      *
-     * @param context       the context
-     * @param appKey        the appKey
-     * @param ingestion     ingestion object for dependency injection
-     * @param persistence   persistence object for dependency injection
-     * @param logSerializer log serializer object for dependency injection
+     * @param context       The context.
+     * @param appSecret     The application secret.
+     * @param ingestion     Ingestion object for dependency injection.
+     * @param persistence   Persistence object for dependency injection.
+     * @param logSerializer Log serializer object for dependency injection.
      */
     @VisibleForTesting
-    DefaultAvalancheChannel(@NonNull Context context, @NonNull UUID appKey, @NonNull AvalancheIngestion ingestion, @NonNull AvalanchePersistence persistence, @NonNull LogSerializer logSerializer) {
-        this(context, appKey, logSerializer);
+    DefaultAvalancheChannel(@NonNull Context context, @NonNull UUID appSecret, @NonNull AvalancheIngestion ingestion, @NonNull AvalanchePersistence persistence, @NonNull LogSerializer logSerializer) {
+        this(context, appSecret, logSerializer);
         mPersistence = persistence;
         mIngestion = ingestion;
     }
@@ -134,7 +134,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * Setter for persistence object, to be used for dependency injection.
      *
-     * @param mPersistence the persistence object.
+     * @param mPersistence The persistence object.
      */
     @VisibleForTesting
     void setPersistence(AvalanchePersistence mPersistence) {
@@ -194,7 +194,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     }
 
     /**
-     * Stop sending logs until app restarted or the channel is enabled again.
+     * Stop sending logs until app is restarted or the channel is enabled again.
      *
      * @param deleteLogs in addition to suspending, if this is true, delete all logs from persistence.
      */
@@ -285,7 +285,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         synchronized (LOCK) {
             AvalancheLog.debug("triggerIngestion(" + groupName + ")");
 
-            if (TextUtils.isEmpty(groupName) || (mAppKey == null) || (mInstallId == null) || !mEnabled) {
+            if (TextUtils.isEmpty(groupName) || (mAppSecret == null) || (mInstallId == null) || !mEnabled) {
                 return;
             }
 
@@ -331,15 +331,15 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     private void ingestLogs(@NonNull final String groupName, @NonNull final String batchId, @NonNull LogContainer logContainer) {
         AvalancheLog.debug(TAG, "ingestLogs(" + groupName + "," + batchId + ")");
-        mIngestion.sendAsync(mAppKey, mInstallId, logContainer, new ServiceCallback() {
+        mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
                     @Override
-                    public void success() {
+                    public void onCallSucceeded() {
                         handleSendingSuccess(groupName, batchId);
                     }
 
                     @Override
-                    public void failure(Throwable t) {
-                        handleSendingFailure(groupName, batchId, t);
+                    public void onCallFailed(Exception e) {
+                        handleSendingFailure(groupName, batchId, e);
                     }
                 }
         );
@@ -376,10 +376,10 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      *
      * @param groupName the group name
      * @param batchId   the batch ID
-     * @param t         the error
+     * @param e         the exception
      */
-    private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, @NonNull final Throwable t) {
-        if (!HttpUtils.isRecoverableError(t))
+    private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, @NonNull final Exception e) {
+        if (!HttpUtils.isRecoverableError(e))
             mPersistence.deleteLogs(groupName, batchId);
         List<Log> removedLogsForBatchId = mGroupStates.get(groupName).mSendingBatches.remove(batchId);
         if (removedLogsForBatchId == null) {
@@ -388,7 +388,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             GroupListener groupListener = mGroupStates.get(groupName).mListener;
             if (groupListener != null) {
                 for (Log log : removedLogsForBatchId)
-                    groupListener.onFailure(log, new Exception(t));
+                    groupListener.onFailure(log, e);
             }
         }
         suspend(false);

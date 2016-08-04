@@ -61,10 +61,10 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
     }
 
     @Override
-    public ServiceCall sendAsync(UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
 
         /* Wrap the call with the retry logic and call delegate. */
-        RetryableCall retryableCall = new RetryableCall(mDecoratedApi, appKey, installId, logContainer, serviceCallback);
+        RetryableCall retryableCall = new RetryableCall(mDecoratedApi, appSecret, installId, logContainer, serviceCallback);
         retryableCall.run();
         return retryableCall;
     }
@@ -79,8 +79,8 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
          */
         private int mRetryCount;
 
-        RetryableCall(AvalancheIngestion decoratedApi, UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
-            super(decoratedApi, appKey, installId, logContainer, serviceCallback);
+        RetryableCall(AvalancheIngestion decoratedApi, UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
+            super(decoratedApi, appSecret, installId, logContainer, serviceCallback);
         }
 
         @Override
@@ -90,14 +90,14 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
         }
 
         @Override
-        public void failure(Throwable t) {
-            if (mRetryCount < RETRY_INTERVALS.length && HttpUtils.isRecoverableError(t)) {
+        public void onCallFailed(Exception e) {
+            if (mRetryCount < RETRY_INTERVALS.length && HttpUtils.isRecoverableError(e)) {
                 long delay = RETRY_INTERVALS[mRetryCount++] / 2;
                 delay += mRandom.nextInt((int) delay);
-                AvalancheLog.warn("Try #" + mRetryCount + " failed and will be retried in " + delay + " ms", t);
+                AvalancheLog.warn("Try #" + mRetryCount + " failed and will be retried in " + delay + " ms", e);
                 mHandler.postDelayed(this, delay);
             } else
-                mServiceCallback.failure(t);
+                mServiceCallback.onCallFailed(e);
         }
     }
 }
