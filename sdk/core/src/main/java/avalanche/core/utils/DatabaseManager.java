@@ -92,6 +92,7 @@ public class DatabaseManager implements Closeable {
      * @param schema   The schema.
      * @param listener The error listener.
      */
+    @SuppressWarnings("SameParameterValue")
     protected DatabaseManager(Context context, String database, String table, int version,
                               ContentValues schema, ErrorListener listener) {
         this(context, database, table, version, schema, 0, listener);
