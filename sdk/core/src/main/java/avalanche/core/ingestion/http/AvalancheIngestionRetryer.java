@@ -61,10 +61,10 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
     }
 
     @Override
-    public ServiceCall sendAsync(UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
 
         /* Wrap the call with the retry logic and call delegate. */
-        RetryableCall retryableCall = new RetryableCall(mDecoratedApi, appKey, installId, logContainer, serviceCallback);
+        RetryableCall retryableCall = new RetryableCall(mDecoratedApi, appSecret, installId, logContainer, serviceCallback);
         retryableCall.run();
         return retryableCall;
     }
@@ -79,8 +79,8 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
          */
         private int mRetryCount;
 
-        RetryableCall(AvalancheIngestion decoratedApi, UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
-            super(decoratedApi, appKey, installId, logContainer, serviceCallback);
+        RetryableCall(AvalancheIngestion decoratedApi, UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
+            super(decoratedApi, appSecret, installId, logContainer, serviceCallback);
         }
 
         @Override
