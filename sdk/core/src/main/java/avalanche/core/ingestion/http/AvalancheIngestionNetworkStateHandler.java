@@ -39,8 +39,8 @@ public class AvalancheIngestionNetworkStateHandler extends AvalancheIngestionDec
     }
 
     @Override
-    public ServiceCall sendAsync(UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
-        Call ingestionCall = new Call(mDecoratedApi, appKey, installId, logContainer, serviceCallback);
+    public ServiceCall sendAsync(UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
+        Call ingestionCall = new Call(mDecoratedApi, appSecret, installId, logContainer, serviceCallback);
         synchronized (mCalls) {
             mCalls.add(ingestionCall);
             if (mNetworkStateHelper.isNetworkConnected())
@@ -76,14 +76,14 @@ public class AvalancheIngestionNetworkStateHandler extends AvalancheIngestionDec
      */
     private class Call extends AvalancheIngestionCallDecorator implements Runnable, ServiceCallback {
 
-        Call(AvalancheIngestion decoratedApi, UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
-            super(decoratedApi, appKey, installId, logContainer, serviceCallback);
+        Call(AvalancheIngestion decoratedApi, UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
+            super(decoratedApi, appSecret, installId, logContainer, serviceCallback);
         }
 
         @Override
         public void run() {
             synchronized (mCalls) {
-                mServiceCall = mDecoratedApi.sendAsync(mAppKey, mInstallId, mLogContainer, this);
+                mServiceCall = mDecoratedApi.sendAsync(mAppSecret, mInstallId, mLogContainer, this);
             }
         }
 

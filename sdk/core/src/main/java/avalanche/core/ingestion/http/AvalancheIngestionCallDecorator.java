@@ -18,9 +18,9 @@ abstract class AvalancheIngestionCallDecorator implements Runnable, ServiceCall,
     final AvalancheIngestion mDecoratedApi;
 
     /**
-     * Application identifier.
+     * Application secret.
      */
-    final UUID mAppKey;
+    final UUID mAppSecret;
 
     /**
      * Installation identifier.
@@ -42,9 +42,9 @@ abstract class AvalancheIngestionCallDecorator implements Runnable, ServiceCall,
      */
     ServiceCall mServiceCall;
 
-    public AvalancheIngestionCallDecorator(AvalancheIngestion decoratedApi, UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
+    public AvalancheIngestionCallDecorator(AvalancheIngestion decoratedApi, UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
         mDecoratedApi = decoratedApi;
-        mAppKey = appKey;
+        mAppSecret = appSecret;
         mInstallId = installId;
         mLogContainer = logContainer;
         mServiceCallback = serviceCallback;
@@ -57,7 +57,7 @@ abstract class AvalancheIngestionCallDecorator implements Runnable, ServiceCall,
 
     @Override
     public synchronized void run() {
-        mServiceCall = mDecoratedApi.sendAsync(mAppKey, mInstallId, mLogContainer, this);
+        mServiceCall = mDecoratedApi.sendAsync(mAppSecret, mInstallId, mLogContainer, this);
     }
 
     @Override
