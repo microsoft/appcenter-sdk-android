@@ -16,9 +16,9 @@ public interface AvalancheChannel {
      * @param maxLogsPerBatch    maximum log count per batch.
      * @param batchTimeInterval  time interval for a next batch.
      * @param maxParallelBatches maximum number of batches in parallel.
-     * @param listener           a listener for a feature.
+     * @param groupListener      a listener for a feature.
      */
-    void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, Listener listener);
+    void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, GroupListener groupListener);
 
     /**
      * Remove a group for logs.
@@ -31,15 +31,16 @@ public interface AvalancheChannel {
      * Add Log to queue to be persisted and sent.
      *
      * @param log       the Log to be enqueued
-     * @param queueName the queue to use
+     * @param groupName the group to use
      */
-    void enqueue(@NonNull Log log, @NonNull String queueName);
+    void enqueue(@NonNull Log log, @NonNull String groupName);
 
     /**
      * Check whether channel is enabled or disabled.
      *
      * @return true if channel is enabled, false otherwise.
      */
+    @SuppressWarnings("unused")
     boolean isEnabled();
 
     /**
@@ -57,9 +58,38 @@ public interface AvalancheChannel {
     void clear(String groupName);
 
     /**
-     * Channel listener specification.
+     * Add a global listener to the channel.
+     *
+     * @param listener listener to add.
+     */
+    void addListener(Listener listener);
+
+    /**
+     * Remove a listener from the channel.
+     *
+     * @param listener listener to remove.
+     */
+    void removeListener(Listener listener);
+
+    /**
+     * Channel global listener specification.
      */
     interface Listener {
+
+        /**
+         * Called whenever a log is enqueued.
+         *
+         * @param log       log being enqueued.
+         * @param groupName group of the log.
+         */
+        void onEnqueuingLog(@NonNull Log log, @NonNull String groupName);
+    }
+
+    /**
+     * Channel group listener specification.
+     */
+    interface GroupListener {
+
         /**
          * Called when the log is delivered successfully.
          *

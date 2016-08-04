@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Set;
 
 import avalanche.core.channel.AvalancheChannel;
-import avalanche.core.channel.AvalancheChannelSessionDecorator;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.IdHelper;
@@ -134,7 +133,7 @@ public class AvalancheTest {
     @Test
     public void avalancheFeaturesEnableTest() {
         Avalanche.start(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
-        AvalancheChannelSessionDecorator channel = mock(AvalancheChannelSessionDecorator.class);
+        AvalancheChannel channel = mock(AvalancheChannel.class);
         Avalanche avalanche = Avalanche.getInstance();
         avalanche.setChannel(channel);
 
@@ -219,9 +218,9 @@ public class AvalancheTest {
 
         /* Check factories / channel only once interactions. */
         verify(dummyFeature).getLogFactories();
-        verify(dummyFeature).onChannelReady(any(AvalancheChannelSessionDecorator.class));
+        verify(dummyFeature).onChannelReady(any(AvalancheChannel.class));
         verify(anotherDummyFeature).getLogFactories();
-        verify(anotherDummyFeature).onChannelReady(any(AvalancheChannelSessionDecorator.class));
+        verify(anotherDummyFeature).onChannelReady(any(AvalancheChannel.class));
     }
 
     @Test
