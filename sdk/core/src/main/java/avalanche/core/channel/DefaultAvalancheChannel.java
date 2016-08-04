@@ -143,17 +143,25 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
     @Override
     public void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
-        mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener));
+        synchronized (LOCK) {
+            mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener));
+        }
     }
 
     @Override
     public void removeGroup(String groupName) {
-        mGroupStates.remove(groupName);
+        synchronized (LOCK) {
+            GroupState groupState = mGroupStates.remove(groupName);
+            if (groupState != null)
+                mIngestionHandler.removeCallbacks(groupState.mRunnable);
+        }
     }
 
     @Override
     public boolean isEnabled() {
-        return mEnabled;
+        synchronized (LOCK) {
+            return mEnabled;
+        }
     }
 
     /**
@@ -180,7 +188,9 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     @Override
     public void clear(String groupName) {
-        mPersistence.deleteLogs(groupName);
+        synchronized (LOCK) {
+            mPersistence.deleteLogs(groupName);
+        }
     }
 
     /**
