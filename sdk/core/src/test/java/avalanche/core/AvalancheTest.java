@@ -45,7 +45,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 @PrepareForTest({Constants.class, AvalancheLog.class, StorageHelper.class, StorageHelper.PreferencesStorage.class, IdHelper.class})
 public class AvalancheTest {
 
-    private static final String DUMMY_APP_KEY = "123e4567-e89b-12d3-a456-426655440000";
+    private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
 
     private Application application;
 
@@ -91,7 +91,7 @@ public class AvalancheTest {
 
     @Test
     public void nullVarargClass() {
-        Avalanche.start(application, DUMMY_APP_KEY, (Class<? extends AvalancheFeature>) null);
+        Avalanche.start(application, DUMMY_APP_SECRET, (Class<? extends AvalancheFeature>) null);
 
         // Verify that no modules have been auto-loaded since none are configured for this
         assertEquals(0, Avalanche.getInstance().getFeatures().size());
@@ -100,7 +100,7 @@ public class AvalancheTest {
 
     @Test
     public void nullVarargFeatures() {
-        Avalanche.start(application, DUMMY_APP_KEY, (AvalancheFeature) null);
+        Avalanche.start(application, DUMMY_APP_SECRET, (AvalancheFeature) null);
 
         // Verify that no modules have been auto-loaded since none are configured for this
         assertEquals(0, Avalanche.getInstance().getFeatures().size());
@@ -109,7 +109,7 @@ public class AvalancheTest {
 
     @Test
     public void avalancheUseDummyFeatureTest() {
-        Avalanche.start(application, DUMMY_APP_KEY, DummyFeature.class);
+        Avalanche.start(application, DUMMY_APP_SECRET, DummyFeature.class);
 
         // Verify that single module has been loaded and configured
         assertEquals(1, Avalanche.getInstance().getFeatures().size());
@@ -122,8 +122,8 @@ public class AvalancheTest {
 
     @Test
     public void avalancheUseFeaturesTwiceTest() {
-        Avalanche.start(application, DUMMY_APP_KEY, DummyFeature.class);
-        Avalanche.start(application, DUMMY_APP_KEY, AnotherDummyFeature.class); //ignored
+        Avalanche.start(application, DUMMY_APP_SECRET, DummyFeature.class);
+        Avalanche.start(application, DUMMY_APP_SECRET, AnotherDummyFeature.class); //ignored
 
         // Verify that single module has been loaded and configured
         assertEquals(1, Avalanche.getInstance().getFeatures().size());
@@ -136,7 +136,7 @@ public class AvalancheTest {
 
     @Test
     public void avalancheUseDummyFeaturesTest() {
-        Avalanche.start(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
+        Avalanche.start(application, DUMMY_APP_SECRET, DummyFeature.class, AnotherDummyFeature.class);
 
         // Verify that the right amount of modules have been loaded and configured
         assertEquals(2, Avalanche.getInstance().getFeatures().size());
@@ -156,7 +156,7 @@ public class AvalancheTest {
 
     @Test
     public void avalancheFeaturesEnableTest() {
-        Avalanche.start(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
+        Avalanche.start(application, DUMMY_APP_SECRET, DummyFeature.class, AnotherDummyFeature.class);
         AvalancheChannel channel = mock(AvalancheChannel.class);
         Avalanche avalanche = Avalanche.getInstance();
         avalanche.setChannel(channel);
@@ -250,7 +250,7 @@ public class AvalancheTest {
     @Test
     public void disablePersisted() {
         when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
-        Avalanche.start(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
+        Avalanche.start(application, DUMMY_APP_SECRET, DummyFeature.class, AnotherDummyFeature.class);
         AvalancheChannel channel = mock(AvalancheChannel.class);
         Avalanche avalanche = Avalanche.getInstance();
         avalanche.setChannel(channel);
@@ -275,7 +275,7 @@ public class AvalancheTest {
     @Test
     public void disablePersistedAndDisable() {
         when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
-        Avalanche.start(application, DUMMY_APP_KEY, DummyFeature.class, AnotherDummyFeature.class);
+        Avalanche.start(application, DUMMY_APP_SECRET, DummyFeature.class, AnotherDummyFeature.class);
         AvalancheChannel channel = mock(AvalancheChannel.class);
         Avalanche avalanche = Avalanche.getInstance();
         avalanche.setChannel(channel);
@@ -301,14 +301,14 @@ public class AvalancheTest {
 
     @Test
     public void avalancheInvalidFeatureTest() {
-        Avalanche.start(application, DUMMY_APP_KEY, InvalidFeature.class);
+        Avalanche.start(application, DUMMY_APP_SECRET, InvalidFeature.class);
         PowerMockito.verifyStatic();
         AvalancheLog.error(anyString(), any(NoSuchMethodException.class));
     }
 
     @Test
     public void avalancheNullApplicationTest() {
-        Avalanche.start(null, DUMMY_APP_KEY, DummyFeature.class);
+        Avalanche.start(null, DUMMY_APP_SECRET, DummyFeature.class);
         PowerMockito.verifyStatic();
         AvalancheLog.error(anyString());
     }

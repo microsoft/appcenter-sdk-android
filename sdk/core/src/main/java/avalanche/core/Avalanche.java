@@ -65,14 +65,15 @@ public final class Avalanche {
     }
 
     /**
-     * Set up the SDK and provide a varargs list of feature classes you would like to have enabled and auto-configured.
+     * Initialize the SDK with the list of features to use.
+     * This may be called only once per application process lifetime.
      *
      * @param application Your application object.
-     * @param appKey      The app key to use (application/environment).
-     * @param features    Vararg list of feature classes to auto-use.
+     * @param appSecret   A unique and secret key used to identify the application.
+     * @param features    List of features to use.
      */
     @SafeVarargs
-    public static void start(Application application, String appKey, Class<? extends AvalancheFeature>... features) {
+    public static void start(Application application, String appSecret, Class<? extends AvalancheFeature>... features) {
         Set<Class<? extends AvalancheFeature>> featureClassSet = new HashSet<>();
         List<AvalancheFeature> featureList = new ArrayList<>();
         for (Class<? extends AvalancheFeature> featureClass : features)
@@ -83,22 +84,22 @@ public final class Avalanche {
                 if (feature != null)
                     featureList.add(feature);
             }
-        start(application, appKey, featureList.toArray(new AvalancheFeature[featureList.size()]));
+        start(application, appSecret, featureList.toArray(new AvalancheFeature[featureList.size()]));
     }
 
     /**
-     * The most flexible way to set up the SDK. Configure your features first and then pass them in here to enable them in the SDK.
+     * Initializer only visible for testing.
      *
      * @param application Your application object.
-     * @param appKey      The app key to use (application/environment).
-     * @param features    Vararg list of configured features to enable.
+     * @param appSecret   A unique and secret key used to identify the application.
+     * @param features    List of features to use.
      */
     @VisibleForTesting
     @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-    static void start(Application application, String appKey, AvalancheFeature... features) {
+    static void start(Application application, String appSecret, AvalancheFeature... features) {
         Avalanche instance = getInstance();
         synchronized (instance) {
-            boolean initializedSuccessfully = instance.initialize(application, appKey);
+            boolean initializedSuccessfully = instance.initialize(application, appSecret);
             if (initializedSuccessfully)
                 for (AvalancheFeature feature : features)
                     instance.addFeature(feature);
@@ -210,10 +211,10 @@ public final class Avalanche {
      * Initialize the SDK.
      *
      * @param application application context.
-     * @param appKey      application key.
+     * @param appSecret   a unique and secret key used to identify the application.
      * @return true if init was successful, false otherwise.
      */
-    private boolean initialize(Application application, String appKey) {
+    private boolean initialize(Application application, String appSecret) {
 
         /* Parse and store parameters. */
         if (mApplication != null) {
@@ -224,15 +225,15 @@ public final class Avalanche {
             AvalancheLog.error("application may not be null");
             return false;
         }
-        if (appKey == null) {
-            AvalancheLog.error("appKey may not be null");
+        if (appSecret == null) {
+            AvalancheLog.error("appSecret may not be null");
             return false;
         }
-        UUID appKeyUUID;
+        UUID appSecretUUID;
         try {
-            appKeyUUID = UUID.fromString(appKey);
+            appSecretUUID = UUID.fromString(appSecret);
         } catch (IllegalArgumentException e) {
-            AvalancheLog.error("appKey is invalid", e);
+            AvalancheLog.error("appSecret is invalid", e);
             return false;
         }
         mApplication = application;
@@ -244,7 +245,7 @@ public final class Avalanche {
 
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
-        mChannel = new DefaultAvalancheChannel(application, appKeyUUID, mLogSerializer);
+        mChannel = new DefaultAvalancheChannel(application, appSecretUUID, mLogSerializer);
         mChannel.setEnabled(isInstanceEnabled());
         return true;
     }
