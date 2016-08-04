@@ -5,6 +5,8 @@ import android.app.Application;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -19,6 +21,7 @@ import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.IdHelper;
 import avalanche.core.utils.StorageHelper;
 
+import static avalanche.core.utils.PrefStorageConstants.KEY_ENABLED;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
@@ -27,6 +30,7 @@ import static junit.framework.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -34,10 +38,11 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Constants.class, AvalancheLog.class, StorageHelper.class, IdHelper.class})
+@PrepareForTest({Constants.class, AvalancheLog.class, StorageHelper.class, StorageHelper.PreferencesStorage.class, IdHelper.class})
 public class AvalancheTest {
 
     private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
@@ -53,10 +58,29 @@ public class AvalancheTest {
         application = mock(Application.class);
         when(application.getApplicationContext()).thenReturn(application);
 
-        PowerMockito.mockStatic(Constants.class);
-        PowerMockito.mockStatic(AvalancheLog.class);
-        PowerMockito.mockStatic(StorageHelper.class);
-        PowerMockito.mockStatic(IdHelper.class);
+        mockStatic(Constants.class);
+        mockStatic(AvalancheLog.class);
+        mockStatic(StorageHelper.class);
+        mockStatic(StorageHelper.PreferencesStorage.class);
+        mockStatic(IdHelper.class);
+
+        /* First call to avalanche.isInstanceEnabled shall return true, initial state. */
+        when(StorageHelper.PreferencesStorage.getBoolean(anyString(), eq(true))).thenReturn(true);
+
+        /* Then simulate further changes to state. */
+        PowerMockito.doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+
+                /* Whenever the new state is persisted, make further calls return the new state. */
+                String key = (String) invocation.getArguments()[0];
+                boolean enabled = (Boolean) invocation.getArguments()[1];
+                when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(enabled);
+                return null;
+            }
+        }).when(StorageHelper.PreferencesStorage.class);
+        StorageHelper.PreferencesStorage.putBoolean(anyString(), anyBoolean());
     }
 
     @Test
@@ -143,27 +167,27 @@ public class AvalancheTest {
         DummyFeature dummyFeature = DummyFeature.getInstance();
         AnotherDummyFeature anotherDummyFeature = AnotherDummyFeature.getInstance();
         for (AvalancheFeature feature : features) {
-            assertTrue(feature.isEnabled());
+            assertTrue(feature.isInstanceEnabled());
         }
 
         // Explicit set enabled should not change that
         Avalanche.setEnabled(true);
         assertTrue(Avalanche.isEnabled());
         for (AvalancheFeature feature : features) {
-            assertTrue(feature.isEnabled());
+            assertTrue(feature.isInstanceEnabled());
         }
-        verify(dummyFeature, never()).setEnabled(anyBoolean());
-        verify(anotherDummyFeature, never()).setEnabled(anyBoolean());
+        verify(dummyFeature, never()).setInstanceEnabled(anyBoolean());
+        verify(anotherDummyFeature, never()).setInstanceEnabled(anyBoolean());
         verify(channel).setEnabled(true);
 
         // Verify disabling base disables all modules
         Avalanche.setEnabled(false);
         assertFalse(Avalanche.isEnabled());
         for (AvalancheFeature feature : features) {
-            assertFalse(feature.isEnabled());
+            assertFalse(feature.isInstanceEnabled());
         }
-        verify(dummyFeature).setEnabled(false);
-        verify(anotherDummyFeature).setEnabled(false);
+        verify(dummyFeature).setInstanceEnabled(false);
+        verify(anotherDummyFeature).setInstanceEnabled(false);
         verify(application).unregisterActivityLifecycleCallbacks(dummyFeature);
         verify(application).unregisterActivityLifecycleCallbacks(anotherDummyFeature);
         verify(channel).setEnabled(false);
@@ -172,47 +196,47 @@ public class AvalancheTest {
         Avalanche.setEnabled(true);
         assertTrue(Avalanche.isEnabled());
         for (AvalancheFeature feature : features) {
-            assertTrue(feature.isEnabled());
+            assertTrue(feature.isInstanceEnabled());
         }
-        verify(dummyFeature).setEnabled(true);
-        verify(anotherDummyFeature).setEnabled(true);
+        verify(dummyFeature).setInstanceEnabled(true);
+        verify(anotherDummyFeature).setInstanceEnabled(true);
         verify(application, times(2)).registerActivityLifecycleCallbacks(dummyFeature);
         verify(application, times(2)).registerActivityLifecycleCallbacks(anotherDummyFeature);
         verify(channel, times(2)).setEnabled(true);
 
         // Verify that disabling one module leaves base and other modules enabled
-        dummyFeature.setEnabled(false);
-        assertFalse(dummyFeature.isEnabled());
+        dummyFeature.setInstanceEnabled(false);
+        assertFalse(dummyFeature.isInstanceEnabled());
         assertTrue(Avalanche.isEnabled());
-        assertTrue(anotherDummyFeature.isEnabled());
+        assertTrue(anotherDummyFeature.isInstanceEnabled());
 
         /* Enable back via main class. */
         Avalanche.setEnabled(true);
         assertTrue(Avalanche.isEnabled());
         for (AvalancheFeature feature : features) {
-            assertTrue(feature.isEnabled());
+            assertTrue(feature.isInstanceEnabled());
         }
-        verify(dummyFeature, times(2)).setEnabled(true);
-        verify(anotherDummyFeature).setEnabled(true);
+        verify(dummyFeature, times(2)).setInstanceEnabled(true);
+        verify(anotherDummyFeature).setInstanceEnabled(true);
         verify(channel, times(3)).setEnabled(true);
 
         /* Enable 1 feature only after disable all. */
         Avalanche.setEnabled(false);
         assertFalse(Avalanche.isEnabled());
         for (AvalancheFeature feature : features) {
-            assertFalse(feature.isEnabled());
+            assertFalse(feature.isInstanceEnabled());
         }
-        dummyFeature.setEnabled(true);
-        assertTrue(dummyFeature.isEnabled());
+        dummyFeature.setInstanceEnabled(true);
+        assertTrue(dummyFeature.isInstanceEnabled());
         assertFalse(Avalanche.isEnabled());
-        assertFalse(anotherDummyFeature.isEnabled());
+        assertFalse(anotherDummyFeature.isInstanceEnabled());
         verify(channel, times(2)).setEnabled(false);
 
         /* Disable back via main class. */
         Avalanche.setEnabled(false);
         assertFalse(Avalanche.isEnabled());
         for (AvalancheFeature feature : features) {
-            assertFalse(feature.isEnabled());
+            assertFalse(feature.isInstanceEnabled());
         }
         verify(channel, times(3)).setEnabled(false);
 
@@ -221,6 +245,58 @@ public class AvalancheTest {
         verify(dummyFeature).onChannelReady(any(AvalancheChannel.class));
         verify(anotherDummyFeature).getLogFactories();
         verify(anotherDummyFeature).onChannelReady(any(AvalancheChannel.class));
+    }
+
+    @Test
+    public void disablePersisted() {
+        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
+        Avalanche.start(application, DUMMY_APP_SECRET, DummyFeature.class, AnotherDummyFeature.class);
+        AvalancheChannel channel = mock(AvalancheChannel.class);
+        Avalanche avalanche = Avalanche.getInstance();
+        avalanche.setChannel(channel);
+
+        /* Verify modules are enabled by default but core is disabled. */
+        assertFalse(Avalanche.isEnabled());
+        for (AvalancheFeature feature : avalanche.getFeatures()) {
+            assertTrue(feature.isInstanceEnabled());
+            verify(application, never()).registerActivityLifecycleCallbacks(feature);
+        }
+
+        /* Verify we can enable back. */
+        Avalanche.setEnabled(true);
+        assertTrue(Avalanche.isEnabled());
+        for (AvalancheFeature feature : avalanche.getFeatures()) {
+            assertTrue(feature.isInstanceEnabled());
+            verify(application).registerActivityLifecycleCallbacks(feature);
+            verify(application, never()).unregisterActivityLifecycleCallbacks(feature);
+        }
+    }
+
+    @Test
+    public void disablePersistedAndDisable() {
+        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
+        Avalanche.start(application, DUMMY_APP_SECRET, DummyFeature.class, AnotherDummyFeature.class);
+        AvalancheChannel channel = mock(AvalancheChannel.class);
+        Avalanche avalanche = Avalanche.getInstance();
+        avalanche.setChannel(channel);
+
+        /* Its already disabled so disable should have no effect on core but should disable features. */
+        Avalanche.setEnabled(false);
+        assertFalse(Avalanche.isEnabled());
+        for (AvalancheFeature feature : avalanche.getFeatures()) {
+            assertFalse(feature.isInstanceEnabled());
+            verify(application, never()).registerActivityLifecycleCallbacks(feature);
+            verify(application, never()).unregisterActivityLifecycleCallbacks(feature);
+        }
+
+        /* Verify we can enable the core back, should have no effect on features except registering the application life cycle callbacks. */
+        Avalanche.setEnabled(true);
+        assertTrue(Avalanche.isEnabled());
+        for (AvalancheFeature feature : avalanche.getFeatures()) {
+            assertTrue(feature.isInstanceEnabled());
+            verify(application).registerActivityLifecycleCallbacks(feature);
+            verify(application, never()).unregisterActivityLifecycleCallbacks(feature);
+        }
     }
 
     @Test

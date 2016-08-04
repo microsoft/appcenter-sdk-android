@@ -4,6 +4,9 @@
         android:key="@string/avalanche_state_key"
         android:title="@string/avalanche_state_title"/>
     <CheckBoxPreference
+        android:key="@string/avalanche_analytics_state_key"
+        android:title="@string/avalanche_analytics_state_title"/>
+    <CheckBoxPreference
         android:key="@string/avalanche_auto_page_tracking_key"
         android:title="@string/avalanche_auto_page_tracking_title"/>
 </PreferenceScreen>
