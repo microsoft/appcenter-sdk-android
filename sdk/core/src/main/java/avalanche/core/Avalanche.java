@@ -92,7 +92,7 @@ public final class Avalanche {
     }
 
     /**
-     * Init.
+     * Initializer only visible for testing.
      *
      * @param application Your application object.
      * @param appSecret   A unique and secret key used to identify the application.
