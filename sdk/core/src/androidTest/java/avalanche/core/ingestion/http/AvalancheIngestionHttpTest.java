@@ -161,14 +161,13 @@ public class AvalancheIngestionHttpTest {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp(urlConnectionFactory, serializer);
-        httpClient.setBaseUrl("http://mock");
 
         /* Test calling code. */
         UUID appSecret = UUIDUtils.randomUUID();
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         httpClient.sendAsync(appSecret, installId, container, serviceCallback);
-        verify(serviceCallback, timeout(1000)).onCallFailed(new HttpException(503));
+        verify(serviceCallback, timeout(1000)).onCallFailed(new HttpException(503, "Busy"));
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
     }
@@ -178,7 +177,6 @@ public class AvalancheIngestionHttpTest {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp(mock(UrlConnectionFactory.class), serializer);
-        httpClient.setBaseUrl("http://mock");
         final Semaphore semaphore = new Semaphore(0);
         ServiceCall call = httpClient.sendAsync(UUIDUtils.randomUUID(), UUIDUtils.randomUUID(), new LogContainer(), new ServiceCallback() {
 
@@ -199,16 +197,10 @@ public class AvalancheIngestionHttpTest {
         call.cancel();
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void noUrl() {
-        new AvalancheIngestionHttp(mock(UrlConnectionFactory.class), mock(LogSerializer.class)).sendAsync(UUIDUtils.randomUUID(), UUIDUtils.randomUUID(), new LogContainer(), mock(ServiceCallback.class));
-    }
-
     @Test
     public void failedConnection() throws IOException {
         UrlConnectionFactory urlConnectionFactory = mock(UrlConnectionFactory.class);
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp(urlConnectionFactory, new DefaultLogSerializer());
-        httpClient.setBaseUrl("http://mock");
         IOException exception = new IOException("mock");
         when(urlConnectionFactory.openConnection(any(URL.class))).thenThrow(exception);
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
@@ -244,7 +236,6 @@ public class AvalancheIngestionHttpTest {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
         AvalancheIngestionHttp httpClient = new AvalancheIngestionHttp(urlConnectionFactory, serializer);
-        httpClient.setBaseUrl("http://mock");
 
         /* Test calling code. */
         UUID appSecret = UUID.randomUUID();
