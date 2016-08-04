@@ -52,7 +52,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     private final Context mContext;
 
     /**
-     * The application secret for ingestion service.
+     * The application secret for the ingestion service.
      */
     private final UUID mAppSecret;
 
@@ -118,11 +118,11 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * Overloaded constructor with limited visibility that allows for dependency injection.
      *
-     * @param context       the context
-     * @param appSecret     the appSecret
-     * @param ingestion     ingestion object for dependency injection
-     * @param persistence   persistence object for dependency injection
-     * @param logSerializer log serializer object for dependency injection
+     * @param context       The context.
+     * @param appSecret     The application secret.
+     * @param ingestion     Ingestion object for dependency injection.
+     * @param persistence   Persistence object for dependency injection.
+     * @param logSerializer Log serializer object for dependency injection.
      */
     @VisibleForTesting
     DefaultAvalancheChannel(@NonNull Context context, @NonNull UUID appSecret, @NonNull AvalancheIngestion ingestion, @NonNull AvalanchePersistence persistence, @NonNull LogSerializer logSerializer) {
@@ -134,7 +134,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     /**
      * Setter for persistence object, to be used for dependency injection.
      *
-     * @param mPersistence the persistence object.
+     * @param mPersistence The persistence object.
      */
     @VisibleForTesting
     void setPersistence(AvalanchePersistence mPersistence) {
@@ -184,7 +184,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     }
 
     /**
-     * Stop sending logs until app restarted or the channel is enabled again.
+     * Stop sending logs until app is restarted or the channel is enabled again.
      *
      * @param deleteLogs in addition to suspending, if this is true, delete all logs from persistence.
      */
