@@ -13,12 +13,12 @@ public interface AvalancheIngestion extends Closeable {
     /**
      * Send logs to the Ingestion service.
      *
-     * @param appKey application identifier.
-     * @param installId install identifier.
-     * @param logContainer payload.
+     * @param appSecret       a unique and secret key used to identify the application.
+     * @param installId       install identifier.
+     * @param logContainer    payload.
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
-     * @throws IllegalArgumentException thrown if callback is null
      * @return the {@link ServiceCall} object
+     * @throws IllegalArgumentException thrown if callback is null
      */
-    ServiceCall sendAsync(UUID appKey, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException;
+    ServiceCall sendAsync(UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException;
 }
