@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.test.InstrumentationRegistry;
 
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -15,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import avalanche.core.AndroidTestUtils;
 import avalanche.core.ingestion.AvalancheIngestion;
 import avalanche.core.ingestion.ServiceCallback;
 import avalanche.core.ingestion.http.AvalancheIngestionHttp;
@@ -25,6 +25,7 @@ import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.LogContainer;
 import avalanche.core.ingestion.models.json.DefaultLogSerializer;
 import avalanche.core.ingestion.models.json.LogSerializer;
+import avalanche.core.ingestion.models.json.MockLog;
 import avalanche.core.ingestion.models.json.MockLogFactory;
 import avalanche.core.persistence.AvalancheDatabasePersistence;
 import avalanche.core.persistence.AvalanchePersistence;
@@ -68,7 +69,6 @@ public class DefaultAvalancheChannelTest {
         sContext = InstrumentationRegistry.getTargetContext();
         StorageHelper.initialize(sContext);
 
-        sMockLog = AndroidTestUtils.generateMockLog();
         sLogSerializer = new DefaultLogSerializer();
         sLogSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
     }
@@ -131,6 +131,11 @@ public class DefaultAvalancheChannelTest {
         };
     }
 
+    @Before
+    public void setUp() {
+        sMockLog = new MockLog();
+    }
+
     @Test
     public void creationWorks() {
         DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), sLogSerializer);
@@ -164,7 +169,7 @@ public class DefaultAvalancheChannelTest {
         //Enqueuing 49 events.
         for (int i = 0; i < 49; i++) {
             channel.enqueue(sMockLog, TEST_GROUP);
-            assertTrue(System.currentTimeMillis() - sMockLog.getToffset() <= 100);
+            assertTrue(sMockLog.getToffset() > 0);
         }
 
         //Check if our counter is equal the number of events.
@@ -424,7 +429,7 @@ public class DefaultAvalancheChannelTest {
         //Enqueuing 4 events.
         for (int i = 0; i < 4; i++) {
             channel.enqueue(sMockLog, TEST_GROUP);
-            assertTrue(System.currentTimeMillis() - sMockLog.getToffset() <= 100);
+            assertTrue(sMockLog.getToffset() > 0);
         }
 
         //The counter should have been 0 now as we have reached the limit
@@ -642,9 +647,9 @@ public class DefaultAvalancheChannelTest {
         AvalancheChannel.Listener listener = mock(AvalancheChannel.Listener.class);
         channel.addListener(listener);
 
-        /* Enqueue a log: nothing will happen as device property generation fails. */
+        /* Enqueue a log: listener is called before but then attaching device properties fails before saving the log. */
         channel.enqueue(sMockLog, TEST_GROUP);
-        verify(listener, never()).onEnqueuingLog(sMockLog, TEST_GROUP);
+        verify(listener).onEnqueuingLog(sMockLog, TEST_GROUP);
         verify(persistence, never()).putLog(TEST_GROUP, sMockLog);
     }
 }
