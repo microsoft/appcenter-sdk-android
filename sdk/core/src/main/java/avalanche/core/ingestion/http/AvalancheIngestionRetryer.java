@@ -90,14 +90,14 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
         }
 
         @Override
-        public void failure(Throwable t) {
-            if (mRetryCount < RETRY_INTERVALS.length && HttpUtils.isRecoverableError(t)) {
+        public void onCallFailed(Exception e) {
+            if (mRetryCount < RETRY_INTERVALS.length && HttpUtils.isRecoverableError(e)) {
                 long delay = RETRY_INTERVALS[mRetryCount++] / 2;
                 delay += mRandom.nextInt((int) delay);
-                AvalancheLog.warn("Try #" + mRetryCount + " failed and will be retried in " + delay + " ms", t);
+                AvalancheLog.warn("Try #" + mRetryCount + " failed and will be retried in " + delay + " ms", e);
                 mHandler.postDelayed(this, delay);
             } else
-                mServiceCallback.failure(t);
+                mServiceCallback.onCallFailed(e);
         }
     }
 }

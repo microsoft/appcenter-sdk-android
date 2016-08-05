@@ -85,13 +85,31 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     /**
+     * Check whether this feature is enabled.
+     *
+     * @return true if enabled, false otherwise.
+     */
+    public static boolean isEnabled() {
+        return getInstance().isInstanceEnabled();
+    }
+
+    /**
+     * Enable or disable this feature.
+     *
+     * @param enabled true to enable, false to disable.
+     */
+    public static void setEnabled(boolean enabled) {
+        getInstance().setInstanceEnabled(enabled);
+    }
+
+    /**
      * Check if automatic page tracking is enabled.
      *
      * @return true if automatic page tracking is enabled. false otherwise.
      * @see #setAutoPageTrackingEnabled(boolean)
      */
     public static boolean isAutoPageTrackingEnabled() {
-        return getInstance().isAutoPageTrackingStateEnabled();
+        return getInstance().isInstanceAutoPageTrackingEnabled();
     }
 
     /**
@@ -102,7 +120,7 @@ public class Analytics extends AbstractAvalancheFeature {
      * @param autoPageTrackingEnabled true to let the module track pages automatically, false otherwise (default state is true).
      */
     public static void setAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
-        getInstance().setAutoPageTrackingStateEnabled(autoPageTrackingEnabled);
+        getInstance().setInstanceAutoPageTrackingEnabled(autoPageTrackingEnabled);
     }
 
     /**
@@ -151,13 +169,15 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     @Override
-    public synchronized void onChannelReady(AvalancheChannel channel) {
+    public synchronized void onChannelReady(@NonNull AvalancheChannel channel) {
         super.onChannelReady(channel);
-        applyEnabledState(isEnabled());
+        applyEnabledState(isInstanceEnabled());
     }
 
     @Override
     public synchronized void onActivityResumed(Activity activity) {
+        if (mSessionTracker == null)
+            return;
         mSessionTracker.onActivityResumed();
         if (mAutoPageTrackingEnabled)
             queuePage(generatePageName(activity.getClass()), null);
@@ -165,12 +185,13 @@ public class Analytics extends AbstractAvalancheFeature {
 
     @Override
     public synchronized void onActivityPaused(Activity activity) {
-        mSessionTracker.onActivityPaused();
+        if (mSessionTracker != null)
+            mSessionTracker.onActivityPaused();
     }
 
     @Override
-    public synchronized void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
+    public synchronized void setInstanceEnabled(boolean enabled) {
+        super.setInstanceEnabled(enabled);
         applyEnabledState(enabled);
     }
 
@@ -213,7 +234,7 @@ public class Analytics extends AbstractAvalancheFeature {
      * @param properties optional properties.
      */
     private void queuePage(@NonNull String name, @Nullable Map<String, String> properties) {
-        if (!isEnabled())
+        if (!isInstanceEnabled())
             return;
         PageLog pageLog = new PageLog();
         pageLog.setName(name);
@@ -228,7 +249,7 @@ public class Analytics extends AbstractAvalancheFeature {
      * @param properties optional properties.
      */
     private void queueEvent(@NonNull String name, @Nullable Map<String, String> properties) {
-        if (!isEnabled())
+        if (!isInstanceEnabled())
             return;
         EventLog eventLog = new EventLog();
         eventLog.setId(UUIDUtils.randomUUID());
@@ -240,14 +261,14 @@ public class Analytics extends AbstractAvalancheFeature {
     /**
      * Implements {@link #isAutoPageTrackingEnabled()}.
      */
-    private boolean isAutoPageTrackingStateEnabled() {
+    private boolean isInstanceAutoPageTrackingEnabled() {
         return mAutoPageTrackingEnabled;
     }
 
     /**
      * Implements {@link #setAutoPageTrackingEnabled(boolean)}.
      */
-    private synchronized void setAutoPageTrackingStateEnabled(boolean autoPageTrackingEnabled) {
+    private synchronized void setInstanceAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
         mAutoPageTrackingEnabled = autoPageTrackingEnabled;
     }
 }

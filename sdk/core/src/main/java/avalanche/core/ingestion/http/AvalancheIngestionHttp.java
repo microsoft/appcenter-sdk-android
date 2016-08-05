@@ -131,9 +131,9 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             @Override
             protected void onPostExecute(Exception e) {
                 if (e == null)
-                    serviceCallback.success();
+                    serviceCallback.onCallSucceeded();
                 else
-                    serviceCallback.failure(e);
+                    serviceCallback.onCallFailed(e);
             }
         };
         call.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);

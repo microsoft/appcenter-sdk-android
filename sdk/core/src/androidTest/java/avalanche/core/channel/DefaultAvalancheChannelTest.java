@@ -122,9 +122,9 @@ public class DefaultAvalancheChannelTest {
                 Object[] args = invocation.getArguments();
                 if (args[3] instanceof ServiceCallback) {
                     if (e == null)
-                        ((ServiceCallback) invocation.getArguments()[3]).success();
+                        ((ServiceCallback) invocation.getArguments()[3]).onCallSucceeded();
                     else
-                        ((ServiceCallback) invocation.getArguments()[3]).failure(e);
+                        ((ServiceCallback) invocation.getArguments()[3]).onCallFailed(e);
                 }
                 return null;
             }
@@ -255,7 +255,7 @@ public class DefaultAvalancheChannelTest {
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
         /* Make 1 of the call succeed. Verify log deleted. */
-        callbacks.get(0).success();
+        callbacks.get(0).onCallSucceeded();
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
         /* The request N+1 is now unlocked. */
@@ -263,7 +263,7 @@ public class DefaultAvalancheChannelTest {
 
         /* Unlock all requests and check logs deleted. */
         for (int i = 1; i < 4; i++)
-            callbacks.get(i).success();
+            callbacks.get(i).onCallSucceeded();
         verify(mockPersistence, times(4)).deleteLogs(any(String.class), any(String.class));
 
         /* The counter should be 0 now as we sent data. */

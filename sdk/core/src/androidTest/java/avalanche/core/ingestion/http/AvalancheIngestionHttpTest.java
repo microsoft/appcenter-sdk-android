@@ -101,7 +101,7 @@ public class AvalancheIngestionHttpTest {
         ServiceCallback serviceCallback = spy(new LockServiceCallback(lock));
         httpClient.sendAsync(appSecret, installId, container, serviceCallback);
         lock.acquire();
-        verify(serviceCallback).success();
+        verify(serviceCallback).onCallSucceeded();
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Secret", appSecret.toString());
@@ -168,7 +168,7 @@ public class AvalancheIngestionHttpTest {
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         httpClient.sendAsync(appSecret, installId, container, serviceCallback);
-        verify(serviceCallback, timeout(1000)).failure(new HttpException(503));
+        verify(serviceCallback, timeout(1000)).onCallFailed(new HttpException(503));
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
     }
@@ -183,12 +183,12 @@ public class AvalancheIngestionHttpTest {
         ServiceCall call = httpClient.sendAsync(UUIDUtils.randomUUID(), UUIDUtils.randomUUID(), new LogContainer(), new ServiceCallback() {
 
             @Override
-            public void success() {
+            public void onCallSucceeded() {
                 semaphore.release();
             }
 
             @Override
-            public void failure(Throwable t) {
+            public void onCallFailed(Exception e) {
                 semaphore.release();
             }
         });
@@ -213,7 +213,7 @@ public class AvalancheIngestionHttpTest {
         when(urlConnectionFactory.openConnection(any(URL.class))).thenThrow(exception);
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         httpClient.sendAsync(UUIDUtils.randomUUID(), UUIDUtils.randomUUID(), new LogContainer(), serviceCallback);
-        verify(serviceCallback, timeout(1000)).failure(exception);
+        verify(serviceCallback, timeout(1000)).onCallFailed(exception);
         verifyNoMoreInteractions(serviceCallback);
     }
 
@@ -251,7 +251,7 @@ public class AvalancheIngestionHttpTest {
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         httpClient.sendAsync(appSecret, installId, container, serviceCallback);
-        verify(serviceCallback, timeout(1000)).failure(any(JSONException.class));
+        verify(serviceCallback, timeout(1000)).onCallFailed(any(JSONException.class));
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
         assertEquals(toffset, log.getToffset());
@@ -267,12 +267,12 @@ public class AvalancheIngestionHttpTest {
         }
 
         @Override
-        public void success() {
+        public void onCallSucceeded() {
             mLock.release();
         }
 
         @Override
-        public void failure(Throwable t) {
+        public void onCallFailed(Exception e) {
             mLock.release();
         }
     }

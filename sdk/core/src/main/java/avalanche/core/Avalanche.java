@@ -19,6 +19,7 @@ import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.IdHelper;
+import avalanche.core.utils.PrefStorageConstants;
 import avalanche.core.utils.StorageHelper;
 
 import static android.util.Log.ASSERT;
@@ -40,11 +41,6 @@ public final class Avalanche {
      * Configured features.
      */
     private Set<AvalancheFeature> mFeatures;
-
-    /**
-     * Enabled state.
-     */
-    private boolean mEnabled = true;
 
     /**
      * Log serializer.
@@ -126,7 +122,7 @@ public final class Avalanche {
      * @return true if enabled, false otherwise.
      */
     public static boolean isEnabled() {
-        return getInstance().mIsEnabled();
+        return getInstance().isInstanceEnabled();
     }
 
     /**
@@ -137,7 +133,7 @@ public final class Avalanche {
      * @param enabled true to enable, false to disable.
      */
     public static void setEnabled(boolean enabled) {
-        getInstance().mSetEnabled(enabled);
+        getInstance().setInstanceEnabled(enabled);
     }
 
     /**
@@ -171,21 +167,22 @@ public final class Avalanche {
     /**
      * Implements {@link #isEnabled()}.
      */
-    private synchronized boolean mIsEnabled() {
-        return mEnabled;
+    private synchronized boolean isInstanceEnabled() {
+        return StorageHelper.PreferencesStorage.getBoolean(PrefStorageConstants.KEY_ENABLED, true);
     }
 
     /**
      * Implements {@link #setEnabled(boolean)}}.
      */
-    private synchronized void mSetEnabled(boolean enabled) {
+    private synchronized void setInstanceEnabled(boolean enabled) {
 
         /* Update channel state. */
         mChannel.setEnabled(enabled);
 
         /* Un-subscribe app callbacks if we were enabled and now disabled. */
-        boolean switchToDisabled = mEnabled && !enabled;
-        boolean switchToEnabled = !mEnabled && enabled;
+        boolean previouslyEnabled = isInstanceEnabled();
+        boolean switchToDisabled = previouslyEnabled && !enabled;
+        boolean switchToEnabled = !previouslyEnabled && enabled;
         if (switchToDisabled) {
             AvalancheLog.info("Avalanche disabled");
         } else if (switchToEnabled) {
@@ -202,12 +199,12 @@ public final class Avalanche {
                 mApplication.registerActivityLifecycleCallbacks(feature);
 
             /* Forward status change. */
-            if (feature.isEnabled() != enabled)
-                feature.setEnabled(enabled);
+            if (feature.isInstanceEnabled() != enabled)
+                feature.setInstanceEnabled(enabled);
         }
 
         /* Update state. */
-        mEnabled = enabled;
+        StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, enabled);
     }
 
     /**
@@ -249,6 +246,7 @@ public final class Avalanche {
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
         mChannel = new DefaultAvalancheChannel(application, appSecretUUID, mLogSerializer);
+        mChannel.setEnabled(isInstanceEnabled());
         return true;
     }
 
@@ -267,7 +265,8 @@ public final class Avalanche {
         }
         mFeatures.add(feature);
         feature.onChannelReady(mChannel);
-        mApplication.registerActivityLifecycleCallbacks(feature);
+        if (isInstanceEnabled())
+            mApplication.registerActivityLifecycleCallbacks(feature);
     }
 
     @VisibleForTesting
