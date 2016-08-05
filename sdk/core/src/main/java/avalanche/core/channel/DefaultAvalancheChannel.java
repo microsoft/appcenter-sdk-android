@@ -143,17 +143,25 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
     @Override
     public void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
-        mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener));
+        synchronized (LOCK) {
+            mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener));
+        }
     }
 
     @Override
     public void removeGroup(String groupName) {
-        mGroupStates.remove(groupName);
+        synchronized (LOCK) {
+            GroupState groupState = mGroupStates.remove(groupName);
+            if (groupState != null)
+                mIngestionHandler.removeCallbacks(groupState.mRunnable);
+        }
     }
 
     @Override
     public boolean isEnabled() {
-        return mEnabled;
+        synchronized (LOCK) {
+            return mEnabled;
+        }
     }
 
     /**
@@ -180,7 +188,9 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      */
     @Override
     public void clear(String groupName) {
-        mPersistence.deleteLogs(groupName);
+        synchronized (LOCK) {
+            mPersistence.deleteLogs(groupName);
+        }
     }
 
     /**
@@ -323,13 +333,13 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         AvalancheLog.debug(TAG, "ingestLogs(" + groupName + "," + batchId + ")");
         mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
                     @Override
-                    public void success() {
+                    public void onCallSucceeded() {
                         handleSendingSuccess(groupName, batchId);
                     }
 
                     @Override
-                    public void failure(Throwable t) {
-                        handleSendingFailure(groupName, batchId, t);
+                    public void onCallFailed(Exception e) {
+                        handleSendingFailure(groupName, batchId, e);
                     }
                 }
         );
@@ -366,10 +376,10 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      *
      * @param groupName the group name
      * @param batchId   the batch ID
-     * @param t         the error
+     * @param e         the exception
      */
-    private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, @NonNull final Throwable t) {
-        if (!HttpUtils.isRecoverableError(t))
+    private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, @NonNull final Exception e) {
+        if (!HttpUtils.isRecoverableError(e))
             mPersistence.deleteLogs(groupName, batchId);
         List<Log> removedLogsForBatchId = mGroupStates.get(groupName).mSendingBatches.remove(batchId);
         if (removedLogsForBatchId == null) {
@@ -378,7 +388,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             GroupListener groupListener = mGroupStates.get(groupName).mListener;
             if (groupListener != null) {
                 for (Log log : removedLogsForBatchId)
-                    groupListener.onFailure(log, new Exception(t));
+                    groupListener.onFailure(log, e);
             }
         }
         suspend(false);

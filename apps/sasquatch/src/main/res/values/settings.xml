@@ -5,6 +5,11 @@
     <string name="avalanche_state_summary_enabled">Avalanche is enabled</string>
     <string name="avalanche_state_summary_disabled">Avalanche is disabled</string>
 
+    <string name="avalanche_analytics_state_key">avalanche_analytics_state_key</string>
+    <string name="avalanche_analytics_state_title">Analytics state</string>
+    <string name="avalanche_analytics_state_summary_enabled">Analytics is enabled</string>
+    <string name="avalanche_analytics_state_summary_disabled">Analytics is disabled</string>
+
     <string name="avalanche_auto_page_tracking_key">avalanche_auto_page_tracking_key</string>
     <string name="avalanche_auto_page_tracking_title">Analytics automatic page tracking</string>
     <string name="avalanche_auto_page_tracking_enabled">Automatic page tracking is enabled</string>
