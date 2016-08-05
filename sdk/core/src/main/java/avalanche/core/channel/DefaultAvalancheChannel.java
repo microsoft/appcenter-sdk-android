@@ -410,25 +410,30 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
                 return;
             }
 
-            /* Generate device properties only once per process life time. */
-            if (mDevice == null) {
-                try {
-                    mDevice = DeviceInfoHelper.getDeviceInfo(mContext);
-                } catch (DeviceInfoHelper.DeviceInfoException e) {
-                    AvalancheLog.error("Device log cannot be generated", e);
-                    return;
-                }
-            }
-
-            /* Attach device properties to every log. */
-            log.setDevice(mDevice);
-
             /* Call listeners so that they can decorate the log. */
             for (Listener listener : mListeners)
                 listener.onEnqueuingLog(log, groupName);
 
-            /* Set an absolute timestamp, we'll convert to relative just before sending. */
-            log.setToffset(System.currentTimeMillis());
+            /* Attach device properties to every log if its not already attached by a feature. */
+            if (log.getDevice() == null) {
+
+                /* Generate device properties only once per process life time. */
+                if (mDevice == null) {
+                    try {
+                        mDevice = DeviceInfoHelper.getDeviceInfo(mContext);
+                    } catch (DeviceInfoHelper.DeviceInfoException e) {
+                        AvalancheLog.error("Device log cannot be generated", e);
+                        return;
+                    }
+                }
+
+                /* Attach device properties. */
+                log.setDevice(mDevice);
+            }
+
+            /* Set an absolute timestamp, we'll convert to relative just before sending. Don't do it if the feature already set a timestamp.*/
+            if (log.getToffset() == 0L)
+                log.setToffset(System.currentTimeMillis());
 
             /* Persist log. */
             try {
