@@ -100,22 +100,20 @@ public class SessionTracker implements AvalancheChannel.Listener {
         mTimeSource = timeSource;
 
         /* Try loading past sessions from storage. */
-        try {
-            Set<String> storedSessions = StorageHelper.PreferencesStorage.getStringSet(STORAGE_KEY);
-            if (storedSessions != null) {
-                for (String session : storedSessions) {
-                    String[] split = session.split(STORAGE_KEY_VALUE_SEPARATOR);
-                    if (split.length == 2) {
-                        Long time = Long.parseLong(split[0]);
-                        UUID sid = UUID.fromString(split[1]);
-                        mSessions.put(time, sid);
-                    }
+        Set<String> storedSessions = StorageHelper.PreferencesStorage.getStringSet(STORAGE_KEY);
+        if (storedSessions != null) {
+            for (String session : storedSessions) {
+                String[] split = session.split(STORAGE_KEY_VALUE_SEPARATOR);
+                try {
+                    Long time = Long.parseLong(split[0]);
+                    UUID sid = UUID.fromString(split[1]);
+                    mSessions.put(time, sid);
+                } catch (RuntimeException e) {
+                    AvalancheLog.warn("Ignore invalid session in store: " + session, e);
                 }
             }
-            AvalancheLog.debug("Loaded stored sessions: " + mSessions);
-        } catch (RuntimeException e) {
-            AvalancheLog.warn("Failed to log stored sessions state.", e);
         }
+        AvalancheLog.debug("Loaded stored sessions: " + mSessions);
     }
 
     @Override
