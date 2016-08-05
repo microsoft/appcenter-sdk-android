@@ -27,7 +27,7 @@ public class SessionTracker implements AvalancheChannel.Listener {
     /**
      * Key used in storage to persist sessions.
      */
-    public static final String STORAGE_KEY = "sessions";
+    private static final String STORAGE_KEY = "sessions";
 
     /**
      * Maximum number of sessions to persist the state.
