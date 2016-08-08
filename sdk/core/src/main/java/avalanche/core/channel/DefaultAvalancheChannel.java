@@ -106,7 +106,6 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         mPersistence = new AvalancheDatabasePersistence();
         mPersistence.setLogSerializer(logSerializer);
         AvalancheIngestionHttp api = new AvalancheIngestionHttp(new DefaultUrlConnectionFactory(), logSerializer);
-        api.setBaseUrl("http://avalanche-perf.westus.cloudapp.azure.com:8081"); //TODO make that a parameter
         AvalancheIngestionRetryer retryer = new AvalancheIngestionRetryer(api);
         mIngestion = new AvalancheIngestionNetworkStateHandler(retryer, NetworkStateHelper.getSharedInstance(context));
         mIngestionHandler = new Handler(Looper.getMainLooper());
@@ -379,6 +378,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param e         the exception
      */
     private void handleSendingFailure(@NonNull final String groupName, @NonNull final String batchId, @NonNull final Exception e) {
+        AvalancheLog.error("Sending logs groupName=" + groupName + " id=" + batchId + " failed", e);
         if (!HttpUtils.isRecoverableError(e))
             mPersistence.deleteLogs(groupName, batchId);
         List<Log> removedLogsForBatchId = mGroupStates.get(groupName).mSendingBatches.remove(batchId);
