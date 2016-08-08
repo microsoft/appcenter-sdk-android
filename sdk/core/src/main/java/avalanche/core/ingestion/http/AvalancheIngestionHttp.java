@@ -22,8 +22,12 @@ import avalanche.core.utils.AvalancheLog;
 
 import static java.lang.Math.max;
 
-
 public class AvalancheIngestionHttp implements AvalancheIngestion {
+
+    /**
+     * Default base URL.
+     */
+    private static final String DEFAULT_BASE_URL = "http://in-staging.avalanch.es:8081";
 
     /**
      * API Path.
@@ -79,14 +83,17 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
      * HTTP read timeout.
      */
     private static final int READ_TIMEOUT = 20000;
+
     /**
      * Url connection factory.
      */
     private final UrlConnectionFactory mUrlConnectionFactory;
+
     /**
      * Log serializer.
      */
     private final LogSerializer mLogSerializer;
+
     /**
      * API base URL (scheme + authority).
      */
@@ -101,6 +108,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     public AvalancheIngestionHttp(@NonNull UrlConnectionFactory urlConnectionFactory, @NonNull LogSerializer logSerializer) {
         mUrlConnectionFactory = urlConnectionFactory;
         mLogSerializer = logSerializer;
+        mBaseUrl = DEFAULT_BASE_URL;
     }
 
     /**
@@ -108,14 +116,12 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
      *
      * @param baseUrl the base url.
      */
-    public void setBaseUrl(String baseUrl) {
+    public void setBaseUrl(@NonNull String baseUrl) {
         mBaseUrl = baseUrl;
     }
 
     @Override
     public ServiceCall sendAsync(final UUID appSecret, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
-        if (mBaseUrl == null)
-            throw new IllegalStateException("baseUrl not configured");
         final AsyncTask<Void, Void, Exception> call = new AsyncTask<Void, Void, Exception>() {
 
             @Override
@@ -170,6 +176,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             /* Set headers. */
             urlConnection.setRequestProperty(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
             urlConnection.setRequestProperty(APP_SECRET, appSecret.toString());
+            urlConnection.setRequestProperty("App-Key", appSecret.toString()); // FIXME temporary as the backend has not implemented the header rename yet
             urlConnection.setRequestProperty(INSTALL_ID, installId.toString());
             AvalancheLog.verbose(LOG_TAG, "Headers: " + urlConnection.getRequestProperties());
 
@@ -211,7 +218,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
 
             /* Generate exception on failure. */
             if (status != 200)
-                throw new HttpException(status);
+                throw new HttpException(status, response);
         } finally {
 
             /* Release connection. */
