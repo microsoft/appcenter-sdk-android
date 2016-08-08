@@ -45,6 +45,14 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         return sInstance;
     }
 
+    public static void setEnabled(boolean enabled) {
+        getInstance().setInstanceEnabled(enabled);
+    }
+
+    public static boolean isEnabled() {
+        return getInstance().isInstanceEnabled();
+    }
+
     @Override
     public synchronized void setInstanceEnabled(boolean enabled) {
         super.setInstanceEnabled(enabled);
