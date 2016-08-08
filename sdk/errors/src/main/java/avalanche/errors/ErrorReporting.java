@@ -46,8 +46,8 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     }
 
     @Override
-    public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
+    public synchronized void setInstanceEnabled(boolean enabled) {
+        super.setInstanceEnabled(enabled);
         initialize();
     }
 
@@ -55,7 +55,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     public synchronized void onChannelReady(AvalancheChannel channel) {
         super.onChannelReady(channel);
 
-        if (isEnabled() && mChannel != null) {
+        if (isInstanceEnabled() && mChannel != null) {
             queuePendingCrashes();
         }
     }
@@ -71,7 +71,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     }
 
     private void initialize() {
-        boolean enabled = isEnabled();
+        boolean enabled = isInstanceEnabled();
         mInitializeTimestamp = enabled ? System.currentTimeMillis() : -1;
 
         if (!enabled) {
