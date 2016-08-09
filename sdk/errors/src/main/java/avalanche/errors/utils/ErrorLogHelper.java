@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import avalanche.core.Constants;
+import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.StorageHelper;
 import avalanche.core.utils.UUIDUtils;
 import avalanche.errors.ingestion.models.ErrorLog;
@@ -63,10 +64,7 @@ public final class ErrorLogHelper {
     public static void serializeErrorLog(@NonNull ErrorLog errorLog) {
 
         File errorLogDirectory = getErrorStorageDirectory();
-        if (!StorageHelper.InternalStorage.mkdir(errorLogDirectory.getAbsolutePath())) {
-            // Could not create crashes temporary directory, can't write error log
-            return;
-        }
+        StorageHelper.InternalStorage.mkdir(errorLogDirectory.getAbsolutePath());
         File logFile = new File(errorLogDirectory, errorLog.getId().toString() + ".json");
 
         //noinspection TryWithIdenticalCatches
@@ -75,7 +73,7 @@ public final class ErrorLogHelper {
         } catch (JSONException e) { // TODO error handling
             e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+            AvalancheLog.error("Couldn't write temporary error log", e);
         }
     }
 
