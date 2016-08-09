@@ -92,7 +92,7 @@ public class ThreadFrame implements Model {
 
     @Override
     public void read(JSONObject object) throws JSONException {
-        setAddress(object.getString(ADDRESS));
+        setAddress(object.optString(ADDRESS, null));
         setSymbol(object.optString(SYMBOL, null));
         setRegisters(JSONUtils.readMap(object, REGISTERS));
     }
