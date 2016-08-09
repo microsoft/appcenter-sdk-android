@@ -382,9 +382,8 @@ public final class StorageHelper {
          * @return {@code true} if the directory was created, otherwise {@code false}.
          */
         @SuppressWarnings({"ResultOfMethodCallIgnored", "SpellCheckingInspection"})
-        public static boolean mkdir(@NonNull String path) {
-            File dir = new File(path);
-            return (dir.exists() && dir.isDirectory()) || dir.mkdirs();
+        public static void mkdir(@NonNull String path) {
+            new File(path).mkdirs();
         }
     }
 
