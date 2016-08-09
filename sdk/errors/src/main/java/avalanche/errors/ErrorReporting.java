@@ -2,17 +2,18 @@ package avalanche.errors;
 
 import android.support.annotation.NonNull;
 
+import org.json.JSONException;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
 import avalanche.core.AbstractAvalancheFeature;
-import avalanche.core.Avalanche;
 import avalanche.core.channel.AvalancheChannel;
-import avalanche.core.ingestion.models.Device;
+import avalanche.core.ingestion.models.json.DefaultLogSerializer;
 import avalanche.core.ingestion.models.json.LogFactory;
+import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.utils.AvalancheLog;
-import avalanche.core.utils.DeviceInfoHelper;
 import avalanche.core.utils.StorageHelper;
 import avalanche.errors.ingestion.models.ErrorLog;
 import avalanche.errors.ingestion.models.json.ErrorLogFactory;
@@ -29,10 +30,13 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     private long mInitializeTimestamp;
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
+    private LogSerializer mLogSerializer;
 
     private ErrorReporting() {
         mFactories = new HashMap<>();
         mFactories.put(ErrorLog.TYPE, ErrorLogFactory.getInstance());
+        mLogSerializer = new DefaultLogSerializer();
+        mLogSerializer.addLogFactory(ErrorLog.TYPE, ErrorLogFactory.getInstance());
     }
 
     @NonNull
@@ -58,7 +62,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     }
 
     @Override
-    public synchronized void onChannelReady(AvalancheChannel channel) {
+    public synchronized void onChannelReady(@NonNull AvalancheChannel channel) {
         super.onChannelReady(channel);
 
         initialize();
@@ -94,12 +98,17 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     private void queuePendingCrashes() {
         for (File logfile : ErrorLogHelper.getStoredErrorLogFiles()) {
-            ErrorLog log = ErrorLogHelper.deserializeErrorLog(logfile.getAbsolutePath());
-            if (log != null) {
-                mChannel.enqueue(log, ERROR_GROUP);
-            }
+            String logfileContents = StorageHelper.InternalStorage.read(logfile);
             AvalancheLog.info("Deleting error log file " + logfile.getName());
             StorageHelper.InternalStorage.delete(logfile);
+            try {
+                ErrorLog log = (ErrorLog) mLogSerializer.deserializeLog(logfileContents);
+                if (log != null) {
+                    mChannel.enqueue(log, ERROR_GROUP);
+                }
+            } catch (JSONException e) {
+                AvalancheLog.error("Error parsing error log", e);
+            }
         }
     }
 
