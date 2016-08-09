@@ -36,7 +36,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     }
 
     @NonNull
-    public static ErrorReporting getInstance() {
+    public static synchronized ErrorReporting getInstance() {
         if (sInstance == null) {
             sInstance = new ErrorReporting();
         }
