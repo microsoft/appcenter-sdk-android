@@ -2,18 +2,15 @@ package avalanche.errors;
 
 import android.os.Process;
 
-import avalanche.core.Constants;
-import avalanche.core.ingestion.models.Device;
-import avalanche.core.utils.UUIDUtils;
 import avalanche.errors.ingestion.models.ErrorLog;
 import avalanche.errors.utils.ErrorLogHelper;
 
-public class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
+class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
     private boolean mIgnoreDefaultExceptionHandler = false;
     private Thread.UncaughtExceptionHandler mDefaultUncaughtExceptionHandler;
 
-    public UncaughtExceptionHandler() {
+    UncaughtExceptionHandler() {
         register();
     }
 
