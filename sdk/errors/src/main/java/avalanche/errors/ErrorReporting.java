@@ -29,12 +29,10 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     private long mInitializeTimestamp;
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
-    private Device mDevice;
 
     private ErrorReporting() {
         mFactories = new HashMap<>();
         mFactories.put(ErrorLog.TYPE, ErrorLogFactory.getInstance());
-        initialize();
     }
 
     @NonNull
@@ -62,6 +60,8 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     @Override
     public synchronized void onChannelReady(AvalancheChannel channel) {
         super.onChannelReady(channel);
+
+        initialize();
 
         if (isInstanceEnabled() && mChannel != null) {
             queuePendingCrashes();
