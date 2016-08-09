@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.VisibleForTesting;
 
+import java.net.UnknownHostException;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -94,7 +95,10 @@ public class AvalancheIngestionRetryer extends AvalancheIngestionDecorator {
             if (mRetryCount < RETRY_INTERVALS.length && HttpUtils.isRecoverableError(e)) {
                 long delay = RETRY_INTERVALS[mRetryCount++] / 2;
                 delay += mRandom.nextInt((int) delay);
-                AvalancheLog.warn("Try #" + mRetryCount + " failed and will be retried in " + delay + " ms", e);
+                String message = "Try #" + mRetryCount + " failed and will be retried in " + delay + " ms";
+                if (e instanceof UnknownHostException)
+                    message += " (UnknownHostException)";
+                AvalancheLog.warn(message, e);
                 mHandler.postDelayed(this, delay);
             } else
                 mServiceCallback.onCallFailed(e);
