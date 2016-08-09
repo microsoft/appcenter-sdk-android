@@ -123,7 +123,7 @@ public final class ErrorLogHelper {
         try {
             errorLog.read(new JSONObject(logfileContents));
         } catch (JSONException e) {
-            e.printStackTrace(); // TODO Error handling
+            throw new RuntimeException(e);
         }
         return errorLog;
     }
