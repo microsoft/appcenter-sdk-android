@@ -2,22 +2,14 @@ package avalanche.errors.utils;
 
 import android.os.Process;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.text.TextUtils;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONStringer;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import avalanche.core.Constants;
-import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.StorageHelper;
 import avalanche.core.utils.UUIDUtils;
 import avalanche.errors.ingestion.models.ErrorLog;
@@ -61,25 +53,11 @@ public final class ErrorLogHelper {
         return errorLog;
     }
 
-    public static void serializeErrorLog(@NonNull ErrorLog errorLog) {
-
-        File errorLogDirectory = getErrorStorageDirectory();
-        StorageHelper.InternalStorage.mkdir(errorLogDirectory.getAbsolutePath());
-        File logFile = new File(errorLogDirectory, errorLog.getId().toString() + ".json");
-
-        //noinspection TryWithIdenticalCatches
-        try {
-            writeErrorLog(errorLog, logFile.getAbsolutePath());
-        } catch (JSONException e) { // TODO error handling
-            e.printStackTrace();
-        } catch (IOException e) {
-            AvalancheLog.error("Couldn't write temporary error log", e);
-        }
-    }
-
     @NonNull
-    private static File getErrorStorageDirectory() {
-        return new File(Constants.FILES_PATH, ERROR_DIRECTORY);
+    public static File getErrorStorageDirectory() {
+        File errorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
+        StorageHelper.InternalStorage.mkdir(errorLogDirectory.getAbsolutePath());
+        return errorLogDirectory;
     }
 
     @NonNull
@@ -92,38 +70,6 @@ public final class ErrorLogHelper {
         });
 
         return files != null ? files : new File[0];
-    }
-
-    @Nullable
-    public static ErrorLog getLastErrorLog() {
-        File logfile = StorageHelper.InternalStorage.lastModifiedFile(getErrorStorageDirectory().getAbsolutePath(), new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String filename) {
-                return filename.endsWith(".json");
-            }
-        });
-
-        if (logfile == null) {
-            return null;
-        }
-
-        return deserializeErrorLog(logfile.getAbsolutePath());
-    }
-
-    @Nullable
-    public static ErrorLog deserializeErrorLog(@NonNull String logfile) {
-        String logfileContents = StorageHelper.InternalStorage.read(logfile);
-        if (TextUtils.isEmpty(logfileContents)) {
-            return null;
-        }
-
-        ErrorLog errorLog = new ErrorLog();
-        try {
-            errorLog.read(new JSONObject(logfileContents));
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-        return errorLog;
     }
 
     @NonNull
@@ -157,14 +103,6 @@ public final class ErrorLogHelper {
             threadFrames.add(frame);
         }
         return threadFrames;
-    }
-
-    private static void writeErrorLog(@NonNull ErrorLog log, @NonNull String logfile) throws JSONException, IOException {
-        JSONStringer writer = new JSONStringer();
-        writer.object();
-        log.write(writer);
-        writer.endObject();
-        StorageHelper.InternalStorage.write(logfile, writer.toString());
     }
 
 }
