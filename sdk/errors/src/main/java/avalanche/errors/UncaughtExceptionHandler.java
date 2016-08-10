@@ -13,6 +13,7 @@ import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.StorageHelper;
 import avalanche.errors.ingestion.models.ErrorLog;
 import avalanche.errors.ingestion.models.json.ErrorLogFactory;
+import avalanche.errors.model.TestCrashException;
 import avalanche.errors.utils.ErrorLogHelper;
 
 class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
@@ -33,17 +34,21 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
         if (!ErrorReporting.isEnabled() && mDefaultUncaughtExceptionHandler != null) {
             mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
         } else {
-            ErrorLog errorLog = ErrorLogHelper.createErrorLog(thread, exception, Thread.getAllStackTraces(), ErrorReporting.getInstance().getInitializeTimestamp());
+            if (exception instanceof TestCrashException) {
+                AvalancheLog.info("Test crash exception detected. The exception will not be sent.");
+            } else {
+                ErrorLog errorLog = ErrorLogHelper.createErrorLog(thread, exception, Thread.getAllStackTraces(), ErrorReporting.getInstance().getInitializeTimestamp());
 
-            try {
-                File errorLogDirectory = ErrorLogHelper.getErrorStorageDirectory();
-                File errorLogFile = new File(errorLogDirectory, errorLog.getId().toString() + ".json");
-                String errorLogString = mLogSerializer.serializeLog(errorLog);
-                StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
-            } catch (JSONException e) {
-                AvalancheLog.error("Error serializing error log to JSON", e);
-            } catch (IOException e) {
-                AvalancheLog.error("Error writing error log to file", e);
+                try {
+                    File errorLogDirectory = ErrorLogHelper.getErrorStorageDirectory();
+                    File errorLogFile = new File(errorLogDirectory, errorLog.getId().toString() + ".json");
+                    String errorLogString = mLogSerializer.serializeLog(errorLog);
+                    StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
+                } catch (JSONException e) {
+                    AvalancheLog.error("Error serializing error log to JSON", e);
+                } catch (IOException e) {
+                    AvalancheLog.error("Error writing error log to file", e);
+                }
             }
 
             if (!mIgnoreDefaultExceptionHandler && mDefaultUncaughtExceptionHandler != null) {

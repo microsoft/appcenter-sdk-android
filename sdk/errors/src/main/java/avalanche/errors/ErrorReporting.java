@@ -17,6 +17,7 @@ import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.StorageHelper;
 import avalanche.errors.ingestion.models.ErrorLog;
 import avalanche.errors.ingestion.models.json.ErrorLogFactory;
+import avalanche.errors.model.TestCrashException;
 import avalanche.errors.utils.ErrorLogHelper;
 
 
@@ -47,12 +48,19 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         return sInstance;
     }
 
+    public static boolean isEnabled() {
+        return getInstance().isInstanceEnabled();
+    }
+
     public static void setEnabled(boolean enabled) {
         getInstance().setInstanceEnabled(enabled);
     }
 
-    public static boolean isEnabled() {
-        return getInstance().isInstanceEnabled();
+    /**
+     * Generates crash for test purpose.
+     */
+    public static void generateTestCrash() {
+        throw new TestCrashException();
     }
 
     @Override
