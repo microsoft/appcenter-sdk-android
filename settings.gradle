@@ -1,7 +1,7 @@
 // sdk modules
 include ':sdk'
 include ':sdk:core'
-include ':sdk:crash'
+include ':sdk:errors'
 include ':sdk:analytics'
 
 // test apps
