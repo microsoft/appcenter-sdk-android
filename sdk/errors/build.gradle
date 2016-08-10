@@ -1,5 +1,5 @@
 //
-// :sdk:crash
+// :sdk:error
 //
 evaluationDependsOn(':sdk')
 
