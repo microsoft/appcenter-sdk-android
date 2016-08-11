@@ -5,6 +5,7 @@ import android.os.SystemClock;
 import org.junit.Assert;
 import org.junit.Test;
 
+@SuppressWarnings("unused")
 public class AndroidTimeSourceTest {
 
     @Test
