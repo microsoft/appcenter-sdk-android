@@ -1,6 +1,7 @@
 package avalanche.errors;
 
 import android.content.Context;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 
 import org.json.JSONException;
@@ -96,7 +97,8 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     private void initialize() {
         boolean enabled = isInstanceEnabled();
-        mInitializeTimestamp = enabled ? System.currentTimeMillis() : -1;
+        mInitializeTimestamp = enabled ? SystemClock.elapsedRealtime() : -1;
+
         if (!enabled) {
             if (mUncaughtExceptionHandler != null) {
                 mUncaughtExceptionHandler.unregister();
