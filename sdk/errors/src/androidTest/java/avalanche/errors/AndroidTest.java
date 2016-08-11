@@ -2,10 +2,11 @@ package avalanche.errors;
 
 import org.junit.Test;
 
+@SuppressWarnings("unused")
 public class AndroidTest {
 
-    @SuppressWarnings("EmptyMethod")
     @Test
+    @SuppressWarnings("EmptyMethod")
     public void emptyTest() {
     }
 }
