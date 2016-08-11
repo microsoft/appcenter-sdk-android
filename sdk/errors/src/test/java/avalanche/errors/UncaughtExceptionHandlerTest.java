@@ -84,10 +84,16 @@ public class UncaughtExceptionHandlerTest {
     }
 
     @Test
-    public void testRegistration() {
+    public void registerWorks() {
         // Verify that creation registers handler and previously defined handler is correctly saved
         assertEquals(exceptionHandler, Thread.getDefaultUncaughtExceptionHandler());
         assertEquals(defaultExceptionHandler, exceptionHandler.getDefaultUncaughtExceptionHandler());
+    }
+
+    @Test
+    public void unregisterWorks() {
+        exceptionHandler.unregister();
+        assertEquals(defaultExceptionHandler, Thread.getDefaultUncaughtExceptionHandler());
     }
 
     @Test
