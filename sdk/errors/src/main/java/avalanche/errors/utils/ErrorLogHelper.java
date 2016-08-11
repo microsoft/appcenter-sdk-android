@@ -4,6 +4,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Build;
 import android.os.Process;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 
 import java.io.File;
