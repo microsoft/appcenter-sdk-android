@@ -2,6 +2,7 @@ package avalanche.errors;
 
 import android.content.Context;
 import android.os.Process;
+import android.support.annotation.VisibleForTesting;
 
 import org.json.JSONException;
 
@@ -22,7 +23,7 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
     private final LogSerializer mLogSerializer;
 
-    private final boolean mIgnoreDefaultExceptionHandler = false;
+    private boolean mIgnoreDefaultExceptionHandler = false;
 
     private Thread.UncaughtExceptionHandler mDefaultUncaughtExceptionHandler;
 
@@ -57,6 +58,17 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
             }
         }
     }
+
+    @VisibleForTesting
+    void setIgnoreDefaultExceptionHandler(boolean ignoreDefaultExceptionHandler) {
+        mIgnoreDefaultExceptionHandler = ignoreDefaultExceptionHandler;
+    }
+
+    @VisibleForTesting
+    Thread.UncaughtExceptionHandler getDefaultUncaughtExceptionHandler() {
+        return mDefaultUncaughtExceptionHandler;
+    }
+
 
     private void register() {
         if (!mIgnoreDefaultExceptionHandler) {
