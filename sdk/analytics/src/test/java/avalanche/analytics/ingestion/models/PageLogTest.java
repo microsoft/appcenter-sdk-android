@@ -10,7 +10,7 @@ import avalanche.analytics.utils.TestUtils;
 import static avalanche.analytics.utils.TestUtils.checkEquals;
 import static avalanche.analytics.utils.TestUtils.checkNotEquals;
 
-
+@SuppressWarnings("unused")
 public class PageLogTest {
 
     @Test

@@ -10,6 +10,7 @@ import static avalanche.core.utils.TestUtils.checkEquals;
 import static avalanche.core.utils.TestUtils.checkNotEquals;
 import static org.mockito.Mockito.mock;
 
+@SuppressWarnings("unused")
 public class AbstractLogTest {
 
     @Test
