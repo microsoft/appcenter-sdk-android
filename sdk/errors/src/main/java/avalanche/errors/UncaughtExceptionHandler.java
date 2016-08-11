@@ -1,5 +1,6 @@
 package avalanche.errors;
 
+import android.content.Context;
 import android.os.Process;
 
 import org.json.JSONException;
@@ -17,13 +18,16 @@ import avalanche.errors.utils.ErrorLogHelper;
 
 class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
+    private final Context mContext;
+
     private final LogSerializer mLogSerializer;
 
     private final boolean mIgnoreDefaultExceptionHandler = false;
 
     private Thread.UncaughtExceptionHandler mDefaultUncaughtExceptionHandler;
 
-    UncaughtExceptionHandler() {
+    UncaughtExceptionHandler(Context context) {
+        mContext = context;
         register();
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
@@ -34,7 +38,7 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
         if (!ErrorReporting.isEnabled() && mDefaultUncaughtExceptionHandler != null) {
             mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
         } else {
-            JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(null, thread, exception, Thread.getAllStackTraces(), ErrorReporting.getInstance().getInitializeTimestamp());
+            JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, exception, Thread.getAllStackTraces(), ErrorReporting.getInstance().getInitializeTimestamp());
             try {
                 File errorLogDirectory = ErrorLogHelper.getErrorStorageDirectory();
                 File errorLogFile = new File(errorLogDirectory, errorLog.getId().toString() + ".json");

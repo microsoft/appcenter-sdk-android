@@ -20,9 +20,16 @@ public class JavaErrorLog extends AbstractErrorLog {
      */
     public static final String TYPE = "javaError";
 
+    private static final String ARCHITECTURE = "architecture";
+
     private static final String THREADS = "threads";
 
     private static final String EXCEPTIONS = "exceptions";
+
+    /**
+     * CPU architecture.
+     */
+    private String architecture;
 
     /**
      * Exception causal chain as an array.
@@ -40,6 +47,24 @@ public class JavaErrorLog extends AbstractErrorLog {
     @Override
     public String getType() {
         return TYPE;
+    }
+
+    /**
+     * Get the architecture value.
+     *
+     * @return the architecture value
+     */
+    public String getArchitecture() {
+        return this.architecture;
+    }
+
+    /**
+     * Set the architecture value.
+     *
+     * @param architecture the architecture value to set
+     */
+    public void setArchitecture(String architecture) {
+        this.architecture = architecture;
     }
 
     /**
@@ -81,6 +106,7 @@ public class JavaErrorLog extends AbstractErrorLog {
     @Override
     public void read(JSONObject object) throws JSONException {
         super.read(object);
+        setArchitecture(object.optString(ARCHITECTURE, null));
         setExceptions(JSONUtils.readArray(object, EXCEPTIONS, JavaExceptionFactory.getInstance()));
         setThreads(JSONUtils.readArray(object, THREADS, JavaThreadFactory.getInstance()));
     }
@@ -88,6 +114,7 @@ public class JavaErrorLog extends AbstractErrorLog {
     @Override
     public void write(JSONStringer writer) throws JSONException {
         super.write(writer);
+        JSONUtils.write(writer, ARCHITECTURE, getArchitecture());
         JSONUtils.writeArray(writer, EXCEPTIONS, getExceptions());
         JSONUtils.writeArray(writer, THREADS, getThreads());
     }
@@ -101,6 +128,8 @@ public class JavaErrorLog extends AbstractErrorLog {
 
         JavaErrorLog that = (JavaErrorLog) o;
 
+        if (architecture != null ? !architecture.equals(that.architecture) : that.architecture != null)
+            return false;
         if (exceptions != null ? !exceptions.equals(that.exceptions) : that.exceptions != null)
             return false;
         return threads != null ? threads.equals(that.threads) : that.threads == null;
@@ -109,6 +138,7 @@ public class JavaErrorLog extends AbstractErrorLog {
     @Override
     public int hashCode() {
         int result = super.hashCode();
+        result = 31 * result + (architecture != null ? architecture.hashCode() : 0);
         result = 31 * result + (exceptions != null ? exceptions.hashCode() : 0);
         result = 31 * result + (threads != null ? threads.hashCode() : 0);
         return result;

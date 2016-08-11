@@ -24,10 +24,6 @@ public abstract class AbstractErrorLog extends AbstractLog {
 
     private static final String PARENT_PROCESS_NAME = "parentProcessName";
 
-    private static final String CPU_TYPE = "cpuType";
-
-    private static final String CPU_SUB_TYPE = "cpuSubType";
-
     private static final String ERROR_THREAD_ID = "errorThreadId";
 
     private static final String ERROR_THREAD_NAME = "errorThreadName";
@@ -60,16 +56,6 @@ public abstract class AbstractErrorLog extends AbstractLog {
      * Parent's process name.
      */
     private String parentProcessName;
-
-    /**
-     * The cpuType property.
-     */
-    private Integer cpuType;
-
-    /**
-     * The cpuSubType property.
-     */
-    private Integer cpuSubType;
 
     /**
      * Error thread identifier.
@@ -183,42 +169,6 @@ public abstract class AbstractErrorLog extends AbstractLog {
     }
 
     /**
-     * Get the cpuType value.
-     *
-     * @return the cpuType value
-     */
-    public Integer getCpuType() {
-        return this.cpuType;
-    }
-
-    /**
-     * Set the cpuType value.
-     *
-     * @param cpuType the cpuType value to set
-     */
-    public void setCpuType(Integer cpuType) {
-        this.cpuType = cpuType;
-    }
-
-    /**
-     * Get the cpuSubType value.
-     *
-     * @return the cpuSubType value
-     */
-    public Integer getCpuSubType() {
-        return this.cpuSubType;
-    }
-
-    /**
-     * Set the cpuSubType value.
-     *
-     * @param cpuSubType the cpuSubType value to set
-     */
-    public void setCpuSubType(Integer cpuSubType) {
-        this.cpuSubType = cpuSubType;
-    }
-
-    /**
      * Get the errorThreadId value.
      *
      * @return the errorThreadId value
@@ -298,8 +248,6 @@ public abstract class AbstractErrorLog extends AbstractLog {
         setProcessName(object.optString(PROCESS_NAME, null));
         setParentProcessId(JSONUtils.readInteger(object, PARENT_PROCESS_ID));
         setParentProcessName(object.optString(PARENT_PROCESS_NAME, null));
-        setCpuType(JSONUtils.readInteger(object, CPU_TYPE));
-        setCpuSubType(JSONUtils.readInteger(object, CPU_SUB_TYPE));
         setErrorThreadId(JSONUtils.readLong(object, ERROR_THREAD_ID));
         setErrorThreadName(object.optString(ERROR_THREAD_NAME, null));
         setFatal(JSONUtils.readBoolean(object, FATAL));
@@ -314,8 +262,6 @@ public abstract class AbstractErrorLog extends AbstractLog {
         JSONUtils.write(writer, PROCESS_NAME, getProcessName());
         JSONUtils.write(writer, PARENT_PROCESS_ID, getParentProcessId());
         JSONUtils.write(writer, PARENT_PROCESS_NAME, getParentProcessName());
-        JSONUtils.write(writer, CPU_TYPE, getCpuType());
-        JSONUtils.write(writer, CPU_SUB_TYPE, getCpuSubType());
         JSONUtils.write(writer, ERROR_THREAD_ID, getErrorThreadId());
         JSONUtils.write(writer, ERROR_THREAD_NAME, getErrorThreadName());
         JSONUtils.write(writer, FATAL, getFatal());
@@ -340,9 +286,6 @@ public abstract class AbstractErrorLog extends AbstractLog {
             return false;
         if (parentProcessName != null ? !parentProcessName.equals(that.parentProcessName) : that.parentProcessName != null)
             return false;
-        if (cpuType != null ? !cpuType.equals(that.cpuType) : that.cpuType != null) return false;
-        if (cpuSubType != null ? !cpuSubType.equals(that.cpuSubType) : that.cpuSubType != null)
-            return false;
         if (errorThreadId != null ? !errorThreadId.equals(that.errorThreadId) : that.errorThreadId != null)
             return false;
         if (errorThreadName != null ? !errorThreadName.equals(that.errorThreadName) : that.errorThreadName != null)
@@ -359,8 +302,6 @@ public abstract class AbstractErrorLog extends AbstractLog {
         result = 31 * result + (processName != null ? processName.hashCode() : 0);
         result = 31 * result + (parentProcessId != null ? parentProcessId.hashCode() : 0);
         result = 31 * result + (parentProcessName != null ? parentProcessName.hashCode() : 0);
-        result = 31 * result + (cpuType != null ? cpuType.hashCode() : 0);
-        result = 31 * result + (cpuSubType != null ? cpuSubType.hashCode() : 0);
         result = 31 * result + (errorThreadId != null ? errorThreadId.hashCode() : 0);
         result = 31 * result + (errorThreadName != null ? errorThreadName.hashCode() : 0);
         result = 31 * result + (fatal != null ? fatal.hashCode() : 0);
