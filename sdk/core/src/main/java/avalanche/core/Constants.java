@@ -178,7 +178,7 @@ public class Constants {
     private static void loadCrashIdentifier(Context context) {
         String deviceIdentifier = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
         if (!TextUtils.isEmpty(Constants.APP_PACKAGE) && !TextUtils.isEmpty(deviceIdentifier)) {
-            String combined = Constants.APP_PACKAGE + ":" + deviceIdentifier + ":" + createSalt(context);
+            String combined = Constants.APP_PACKAGE + ":" + deviceIdentifier + ":" + createSalt();
             try {
                 MessageDigest digest = MessageDigest.getInstance("SHA-1");
                 byte[] bytes = combined.getBytes("UTF-8");
@@ -217,7 +217,7 @@ public class Constants {
      * @return a SHA-256 hash of the input or null if SHA-256 is not available (should never happen).
      */
     private static String tryHashStringSha256(Context context, String input) {
-        String salt = createSalt(context);
+        String salt = createSalt();
         try {
             // Get a Sha256 digest
             MessageDigest hash = MessageDigest.getInstance("SHA-256");
@@ -235,12 +235,10 @@ public class Constants {
 
     /**
      * Helper method to create a salt for the crash identifier.
-     *
-     * @param context the context to use. Usually your Activity object.
      */
     @SuppressLint("InlinedApi")
     @SuppressWarnings("deprecation")
-    private static String createSalt(Context context) {
+    private static String createSalt() {
         String abiString;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             abiString = Build.SUPPORTED_ABIS[0];

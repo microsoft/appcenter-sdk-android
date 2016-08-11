@@ -7,6 +7,7 @@ import avalanche.core.utils.TestUtils;
 import static avalanche.core.utils.TestUtils.checkEquals;
 import static avalanche.core.utils.TestUtils.checkNotEquals;
 
+@SuppressWarnings("unused")
 public class DeviceTest {
 
     @Test
