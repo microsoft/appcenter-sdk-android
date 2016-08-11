@@ -3,6 +3,7 @@ package avalanche.errors;
 import android.content.Context;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 import org.json.JSONException;
 
@@ -52,6 +53,12 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             sInstance = new ErrorReporting();
         }
         return sInstance;
+    }
+
+
+    @VisibleForTesting
+    static synchronized void unsetInstance() {
+        sInstance = null;
     }
 
     public static boolean isEnabled() {
