@@ -15,29 +15,28 @@ import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.StorageHelper;
-import avalanche.errors.ingestion.models.ErrorLog;
-import avalanche.errors.ingestion.models.json.ErrorLogFactory;
+import avalanche.errors.ingestion.models.JavaErrorLog;
+import avalanche.errors.ingestion.models.json.JavaErrorLogFactory;
 import avalanche.errors.model.TestCrashException;
 import avalanche.errors.utils.ErrorLogHelper;
 
 
 public class ErrorReporting extends AbstractAvalancheFeature {
 
-    public static final String ERROR_GROUP = "group_error";
+    private static final String ERROR_GROUP = "group_error";
 
     private static ErrorReporting sInstance = null;
 
     private final Map<String, LogFactory> mFactories;
-
+    private final LogSerializer mLogSerializer;
     private long mInitializeTimestamp;
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
-    private LogSerializer mLogSerializer;
 
     private ErrorReporting() {
         mFactories = new HashMap<>();
-        mFactories.put(ErrorLog.TYPE, ErrorLogFactory.getInstance());
+        mFactories.put(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
         mLogSerializer = new DefaultLogSerializer();
-        mLogSerializer.addLogFactory(ErrorLog.TYPE, ErrorLogFactory.getInstance());
+        mLogSerializer.addLogFactory(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
     }
 
     @NonNull
@@ -110,7 +109,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             AvalancheLog.info("Deleting error log file " + logfile.getName());
             StorageHelper.InternalStorage.delete(logfile);
             try {
-                ErrorLog log = (ErrorLog) mLogSerializer.deserializeLog(logfileContents);
+                JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logfileContents);
                 if (log != null) {
                     mChannel.enqueue(log, ERROR_GROUP);
                 }
@@ -120,7 +119,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         }
     }
 
-    protected long getInitializeTimestamp() {
+    long getInitializeTimestamp() {
         return mInitializeTimestamp;
     }
 
