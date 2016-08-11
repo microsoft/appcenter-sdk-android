@@ -9,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 
 import avalanche.analytics.Analytics;
 import avalanche.core.Avalanche;
+import avalanche.errors.ErrorReporting;
 import avalanche.sasquatch.R;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -28,6 +29,7 @@ public class SettingsActivity extends AppCompatActivity {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.settings);
             final CheckBoxPreference analyticsEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.avalanche_analytics_state_key));
+            final CheckBoxPreference errorsEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.avalanche_errors_state_key));
             initSetting(R.string.avalanche_state_key, Avalanche.isEnabled(), R.string.avalanche_state_summary_enabled, R.string.avalanche_state_summary_disabled, new SetEnabled() {
 
                 @Override
@@ -35,6 +37,8 @@ public class SettingsActivity extends AppCompatActivity {
                     Avalanche.setEnabled(enabled);
                     analyticsEnabledPreference.setChecked(enabled);
                     analyticsEnabledPreference.getOnPreferenceChangeListener().onPreferenceChange(analyticsEnabledPreference, enabled);
+                    errorsEnabledPreference.setChecked(enabled);
+                    errorsEnabledPreference.getOnPreferenceChangeListener().onPreferenceChange(errorsEnabledPreference, enabled);
                 }
             });
             initSetting(R.string.avalanche_analytics_state_key, Analytics.isEnabled(), R.string.avalanche_analytics_state_summary_enabled, R.string.avalanche_analytics_state_summary_disabled, new SetEnabled() {
@@ -42,6 +46,12 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public void setEnabled(boolean enabled) {
                     Analytics.setEnabled(enabled);
+                }
+            });
+            initSetting(R.string.avalanche_errors_state_key, ErrorReporting.isEnabled(), R.string.avalanche_errors_state_summary_enabled, R.string.avalanche_errors_state_summary_disabled, new SetEnabled() {
+                @Override
+                public void setEnabled(boolean enabled) {
+                    ErrorReporting.setEnabled(enabled);
                 }
             });
             initSetting(R.string.avalanche_auto_page_tracking_key, Analytics.isAutoPageTrackingEnabled(), R.string.avalanche_auto_page_tracking_enabled, R.string.avalanche_auto_page_tracking_disabled, new SetEnabled() {
