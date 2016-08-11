@@ -1,5 +1,6 @@
 package avalanche.errors.utils;
 
+import android.content.Context;
 import android.os.Process;
 import android.support.annotation.NonNull;
 
@@ -12,44 +13,54 @@ import java.util.Map;
 import avalanche.core.Constants;
 import avalanche.core.utils.StorageHelper;
 import avalanche.core.utils.UUIDUtils;
-import avalanche.errors.ingestion.models.ErrorLog;
-import avalanche.errors.ingestion.models.Exception;
-import avalanche.errors.ingestion.models.ThreadFrame;
+import avalanche.errors.ingestion.models.JavaErrorLog;
+import avalanche.errors.ingestion.models.JavaException;
+import avalanche.errors.ingestion.models.JavaStackFrame;
+import avalanche.errors.ingestion.models.JavaThread;
 
 /**
  * ErrorLogHelper to help constructing, serializing, and de-serializing locally stored error logs.
  */
 public final class ErrorLogHelper {
 
-    public static final String ERROR_DIRECTORY = "error";
+    private static final String ERROR_DIRECTORY = "error";
 
     @NonNull
-    public static ErrorLog createErrorLog(@NonNull final Thread thread, @NonNull final Throwable exception, @NonNull final Map<Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
-        ErrorLog errorLog = new ErrorLog();
-        errorLog.setId(UUIDUtils.randomUUID());
-        /*
-            - Parent process information intentionally left blank
-            - applicationPath, exceptionType, exceptionCode, exceptionAddress intentionally left blank
-            (Android does not provide any of this information)
-         */
+    public static JavaErrorLog createErrorLog(@NonNull Context context, @NonNull final Thread thread, @NonNull final Throwable exception, @NonNull final Map<Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
 
+        /* Build error log with a unique identifier. */
+        JavaErrorLog errorLog = new JavaErrorLog();
+        errorLog.setId(UUIDUtils.randomUUID());
+
+        /* Process information. Parent one is not available on Android. */
         errorLog.setProcessId(Process.myPid());
-        errorLog.setCrashThread((int) thread.getId()); // TODO maybe redefine model value to be of type long
-        errorLog.setAppLaunchTOffset(System.currentTimeMillis() - initializeTimestamp);
-        errorLog.setExceptionType(exception.getClass().getName());
-        errorLog.setExceptionReason(exception.getMessage());
+//        FIXME ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+//        for (ActivityManager.RunningAppProcessInfo info : activityManager.getRunningAppProcesses())
+//            if (info.pid == Process.myPid())
+//                errorLog.setProcessName(info.processName);
+
+        // TODO cpu types cannot be integer on Android, what to do?
+
+        /* Thread in error information. */
+        errorLog.setErrorThreadId(thread.getId());
+        errorLog.setErrorThreadName(thread.getName());
+
+        /* For now we monitor only uncaught exceptions: a crash, fatal. */
         errorLog.setFatal(true);
 
+        /* Relative application launch time to error time. */
+        errorLog.setAppLaunchTOffset(System.currentTimeMillis() - initializeTimestamp);
+
+        /* Attach exceptions. */
+        errorLog.setExceptions(getJavaExceptionsFromThrowable(exception));
+
+        /* Attach thread states. */
         for (Map.Entry<Thread, StackTraceElement[]> entry : allStackTraces.entrySet()) {
-            avalanche.errors.ingestion.models.Thread t = new avalanche.errors.ingestion.models.Thread();
-            t.setId((int) entry.getKey().getId());
-            t.setFrames(getThreadFramesFromStackTrace(entry.getValue()));
+            JavaThread t = new JavaThread();
+            t.setId(entry.getKey().getId());
+            t.setName(entry.getKey().getName());
+            t.setFrames(getJavaStackFramesFromStackTrace(entry.getValue()));
         }
-
-        List<Exception> exceptions = new ArrayList<>();
-        exceptions.add(getExceptionFromThrowable(exception));
-        errorLog.setExceptions(exceptions);
-
         return errorLog;
     }
 
@@ -73,36 +84,30 @@ public final class ErrorLogHelper {
     }
 
     @NonNull
-    private static Exception getExceptionFromThrowable(@NonNull Throwable t) {
-        return getExceptionFromThrowable(t, 0);
+    private static List<JavaException> getJavaExceptionsFromThrowable(@NonNull Throwable t) {
+        List<JavaException> javaExceptions = new ArrayList<>();
+        for (Throwable cause = t; cause != null; cause = cause.getCause()) {
+            JavaException javaException = new JavaException();
+            javaException.setType(cause.getClass().getName());
+            javaException.setMessage(cause.getMessage());
+            javaException.setFrames(getJavaStackFramesFromStackTrace(cause.getStackTrace()));
+            javaExceptions.add(javaException);
+        }
+        return javaExceptions;
     }
 
     @NonNull
-    private static Exception getExceptionFromThrowable(@NonNull Throwable t, int id) {
-        Exception result = new Exception();
-        result.setId(id);
-        result.setFrames(getThreadFramesFromStackTrace(t.getStackTrace()));
-        result.setLanguage("Java");
-        result.setReason(t.getMessage());
-
-        if (t.getCause() != null) {
-            List<Exception> innerExceptions = new ArrayList<>();
-            innerExceptions.add(getExceptionFromThrowable(t.getCause(), id + 1));
-            result.setInnerExceptions(innerExceptions);
+    private static List<JavaStackFrame> getJavaStackFramesFromStackTrace(@NonNull StackTraceElement[] stackTrace) {
+        List<JavaStackFrame> javaStackFrames = new ArrayList<>();
+        for (StackTraceElement stackTraceElement : stackTrace) {
+            JavaStackFrame javaStackFrame = new JavaStackFrame();
+            javaStackFrame.setClassName(stackTraceElement.getClassName());
+            javaStackFrame.setMethodName(stackTraceElement.getMethodName());
+            javaStackFrame.setLineNumber(stackTraceElement.getLineNumber());
+            javaStackFrame.setFileName(stackTraceElement.getFileName());
+            javaStackFrames.add(javaStackFrame);
         }
-
-        return result;
-    }
-
-    @NonNull
-    private static List<ThreadFrame> getThreadFramesFromStackTrace(@NonNull StackTraceElement[] stackTrace) {
-        List<ThreadFrame> threadFrames = new ArrayList<>();
-        for (StackTraceElement e : stackTrace) {
-            ThreadFrame frame = new ThreadFrame();
-            frame.setSymbol(e.toString());
-            threadFrames.add(frame);
-        }
-        return threadFrames;
+        return javaStackFrames;
     }
 
 }
