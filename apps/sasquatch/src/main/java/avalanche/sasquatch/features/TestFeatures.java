@@ -8,6 +8,7 @@ import android.widget.AdapterView;
 import java.util.ArrayList;
 import java.util.List;
 
+import avalanche.errors.ErrorReporting;
 import avalanche.sasquatch.R;
 import avalanche.sasquatch.activities.DeviceInfoActivity;
 import avalanche.sasquatch.activities.DummyActivity;
@@ -28,7 +29,7 @@ public final class TestFeatures {
             public void onClick(View v) {
 
                 /* Make the app crash on purpose for testing report. */
-                ((String) null).isEmpty();
+                ErrorReporting.generateTestCrash();
             }
         }));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
