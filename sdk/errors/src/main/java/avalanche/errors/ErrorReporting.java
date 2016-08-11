@@ -29,9 +29,10 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     private final Map<String, LogFactory> mFactories;
 
+    private final LogSerializer mLogSerializer;
+
     private long mInitializeTimestamp;
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
-    private LogSerializer mLogSerializer;
 
     private ErrorReporting() {
         mFactories = new HashMap<>();
