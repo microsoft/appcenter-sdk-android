@@ -1,5 +1,7 @@
 package avalanche.core;
 
+import android.content.Context;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -105,8 +107,7 @@ public class AbstractAvalancheFeatureTest {
     @Test
     public void onChannelReady() {
         AvalancheChannel channel = mock(AvalancheChannel.class);
-        feature.onChannelReady(channel);
-
+        feature.onChannelReady(mock(Context.class), channel);
         Assert.assertSame(channel, feature.mChannel);
     }
 

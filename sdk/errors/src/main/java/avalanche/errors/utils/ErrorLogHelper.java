@@ -1,6 +1,8 @@
 package avalanche.errors.utils;
 
+import android.app.ActivityManager;
 import android.content.Context;
+import android.os.Build;
 import android.os.Process;
 import android.support.annotation.NonNull;
 
@@ -11,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 
 import avalanche.core.Constants;
+import avalanche.core.utils.AvalancheLog;
+import avalanche.core.utils.DeviceInfoHelper;
 import avalanche.core.utils.StorageHelper;
 import avalanche.core.utils.UUIDUtils;
 import avalanche.errors.ingestion.models.JavaErrorLog;
@@ -35,14 +39,22 @@ public final class ErrorLogHelper {
         /* Set absolute current time. Will be correlated to session and converted to relative later. */
         errorLog.setToffset(System.currentTimeMillis());
 
+        /* Snapshot device properties. */
+        try {
+            errorLog.setDevice(DeviceInfoHelper.getDeviceInfo(context));
+        } catch (DeviceInfoHelper.DeviceInfoException e) {
+            AvalancheLog.error("Could not attach device properties snapshot to error log, will attach at sending time", e);
+        }
+
         /* Process information. Parent one is not available on Android. */
         errorLog.setProcessId(Process.myPid());
-//        FIXME ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-//        for (ActivityManager.RunningAppProcessInfo info : activityManager.getRunningAppProcesses())
-//            if (info.pid == Process.myPid())
-//                errorLog.setProcessName(info.processName);
+        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningAppProcessInfo info : activityManager.getRunningAppProcesses())
+            if (info.pid == Process.myPid())
+                errorLog.setProcessName(info.processName);
 
-        // TODO cpu types cannot be integer on Android, what to do?
+        /* CPU architecture. */
+        errorLog.setArchitecture(getArchitecture());
 
         /* Thread in error information. */
         errorLog.setErrorThreadId(thread.getId());
@@ -58,13 +70,25 @@ public final class ErrorLogHelper {
         errorLog.setExceptions(getJavaExceptionsFromThrowable(exception));
 
         /* Attach thread states. */
+        List<JavaThread> threads = new ArrayList<>(allStackTraces.size());
         for (Map.Entry<Thread, StackTraceElement[]> entry : allStackTraces.entrySet()) {
-            JavaThread t = new JavaThread();
-            t.setId(entry.getKey().getId());
-            t.setName(entry.getKey().getName());
-            t.setFrames(getJavaStackFramesFromStackTrace(entry.getValue()));
+            JavaThread javaThread = new JavaThread();
+            javaThread.setId(entry.getKey().getId());
+            javaThread.setName(entry.getKey().getName());
+            javaThread.setFrames(getJavaStackFramesFromStackTrace(entry.getValue()));
+            threads.add(javaThread);
         }
+        errorLog.setThreads(threads);
         return errorLog;
+    }
+
+    @SuppressWarnings("deprecation")
+    private static String getArchitecture() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            return Build.SUPPORTED_ABIS[0];
+        } else {
+            return Build.CPU_ABI;
+        }
     }
 
     @NonNull

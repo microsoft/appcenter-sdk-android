@@ -1,6 +1,7 @@
 package avalanche.core;
 
 import android.app.Application;
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -40,7 +41,8 @@ public interface AvalancheFeature extends Application.ActivityLifecycleCallbacks
     /**
      * Called when the channel is ready to be used. This is called even when the feature is disabled.
      *
-     * @param channel channel.
+     * @param context application context.
+     * @param channel  channel.
      */
-    void onChannelReady(@NonNull AvalancheChannel channel);
+    void onChannelReady(@NonNull Context context, @NonNull AvalancheChannel channel);
 }

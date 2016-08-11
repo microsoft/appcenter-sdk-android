@@ -1,5 +1,6 @@
 package avalanche.errors;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 
 import org.json.JSONException;
@@ -28,8 +29,13 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     private static ErrorReporting sInstance = null;
 
     private final Map<String, LogFactory> mFactories;
+
     private final LogSerializer mLogSerializer;
+
+    private Context mContext;
+
     private long mInitializeTimestamp;
+
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
 
     private ErrorReporting() {
@@ -69,11 +75,10 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     }
 
     @Override
-    public synchronized void onChannelReady(@NonNull AvalancheChannel channel) {
-        super.onChannelReady(channel);
-
+    public synchronized void onChannelReady(@NonNull Context context, @NonNull AvalancheChannel channel) {
+        super.onChannelReady(context, channel);
+        mContext = context;
         initialize();
-
         if (isInstanceEnabled() && mChannel != null) {
             queuePendingCrashes();
         }
@@ -92,15 +97,14 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     private void initialize() {
         boolean enabled = isInstanceEnabled();
         mInitializeTimestamp = enabled ? System.currentTimeMillis() : -1;
-
         if (!enabled) {
             if (mUncaughtExceptionHandler != null) {
                 mUncaughtExceptionHandler.unregister();
+                mUncaughtExceptionHandler = null;
             }
-            return;
+        } else if (mContext != null) {
+            mUncaughtExceptionHandler = new UncaughtExceptionHandler(mContext);
         }
-
-        mUncaughtExceptionHandler = new UncaughtExceptionHandler();
     }
 
     private void queuePendingCrashes() {
@@ -119,7 +123,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         }
     }
 
-    long getInitializeTimestamp() {
+    synchronized long getInitializeTimestamp() {
         return mInitializeTimestamp;
     }
 
