@@ -32,6 +32,9 @@ public final class ErrorLogHelper {
         JavaErrorLog errorLog = new JavaErrorLog();
         errorLog.setId(UUIDUtils.randomUUID());
 
+        /* Set absolute current time. Will be correlated to session and converted to relative later. */
+        errorLog.setToffset(System.currentTimeMillis());
+
         /* Process information. Parent one is not available on Android. */
         errorLog.setProcessId(Process.myPid());
 //        FIXME ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
