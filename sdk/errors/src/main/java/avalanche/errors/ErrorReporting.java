@@ -87,7 +87,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         super.onChannelReady(context, channel);
         mContext = context;
         initialize();
-        if (isInstanceEnabled() && mChannel != null) {
+        if (isInstanceEnabled()) {
             queuePendingCrashes();
         }
     }
