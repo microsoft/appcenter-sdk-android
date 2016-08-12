@@ -19,15 +19,18 @@ import java.util.Map;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.PrefStorageConstants;
 import avalanche.core.utils.StorageHelper;
-import avalanche.errors.ingestion.models.ErrorLog;
-import avalanche.errors.ingestion.models.json.ErrorLogFactory;
+import avalanche.errors.ingestion.models.JavaErrorLog;
+import avalanche.errors.ingestion.models.json.JavaErrorLogFactory;
 import avalanche.errors.model.TestCrashException;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.eq;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class})
@@ -39,7 +42,9 @@ public class ErrorReportingTest {
         mockStatic(SystemClock.class);
         mockStatic(StorageHelper.PreferencesStorage.class);
 
-        final String key = PrefStorageConstants.KEY_ENABLED + "_" + ErrorReporting.ERROR_GROUP;
+        when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
+
+        final String key = PrefStorageConstants.KEY_ENABLED + "_" + ErrorReporting.getInstance().getGroupName();
         PowerMockito.when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
@@ -65,8 +70,21 @@ public class ErrorReportingTest {
     public void checkFactories() {
         Map<String, LogFactory> factories = ErrorReporting.getInstance().getLogFactories();
         assertNotNull(factories);
-        assertTrue(factories.remove(ErrorLog.TYPE) instanceof ErrorLogFactory);
+        assertTrue(factories.remove(JavaErrorLog.TYPE) instanceof JavaErrorLogFactory);
         assertTrue(factories.isEmpty());
+    }
+
+    @Test
+    public void setEnabled() {
+        ErrorReporting.setEnabled(true);
+        assertTrue(ErrorReporting.isEnabled());
+        assertTrue(ErrorReporting.getInstance().getInitializeTimestamp() > 0);
+        ErrorReporting.setEnabled(false);
+        assertFalse(ErrorReporting.isEnabled());
+        assertEquals(ErrorReporting.getInstance().getInitializeTimestamp(), -1);
+        ErrorReporting.setEnabled(true);
+        assertTrue(ErrorReporting.isEnabled());
+        assertTrue(ErrorReporting.getInstance().getInitializeTimestamp() > 0);
     }
 
     @Test(expected = TestCrashException.class)
