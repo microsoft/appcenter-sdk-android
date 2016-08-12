@@ -61,37 +61,67 @@ public final class StorageHelper {
      * PreferencesStorage Helper class
      */
     public final static class PreferencesStorage {
-        /*
-         * boolean value
+
+        /**
+         * Retrieve a boolean value.
+         * @param key The key for which the value is to be retrieved.
+         * @return The value of {@code key} or false if key is not set.
          */
         @SuppressWarnings("unused")
         public static boolean getBoolean(@NonNull String key) {
             return getBoolean(key, false);
         }
 
+        /**
+         * Retrieve a boolean value and provide a default value.
+         * @param key         The key for which the value is to be retrieved.
+         * @param defValue    The default value to return if no value is set for {@code key}.
+         * @return The value of {@code key} or the default value if key is not set.
+         */
         public static boolean getBoolean(@NonNull String key, boolean defValue) {
             return sSharedPreferences.getBoolean(key, defValue);
         }
 
+        /**
+         * Store a boolean value.
+         * @param key      The key to store the value for.
+         * @param value    The value to store for the key.
+         */
         public static void putBoolean(@NonNull String key, boolean value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putBoolean(key, value);
             editor.apply();
         }
 
-        /*
-         * float value
+        /**
+         * Retrieve a float value.
+         *
+         * @param key The key for which the value is to be retrieved.
+         * @return The value of {@code key} or 0f if key is not set.
          */
         @SuppressWarnings("unused")
         public static float getFloat(@NonNull String key) {
             return getFloat(key, 0f);
         }
 
+        /**
+         * Retrieve a float value and provide a default value.
+         *
+         * @param key      The key for which the value is to be retrieved.
+         * @param defValue The default value to return if no value is set for {@code key}.
+         * @return The value of {@code key} or the default value if key is not set.
+         */
         @SuppressWarnings("SameParameterValue")
         public static float getFloat(@NonNull String key, float defValue) {
             return sSharedPreferences.getFloat(key, defValue);
         }
 
+        /**
+         * Store a float value.
+         *
+         * @param key   The key to store the value for.
+         * @param value The value to store for the key.
+         */
         @SuppressWarnings("unused")
         public static void putFloat(@NonNull String key, float value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
@@ -99,37 +129,69 @@ public final class StorageHelper {
             editor.apply();
         }
 
-        /*
-         * int value
+        /**
+         * Retrieve an int value.
+         *
+         * @param key The key for which the value is to be retrieved.
+         * @return The value of {@code key} or 0 if key is not set.
          */
         public static int getInt(@NonNull String key) {
             return getInt(key, 0);
         }
 
+        /**
+         * Retrieve an int value and provide a default value.
+         *
+         * @param key      The key for which the value is to be retrieved.
+         * @param defValue The default value to return if no value is set for {@code key}.
+         * @return The value of {@code key} or the default value if key is not set.
+         */
         @SuppressWarnings("SameParameterValue")
         public static int getInt(@NonNull String key, int defValue) {
             return sSharedPreferences.getInt(key, defValue);
         }
 
+        /**
+         * Store an int value.
+         *
+         * @param key   The key to store the value for.
+         * @param value The value to store for the key.
+         */
         public static void putInt(@NonNull String key, int value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putInt(key, value);
             editor.apply();
         }
 
-        /*
-         * long value
+        /**
+         * Retrieve a long value.
+         *
+         * @param key The key for which the value is to be retrieved.
+         * @return The value of {@code key} or 0L if key is not set.
          */
         @SuppressWarnings("unused")
         public static long getLong(@NonNull String key) {
             return getLong(key, 0L);
         }
 
+        /**
+         * Retrieve a long value and provide a default value.
+         *
+         * @param key      The key for which the value is to be retrieved.
+         * @param defValue The default value to return if no value is set for {@code key}.
+         * @return The value of {@code key} or the default value if key is not set.
+         */
         @SuppressWarnings("SameParameterValue")
         public static long getLong(@NonNull String key, long defValue) {
             return sSharedPreferences.getLong(key, defValue);
         }
 
+        /**
+         * Store a long value.
+         *
+         * @param key   The key to store the value for.
+         * @param value The value to store for the key.
+         */
         @SuppressWarnings("unused")
         public static void putLong(@NonNull String key, long value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
@@ -137,37 +199,69 @@ public final class StorageHelper {
             editor.apply();
         }
 
-        /*
-         * String value
+        /**
+         * Retrieve a string value.
+         *
+         * @param key The key for which the value is to be retrieved.
+         * @return The value of {@code key} or {@code null} if key is not set.
          */
         @SuppressWarnings("unused")
         public static String getString(@NonNull String key) {
             return getString(key, null);
         }
 
+        /**
+         * Retrieve a string value and provide a default value.
+         *
+         * @param key      The key for which the value is to be retrieved.
+         * @param defValue The default value to return if no value is set for {@code key}.
+         * @return The value of {@code key} or the default value if key is not set.
+         */
         public static String getString(@NonNull String key, String defValue) {
             return sSharedPreferences.getString(key, defValue);
         }
 
+        /**
+         * Store a string value.
+         *
+         * @param key   The key to store the value for.
+         * @param value The value to store for the key.
+         */
         public static void putString(@NonNull String key, String value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putString(key, value);
             editor.apply();
         }
 
-        /*
-         * Set<String> value
+        /**
+         * Retrieve a string set.
+         *
+         * @param key The key for which the value is to be retrieved.
+         * @return The value of {@code key} or {@code null} if key is not set.
          */
         @SuppressWarnings("unused")
         public static Set<String> getStringSet(@NonNull String key) {
             return getStringSet(key, null);
         }
 
+        /**
+         * Retrieve a string set and provide a default value.
+         *
+         * @param key      The key for which the value is to be retrieved.
+         * @param defValue The default value to return if no value is set for {@code key}.
+         * @return The value of {@code key} or the default value if key is not set.
+         */
         @SuppressWarnings("SameParameterValue")
         public static Set<String> getStringSet(@NonNull String key, Set<String> defValue) {
             return sSharedPreferences.getStringSet(key, defValue);
         }
 
+        /**
+         * Store a string set.
+         *
+         * @param key   The key to store the value for.
+         * @param value The value to store for the key.
+         */
         @SuppressWarnings("unused")
         public static void putStringSet(@NonNull String key, Set<String> value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
@@ -192,19 +286,19 @@ public final class StorageHelper {
      */
     public final static class InternalStorage {
         /**
-         * Reads contents from the file.
+         * Read contents from a file.
          *
-         * @param filename The name of the file.
+         * @param path The path of the file.
          * @return The contents of the file.
          */
-        public static String read(@NonNull String filename) {
-            return read(new File(filename));
+        public static String read(@NonNull String path) {
+            return read(new File(path));
         }
 
         /**
-         * Reads contents from the file.
+         * Read contents from a file.
          *
-         * @param file The file instance.
+         * @param file The file to read from.
          * @return The contents of the file.
          */
         public static String read(@NonNull File file) {
@@ -235,24 +329,24 @@ public final class StorageHelper {
         }
 
         /**
-         * Writes contents to the file.
+         * Write contents to a file.
          *
-         * @param filename The name of the file.
-         * @param contents The content to be written to the file.
+         * @param path The path of the file.
+         * @param contents The contents to be written to the file.
          * @throws IOException
          */
-        public static void write(@NonNull String filename, String contents) throws IOException {
-            write(new File(filename), contents);
+        public static void write(@NonNull String path, @NonNull String contents) throws IOException {
+            write(new File(path), contents);
         }
 
         /**
-         * Writes contents to the file.
+         * Write contents to a file.
          *
          * @param file     The file instance.
-         * @param contents The content to be written to the file.
+         * @param contents The content to be written to the file. Must not be empty or whitespace only.
          * @throws IOException
          */
-        public static void write(@NonNull File file, String contents) throws IOException {
+        public static void write(@NonNull File file, @NonNull String contents) throws IOException {
             if (TextUtils.isEmpty(contents) || TextUtils.getTrimmedLength(contents) <= 0) {
                 return;
             }
@@ -270,10 +364,10 @@ public final class StorageHelper {
         }
 
         /**
-         * Reads an object from the file (deserialization).
+         * Read an object from a file (deserialization).
          *
-         * @param file The file instance.
-         * @return The deserialized instance.
+         * @param file The file to read from.
+         * @return The de-serialized instance.
          * @throws IOException
          * @throws ClassNotFoundException
          */
@@ -293,13 +387,13 @@ public final class StorageHelper {
         }
 
         /**
-         * Writes and object to the file (serialization).
+         * Write an object to a file (serialization).
          *
-         * @param file   The file instance.
+         * @param file   The file to write to.
          * @param object The object to be written to the file.
          * @throws IOException
          */
-        public static <T extends Serializable> void writeObject(@NonNull File file, T object) throws IOException {
+        public static <T extends Serializable> void writeObject(@NonNull File file, @NonNull T object) throws IOException {
             ObjectOutputStream outputStream = null;
             try {
                 outputStream = new ObjectOutputStream(new FileOutputStream(file));
@@ -311,13 +405,14 @@ public final class StorageHelper {
         }
 
         /**
-         * Gets an array of filenames in the path.
+         * Get an array of filenames in the path.
          *
          * @param path   The directory path.
-         * @param filter The filter to match names against, may be {@code null}.
+         * @param filter The filter to match file names against, may be {@code null}.
          * @return An array of filename that doesn't include paths.
          */
-        public static String[] getFilenames(@NonNull String path, FilenameFilter filter) {
+        @NonNull
+        public static String[] getFilenames(@NonNull String path, @Nullable FilenameFilter filter) {
             File dir = new File(path);
             if (dir.exists()) {
                 return dir.list(filter);
@@ -327,13 +422,14 @@ public final class StorageHelper {
         }
 
         /**
-         * Gets the most recent file in the path.
+         * Get the most recently modified file in the directory specified.
          *
          * @param path   The directory path.
-         * @param filter The filter to match names against, may be {@code null}.
-         * @return A file instance, may be {@code null} if the directory is empty.
+         * @param filter The filter to match file names against, may be {@code null}.
+         * @return The last modified file in the directory matching the specified filter, if any matches. {@code null} otherwise.
          */
-        public static File lastModifiedFile(@NonNull String path, FilenameFilter filter) {
+        @Nullable
+        public static File lastModifiedFile(@NonNull String path, @Nullable FilenameFilter filter) {
             File dir = new File(path);
             if (dir.exists()) {
                 File[] files = dir.listFiles(filter);
@@ -356,19 +452,19 @@ public final class StorageHelper {
         }
 
         /**
-         * Deletes a file or directory with the given name.
+         * Delete a file or directory with the given path.
          *
-         * @param name The name of the file or directory.
+         * @param path The path of the file or directory.
          * @return {@code true} if it was deleted, {@code false} otherwise.
          */
-        public static boolean delete(@NonNull String name) {
-            return delete(new File(name));
+        public static boolean delete(@NonNull String path) {
+            return delete(new File(path));
         }
 
         /**
-         * Deletes the file.
+         * Delete a file or directory.
          *
-         * @param file The file instance.
+         * @param file The file or directory to delete.
          * @return {@code true} if it was deleted, {@code false} otherwise.
          */
         public static boolean delete(@NonNull File file) {
@@ -376,10 +472,10 @@ public final class StorageHelper {
         }
 
         /**
-         * Creates the directory if it does not already exist.
+         * Create a directory if it does not already exist.
+         * Will create the whole directory tree if necessary.
          *
-         * @param path An absolute path for directory.
-         * @return {@code true} if the directory was created, otherwise {@code false}.
+         * @param path An absolute path for the directory to be created.
          */
         @SuppressWarnings({"ResultOfMethodCallIgnored", "SpellCheckingInspection"})
         public static void mkdir(@NonNull String path) {
@@ -407,34 +503,34 @@ public final class StorageHelper {
         }
 
         /**
-         * Gets a new instance of {@code DatabaseManager}.
+         * Get a new instance of {@code DatabaseManager}.
          *
          * @param database The database name.
          * @param table    The table name.
          * @param version  The version.
-         * @param schema   The schema of the database. If the database has tables more than 1,
-         *                 the schema should contain schemas for all the tables.
-         * @param listener The error listener
+         * @param schema   The schema of the database. If the database has more than one table,
+         *                 it should contain schemas for all the tables.
+         * @param listener The error listener.
          * @return database storage.
          */
         public static DatabaseStorage getDatabaseStorage(@NonNull String database,
                                                          @NonNull String table,
                                                          @IntRange(from = 1) int version,
                                                          @NonNull ContentValues schema,
-                                                         final DatabaseErrorListener listener) {
+                                                         @NonNull final DatabaseErrorListener listener) {
             return getDatabaseStorage(database, table, version, schema, 0, listener);
         }
 
         /**
-         * Gets a new instance of {@code DatabaseManager}.
+         * Get a new instance of {@code DatabaseManager}.
          *
          * @param database   The database name.
          * @param table      The table name.
          * @param version    The version.
-         * @param schema     The schema of the database. If the database has tables more than 1,
-         *                   the schema should contain schemas for all the tables.
+         * @param schema     The schema of the database. If the database has more than one table,
+         *                   it should contain schemas for all tables.
          * @param maxRecords The maximum number of records allowed in the table.
-         * @param listener   The error listener
+         * @param listener   The error listener.
          * @return database storage.
          */
         public static DatabaseStorage getDatabaseStorage(@NonNull String database,
@@ -452,30 +548,30 @@ public final class StorageHelper {
         }
 
         /**
-         * Stores the entry to the table.
+         * Store an entry in a table.
          *
          * @param values The entry to be stored.
-         * @return A database identifier
+         * @return The identifier of the created database entry.
          */
-        public Long put(@NonNull ContentValues values) {
+        public long put(@NonNull ContentValues values) {
             return mDatabaseManager.put(values);
         }
 
         /**
-         * Updates the entry for the identifier.
+         * Update an entry in a table.
          *
          * @param id     The existing database identifier.
-         * @param values The entry to be updated.
-         * @return true if the values updated successfully, false otherwise.
+         * @param values The value to update.
+         * @return {@code true} if the values were updated successfully, {@code false} otherwise.
          */
         public boolean update(@IntRange(from = 0) long id, @NonNull ContentValues values) {
             return mDatabaseManager.update(id, values);
         }
 
         /**
-         * Deletes the entry by the identifier from the database.
+         * Delete an entry in a table.
          *
-         * @param id The database identifier.
+         * @param id The identifier for the entry to be deleted.
          */
         public void delete(@IntRange(from = 0) long id) {
             mDatabaseManager.delete(id);
@@ -549,7 +645,7 @@ public final class StorageHelper {
         }
 
         /**
-         * Closes database and clean up in-memory database.
+         * Closes database and cleans up in-memory database.
          *
          * @throws IOException
          */
@@ -588,7 +684,7 @@ public final class StorageHelper {
         }
 
         /**
-         * Database scanner to iterate values.
+         * Database scanner to iterate over values.
          */
         public static class DatabaseScanner implements Iterable<ContentValues>, Closeable {
             private final DatabaseManager.Scanner mScanner;
