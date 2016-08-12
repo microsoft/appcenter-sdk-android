@@ -52,7 +52,7 @@ public class DefaultLogSerializer implements LogSerializer {
     @Override
     public String serializeContainer(@NonNull LogContainer logContainer) throws JSONException {
 
-        /* Init JSON serializer, in debug/verbose: try to make it pretty. */
+        /* Init JSON serializer, in verbose: try to make it pretty. */
         JSONStringer writer = null;
         if (AvalancheLog.getLogLevel() <= android.util.Log.VERBOSE) {
             try {

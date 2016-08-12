@@ -6,10 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import avalanche.analytics.utils.TestUtils;
+import avalanche.test.TestUtils;
 
-import static avalanche.analytics.utils.TestUtils.checkEquals;
-import static avalanche.analytics.utils.TestUtils.checkNotEquals;
+import static avalanche.test.TestUtils.checkEquals;
+import static avalanche.test.TestUtils.checkNotEquals;
 
 @SuppressWarnings("unused")
 public class EventLogTest {
@@ -34,12 +34,9 @@ public class EventLogTest {
         p1.put("c", "d");
         a.setProperties(p1);
         checkNotEquals(a, b);
-        a.setProperties(null);
+        b.setProperties(p2);
+        checkNotEquals(a, b);
         b.setProperties(p1);
-        checkNotEquals(a, b);
-        a.setProperties(p2);
-        checkNotEquals(a, b);
-        a.setProperties(p1);
         checkEquals(a, b);
 
         /* Id */
@@ -47,23 +44,17 @@ public class EventLogTest {
         UUID sid2 = UUID.randomUUID();
         a.setId(sid1);
         checkNotEquals(a, b);
-        a.setId(null);
+        b.setId(sid2);
+        checkNotEquals(a, b);
         b.setId(sid1);
-        checkNotEquals(a, b);
-        a.setId(sid2);
-        checkNotEquals(a, b);
-        a.setId(sid1);
         checkEquals(a, b);
 
         /* Name. */
         a.setName("a");
         checkNotEquals(a, b);
-        a.setName(null);
+        b.setName("b");
+        checkNotEquals(a, b);
         b.setName("a");
-        checkNotEquals(a, b);
-        a.setName("b");
-        checkNotEquals(a, b);
-        a.setName("a");
         checkEquals(a, b);
     }
 }

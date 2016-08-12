@@ -1,6 +1,7 @@
 package avalanche.analytics;
 
 import android.app.Activity;
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
@@ -169,8 +170,8 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     @Override
-    public synchronized void onChannelReady(@NonNull AvalancheChannel channel) {
-        super.onChannelReady(channel);
+    public synchronized void onChannelReady(@NonNull Context context, @NonNull AvalancheChannel channel) {
+        super.onChannelReady(context, channel);
         applyEnabledState(isInstanceEnabled());
     }
 

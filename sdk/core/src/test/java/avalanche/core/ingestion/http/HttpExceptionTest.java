@@ -2,9 +2,9 @@ package avalanche.core.ingestion.http;
 
 import org.junit.Test;
 
-import static avalanche.core.utils.TestUtils.checkEquals;
-import static avalanche.core.utils.TestUtils.checkNotEquals;
-import static avalanche.core.utils.TestUtils.compareSelfNullClass;
+import static avalanche.test.TestUtils.checkEquals;
+import static avalanche.test.TestUtils.checkNotEquals;
+import static avalanche.test.TestUtils.compareSelfNullClass;
 import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings("unused")

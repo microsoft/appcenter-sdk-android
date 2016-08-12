@@ -1,5 +1,6 @@
 package avalanche.analytics;
 
+import android.content.Context;
 import android.os.SystemClock;
 
 import junit.framework.Assert;
@@ -101,7 +102,7 @@ public class AnalyticsTest {
     private void activityResumed(final String expectedName, android.app.Activity activity) {
         Analytics analytics = Analytics.getInstance();
         AvalancheChannel channel = mock(AvalancheChannel.class);
-        analytics.onChannelReady(channel);
+        analytics.onChannelReady(mock(Context.class), channel);
         analytics.onActivityResumed(activity);
         analytics.onActivityPaused(activity);
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
@@ -139,7 +140,7 @@ public class AnalyticsTest {
         Analytics.setAutoPageTrackingEnabled(false);
         assertFalse(Analytics.isAutoPageTrackingEnabled());
         AvalancheChannel channel = mock(AvalancheChannel.class);
-        analytics.onChannelReady(channel);
+        analytics.onChannelReady(mock(Context.class), channel);
         analytics.onActivityResumed(new MyActivity());
         verify(channel, never()).enqueue(any(Log.class), anyString());
         Analytics.setAutoPageTrackingEnabled(true);
@@ -162,7 +163,7 @@ public class AnalyticsTest {
     public void trackEvent() {
         Analytics analytics = Analytics.getInstance();
         AvalancheChannel channel = mock(AvalancheChannel.class);
-        analytics.onChannelReady(channel);
+        analytics.onChannelReady(mock(Context.class), channel);
         final String name = "testEvent";
         final HashMap<String, String> properties = new HashMap<>();
         properties.put("a", "b");
@@ -189,7 +190,7 @@ public class AnalyticsTest {
         assertTrue(Analytics.isEnabled());
         Analytics.setEnabled(false);
         assertFalse(Analytics.isEnabled());
-        analytics.onChannelReady(channel);
+        analytics.onChannelReady(mock(Context.class), channel);
         verify(channel).clear(analytics.getGroupName());
         verify(channel).removeGroup(eq(analytics.getGroupName()));
         Analytics.trackEvent("test", null);
