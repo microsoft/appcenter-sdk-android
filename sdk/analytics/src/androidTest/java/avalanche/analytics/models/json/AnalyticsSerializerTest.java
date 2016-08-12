@@ -37,6 +37,7 @@ public class AnalyticsSerializerTest {
         device.setOemName("HTC");
         device.setOsName("Android");
         device.setOsVersion("4.0.3");
+        device.setOsBuild("LMY47X");
         device.setOsApiLevel(15);
         device.setLocale("en_US");
         device.setTimeZoneOffset(120);

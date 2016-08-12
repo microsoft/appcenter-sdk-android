@@ -21,6 +21,8 @@ public class Device implements Model {
 
     private static final String OS_VERSION = "osVersion";
 
+    private static final String OS_BUILD = "osBuild";
+
     private static final String OS_API_LEVEL = "osApiLevel";
 
     private static final String LOCALE = "locale";
@@ -63,6 +65,11 @@ public class Device implements Model {
      * OS version (example: 9.3.0).
      */
     private String osVersion;
+
+    /**
+     * OS build code (example: LMY47X).
+     */
+    private String osBuild;
 
     /**
      * API level when applicable like in Android (example: 15).
@@ -200,6 +207,24 @@ public class Device implements Model {
      */
     public void setOsVersion(String osVersion) {
         this.osVersion = osVersion;
+    }
+
+    /**
+     * Get the osBuild value.
+     *
+     * @return the osBuild value
+     */
+    public String getOsBuild() {
+        return this.osBuild;
+    }
+
+    /**
+     * Set the osBuild value.
+     *
+     * @param osBuild the osBuild value to set
+     */
+    public void setOsBuild(String osBuild) {
+        this.osBuild = osBuild;
     }
 
     /**
@@ -371,6 +396,7 @@ public class Device implements Model {
         setOemName(object.getString(OEM_NAME));
         setOsName(object.getString(OS_NAME));
         setOsVersion(object.getString(OS_VERSION));
+        setOsBuild(object.optString(OS_BUILD, null));
         setOsApiLevel(JSONUtils.readInteger(object, OS_API_LEVEL));
         setLocale(object.getString(LOCALE));
         setTimeZoneOffset(object.getInt(TIME_ZONE_OFFSET));
@@ -389,6 +415,7 @@ public class Device implements Model {
         writer.key(OEM_NAME).value(getOemName());
         writer.key(OS_NAME).value(getOsName());
         writer.key(OS_VERSION).value(getOsVersion());
+        JSONUtils.write(writer, OS_BUILD, getOsBuild());
         JSONUtils.write(writer, OS_API_LEVEL, getOsApiLevel());
         writer.key(LOCALE).value(getLocale());
         writer.key(TIME_ZONE_OFFSET).value(getTimeZoneOffset());
@@ -416,6 +443,8 @@ public class Device implements Model {
         if (osName != null ? !osName.equals(device.osName) : device.osName != null) return false;
         if (osVersion != null ? !osVersion.equals(device.osVersion) : device.osVersion != null)
             return false;
+        if (osBuild != null ? !osBuild.equals(device.osBuild) : device.osBuild != null)
+            return false;
         if (osApiLevel != null ? !osApiLevel.equals(device.osApiLevel) : device.osApiLevel != null)
             return false;
         if (locale != null ? !locale.equals(device.locale) : device.locale != null) return false;
@@ -441,6 +470,7 @@ public class Device implements Model {
         result = 31 * result + (oemName != null ? oemName.hashCode() : 0);
         result = 31 * result + (osName != null ? osName.hashCode() : 0);
         result = 31 * result + (osVersion != null ? osVersion.hashCode() : 0);
+        result = 31 * result + (osBuild != null ? osBuild.hashCode() : 0);
         result = 31 * result + (osApiLevel != null ? osApiLevel.hashCode() : 0);
         result = 31 * result + (locale != null ? locale.hashCode() : 0);
         result = 31 * result + (timeZoneOffset != null ? timeZoneOffset.hashCode() : 0);
