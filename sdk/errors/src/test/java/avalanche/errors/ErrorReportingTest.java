@@ -1,5 +1,6 @@
 package avalanche.errors;
 
+import android.content.Context;
 import android.os.SystemClock;
 
 import junit.framework.Assert;
@@ -16,6 +17,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Map;
 
+import avalanche.core.channel.AvalancheChannel;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.PrefStorageConstants;
 import avalanche.core.utils.StorageHelper;
@@ -29,6 +31,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
@@ -76,7 +79,11 @@ public class ErrorReportingTest {
 
     @Test
     public void setEnabled() {
-        ErrorReporting.setEnabled(true);
+        Context mockContext = mock(Context.class);
+        AvalancheChannel mockChannel = mock(AvalancheChannel.class);
+
+        ErrorReporting.getInstance().onChannelReady(mockContext, mockChannel);
+
         assertTrue(ErrorReporting.isEnabled());
         assertTrue(ErrorReporting.getInstance().getInitializeTimestamp() > 0);
         assertTrue(Thread.getDefaultUncaughtExceptionHandler() instanceof  UncaughtExceptionHandler);
