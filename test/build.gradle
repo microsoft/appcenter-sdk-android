@@ -1,0 +1,14 @@
+apply plugin: 'com.android.library'
+
+android {
+    //noinspection GroovyAssignabilityCheck
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+}
+
+dependencies {
+    compile 'junit:junit:4.12'
+}

@@ -264,7 +264,7 @@ public final class Avalanche {
                 mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
         }
         mFeatures.add(feature);
-        feature.onChannelReady(mChannel);
+        feature.onChannelReady(mApplication, mChannel);
         if (isInstanceEnabled())
             mApplication.registerActivityLifecycleCallbacks(feature);
     }

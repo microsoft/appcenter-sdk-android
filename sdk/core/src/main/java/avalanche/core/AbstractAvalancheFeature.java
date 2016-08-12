@@ -1,6 +1,7 @@
 package avalanche.core;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 
@@ -98,7 +99,7 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
     }
 
     @Override
-    public synchronized void onChannelReady(@NonNull AvalancheChannel channel) {
+    public synchronized void onChannelReady(@NonNull Context context, @NonNull AvalancheChannel channel) {
         channel.removeGroup(getGroupName());
 
         /* Add a group to the channel if the feature is enabled */

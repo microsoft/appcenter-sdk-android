@@ -1,5 +1,6 @@
 package avalanche.errors;
 
+import android.content.Context;
 import android.os.Process;
 
 import org.json.JSONException;
@@ -11,21 +12,25 @@ import avalanche.core.ingestion.models.json.DefaultLogSerializer;
 import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.StorageHelper;
-import avalanche.errors.ingestion.models.ErrorLog;
-import avalanche.errors.ingestion.models.json.ErrorLogFactory;
+import avalanche.errors.ingestion.models.JavaErrorLog;
+import avalanche.errors.ingestion.models.json.JavaErrorLogFactory;
 import avalanche.errors.utils.ErrorLogHelper;
 
 class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
-    private LogSerializer mLogSerializer;
+    private final Context mContext;
 
-    private boolean mIgnoreDefaultExceptionHandler = false;
+    private final LogSerializer mLogSerializer;
+
+    private final boolean mIgnoreDefaultExceptionHandler = false;
+
     private Thread.UncaughtExceptionHandler mDefaultUncaughtExceptionHandler;
 
-    UncaughtExceptionHandler() {
+    UncaughtExceptionHandler(Context context) {
+        mContext = context;
         register();
         mLogSerializer = new DefaultLogSerializer();
-        mLogSerializer.addLogFactory(ErrorLog.TYPE, ErrorLogFactory.getInstance());
+        mLogSerializer.addLogFactory(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
     }
 
     @Override
@@ -33,8 +38,7 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
         if (!ErrorReporting.isEnabled() && mDefaultUncaughtExceptionHandler != null) {
             mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
         } else {
-            ErrorLog errorLog = ErrorLogHelper.createErrorLog(thread, exception, Thread.getAllStackTraces(), ErrorReporting.getInstance().getInitializeTimestamp());
-
+            JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, exception, Thread.getAllStackTraces(), ErrorReporting.getInstance().getInitializeTimestamp());
             try {
                 File errorLogDirectory = ErrorLogHelper.getErrorStorageDirectory();
                 File errorLogFile = new File(errorLogDirectory, errorLog.getId().toString() + ".json");
@@ -45,7 +49,6 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
             } catch (IOException e) {
                 AvalancheLog.error("Error writing error log to file", e);
             }
-
             if (!mIgnoreDefaultExceptionHandler && mDefaultUncaughtExceptionHandler != null) {
                 mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
             } else {
@@ -55,8 +58,7 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
         }
     }
 
-
-    public void register() {
+    private void register() {
         if (!mIgnoreDefaultExceptionHandler) {
             mDefaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
         }

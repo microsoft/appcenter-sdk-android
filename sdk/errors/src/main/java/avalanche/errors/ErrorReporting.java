@@ -1,5 +1,6 @@
 package avalanche.errors;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 
 import org.json.JSONException;
@@ -15,15 +16,15 @@ import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.StorageHelper;
-import avalanche.errors.ingestion.models.ErrorLog;
-import avalanche.errors.ingestion.models.json.ErrorLogFactory;
+import avalanche.errors.ingestion.models.JavaErrorLog;
+import avalanche.errors.ingestion.models.json.JavaErrorLogFactory;
 import avalanche.errors.model.TestCrashException;
 import avalanche.errors.utils.ErrorLogHelper;
 
 
 public class ErrorReporting extends AbstractAvalancheFeature {
 
-    public static final String ERROR_GROUP = "group_error";
+    private static final String ERROR_GROUP = "group_error";
 
     private static ErrorReporting sInstance = null;
 
@@ -31,14 +32,17 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     private final LogSerializer mLogSerializer;
 
+    private Context mContext;
+
     private long mInitializeTimestamp;
+
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
 
     private ErrorReporting() {
         mFactories = new HashMap<>();
-        mFactories.put(ErrorLog.TYPE, ErrorLogFactory.getInstance());
+        mFactories.put(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
         mLogSerializer = new DefaultLogSerializer();
-        mLogSerializer.addLogFactory(ErrorLog.TYPE, ErrorLogFactory.getInstance());
+        mLogSerializer.addLogFactory(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
     }
 
     @NonNull
@@ -71,11 +75,10 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     }
 
     @Override
-    public synchronized void onChannelReady(@NonNull AvalancheChannel channel) {
-        super.onChannelReady(channel);
-
+    public synchronized void onChannelReady(@NonNull Context context, @NonNull AvalancheChannel channel) {
+        super.onChannelReady(context, channel);
+        mContext = context;
         initialize();
-
         if (isInstanceEnabled() && mChannel != null) {
             queuePendingCrashes();
         }
@@ -94,15 +97,14 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     private void initialize() {
         boolean enabled = isInstanceEnabled();
         mInitializeTimestamp = enabled ? System.currentTimeMillis() : -1;
-
         if (!enabled) {
             if (mUncaughtExceptionHandler != null) {
                 mUncaughtExceptionHandler.unregister();
+                mUncaughtExceptionHandler = null;
             }
-            return;
+        } else if (mContext != null) {
+            mUncaughtExceptionHandler = new UncaughtExceptionHandler(mContext);
         }
-
-        mUncaughtExceptionHandler = new UncaughtExceptionHandler();
     }
 
     private void queuePendingCrashes() {
@@ -111,7 +113,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             AvalancheLog.info("Deleting error log file " + logfile.getName());
             StorageHelper.InternalStorage.delete(logfile);
             try {
-                ErrorLog log = (ErrorLog) mLogSerializer.deserializeLog(logfileContents);
+                JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logfileContents);
                 if (log != null) {
                     mChannel.enqueue(log, ERROR_GROUP);
                 }
@@ -121,7 +123,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         }
     }
 
-    protected long getInitializeTimestamp() {
+    synchronized long getInitializeTimestamp() {
         return mInitializeTimestamp;
     }
 
