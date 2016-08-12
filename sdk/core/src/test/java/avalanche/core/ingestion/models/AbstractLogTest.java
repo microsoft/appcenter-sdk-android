@@ -4,10 +4,10 @@ import org.junit.Test;
 
 import java.util.UUID;
 
-import avalanche.core.utils.TestUtils;
+import avalanche.test.TestUtils;
 
-import static avalanche.core.utils.TestUtils.checkEquals;
-import static avalanche.core.utils.TestUtils.checkNotEquals;
+import static avalanche.test.TestUtils.checkEquals;
+import static avalanche.test.TestUtils.checkNotEquals;
 import static org.mockito.Mockito.mock;
 
 public class AbstractLogTest {

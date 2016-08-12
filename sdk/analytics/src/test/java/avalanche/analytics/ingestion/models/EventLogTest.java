@@ -6,11 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import avalanche.analytics.utils.TestUtils;
+import avalanche.test.TestUtils;
 
-import static avalanche.analytics.utils.TestUtils.checkEquals;
-import static avalanche.analytics.utils.TestUtils.checkNotEquals;
-
+import static avalanche.test.TestUtils.checkEquals;
+import static avalanche.test.TestUtils.checkNotEquals;
 
 public class EventLogTest {
 
