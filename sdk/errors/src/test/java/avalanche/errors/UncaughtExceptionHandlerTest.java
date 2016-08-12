@@ -31,13 +31,14 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({SystemClock.class, StorageHelper.class, System.class, Process.class, ErrorReporting.class, ErrorLogHelper.class, DeviceInfoHelper.class})
+@PrepareForTest({SystemClock.class, StorageHelper.class, System.class, Process.class, ErrorReporting.class, ErrorLogHelper.class, DeviceInfoHelper.class, UncaughtExceptionHandler.ShutdownHelper.class})
 public class UncaughtExceptionHandlerTest {
 
     private Thread.UncaughtExceptionHandler defaultExceptionHandler;
@@ -51,6 +52,7 @@ public class UncaughtExceptionHandlerTest {
         mockStatic(StorageHelper.InternalStorage.class);
         mockStatic(ErrorLogHelper.class);
         mockStatic(DeviceInfoHelper.class);
+        mockStatic(UncaughtExceptionHandler.ShutdownHelper.class);
 
         Context mockContext = mock(Context.class);
 
@@ -97,8 +99,8 @@ public class UncaughtExceptionHandlerTest {
     }
 
     @Test
-    public void testHandleAndPassOnException() {
-        // Verify that the exception is being passed on to the previously defined uncaught exception handler
+    public void handleExceptionAndPassOn() {
+        // Verify that the exception is being handled and passed on to the previously defined UncaughtExceptionHandler
         Thread thread = Thread.currentThread();
         RuntimeException exception = new RuntimeException();
         exceptionHandler.uncaughtException(thread, exception);
@@ -106,6 +108,33 @@ public class UncaughtExceptionHandlerTest {
 
         verifyStatic();
         ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong());
+    }
+
+    @Test
+    public void handleExceptionAndIgnoreDefaultHandler() {
+        // Verify that the exception is handled and not being passed on to the previous default UncaughtExceptionHandler
+        Thread thread = Thread.currentThread();
+        RuntimeException exception = new RuntimeException();
+        exceptionHandler.setIgnoreDefaultExceptionHandler(true);
+        exceptionHandler.uncaughtException(thread, exception);
+        verifyNoMoreInteractions(defaultExceptionHandler);
+
+        verifyStatic();
+        ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong());
+        UncaughtExceptionHandler.ShutdownHelper.shutdown();
+    }
+
+    @Test
+    public void passOnException() {
+        // Verify that when error reporting is disabled, an exception is instantly passed on 
+        when(ErrorReporting.isEnabled()).thenReturn(false);
+
+        Thread thread = Thread.currentThread();
+        RuntimeException exception = new RuntimeException();
+        exceptionHandler.uncaughtException(thread, exception);
+        verify(defaultExceptionHandler).uncaughtException(thread, exception);
+
+        PowerMockito.verifyNoMoreInteractions(ErrorLogHelper.class);
     }
 
 }

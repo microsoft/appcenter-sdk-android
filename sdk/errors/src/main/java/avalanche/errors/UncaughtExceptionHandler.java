@@ -53,8 +53,7 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
             if (!mIgnoreDefaultExceptionHandler && mDefaultUncaughtExceptionHandler != null) {
                 mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
             } else {
-                Process.killProcess(Process.myPid());
-                System.exit(10);
+                ShutdownHelper.shutdown();
             }
         }
     }
@@ -79,5 +78,15 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
     public void unregister() {
         Thread.setDefaultUncaughtExceptionHandler(mDefaultUncaughtExceptionHandler);
+    }
+
+    @VisibleForTesting
+    final static class ShutdownHelper {
+
+        static void shutdown() {
+            Process.killProcess(Process.myPid());
+            System.exit(10);
+        }
+
     }
 }
