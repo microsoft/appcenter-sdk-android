@@ -50,9 +50,13 @@ public final class ErrorLogHelper {
         /* Process information. Parent one is not available on Android. */
         errorLog.setProcessId(Process.myPid());
         ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningAppProcessInfo info : activityManager.getRunningAppProcesses())
-            if (info.pid == Process.myPid())
-                errorLog.setProcessName(info.processName);
+        if (activityManager != null) {
+            for (ActivityManager.RunningAppProcessInfo info : activityManager.getRunningAppProcesses()) {
+                if (info.pid == Process.myPid()) {
+                    errorLog.setProcessName(info.processName);
+                }
+            }
+        }
 
         /* CPU architecture. */
         errorLog.setArchitecture(getArchitecture());
@@ -65,7 +69,7 @@ public final class ErrorLogHelper {
         errorLog.setFatal(true);
 
         /* Relative application launch time to error time. */
-        errorLog.setAppLaunchTOffset(System.currentTimeMillis() - initializeTimestamp);
+        errorLog.setAppLaunchTOffset(SystemClock.elapsedRealtime() - initializeTimestamp);
 
         /* Attach exceptions. */
         errorLog.setExceptions(getJavaExceptionsFromThrowable(exception));
