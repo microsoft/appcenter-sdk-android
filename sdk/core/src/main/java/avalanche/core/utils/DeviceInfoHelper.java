@@ -71,6 +71,7 @@ public class DeviceInfoHelper {
         device.setOsApiLevel(Build.VERSION.SDK_INT);
         device.setOsName(OS_NAME);
         device.setOsVersion(Build.VERSION.RELEASE);
+        device.setOsBuild(Build.ID);
 
         /* Screen size. */
         try {
