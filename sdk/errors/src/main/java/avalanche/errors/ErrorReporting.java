@@ -32,7 +32,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     private final Map<String, LogFactory> mFactories;
 
-    private final LogSerializer mLogSerializer;
+    private LogSerializer mLogSerializer;
 
     private Context mContext;
 
@@ -134,6 +134,11 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     synchronized long getInitializeTimestamp() {
         return mInitializeTimestamp;
+    }
+
+    @VisibleForTesting
+    void setLogSerializer(LogSerializer logSerializer) {
+        mLogSerializer = logSerializer;
     }
 
 }
