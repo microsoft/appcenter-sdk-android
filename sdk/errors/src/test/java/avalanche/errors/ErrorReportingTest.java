@@ -79,12 +79,15 @@ public class ErrorReportingTest {
         ErrorReporting.setEnabled(true);
         assertTrue(ErrorReporting.isEnabled());
         assertTrue(ErrorReporting.getInstance().getInitializeTimestamp() > 0);
+        assertTrue(Thread.getDefaultUncaughtExceptionHandler() instanceof  UncaughtExceptionHandler);
         ErrorReporting.setEnabled(false);
         assertFalse(ErrorReporting.isEnabled());
         assertEquals(ErrorReporting.getInstance().getInitializeTimestamp(), -1);
+        assertFalse(Thread.getDefaultUncaughtExceptionHandler() instanceof UncaughtExceptionHandler);
         ErrorReporting.setEnabled(true);
         assertTrue(ErrorReporting.isEnabled());
         assertTrue(ErrorReporting.getInstance().getInitializeTimestamp() > 0);
+        assertTrue(Thread.getDefaultUncaughtExceptionHandler() instanceof UncaughtExceptionHandler);
     }
 
     @Test(expected = TestCrashException.class)
