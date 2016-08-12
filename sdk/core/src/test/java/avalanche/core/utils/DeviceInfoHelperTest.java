@@ -21,6 +21,7 @@ import org.powermock.reflect.Whitebox;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import avalanche.core.BuildConfig;
 import avalanche.core.ingestion.models.Device;
 
 import static org.junit.Assert.assertEquals;
@@ -104,12 +105,11 @@ public class DeviceInfoHelperTest {
         Whitebox.setInternalState(Build.class, "ID", osBuild);
         Whitebox.setInternalState(Build.VERSION.class, "RELEASE", osVersion);
 
-        /* TODO: Implement mock for BuildConfig.VERSION_NAME and verify getSdkVersion(). Need a special way to do this since BuildConfig is a final class. */
-
         /* First call */
         Device log = DeviceInfoHelper.getDeviceInfo(contextMock);
 
         /* Verify device information. */
+        assertEquals(BuildConfig.VERSION_NAME, log.getSdkVersion());
         assertEquals(appVersion, log.getAppVersion());
         assertEquals(appBuild, log.getAppBuild());
         assertEquals(appNamespace, log.getAppNamespace());
