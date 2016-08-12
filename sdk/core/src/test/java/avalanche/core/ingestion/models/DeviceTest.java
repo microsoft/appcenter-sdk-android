@@ -26,155 +26,113 @@ public class DeviceTest {
         /* Sdk version. */
         a.setSdkVersion("a");
         checkNotEquals(a, b);
-        a.setSdkVersion(null);
+        b.setSdkVersion("b");
+        checkNotEquals(a, b);
         b.setSdkVersion("a");
-        checkNotEquals(a, b);
-        a.setSdkVersion("b");
-        checkNotEquals(a, b);
-        a.setSdkVersion("a");
         checkEquals(a, b);
 
         /* Model. */
         a.setModel("a");
         checkNotEquals(a, b);
-        a.setModel(null);
+        b.setModel("b");
+        checkNotEquals(a, b);
         b.setModel("a");
-        checkNotEquals(a, b);
-        a.setModel("b");
-        checkNotEquals(a, b);
-        a.setModel("a");
         checkEquals(a, b);
 
         /* OEM name. */
         a.setOemName("a");
         checkNotEquals(a, b);
-        a.setOemName(null);
+        b.setOemName("b");
+        checkNotEquals(a, b);
         b.setOemName("a");
-        checkNotEquals(a, b);
-        a.setOemName("b");
-        checkNotEquals(a, b);
-        a.setOemName("a");
         checkEquals(a, b);
 
         /* OS name. */
         a.setOsName("a");
         checkNotEquals(a, b);
-        a.setOsName(null);
+        b.setOsName("b");
+        checkNotEquals(a, b);
         b.setOsName("a");
-        checkNotEquals(a, b);
-        a.setOsName("b");
-        checkNotEquals(a, b);
-        a.setOsName("a");
         checkEquals(a, b);
 
         /* OS version. */
         a.setOsVersion("a");
         checkNotEquals(a, b);
-        a.setOsVersion(null);
+        b.setOsVersion("b");
+        checkNotEquals(a, b);
         b.setOsVersion("a");
-        checkNotEquals(a, b);
-        a.setOsVersion("b");
-        checkNotEquals(a, b);
-        a.setOsVersion("a");
         checkEquals(a, b);
 
         /* OS API level. */
         a.setOsApiLevel(1);
         checkNotEquals(a, b);
-        a.setOsApiLevel(null);
+        b.setOsApiLevel(2);
+        checkNotEquals(a, b);
         b.setOsApiLevel(1);
-        checkNotEquals(a, b);
-        a.setOsApiLevel(2);
-        checkNotEquals(a, b);
-        a.setOsApiLevel(1);
         checkEquals(a, b);
 
         /* Locale. */
         a.setLocale("a");
         checkNotEquals(a, b);
-        a.setLocale(null);
+        b.setLocale("b");
+        checkNotEquals(a, b);
         b.setLocale("a");
-        checkNotEquals(a, b);
-        a.setLocale("b");
-        checkNotEquals(a, b);
-        a.setLocale("a");
         checkEquals(a, b);
 
         /* Time zone offset. */
         a.setTimeZoneOffset(1);
         checkNotEquals(a, b);
-        a.setTimeZoneOffset(null);
+        b.setTimeZoneOffset(2);
+        checkNotEquals(a, b);
         b.setTimeZoneOffset(1);
-        checkNotEquals(a, b);
-        a.setTimeZoneOffset(2);
-        checkNotEquals(a, b);
-        a.setTimeZoneOffset(1);
         checkEquals(a, b);
 
         /* Screen size. */
         a.setScreenSize("a");
         checkNotEquals(a, b);
-        a.setScreenSize(null);
+        b.setScreenSize("b");
+        checkNotEquals(a, b);
         b.setScreenSize("a");
-        checkNotEquals(a, b);
-        a.setScreenSize("b");
-        checkNotEquals(a, b);
-        a.setScreenSize("a");
         checkEquals(a, b);
 
         /* App version. */
         a.setAppVersion("a");
         checkNotEquals(a, b);
-        a.setAppVersion(null);
+        b.setAppVersion("b");
+        checkNotEquals(a, b);
         b.setAppVersion("a");
-        checkNotEquals(a, b);
-        a.setAppVersion("b");
-        checkNotEquals(a, b);
-        a.setAppVersion("a");
         checkEquals(a, b);
 
         /* Carrier name. */
         a.setCarrierName("a");
         checkNotEquals(a, b);
-        a.setCarrierName(null);
+        b.setCarrierName("b");
+        checkNotEquals(a, b);
         b.setCarrierName("a");
-        checkNotEquals(a, b);
-        a.setCarrierName("b");
-        checkNotEquals(a, b);
-        a.setCarrierName("a");
         checkEquals(a, b);
 
         /* Carrier country. */
         a.setCarrierCountry("a");
         checkNotEquals(a, b);
-        a.setCarrierCountry(null);
+        b.setCarrierCountry("b");
+        checkNotEquals(a, b);
         b.setCarrierCountry("a");
-        checkNotEquals(a, b);
-        a.setCarrierCountry("b");
-        checkNotEquals(a, b);
-        a.setCarrierCountry("a");
         checkEquals(a, b);
 
         /* App build. */
         a.setAppBuild("a");
         checkNotEquals(a, b);
-        a.setAppBuild(null);
+        b.setAppBuild("b");
+        checkNotEquals(a, b);
         b.setAppBuild("a");
-        checkNotEquals(a, b);
-        a.setAppBuild("b");
-        checkNotEquals(a, b);
-        a.setAppBuild("a");
         checkEquals(a, b);
 
         /* App namespace. */
         a.setAppNamespace("a");
         checkNotEquals(a, b);
-        a.setAppNamespace(null);
+        b.setAppNamespace("b");
+        checkNotEquals(a, b);
         b.setAppNamespace("a");
-        checkNotEquals(a, b);
-        a.setAppNamespace("b");
-        checkNotEquals(a, b);
-        a.setAppNamespace("a");
         checkEquals(a, b);
     }
 }

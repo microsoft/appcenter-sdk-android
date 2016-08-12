@@ -8,14 +8,17 @@ import avalanche.test.TestUtils;
 
 import static avalanche.test.TestUtils.checkEquals;
 import static avalanche.test.TestUtils.checkNotEquals;
-import static org.mockito.Mockito.mock;
 
 @SuppressWarnings("unused")
 public class AbstractLogTest {
 
     @Test
     public void compareDifferentType() {
-        TestUtils.compareSelfNullClass(mock(AbstractLog.class));
+        TestUtils.compareSelfNullClass(new MockLog());
+        MockLogWithProperties mockLogWithProperties = new MockLogWithProperties();
+        TestUtils.compareSelfNullClass(mockLogWithProperties);
+        mockLogWithProperties.setToffset(1L);
+        checkNotEquals(mockLogWithProperties, new MockLogWithProperties());
     }
 
     @Test
@@ -37,12 +40,9 @@ public class AbstractLogTest {
         UUID sid2 = UUID.randomUUID();
         a.setSid(sid1);
         checkNotEquals(a, b);
-        a.setSid(null);
+        b.setSid(sid2);
+        checkNotEquals(a, b);
         b.setSid(sid1);
-        checkNotEquals(a, b);
-        a.setSid(sid2);
-        checkNotEquals(a, b);
-        a.setSid(sid1);
         checkEquals(a, b);
 
         /* Device. */
@@ -52,16 +52,21 @@ public class AbstractLogTest {
         d2.setSdkVersion("a");
         a.setDevice(d1);
         checkNotEquals(a, b);
-        a.setDevice(null);
+        b.setDevice(d2);
+        checkNotEquals(a, b);
         b.setDevice(d1);
-        checkNotEquals(a, b);
-        a.setDevice(d2);
-        checkNotEquals(a, b);
-        a.setDevice(d1);
         checkEquals(a, b);
     }
 
     private static class MockLog extends AbstractLog {
+
+        @Override
+        public String getType() {
+            return null;
+        }
+    }
+
+    private static class MockLogWithProperties extends LogWithProperties {
 
         @Override
         public String getType() {

@@ -122,11 +122,7 @@ public class ErrorModelTest {
             checkNotEquals(errorLog1, errorLog2);
             checkSerialization(errorLog1, serializer);
 
-            errorLog1.setId(null);
             errorLog2.setId(UUID.randomUUID());
-            checkNotEquals(errorLog1, errorLog2);
-
-            errorLog1.setId(UUID.randomUUID());
             checkNotEquals(errorLog1, errorLog2);
 
             errorLog2.setId(errorLog1.getId());
@@ -137,11 +133,7 @@ public class ErrorModelTest {
             checkNotEquals(errorLog1, errorLog2);
             checkSerialization(errorLog1, serializer);
 
-            errorLog1.setProcessId(null);
             errorLog2.setProcessId(2);
-            checkNotEquals(errorLog1, errorLog2);
-
-            errorLog1.setProcessId(1);
             checkNotEquals(errorLog1, errorLog2);
 
             errorLog2.setProcessId(errorLog1.getProcessId());
@@ -152,11 +144,7 @@ public class ErrorModelTest {
             checkNotEquals(errorLog1, errorLog2);
             checkSerialization(errorLog1, serializer);
 
-            errorLog1.setProcessName(null);
             errorLog2.setProcessName("2");
-            checkNotEquals(errorLog1, errorLog2);
-
-            errorLog1.setProcessName("1");
             checkNotEquals(errorLog1, errorLog2);
 
             errorLog2.setProcessName(errorLog1.getProcessName());
@@ -167,11 +155,7 @@ public class ErrorModelTest {
             checkNotEquals(errorLog1, errorLog2);
             checkSerialization(errorLog1, serializer);
 
-            errorLog1.setParentProcessId(null);
             errorLog2.setParentProcessId(2);
-            checkNotEquals(errorLog1, errorLog2);
-
-            errorLog1.setParentProcessId(1);
             checkNotEquals(errorLog1, errorLog2);
 
             errorLog2.setParentProcessId(errorLog1.getParentProcessId());
@@ -182,11 +166,7 @@ public class ErrorModelTest {
             checkNotEquals(errorLog1, errorLog2);
             checkSerialization(errorLog1, serializer);
 
-            errorLog1.setParentProcessName(null);
             errorLog2.setParentProcessName("2");
-            checkNotEquals(errorLog1, errorLog2);
-
-            errorLog1.setParentProcessName("1");
             checkNotEquals(errorLog1, errorLog2);
 
             errorLog2.setParentProcessName(errorLog1.getParentProcessName());
@@ -197,11 +177,7 @@ public class ErrorModelTest {
             checkNotEquals(errorLog1, errorLog2);
             checkSerialization(errorLog1, serializer);
 
-            errorLog1.setErrorThreadId(null);
             errorLog2.setErrorThreadId(2L);
-            checkNotEquals(errorLog1, errorLog2);
-
-            errorLog1.setErrorThreadId(1L);
             checkNotEquals(errorLog1, errorLog2);
 
             errorLog2.setErrorThreadId(errorLog1.getErrorThreadId());
@@ -212,11 +188,7 @@ public class ErrorModelTest {
             checkNotEquals(errorLog1, errorLog2);
             checkSerialization(errorLog1, serializer);
 
-            errorLog1.setErrorThreadName(null);
             errorLog2.setErrorThreadName("2");
-            checkNotEquals(errorLog1, errorLog2);
-
-            errorLog1.setErrorThreadName("1");
             checkNotEquals(errorLog1, errorLog2);
 
             errorLog2.setErrorThreadName(errorLog1.getErrorThreadName());
@@ -227,11 +199,7 @@ public class ErrorModelTest {
             checkNotEquals(errorLog1, errorLog2);
             checkSerialization(errorLog1, serializer);
 
-            errorLog1.setFatal(null);
             errorLog2.setFatal(false);
-            checkNotEquals(errorLog1, errorLog2);
-
-            errorLog1.setFatal(true);
             checkNotEquals(errorLog1, errorLog2);
 
             errorLog2.setFatal(errorLog1.getFatal());
@@ -242,11 +210,7 @@ public class ErrorModelTest {
             checkNotEquals(errorLog1, errorLog2);
             checkSerialization(errorLog1, serializer);
 
-            errorLog1.setAppLaunchTOffset(null);
             errorLog2.setAppLaunchTOffset(2L);
-            checkNotEquals(errorLog1, errorLog2);
-
-            errorLog1.setAppLaunchTOffset(1L);
             checkNotEquals(errorLog1, errorLog2);
 
             errorLog2.setAppLaunchTOffset(errorLog1.getAppLaunchTOffset());
@@ -257,11 +221,7 @@ public class ErrorModelTest {
             checkNotEquals(errorLog1, errorLog2);
             checkSerialization(errorLog1, serializer);
 
-            errorLog1.setArchitecture(null);
             errorLog2.setArchitecture("2");
-            checkNotEquals(errorLog1, errorLog2);
-
-            errorLog1.setArchitecture("1");
             checkNotEquals(errorLog1, errorLog2);
 
             errorLog2.setArchitecture(errorLog1.getArchitecture());
@@ -279,11 +239,7 @@ public class ErrorModelTest {
                 checkNotEquals(exception1, exception2);
                 checkExceptions(serializer, errorLog1, errorLog2, exception1, exception2);
 
-                exception1.setType(null);
                 exception2.setType("2");
-                checkNotEquals(exception1, exception2);
-
-                exception1.setType("1");
                 checkNotEquals(exception1, exception2);
 
                 exception2.setType(exception1.getType());
@@ -294,11 +250,7 @@ public class ErrorModelTest {
                 checkNotEquals(exception1, exception2);
                 checkExceptions(serializer, errorLog1, errorLog2, exception1, exception2);
 
-                exception1.setMessage(null);
                 exception2.setMessage("2");
-                checkNotEquals(exception1, exception2);
-
-                exception1.setMessage("1");
                 checkNotEquals(exception1, exception2);
 
                 exception2.setMessage(exception1.getMessage());
@@ -319,11 +271,7 @@ public class ErrorModelTest {
                     checkNotEquals(frame1, frame2);
                     checkFrames(serializer, errorLog1, errorLog2, exception1, exception2, frame1, frame2);
 
-                    frame1.setClassName(null);
                     frame2.setClassName("2");
-                    checkNotEquals(frame1, frame2);
-
-                    frame1.setClassName("1");
                     checkNotEquals(frame1, frame2);
 
                     frame2.setClassName(frame1.getClassName());
@@ -334,11 +282,7 @@ public class ErrorModelTest {
                     checkNotEquals(frame1, frame2);
                     checkFrames(serializer, errorLog1, errorLog2, exception1, exception2, frame1, frame2);
 
-                    frame1.setMethodName(null);
                     frame2.setMethodName("2");
-                    checkNotEquals(frame1, frame2);
-
-                    frame1.setMethodName("1");
                     checkNotEquals(frame1, frame2);
 
                     frame2.setMethodName(frame1.getMethodName());
@@ -349,11 +293,7 @@ public class ErrorModelTest {
                     checkNotEquals(frame1, frame2);
                     checkFrames(serializer, errorLog1, errorLog2, exception1, exception2, frame1, frame2);
 
-                    frame1.setLineNumber(null);
                     frame2.setLineNumber(2);
-                    checkNotEquals(frame1, frame2);
-
-                    frame1.setLineNumber(1);
                     checkNotEquals(frame1, frame2);
 
                     frame2.setLineNumber(frame1.getLineNumber());
@@ -364,11 +304,7 @@ public class ErrorModelTest {
                     checkNotEquals(frame1, frame2);
                     checkFrames(serializer, errorLog1, errorLog2, exception1, exception2, frame1, frame2);
 
-                    frame1.setFileName(null);
                     frame2.setFileName("2");
-                    checkNotEquals(frame1, frame2);
-
-                    frame1.setFileName("1");
                     checkNotEquals(frame1, frame2);
 
                     frame2.setFileName(frame1.getFileName());
@@ -399,11 +335,7 @@ public class ErrorModelTest {
                 checkNotEquals(thread1, thread2);
                 checkThreads(serializer, errorLog1, errorLog2, thread1, thread2);
 
-                thread1.setName(null);
                 thread2.setName("2");
-                checkNotEquals(thread1, thread2);
-
-                thread1.setName("1");
                 checkNotEquals(thread1, thread2);
 
                 thread2.setName(thread1.getName());
@@ -424,11 +356,7 @@ public class ErrorModelTest {
                     checkNotEquals(frame1, frame2);
                     checkFrames(serializer, errorLog1, errorLog2, thread1, thread2, frame1, frame2);
 
-                    frame1.setClassName(null);
                     frame2.setClassName("2");
-                    checkNotEquals(frame1, frame2);
-
-                    frame1.setClassName("1");
                     checkNotEquals(frame1, frame2);
 
                     frame2.setClassName(frame1.getClassName());
@@ -439,11 +367,7 @@ public class ErrorModelTest {
                     checkNotEquals(frame1, frame2);
                     checkFrames(serializer, errorLog1, errorLog2, thread1, thread2, frame1, frame2);
 
-                    frame1.setMethodName(null);
                     frame2.setMethodName("2");
-                    checkNotEquals(frame1, frame2);
-
-                    frame1.setMethodName("1");
                     checkNotEquals(frame1, frame2);
 
                     frame2.setMethodName(frame1.getMethodName());
@@ -454,11 +378,7 @@ public class ErrorModelTest {
                     checkNotEquals(frame1, frame2);
                     checkFrames(serializer, errorLog1, errorLog2, thread1, thread2, frame1, frame2);
 
-                    frame1.setLineNumber(null);
                     frame2.setLineNumber(2);
-                    checkNotEquals(frame1, frame2);
-
-                    frame1.setLineNumber(1);
                     checkNotEquals(frame1, frame2);
 
                     frame2.setLineNumber(frame1.getLineNumber());
@@ -469,11 +389,7 @@ public class ErrorModelTest {
                     checkNotEquals(frame1, frame2);
                     checkFrames(serializer, errorLog1, errorLog2, thread1, thread2, frame1, frame2);
 
-                    frame1.setFileName(null);
                     frame2.setFileName("2");
-                    checkNotEquals(frame1, frame2);
-
-                    frame1.setFileName("1");
                     checkNotEquals(frame1, frame2);
 
                     frame2.setFileName(frame1.getFileName());
