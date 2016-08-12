@@ -10,7 +10,6 @@ import android.widget.ListView;
 
 import avalanche.analytics.Analytics;
 import avalanche.core.Avalanche;
-import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.UUIDUtils;
 import avalanche.errors.ErrorReporting;
 import avalanche.sasquatch.R;

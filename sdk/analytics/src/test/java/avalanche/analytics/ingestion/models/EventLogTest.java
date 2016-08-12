@@ -11,6 +11,7 @@ import avalanche.test.TestUtils;
 import static avalanche.test.TestUtils.checkEquals;
 import static avalanche.test.TestUtils.checkNotEquals;
 
+@SuppressWarnings("unused")
 public class EventLogTest {
 
     @Test
