@@ -2,10 +2,10 @@ package avalanche.core.ingestion.models;
 
 import org.junit.Test;
 
-import avalanche.core.utils.TestUtils;
+import avalanche.test.TestUtils;
 
-import static avalanche.core.utils.TestUtils.checkEquals;
-import static avalanche.core.utils.TestUtils.checkNotEquals;
+import static avalanche.test.TestUtils.checkEquals;
+import static avalanche.test.TestUtils.checkNotEquals;
 
 public class DeviceTest {
 
