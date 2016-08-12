@@ -20,9 +20,9 @@ import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import avalanche.core.AndroidTestUtils;
 import avalanche.core.ingestion.ServiceCall;
 import avalanche.core.ingestion.ServiceCallback;
-import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.LogContainer;
 import avalanche.core.ingestion.models.json.DefaultLogSerializer;
@@ -59,20 +59,8 @@ public class AvalancheIngestionHttpTest {
         /* Build some payload. */
         long toffset = System.currentTimeMillis();
         LogContainer container = new LogContainer();
-        Device device = new Device();
-        device.setSdkVersion("1.2.3");
-        device.setModel("S5");
-        device.setOemName("HTC");
-        device.setOsName("Android");
-        device.setOsVersion("4.0.3");
-        device.setOsApiLevel(15);
-        device.setLocale("en_US");
-        device.setTimeZoneOffset(120);
-        device.setScreenSize("800x600");
-        device.setAppVersion("3.2.1");
-        device.setAppBuild("42");
         Log log = new MockLog();
-        log.setDevice(device);
+        log.setDevice(AndroidTestUtils.generateMockDevice());
         log.setSid(UUIDUtils.randomUUID());
         log.setToffset(toffset);
         List<Log> logs = new ArrayList<>();
@@ -128,25 +116,7 @@ public class AvalancheIngestionHttpTest {
     public void error503() throws IOException {
 
         /* Build some payload. */
-        LogContainer container = new LogContainer();
-        Device device = new Device();
-        device.setSdkVersion("1.2.3");
-        device.setModel("S5");
-        device.setOemName("HTC");
-        device.setOsName("Android");
-        device.setOsVersion("4.0.3");
-        device.setOsApiLevel(15);
-        device.setLocale("en_US");
-        device.setTimeZoneOffset(120);
-        device.setScreenSize("800x600");
-        device.setAppVersion("3.2.1");
-        device.setAppBuild("42");
-        Log log = new MockLog();
-        log.setDevice(device);
-        log.setSid(UUIDUtils.randomUUID());
-        List<Log> logs = new ArrayList<>();
-        logs.add(log);
-        container.setLogs(logs);
+        LogContainer container = AndroidTestUtils.generateMockLogContainer();
 
         /* Configure mock HTTP. */
         HttpURLConnection urlConnection = mock(HttpURLConnection.class);

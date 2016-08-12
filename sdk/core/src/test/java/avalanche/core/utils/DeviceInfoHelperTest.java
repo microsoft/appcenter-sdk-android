@@ -54,6 +54,7 @@ public class DeviceInfoHelperTest {
         final Integer osApiLevel = 23;
         final String osName = "Android";
         final String osVersion = "mock-version";
+        final String osBuild = "mock-os-build";
         final String screenSizeLandscape = "100x200";
         final String screenSizePortrait = "200x100";
         final TimeZone timeZone = TimeZone.getTimeZone("KST");
@@ -100,7 +101,7 @@ public class DeviceInfoHelperTest {
         Whitebox.setInternalState(Build.class, "MODEL", model);
         Whitebox.setInternalState(Build.class, "MANUFACTURER", oemName);
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", osApiLevel);
-        Whitebox.setInternalState(Build.class, "ID", osName);
+        Whitebox.setInternalState(Build.class, "ID", osBuild);
         Whitebox.setInternalState(Build.VERSION.class, "RELEASE", osVersion);
 
         /* TODO: Implement mock for BuildConfig.VERSION_NAME and verify getSdkVersion(). Need a special way to do this since BuildConfig is a final class. */
@@ -120,6 +121,7 @@ public class DeviceInfoHelperTest {
         assertEquals(osApiLevel, log.getOsApiLevel());
         assertEquals(osName, log.getOsName());
         assertEquals(osVersion, log.getOsVersion());
+        assertEquals(osBuild, log.getOsBuild());
         assertEquals(screenSizeLandscape, log.getScreenSize());
         assertEquals(timeZoneOffset, log.getTimeZoneOffset());
 
