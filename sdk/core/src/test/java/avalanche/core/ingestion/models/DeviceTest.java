@@ -63,6 +63,14 @@ public class DeviceTest {
         b.setOsVersion("a");
         checkEquals(a, b);
 
+        /* OS build. */
+        a.setOsBuild("a");
+        checkNotEquals(a, b);
+        b.setOsBuild("b");
+        checkNotEquals(a, b);
+        b.setOsBuild("a");
+        checkEquals(a, b);
+
         /* OS API level. */
         a.setOsApiLevel(1);
         checkNotEquals(a, b);
