@@ -176,7 +176,6 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
             /* Set headers. */
             urlConnection.setRequestProperty(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
             urlConnection.setRequestProperty(APP_SECRET, appSecret.toString());
-            urlConnection.setRequestProperty("App-Key", appSecret.toString()); // FIXME temporary as the backend has not implemented the header rename yet
             urlConnection.setRequestProperty(INSTALL_ID, installId.toString());
             AvalancheLog.verbose(LOG_TAG, "Headers: " + urlConnection.getRequestProperties());
 
