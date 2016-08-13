@@ -44,7 +44,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
@@ -53,6 +52,7 @@ public class ErrorReportingTest {
 
     @Before
     public void setUp() {
+        Thread.setDefaultUncaughtExceptionHandler(null);
         ErrorReporting.unsetInstance();
         mockStatic(SystemClock.class);
         mockStatic(StorageHelper.InternalStorage.class);
