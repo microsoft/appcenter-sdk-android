@@ -43,6 +43,8 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
@@ -154,6 +156,21 @@ public class ErrorReportingTest {
                 return log.equals(errorLog);
             }
         }), eq(errorReporting.getGroupName()));
+    }
+
+    @Test
+    public void noQueueingWhenDisabled() {
+        Context mockContext = mock(Context.class);
+        AvalancheChannel mockChannel = mock(AvalancheChannel.class);
+
+        ErrorReporting.setEnabled(false);
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
+
+        errorReporting.onChannelReady(mockContext, mockChannel);
+
+        mockStatic(ErrorLogHelper.class);
+
+        verifyNoMoreInteractions(ErrorLogHelper.class);
     }
 
     @Test(expected = TestCrashException.class)
