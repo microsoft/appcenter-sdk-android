@@ -1,7 +1,9 @@
 package avalanche.errors;
 
 import android.content.Context;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 import org.json.JSONException;
 
@@ -30,7 +32,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     private final Map<String, LogFactory> mFactories;
 
-    private final LogSerializer mLogSerializer;
+    private LogSerializer mLogSerializer;
 
     private Context mContext;
 
@@ -51,6 +53,12 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             sInstance = new ErrorReporting();
         }
         return sInstance;
+    }
+
+
+    @VisibleForTesting
+    static synchronized void unsetInstance() {
+        sInstance = null;
     }
 
     public static boolean isEnabled() {
@@ -79,7 +87,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         super.onChannelReady(context, channel);
         mContext = context;
         initialize();
-        if (isInstanceEnabled() && mChannel != null) {
+        if (isInstanceEnabled()) {
             queuePendingCrashes();
         }
     }
@@ -96,7 +104,8 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     private void initialize() {
         boolean enabled = isInstanceEnabled();
-        mInitializeTimestamp = enabled ? System.currentTimeMillis() : -1;
+        mInitializeTimestamp = enabled ? SystemClock.elapsedRealtime() : -1;
+
         if (!enabled) {
             if (mUncaughtExceptionHandler != null) {
                 mUncaughtExceptionHandler.unregister();
@@ -125,6 +134,11 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     synchronized long getInitializeTimestamp() {
         return mInitializeTimestamp;
+    }
+
+    @VisibleForTesting
+    void setLogSerializer(LogSerializer logSerializer) {
+        mLogSerializer = logSerializer;
     }
 
 }

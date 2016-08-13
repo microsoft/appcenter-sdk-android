@@ -2,6 +2,7 @@ package avalanche.errors;
 
 import android.content.Context;
 import android.os.Process;
+import android.support.annotation.VisibleForTesting;
 
 import org.json.JSONException;
 
@@ -22,7 +23,7 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
     private final LogSerializer mLogSerializer;
 
-    private final boolean mIgnoreDefaultExceptionHandler = false;
+    private boolean mIgnoreDefaultExceptionHandler = false;
 
     private Thread.UncaughtExceptionHandler mDefaultUncaughtExceptionHandler;
 
@@ -52,11 +53,21 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
             if (!mIgnoreDefaultExceptionHandler && mDefaultUncaughtExceptionHandler != null) {
                 mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
             } else {
-                Process.killProcess(Process.myPid());
-                System.exit(10);
+                ShutdownHelper.shutdown();
             }
         }
     }
+
+    @VisibleForTesting
+    void setIgnoreDefaultExceptionHandler(boolean ignoreDefaultExceptionHandler) {
+        mIgnoreDefaultExceptionHandler = ignoreDefaultExceptionHandler;
+    }
+
+    @VisibleForTesting
+    Thread.UncaughtExceptionHandler getDefaultUncaughtExceptionHandler() {
+        return mDefaultUncaughtExceptionHandler;
+    }
+
 
     private void register() {
         if (!mIgnoreDefaultExceptionHandler) {
@@ -67,5 +78,15 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
     public void unregister() {
         Thread.setDefaultUncaughtExceptionHandler(mDefaultUncaughtExceptionHandler);
+    }
+
+    @VisibleForTesting
+    final static class ShutdownHelper {
+
+        static void shutdown() {
+            Process.killProcess(Process.myPid());
+            System.exit(10);
+        }
+
     }
 }
