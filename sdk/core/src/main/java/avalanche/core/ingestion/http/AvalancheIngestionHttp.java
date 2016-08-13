@@ -116,6 +116,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
      *
      * @param baseUrl the base url.
      */
+    @SuppressWarnings("SameParameterValue")
     public void setBaseUrl(@NonNull String baseUrl) {
         mBaseUrl = baseUrl;
     }
