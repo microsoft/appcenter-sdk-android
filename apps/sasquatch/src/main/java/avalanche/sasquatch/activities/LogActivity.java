@@ -42,6 +42,7 @@ public abstract class LogActivity extends AppCompatActivity implements TextWatch
         mLastInput.addTextChangedListener(this);
     }
 
+    @SuppressWarnings("unused")
     public void send(@SuppressWarnings("UnusedParameters") View view) {
         String name = ((TextView) findViewById(R.id.name)).getText().toString();
         Map<String, String> properties = null;
