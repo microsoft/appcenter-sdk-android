@@ -375,7 +375,7 @@ public class StorageHelperAndroidTest {
         /* Delete the files to clean up. */
         for (String filename : filenames) {
             Log.i(TAG, "Deleting " + filename);
-            InternalStorage.delete(sAndroidFilesPath + "/" + filename);
+            assertTrue(InternalStorage.delete(sAndroidFilesPath + "/" + filename));
         }
 
         /* Verify all the files are properly deleted. */
