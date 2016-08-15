@@ -135,6 +135,7 @@ public final class StorageHelper {
          * @param key The key for which the value is to be retrieved.
          * @return The value of {@code key} or 0 if key is not set.
          */
+        @SuppressWarnings("unused")
         public static int getInt(@NonNull String key) {
             return getInt(key, 0);
         }
@@ -157,6 +158,7 @@ public final class StorageHelper {
          * @param key   The key to store the value for.
          * @param value The value to store for the key.
          */
+        @SuppressWarnings("unused")
         public static void putInt(@NonNull String key, int value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putInt(key, value);
@@ -227,6 +229,7 @@ public final class StorageHelper {
          * @param key   The key to store the value for.
          * @param value The value to store for the key.
          */
+        @SuppressWarnings("SameParameterValue")
         public static void putString(@NonNull String key, String value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putString(key, value);
@@ -291,6 +294,7 @@ public final class StorageHelper {
          * @param path The path of the file.
          * @return The contents of the file.
          */
+        @SuppressWarnings("SameParameterValue")
         public static String read(@NonNull String path) {
             return read(new File(path));
         }
