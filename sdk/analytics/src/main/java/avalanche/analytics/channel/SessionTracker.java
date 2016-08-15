@@ -178,16 +178,29 @@ public class SessionTracker implements AvalancheChannel.Listener {
         }
     }
 
+    /**
+     * Call this whenever an activity is resumed to update session tracker state.
+     */
     public synchronized void onActivityResumed() {
 
         /* Record resume time for session timeout management. */
         mLastResumedTime = mTimeSource.elapsedRealtime();
     }
 
+    /**
+     * Call this whenever an activity is paused to update session tracker state.
+     */
     public synchronized void onActivityPaused() {
 
         /* Record pause time for session timeout management. */
         mLastPausedTime = mTimeSource.elapsedRealtime();
+    }
+
+    /**
+     * Clear storage from saved session state.
+     */
+    public synchronized void clearSessions() {
+        StorageHelper.PreferencesStorage.remove(STORAGE_KEY);
     }
 
     /**
