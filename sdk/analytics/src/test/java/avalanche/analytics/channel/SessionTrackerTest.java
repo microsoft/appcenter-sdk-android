@@ -33,6 +33,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
@@ -298,6 +299,11 @@ public class SessionTrackerTest {
             assertNotNull(sessions);
             assertEquals(3, sessions.size());
         }
+
+        /* Clear sessions. */
+        mSessionTracker.clearSessions();
+        verifyStatic();
+        StorageHelper.PreferencesStorage.remove("sessions");
     }
 
     @Test
