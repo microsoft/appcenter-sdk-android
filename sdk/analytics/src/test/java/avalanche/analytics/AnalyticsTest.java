@@ -47,6 +47,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
@@ -222,6 +223,10 @@ public class AnalyticsTest {
         analytics.onActivityResumed(new Activity());
         analytics.onActivityPaused(new Activity());
         verifyNoMoreInteractions(channel);
+
+        /* Verify session state has been cleared. */
+        verifyStatic();
+        StorageHelper.PreferencesStorage.remove("sessions");
     }
 
     /**
