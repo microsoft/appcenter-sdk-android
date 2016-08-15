@@ -16,11 +16,17 @@ import avalanche.core.channel.AvalancheChannel;
 import avalanche.core.utils.StorageHelper;
 
 import static avalanche.core.utils.PrefStorageConstants.KEY_ENABLED;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
@@ -93,10 +99,18 @@ public class AbstractAvalancheFeatureTest {
     }
 
     @Test
-    public void enabled() {
-        Assert.assertTrue(feature.isInstanceEnabled());
+    public void setEnabled() {
+        assertTrue(feature.isInstanceEnabled());
+        feature.setInstanceEnabled(true);
         feature.setInstanceEnabled(false);
-        Assert.assertFalse(feature.isInstanceEnabled());
+        assertFalse(feature.isInstanceEnabled());
+        feature.setInstanceEnabled(false);
+        feature.setInstanceEnabled(true);
+        assertTrue(feature.isInstanceEnabled());
+        feature.setInstanceEnabled(true);
+        verifyStatic(times(1));
+        StorageHelper.PreferencesStorage.putBoolean(feature.getEnabledPreferenceKey(), false);
+        StorageHelper.PreferencesStorage.putBoolean(feature.getEnabledPreferenceKey(), true);
     }
 
     @Test
@@ -105,10 +119,33 @@ public class AbstractAvalancheFeatureTest {
     }
 
     @Test
-    public void onChannelReady() {
+    public void onChannelReadyEnabledThenDisable() {
         AvalancheChannel channel = mock(AvalancheChannel.class);
         feature.onChannelReady(mock(Context.class), channel);
+        verify(channel).removeGroup(feature.getGroupName());
+        verify(channel).addGroup(feature.getGroupName(), feature.getTriggerCount(), feature.getTriggerInterval(), feature.getTriggerMaxParallelRequests(), feature.getChannelListener());
+        verifyNoMoreInteractions(channel);
         Assert.assertSame(channel, feature.mChannel);
+
+        feature.setInstanceEnabled(false);
+        verify(channel, times(2)).removeGroup(feature.getGroupName());
+        verify(channel).clear(feature.getGroupName());
+        verifyNoMoreInteractions(channel);
+    }
+
+    @Test
+    public void onChannelReadyDisabledThenEnable() {
+        AvalancheChannel channel = mock(AvalancheChannel.class);
+        feature.setInstanceEnabled(false);
+        feature.onChannelReady(mock(Context.class), channel);
+        verify(channel).removeGroup(feature.getGroupName());
+        verify(channel).clear(feature.getGroupName());
+        verifyNoMoreInteractions(channel);
+        Assert.assertSame(channel, feature.mChannel);
+
+        feature.setInstanceEnabled(true);
+        verify(channel).addGroup(feature.getGroupName(), feature.getTriggerCount(), feature.getTriggerInterval(), feature.getTriggerMaxParallelRequests(), feature.getChannelListener());
+        verifyNoMoreInteractions(channel);
     }
 
     @Test
