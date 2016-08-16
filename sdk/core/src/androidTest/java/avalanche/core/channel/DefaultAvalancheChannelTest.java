@@ -156,28 +156,28 @@ public class DefaultAvalancheChannelTest {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
-        //don't provide a UUID to prevent sending
+        /* Don't provide a UUID to prevent sending. */
         @SuppressWarnings("ConstantConditions")
         DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, null, mockIngestion, mockPersistence, sLogSerializer);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
-        //Enqueuing 49 events.
+        /* Enqueue 49 events. */
         for (int i = 0; i < 49; i++) {
             MockLog log = new MockLog();
             channel.enqueue(log, TEST_GROUP);
             assertTrue(log.getToffset() > 0);
         }
 
-        //Check if our counter is equal the number of events.
+        /* Check if our counter is equal the number of events. */
         assertEquals(49, channel.getCounter(TEST_GROUP));
 
-        //Enqueue another event.
+        /* Enqueue another event. */
         channel.enqueue(new MockLog(), TEST_GROUP);
 
-        //The counter should be 0 as we reset the counter after reaching the limit of 50.
+        /* The counter should be 0 as we reset the counter after reaching the limit of 50. */
         assertEquals(0, channel.getCounter(TEST_GROUP));
 
-        //Verifying that 50 items have been persisted.
+        /* Verify that 50 items have been persisted. */
         verify(mockPersistence, times(50)).putLog(eq(TEST_GROUP), any(MockLog.class));
     }
 
@@ -186,36 +186,37 @@ public class DefaultAvalancheChannelTest {
     public void analyticsSuccess() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
+        AvalancheChannel.GroupListener mockListener = mock(AvalancheChannel.GroupListener.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer()).then(getEmptyGetLogsAnswer());
-
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), sLogSerializer);
-        AvalancheChannel.GroupListener mockListener = mock(AvalancheChannel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
-
         channel.setPersistence(mockPersistence);
         channel.setIngestion(mockIngestion);
 
-        //Enqueuing 50 events.
+        /* Enqueue 50 events. */
         for (int i = 0; i < 50; i++) {
             channel.enqueue(new MockLog(), TEST_GROUP);
         }
 
-        //Verifying that 5 items have been persisted.
+        /* Verify that 5 items have been persisted. */
         verify(mockPersistence, times(50)).putLog(eq(TEST_GROUP), any(MockLog.class));
 
-        //Verify that we have called sendAsync on the ingestion
+        /* Verify that we have called sendAsync on the ingestion. */
         verify(mockIngestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        //Verify that we have called deleteLogs on the persistence
+        /* Verify that we have called deleteLogs on the persistence. */
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
-        //Verify that we have called onSuccess in the listener
+        /* Verify that we have called onBeforeSending in the listener. */
+        verify(mockListener, times(50)).onBeforeSending(any(Log.class));
+
+        /* Verify that we have called onSuccess in the listener. */
         verify(mockListener, times(50)).onSuccess(any(Log.class));
 
-        //The counter should be 0 now as we sent data.
+        /* The counter should be 0 now as we sent data. */
         assertEquals(0, channel.getCounter(TEST_GROUP));
     }
 
@@ -276,49 +277,49 @@ public class DefaultAvalancheChannelTest {
     public void analyticsRecoverable() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
+        AvalancheChannel.GroupListener mockListener = mock(AvalancheChannel.GroupListener.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException()));
 
-        //don't provide a UUID to prevent sending
+        /* Don't provide a UUID to prevent sending. */
         DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), mockIngestion, mockPersistence, sLogSerializer);
-        AvalancheChannel.GroupListener mockListener = mock(AvalancheChannel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
-        //Enqueuing 50 events.
+        /* Enqueue 50 events. */
         for (int i = 0; i < 50; i++) {
             channel.enqueue(new MockLog(), TEST_GROUP);
         }
 
-        //Verifying that 50 items have been persisted.
+        /* Verify that 50 items have been persisted. */
         verify(mockPersistence, times(50)).putLog(eq(TEST_GROUP), any(MockLog.class));
 
-        //Verify that we have called sendAsync on the ingestion
+        /* Verify that we have called sendAsync on the ingestion. */
         verify(mockIngestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        //Verify that we have not called deleteLogs on the persistence
+        /* Verify that we have not called deleteLogs on the persistence. */
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
-        //Verify that the Channel is disabled
+        /* Verify that the Channel is disabled. */
         assertFalse(channel.isEnabled());
         verify(mockPersistence).clearPendingLogState();
         verify(mockPersistence, never()).clear();
 
-        //Enqueuing 20 more events.
+        /* Enqueue 20 more events. */
         for (int i = 0; i < 20; i++) {
             channel.enqueue(new MockLog(), TEST_GROUP);
         }
 
-        //The counter should have been 0 now as we are disabled and the counter is not increased.
+        /* The counter should have been 0 now as we are disabled and the counter is not increased. */
         assertEquals(0, channel.getCounter(TEST_GROUP));
 
-        //Using a fresh ingestion object to change our stub to use the analyticsSuccess()-callback
+        /* Use a fresh ingestion object to change our stub to use the analyticsSuccess()-callback. */
         AvalancheIngestionHttp newIngestion = mock(AvalancheIngestionHttp.class);
         when(newIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         channel.setIngestion(newIngestion);
 
-        //Use a fresh persistence, that will return 50 objects, then another 25 objects.
+        /* Use a fresh persistence, that will return 50 objects, then another 25 objects. */
         AvalancheDatabasePersistence newPersistence = mock(AvalancheDatabasePersistence.class);
         when(newPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class)))
                 .then(getGetLogsAnswer())
@@ -331,16 +332,19 @@ public class DefaultAvalancheChannelTest {
         channel.setEnabled(true);
         channel.triggerIngestion();
 
-        //The counter should back to 0 now.
+        /* The counter should back to 0 now. */
         assertEquals(0, channel.getCounter(TEST_GROUP));
 
-        //Verify that we have called sendAsync on the ingestion 5 times total.
+        /* Verify that we have called sendAsync on the ingestion 5 times total. */
         verify(newIngestion, times(3)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        //Verify that we have called deleteLogs on the persistence
+        /* Verify that we have called deleteLogs on the persistence. */
         verify(newPersistence, times(3)).deleteLogs(any(String.class), any(String.class));
 
-        //Verify that we have called onSuccess in the listener
+        /* Verify that we have called onBeforeSending in the listener. getLogs will return 50, 50, 50 and 25. */
+        verify(mockListener, times(175)).onBeforeSending(any(Log.class));
+
+        /* Verify that we have called onFailure in the listener. */
         verify(mockListener, times(50)).onFailure(any(Log.class), any(Exception.class));
     }
 
@@ -356,40 +360,40 @@ public class DefaultAvalancheChannelTest {
         DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), mockIngestion, mockPersistence, sLogSerializer);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
-        //Enqueuing 50 events.
+        /* Enqueue 50 events. */
         for (int i = 0; i < 50; i++) {
             channel.enqueue(new MockLog(), TEST_GROUP);
         }
 
-        //Verifying that 50 items have been persisted.
+        /* Verify that 50 items have been persisted. */
         verify(mockPersistence, times(50)).putLog(eq(TEST_GROUP), any(MockLog.class));
 
-        //Verify that we have called sendAsync on the ingestion
+        /* Verify that we have called sendAsync on the ingestion. */
         verify(mockIngestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        //Verify that we have deleted the failed batch
+        /* Verify that we have deleted the failed batch. */
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
-        //Verify that the Channel is disabled
+        /* Verify that the Channel is disabled. */
         assertFalse(channel.isEnabled());
         verify(mockPersistence).clearPendingLogState();
         verify(mockPersistence, never()).clear();
 
-        //Enqueuing 20 more events.
+        /* Enqueue 20 more events. */
         for (int i = 0; i < 20; i++) {
             channel.enqueue(new MockLog(), TEST_GROUP);
         }
 
-        //The counter should have been 0 now as we are disabled and the counter is not increased.
+        /* The counter should have been 0 now as we are disabled and the counter is not increased. */
         assertEquals(0, channel.getCounter(TEST_GROUP));
 
-        //Using a fresh ingestion object to change our stub to use the analyticsSuccess()-callback
+        /* Use a fresh ingestion object to change our stub to use the analyticsSuccess()-callback. */
         AvalancheIngestionHttp newIngestion = mock(AvalancheIngestionHttp.class);
         when(newIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         channel.setIngestion(newIngestion);
 
-        //Use a fresh persistence, that will return 50 objects, then another 25 objects.
+        /* Use a fresh persistence, that will return 50 objects, then another 25 objects. */
         AvalancheDatabasePersistence newPersistence = mock(AvalancheDatabasePersistence.class);
         when(newPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class)))
                 .then(getGetLogsAnswer())
@@ -402,13 +406,13 @@ public class DefaultAvalancheChannelTest {
         channel.setEnabled(true);
         channel.triggerIngestion();
 
-        //The counter should back to 0 now.
+        /* The counter should back to 0 now. */
         assertEquals(0, channel.getCounter(TEST_GROUP));
 
-        //Verify that we have called sendAsync on the ingestion 5 times total.
+        /* Verify that we have called sendAsync on the ingestion 5 times total. */
         verify(newIngestion, times(3)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        //Verify that we have called deleteLogs on the persistence
+        /* Verify that we have called deleteLogs on the persistence. */
         verify(newPersistence, times(3)).deleteLogs(any(String.class), any(String.class));
     }
 
@@ -417,25 +421,25 @@ public class DefaultAvalancheChannelTest {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
         AvalancheIngestionHttp mockIngestion = mock(AvalancheIngestionHttp.class);
 
-        //don't provide a UUID to prevent sending
+        /* Don't provide a UUID to prevent sending. */
         @SuppressWarnings("ConstantConditions")
         DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, null, mockIngestion, mockPersistence, sLogSerializer);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
-        //Enqueuing 4 events.
+        /* Enqueue 4 events. */
         for (int i = 0; i < 4; i++) {
             MockLog log = new MockLog();
             channel.enqueue(log, TEST_GROUP);
             assertTrue(log.getToffset() > 0);
         }
 
-        //The counter should have been 0 now as we have reached the limit
+        /* The counter should have been 0 now as we have reached the limit. */
         assertEquals(0, channel.getCounter(TEST_GROUP));
 
-        //Enqueue another event.
+        /* Enqueue another event. */
         channel.enqueue(new MockLog(), TEST_GROUP);
 
-        //Verifying that 5 items have been persisted.
+        /* Verify that 5 items have been persisted. */
         verify(mockPersistence, times(5)).putLog(eq(TEST_GROUP), any(MockLog.class));
     }
 
@@ -444,33 +448,35 @@ public class DefaultAvalancheChannelTest {
     public void errorLogSuccess() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
         AvalancheIngestion mockIngestion = mock(AvalancheIngestion.class);
+        AvalancheChannel.GroupListener mockListener = mock(AvalancheChannel.GroupListener.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer()).then(getEmptyGetLogsAnswer());
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), sLogSerializer);
-        AvalancheChannel.GroupListener mockListener = mock(AvalancheChannel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
-
         channel.setIngestion(mockIngestion);
         channel.setPersistence(mockPersistence);
 
-        //Enqueuing 1 error log.
+        /* Enqueue 1 error log. */
         channel.enqueue(new MockLog(), TEST_GROUP);
 
-        //Verifying that 1 item have been persisted.
+        /* Verify that 1 item have been persisted. */
         verify(mockPersistence).putLog(eq(TEST_GROUP), any(MockLog.class));
 
-        //Verify that we have called sendAsync on the ingestion
+        /* Verify that we have called sendAsync on the ingestion. */
         verify(mockIngestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        //Verify that we have called deleteLogs on the persistence
+        /* Verify that we have called deleteLogs on the persistence. */
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
-        //Verify that we have called onSuccess in the listener
+        /* Verify that we have called onBeforeSending in the listener. */
+        verify(mockListener).onBeforeSending(any(Log.class));
+
+        /* Verify that we have called onSuccess in the listener. */
         verify(mockListener).onSuccess(any(Log.class));
 
-        //The counter should be 0 now as we sent data.
+        /* The counter should be 0 now as we sent data. */
         assertEquals(0, channel.getCounter(TEST_GROUP));
     }
 
@@ -479,35 +485,38 @@ public class DefaultAvalancheChannelTest {
     public void errorLogRecoverable() throws AvalanchePersistence.PersistenceException {
         AvalanchePersistence mockPersistence = mock(AvalanchePersistence.class);
         AvalancheIngestion mockIngestion = mock(AvalancheIngestion.class);
+        AvalancheChannel.GroupListener mockListener = mock(AvalancheChannel.GroupListener.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException()));
 
         DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), mockIngestion, mockPersistence, sLogSerializer);
-        AvalancheChannel.GroupListener mockListener = mock(AvalancheChannel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
-        //Enqueuing 1 error.
+        /* Enqueue 1 error. */
         channel.enqueue(new MockLog(), TEST_GROUP);
 
-        //Verifying that 1 items have been persisted.
+        /* Verify that 1 items have been persisted. */
         verify(mockPersistence).putLog(eq(TEST_GROUP), any(MockLog.class));
 
-        //Verify that we have called sendAsync on the ingestion once for the first item, but not more than that.
+        /* Verify that we have called sendAsync on the ingestion once for the first item, but not more than that. */
         verify(mockIngestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        //Verify that we have not called deleteLogs on the persistence
+        /* Verify that we have not called deleteLogs on the persistence. */
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
-        //Verify that we have called onSuccess in the listener
+        /* Verify that we have called onBeforeSending in the listener. */
+        verify(mockListener).onBeforeSending(any(Log.class));
+
+        /* Verify that we have called onFailure in the listener. */
         verify(mockListener).onFailure(any(Log.class), any(Exception.class));
 
-        //Verify that the Channel is disabled
+        /* Verify that the Channel is disabled. */
         assertFalse(channel.isEnabled());
         verify(mockPersistence).clearPendingLogState();
         verify(mockPersistence, never()).clear();
 
-        //Using a fresh ingestion object to change our stub to use the analyticsSuccess()-callback
+        /* Use a fresh ingestion object to change our stub to use the analyticsSuccess()-callback. */
         AvalancheIngestion newIngestion = mock(AvalancheIngestion.class);
         when(newIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
@@ -527,10 +536,10 @@ public class DefaultAvalancheChannelTest {
         channel.setEnabled(true);
         channel.triggerIngestion();
 
-        //Verify that we have called sendAsync on the ingestion 5 times total
+        /* Verify that we have called sendAsync on the ingestion 5 times total. */
         verify(newIngestion, times(5)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        //Verify that we have called deleteLogs on the persistence 5 times
+        /* Verify that we have called deleteLogs on the persistence 5 times. */
         verify(newPersistence, times(5)).deleteLogs(any(String.class), any(String.class));
     }
 
@@ -546,23 +555,23 @@ public class DefaultAvalancheChannelTest {
         DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), mockIngestion, mockPersistence, sLogSerializer);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
-        //Enqueuing 20 events.
+        /* Enqueue 20 events. */
         for (int i = 0; i < 20; i++) {
             channel.enqueue(new MockLog(), TEST_GROUP);
         }
 
-        //Verifying that 5 items have been persisted.
+        /* Verify that 5 items have been persisted. */
         verify(mockPersistence, times(20)).putLog(eq(TEST_GROUP), any(MockLog.class));
 
         Thread.sleep(4000);
 
-        //Verify that we have called sendAsync on the ingestion
+        /* Verify that we have called sendAsync on the ingestion. */
         verify(mockIngestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        //Verify that we have called deleteLogs on the persistence
+        /* Verify that we have called deleteLogs on the persistence. */
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
-        //The counter should be 0 now as we sent data.
+        /* The counter should be 0 now as we sent data. */
         assertEquals(0, channel.getCounter(TEST_GROUP));
     }
 
