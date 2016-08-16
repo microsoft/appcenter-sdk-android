@@ -2,15 +2,16 @@
 // :sdk
 //
 
-apply plugin: 'jacoco'
+allprojects {
+    apply plugin: 'jacoco'
 
-jacoco {
-    toolVersion '0.7.4.+'
+    jacoco {
+        toolVersion '0.7.6.201602180812'
+    }
 }
 
 subprojects {
     apply plugin: 'com.android.library'
-    apply plugin: 'jacoco'
 
     android {
         buildToolsVersion rootProject.ext.buildToolsVersion
@@ -30,10 +31,6 @@ subprojects {
         testOptions {
             unitTests.returnDefaultValues = true
         }
-    }
-
-    jacoco {
-        toolVersion '0.7.4.+'
     }
 
     dependencies {
