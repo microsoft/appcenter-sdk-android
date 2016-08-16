@@ -288,32 +288,41 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
                 return;
             }
 
-            //Reset counter and timer
+            /* Reset counter and timer. */
             resetThresholds(groupName);
             GroupState groupState = mGroupStates.get(groupName);
             int limit = groupState.mMaxLogsPerBatch;
 
-            //Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending.
-            //condition to stop recursion
+            /* Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending. */
             if (groupState.mSendingBatches.size() == groupState.mMaxParallelBatches) {
                 AvalancheLog.debug(TAG, "Already sending " + groupState.mMaxParallelBatches + " batches of analytics data to the server.");
                 return;
             }
 
-            //Get a batch from persistence
+            /* Get a batch from persistence. */
             ArrayList<Log> list = new ArrayList<>(0);
             String batchId = mPersistence.getLogs(groupName, limit, list);
 
-            //Add batchIds to the list of batchIds and forward to ingestion for real
+            /* Add batchIds to the list of batchIds and forward to ingestion for real. */
             if ((!TextUtils.isEmpty(batchId)) && (list.size() > 0)) {
+
+                /* Call group listener before sending logs to ingestion service. */
+                if (groupState.mListener != null) {
+                    for (Log log : list) {
+                        groupState.mListener.onBeforeSending(log);
+                    }
+                }
+
                 LogContainer logContainer = new LogContainer();
                 logContainer.setLogs(list);
 
                 groupState.mSendingBatches.put(batchId, list);
                 ingestLogs(groupName, batchId, logContainer);
 
-                //if we have sent a batch that was the maximum amount of logs, we trigger sending once more
-                //to make sure we send data that was stored on disc
+                /*
+                 * if we have sent a batch that was the maximum amount of logs, we trigger sending once more
+                 * to make sure we send data that was stored on disc.
+                 */
                 if (list.size() == limit) {
                     triggerIngestion(groupName);
                 }
@@ -465,19 +474,19 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
             int counter = groupState.mPendingLogCount;
             int maxCount = groupState.mMaxLogsPerBatch;
             if (counter == 0) {
-                //Kick of timer if the counter is 0 and cancel previously running timer
+                /* Kick off timer if the counter is 0 and cancel previously running timer. */
                 resetThresholds(groupName);
             }
 
-            //increment counter
+            /* Increment counter. */
             counter = counter + 1;
             if (counter == maxCount) {
                 counter = 0;
-                //We have reached the max batch count or a multiple of it. Trigger ingestion.
+                /* We have reached the max batch count or a multiple of it. Trigger ingestion. */
                 triggerIngestion(groupName);
             }
 
-            //set the counter property
+            /* Set the counter property. */
             setCounter(groupName, counter);
         }
     }

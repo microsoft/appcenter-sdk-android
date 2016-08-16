@@ -4,16 +4,19 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Build;
 import android.os.Process;
-import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import avalanche.core.Constants;
+import avalanche.core.utils.AndroidTimeSource;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.DeviceInfoHelper;
 import avalanche.core.utils.StorageHelper;
@@ -22,13 +25,20 @@ import avalanche.errors.ingestion.models.JavaErrorLog;
 import avalanche.errors.ingestion.models.JavaException;
 import avalanche.errors.ingestion.models.JavaStackFrame;
 import avalanche.errors.ingestion.models.JavaThread;
+import avalanche.errors.model.ErrorReport;
 
 /**
  * ErrorLogHelper to help constructing, serializing, and de-serializing locally stored error logs.
  */
 public final class ErrorLogHelper {
 
+    public static final String ERROR_LOG_FILE_EXTENSION = ".json";
+
+    public static final String THROWABLE_FILE_EXTENSION = ".throwable";
+
     private static final String ERROR_DIRECTORY = "error";
+
+    private static final AndroidTimeSource ANDROID_TIME_SOURCE = new AndroidTimeSource();
 
     @NonNull
     public static JavaErrorLog createErrorLog(@NonNull Context context, @NonNull final Thread thread, @NonNull final Throwable exception, @NonNull final Map<Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
@@ -38,7 +48,7 @@ public final class ErrorLogHelper {
         errorLog.setId(UUIDUtils.randomUUID());
 
         /* Set absolute current time. Will be correlated to session and converted to relative later. */
-        errorLog.setToffset(System.currentTimeMillis());
+        errorLog.setToffset(ANDROID_TIME_SOURCE.currentTimeMillis());
 
         /* Snapshot device properties. */
         try {
@@ -69,7 +79,7 @@ public final class ErrorLogHelper {
         errorLog.setFatal(true);
 
         /* Relative application launch time to error time. */
-        errorLog.setAppLaunchTOffset(SystemClock.elapsedRealtime() - initializeTimestamp);
+        errorLog.setAppLaunchTOffset(ANDROID_TIME_SOURCE.elapsedRealtime() - initializeTimestamp);
 
         /* Attach exceptions. */
         errorLog.setExceptions(getJavaExceptionsFromThrowable(exception));
@@ -108,11 +118,63 @@ public final class ErrorLogHelper {
         File[] files = getErrorStorageDirectory().listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String filename) {
-                return filename.endsWith(".json");
+                return filename.endsWith(ERROR_LOG_FILE_EXTENSION);
             }
         });
 
         return files != null ? files : new File[0];
+    }
+
+    @Nullable
+    public static File getStoredThrowableFile(@NonNull UUID id) {
+        return getStoredFile(id, THROWABLE_FILE_EXTENSION);
+    }
+
+    public static void removeStoredThrowableFile(@NonNull UUID id) {
+        File file = getStoredThrowableFile(id);
+        if (file != null) {
+            AvalancheLog.info("Deleting throwable file " + file.getName());
+            StorageHelper.InternalStorage.delete(file);
+        }
+    }
+
+    @Nullable
+    public static File getStoredErrorLogFile(@NonNull UUID id) {
+        return getStoredFile(id, ERROR_LOG_FILE_EXTENSION);
+    }
+
+    public static void removeStoredErrorLogFile(@NonNull UUID id) {
+        File file = getStoredErrorLogFile(id);
+        if (file != null) {
+            AvalancheLog.info("Deleting error log file " + file.getName());
+            StorageHelper.InternalStorage.delete(file);
+        }
+    }
+
+    @NonNull
+    public static ErrorReport getErrorReportFromErrorLog(@NonNull JavaErrorLog log, Throwable throwable) {
+        ErrorReport report = new ErrorReport();
+        report.setId(log.getId().toString());
+        report.setThreadName(log.getErrorThreadName());
+        report.setThrowable(throwable);
+        report.setAppStartTime(new Date(log.getToffset() - log.getAppLaunchTOffset()));
+        report.setAppErrorTime(new Date(log.getToffset()));
+        report.setOsVersion(log.getDevice().getOsVersion());
+        report.setOsBuild(log.getDevice().getOsBuild());
+        report.setDeviceManufacturer(log.getDevice().getOemName());
+        return report;
+    }
+
+    @Nullable
+    private static File getStoredFile(@NonNull final UUID id, @NonNull final String extension) {
+        File[] files = getErrorStorageDirectory().listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String filename) {
+                return filename.startsWith(id.toString()) && filename.endsWith(extension);
+            }
+        });
+
+        return files != null ? files[0] : null;
     }
 
     @NonNull
@@ -141,5 +203,4 @@ public final class ErrorLogHelper {
         }
         return javaStackFrames;
     }
-
 }
