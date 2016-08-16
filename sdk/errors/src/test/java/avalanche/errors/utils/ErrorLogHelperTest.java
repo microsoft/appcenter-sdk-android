@@ -23,6 +23,7 @@ import avalanche.errors.ingestion.models.JavaErrorLog;
 import avalanche.errors.ingestion.models.JavaException;
 import avalanche.errors.ingestion.models.JavaStackFrame;
 import avalanche.errors.ingestion.models.JavaThread;
+import avalanche.errors.model.ErrorReport;
 import avalanche.errors.model.TestCrashException;
 
 import static org.junit.Assert.assertEquals;
@@ -148,5 +149,45 @@ public class ErrorLogHelperTest {
         assertEquals(Thread.currentThread().getName(), errorLog.getErrorThreadName());
         assertEquals(Boolean.TRUE, errorLog.getFatal());
         assertEquals(Long.valueOf(100), errorLog.getAppLaunchTOffset());
+    }
+
+    @Test
+    public void getErrorReportFromErrorLog() throws DeviceInfoHelper.DeviceInfoException {
+
+        /* Mock base. */
+        Context context = mock(Context.class);
+        when(SystemClock.elapsedRealtime()).thenReturn(1000L);
+        when(Process.myPid()).thenReturn(123);
+
+        /* Mock device. */
+        Device device = mock(Device.class);
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(device);
+
+        /* Mock process name. */
+        ActivityManager activityManager = mock(ActivityManager.class);
+        RunningAppProcessInfo runningAppProcessInfo = new RunningAppProcessInfo(null, 0, null);
+        runningAppProcessInfo.pid = 123;
+        runningAppProcessInfo.processName = "right.process";
+        when(context.getSystemService(Context.ACTIVITY_SERVICE)).thenReturn(activityManager);
+        when(activityManager.getRunningAppProcesses()).thenReturn(Arrays.asList(mock(RunningAppProcessInfo.class), runningAppProcessInfo));
+
+        /* Mock architecture. */
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", 23);
+        Whitebox.setInternalState(Build.class, "SUPPORTED_ABIS", new String[]{"armeabi-v7a", "arm"});
+
+        /* Create an error log. */
+        JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(context, Thread.currentThread(), new RuntimeException(new TestCrashException()), Thread.getAllStackTraces(), 900);
+        assertNotNull(errorLog);
+
+        /* Test. */
+        Throwable throwable = new RuntimeException();
+        ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(errorLog, throwable);
+        assertNotNull(report);
+        assertEquals(errorLog.getId().toString(), report.getId());
+        assertEquals(errorLog.getErrorThreadName(), report.getThreadName());
+        assertEquals(throwable, report.getThrowable());
+        assertEquals(errorLog.getToffset() - errorLog.getAppLaunchTOffset(), report.getAppStartTime().getTime());
+        assertEquals(errorLog.getToffset(), report.getAppErrorTime().getTime());
+        assertEquals(errorLog.getDevice(), report.getDevice());
     }
 }

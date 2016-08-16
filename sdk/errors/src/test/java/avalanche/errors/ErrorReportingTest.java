@@ -10,6 +10,7 @@ import org.json.JSONException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -18,7 +19,9 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
 
 import avalanche.core.channel.AvalancheChannel;
 import avalanche.core.ingestion.models.Log;
@@ -29,6 +32,7 @@ import avalanche.core.utils.PrefStorageConstants;
 import avalanche.core.utils.StorageHelper;
 import avalanche.errors.ingestion.models.JavaErrorLog;
 import avalanche.errors.ingestion.models.json.JavaErrorLogFactory;
+import avalanche.errors.model.ErrorReport;
 import avalanche.errors.model.TestCrashException;
 import avalanche.errors.utils.ErrorLogHelper;
 
@@ -36,9 +40,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -59,7 +66,7 @@ public class ErrorReportingTest {
         when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
 
         final String key = PrefStorageConstants.KEY_ENABLED + "_" + ErrorReporting.getInstance().getGroupName();
-        PowerMockito.when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(true);
+        when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
         PowerMockito.doAnswer(new Answer<Object>() {
@@ -109,7 +116,7 @@ public class ErrorReportingTest {
     }
 
     @Test
-    public void queuePendingCrashes() {
+    public void queuePendingCrashes() throws IOException, ClassNotFoundException {
         Context mockContext = mock(Context.class);
         AvalancheChannel mockChannel = mock(AvalancheChannel.class);
 
@@ -117,6 +124,14 @@ public class ErrorReportingTest {
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(new ErrorReport());
+
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
+
+        ErrorReportingListener mockListener = mock(ErrorReportingListener.class);
+        when(mockListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
+        when(mockListener.shouldAwaitUserConfirmation()).thenReturn(false);
 
         ErrorReporting errorReporting = ErrorReporting.getInstance();
         errorReporting.setLogSerializer(new LogSerializer() {
@@ -145,16 +160,18 @@ public class ErrorReportingTest {
 
             }
         });
+        errorReporting.setInstanceListener(mockListener);
 
         errorReporting.onChannelReady(mockContext, mockChannel);
 
-        /* TODO (jaelim): Change this test based on changes. */
-//        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-//            @Override
-//            public boolean matches(Object log) {
-//                return log.equals(errorLog);
-//            }
-//        }), eq(errorReporting.getGroupName()));
+        verify(mockListener).shouldProcess(any(ErrorReport.class));
+        verify(mockListener).shouldAwaitUserConfirmation();
+        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+            @Override
+            public boolean matches(Object log) {
+                return log.equals(errorLog);
+            }
+        }), eq(errorReporting.getGroupName()));
     }
 
     @Test
@@ -176,5 +193,4 @@ public class ErrorReportingTest {
     public void generateTestCrash() {
         ErrorReporting.generateTestCrash();
     }
-
 }

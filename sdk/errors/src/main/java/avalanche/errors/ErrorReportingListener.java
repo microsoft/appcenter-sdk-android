@@ -20,11 +20,13 @@ public interface ErrorReportingListener {
      * Called to determine whether it should wait for user confirmation before sending error reports.
      *
      * @return <code>true</code> if it requires to be confirmed by a user, otherwise <code>false</code>.
+     *         If this method returns <code>true</code>, {@link ErrorReporting#notifyUserConfirmation(int)} must be called by yourself.
      */
     boolean shouldAwaitUserConfirmation();
 
     /**
      * Called to get additional information to be attached to an error report before sending.
+     * Attachment is an optional so this method can also return <code>null</code>.
      *
      * @param errorReport An error report for additional information.
      * @return {@link ErrorAttachment} instance to be attached to the error report.
@@ -40,6 +42,7 @@ public interface ErrorReportingListener {
 
     /**
      * Called when it failed to send an error report.
+     * It failed after the maximum retries so the error report is discarded and won't be retried.
      *
      * @param errorReport An error report that failed to send.
      * @param e           An exception that caused failure.
