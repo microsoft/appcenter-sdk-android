@@ -4,8 +4,10 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Build;
 import android.os.Process;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Pair;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -16,7 +18,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import avalanche.core.Constants;
-import avalanche.core.utils.AndroidTimeSource;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.DeviceInfoHelper;
 import avalanche.core.utils.StorageHelper;
@@ -38,8 +39,6 @@ public final class ErrorLogHelper {
 
     private static final String ERROR_DIRECTORY = "error";
 
-    private static final AndroidTimeSource ANDROID_TIME_SOURCE = new AndroidTimeSource();
-
     @NonNull
     public static JavaErrorLog createErrorLog(@NonNull Context context, @NonNull final Thread thread, @NonNull final Throwable exception, @NonNull final Map<Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
 
@@ -48,7 +47,7 @@ public final class ErrorLogHelper {
         errorLog.setId(UUIDUtils.randomUUID());
 
         /* Set absolute current time. Will be correlated to session and converted to relative later. */
-        errorLog.setToffset(ANDROID_TIME_SOURCE.currentTimeMillis());
+        errorLog.setToffset(System.currentTimeMillis());
 
         /* Snapshot device properties. */
         try {
@@ -79,7 +78,7 @@ public final class ErrorLogHelper {
         errorLog.setFatal(true);
 
         /* Relative application launch time to error time. */
-        errorLog.setAppLaunchTOffset(ANDROID_TIME_SOURCE.elapsedRealtime() - initializeTimestamp);
+        errorLog.setAppLaunchTOffset(SystemClock.elapsedRealtime() - initializeTimestamp);
 
         /* Attach exceptions. */
         errorLog.setExceptions(getJavaExceptionsFromThrowable(exception));
@@ -159,9 +158,7 @@ public final class ErrorLogHelper {
         report.setThrowable(throwable);
         report.setAppStartTime(new Date(log.getToffset() - log.getAppLaunchTOffset()));
         report.setAppErrorTime(new Date(log.getToffset()));
-        report.setOsVersion(log.getDevice().getOsVersion());
-        report.setOsBuild(log.getDevice().getOsBuild());
-        report.setDeviceManufacturer(log.getDevice().getOemName());
+        report.setDevice(log.getDevice());
         return report;
     }
 

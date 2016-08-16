@@ -2,6 +2,8 @@ package avalanche.errors.model;
 
 import java.util.Date;
 
+import avalanche.core.ingestion.models.Device;
+
 /**
  * Error report class.
  */
@@ -32,19 +34,9 @@ public class ErrorReport {
     private Date appErrorTime;
 
     /**
-     * The operation system version string the app was running on when it crashed.
+     * The device information.
      */
-    private String osVersion;
-
-    /**
-     * The operation system build string the app was running on when it crashed. This may be unavailable (<code>null</code>).
-     */
-    private String osBuild;
-
-    /**
-     * The device manufacturer.
-     */
-    private String deviceManufacturer;
+    private Device device;
 
     /**
      * Gets the UUID for crash report.
@@ -127,50 +119,18 @@ public class ErrorReport {
     }
 
     /**
-     * Gets the operation system version.
+     * Gets the device information.
      *
-     * @return The operation system version.
+     * @return The device information.
      */
-    public String getOsVersion() {
-        return osVersion;
+    public Device getDevice() {
+        return device;
     }
 
     /**
-     * Sets the operation system version.
+     * Sets the device information.
      */
-    public void setOsVersion(String osVersion) {
-        this.osVersion = osVersion;
-    }
-
-    /**
-     * Gets the operation system build.
-     *
-     * @return The operation system build.
-     */
-    public String getOsBuild() {
-        return osBuild;
-    }
-
-    /**
-     * Sets the operation system build.
-     */
-    public void setOsBuild(String osBuild) {
-        this.osBuild = osBuild;
-    }
-
-    /**
-     * Gets the device manufacturer.
-     *
-     * @return The device manufacturer.
-     */
-    public String getDeviceManufacturer() {
-        return deviceManufacturer;
-    }
-
-    /**
-     * Sets the device manufacturer.
-     */
-    public void setDeviceManufacturer(String deviceManufacturer) {
-        this.deviceManufacturer = deviceManufacturer;
+    public void setDevice(Device device) {
+        this.device = device;
     }
 }
