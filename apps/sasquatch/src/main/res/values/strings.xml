@@ -18,4 +18,11 @@
     <string name="properties">Properties</string>
     <string name="key">Key</string>
     <string name="value">Value</string>
+    <string name="crash_confirmation_dialog_title">Unexpected crash found</string>
+    <string name="crash_confirmation_dialog_message">Would you like to send an anonymous report so we can fix the problem?</string>
+    <string name="crash_confirmation_dialog_not_send_button">Don\'t Send</string>
+    <string name="crash_confirmation_dialog_always_send_button">Always Send</string>
+    <string name="crash_confirmation_dialog_send_button">Send</string>
+    <string name="crash_sent_succeeded">Crash reports delivered successfully.</string>
+    <string name="crash_sent_failed">Failed to deliver Crash reports.</string>
 </resources>
