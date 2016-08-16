@@ -5,6 +5,9 @@
     <string name="avalanche_state_summary_enabled">Avalanche is enabled</string>
     <string name="avalanche_state_summary_disabled">Avalanche is disabled</string>
 
+    <string name="analytics_key">avalanche_analytics</string>
+    <string name="analytics_title">Analytics</string>
+
     <string name="avalanche_analytics_state_key">avalanche_analytics_state_key</string>
     <string name="avalanche_analytics_state_title">Analytics state</string>
     <string name="avalanche_analytics_state_summary_enabled">Analytics is enabled</string>
@@ -15,8 +18,18 @@
     <string name="avalanche_auto_page_tracking_enabled">Automatic page tracking is enabled</string>
     <string name="avalanche_auto_page_tracking_disabled">Automatic page tracking is disabled</string>
 
+    <string name="error_reporting_key">avalanche_errors</string>
+    <string name="error_reporting_title">Error Reporting</string>
+
     <string name="avalanche_errors_state_key">avalanche_errors_state_key</string>
     <string name="avalanche_errors_state_title">Error Reporting state</string>
     <string name="avalanche_errors_state_summary_enabled">Error Reporting is enabled</string>
     <string name="avalanche_errors_state_summary_disabled">Error Reporting is disabled</string>
+
+    <string name="miscellaneous_key">miscellaneous</string>
+    <string name="miscellaneous_title">Miscellaneous</string>
+
+    <string name="clear_crash_user_confirmation_key">clear_crash_user_confirmation_key</string>
+    <string name="clear_crash_user_confirmation_title">Clear crash user confirmation</string>
+    <string name="clear_crash_user_confirmation_toast">Cleared</string>
 </resources>
