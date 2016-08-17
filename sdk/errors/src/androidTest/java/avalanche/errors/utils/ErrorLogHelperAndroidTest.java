@@ -93,6 +93,13 @@ public class ErrorLogHelperAndroidTest {
         ErrorLogHelper.removeStoredErrorLogFile(new UUID(0, 2));
         file = ErrorLogHelper.getStoredErrorLogFile(new UUID(0, 2));
         assertNull(file);
+
+        /*Trying to delete an error log file which doesn't exist. */
+        ErrorLogHelper.removeStoredErrorLogFile(new UUID(0, 3));
+        file = ErrorLogHelper.getStoredThrowableFile(new UUID(0, 3));
+        assertNotNull(file);
+
+        /* Verify the number of remaining error log files. */
         files = ErrorLogHelper.getStoredErrorLogFiles();
         assertNotNull(files);
         assertEquals(2, files.length);
@@ -101,6 +108,11 @@ public class ErrorLogHelperAndroidTest {
         ErrorLogHelper.removeStoredThrowableFile(new UUID(0, 3));
         file = ErrorLogHelper.getStoredThrowableFile(new UUID(0, 3));
         assertNull(file);
+
+        /*Trying to delete a throwable file which doesn't exist. */
+        ErrorLogHelper.removeStoredThrowableFile(new UUID(0, 1));
+        file = ErrorLogHelper.getStoredErrorLogFile(new UUID(0, 1));
+        assertNotNull(file);
 
         /* Clean up. */
         for (int i = 0; i < 2; i++)

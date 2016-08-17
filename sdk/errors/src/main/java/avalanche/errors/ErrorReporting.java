@@ -185,22 +185,19 @@ public class ErrorReporting extends AbstractAvalancheFeature {
                     UUID id = errorLog.getId();
                     if (report != null) {
 
-                        /* Clean up before calling callbacks. */
-                        if (type != BEFORE_SENDING) {
+                        if (type == BEFORE_SENDING) {
+                            mErrorReportingListener.onBeforeSending(report);
+                        } else {
+
+                            /* Clean up before calling callbacks. */
                             ErrorLogHelper.removeStoredThrowableFile(id);
                             mErrorReportMap.remove(id);
-                        }
 
-                        switch (type) {
-                            case BEFORE_SENDING:
-                                mErrorReportingListener.onBeforeSending(report);
-                                break;
-                            case SENDING_SUCCEEDED:
+                            if (type == SENDING_SUCCEEDED) {
                                 mErrorReportingListener.onSendingSucceeded(report);
-                                break;
-                            case SENDING_FAILED:
+                            } else {
                                 mErrorReportingListener.onSendingFailed(report, e);
-                                break;
+                            }
                         }
                     } else
                         AvalancheLog.warn("Cannot find error report for the error log: " + id);
@@ -244,28 +241,6 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         }
     }
 
-    private ErrorReport buildErrorReport(JavaErrorLog log) {
-        UUID id = log.getId();
-        if (mErrorReportMap.containsKey(id)) {
-            return mErrorReportMap.get(id).report;
-        } else {
-            File file = ErrorLogHelper.getStoredThrowableFile(id);
-            if (file != null) {
-                try {
-                    Throwable throwable = StorageHelper.InternalStorage.readObject(file);
-                    ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, throwable);
-                    mErrorReportMap.put(id, new ErrorLogReportPair(log, report));
-                    return report;
-                } catch (ClassNotFoundException ignored) {
-                    AvalancheLog.error("Cannot read throwable file " + file.getName(), ignored);
-                } catch (IOException ignored) {
-                    AvalancheLog.error("Cannot access serialized throwable file " + file.getName(), ignored);
-                }
-            }
-        }
-        return null;
-    }
-
     private void queuePendingCrashes() {
         for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
             String logfileContents = StorageHelper.InternalStorage.read(logFile);
@@ -289,6 +264,34 @@ public class ErrorReporting extends AbstractAvalancheFeature {
                         || !mErrorReportingListener.shouldAwaitUserConfirmation())) {
             handleUserConfirmation(SEND);
         }
+    }
+
+    @VisibleForTesting
+    ErrorReport buildErrorReport(JavaErrorLog log) {
+        UUID id = log.getId();
+        if (mErrorReportMap.containsKey(id)) {
+            return mErrorReportMap.get(id).report;
+        } else {
+            File file = ErrorLogHelper.getStoredThrowableFile(id);
+            if (file != null) {
+                try {
+                    Throwable throwable = StorageHelper.InternalStorage.readObject(file);
+                    ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, throwable);
+                    mErrorReportMap.put(id, new ErrorLogReportPair(log, report));
+                    return report;
+                } catch (ClassNotFoundException ignored) {
+                    AvalancheLog.error("Cannot read throwable file " + file.getName(), ignored);
+                } catch (IOException ignored) {
+                    AvalancheLog.error("Cannot access serialized throwable file " + file.getName(), ignored);
+                }
+            }
+        }
+        return null;
+    }
+
+    @VisibleForTesting
+    ErrorReportingListener getInstanceListener() {
+        return mErrorReportingListener;
     }
 
     @VisibleForTesting

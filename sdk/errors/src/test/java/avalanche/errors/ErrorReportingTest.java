@@ -31,8 +31,10 @@ import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.PrefStorageConstants;
 import avalanche.core.utils.StorageHelper;
+import avalanche.core.utils.UUIDUtils;
 import avalanche.errors.ingestion.models.JavaErrorLog;
 import avalanche.errors.ingestion.models.json.JavaErrorLogFactory;
+import avalanche.errors.model.ErrorAttachment;
 import avalanche.errors.model.ErrorReport;
 import avalanche.errors.model.TestCrashException;
 import avalanche.errors.utils.ErrorLogHelper;
@@ -40,6 +42,7 @@ import avalanche.errors.utils.ErrorLogHelper;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -68,7 +71,6 @@ public class ErrorReportingTest {
         assertEquals(errorLog.getToffset() - errorLog.getAppLaunchTOffset(), errorReport.getAppStartTime().getTime());
         assertEquals(errorLog.getToffset(), errorReport.getAppErrorTime().getTime());
         assertEquals(errorLog.getDevice(), errorReport.getDevice());
-
     }
 
     @Before
@@ -113,10 +115,7 @@ public class ErrorReportingTest {
 
     @Test
     public void setEnabled() {
-        Context mockContext = mock(Context.class);
-        AvalancheChannel mockChannel = mock(AvalancheChannel.class);
-
-        ErrorReporting.getInstance().onChannelReady(mockContext, mockChannel);
+        ErrorReporting.getInstance().onChannelReady(mock(Context.class), mock(AvalancheChannel.class));
 
         assertTrue(ErrorReporting.isEnabled());
         assertTrue(ErrorReporting.getInstance().getInitializeTimestamp() > 0);
@@ -132,7 +131,7 @@ public class ErrorReportingTest {
     }
 
     @Test
-    public void queuePendingCrashes() throws IOException, ClassNotFoundException {
+    public void queuePendingCrashesShouldProcess() throws IOException, ClassNotFoundException {
         Context mockContext = mock(Context.class);
         AvalancheChannel mockChannel = mock(AvalancheChannel.class);
 
@@ -191,14 +190,63 @@ public class ErrorReportingTest {
     }
 
     @Test
-    public void noQueueingWhenDisabled() {
+    public void queuePendingCrashesShouldNotProcess() throws IOException, ClassNotFoundException {
         Context mockContext = mock(Context.class);
         AvalancheChannel mockChannel = mock(AvalancheChannel.class);
 
+        final JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(new ErrorReport());
+
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
+
+        ErrorReportingListener mockListener = mock(ErrorReportingListener.class);
+        when(mockListener.shouldProcess(any(ErrorReport.class))).thenReturn(false);
+
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
+        errorReporting.setLogSerializer(new LogSerializer() {
+            @Override
+            public String serializeLog(@NonNull Log log) throws JSONException {
+                return null;
+            }
+
+            @Override
+            public Log deserializeLog(@NonNull String json) throws JSONException {
+                return errorLog;
+            }
+
+            @Override
+            public String serializeContainer(@NonNull LogContainer container) throws JSONException {
+                return null;
+            }
+
+            @Override
+            public LogContainer deserializeContainer(@NonNull String json) throws JSONException {
+                return null;
+            }
+
+            @Override
+            public void addLogFactory(@NonNull String logType, @NonNull LogFactory logFactory) {
+            }
+        });
+        errorReporting.setInstanceListener(mockListener);
+
+        errorReporting.onChannelReady(mockContext, mockChannel);
+
+        verify(mockListener).shouldProcess(any(ErrorReport.class));
+        verify(mockListener, never()).shouldAwaitUserConfirmation();
+        verify(mockChannel, never()).enqueue(any(Log.class), eq(errorReporting.getGroupName()));
+    }
+
+    @Test
+    public void noQueueingWhenDisabled() {
         ErrorReporting.setEnabled(false);
         ErrorReporting errorReporting = ErrorReporting.getInstance();
 
-        errorReporting.onChannelReady(mockContext, mockChannel);
+        errorReporting.onChannelReady(mock(Context.class), mock(AvalancheChannel.class));
 
         mockStatic(ErrorLogHelper.class);
 
@@ -252,7 +300,6 @@ public class ErrorReportingTest {
         listener.onFailure(errorLog, exception);
     }
 
-
     @Test
     public void getChannelListenerErrors() throws IOException, ClassNotFoundException {
         final JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
@@ -281,5 +328,160 @@ public class ErrorReportingTest {
         verifyStatic();
         AvalancheLog.warn(contains(Log.class.getName()));
         Mockito.verifyNoMoreInteractions(mockListener);
+    }
+
+    @Test
+    public void handleUserConfirmation() throws IOException, ClassNotFoundException {
+        final JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(null);
+
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(null);
+
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
+        errorReporting.setLogSerializer(new LogSerializer() {
+            @Override
+            public String serializeLog(@NonNull Log log) throws JSONException {
+                return null;
+            }
+
+            @Override
+            public Log deserializeLog(@NonNull String json) throws JSONException {
+                return errorLog;
+            }
+
+            @Override
+            public String serializeContainer(@NonNull LogContainer container) throws JSONException {
+                return null;
+            }
+
+            @Override
+            public LogContainer deserializeContainer(@NonNull String json) throws JSONException {
+                return null;
+            }
+
+            @Override
+            public void addLogFactory(@NonNull String logType, @NonNull LogFactory logFactory) {
+            }
+        });
+        errorReporting.setInstanceListener(new AbstractErrorReportingListener() {
+            @Override
+            public boolean shouldAwaitUserConfirmation() {
+                return true;
+            }
+        });
+
+        errorReporting.onChannelReady(mock(Context.class), mock(AvalancheChannel.class));
+
+        ErrorReporting.notifyUserConfirmation(ErrorReporting.DONT_SEND);
+
+        verifyStatic();
+        ErrorLogHelper.removeStoredErrorLogFile(errorLog.getId());
+        ErrorLogHelper.removeStoredThrowableFile(errorLog.getId());
+    }
+
+    @Test
+    public void buildErrorReport() throws IOException, ClassNotFoundException {
+        final JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        final String exceptionMessage = "This is a test exception.";
+        final Exception exception = new Exception() {
+            @Override
+            public String getMessage() {
+                return exceptionMessage;
+            }
+        };
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File(".")).thenReturn(null);
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenCallRealMethod();
+
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(exception);
+
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
+        ErrorReport report = errorReporting.buildErrorReport(errorLog);
+        assertErrorEquals(errorLog, exception, report);
+
+        errorLog.setId(UUIDUtils.randomUUID());
+        report = errorReporting.buildErrorReport(errorLog);
+        assertNull(report);
+    }
+
+    @Test
+    public void buildErrorReportError() throws IOException, ClassNotFoundException {
+        final JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(null);
+
+        Exception classNotFoundException = mock(ClassNotFoundException.class);
+        Exception ioException = mock(IOException.class);
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenThrow(classNotFoundException).thenThrow(ioException);
+
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
+
+        mockStatic(AvalancheLog.class);
+        ErrorReport report = errorReporting.buildErrorReport(errorLog);
+        assertNull(report);
+        report = errorReporting.buildErrorReport(errorLog);
+        assertNull(report);
+
+        verifyStatic();
+        AvalancheLog.error(anyString(), eq(classNotFoundException));
+        AvalancheLog.error(anyString(), eq(ioException));
+    }
+
+    @Test
+    public void defaultErrorReportingListener() {
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
+        ErrorReportingListener defaultListener = errorReporting.getInstanceListener();
+        errorReporting.setInstanceListener(new ErrorReportingListener() {
+            @Override
+            public boolean shouldProcess(ErrorReport errorReport) {
+                return false;
+            }
+
+            @Override
+            public boolean shouldAwaitUserConfirmation() {
+                return false;
+            }
+
+            @Override
+            public ErrorAttachment getErrorAttachment(ErrorReport errorReport) {
+                return null;
+            }
+
+            @Override
+            public void onBeforeSending(ErrorReport errorReport) {
+            }
+
+            @Override
+            public void onSendingFailed(ErrorReport errorReport, Exception e) {
+            }
+
+            @Override
+            public void onSendingSucceeded(ErrorReport errorReport) {
+            }
+        });
+
+        /* Verify error reporting has default listener when null is assigned. */
+        errorReporting.setInstanceListener(null);
+        ErrorReportingListener listener = errorReporting.getInstanceListener();
+        assertEquals(defaultListener, listener);
+
+        /* Verify default behavior. */
+        assertTrue(defaultListener.shouldProcess(null));
+        assertFalse(defaultListener.shouldAwaitUserConfirmation());
+
+        /* Nothing to verify. */
+        defaultListener.getErrorAttachment(null);
+        defaultListener.onBeforeSending(null);
+        defaultListener.onSendingSucceeded(null);
+        defaultListener.onSendingFailed(null, null);
     }
 }
