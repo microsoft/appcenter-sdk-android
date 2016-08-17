@@ -8,6 +8,7 @@ import android.support.annotation.VisibleForTesting;
 import org.json.JSONException;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,7 +35,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
     private LogSerializer mLogSerializer;
 
-    private Context mContext;
+    private WeakReference<Context> mWeakContext;
 
     private long mInitializeTimestamp;
 
@@ -85,7 +86,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     @Override
     public synchronized void onChannelReady(@NonNull Context context, @NonNull AvalancheChannel channel) {
         super.onChannelReady(context, channel);
-        mContext = context;
+        mWeakContext = new WeakReference<>(context);
         initialize();
         if (isInstanceEnabled()) {
             queuePendingCrashes();
@@ -106,13 +107,15 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         boolean enabled = isInstanceEnabled();
         mInitializeTimestamp = enabled ? SystemClock.elapsedRealtime() : -1;
 
+        Context context = mWeakContext != null ? mWeakContext.get() : null;
+
         if (!enabled) {
             if (mUncaughtExceptionHandler != null) {
                 mUncaughtExceptionHandler.unregister();
                 mUncaughtExceptionHandler = null;
             }
-        } else if (mContext != null) {
-            mUncaughtExceptionHandler = new UncaughtExceptionHandler(mContext);
+        } else if (context != null) {
+            mUncaughtExceptionHandler = new UncaughtExceptionHandler(context);
         }
     }
 
