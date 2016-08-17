@@ -142,11 +142,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         /* Init group. */
         mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener));
 
-        /* Count pending logs. FIXME we should have a more efficient way to do this... */
-        List<Log> pendingLogs = new ArrayList<>(maxLogsPerBatch);
-        mPersistence.getLogs(groupName, maxLogsPerBatch, pendingLogs);
-        mPersistence.clearPendingLogState();
-        mGroupStates.get(groupName).mPendingLogCount = pendingLogs.size();
+        /* Count pending logs. */
+        mGroupStates.get(groupName).mPendingLogCount = mPersistence.countLogs(groupName);
 
         /* Schedule sending any pending log. */
         checkPendingLogs(groupName);
