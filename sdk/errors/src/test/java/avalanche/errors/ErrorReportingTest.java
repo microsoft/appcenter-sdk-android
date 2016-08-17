@@ -28,6 +28,7 @@ import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.LogContainer;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.ingestion.models.json.LogSerializer;
+import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.PrefStorageConstants;
 import avalanche.core.utils.StorageHelper;
 import avalanche.errors.ingestion.models.JavaErrorLog;
@@ -42,17 +43,21 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class})
+@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, AvalancheLog.class})
 public class ErrorReportingTest {
 
     private static void assertErrorEquals(JavaErrorLog errorLog, Throwable throwable, ErrorReport errorReport) {
@@ -223,8 +228,7 @@ public class ErrorReportingTest {
 
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(exception);
 
-        ErrorReporting errorReporting = ErrorReporting.getInstance();
-        errorReporting.setInstanceListener(new AbstractErrorReportingListener() {
+        ErrorReporting.setListener(new AbstractErrorReportingListener() {
             @Override
             public void onBeforeSending(ErrorReport errorReport) {
                 assertErrorEquals(errorLog, exception, errorReport);
@@ -240,10 +244,42 @@ public class ErrorReportingTest {
                 assertErrorEquals(errorLog, exception, errorReport);
             }
         });
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
 
         AvalancheChannel.GroupListener listener = ErrorReporting.getInstance().getChannelListener();
         listener.onBeforeSending(errorLog);
         listener.onSuccess(errorLog);
         listener.onFailure(errorLog, exception);
+    }
+
+
+    @Test
+    public void getChannelListenerErrors() throws IOException, ClassNotFoundException {
+        final JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(null);
+
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(null);
+
+        mockStatic(AvalancheLog.class);
+
+        ErrorReportingListener mockListener = mock(ErrorReportingListener.class);
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
+        errorReporting.setInstanceListener(mockListener);
+
+        AvalancheChannel.GroupListener listener = ErrorReporting.getInstance().getChannelListener();
+
+        listener.onBeforeSending(errorLog);
+        verifyStatic();
+        AvalancheLog.warn(anyString());
+        Mockito.verifyNoMoreInteractions(mockListener);
+
+        listener.onSuccess(mock(Log.class));
+        verifyStatic();
+        AvalancheLog.warn(contains(Log.class.getName()));
+        Mockito.verifyNoMoreInteractions(mockListener);
     }
 }
