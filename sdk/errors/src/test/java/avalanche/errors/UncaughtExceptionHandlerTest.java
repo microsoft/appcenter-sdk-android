@@ -196,9 +196,9 @@ public class UncaughtExceptionHandlerTest {
     public void testIOException() throws Exception {
         exceptionHandler.register();
 
-        PowerMockito.spy(StorageHelper.InternalStorage.class);
         IOException ioException = new IOException("Fake IO exception");
-        PowerMockito.doThrow(ioException).when(StorageHelper.InternalStorage.class, "write", any(File.class), anyString());
+        PowerMockito.doThrow(ioException).when(StorageHelper.InternalStorage.class);
+        StorageHelper.InternalStorage.write(any(File.class), anyString());
 
         final Thread thread = Thread.currentThread();
         final RuntimeException exception = new RuntimeException();
@@ -209,6 +209,4 @@ public class UncaughtExceptionHandlerTest {
 
         verify(defaultExceptionHandler).uncaughtException(thread, exception);
     }
-
-
 }
