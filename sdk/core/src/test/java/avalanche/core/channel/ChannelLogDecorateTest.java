@@ -12,7 +12,6 @@ import java.util.UUID;
 import avalanche.core.ingestion.AvalancheIngestion;
 import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.Log;
-import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.persistence.AvalanchePersistence;
 import avalanche.core.utils.DeviceInfoHelper;
 import avalanche.core.utils.IdHelper;
@@ -36,7 +35,7 @@ public class ChannelLogDecorateTest {
         Device device = mock(Device.class);
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(device).thenReturn(null);
         mockStatic(IdHelper.class);
-        AvalancheChannel channel = new DefaultAvalancheChannel(mock(Context.class), UUID.randomUUID(), mock(AvalancheIngestion.class), mock(AvalanchePersistence.class), mock(LogSerializer.class));
+        AvalancheChannel channel = new DefaultAvalancheChannel(mock(Context.class), UUID.randomUUID(), mock(AvalanchePersistence.class), mock(AvalancheIngestion.class));
         channel.addGroup("", 0, 0, 0, null);
 
         /* Test a log that should be decorated. */
