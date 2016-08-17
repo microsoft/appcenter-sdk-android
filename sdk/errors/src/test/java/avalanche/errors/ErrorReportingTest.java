@@ -2,7 +2,6 @@ package avalanche.errors;
 
 import android.content.Context;
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
 
 import junit.framework.Assert;
 
@@ -25,7 +24,6 @@ import java.util.UUID;
 
 import avalanche.core.channel.AvalancheChannel;
 import avalanche.core.ingestion.models.Log;
-import avalanche.core.ingestion.models.LogContainer;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.ingestion.models.json.LogSerializer;
 import avalanche.core.utils.AvalancheLog;
@@ -80,6 +78,7 @@ public class ErrorReportingTest {
         mockStatic(SystemClock.class);
         mockStatic(StorageHelper.InternalStorage.class);
         mockStatic(StorageHelper.PreferencesStorage.class);
+        mockStatic(AvalancheLog.class);
 
         when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
 
@@ -131,7 +130,7 @@ public class ErrorReportingTest {
     }
 
     @Test
-    public void queuePendingCrashesShouldProcess() throws IOException, ClassNotFoundException {
+    public void queuePendingCrashesShouldProcess() throws IOException, ClassNotFoundException, JSONException {
         Context mockContext = mock(Context.class);
         AvalancheChannel mockChannel = mock(AvalancheChannel.class);
 
@@ -149,34 +148,10 @@ public class ErrorReportingTest {
         when(mockListener.shouldAwaitUserConfirmation()).thenReturn(false);
 
         ErrorReporting errorReporting = ErrorReporting.getInstance();
-        errorReporting.setLogSerializer(new LogSerializer() {
-            @Override
-            public String serializeLog(@NonNull Log log) throws JSONException {
-                return null;
-            }
-
-            @Override
-            public Log deserializeLog(@NonNull String json) throws JSONException {
-                return errorLog;
-            }
-
-            @Override
-            public String serializeContainer(@NonNull LogContainer container) throws JSONException {
-                return null;
-            }
-
-            @Override
-            public LogContainer deserializeContainer(@NonNull String json) throws JSONException {
-                return null;
-            }
-
-            @Override
-            public void addLogFactory(@NonNull String logType, @NonNull LogFactory logFactory) {
-
-            }
-        });
-        errorReporting.setInstanceListener(mockListener);
-
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString())).thenReturn(errorLog);
+        errorReporting.setLogSerializer(logSerializer);
+		errorReporting.setInstanceListener(mockListener);
         errorReporting.onChannelReady(mockContext, mockChannel);
 
         verify(mockListener).shouldProcess(any(ErrorReport.class));
@@ -190,7 +165,7 @@ public class ErrorReportingTest {
     }
 
     @Test
-    public void queuePendingCrashesShouldNotProcess() throws IOException, ClassNotFoundException {
+    public void queuePendingCrashesShouldNotProcess() throws IOException, ClassNotFoundException, JSONException {
         Context mockContext = mock(Context.class);
         AvalancheChannel mockChannel = mock(AvalancheChannel.class);
 
@@ -207,31 +182,9 @@ public class ErrorReportingTest {
         when(mockListener.shouldProcess(any(ErrorReport.class))).thenReturn(false);
 
         ErrorReporting errorReporting = ErrorReporting.getInstance();
-        errorReporting.setLogSerializer(new LogSerializer() {
-            @Override
-            public String serializeLog(@NonNull Log log) throws JSONException {
-                return null;
-            }
-
-            @Override
-            public Log deserializeLog(@NonNull String json) throws JSONException {
-                return errorLog;
-            }
-
-            @Override
-            public String serializeContainer(@NonNull LogContainer container) throws JSONException {
-                return null;
-            }
-
-            @Override
-            public LogContainer deserializeContainer(@NonNull String json) throws JSONException {
-                return null;
-            }
-
-            @Override
-            public void addLogFactory(@NonNull String logType, @NonNull LogFactory logFactory) {
-            }
-        });
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString())).thenReturn(errorLog);
+        errorReporting.setLogSerializer(logSerializer);
         errorReporting.setInstanceListener(mockListener);
 
         errorReporting.onChannelReady(mockContext, mockChannel);
@@ -251,6 +204,47 @@ public class ErrorReportingTest {
         mockStatic(ErrorLogHelper.class);
 
         verifyNoMoreInteractions(ErrorLogHelper.class);
+    }
+
+    @Test
+    public void noQueueNullLog() throws JSONException {
+        Context mockContext = mock(Context.class);
+        AvalancheChannel mockChannel = mock(AvalancheChannel.class);
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
+
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString())).thenReturn(null);
+        errorReporting.setLogSerializer(logSerializer);
+
+        errorReporting.onChannelReady(mockContext, mockChannel);
+
+        verify(mockChannel, never()).enqueue(any(Log.class), anyString());
+    }
+
+    @Test
+    public void printErrorOnJSONException() throws JSONException {
+        Context mockContext = mock(Context.class);
+        AvalancheChannel mockChannel = mock(AvalancheChannel.class);
+        final JSONException jsonException = new JSONException("Fake JSON exception");
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
+
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
+        LogSerializer logSerializer = mock(LogSerializer.class);
+
+        when(logSerializer.deserializeLog(anyString())).thenThrow(jsonException);
+        errorReporting.setLogSerializer(logSerializer);
+
+        errorReporting.onChannelReady(mockContext, mockChannel);
+
+        verify(mockChannel, never()).enqueue(any(Log.class), anyString());
+
+        verifyStatic();
+        AvalancheLog.error(anyString(), eq(jsonException));
     }
 
     @Test(expected = TestCrashException.class)
@@ -311,8 +305,6 @@ public class ErrorReportingTest {
 
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(null);
 
-        mockStatic(AvalancheLog.class);
-
         ErrorReportingListener mockListener = mock(ErrorReportingListener.class);
         ErrorReporting errorReporting = ErrorReporting.getInstance();
         errorReporting.setInstanceListener(mockListener);
@@ -331,7 +323,7 @@ public class ErrorReportingTest {
     }
 
     @Test
-    public void handleUserConfirmation() throws IOException, ClassNotFoundException {
+    public void handleUserConfirmation() throws IOException, ClassNotFoundException, JSONException {
         final JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
 
         mockStatic(ErrorLogHelper.class);
@@ -342,31 +334,9 @@ public class ErrorReportingTest {
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(null);
 
         ErrorReporting errorReporting = ErrorReporting.getInstance();
-        errorReporting.setLogSerializer(new LogSerializer() {
-            @Override
-            public String serializeLog(@NonNull Log log) throws JSONException {
-                return null;
-            }
-
-            @Override
-            public Log deserializeLog(@NonNull String json) throws JSONException {
-                return errorLog;
-            }
-
-            @Override
-            public String serializeContainer(@NonNull LogContainer container) throws JSONException {
-                return null;
-            }
-
-            @Override
-            public LogContainer deserializeContainer(@NonNull String json) throws JSONException {
-                return null;
-            }
-
-            @Override
-            public void addLogFactory(@NonNull String logType, @NonNull LogFactory logFactory) {
-            }
-        });
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString())).thenReturn(errorLog);
+        errorReporting.setLogSerializer(logSerializer);
         errorReporting.setInstanceListener(new AbstractErrorReportingListener() {
             @Override
             public boolean shouldAwaitUserConfirmation() {
@@ -425,7 +395,6 @@ public class ErrorReportingTest {
 
         ErrorReporting errorReporting = ErrorReporting.getInstance();
 
-        mockStatic(AvalancheLog.class);
         ErrorReport report = errorReporting.buildErrorReport(errorLog);
         assertNull(report);
         report = errorReporting.buildErrorReport(errorLog);
