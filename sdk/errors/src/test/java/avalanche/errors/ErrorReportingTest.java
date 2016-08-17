@@ -55,6 +55,17 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class})
 public class ErrorReportingTest {
 
+    private static void assertErrorEquals(JavaErrorLog errorLog, Throwable throwable, ErrorReport errorReport) {
+        assertNotNull(errorReport);
+        assertEquals(errorLog.getId().toString(), errorReport.getId());
+        assertEquals(errorLog.getErrorThreadName(), errorReport.getThreadName());
+        assertEquals(throwable, errorReport.getThrowable());
+        assertEquals(errorLog.getToffset() - errorLog.getAppLaunchTOffset(), errorReport.getAppStartTime().getTime());
+        assertEquals(errorLog.getToffset(), errorReport.getAppErrorTime().getTime());
+        assertEquals(errorLog.getDevice(), errorReport.getDevice());
+
+    }
+
     @Before
     public void setUp() {
         Thread.setDefaultUncaughtExceptionHandler(null);
@@ -192,5 +203,47 @@ public class ErrorReportingTest {
     @Test(expected = TestCrashException.class)
     public void generateTestCrash() {
         ErrorReporting.generateTestCrash();
+    }
+
+    @Test
+    public void getChannelListener() throws IOException, ClassNotFoundException {
+        final JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        final String exceptionMessage = "This is a test exception.";
+        final Exception exception = new Exception() {
+            @Override
+            public String getMessage() {
+                return exceptionMessage;
+            }
+        };
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenCallRealMethod();
+
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(exception);
+
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
+        errorReporting.setInstanceListener(new AbstractErrorReportingListener() {
+            @Override
+            public void onBeforeSending(ErrorReport errorReport) {
+                assertErrorEquals(errorLog, exception, errorReport);
+            }
+
+            @Override
+            public void onSendingSucceeded(ErrorReport errorReport) {
+                assertErrorEquals(errorLog, exception, errorReport);
+            }
+
+            @Override
+            public void onSendingFailed(ErrorReport errorReport, Exception e) {
+                assertErrorEquals(errorLog, exception, errorReport);
+            }
+        });
+
+        AvalancheChannel.GroupListener listener = ErrorReporting.getInstance().getChannelListener();
+        listener.onBeforeSending(errorLog);
+        listener.onSuccess(errorLog);
+        listener.onFailure(errorLog, exception);
     }
 }
