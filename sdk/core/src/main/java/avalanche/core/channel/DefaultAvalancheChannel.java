@@ -5,7 +5,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
-import android.text.TextUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -237,7 +236,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param groupName the group name
      */
     private synchronized void triggerIngestion(final @NonNull String groupName) {
-        if (TextUtils.isEmpty(groupName) || (mAppSecret == null) || (mInstallId == null) || !mEnabled) {
+        if (mAppSecret == null || mInstallId == null || !mEnabled) {
             return;
         }
         final GroupState groupState = mGroupStates.get(groupName);
