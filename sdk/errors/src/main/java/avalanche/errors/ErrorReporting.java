@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -57,7 +58,8 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     /**
      * Preference storage key for ALWAYS SEND.
      */
-    private static final String PREF_KEY_ALWAYS_SEND = "avalanche.errors.crash.always.send";
+    @VisibleForTesting
+    static final String PREF_KEY_ALWAYS_SEND = "avalanche.errors.crash.always.send";
 
     /**
      * Default error reporting listener.
@@ -307,7 +309,9 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     synchronized void handleUserConfirmation(@ConfirmationDef int userConfirmation) {
         if (userConfirmation == DONT_SEND) {
             /* Clean up all pending error log and throwable files. */
-            for (UUID id : getInstance().mErrorReportMap.keySet()) {
+            for (Iterator<UUID> iterator = mErrorReportMap.keySet().iterator(); iterator.hasNext(); ) {
+                UUID id = iterator.next();
+                iterator.remove();
                 ErrorLogHelper.removeStoredErrorLogFile(id);
                 ErrorLogHelper.removeStoredThrowableFile(id);
             }
