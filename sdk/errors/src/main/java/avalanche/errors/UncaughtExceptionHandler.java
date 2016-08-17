@@ -29,15 +29,16 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
     UncaughtExceptionHandler(Context context) {
         mContext = context;
-        register();
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
     }
 
     @Override
     public void uncaughtException(Thread thread, Throwable exception) {
-        if (!ErrorReporting.isEnabled() && mDefaultUncaughtExceptionHandler != null) {
-            mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
+        if (!ErrorReporting.isEnabled()) {
+            if (mDefaultUncaughtExceptionHandler != null) {
+                mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
+            }
         } else {
             JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, exception, Thread.getAllStackTraces(), ErrorReporting.getInstance().getInitializeTimestamp());
             try {
@@ -50,7 +51,7 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
             } catch (IOException e) {
                 AvalancheLog.error("Error writing error log to file", e);
             }
-            if (!mIgnoreDefaultExceptionHandler && mDefaultUncaughtExceptionHandler != null) {
+            if (mDefaultUncaughtExceptionHandler != null) {
                 mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
             } else {
                 ShutdownHelper.shutdown();
@@ -61,6 +62,9 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
     @VisibleForTesting
     void setIgnoreDefaultExceptionHandler(boolean ignoreDefaultExceptionHandler) {
         mIgnoreDefaultExceptionHandler = ignoreDefaultExceptionHandler;
+        if (ignoreDefaultExceptionHandler) {
+            mDefaultUncaughtExceptionHandler = null;
+        }
     }
 
     @VisibleForTesting
@@ -69,9 +73,11 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
     }
 
 
-    private void register() {
+    public void register() {
         if (!mIgnoreDefaultExceptionHandler) {
             mDefaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
+        } else {
+            mDefaultUncaughtExceptionHandler = null;
         }
         Thread.setDefaultUncaughtExceptionHandler(this);
     }
