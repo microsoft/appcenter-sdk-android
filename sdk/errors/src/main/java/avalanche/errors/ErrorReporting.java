@@ -113,6 +113,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             }
         } else if (mContext != null) {
             mUncaughtExceptionHandler = new UncaughtExceptionHandler(mContext);
+            mUncaughtExceptionHandler.register();
         }
     }
 

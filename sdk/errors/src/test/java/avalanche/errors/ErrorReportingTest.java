@@ -2,7 +2,6 @@ package avalanche.errors;
 
 import android.content.Context;
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
 
 import junit.framework.Assert;
 
@@ -23,9 +22,9 @@ import java.util.Map;
 
 import avalanche.core.channel.AvalancheChannel;
 import avalanche.core.ingestion.models.Log;
-import avalanche.core.ingestion.models.LogContainer;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.ingestion.models.json.LogSerializer;
+import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.PrefStorageConstants;
 import avalanche.core.utils.StorageHelper;
 import avalanche.errors.ingestion.models.JavaErrorLog;
@@ -37,18 +36,22 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class})
+@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, AvalancheLog.class})
 public class ErrorReportingTest {
 
     @Before
@@ -58,6 +61,7 @@ public class ErrorReportingTest {
         mockStatic(SystemClock.class);
         mockStatic(StorageHelper.InternalStorage.class);
         mockStatic(StorageHelper.PreferencesStorage.class);
+        mockStatic(AvalancheLog.class);
 
         when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
 
@@ -112,7 +116,7 @@ public class ErrorReportingTest {
     }
 
     @Test
-    public void queuePendingCrashes() {
+    public void queuePendingCrashes() throws JSONException {
         Context mockContext = mock(Context.class);
         AvalancheChannel mockChannel = mock(AvalancheChannel.class);
 
@@ -122,32 +126,9 @@ public class ErrorReportingTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
 
         ErrorReporting errorReporting = ErrorReporting.getInstance();
-        errorReporting.setLogSerializer(new LogSerializer() {
-            @Override
-            public String serializeLog(@NonNull Log log) throws JSONException {
-                return null;
-            }
-
-            @Override
-            public Log deserializeLog(@NonNull String json) throws JSONException {
-                return errorLog;
-            }
-
-            @Override
-            public String serializeContainer(@NonNull LogContainer container) throws JSONException {
-                return null;
-            }
-
-            @Override
-            public LogContainer deserializeContainer(@NonNull String json) throws JSONException {
-                return null;
-            }
-
-            @Override
-            public void addLogFactory(@NonNull String logType, @NonNull LogFactory logFactory) {
-
-            }
-        });
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString())).thenReturn(errorLog);
+        errorReporting.setLogSerializer(logSerializer);
 
         errorReporting.onChannelReady(mockContext, mockChannel);
 
@@ -172,6 +153,47 @@ public class ErrorReportingTest {
         mockStatic(ErrorLogHelper.class);
 
         verifyNoMoreInteractions(ErrorLogHelper.class);
+    }
+
+    @Test
+    public void noQueueNullLog() throws JSONException {
+        Context mockContext = mock(Context.class);
+        AvalancheChannel mockChannel = mock(AvalancheChannel.class);
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
+
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString())).thenReturn(null);
+        errorReporting.setLogSerializer(logSerializer);
+
+        errorReporting.onChannelReady(mockContext, mockChannel);
+
+        verify(mockChannel, never()).enqueue(any(Log.class), anyString());
+    }
+
+    @Test
+    public void printErrorOnJSONException() throws JSONException {
+        Context mockContext = mock(Context.class);
+        AvalancheChannel mockChannel = mock(AvalancheChannel.class);
+        final JSONException jsonException = new JSONException("Fake JSON exception");
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
+
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
+        LogSerializer logSerializer = mock(LogSerializer.class);
+
+        when(logSerializer.deserializeLog(anyString())).thenThrow(jsonException);
+        errorReporting.setLogSerializer(logSerializer);
+
+        errorReporting.onChannelReady(mockContext, mockChannel);
+
+        verify(mockChannel, never()).enqueue(any(Log.class), anyString());
+
+        verifyStatic();
+        AvalancheLog.error(anyString(), eq(jsonException));
     }
 
     @Test(expected = TestCrashException.class)
