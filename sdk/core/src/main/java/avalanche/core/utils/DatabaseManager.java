@@ -642,5 +642,11 @@ public class DatabaseManager implements Closeable {
                 }
             };
         }
+
+        public int getCount() {
+            if (cursor == null)
+                cursor = getCursor(key, value);
+            return cursor.getCount();
+        }
     }
 }

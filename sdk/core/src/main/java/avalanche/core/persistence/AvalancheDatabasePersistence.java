@@ -165,8 +165,18 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
     }
 
     @Override
+    public int countLogs(@NonNull String group) {
+
+        /* Query database and get scanner. */
+        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group);
+        int count = scanner.getCount();
+        scanner.close();
+        return count;
+    }
+
+    @Override
     @Nullable
-    public String getLogs(@NonNull String group, @IntRange(from = 1) int limit, @NonNull List<Log> outLogs) {
+    public String getLogs(@NonNull String group, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
         /* Log. */
         AvalancheLog.info("Trying to get " + limit + " logs from the persistence database for " + group);
 
