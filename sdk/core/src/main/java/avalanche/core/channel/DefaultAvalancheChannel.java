@@ -37,11 +37,6 @@ import avalanche.core.utils.NetworkStateHelper;
 public class DefaultAvalancheChannel implements AvalancheChannel {
 
     /**
-     * Synchronization lock.
-     */
-    private static final Object LOCK = new Object();
-
-    /**
      * TAG used in logging.
      */
     private static final String TAG = "AvalancheChannel";
@@ -143,38 +138,32 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     }
 
     @Override
-    public void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
-        synchronized (LOCK) {
+    public synchronized void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
 
-            /* Init group. */
-            mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener));
+        /* Init group. */
+        mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener));
 
-            /* Count pending logs. FIXME we should have a more efficient way to do this... */
-            List<Log> pendingLogs = new ArrayList<>(maxLogsPerBatch);
-            mPersistence.getLogs(groupName, maxLogsPerBatch, pendingLogs);
-            mPersistence.clearPendingLogState();
-            mGroupStates.get(groupName).mPendingLogCount = pendingLogs.size();
+        /* Count pending logs. FIXME we should have a more efficient way to do this... */
+        List<Log> pendingLogs = new ArrayList<>(maxLogsPerBatch);
+        mPersistence.getLogs(groupName, maxLogsPerBatch, pendingLogs);
+        mPersistence.clearPendingLogState();
+        mGroupStates.get(groupName).mPendingLogCount = pendingLogs.size();
 
-            /* Schedule sending any pending log. */
-            checkPendingLogs(groupName);
+        /* Schedule sending any pending log. */
+        checkPendingLogs(groupName);
+    }
+
+    @Override
+    public synchronized void removeGroup(String groupName) {
+        GroupState groupState = mGroupStates.remove(groupName);
+        if (groupState != null) {
+            cancelTimer(groupState);
         }
     }
 
     @Override
-    public void removeGroup(String groupName) {
-        synchronized (LOCK) {
-            GroupState groupState = mGroupStates.remove(groupName);
-            if (groupState != null) {
-                cancelTimer(groupState);
-            }
-        }
-    }
-
-    @Override
-    public boolean isEnabled() {
-        synchronized (LOCK) {
-            return mEnabled;
-        }
+    public synchronized boolean isEnabled() {
+        return mEnabled;
     }
 
     /**
@@ -185,17 +174,15 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param enabled flag to enable or disable the channel.
      */
     @Override
-    public void setEnabled(boolean enabled) {
-        synchronized (LOCK) {
-            if (mEnabled == enabled)
-                return;
-            if (enabled) {
-                mEnabled = true;
-                for (String groupName : mGroupStates.keySet())
-                    checkPendingLogs(groupName);
-            } else
-                suspend(true);
-        }
+    public synchronized void setEnabled(boolean enabled) {
+        if (mEnabled == enabled)
+            return;
+        if (enabled) {
+            mEnabled = true;
+            for (String groupName : mGroupStates.keySet())
+                checkPendingLogs(groupName);
+        } else
+            suspend(true);
     }
 
     /**
@@ -204,10 +191,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param groupName the group name.
      */
     @Override
-    public void clear(String groupName) {
-        synchronized (LOCK) {
-            mPersistence.deleteLogs(groupName);
-        }
+    public synchronized void clear(String groupName) {
+        mPersistence.deleteLogs(groupName);
     }
 
     /**
@@ -239,10 +224,8 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
 
     @VisibleForTesting
     @SuppressWarnings("SameParameterValue")
-    int getCounter(@NonNull String groupName) {
-        synchronized (LOCK) {
-            return mGroupStates.get(groupName).mPendingLogCount;
-        }
+    synchronized int getCounter(@NonNull String groupName) {
+        return mGroupStates.get(groupName).mPendingLogCount;
     }
 
     /**
@@ -253,53 +236,50 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      *
      * @param groupName the group name
      */
-    private void triggerIngestion(final @NonNull String groupName) {
-        synchronized (LOCK) {
+    private synchronized void triggerIngestion(final @NonNull String groupName) {
+        if (TextUtils.isEmpty(groupName) || (mAppSecret == null) || (mInstallId == null) || !mEnabled) {
+            return;
+        }
+        final GroupState groupState = mGroupStates.get(groupName);
+        AvalancheLog.debug("triggerIngestion(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
 
-            if (TextUtils.isEmpty(groupName) || (mAppSecret == null) || (mInstallId == null) || !mEnabled) {
-                return;
-            }
-            final GroupState groupState = mGroupStates.get(groupName);
-            AvalancheLog.debug("triggerIngestion(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
+        /* Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending. */
+        if (groupState.mSendingBatches.size() == groupState.mMaxParallelBatches) {
+            AvalancheLog.debug(TAG, "Already sending " + groupState.mMaxParallelBatches + " batches of analytics data to the server.");
+            return;
+        }
 
-            /* Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending. */
-            if (groupState.mSendingBatches.size() == groupState.mMaxParallelBatches) {
-                AvalancheLog.debug(TAG, "Already sending " + groupState.mMaxParallelBatches + " batches of analytics data to the server.");
-                return;
-            }
+        /* Get a batch from persistence. */
+        List<Log> batch = new ArrayList<>(groupState.mMaxLogsPerBatch);
+        final String batchId = mPersistence.getLogs(groupName, groupState.mMaxLogsPerBatch, batch);
+        if (batchId != null) {
 
-            /* Get a batch from persistence. */
-            List<Log> batch = new ArrayList<>(groupState.mMaxLogsPerBatch);
-            final String batchId = mPersistence.getLogs(groupName, groupState.mMaxLogsPerBatch, batch);
-            if (batchId != null) {
+            /* Decrement counter. */
+            groupState.mPendingLogCount -= batch.size();
+            AvalancheLog.debug(TAG, "ingestLogs(" + groupName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
 
-                /* Decrement counter. */
-                groupState.mPendingLogCount -= batch.size();
-                AvalancheLog.debug(TAG, "ingestLogs(" + groupName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
+            /* Remember this batch. */
+            groupState.mSendingBatches.put(batchId, batch);
 
-                /* Remember this batch. */
-                groupState.mSendingBatches.put(batchId, batch);
+            /* Send logs. */
+            LogContainer logContainer = new LogContainer();
+            logContainer.setLogs(batch);
+            mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
-                /* Send logs. */
-                LogContainer logContainer = new LogContainer();
-                logContainer.setLogs(batch);
-                mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
-
-                            @Override
-                            public void onCallSucceeded() {
-                                handleSendingSuccess(groupState, batchId);
-                            }
-
-                            @Override
-                            public void onCallFailed(Exception e) {
-                                handleSendingFailure(groupState, batchId, e);
-                            }
+                        @Override
+                        public void onCallSucceeded() {
+                            handleSendingSuccess(groupState, batchId);
                         }
-                );
 
-                /* Check for more pending logs. */
-                checkPendingLogs(groupName);
-            }
+                        @Override
+                        public void onCallFailed(Exception e) {
+                            handleSendingFailure(groupState, batchId, e);
+                        }
+                    }
+            );
+
+            /* Check for more pending logs. */
+            checkPendingLogs(groupName);
         }
     }
 
@@ -309,18 +289,16 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param groupState The group state.
      * @param batchId    The batch ID.
      */
-    private void handleSendingSuccess(@NonNull final GroupState groupState, @NonNull final String batchId) {
-        synchronized (LOCK) {
-            String groupName = groupState.mName;
-            mPersistence.deleteLogs(groupName, batchId);
-            List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
-            GroupListener groupListener = groupState.mListener;
-            if (groupListener != null) {
-                for (Log log : removedLogsForBatchId)
-                    groupListener.onSuccess(log);
-            }
-            checkPendingLogs(groupName);
+    private synchronized void handleSendingSuccess(@NonNull final GroupState groupState, @NonNull final String batchId) {
+        String groupName = groupState.mName;
+        mPersistence.deleteLogs(groupName, batchId);
+        List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
+        GroupListener groupListener = groupState.mListener;
+        if (groupListener != null) {
+            for (Log log : removedLogsForBatchId)
+                groupListener.onSuccess(log);
         }
+        checkPendingLogs(groupName);
     }
 
     /**
@@ -332,22 +310,20 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param batchId    the batch ID
      * @param e          the exception
      */
-    private void handleSendingFailure(@NonNull final GroupState groupState, @NonNull final String batchId, @NonNull final Exception e) {
-        synchronized (LOCK) {
-            String groupName = groupState.mName;
-            AvalancheLog.error("Sending logs groupName=" + groupName + " id=" + batchId + " failed", e);
-            List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
-            if (!HttpUtils.isRecoverableError(e))
-                mPersistence.deleteLogs(groupName, batchId);
-            else
-                groupState.mPendingLogCount += removedLogsForBatchId.size();
-            GroupListener groupListener = groupState.mListener;
-            if (groupListener != null) {
-                for (Log log : removedLogsForBatchId)
-                    groupListener.onFailure(log, e);
-            }
-            suspend(false);
+    private synchronized void handleSendingFailure(@NonNull final GroupState groupState, @NonNull final String batchId, @NonNull final Exception e) {
+        String groupName = groupState.mName;
+        AvalancheLog.error("Sending logs groupName=" + groupName + " id=" + batchId + " failed", e);
+        List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
+        if (!HttpUtils.isRecoverableError(e))
+            mPersistence.deleteLogs(groupName, batchId);
+        else
+            groupState.mPendingLogCount += removedLogsForBatchId.size();
+        GroupListener groupListener = groupState.mListener;
+        if (groupListener != null) {
+            for (Log log : removedLogsForBatchId)
+                groupListener.onFailure(log, e);
         }
+        suspend(false);
     }
 
     /**
@@ -357,58 +333,56 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      * @param groupName the queue to use
      */
     @Override
-    public void enqueue(@NonNull Log log, @NonNull String groupName) {
-        synchronized (LOCK) {
+    public synchronized void enqueue(@NonNull Log log, @NonNull String groupName) {
 
-            /* Check group name is registered. */
-            GroupState groupState = mGroupStates.get(groupName);
-            if (groupState == null) {
-                AvalancheLog.error("Invalid group name:" + groupName);
-                return;
-            }
+        /* Check group name is registered. */
+        GroupState groupState = mGroupStates.get(groupName);
+        if (groupState == null) {
+            AvalancheLog.error("Invalid group name:" + groupName);
+            return;
+        }
 
-            /* Call listeners so that they can decorate the log. */
-            for (Listener listener : mListeners)
-                listener.onEnqueuingLog(log, groupName);
+        /* Call listeners so that they can decorate the log. */
+        for (Listener listener : mListeners)
+            listener.onEnqueuingLog(log, groupName);
 
-            /* Attach device properties to every log if its not already attached by a feature. */
-            if (log.getDevice() == null) {
+        /* Attach device properties to every log if its not already attached by a feature. */
+        if (log.getDevice() == null) {
 
-                /* Generate device properties only once per process life time. */
-                if (mDevice == null) {
-                    try {
-                        mDevice = DeviceInfoHelper.getDeviceInfo(mContext);
-                    } catch (DeviceInfoHelper.DeviceInfoException e) {
-                        AvalancheLog.error("Device log cannot be generated", e);
-                        return;
-                    }
+            /* Generate device properties only once per process life time. */
+            if (mDevice == null) {
+                try {
+                    mDevice = DeviceInfoHelper.getDeviceInfo(mContext);
+                } catch (DeviceInfoHelper.DeviceInfoException e) {
+                    AvalancheLog.error("Device log cannot be generated", e);
+                    return;
                 }
-
-                /* Attach device properties. */
-                log.setDevice(mDevice);
             }
 
-            /* Set an absolute timestamp, we'll convert to relative just before sending. Don't do it if the feature already set a timestamp.*/
-            if (log.getToffset() == 0L)
-                log.setToffset(System.currentTimeMillis());
+            /* Attach device properties. */
+            log.setDevice(mDevice);
+        }
 
-            /* Persist log. */
-            try {
+        /* Set an absolute timestamp, we'll convert to relative just before sending. Don't do it if the feature already set a timestamp.*/
+        if (log.getToffset() == 0L)
+            log.setToffset(System.currentTimeMillis());
 
-                /* Save log in database. */
-                mPersistence.putLog(groupName, log);
-                groupState.mPendingLogCount++;
-                AvalancheLog.debug("enqueue(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
+        /* Persist log. */
+        try {
 
-                /* Increment counters and schedule ingestion if we are not disabled. */
-                if (!mEnabled) {
-                    AvalancheLog.warn(TAG, "Channel is disabled, event was saved to disk.");
-                } else {
-                    checkPendingLogs(groupName);
-                }
-            } catch (AvalanchePersistence.PersistenceException e) {
-                AvalancheLog.error(TAG, "Error persisting event with exception: " + e.toString());
+            /* Save log in database. */
+            mPersistence.putLog(groupName, log);
+            groupState.mPendingLogCount++;
+            AvalancheLog.debug("enqueue(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
+
+            /* Increment counters and schedule ingestion if we are not disabled. */
+            if (!mEnabled) {
+                AvalancheLog.warn(TAG, "Channel is disabled, event was saved to disk.");
+            } else {
+                checkPendingLogs(groupName);
             }
+        } catch (AvalanchePersistence.PersistenceException e) {
+            AvalancheLog.error(TAG, "Error persisting event with exception: " + e.toString());
         }
     }
 
@@ -417,32 +391,26 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
      *
      * @param groupName the group name.
      */
-    private void checkPendingLogs(@NonNull String groupName) {
-        synchronized (LOCK) {
-            GroupState groupState = mGroupStates.get(groupName);
-            long pendingLogCount = groupState.mPendingLogCount;
-            AvalancheLog.debug("checkPendingLogs(" + groupName + ") pendingLogCount=" + pendingLogCount);
-            if (pendingLogCount >= groupState.mMaxLogsPerBatch)
-                triggerIngestion(groupName);
-            else if (pendingLogCount > 0 && !groupState.mScheduled) {
-                groupState.mScheduled = true;
-                mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
-            }
+    private synchronized void checkPendingLogs(@NonNull String groupName) {
+        GroupState groupState = mGroupStates.get(groupName);
+        long pendingLogCount = groupState.mPendingLogCount;
+        AvalancheLog.debug("checkPendingLogs(" + groupName + ") pendingLogCount=" + pendingLogCount);
+        if (pendingLogCount >= groupState.mMaxLogsPerBatch)
+            triggerIngestion(groupName);
+        else if (pendingLogCount > 0 && !groupState.mScheduled) {
+            groupState.mScheduled = true;
+            mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
         }
     }
 
     @Override
-    public void addListener(Listener listener) {
-        synchronized (LOCK) {
-            mListeners.add(listener);
-        }
+    public synchronized void addListener(Listener listener) {
+        mListeners.add(listener);
     }
 
     @Override
-    public void removeListener(Listener listener) {
-        synchronized (LOCK) {
-            mListeners.remove(listener);
-        }
+    public synchronized void removeListener(Listener listener) {
+        mListeners.remove(listener);
     }
 
     /**
