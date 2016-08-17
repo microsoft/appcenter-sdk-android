@@ -578,4 +578,21 @@ public class DefaultAvalancheChannelTest {
         verify(listener).onEnqueuingLog(log, TEST_GROUP);
         verify(persistence, never()).putLog(TEST_GROUP, log);
     }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void somehowDatabaseEmptiedAfterTimer() throws IOException, InterruptedException {
+
+        /* Cover the if (batchId != null) test though it could happen only if the database content disappear after the timer... */
+        AvalancheIngestion ingestion = mock(AvalancheIngestion.class);
+        doThrow(new IOException()).when(ingestion).close();
+        AvalanchePersistence persistence = mock(AvalanchePersistence.class);
+        when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(2)).then(getEmptyGetLogsAnswer());
+        DefaultAvalancheChannel channel = new DefaultAvalancheChannel(sContext, UUIDUtils.randomUUID(), persistence, ingestion);
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+        verify(ingestion, never()).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        assertEquals(2, channel.getCounter(TEST_GROUP));
+        Thread.sleep(TIME_TO_SLEEP);
+        verify(ingestion, never()).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+    }
 }
