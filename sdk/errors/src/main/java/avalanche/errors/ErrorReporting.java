@@ -284,13 +284,10 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             }
         }
 
-        if (mErrorReportMap.size() > 0) {
-            if (StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false)) {
-                AvalancheLog.info("ALWAYS_SEND flag is true. Bypass getting a user confirmation.");
-                handleUserConfirmation(ALWAYS_SEND);
-            } else if (!mErrorReportingListener.shouldAwaitUserConfirmation()) {
-                handleUserConfirmation(SEND);
-            }
+        if (mErrorReportMap.size() > 0 &&
+                (StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false)
+                        || !mErrorReportingListener.shouldAwaitUserConfirmation())) {
+            handleUserConfirmation(SEND);
         }
     }
 
