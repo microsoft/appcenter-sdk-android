@@ -7,6 +7,7 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.VisibleForTesting;
 import android.util.Pair;
 
 import java.io.File;
@@ -37,7 +38,8 @@ public final class ErrorLogHelper {
 
     public static final String THROWABLE_FILE_EXTENSION = ".throwable";
 
-    private static final String ERROR_DIRECTORY = "error";
+    @VisibleForTesting
+    static final String ERROR_DIRECTORY = "error";
 
     @NonNull
     public static JavaErrorLog createErrorLog(@NonNull Context context, @NonNull final Thread thread, @NonNull final Throwable exception, @NonNull final Map<Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
@@ -121,7 +123,7 @@ public final class ErrorLogHelper {
             }
         });
 
-        return files != null ? files : new File[0];
+        return files != null && files.length > 0 ? files : new File[0];
     }
 
     @Nullable
@@ -171,7 +173,7 @@ public final class ErrorLogHelper {
             }
         });
 
-        return files != null ? files[0] : null;
+        return files != null && files.length > 0 ? files[0] : null;
     }
 
     @NonNull
