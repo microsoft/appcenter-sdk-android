@@ -1,5 +1,6 @@
 package avalanche.errors.utils;
 
+import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Build;
@@ -8,7 +9,6 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
-import android.util.Pair;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -99,6 +99,7 @@ public final class ErrorLogHelper {
     }
 
     @SuppressWarnings("deprecation")
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private static String getArchitecture() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             return Build.SUPPORTED_ABIS[0];
