@@ -439,8 +439,9 @@ public class DatabaseManager implements Closeable {
      * @throws RuntimeException If an error occurs.
      */
     Cursor getCursor(String key, Object value) throws RuntimeException {
+
         /* Build a query to get values. */
-        SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.setTables(mTable);
         String[] selectionArgs;
         if (key == null)
@@ -568,11 +569,16 @@ public class DatabaseManager implements Closeable {
                                 try {
                                     hasNext = cursor.moveToNext();
                                 } catch (RuntimeException e) {
+
                                     /* Consider no next on errors. */
                                     hasNext = false;
 
                                     /* Close cursor. */
-                                    cursor.close();
+                                    try {
+                                        cursor.close();
+                                    } catch (RuntimeException e1) {
+                                        AvalancheLog.warn("Closing cursor failed", e1);
+                                    }
 
                                     /* Switch to in-memory database. */
                                     switchToInMemory("scan.hasNext", e);

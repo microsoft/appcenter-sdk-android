@@ -1,8 +1,15 @@
 package avalanche.core.utils;
 
 import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.internal.stubbing.answers.Returns;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,16 +17,22 @@ import java.util.NoSuchElementException;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 
 @SuppressWarnings("unused")
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(SQLiteUtils.class)
 public class DatabaseManagerTest {
 
     private static DatabaseManager getDatabaseManagerMock() {
+
         /* Mocking(spying) instance. */
         DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, null);
         DatabaseManager databaseManagerMock = spy(databaseManager);
@@ -56,6 +69,25 @@ public class DatabaseManagerTest {
             databaseManagerMock = getDatabaseManagerMock();
             databaseManagerMock.getScanner(null, null).getCount();
             verify(databaseManagerMock).switchToInMemory(eq("scan.count"), any(RuntimeException.class));
+        }
+        {
+            DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, null);
+            databaseManagerMock = spy(databaseManager);
+            when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
+            mockStatic(SQLiteUtils.class);
+            Cursor cursor = mock(Cursor.class);
+            SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
+            when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
+            when(cursor.moveToNext()).thenThrow(new RuntimeException());
+            DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null);
+            scanner.iterator().hasNext();
+            verify(databaseManagerMock).switchToInMemory(eq("scan.hasNext"), any(RuntimeException.class));
+            scanner.close();
+            verify(databaseManagerMock, never()).switchToInMemory(eq("scan.close"), any(RuntimeException.class));
+            doThrow(new RuntimeException()).when(cursor).close();
+            scanner.iterator();
+            scanner.close();
+            verify(databaseManagerMock).switchToInMemory(eq("scan.close"), any(RuntimeException.class));
         }
 
         /* Delete. */
