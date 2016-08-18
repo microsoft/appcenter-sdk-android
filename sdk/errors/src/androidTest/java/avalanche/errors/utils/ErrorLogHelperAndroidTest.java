@@ -32,17 +32,24 @@ public class ErrorLogHelperAndroidTest {
     @Before
     public void setUp() {
         mErrorDirectory = ErrorLogHelper.getErrorStorageDirectory();
-        for (File file : mErrorDirectory.listFiles()) {
-            file.delete();
-        }
         assertNotNull(mErrorDirectory);
+
+        File[] files = mErrorDirectory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                file.delete();
+            }
+        }
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @After
     public void tearDown() {
-        for (File file : mErrorDirectory.listFiles()) {
-            file.delete();
+        File[] files = mErrorDirectory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                file.delete();
+            }
         }
         mErrorDirectory.delete();
     }

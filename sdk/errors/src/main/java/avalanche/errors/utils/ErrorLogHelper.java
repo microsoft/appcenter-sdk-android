@@ -41,6 +41,11 @@ public final class ErrorLogHelper {
     @VisibleForTesting
     static final String ERROR_DIRECTORY = "error";
 
+    /**
+     * Root directory for error log and throwable files.
+     */
+    private static File sErrorLogDirectory;
+
     @NonNull
     public static JavaErrorLog createErrorLog(@NonNull Context context, @NonNull final Thread thread, @NonNull final Throwable exception, @NonNull final Map<Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
 
@@ -110,9 +115,12 @@ public final class ErrorLogHelper {
 
     @NonNull
     public static File getErrorStorageDirectory() {
-        File errorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
-        StorageHelper.InternalStorage.mkdir(errorLogDirectory.getAbsolutePath());
-        return errorLogDirectory;
+        if (sErrorLogDirectory == null) {
+            sErrorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
+            StorageHelper.InternalStorage.mkdir(sErrorLogDirectory.getAbsolutePath());
+        }
+
+        return sErrorLogDirectory;
     }
 
     @NonNull
@@ -163,6 +171,11 @@ public final class ErrorLogHelper {
         report.setAppErrorTime(new Date(log.getToffset()));
         report.setDevice(log.getDevice());
         return report;
+    }
+
+    @VisibleForTesting
+    static void setErrorLogDirectory(File file) {
+        sErrorLogDirectory = file;
     }
 
     @Nullable
