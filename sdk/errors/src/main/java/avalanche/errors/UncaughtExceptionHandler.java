@@ -42,10 +42,14 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
         } else {
             JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, exception, Thread.getAllStackTraces(), ErrorReporting.getInstance().getInitializeTimestamp());
             try {
-                File errorLogDirectory = ErrorLogHelper.getErrorStorageDirectory();
-                File errorLogFile = new File(errorLogDirectory, errorLog.getId().toString() + ".json");
+                File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
+                String filename = errorLog.getId().toString();
+                File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
+                File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
                 String errorLogString = mLogSerializer.serializeLog(errorLog);
+
                 StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
+                StorageHelper.InternalStorage.writeObject(throwableFile, exception);
             } catch (JSONException e) {
                 AvalancheLog.error("Error serializing error log to JSON", e);
             } catch (IOException e) {

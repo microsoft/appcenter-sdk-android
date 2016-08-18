@@ -250,6 +250,13 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
         final String batchId = mPersistence.getLogs(groupName, groupState.mMaxLogsPerBatch, batch);
         if (batchId != null) {
 
+            /* Call group listener before sending logs to ingestion service. */
+            if (groupState.mListener != null) {
+                for (Log log : batch) {
+                    groupState.mListener.onBeforeSending(log);
+                }
+            }
+
             /* Decrement counter. */
             groupState.mPendingLogCount -= batch.size();
             AvalancheLog.debug(TAG, "ingestLogs(" + groupName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
