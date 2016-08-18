@@ -1,11 +1,13 @@
 package avalanche.core;
 
 import android.app.Application;
+import android.content.ContentValues;
 import android.content.Context;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -13,6 +15,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,6 +33,8 @@ import static junit.framework.Assert.assertSame;
 import static junit.framework.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
@@ -43,12 +48,15 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Constants.class, AvalancheLog.class, StorageHelper.class, StorageHelper.PreferencesStorage.class, IdHelper.class})
+@PrepareForTest({Constants.class, AvalancheLog.class, StorageHelper.class, StorageHelper.PreferencesStorage.class, IdHelper.class, StorageHelper.DatabaseStorage.class})
 public class AvalancheTest {
 
     private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
 
     private Application application;
+
+    @Mock
+    private Iterator<ContentValues> mDataBaseScannerIterator;
 
     @Before
     public void setUp() {
@@ -64,6 +72,7 @@ public class AvalancheTest {
         mockStatic(StorageHelper.class);
         mockStatic(StorageHelper.PreferencesStorage.class);
         mockStatic(IdHelper.class);
+        mockStatic(StorageHelper.DatabaseStorage.class);
 
         /* First call to avalanche.isInstanceEnabled shall return true, initial state. */
         when(StorageHelper.PreferencesStorage.getBoolean(anyString(), eq(true))).thenReturn(true);
@@ -82,6 +91,13 @@ public class AvalancheTest {
             }
         }).when(StorageHelper.PreferencesStorage.class);
         StorageHelper.PreferencesStorage.putBoolean(anyString(), anyBoolean());
+
+        /* Mock empty database. */
+        StorageHelper.DatabaseStorage databaseStorage = mock(StorageHelper.DatabaseStorage.class);
+        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class), anyInt(), any(StorageHelper.DatabaseStorage.DatabaseErrorListener.class))).thenReturn(databaseStorage);
+        StorageHelper.DatabaseStorage.DatabaseScanner databaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
+        when(databaseStorage.getScanner(anyString(), anyObject())).thenReturn(databaseScanner);
+        when(databaseScanner.iterator()).thenReturn(mDataBaseScannerIterator);
     }
 
     @Test

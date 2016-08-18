@@ -6,7 +6,7 @@ import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 
 import org.json.JSONException;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,17 +62,18 @@ public class AvalancheDatabasePersistenceTest {
         sContext.deleteDatabase("test-persistence");
     }
 
-    @AfterClass
-    public static void tearDownClass() {
-        /* Clean up database. */
-        sContext.deleteDatabase("test-persistence");
-    }
-
     private static int getIteratorSize(Iterator iterator) {
         int count = 0;
         for (; iterator.hasNext(); iterator.next())
             count++;
         return count;
+    }
+
+    @After
+    public void tearDown() {
+
+        /* Clean up database. */
+        sContext.deleteDatabase("test-persistence");
     }
 
     @Test
@@ -88,15 +89,23 @@ public class AvalancheDatabasePersistenceTest {
         persistence.setLogSerializer(logSerializer);
 
         try {
+
+            /* Initial count is 0. */
+            assertEquals(0, persistence.countLogs("test-p1"));
+
             /* Generate a log and persist. */
             Log log = AndroidTestUtils.generateMockLog();
             persistence.putLog("test-p1", log);
+
+            /* Count logs. */
+            assertEquals(1, persistence.countLogs("test-p1"));
 
             /* Get a log from persistence. */
             List<Log> outputLogs = new ArrayList<>();
             persistence.getLogs("test-p1", 1, outputLogs);
             assertEquals(1, outputLogs.size());
             assertEquals(log, outputLogs.get(0));
+            assertEquals(1, persistence.countLogs("test-p1"));
         } finally {
             /* Close. */
             persistence.close();
@@ -132,6 +141,7 @@ public class AvalancheDatabasePersistenceTest {
             assertEquals(2, outputLogs.size());
             assertEquals(log3, outputLogs.get(0));
             assertEquals(log4, outputLogs.get(1));
+            assertEquals(2, persistence.countLogs("test-p1"));
         } finally {
             /* Close. */
             persistence.close();
@@ -182,6 +192,9 @@ public class AvalancheDatabasePersistenceTest {
             persistence.putLog("test-p1", log2);
             persistence.putLog("test-p2", log3);
             persistence.putLog("test-p3", log4);
+            assertEquals(2, persistence.countLogs("test-p1"));
+            assertEquals(1, persistence.countLogs("test-p2"));
+            assertEquals(1, persistence.countLogs("test-p3"));
 
             /* Get a log from persistence. */
             List<Log> outputLogs1 = new ArrayList<>();
@@ -233,6 +246,11 @@ public class AvalancheDatabasePersistenceTest {
                 /* Close. */
                 scanner4.close();
             }
+
+            /* Count logs after delete. */
+            assertEquals(0, persistence.countLogs("test-p1"));
+            assertEquals(1, persistence.countLogs("test-p2"));
+            assertEquals(1, persistence.countLogs("test-p3"));
 
         } finally {
             /* Close. */
@@ -292,6 +310,11 @@ public class AvalancheDatabasePersistenceTest {
             persistence.getLogs("test-p2", 5, outputLogs);
             assertEquals(1, outputLogs.size());
             assertEquals(log3, outputLogs.get(0));
+
+            /* Count for groups. */
+            assertEquals(0, persistence.countLogs("test-p1"));
+            assertEquals(1, persistence.countLogs("test-p2"));
+            assertEquals(0, persistence.countLogs("test-p3"));
         } finally {
             /* Close. */
             persistence.close();
@@ -331,11 +354,15 @@ public class AvalancheDatabasePersistenceTest {
             persistence.clearPendingLogState();
             getAllLogs(persistence, "test", numberOfLogs, sizeForGetLogs);
 
+            /* Count. */
+            assertEquals(10, persistence.countLogs("test"));
+
             /* Clear. Nothing to get after. */
             persistence.clear();
             List<Log> outputLogs = new ArrayList<>();
             assertNull(persistence.getLogs("test", sizeForGetLogs, outputLogs));
             assertTrue(outputLogs.isEmpty());
+            assertEquals(0, persistence.countLogs("test"));
         } finally {
             /* Close. */
             persistence.close();

@@ -20,6 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
@@ -40,6 +41,7 @@ import static org.junit.Assert.assertTrue;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class StorageHelperAndroidTest {
+
     /**
      * Log tag.
      */
@@ -49,6 +51,11 @@ public class StorageHelperAndroidTest {
      * File extension.
      */
     private static final String INTERNAL_STORAGE_TEST_FILE_EXTENSION = ".stacktrace";
+
+    /**
+     * Random tool.
+     */
+    private static final Random RANDOM = new Random();
 
     /**
      * Context instance.
@@ -178,25 +185,26 @@ public class StorageHelperAndroidTest {
     }
 
     private static ContentValues generateContentValues() {
-        Random random = new Random(System.currentTimeMillis());
         byte[] randomBytes = new byte[10];
-        random.nextBytes(randomBytes);
+        RANDOM.nextBytes(randomBytes);
 
         ContentValues values = new ContentValues();
         values.put("COL_STRING", new String(randomBytes));
+        values.put("COL_STRING_NULL", (String) null);
         values.put("COL_BYTE", randomBytes[0]);
-        values.put("COL_SHORT", (short) random.nextInt(100));
-        values.put("COL_INTEGER", random.nextInt());
-        values.put("COL_LONG", random.nextLong());
-        values.put("COL_FLOAT", random.nextFloat());
-        values.put("COL_DOUBLE", random.nextDouble());
-        values.put("COL_BOOLEAN", Boolean.TRUE/*random.nextBoolean()*/);
+        values.put("COL_SHORT", (short) RANDOM.nextInt(100));
+        values.put("COL_INTEGER", RANDOM.nextInt());
+        values.put("COL_LONG", RANDOM.nextLong());
+        values.put("COL_FLOAT", RANDOM.nextFloat());
+        values.put("COL_DOUBLE", RANDOM.nextDouble());
+        values.put("COL_BOOLEAN", Boolean.TRUE/*RANDOM.nextBoolean()*/);
         values.put("COL_BYTE_ARRAY", randomBytes);
         return values;
     }
 
     public static void assertContentValuesEquals(ContentValues expected, ContentValues actual) {
         assertEquals(expected.getAsString("COL_STRING"), actual.getAsString("COL_STRING"));
+        assertEquals(expected.getAsString("COL_STRING_NULL"), actual.getAsString("COL_STRING_NULL"));
         assertEquals(expected.getAsByte("COL_BYTE"), actual.getAsByte("COL_BYTE"));
         assertEquals(expected.getAsShort("COL_SHORT"), actual.getAsShort("COL_SHORT"));
         assertEquals(expected.getAsInteger("COL_INTEGER"), actual.getAsInteger("COL_INTEGER"));
@@ -240,6 +248,20 @@ public class StorageHelperAndroidTest {
         ContentValues nullValueFromDatabase = databaseStorage.get(-1);
         assertNull(nullValueFromDatabase);
 
+        /* Count with scanner. */
+        DatabaseStorage.DatabaseScanner scanner = databaseStorage.getScanner();
+        assertEquals(2, scanner.getCount());
+        assertEquals(2, scanner.getCount());
+        DatabaseStorage.DatabaseScanner scanner1 = databaseStorage.getScanner("COL_STRING", value1.getAsString("COL_STRING"));
+        assertEquals(1, scanner1.getCount());
+        Iterator<ContentValues> iterator = scanner1.iterator();
+        assertContentValuesEquals(value1, iterator.next());
+        assertFalse(iterator.hasNext());
+
+        /* Null value matching. */
+        assertEquals(0, databaseStorage.getScanner("COL_STRING", null).getCount());
+        assertEquals(2, databaseStorage.getScanner("COL_STRING_NULL", null).getCount());
+
         /* Update. */
         assertTrue(databaseStorage.update(value1Id, value3));
         ContentValues value3FromDatabase = databaseStorage.get(value1Id);
@@ -249,6 +271,7 @@ public class StorageHelperAndroidTest {
         databaseStorage.delete(value1Id);
         assertNull(databaseStorage.get(value1Id));
         assertEquals(1, databaseStorage.size());
+        assertEquals(1, databaseStorage.getScanner().getCount());
 
         /* Put logs to delete multiple IDs. */
         ContentValues value4 = generateContentValues();
@@ -471,7 +494,7 @@ public class StorageHelperAndroidTest {
         });
 
         try {
-            assertEquals(10, databaseStorage.getColumnNames().length);
+            assertEquals(11, databaseStorage.getColumnNames().length);
         } finally {
             /* Close. */
             databaseStorage.close();
