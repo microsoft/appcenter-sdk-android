@@ -4,7 +4,6 @@ import android.content.ContentValues;
 
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
@@ -15,6 +14,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 
 @SuppressWarnings("unused")
 public class DatabaseManagerTest {
@@ -28,7 +28,7 @@ public class DatabaseManagerTest {
     }
 
     @Test
-    public void switchInMemory() throws IOException {
+    public void switchInMemory() throws Exception {
         DatabaseManager databaseManagerMock;
 
         /* Put. */
@@ -47,15 +47,21 @@ public class DatabaseManagerTest {
         verify(databaseManagerMock).switchToInMemory(eq("get"), any(RuntimeException.class));
 
         /* Scanner. */
-        databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.getScanner(null, null).iterator();
-        verify(databaseManagerMock).switchToInMemory(eq("scan"), any(RuntimeException.class));
+        {
+            databaseManagerMock = getDatabaseManagerMock();
+            databaseManagerMock.getScanner(null, null).iterator();
+            verify(databaseManagerMock).switchToInMemory(eq("scan.iterator"), any(RuntimeException.class));
+        }
+        {
+            databaseManagerMock = getDatabaseManagerMock();
+            databaseManagerMock.getScanner(null, null).getCount();
+            verify(databaseManagerMock).switchToInMemory(eq("scan.count"), any(RuntimeException.class));
+        }
 
         /* Delete. */
         databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.delete(0);
         verify(databaseManagerMock).switchToInMemory(eq("delete"), any(RuntimeException.class));
-
 
         /* Delete multiple IDs. */
         databaseManagerMock = getDatabaseManagerMock();
@@ -75,7 +81,7 @@ public class DatabaseManagerTest {
         databaseManagerMock.close();
         verify(databaseManagerMock).switchToInMemory(eq("close"), any(RuntimeException.class));
 
-        /* Close. */
+        /* Row count. */
         databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.getRowCount();
         verify(databaseManagerMock).switchToInMemory(eq("count"), any(RuntimeException.class));
