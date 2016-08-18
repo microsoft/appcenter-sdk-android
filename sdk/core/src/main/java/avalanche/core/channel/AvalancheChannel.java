@@ -91,6 +91,13 @@ public interface AvalancheChannel {
     interface GroupListener {
 
         /**
+         * Called before processing a log.
+         *
+         * @param log The log that will be delivered.
+         */
+        void onBeforeSending(Log log);
+
+        /**
          * Called when the log is delivered successfully.
          *
          * @param log The log that is delivered.

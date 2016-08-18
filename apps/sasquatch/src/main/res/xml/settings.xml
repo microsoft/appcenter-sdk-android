@@ -3,13 +3,31 @@
     <CheckBoxPreference
         android:key="@string/avalanche_state_key"
         android:title="@string/avalanche_state_title"/>
-    <CheckBoxPreference
-        android:key="@string/avalanche_analytics_state_key"
-        android:title="@string/avalanche_analytics_state_title"/>
-    <CheckBoxPreference
-        android:key="@string/avalanche_auto_page_tracking_key"
-        android:title="@string/avalanche_auto_page_tracking_title"/>
-    <CheckBoxPreference
-        android:key="@string/avalanche_errors_state_key"
-        android:title="@string/avalanche_errors_state_title"/>
+
+    <PreferenceCategory
+        android:key="@string/analytics_key"
+        android:title="@string/analytics_title">
+        <CheckBoxPreference
+            android:key="@string/avalanche_analytics_state_key"
+            android:title="@string/avalanche_analytics_state_title"/>
+        <CheckBoxPreference
+            android:key="@string/avalanche_auto_page_tracking_key"
+            android:title="@string/avalanche_auto_page_tracking_title"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="@string/error_reporting_key"
+        android:title="@string/error_reporting_title">
+        <CheckBoxPreference
+            android:key="@string/avalanche_errors_state_key"
+            android:title="@string/avalanche_errors_state_title"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="@string/miscellaneous_key"
+        android:title="@string/miscellaneous_title">
+        <Preference
+            android:key="@string/clear_crash_user_confirmation_key"
+            android:title="@string/clear_crash_user_confirmation_title"/>
+    </PreferenceCategory>
 </PreferenceScreen>
