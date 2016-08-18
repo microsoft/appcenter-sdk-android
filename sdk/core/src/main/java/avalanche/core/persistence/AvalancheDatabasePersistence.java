@@ -206,6 +206,7 @@ public class AvalancheDatabasePersistence extends AvalanchePersistence implement
                 }
             }
         }
+        scanner.close();
 
         /* Delete any logs that cannot be deserialized. */
         if (failedDbIdentifiers.size() > 0) {

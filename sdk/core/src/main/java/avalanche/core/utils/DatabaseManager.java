@@ -439,8 +439,9 @@ public class DatabaseManager implements Closeable {
      * @throws RuntimeException If an error occurs.
      */
     Cursor getCursor(String key, Object value) throws RuntimeException {
+
         /* Build a query to get values. */
-        SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.setTables(mTable);
         String[] selectionArgs;
         if (key == null)
@@ -537,12 +538,14 @@ public class DatabaseManager implements Closeable {
 
         @Override
         public void close() {
+
             /* Close cursor. */
             if (cursor != null)
                 try {
                     cursor.close();
+                    cursor = null;
                 } catch (RuntimeException e) {
-                    switchToInMemory("scan", e);
+                    switchToInMemory("scan.close", e);
                 }
         }
 
@@ -568,14 +571,20 @@ public class DatabaseManager implements Closeable {
                                 try {
                                     hasNext = cursor.moveToNext();
                                 } catch (RuntimeException e) {
+
                                     /* Consider no next on errors. */
                                     hasNext = false;
 
                                     /* Close cursor. */
-                                    cursor.close();
+                                    try {
+                                        cursor.close();
+                                    } catch (RuntimeException e1) {
+                                        AvalancheLog.warn("Closing cursor failed", e1);
+                                    }
+                                    cursor = null;
 
                                     /* Switch to in-memory database. */
-                                    switchToInMemory("scan", e);
+                                    switchToInMemory("scan.hasNext", e);
                                 }
                             }
                             return hasNext;
@@ -598,7 +607,7 @@ public class DatabaseManager implements Closeable {
                         }
                     };
                 } catch (RuntimeException e) {
-                    switchToInMemory("scan", e);
+                    switchToInMemory("scan.iterator", e);
                 }
             }
 
@@ -649,15 +658,18 @@ public class DatabaseManager implements Closeable {
 
         public int getCount() {
             if (mIMDB == null) {
-                if (cursor == null)
-                    cursor = getCursor(key, value);
-                return cursor.getCount();
-            } else {
-                int count = 0;
-                for (Iterator<ContentValues> iterator = iterator(); iterator.hasNext(); iterator.next())
-                    count++;
-                return count;
+                try {
+                    if (cursor == null)
+                        cursor = getCursor(key, value);
+                    return cursor.getCount();
+                } catch (RuntimeException e) {
+                    switchToInMemory("scan.count", e);
+                }
             }
+            int count = 0;
+            for (Iterator<ContentValues> iterator = iterator(); iterator.hasNext(); iterator.next())
+                count++;
+            return count;
         }
     }
 }
