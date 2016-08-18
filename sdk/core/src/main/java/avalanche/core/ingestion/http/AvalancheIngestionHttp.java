@@ -27,7 +27,7 @@ public class AvalancheIngestionHttp implements AvalancheIngestion {
     /**
      * Default base URL.
      */
-    private static final String DEFAULT_BASE_URL = "http://in-staging.avalanch.es:8081";
+    private static final String DEFAULT_BASE_URL = "http://in-analytics-dev.avalanch.es:8081";
 
     /**
      * API Path.
