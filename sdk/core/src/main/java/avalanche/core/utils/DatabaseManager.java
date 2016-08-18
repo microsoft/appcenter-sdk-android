@@ -542,7 +542,7 @@ public class DatabaseManager implements Closeable {
                 try {
                     cursor.close();
                 } catch (RuntimeException e) {
-                    switchToInMemory("scan", e);
+                    switchToInMemory("scan.close", e);
                 }
         }
 
@@ -575,7 +575,7 @@ public class DatabaseManager implements Closeable {
                                     cursor.close();
 
                                     /* Switch to in-memory database. */
-                                    switchToInMemory("scan", e);
+                                    switchToInMemory("scan.hasNext", e);
                                 }
                             }
                             return hasNext;
@@ -598,7 +598,7 @@ public class DatabaseManager implements Closeable {
                         }
                     };
                 } catch (RuntimeException e) {
-                    switchToInMemory("scan", e);
+                    switchToInMemory("scan.iterator", e);
                 }
             }
 
@@ -649,15 +649,18 @@ public class DatabaseManager implements Closeable {
 
         public int getCount() {
             if (mIMDB == null) {
-                if (cursor == null)
-                    cursor = getCursor(key, value);
-                return cursor.getCount();
-            } else {
-                int count = 0;
-                for (Iterator<ContentValues> iterator = iterator(); iterator.hasNext(); iterator.next())
-                    count++;
-                return count;
+                try {
+                    if (cursor == null)
+                        cursor = getCursor(key, value);
+                    return cursor.getCount();
+                } catch (RuntimeException e) {
+                    switchToInMemory("scan.count", e);
+                }
             }
+            int count = 0;
+            for (Iterator<ContentValues> iterator = iterator(); iterator.hasNext(); iterator.next())
+                count++;
+            return count;
         }
     }
 }
