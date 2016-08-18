@@ -706,6 +706,10 @@ public final class StorageHelper {
             public Iterator<ContentValues> iterator() {
                 return mScanner.iterator();
             }
+
+            public int getCount() {
+                return mScanner.getCount();
+            }
         }
     }
 }

@@ -445,7 +445,10 @@ public class DatabaseManager implements Closeable {
         String[] selectionArgs;
         if (key == null)
             selectionArgs = null;
-        else {
+        else if (value == null) {
+            builder.appendWhere(key + " IS NULL");
+            selectionArgs = null;
+        } else {
             builder.appendWhere(key + " = ?");
             selectionArgs = new String[]{String.valueOf(value.toString())};
         }
@@ -618,7 +621,8 @@ public class DatabaseManager implements Closeable {
                         next = null;
                         while (iterator.hasNext()) {
                             ContentValues nextCandidate = iterator.next();
-                            if (key == null || value.equals(nextCandidate.get(key))) {
+                            Object candidateValue = nextCandidate.get(key);
+                            if (key == null || (value != null && value.equals(candidateValue)) || (value == null && candidateValue == null)) {
                                 next = nextCandidate;
                                 break;
                             }
@@ -641,6 +645,19 @@ public class DatabaseManager implements Closeable {
                     throw new UnsupportedOperationException();
                 }
             };
+        }
+
+        public int getCount() {
+            if (mIMDB == null) {
+                if (cursor == null)
+                    cursor = getCursor(key, value);
+                return cursor.getCount();
+            } else {
+                int count = 0;
+                for (Iterator<ContentValues> iterator = iterator(); iterator.hasNext(); iterator.next())
+                    count++;
+                return count;
+            }
         }
     }
 }

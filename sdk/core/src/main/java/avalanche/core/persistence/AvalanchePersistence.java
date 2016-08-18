@@ -50,10 +50,18 @@ public abstract class AvalanchePersistence {
     public abstract void deleteLogs(String group);
 
     /**
+     * Count number of logs for the given {@code group}.
+     *
+     * @param group The group of the storage for the log.
+     * @return number of logs for the given {@code group}.
+     */
+    public abstract int countLogs(@NonNull String group);
+
+    /**
      * Gets an array of logs for the given {@code group}.
      *
      * @param group   The group of the storage for the log.
-     * @param limit   The max number of logs to be returned. {@code 0} for all logs in the storage.
+     * @param limit   The max number of logs to be returned.
      * @param outLogs A list to receive {@link Log} objects.
      * @return An ID for {@code outLogs}. {@code null} if no logs exist.
      */
