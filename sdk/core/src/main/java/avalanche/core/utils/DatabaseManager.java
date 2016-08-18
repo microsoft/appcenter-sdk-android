@@ -538,10 +538,12 @@ public class DatabaseManager implements Closeable {
 
         @Override
         public void close() {
+
             /* Close cursor. */
             if (cursor != null)
                 try {
                     cursor.close();
+                    cursor = null;
                 } catch (RuntimeException e) {
                     switchToInMemory("scan.close", e);
                 }
@@ -579,6 +581,7 @@ public class DatabaseManager implements Closeable {
                                     } catch (RuntimeException e1) {
                                         AvalancheLog.warn("Closing cursor failed", e1);
                                     }
+                                    cursor = null;
 
                                     /* Switch to in-memory database. */
                                     switchToInMemory("scan.hasNext", e);
