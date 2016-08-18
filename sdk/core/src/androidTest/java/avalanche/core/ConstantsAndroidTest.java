@@ -1,10 +1,13 @@
 package avalanche.core;
 
+import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ConstantsAndroidTest {
 
@@ -20,8 +23,17 @@ public class ConstantsAndroidTest {
     }
 
     @Test
-    public void loadFilesPathError() {
+    public void loadFilesPathNullContext() {
         Constants.loadFromContext(null);
+        Assert.assertNull(Constants.FILES_PATH);
+    }
+
+    @Test
+    public void loadFilesPathError() {
+        Context mockContext = mock(Context.class);
+        when(mockContext.getFilesDir()).thenReturn(null);
+
+        Constants.loadFromContext(mockContext);
 
         /* Should return null, not throw an exception. */
         Assert.assertNull(Constants.FILES_PATH);
