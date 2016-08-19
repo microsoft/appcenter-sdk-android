@@ -136,6 +136,16 @@ public final class ErrorLogHelper {
     }
 
     @Nullable
+    public static File getLastErrorLogFile() {
+        return StorageHelper.InternalStorage.lastModifiedFile(getErrorStorageDirectory(), new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String filename) {
+                return filename.endsWith(ERROR_LOG_FILE_EXTENSION);
+            }
+        });
+    }
+
+    @Nullable
     public static File getStoredThrowableFile(@NonNull UUID id) {
         return getStoredFile(id, THROWABLE_FILE_EXTENSION);
     }

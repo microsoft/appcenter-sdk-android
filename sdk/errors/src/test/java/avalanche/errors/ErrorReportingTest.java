@@ -19,10 +19,12 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
 import avalanche.core.channel.AvalancheChannel;
+import avalanche.core.ingestion.models.Device;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.ingestion.models.json.LogSerializer;
@@ -519,4 +521,48 @@ public class ErrorReportingTest {
         defaultListener.onSendingSucceeded(null);
         defaultListener.onSendingFailed(null, null);
     }
+
+    @Test
+    public void crashInLastSession() throws JSONException, IOException, ClassNotFoundException {
+        int tOffset = 10;
+        long appLaunchTOffset = 100L;
+
+        JavaErrorLog errorLog = new JavaErrorLog();
+        errorLog.setId(UUIDUtils.randomUUID());
+        errorLog.setErrorThreadName(Thread.currentThread().getName());
+        errorLog.setToffset(tOffset);
+
+        errorLog.setAppLaunchTOffset(appLaunchTOffset);
+        errorLog.setDevice(mock(Device.class));
+
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString())).thenReturn(errorLog);
+
+        Throwable throwable = mock(Throwable.class);
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(new File("."));
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenCallRealMethod();
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(throwable);
+
+        ErrorReporting.getInstance().setLogSerializer(logSerializer);
+
+        assertFalse(ErrorReporting.hasCrashedInLastSession());
+        assertNull(ErrorReporting.getLastSessionErrorReport());
+
+        // Last session error is only fetched upon initialization (triggered by setting the module to enabled)
+        ErrorReporting.setEnabled(true);
+
+        assertTrue(ErrorReporting.hasCrashedInLastSession());
+        ErrorReport report = ErrorReporting.getLastSessionErrorReport();
+        assertNotNull(report);
+        assertEquals(errorLog.getId().toString(), report.getId());
+        assertEquals(errorLog.getErrorThreadName(), report.getThreadName());
+        assertEquals(new Date(tOffset - appLaunchTOffset), report.getAppStartTime());
+        assertEquals(new Date(tOffset), report.getAppErrorTime());
+        assertNotNull(report.getDevice());
+        assertEquals(throwable, report.getThrowable());
+    }
+
 }
