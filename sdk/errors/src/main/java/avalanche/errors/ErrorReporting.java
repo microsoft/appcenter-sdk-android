@@ -178,6 +178,15 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     public synchronized void setInstanceEnabled(boolean enabled) {
         super.setInstanceEnabled(enabled);
         initialize();
+        if (!enabled) {
+            for (File file : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
+                AvalancheLog.debug("Deleting file " + file);
+                if (!file.delete()) {
+                    AvalancheLog.warn("Failed to delete file " + file);
+                }
+            }
+            AvalancheLog.info("Deleted error reporting local files");
+        }
     }
 
     @Override
