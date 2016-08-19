@@ -105,11 +105,14 @@ public class ErrorReportingTest {
     }
 
     @Test
-    public void checkFactories() {
-        Map<String, LogFactory> factories = ErrorReporting.getInstance().getLogFactories();
+    public void checkConfig() {
+        ErrorReporting instance = ErrorReporting.getInstance();
+        Map<String, LogFactory> factories = instance.getLogFactories();
         assertNotNull(factories);
         assertTrue(factories.remove(JavaErrorLog.TYPE) instanceof JavaErrorLogFactory);
         assertTrue(factories.isEmpty());
+        assertEquals(1, instance.getTriggerCount());
+        assertEquals("group_errors", instance.getGroupName());
     }
 
     @Test
@@ -323,7 +326,6 @@ public class ErrorReportingTest {
                 assertErrorEquals(errorLog, exception, errorReport);
             }
         });
-        ErrorReporting errorReporting = ErrorReporting.getInstance();
 
         AvalancheChannel.GroupListener listener = ErrorReporting.getInstance().getChannelListener();
         listener.onBeforeSending(errorLog);
@@ -393,7 +395,6 @@ public class ErrorReportingTest {
     @Test
     public void handleUserConfirmationAlwaysSend() throws IOException, ClassNotFoundException, JSONException {
         final JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
-        AvalancheChannel mockChannel = mock(AvalancheChannel.class);
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
