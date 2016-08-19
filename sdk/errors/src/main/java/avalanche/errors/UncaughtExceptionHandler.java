@@ -47,9 +47,11 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
                 File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
                 File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
                 String errorLogString = mLogSerializer.serializeLog(errorLog);
-
+                AvalancheLog.debug("Saving uncaught exception:", exception);
                 StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
+                AvalancheLog.debug("Saved JSON content for ingestion into " + errorLogFile);
                 StorageHelper.InternalStorage.writeObject(throwableFile, exception);
+                AvalancheLog.debug("Saved Throwable as is for client side inspection in " + throwableFile);
             } catch (JSONException e) {
                 AvalancheLog.error("Error serializing error log to JSON", e);
             } catch (IOException e) {
