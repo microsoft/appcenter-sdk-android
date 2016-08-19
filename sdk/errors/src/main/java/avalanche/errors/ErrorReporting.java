@@ -258,7 +258,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     /**
      * Get initialization timestamp.
      *
-     * @return initialization timestamp expressed using {@link @}
+     * @return initialization timestamp expressed using {@link SystemClock#elapsedRealtime()}.
      */
     synchronized long getInitializeTimestamp() {
         return mInitializeTimestamp;
