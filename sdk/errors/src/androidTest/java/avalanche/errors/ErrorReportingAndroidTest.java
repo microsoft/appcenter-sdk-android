@@ -3,7 +3,6 @@ package avalanche.errors;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -51,19 +50,18 @@ public class ErrorReportingAndroidTest {
         sDefaultCrashHandler = Thread.getDefaultUncaughtExceptionHandler();
     }
 
-    @After
     @Before
     public void cleanup() {
-        AvalancheLog.info("Cleanup test");
+        AvalancheLog.info("Cleanup");
         Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
-        StorageHelper.PreferencesStorage.remove(ErrorReporting.PREF_KEY_ALWAYS_SEND);
+        StorageHelper.PreferencesStorage.clear();
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
             assertTrue(logFile.delete());
         }
     }
 
     @Test
-    public void testNoDupicateCallbacksOrSending() throws InterruptedException {
+    public void testNoDuplicateCallbacksOrSending() throws InterruptedException {
 
         /* Crash on 1st process. */
         AvalancheLog.info("Process 1");
@@ -143,5 +141,32 @@ public class ErrorReportingAndroidTest {
         verify(errorReportingListener).onBeforeSending(any(ErrorReport.class));
         verify(errorReportingListener).onSendingSucceeded(any(ErrorReport.class));
         verifyNoMoreInteractions(errorReportingListener);
+    }
+
+    @Test
+    public void cleanupFilesOnDisable() throws InterruptedException {
+
+        /* Crash on 1st process. */
+        AvalancheLog.info("Process 1");
+        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
+        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+        ErrorReporting.getInstance().onChannelReady(sContext, mock(AvalancheChannel.class));
+        final RuntimeException exception = new RuntimeException();
+        final Thread thread = new Thread() {
+
+            @Override
+            public void run() {
+                throw exception;
+            }
+        };
+        thread.start();
+        thread.join();
+        verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
+        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+
+        /* Disable in process 2. */
+        ErrorReporting.unsetInstance();
+        ErrorReporting.setEnabled(false);
+        assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
     }
 }

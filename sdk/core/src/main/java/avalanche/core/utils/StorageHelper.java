@@ -64,6 +64,7 @@ public final class StorageHelper {
 
         /**
          * Retrieve a boolean value.
+         *
          * @param key The key for which the value is to be retrieved.
          * @return The value of {@code key} or false if key is not set.
          */
@@ -74,8 +75,9 @@ public final class StorageHelper {
 
         /**
          * Retrieve a boolean value and provide a default value.
-         * @param key         The key for which the value is to be retrieved.
-         * @param defValue    The default value to return if no value is set for {@code key}.
+         *
+         * @param key      The key for which the value is to be retrieved.
+         * @param defValue The default value to return if no value is set for {@code key}.
          * @return The value of {@code key} or the default value if key is not set.
          */
         public static boolean getBoolean(@NonNull String key, boolean defValue) {
@@ -84,8 +86,9 @@ public final class StorageHelper {
 
         /**
          * Store a boolean value.
-         * @param key      The key to store the value for.
-         * @param value    The value to store for the key.
+         *
+         * @param key   The key to store the value for.
+         * @param value The value to store for the key.
          */
         public static void putBoolean(@NonNull String key, boolean value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
@@ -282,6 +285,15 @@ public final class StorageHelper {
             editor.remove(key);
             editor.apply();
         }
+
+        /**
+         * Removes all keys and values.
+         */
+        public static void clear() {
+            SharedPreferences.Editor editor = sSharedPreferences.edit();
+            editor.clear();
+            editor.apply();
+        }
     }
 
     /**
@@ -335,7 +347,7 @@ public final class StorageHelper {
         /**
          * Write contents to a file.
          *
-         * @param path The path of the file.
+         * @param path     The path of the file.
          * @param contents The contents to be written to the file.
          * @throws IOException
          */
