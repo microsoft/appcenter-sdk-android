@@ -322,12 +322,11 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             StorageHelper.PreferencesStorage.putBoolean(PREF_KEY_ALWAYS_SEND, true);
         }
 
-        for (UUID id : getInstance().mErrorReportMap.keySet()) {
-            ErrorLogReportPair pair = getInstance().mErrorReportMap.get(id);
+        for (UUID id : mErrorReportMap.keySet()) {
+            ErrorLogReportPair pair = mErrorReportMap.get(id);
 
-            /* TODO (jaelim): Attach the return value to the log. */
-            getInstance().mErrorReportingListener.getErrorAttachment(pair.report);
-            getInstance().mChannel.enqueue(pair.log, ERROR_GROUP);
+            pair.log.setErrorAttachment(mErrorReportingListener.getErrorAttachment(pair.report));
+            mChannel.enqueue(pair.log, ERROR_GROUP);
 
             /* Clean up an error log file. */
             ErrorLogHelper.removeStoredErrorLogFile(id);

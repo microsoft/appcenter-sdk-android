@@ -16,6 +16,8 @@ import avalanche.core.Avalanche;
 import avalanche.core.utils.UUIDUtils;
 import avalanche.errors.AbstractErrorReportingListener;
 import avalanche.errors.ErrorReporting;
+import avalanche.errors.model.ErrorAttachment;
+import avalanche.errors.model.ErrorBinaryAttachment;
 import avalanche.errors.model.ErrorReport;
 import avalanche.sasquatch.R;
 import avalanche.sasquatch.features.TestFeatures;
@@ -55,6 +57,19 @@ public class MainActivity extends AppCompatActivity {
                         });
                 builder.create().show();
                 return true;
+            }
+
+            @Override
+            public ErrorAttachment getErrorAttachment(ErrorReport errorReport) {
+                ErrorBinaryAttachment binaryAttachment = new ErrorBinaryAttachment();
+                binaryAttachment.setContentType("text/plain");
+                binaryAttachment.setFileName("binary.txt");
+                binaryAttachment.setData("Hello World!".getBytes());
+
+                ErrorAttachment attachment = new ErrorAttachment();
+                attachment.setTextAttachment("This is a text attachment.");
+                attachment.setBinaryAttachment(binaryAttachment);
+                return attachment;
             }
 
             @Override
