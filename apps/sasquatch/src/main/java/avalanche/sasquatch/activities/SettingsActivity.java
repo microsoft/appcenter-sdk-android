@@ -38,9 +38,7 @@ public class SettingsActivity extends AppCompatActivity {
                 public void setEnabled(boolean enabled) {
                     Avalanche.setEnabled(enabled);
                     analyticsEnabledPreference.setChecked(enabled);
-                    analyticsEnabledPreference.getOnPreferenceChangeListener().onPreferenceChange(analyticsEnabledPreference, enabled);
                     errorsEnabledPreference.setChecked(enabled);
-                    errorsEnabledPreference.getOnPreferenceChangeListener().onPreferenceChange(errorsEnabledPreference, enabled);
                 }
             });
             initCheckBoxSetting(R.string.avalanche_analytics_state_key, Analytics.isEnabled(), R.string.avalanche_analytics_state_summary_enabled, R.string.avalanche_analytics_state_summary_disabled, new SetEnabled() {
@@ -51,6 +49,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
             initCheckBoxSetting(R.string.avalanche_errors_state_key, ErrorReporting.isEnabled(), R.string.avalanche_errors_state_summary_enabled, R.string.avalanche_errors_state_summary_disabled, new SetEnabled() {
+
                 @Override
                 public void setEnabled(boolean enabled) {
                     ErrorReporting.setEnabled(enabled);
@@ -64,10 +63,10 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
             initClickableSetting(R.string.clear_crash_user_confirmation_key, new Preference.OnPreferenceClickListener() {
+
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    /* Key is not exposed. Use hard-coded key instead. */
-                    StorageHelper.PreferencesStorage.remove("avalanche.errors.crash.always.send");
+                    StorageHelper.PreferencesStorage.remove(ErrorReporting.PREF_KEY_ALWAYS_SEND);
                     Toast.makeText(getActivity(), R.string.clear_crash_user_confirmation_toast, Toast.LENGTH_SHORT).show();
                     return true;
                 }
@@ -90,6 +89,7 @@ public class SettingsActivity extends AppCompatActivity {
             preference.setChecked(enabled);
         }
 
+        @SuppressWarnings("SameParameterValue")
         private void initClickableSetting(int key, Preference.OnPreferenceClickListener listener) {
             Preference preference = getPreferenceManager().findPreference(getString(key));
             preference.setOnPreferenceClickListener(listener);
