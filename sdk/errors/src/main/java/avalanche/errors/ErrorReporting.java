@@ -55,8 +55,9 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     /**
      * Preference storage key for ALWAYS SEND.
      */
+    /* TODO maybe add an API to reset and make that private. */
     @VisibleForTesting
-    static final String PREF_KEY_ALWAYS_SEND = "avalanche.errors.crash.always.send";
+    public static final String PREF_KEY_ALWAYS_SEND = "avalanche.errors.crash.always.send";
 
     /**
      * Group for sending logs.
