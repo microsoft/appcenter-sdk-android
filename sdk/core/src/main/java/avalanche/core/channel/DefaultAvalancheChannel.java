@@ -140,6 +140,7 @@ public class DefaultAvalancheChannel implements AvalancheChannel {
     public synchronized void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
 
         /* Init group. */
+        AvalancheLog.debug("addGroup(" + groupName + ")");
         mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener));
 
         /* Count pending logs. */
