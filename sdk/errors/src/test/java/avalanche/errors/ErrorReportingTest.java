@@ -112,7 +112,7 @@ public class ErrorReportingTest {
         assertTrue(factories.remove(JavaErrorLog.TYPE) instanceof JavaErrorLogFactory);
         assertTrue(factories.isEmpty());
         assertEquals(1, instance.getTriggerCount());
-        assertEquals("group_errors", instance.getGroupName());
+        assertEquals(ErrorReporting.ERROR_GROUP, instance.getGroupName());
     }
 
     @Test

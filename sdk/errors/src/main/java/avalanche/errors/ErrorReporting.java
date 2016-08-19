@@ -61,7 +61,8 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     /**
      * Group for sending logs.
      */
-    private static final String ERROR_GROUP = "group_errors";
+    @VisibleForTesting
+    static final String ERROR_GROUP = "group_errors";
 
     /**
      * Default error reporting listener.
