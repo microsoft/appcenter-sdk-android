@@ -63,7 +63,7 @@ public class ErrorReportingAndroidTest {
     }
 
     @Test
-    public void testNoDupicateCallbacksOrSending() throws InterruptedException {
+    public void testNoDuplicateCallbacksOrSending() throws InterruptedException {
 
         /* Crash on 1st process. */
         AvalancheLog.info("Process 1");
