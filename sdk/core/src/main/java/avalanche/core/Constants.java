@@ -7,8 +7,6 @@ import java.io.File;
 import avalanche.core.utils.AvalancheLog;
 
 /**
- * <h3>Description</h3>
- *
  * Various constants and meta information loaded from the context.
  **/
 public class Constants {
@@ -37,16 +35,14 @@ public class Constants {
     private static void loadFilesPath(Context context) {
         if (context != null) {
             try {
+                /*
+                 * The file shouldn't be null, but apparently it still can happen, see
+                 * http://code.google.com/p/android/issues/detail?id=8886, Fixed in API 19.
+                 */
                 File file = context.getFilesDir();
-
-                // The file shouldn't be null, but apparently it still can happen, see
-                // http://code.google.com/p/android/issues/detail?id=8886
-                if (file != null) {
-                    Constants.FILES_PATH = file.getAbsolutePath();
-                }
+                Constants.FILES_PATH = file.getAbsolutePath();
             } catch (Exception e) {
-                AvalancheLog.error("Exception thrown when accessing the files dir:");
-                e.printStackTrace();
+                AvalancheLog.error("Exception thrown when accessing the application filesystem", e);
             }
         }
     }
