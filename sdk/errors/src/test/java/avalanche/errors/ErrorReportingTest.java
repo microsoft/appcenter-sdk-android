@@ -105,11 +105,14 @@ public class ErrorReportingTest {
     }
 
     @Test
-    public void checkFactories() {
-        Map<String, LogFactory> factories = ErrorReporting.getInstance().getLogFactories();
+    public void checkConfig() {
+        ErrorReporting instance = ErrorReporting.getInstance();
+        Map<String, LogFactory> factories = instance.getLogFactories();
         assertNotNull(factories);
         assertTrue(factories.remove(JavaErrorLog.TYPE) instanceof JavaErrorLogFactory);
         assertTrue(factories.isEmpty());
+        assertEquals(1, instance.getTriggerCount());
+        assertEquals(ErrorReporting.ERROR_GROUP, instance.getGroupName());
     }
 
     @Test
