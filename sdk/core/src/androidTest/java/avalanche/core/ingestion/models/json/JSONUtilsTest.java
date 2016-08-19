@@ -85,6 +85,11 @@ public class JSONUtilsTest {
         /* Read a JSON object and verify. */
         JSONObject object = new JSONObject(json);
         assertEquals(list, JSONUtils.readArray(object, "list", new MockLogFactory()));
+
+        /* Test null value. */
+        writer = new JSONStringer();
+        JSONUtils.writeArray(writer, "null", null);
+        assertNull(writer.toString());
     }
 
     @Test
