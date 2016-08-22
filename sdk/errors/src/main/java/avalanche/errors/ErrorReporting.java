@@ -183,7 +183,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
      *
      * @return {@code true} if a crash was recorded in the last session, otherwise {@code false}.
      */
-    public static boolean hasCrashedInLastSession() {
+    public static synchronized boolean hasCrashedInLastSession() {
         return getInstance().mLastSessionErrorReport != null;
     }
 
@@ -193,7 +193,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
      * @return The error report from the last session if one was set.
      */
     @Nullable
-    public static ErrorReport getLastSessionErrorReport() {
+    public static synchronized ErrorReport getLastSessionErrorReport() {
         return getInstance().mLastSessionErrorReport;
     }
 
