@@ -55,8 +55,9 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     /**
      * Preference storage key for ALWAYS SEND.
      */
+    /* TODO maybe add an API to reset and make that private. */
     @VisibleForTesting
-    static final String PREF_KEY_ALWAYS_SEND = "avalanche.errors.crash.always.send";
+    public static final String PREF_KEY_ALWAYS_SEND = "avalanche.errors.crash.always.send";
 
     /**
      * Group for sending logs.
@@ -178,6 +179,15 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     public synchronized void setInstanceEnabled(boolean enabled) {
         super.setInstanceEnabled(enabled);
         initialize();
+        if (!enabled) {
+            for (File file : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
+                AvalancheLog.debug("Deleting file " + file);
+                if (!file.delete()) {
+                    AvalancheLog.warn("Failed to delete file " + file);
+                }
+            }
+            AvalancheLog.info("Deleted error reporting local files");
+        }
     }
 
     @Override
