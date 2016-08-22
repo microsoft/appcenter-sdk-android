@@ -28,6 +28,7 @@ import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.StorageHelper;
 import avalanche.errors.ingestion.models.JavaErrorLog;
 import avalanche.errors.ingestion.models.json.JavaErrorLogFactory;
+import avalanche.errors.model.ErrorAttachment;
 import avalanche.errors.model.ErrorReport;
 import avalanche.errors.model.TestCrashException;
 import avalanche.errors.utils.ErrorLogHelper;
@@ -299,8 +300,10 @@ public class ErrorReporting extends AbstractAvalancheFeature {
                 if (log != null) {
                     UUID id = log.getId();
                     if (mErrorReportingListener.shouldProcess(buildErrorReport(log))) {
+                        AvalancheLog.debug("ErrorReportingListener.shouldProcess returned true, continue processing log: " + id.toString());
                         mUnprocessedErrorReports.put(id, mErrorReportCache.get(id));
                     } else {
+                        AvalancheLog.debug("ErrorReportingListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
                         ErrorLogHelper.removeStoredErrorLogFile(id);
                         removeStoredThrowable(id);
                     }
@@ -310,9 +313,14 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             }
         }
 
+        boolean shouldAwaitUserConfirmation = true;
         if (mUnprocessedErrorReports.size() > 0 &&
                 (StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false)
-                        || !mErrorReportingListener.shouldAwaitUserConfirmation())) {
+                        || !(shouldAwaitUserConfirmation = mErrorReportingListener.shouldAwaitUserConfirmation()))) {
+            if (shouldAwaitUserConfirmation)
+                AvalancheLog.debug("ErrorReportingListener.shouldAwaitUserConfirmation returned false, continue sending logs");
+            else
+                AvalancheLog.debug("The flag for user confirmation is set to ALWAYS_SEND, continue sending logs");
             handleUserConfirmation(SEND);
         }
     }
@@ -381,7 +389,11 @@ public class ErrorReporting extends AbstractAvalancheFeature {
 
             Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
             ErrorLogReport errorLogReport = unprocessedEntry.getValue();
-            errorLogReport.log.setErrorAttachment(mErrorReportingListener.getErrorAttachment(errorLogReport.report));
+            ErrorAttachment attachment = mErrorReportingListener.getErrorAttachment(errorLogReport.report);
+            if (attachment == null)
+                AvalancheLog.debug("ErrorReportingListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
+            else
+                errorLogReport.log.setErrorAttachment(attachment);
             mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
 
             /* Clean up an error log file and map entry. */
