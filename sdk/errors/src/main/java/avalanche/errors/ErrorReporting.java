@@ -311,16 +311,18 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             mUncaughtExceptionHandler.register();
         }
 
-        File logFile = ErrorLogHelper.getLastErrorLogFile();
-        if (logFile != null) {
-            String logfileContents = StorageHelper.InternalStorage.read(logFile);
-            try {
-                JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logfileContents);
-                if (log != null) {
-                    mLastSessionErrorReport = buildErrorReport(log);
+        if (enabled) {
+            File logFile = ErrorLogHelper.getLastErrorLogFile();
+            if (logFile != null) {
+                String logfileContents = StorageHelper.InternalStorage.read(logFile);
+                try {
+                    JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logfileContents);
+                    if (log != null) {
+                        mLastSessionErrorReport = buildErrorReport(log);
+                    }
+                } catch (JSONException e) {
+                    AvalancheLog.error("Error parsing last session error log", e);
                 }
-            } catch (JSONException e) {
-                AvalancheLog.error("Error parsing last session error log", e);
             }
         }
     }
