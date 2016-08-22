@@ -330,6 +330,13 @@ public class StorageHelperAndroidTest {
             /* Verify the value equals to default value. */
             assertEquals(data.defaultValue, data.getMethod2.invoke(null, key, data.defaultValue));
         }
+
+        /* Test clear. */
+        PreferencesStorage.putString("test", "someTest");
+        PreferencesStorage.putInt("test2", 2);
+        PreferencesStorage.clear();
+        assertNull(PreferencesStorage.getString("test"));
+        assertEquals(0, PreferencesStorage.getInt("test2"));
     }
 
     @Test
