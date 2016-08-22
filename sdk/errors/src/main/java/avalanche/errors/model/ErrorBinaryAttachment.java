@@ -19,7 +19,7 @@ public class ErrorBinaryAttachment implements Model {
     /**
      * contentType property.
      */
-    public static final String CONTENT_TYPE = "contentType";
+    private static final String CONTENT_TYPE = "contentType";
 
     /**
      * fileName property.
@@ -104,14 +104,18 @@ public class ErrorBinaryAttachment implements Model {
     public void read(JSONObject object) throws JSONException {
         setContentType(object.getString(CONTENT_TYPE));
         setFileName(object.optString(FILE_NAME, null));
-        setData(Base64.decode(object.getString(DATA), Base64.DEFAULT));
+        if (object.optString(DATA, null) == null)
+            setData(null);
+        else
+            setData(Base64.decode(object.getString(DATA), Base64.DEFAULT));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
         writer.key(CONTENT_TYPE).value(getContentType());
         JSONUtils.write(writer, FILE_NAME, getFileName());
-        JSONUtils.write(writer, DATA, Base64.encodeToString(getData(), Base64.NO_WRAP));
+        if (getData() != null)
+            JSONUtils.write(writer, DATA, Base64.encodeToString(getData(), Base64.NO_WRAP));
     }
 
     @Override

@@ -418,9 +418,16 @@ public class ErrorModelTest {
             }
             {
                 errorLog1.setErrorAttachment(errorAttachment1);
+                errorLog2.setErrorAttachment(null);
+                checkNotEquals(errorLog1, errorLog2);
                 checkSerialization(errorLog1, serializer);
 
+                errorLog1.setErrorAttachment(null);
                 errorLog2.setErrorAttachment(errorAttachment2);
+                checkNotEquals(errorLog1, errorLog2);
+
+                errorLog1.setErrorAttachment(errorLog2.getErrorAttachment());
+                checkEquals(errorLog1, errorLog2);
 
                 ErrorBinaryAttachment errorBinaryAttachment1 = new ErrorBinaryAttachment();
                 ErrorBinaryAttachment errorBinaryAttachment2 = new ErrorBinaryAttachment();
@@ -451,6 +458,7 @@ public class ErrorModelTest {
                 {
                     errorBinaryAttachment1.setData(new byte[]{1});
                     checkNotEquals(errorBinaryAttachment1, errorBinaryAttachment2);
+                    checkSerialization(errorLog1, serializer);
 
                     errorBinaryAttachment2.setData(new byte[]{2});
                     checkNotEquals(errorBinaryAttachment1, errorBinaryAttachment2);
@@ -460,6 +468,20 @@ public class ErrorModelTest {
                 }
                 {
                     errorAttachment1.setBinaryAttachment(errorBinaryAttachment1);
+                    errorAttachment2.setBinaryAttachment(null);
+                    checkNotEquals(errorAttachment1, errorAttachment2);
+
+                    errorAttachment1.setBinaryAttachment(null);
+                    errorAttachment2.setBinaryAttachment(errorBinaryAttachment2);
+                    checkNotEquals(errorAttachment1, errorAttachment2);
+
+                    errorAttachment1.setBinaryAttachment(errorAttachment2.getBinaryAttachment());
+                    checkEquals(errorAttachment1, errorAttachment2);
+
+                    errorBinaryAttachment2.setData(null);
+                    checkSerialization(errorLog1, serializer);
+
+                    errorBinaryAttachment2.setData(errorBinaryAttachment1.getData());
                     checkSerialization(errorLog1, serializer);
                 }
             }
