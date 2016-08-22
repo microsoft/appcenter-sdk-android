@@ -15,12 +15,12 @@ public class ErrorAttachment implements Model {
     /**
      * textAttachment property.
      */
-    public static final String TEXT_ATTACHMENT = "textAttachment";
+    private static final String TEXT_ATTACHMENT = "textAttachment";
 
     /**
      * binaryAttachment property.
      */
-    public static final String BINARY_ATTACHMENT = "binaryAttachment";
+    private static final String BINARY_ATTACHMENT = "binaryAttachment";
 
     /**
      * Plain text attachment.
