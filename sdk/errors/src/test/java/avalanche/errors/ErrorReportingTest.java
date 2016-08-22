@@ -7,7 +7,9 @@ import junit.framework.Assert;
 
 import org.json.JSONException;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
@@ -62,6 +64,9 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, AvalancheLog.class})
 public class ErrorReportingTest {
+
+    @Rule
+    private TemporaryFolder errorStorageDirectory = new TemporaryFolder();
 
     private static void assertErrorEquals(JavaErrorLog errorLog, Throwable throwable, ErrorReport errorReport) {
         assertNotNull(errorReport);
@@ -558,8 +563,8 @@ public class ErrorReportingTest {
         Throwable throwable = mock(Throwable.class);
 
         mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(new File("."));
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
+        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(errorStorageDirectory.newFile("last-error-log.json"));
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(errorStorageDirectory.newFile());
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenCallRealMethod();
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(throwable);
 
@@ -580,6 +585,52 @@ public class ErrorReportingTest {
         assertEquals(new Date(tOffset), report.getAppErrorTime());
         assertNotNull(report.getDevice());
         assertEquals(throwable, report.getThrowable());
+    }
+
+    @Test
+    public void noCrashInLastSessionWhenDisabled() {
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
+
+        ErrorReporting.setEnabled(false);
+
+        assertFalse(ErrorReporting.hasCrashedInLastSession());
+        assertNull(ErrorReporting.getLastSessionErrorReport());
+
+        verifyStatic(never());
+        ErrorLogHelper.getLastErrorLogFile();
+    }
+
+    @Test
+    public void crashInLastSessionError() throws JSONException, IOException, ClassNotFoundException {
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString())).thenReturn(null);
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(errorStorageDirectory.newFile("last-error-log.json"));
+
+        ErrorReporting.getInstance().setLogSerializer(logSerializer);
+
+        assertFalse(ErrorReporting.hasCrashedInLastSession());
+        assertNull(ErrorReporting.getLastSessionErrorReport());
+
+        // Last session error is only fetched upon initialization (triggered by setting the module to enabled)
+        ErrorReporting.setEnabled(true);
+
+        assertFalse(ErrorReporting.hasCrashedInLastSession());
+        assertNull(ErrorReporting.getLastSessionErrorReport());
+
+        JSONException jsonException = new JSONException("Fake JSON exception");
+        when(logSerializer.deserializeLog(anyString())).thenThrow(jsonException);
+
+        ErrorReporting.setEnabled(true);
+
+        assertFalse(ErrorReporting.hasCrashedInLastSession());
+        assertNull(ErrorReporting.getLastSessionErrorReport());
+
+        verifyStatic();
+        AvalancheLog.error(anyString(), eq(jsonException));
     }
 
 }
