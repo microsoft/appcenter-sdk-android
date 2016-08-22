@@ -44,6 +44,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
+@SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({SystemClock.class, StorageHelper.class, ErrorReporting.class, ErrorLogHelper.class, DeviceInfoHelper.class, UncaughtExceptionHandler.ShutdownHelper.class, AvalancheLog.class})
 public class UncaughtExceptionHandlerTest {
