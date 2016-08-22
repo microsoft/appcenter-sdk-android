@@ -379,10 +379,9 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         Iterator<Map.Entry<UUID, ErrorLogReport>> unprocessedIterator = mUnprocessedErrorReports.entrySet().iterator();
         while (unprocessedIterator.hasNext()) {
 
-            /* TODO (jaelim): Attach the return value to the log. */
             Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
             ErrorLogReport errorLogReport = unprocessedEntry.getValue();
-            mErrorReportingListener.getErrorAttachment(errorLogReport.report);
+            errorLogReport.log.setErrorAttachment(mErrorReportingListener.getErrorAttachment(errorLogReport.report));
             mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
 
             /* Clean up an error log file and map entry. */

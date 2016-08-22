@@ -149,16 +149,17 @@ public class ErrorReportingTest {
         AvalancheChannel mockChannel = mock(AvalancheChannel.class);
 
         final JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        ErrorReport errorReport = new ErrorReport();
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
-        when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(new ErrorReport());
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(errorReport);
 
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
 
         ErrorReportingListener mockListener = mock(ErrorReportingListener.class);
-        when(mockListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
+        when(mockListener.shouldProcess(errorReport)).thenReturn(true);
         when(mockListener.shouldAwaitUserConfirmation()).thenReturn(false);
 
         ErrorReporting errorReporting = ErrorReporting.getInstance();
@@ -169,8 +170,9 @@ public class ErrorReportingTest {
         errorReporting.setInstanceListener(mockListener);
         errorReporting.onChannelReady(mockContext, mockChannel);
 
-        verify(mockListener).shouldProcess(any(ErrorReport.class));
+        verify(mockListener).shouldProcess(errorReport);
         verify(mockListener).shouldAwaitUserConfirmation();
+        verify(mockListener).getErrorAttachment(errorReport);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
             @Override
             public boolean matches(Object log) {
@@ -185,16 +187,17 @@ public class ErrorReportingTest {
         AvalancheChannel mockChannel = mock(AvalancheChannel.class);
 
         final JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        ErrorReport errorReport = new ErrorReport();
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
-        when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(new ErrorReport());
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(errorReport);
 
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
 
         ErrorReportingListener mockListener = mock(ErrorReportingListener.class);
-        when(mockListener.shouldProcess(any(ErrorReport.class))).thenReturn(false);
+        when(mockListener.shouldProcess(errorReport)).thenReturn(false);
 
         ErrorReporting errorReporting = ErrorReporting.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -204,8 +207,9 @@ public class ErrorReportingTest {
         errorReporting.setInstanceListener(mockListener);
         errorReporting.onChannelReady(mockContext, mockChannel);
 
-        verify(mockListener).shouldProcess(any(ErrorReport.class));
+        verify(mockListener).shouldProcess(errorReport);
         verify(mockListener, never()).shouldAwaitUserConfirmation();
+        verify(mockListener, never()).getErrorAttachment(errorReport);
         verify(mockChannel, never()).enqueue(any(Log.class), eq(errorReporting.getGroupName()));
     }
 
@@ -215,17 +219,18 @@ public class ErrorReportingTest {
         AvalancheChannel mockChannel = mock(AvalancheChannel.class);
 
         final JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        ErrorReport errorReport = new ErrorReport();
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
-        when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(new ErrorReport());
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(errorReport);
 
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
         when(StorageHelper.PreferencesStorage.getBoolean(eq(ErrorReporting.PREF_KEY_ALWAYS_SEND), anyBoolean())).thenReturn(true);
 
         ErrorReportingListener mockListener = mock(ErrorReportingListener.class);
-        when(mockListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
+        when(mockListener.shouldProcess(errorReport)).thenReturn(true);
 
         ErrorReporting errorReporting = ErrorReporting.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -235,8 +240,9 @@ public class ErrorReportingTest {
         errorReporting.setInstanceListener(mockListener);
         errorReporting.onChannelReady(mockContext, mockChannel);
 
-        verify(mockListener).shouldProcess(any(ErrorReport.class));
+        verify(mockListener).shouldProcess(errorReport);
         verify(mockListener, never()).shouldAwaitUserConfirmation();
+        verify(mockListener).getErrorAttachment(errorReport);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
             @Override
             public boolean matches(Object log) {
@@ -402,6 +408,8 @@ public class ErrorReportingTest {
         errorReporting.onChannelReady(mock(Context.class), mock(AvalancheChannel.class));
 
         ErrorReporting.notifyUserConfirmation(ErrorReporting.DONT_SEND);
+
+        verify(mockListener, never()).getErrorAttachment(any(ErrorReport.class));
 
         verifyStatic();
         ErrorLogHelper.removeStoredErrorLogFile(errorLog.getId());

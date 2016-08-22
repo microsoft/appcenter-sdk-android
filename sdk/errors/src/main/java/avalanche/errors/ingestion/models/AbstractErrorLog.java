@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import avalanche.core.ingestion.models.AbstractLog;
 import avalanche.core.ingestion.models.json.JSONUtils;
+import avalanche.errors.model.ErrorAttachment;
 
 import static avalanche.core.ingestion.models.CommonProperties.ID;
 
@@ -31,6 +32,8 @@ public abstract class AbstractErrorLog extends AbstractLog {
     private static final String FATAL = "fatal";
 
     private static final String APP_LAUNCH_T_OFFSET = "appLaunchTOffset";
+
+    private static final String ERROR_ATTACHMENT = "errorAttachment";
 
     /**
      * Error identifier.
@@ -77,6 +80,11 @@ public abstract class AbstractErrorLog extends AbstractLog {
      * error occurred and the app was launched.
      */
     private Long appLaunchTOffset;
+
+    /**
+     * Error attachment.
+     */
+    private ErrorAttachment errorAttachment;
 
     /**
      * Get the id value.
@@ -240,6 +248,24 @@ public abstract class AbstractErrorLog extends AbstractLog {
         this.appLaunchTOffset = appLaunchTOffset;
     }
 
+    /**
+     * Get the errorAttachment value.
+     *
+     * @return the errorAttachment value
+     */
+    public ErrorAttachment getErrorAttachment() {
+        return this.errorAttachment;
+    }
+
+    /**
+     * Set the errorAttachment value.
+     *
+     * @param errorAttachment the errorAttachment value to set
+     */
+    public void setErrorAttachment(ErrorAttachment errorAttachment) {
+        this.errorAttachment = errorAttachment;
+    }
+
     @Override
     public void read(JSONObject object) throws JSONException {
         super.read(object);
@@ -252,6 +278,11 @@ public abstract class AbstractErrorLog extends AbstractLog {
         setErrorThreadName(object.optString(ERROR_THREAD_NAME, null));
         setFatal(JSONUtils.readBoolean(object, FATAL));
         setAppLaunchTOffset(JSONUtils.readLong(object, APP_LAUNCH_T_OFFSET));
+        if (object.has(ERROR_ATTACHMENT)) {
+            ErrorAttachment errorAttachment = new ErrorAttachment();
+            errorAttachment.read(object.getJSONObject(ERROR_ATTACHMENT));
+            setErrorAttachment(errorAttachment);
+        }
     }
 
     @Override
@@ -266,6 +297,11 @@ public abstract class AbstractErrorLog extends AbstractLog {
         JSONUtils.write(writer, ERROR_THREAD_NAME, getErrorThreadName());
         JSONUtils.write(writer, FATAL, getFatal());
         JSONUtils.write(writer, APP_LAUNCH_T_OFFSET, getAppLaunchTOffset());
+        if (getErrorAttachment() != null) {
+            writer.key(ERROR_ATTACHMENT).object();
+            getErrorAttachment().write(writer);
+            writer.endObject();
+        }
     }
 
     @Override
@@ -291,7 +327,10 @@ public abstract class AbstractErrorLog extends AbstractLog {
         if (errorThreadName != null ? !errorThreadName.equals(that.errorThreadName) : that.errorThreadName != null)
             return false;
         if (fatal != null ? !fatal.equals(that.fatal) : that.fatal != null) return false;
-        return appLaunchTOffset != null ? appLaunchTOffset.equals(that.appLaunchTOffset) : that.appLaunchTOffset == null;
+        if (appLaunchTOffset != null ? !appLaunchTOffset.equals(that.appLaunchTOffset) : that.appLaunchTOffset != null)
+            return false;
+        return errorAttachment != null ? errorAttachment.equals(that.errorAttachment) : that.errorAttachment == null;
+
     }
 
     @Override
@@ -306,6 +345,7 @@ public abstract class AbstractErrorLog extends AbstractLog {
         result = 31 * result + (errorThreadName != null ? errorThreadName.hashCode() : 0);
         result = 31 * result + (fatal != null ? fatal.hashCode() : 0);
         result = 31 * result + (appLaunchTOffset != null ? appLaunchTOffset.hashCode() : 0);
+        result = 31 * result + (errorAttachment != null ? errorAttachment.hashCode() : 0);
         return result;
     }
 }
