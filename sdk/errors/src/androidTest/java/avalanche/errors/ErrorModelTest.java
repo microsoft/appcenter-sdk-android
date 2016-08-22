@@ -14,6 +14,8 @@ import avalanche.errors.ingestion.models.JavaException;
 import avalanche.errors.ingestion.models.JavaStackFrame;
 import avalanche.errors.ingestion.models.JavaThread;
 import avalanche.errors.ingestion.models.json.JavaErrorLogFactory;
+import avalanche.errors.model.ErrorAttachment;
+import avalanche.errors.model.ErrorBinaryAttachment;
 import avalanche.test.TestUtils;
 
 import static avalanche.test.TestUtils.checkEquals;
@@ -394,6 +396,93 @@ public class ErrorModelTest {
 
                     frame2.setFileName(frame1.getFileName());
                     checkEquals(frame1, frame2);
+                }
+            }
+        }
+        {
+            ErrorAttachment errorAttachment1 = new ErrorAttachment();
+            ErrorAttachment errorAttachment2 = new ErrorAttachment();
+
+            TestUtils.compareSelfNullClass(errorAttachment1);
+            checkEquals(errorAttachment1, errorAttachment2);
+
+            {
+                errorAttachment1.setTextAttachment("1");
+                checkNotEquals(errorAttachment1, errorAttachment2);
+
+                errorAttachment2.setTextAttachment("2");
+                checkNotEquals(errorAttachment1, errorAttachment2);
+
+                errorAttachment2.setTextAttachment(errorAttachment1.getTextAttachment());
+                checkEquals(errorAttachment1, errorAttachment2);
+            }
+            {
+                errorLog1.setErrorAttachment(errorAttachment1);
+                errorLog2.setErrorAttachment(null);
+                checkNotEquals(errorLog1, errorLog2);
+                checkSerialization(errorLog1, serializer);
+
+                errorLog1.setErrorAttachment(null);
+                errorLog2.setErrorAttachment(errorAttachment2);
+                checkNotEquals(errorLog1, errorLog2);
+
+                errorLog1.setErrorAttachment(errorLog2.getErrorAttachment());
+                checkEquals(errorLog1, errorLog2);
+
+                ErrorBinaryAttachment errorBinaryAttachment1 = new ErrorBinaryAttachment();
+                ErrorBinaryAttachment errorBinaryAttachment2 = new ErrorBinaryAttachment();
+
+                TestUtils.compareSelfNullClass(errorBinaryAttachment1);
+                checkEquals(errorBinaryAttachment1, errorBinaryAttachment2);
+
+                {
+                    errorBinaryAttachment1.setContentType("1");
+                    checkNotEquals(errorBinaryAttachment1, errorBinaryAttachment2);
+
+                    errorBinaryAttachment2.setContentType("2");
+                    checkNotEquals(errorBinaryAttachment1, errorBinaryAttachment2);
+
+                    errorBinaryAttachment2.setContentType(errorBinaryAttachment1.getContentType());
+                    checkEquals(errorBinaryAttachment1, errorBinaryAttachment2);
+                }
+                {
+                    errorBinaryAttachment1.setFileName("1");
+                    checkNotEquals(errorBinaryAttachment1, errorBinaryAttachment2);
+
+                    errorBinaryAttachment2.setFileName("2");
+                    checkNotEquals(errorBinaryAttachment1, errorBinaryAttachment2);
+
+                    errorBinaryAttachment2.setFileName(errorBinaryAttachment1.getFileName());
+                    checkEquals(errorBinaryAttachment1, errorBinaryAttachment2);
+                }
+                {
+                    errorBinaryAttachment1.setData(new byte[]{1});
+                    checkNotEquals(errorBinaryAttachment1, errorBinaryAttachment2);
+                    checkSerialization(errorLog1, serializer);
+
+                    errorBinaryAttachment2.setData(new byte[]{2});
+                    checkNotEquals(errorBinaryAttachment1, errorBinaryAttachment2);
+
+                    errorBinaryAttachment2.setData(errorBinaryAttachment1.getData());
+                    checkEquals(errorBinaryAttachment1, errorBinaryAttachment2);
+                }
+                {
+                    errorAttachment1.setBinaryAttachment(errorBinaryAttachment1);
+                    errorAttachment2.setBinaryAttachment(null);
+                    checkNotEquals(errorAttachment1, errorAttachment2);
+
+                    errorAttachment1.setBinaryAttachment(null);
+                    errorAttachment2.setBinaryAttachment(errorBinaryAttachment2);
+                    checkNotEquals(errorAttachment1, errorAttachment2);
+
+                    errorAttachment1.setBinaryAttachment(errorAttachment2.getBinaryAttachment());
+                    checkEquals(errorAttachment1, errorAttachment2);
+
+                    errorBinaryAttachment2.setData(null);
+                    checkSerialization(errorLog1, serializer);
+
+                    errorBinaryAttachment2.setData(errorBinaryAttachment1.getData());
+                    checkSerialization(errorLog1, serializer);
                 }
             }
         }
