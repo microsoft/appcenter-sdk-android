@@ -81,7 +81,6 @@ public class ErrorReportingTest {
         mockStatic(StorageHelper.InternalStorage.class);
         mockStatic(StorageHelper.PreferencesStorage.class);
         mockStatic(AvalancheLog.class);
-
         when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
 
         final String key = PrefStorageConstants.KEY_ENABLED + "_" + ErrorReporting.getInstance().getGroupName();
@@ -107,17 +106,30 @@ public class ErrorReportingTest {
     }
 
     @Test
-    public void checkFactories() {
-        Map<String, LogFactory> factories = ErrorReporting.getInstance().getLogFactories();
+    public void checkConfig() {
+        ErrorReporting instance = ErrorReporting.getInstance();
+        Map<String, LogFactory> factories = instance.getLogFactories();
         assertNotNull(factories);
         assertTrue(factories.remove(JavaErrorLog.TYPE) instanceof JavaErrorLogFactory);
         assertTrue(factories.isEmpty());
+        assertEquals(1, instance.getTriggerCount());
+        assertEquals(ErrorReporting.ERROR_GROUP, instance.getGroupName());
     }
 
     @Test
     public void setEnabled() {
+
+        /* Setup mock. */
+        mockStatic(ErrorLogHelper.class);
+        File dir = mock(File.class);
+        File file1 = mock(File.class);
+        File file2 = mock(File.class);
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(dir);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{});
+        when(dir.listFiles()).thenReturn(new File[]{file1, file2});
         ErrorReporting.getInstance().onChannelReady(mock(Context.class), mock(AvalancheChannel.class));
 
+        /* Test. */
         assertTrue(ErrorReporting.isEnabled());
         assertTrue(ErrorReporting.getInstance().getInitializeTimestamp() > 0);
         assertTrue(Thread.getDefaultUncaughtExceptionHandler() instanceof UncaughtExceptionHandler);
@@ -125,6 +137,8 @@ public class ErrorReportingTest {
         assertFalse(ErrorReporting.isEnabled());
         assertEquals(ErrorReporting.getInstance().getInitializeTimestamp(), -1);
         assertFalse(Thread.getDefaultUncaughtExceptionHandler() instanceof UncaughtExceptionHandler);
+        assertFalse(verify(file1).delete());
+        assertFalse(verify(file2).delete());
         ErrorReporting.setEnabled(true);
         assertTrue(ErrorReporting.isEnabled());
         assertTrue(ErrorReporting.getInstance().getInitializeTimestamp() > 0);
@@ -154,7 +168,7 @@ public class ErrorReportingTest {
         when(logSerializer.deserializeLog(anyString())).thenReturn(errorLog);
 
         errorReporting.setLogSerializer(logSerializer);
-		errorReporting.setInstanceListener(mockListener);
+        errorReporting.setInstanceListener(mockListener);
         errorReporting.onChannelReady(mockContext, mockChannel);
 
         verify(mockListener).shouldProcess(any(ErrorReport.class));
@@ -235,13 +249,18 @@ public class ErrorReportingTest {
 
     @Test
     public void noQueueingWhenDisabled() {
+        mockStatic(ErrorLogHelper.class);
+        File dir = mock(File.class);
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(dir);
+        when(dir.listFiles()).thenReturn(new File[]{});
+
         ErrorReporting.setEnabled(false);
         ErrorReporting errorReporting = ErrorReporting.getInstance();
 
         errorReporting.onChannelReady(mock(Context.class), mock(AvalancheChannel.class));
 
-        mockStatic(ErrorLogHelper.class);
-
+        verifyStatic();
+        ErrorLogHelper.getErrorStorageDirectory();
         verifyNoMoreInteractions(ErrorLogHelper.class);
     }
 
@@ -325,7 +344,6 @@ public class ErrorReportingTest {
                 assertErrorEquals(errorLog, exception, errorReport);
             }
         });
-        ErrorReporting errorReporting = ErrorReporting.getInstance();
 
         AvalancheChannel.GroupListener listener = ErrorReporting.getInstance().getChannelListener();
         listener.onBeforeSending(errorLog);
@@ -395,7 +413,6 @@ public class ErrorReportingTest {
     @Test
     public void handleUserConfirmationAlwaysSend() throws IOException, ClassNotFoundException, JSONException {
         final JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
-        AvalancheChannel mockChannel = mock(AvalancheChannel.class);
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});

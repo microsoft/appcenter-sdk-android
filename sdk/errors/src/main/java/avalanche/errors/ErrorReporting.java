@@ -33,13 +33,10 @@ import avalanche.errors.model.ErrorReport;
 import avalanche.errors.model.TestCrashException;
 import avalanche.errors.utils.ErrorLogHelper;
 
-
+/**
+ * Error reporting feature set.
+ */
 public class ErrorReporting extends AbstractAvalancheFeature {
-
-    /**
-     * Constant marking event of the error reporting group.
-     */
-    public static final String ERROR_GROUP = "group_error";
 
     /**
      * Constant for SEND crash report.
@@ -59,24 +56,59 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     /**
      * Preference storage key for ALWAYS SEND.
      */
+    /* TODO maybe add an API to reset and make that private. */
     @VisibleForTesting
-    static final String PREF_KEY_ALWAYS_SEND = "avalanche.errors.crash.always.send";
+    public static final String PREF_KEY_ALWAYS_SEND = "avalanche.errors.crash.always.send";
+
+    /**
+     * Group for sending logs.
+     */
+    @VisibleForTesting
+    static final String ERROR_GROUP = "group_errors";
 
     /**
      * Default error reporting listener.
      */
     private static final ErrorReportingListener DEFAULT_ERROR_REPORTING_LISTENER = new DefaultErrorReportingListener();
 
+    /**
+     * Singleton.
+     */
     private static ErrorReporting sInstance = null;
 
+    /**
+     * Log factories managed by this feature.
+     */
     private final Map<String, LogFactory> mFactories;
 
+    /**
+     * Error reports not processed yet.
+     */
+    private final Map<UUID, ErrorLogReport> mUnprocessedErrorReports;
+
+    /**
+     * Cache for reports that are queued to channel but not yet sent.
+     */
+    private final Map<UUID, ErrorLogReport> mErrorReportCache;
+
+    /**
+     * Log serializer.
+     */
     private LogSerializer mLogSerializer;
 
+    /**
+     * Application context.
+     */
     private Context mContext;
 
+    /**
+     * Timestamp of initialization.
+     */
     private long mInitializeTimestamp;
 
+    /**
+     * Crash handler.
+     */
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
 
     /**
@@ -84,20 +116,16 @@ public class ErrorReporting extends AbstractAvalancheFeature {
      */
     private ErrorReportingListener mErrorReportingListener;
 
-    /**
-     * Error log and error report mapping.
-     */
-    private Map<UUID, ErrorLogReportPair> mErrorReportMap;
-
     private ErrorReport mLastSessionErrorReport;
-
+    
     private ErrorReporting() {
         mFactories = new HashMap<>();
         mFactories.put(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
         mErrorReportingListener = DEFAULT_ERROR_REPORTING_LISTENER;
-        mErrorReportMap = new LinkedHashMap<>();
+        mUnprocessedErrorReports = new LinkedHashMap<>();
+        mErrorReportCache = new LinkedHashMap<>();
     }
 
     @NonNull
@@ -173,6 +201,15 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     public synchronized void setInstanceEnabled(boolean enabled) {
         super.setInstanceEnabled(enabled);
         initialize();
+        if (!enabled) {
+            for (File file : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
+                AvalancheLog.debug("Deleting file " + file);
+                if (!file.delete()) {
+                    AvalancheLog.warn("Failed to delete file " + file);
+                }
+            }
+            AvalancheLog.info("Deleted error reporting local files");
+        }
     }
 
     @Override
@@ -181,7 +218,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         mContext = context;
         initialize();
         if (isInstanceEnabled()) {
-            queuePendingCrashes();
+            processPendingErrors();
         }
     }
 
@@ -193,6 +230,11 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     @Override
     protected String getGroupName() {
         return ERROR_GROUP;
+    }
+
+    @Override
+    protected int getTriggerCount() {
+        return 1;
     }
 
     @Override
@@ -214,8 +256,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
                         } else {
 
                             /* Clean up before calling callbacks. */
-                            ErrorLogHelper.removeStoredThrowableFile(id);
-                            mErrorReportMap.remove(id);
+                            removeStoredThrowable(id);
 
                             if (type == SENDING_SUCCEEDED) {
                                 mErrorReportingListener.onSendingSucceeded(report);
@@ -247,6 +288,11 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         };
     }
 
+    /**
+     * Get initialization timestamp.
+     *
+     * @return initialization timestamp expressed using {@link SystemClock#elapsedRealtime()}.
+     */
     synchronized long getInitializeTimestamp() {
         return mInitializeTimestamp;
     }
@@ -279,17 +325,19 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         }
     }
 
-    private void queuePendingCrashes() {
+    private void processPendingErrors() {
         for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
+            AvalancheLog.debug("Process pending error file: " + logFile);
             String logfileContents = StorageHelper.InternalStorage.read(logFile);
             try {
                 JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logfileContents);
                 if (log != null) {
-                    if (!mErrorReportingListener.shouldProcess(buildErrorReport(log))) {
-                        UUID id = log.getId();
-                        mErrorReportMap.remove(id);
+                    UUID id = log.getId();
+                    if (mErrorReportingListener.shouldProcess(buildErrorReport(log))) {
+                        mUnprocessedErrorReports.put(id, mErrorReportCache.get(id));
+                    } else {
                         ErrorLogHelper.removeStoredErrorLogFile(id);
-                        ErrorLogHelper.removeStoredThrowableFile(id);
+                        removeStoredThrowable(id);
                     }
                 }
             } catch (JSONException e) {
@@ -297,7 +345,7 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             }
         }
 
-        if (mErrorReportMap.size() > 0 &&
+        if (mUnprocessedErrorReports.size() > 0 &&
                 (StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false)
                         || !mErrorReportingListener.shouldAwaitUserConfirmation())) {
             handleUserConfirmation(SEND);
@@ -307,15 +355,15 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     @VisibleForTesting
     ErrorReport buildErrorReport(JavaErrorLog log) {
         UUID id = log.getId();
-        if (mErrorReportMap.containsKey(id)) {
-            return mErrorReportMap.get(id).report;
+        if (mErrorReportCache.containsKey(id)) {
+            return mErrorReportCache.get(id).report;
         } else {
             File file = ErrorLogHelper.getStoredThrowableFile(id);
             if (file != null) {
                 try {
                     Throwable throwable = StorageHelper.InternalStorage.readObject(file);
                     ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, throwable);
-                    mErrorReportMap.put(id, new ErrorLogReportPair(log, report));
+                    mErrorReportCache.put(id, new ErrorLogReport(log, report));
                     return report;
                 } catch (ClassNotFoundException ignored) {
                     AvalancheLog.error("Cannot read throwable file " + file.getName(), ignored);
@@ -325,6 +373,11 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             }
         }
         return null;
+    }
+
+    private void removeStoredThrowable(UUID id) {
+        mErrorReportCache.remove(id);
+        ErrorLogHelper.removeStoredThrowableFile(id);
     }
 
     @VisibleForTesting
@@ -341,14 +394,15 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     }
 
     @VisibleForTesting
-    synchronized void handleUserConfirmation(@ConfirmationDef int userConfirmation) {
+    private synchronized void handleUserConfirmation(@ConfirmationDef int userConfirmation) {
         if (userConfirmation == DONT_SEND) {
+
             /* Clean up all pending error log and throwable files. */
-            for (Iterator<UUID> iterator = mErrorReportMap.keySet().iterator(); iterator.hasNext(); ) {
+            for (Iterator<UUID> iterator = mUnprocessedErrorReports.keySet().iterator(); iterator.hasNext(); ) {
                 UUID id = iterator.next();
                 iterator.remove();
                 ErrorLogHelper.removeStoredErrorLogFile(id);
-                ErrorLogHelper.removeStoredThrowableFile(id);
+                removeStoredThrowable(id);
             }
             return;
         }
@@ -357,15 +411,18 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             StorageHelper.PreferencesStorage.putBoolean(PREF_KEY_ALWAYS_SEND, true);
         }
 
-        for (UUID id : getInstance().mErrorReportMap.keySet()) {
-            ErrorLogReportPair pair = getInstance().mErrorReportMap.get(id);
+        Iterator<Map.Entry<UUID, ErrorLogReport>> unprocessedIterator = mUnprocessedErrorReports.entrySet().iterator();
+        while (unprocessedIterator.hasNext()) {
 
             /* TODO (jaelim): Attach the return value to the log. */
-            getInstance().mErrorReportingListener.getErrorAttachment(pair.report);
-            getInstance().mChannel.enqueue(pair.log, ERROR_GROUP);
+            Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
+            ErrorLogReport errorLogReport = unprocessedEntry.getValue();
+            mErrorReportingListener.getErrorAttachment(errorLogReport.report);
+            mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
 
-            /* Clean up an error log file. */
-            ErrorLogHelper.removeStoredErrorLogFile(id);
+            /* Clean up an error log file and map entry. */
+            unprocessedIterator.remove();
+            ErrorLogHelper.removeStoredErrorLogFile(unprocessedEntry.getKey());
         }
     }
 
@@ -390,13 +447,14 @@ public class ErrorReporting extends AbstractAvalancheFeature {
     }
 
     /**
-     * ErrorLogReportPair class for error log and error report.
+     * Class holding an error log and its corresponding error report.
      */
-    private static class ErrorLogReportPair {
+    private static class ErrorLogReport {
         private final JavaErrorLog log;
+
         private final ErrorReport report;
 
-        private ErrorLogReportPair(JavaErrorLog log, ErrorReport report) {
+        private ErrorLogReport(JavaErrorLog log, ErrorReport report) {
             this.log = log;
             this.report = report;
         }

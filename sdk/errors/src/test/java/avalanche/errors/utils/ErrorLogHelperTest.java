@@ -18,7 +18,6 @@ import org.powermock.reflect.Whitebox;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Arrays;
-import java.util.UUID;
 
 import avalanche.core.ingestion.models.Device;
 import avalanche.core.utils.DeviceInfoHelper;

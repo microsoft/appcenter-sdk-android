@@ -136,7 +136,6 @@ public abstract class AbstractAvalancheFeature implements AvalancheFeature {
      *
      * @return A number of logs.
      */
-    @SuppressWarnings("WeakerAccess")
     protected int getTriggerCount() {
         return DEFAULT_TRIGGER_COUNT;
     }
