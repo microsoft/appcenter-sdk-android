@@ -6,7 +6,7 @@ import avalanche.errors.model.ErrorReport;
 /**
  * Interface for error reporting listener.
  */
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings({"WeakerAccess", "UnusedReturnValue", "SameReturnValue", "UnusedParameters"})
 public interface ErrorReportingListener {
 
     /**
