@@ -137,7 +137,7 @@ public class AvalancheIngestionHttpTest {
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         httpClient.sendAsync(appSecret, installId, container, serviceCallback);
-        verify(serviceCallback, timeout(1000)).onCallFailed(new HttpException(503, "Busy"));
+        verify(serviceCallback, timeout(10000)).onCallFailed(new HttpException(503, "Busy"));
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
     }
@@ -175,7 +175,7 @@ public class AvalancheIngestionHttpTest {
         when(urlConnectionFactory.openConnection(any(URL.class))).thenThrow(exception);
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         httpClient.sendAsync(UUIDUtils.randomUUID(), UUIDUtils.randomUUID(), new LogContainer(), serviceCallback);
-        verify(serviceCallback, timeout(1000)).onCallFailed(exception);
+        verify(serviceCallback, timeout(10000)).onCallFailed(exception);
         verifyNoMoreInteractions(serviceCallback);
     }
 
@@ -212,7 +212,7 @@ public class AvalancheIngestionHttpTest {
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         httpClient.sendAsync(appSecret, installId, container, serviceCallback);
-        verify(serviceCallback, timeout(1000)).onCallFailed(any(JSONException.class));
+        verify(serviceCallback, timeout(10000)).onCallFailed(any(JSONException.class));
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
         assertEquals(toffset, log.getToffset());
