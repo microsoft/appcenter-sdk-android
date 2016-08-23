@@ -158,9 +158,11 @@ public class ErrorReportingTest {
 
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
 
+        ErrorAttachment mockAttachment = mock(ErrorAttachment.class);
         ErrorReportingListener mockListener = mock(ErrorReportingListener.class);
         when(mockListener.shouldProcess(errorReport)).thenReturn(true);
         when(mockListener.shouldAwaitUserConfirmation()).thenReturn(false);
+        when(mockListener.getErrorAttachment(errorReport)).thenReturn(mockAttachment);
 
         ErrorReporting errorReporting = ErrorReporting.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
