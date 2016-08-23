@@ -325,6 +325,21 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         }
     }
 
+    private void removeStoredThrowable(UUID id) {
+        mErrorReportCache.remove(id);
+        ErrorLogHelper.removeStoredThrowableFile(id);
+    }
+
+    @VisibleForTesting
+    UncaughtExceptionHandler getUncaughtExceptionHandler() {
+        return mUncaughtExceptionHandler;
+    }
+
+    @VisibleForTesting
+    void setUncaughtExceptionHandler(UncaughtExceptionHandler handler) {
+        mUncaughtExceptionHandler = handler;
+    }
+
     @VisibleForTesting
     ErrorReport buildErrorReport(JavaErrorLog log) {
         UUID id = log.getId();
@@ -346,11 +361,6 @@ public class ErrorReporting extends AbstractAvalancheFeature {
             }
         }
         return null;
-    }
-
-    private void removeStoredThrowable(UUID id) {
-        mErrorReportCache.remove(id);
-        ErrorLogHelper.removeStoredThrowableFile(id);
     }
 
     @VisibleForTesting

@@ -144,6 +144,21 @@ public class ErrorReportingTest {
     }
 
     @Test
+    public void setEnabledWithoutContext() {
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
+        errorReporting.setUncaughtExceptionHandler(null);
+        errorReporting.setInstanceEnabled(true);
+        assertNull(errorReporting.getUncaughtExceptionHandler());
+
+        UncaughtExceptionHandler mockHandler = mock(UncaughtExceptionHandler.class);
+        errorReporting.setUncaughtExceptionHandler(mockHandler);
+        errorReporting.setInstanceEnabled(true);
+        assertEquals(mockHandler, errorReporting.getUncaughtExceptionHandler());
+
+        verifyNoMoreInteractions(mockHandler);
+    }
+
+    @Test
     public void queuePendingCrashesShouldProcess() throws IOException, ClassNotFoundException, JSONException {
         Context mockContext = mock(Context.class);
         AvalancheChannel mockChannel = mock(AvalancheChannel.class);
