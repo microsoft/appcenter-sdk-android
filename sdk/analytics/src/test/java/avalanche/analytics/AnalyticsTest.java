@@ -28,6 +28,7 @@ import avalanche.analytics.ingestion.models.json.StartSessionLogFactory;
 import avalanche.core.channel.AvalancheChannel;
 import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.json.LogFactory;
+import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.StorageHelper;
 
 import static avalanche.core.utils.PrefStorageConstants.KEY_ENABLED;
@@ -51,13 +52,14 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class})
+@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, AvalancheLog.class})
 public class AnalyticsTest {
 
     @Before
     public void setUp() {
         Analytics.unsetInstance();
         mockStatic(SystemClock.class);
+        mockStatic(AvalancheLog.class);
 
         /* First call to avalanche.isInstanceEnabled shall return true, initial state. */
         mockStatic(StorageHelper.PreferencesStorage.class);
@@ -97,7 +99,11 @@ public class AnalyticsTest {
     public void notInit() {
 
         /* Just check log is discarded without throwing any exception. */
+        Analytics.trackEvent("test", new HashMap<String, String>());
         Analytics.trackPage("test", new HashMap<String, String>());
+
+        verifyStatic(times(2));
+        AvalancheLog.error(anyString());
     }
 
     private void activityResumed(final String expectedName, android.app.Activity activity) {
