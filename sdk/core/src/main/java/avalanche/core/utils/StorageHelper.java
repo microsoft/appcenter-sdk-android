@@ -446,7 +446,18 @@ public final class StorageHelper {
          */
         @Nullable
         public static File lastModifiedFile(@NonNull String path, @Nullable FilenameFilter filter) {
-            File dir = new File(path);
+            return lastModifiedFile(new File(path), filter);
+        }
+
+        /**
+         * Get the most recently modified file in the directory specified.
+         *
+         * @param dir    The directory.
+         * @param filter The filter to match file names against, may be {@code null}.
+         * @return The last modified file in the directory matching the specified filter, if any matches. {@code null} otherwise.
+         */
+        @Nullable
+        public static File lastModifiedFile(@NonNull File dir, @Nullable FilenameFilter filter) {
             if (dir.exists()) {
                 File[] files = dir.listFiles(filter);
                 long lastModification = 0;

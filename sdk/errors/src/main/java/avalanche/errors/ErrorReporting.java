@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.SystemClock;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import org.json.JSONException;
@@ -116,6 +117,8 @@ public class ErrorReporting extends AbstractAvalancheFeature {
      */
     private ErrorReportingListener mErrorReportingListener;
 
+    private ErrorReport mLastSessionErrorReport;
+    
     private ErrorReporting() {
         mFactories = new HashMap<>();
         mFactories.put(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
@@ -174,6 +177,25 @@ public class ErrorReporting extends AbstractAvalancheFeature {
      */
     public static void notifyUserConfirmation(@ConfirmationDef int userConfirmation) {
         getInstance().handleUserConfirmation(userConfirmation);
+    }
+
+    /**
+     * Provides information whether the app crashed in its last session.
+     *
+     * @return {@code true} if a crash was recorded in the last session, otherwise {@code false}.
+     */
+    public static synchronized boolean hasCrashedInLastSession() {
+        return getInstance().mLastSessionErrorReport != null;
+    }
+
+    /**
+     * Provides information about any available error report from the last session, if it crashed.
+     *
+     * @return The error report from the last session if one was set.
+     */
+    @Nullable
+    public static synchronized ErrorReport getLastSessionErrorReport() {
+        return getInstance().mLastSessionErrorReport;
     }
 
     @Override
@@ -288,6 +310,21 @@ public class ErrorReporting extends AbstractAvalancheFeature {
         } else if (mContext != null) {
             mUncaughtExceptionHandler = new UncaughtExceptionHandler(mContext);
             mUncaughtExceptionHandler.register();
+        }
+
+        if (enabled) {
+            File logFile = ErrorLogHelper.getLastErrorLogFile();
+            if (logFile != null) {
+                String logfileContents = StorageHelper.InternalStorage.read(logFile);
+                try {
+                    JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logfileContents);
+                    if (log != null) {
+                        mLastSessionErrorReport = buildErrorReport(log);
+                    }
+                } catch (JSONException e) {
+                    AvalancheLog.error("Error parsing last session error log", e);
+                }
+            }
         }
     }
 
