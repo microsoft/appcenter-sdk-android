@@ -71,9 +71,14 @@ public class ErrorLogHelperAndroidTest {
 
         /* Generate test files. */
         for (int i = 0; i < 3; i++) {
-            testFiles[i] = new File(mErrorDirectory, new UUID(0, i).toString() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
-            StorageHelper.InternalStorage.write(testFiles[i], "contents");
+            File file = new File(mErrorDirectory, new UUID(0, i).toString() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
+            file.setLastModified(System.currentTimeMillis() - i * 3600);
+            StorageHelper.InternalStorage.write(file, "contents");
+            testFiles[i] = file;
         }
+
+        assertEquals(testFiles[0], ErrorLogHelper.getLastErrorLogFile());
+
         testFiles[3] = new File(mErrorDirectory, new UUID(0, 3).toString() + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         StorageHelper.InternalStorage.write(testFiles[3], "contents");
 
