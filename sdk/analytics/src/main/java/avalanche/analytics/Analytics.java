@@ -216,6 +216,19 @@ public class Analytics extends AbstractAvalancheFeature {
         }
     }
 
+    private synchronized boolean checkPreconditions() {
+        if (mChannel == null) {
+            AvalancheLog.error("Analytics feature not initialized, discarding calls.");
+            return false;
+        }
+
+        if (!isInstanceEnabled()) {
+            AvalancheLog.info("Analytics feature not enabled, discarding calls.");
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Send a page.
      *
@@ -223,16 +236,8 @@ public class Analytics extends AbstractAvalancheFeature {
      * @param properties optional properties.
      */
     private synchronized void queuePage(@NonNull String name, @Nullable Map<String, String> properties) {
-        if (mChannel == null) {
-            AvalancheLog.error("Analytics feature not initialized, discarding calls.");
+        if (!checkPreconditions())
             return;
-        }
-
-        if (!isInstanceEnabled()) {
-            AvalancheLog.info("Analytics feature not enabled, discarding calls.");
-            return;
-        }
-
         PageLog pageLog = new PageLog();
         pageLog.setName(name);
         pageLog.setProperties(properties);
@@ -246,16 +251,8 @@ public class Analytics extends AbstractAvalancheFeature {
      * @param properties optional properties.
      */
     private synchronized void queueEvent(@NonNull String name, @Nullable Map<String, String> properties) {
-        if (mChannel == null) {
-            AvalancheLog.error("Analytics feature not initialized, discarding calls.");
+        if (!checkPreconditions())
             return;
-        }
-
-        if (!isInstanceEnabled()) {
-            AvalancheLog.info("Analytics feature not enabled, discarding calls.");
-            return;
-        }
-
         EventLog eventLog = new EventLog();
         eventLog.setId(UUIDUtils.randomUUID());
         eventLog.setName(name);
