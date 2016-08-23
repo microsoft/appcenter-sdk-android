@@ -1,6 +1,8 @@
 package avalanche.core.ingestion.models;
 
 
+import android.support.annotation.VisibleForTesting;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
@@ -19,7 +21,8 @@ public abstract class AbstractLog implements Log {
     /**
      * Session identifier property.
      */
-    private static final String SID = "sid";
+    @VisibleForTesting
+    static final String SID = "sid";
 
     /**
      * toffset property.
@@ -29,7 +32,8 @@ public abstract class AbstractLog implements Log {
     /**
      * device property.
      */
-    private static final String DEVICE = "device";
+    @VisibleForTesting
+    static final String DEVICE = "device";
 
     /**
      * Corresponds to the number of milliseconds elapsed between the time the

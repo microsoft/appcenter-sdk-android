@@ -358,6 +358,14 @@ public class AvalancheTest {
         AvalancheLog.error(anyString(), any(NumberFormatException.class));
     }
 
+    @Test
+    public void avalancheDuplicateFeatureTest() {
+        Avalanche.start(application, DUMMY_APP_SECRET, DummyFeature.class, DummyFeature.class);
+
+        // Verify that only one module has been loaded and configured
+        assertEquals(1, Avalanche.getInstance().getFeatures().size());
+    }
+
     private static class DummyFeature extends AbstractAvalancheFeature {
 
         private static DummyFeature sharedInstance;

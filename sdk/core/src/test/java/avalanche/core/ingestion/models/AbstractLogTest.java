@@ -1,5 +1,8 @@
 package avalanche.core.ingestion.models;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONStringer;
 import org.junit.Test;
 
 import java.util.UUID;
@@ -8,6 +11,14 @@ import avalanche.test.TestUtils;
 
 import static avalanche.test.TestUtils.checkEquals;
 import static avalanche.test.TestUtils.checkNotEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SuppressWarnings("unused")
 public class AbstractLogTest {
@@ -58,6 +69,47 @@ public class AbstractLogTest {
         checkEquals(a, b);
     }
 
+    @Test(expected = JSONException.class)
+    public void readDifferentTypeTest() throws JSONException {
+        JSONObject mockJsonObject = mock(JSONObject.class);
+        when(mockJsonObject.getString(CommonProperties.TYPE)).thenReturn("type");
+        AbstractLog mockLog = new MockLog();
+        mockLog.read(mockJsonObject);
+    }
+
+    @Test
+    public void readWithoutOptionalPropertiesTest() throws JSONException {
+        AbstractLog mockLog = new MockLogWithType();
+        UUID uuid = UUID.randomUUID();
+
+        JSONObject mockJsonObject = mock(JSONObject.class);
+        when(mockJsonObject.getString(CommonProperties.TYPE)).thenReturn(mockLog.getType());
+        when(mockJsonObject.has(AbstractLog.SID)).thenReturn(false).thenReturn(true);
+        when(mockJsonObject.has(AbstractLog.DEVICE)).thenReturn(false).thenReturn(true);
+        when(mockJsonObject.getString(AbstractLog.SID)).thenReturn(uuid.toString());
+        when(mockJsonObject.getJSONObject(AbstractLog.DEVICE)).thenReturn(mock(JSONObject.class));
+
+        mockLog.read(mockJsonObject);
+        assertNull(mockLog.getSid());
+        assertNull(mockLog.getDevice());
+
+        mockLog.read(mockJsonObject);
+        assertEquals(uuid, mockLog.getSid());
+        assertNotNull(mockLog.getDevice());
+    }
+
+    @Test
+    public void writeNullDeviceTest() throws JSONException {
+        JSONStringer mockJsonStringer = mock(JSONStringer.class);
+        when(mockJsonStringer.key(anyString())).thenReturn(mockJsonStringer);
+        when(mockJsonStringer.value(anyString())).thenReturn(mockJsonStringer);
+
+        AbstractLog mockLog = new MockLog();
+        mockLog.write(mockJsonStringer);
+
+        verify(mockJsonStringer, never()).key(AbstractLog.DEVICE);
+    }
+
     private static class MockLog extends AbstractLog {
 
         @Override
@@ -71,6 +123,14 @@ public class AbstractLogTest {
         @Override
         public String getType() {
             return null;
+        }
+    }
+
+    private static class MockLogWithType extends MockLog {
+
+        @Override
+        public String getType() {
+            return "mockType";
         }
     }
 }
