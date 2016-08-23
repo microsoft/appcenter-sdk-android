@@ -18,7 +18,6 @@ import avalanche.analytics.ingestion.models.json.PageLogFactory;
 import avalanche.analytics.ingestion.models.json.StartSessionLogFactory;
 import avalanche.core.AbstractAvalancheFeature;
 import avalanche.core.channel.AvalancheChannel;
-import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.UUIDUtils;
@@ -218,30 +217,26 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     /**
-     * Send log to channel.
-     *
-     * @param log log to send.
-     */
-    private synchronized void send(Log log) {
-        if (mChannel == null)
-            AvalancheLog.error("Analytics feature not initialized, discarding calls.");
-        else
-            mChannel.enqueue(log, ANALYTICS_GROUP);
-    }
-
-    /**
      * Send a page.
      *
      * @param name       page name.
      * @param properties optional properties.
      */
-    private void queuePage(@NonNull String name, @Nullable Map<String, String> properties) {
-        if (!isInstanceEnabled())
+    private synchronized void queuePage(@NonNull String name, @Nullable Map<String, String> properties) {
+        if (mChannel == null) {
+            AvalancheLog.error("Analytics feature not initialized, discarding calls.");
             return;
+        }
+
+        if (!isInstanceEnabled()) {
+            AvalancheLog.info("Analytics feature not enabled, discarding calls.");
+            return;
+        }
+
         PageLog pageLog = new PageLog();
         pageLog.setName(name);
         pageLog.setProperties(properties);
-        send(pageLog);
+        mChannel.enqueue(pageLog, ANALYTICS_GROUP);
     }
 
     /**
@@ -250,14 +245,22 @@ public class Analytics extends AbstractAvalancheFeature {
      * @param name       event name.
      * @param properties optional properties.
      */
-    private void queueEvent(@NonNull String name, @Nullable Map<String, String> properties) {
-        if (!isInstanceEnabled())
+    private synchronized void queueEvent(@NonNull String name, @Nullable Map<String, String> properties) {
+        if (mChannel == null) {
+            AvalancheLog.error("Analytics feature not initialized, discarding calls.");
             return;
+        }
+
+        if (!isInstanceEnabled()) {
+            AvalancheLog.info("Analytics feature not enabled, discarding calls.");
+            return;
+        }
+
         EventLog eventLog = new EventLog();
         eventLog.setId(UUIDUtils.randomUUID());
         eventLog.setName(name);
         eventLog.setProperties(properties);
-        send(eventLog);
+        mChannel.enqueue(eventLog, ANALYTICS_GROUP);
     }
 
     /**
