@@ -18,7 +18,6 @@ import avalanche.analytics.ingestion.models.json.PageLogFactory;
 import avalanche.analytics.ingestion.models.json.StartSessionLogFactory;
 import avalanche.core.AbstractAvalancheFeature;
 import avalanche.core.channel.AvalancheChannel;
-import avalanche.core.ingestion.models.Log;
 import avalanche.core.ingestion.models.json.LogFactory;
 import avalanche.core.utils.AvalancheLog;
 import avalanche.core.utils.UUIDUtils;
@@ -218,15 +217,21 @@ public class Analytics extends AbstractAvalancheFeature {
     }
 
     /**
-     * Send log to channel.
+     * Check preconditions of this feature.
      *
-     * @param log log to send.
+     * @return <code>true</code> if the feature passed precondition checks, otherwise <code>false</code>.
      */
-    private synchronized void send(Log log) {
-        if (mChannel == null)
+    private synchronized boolean checkPreconditions() {
+        if (mChannel == null) {
             AvalancheLog.error("Analytics feature not initialized, discarding calls.");
-        else
-            mChannel.enqueue(log, ANALYTICS_GROUP);
+            return false;
+        }
+
+        if (!isInstanceEnabled()) {
+            AvalancheLog.info("Analytics feature not enabled, discarding calls.");
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -235,13 +240,13 @@ public class Analytics extends AbstractAvalancheFeature {
      * @param name       page name.
      * @param properties optional properties.
      */
-    private void queuePage(@NonNull String name, @Nullable Map<String, String> properties) {
-        if (!isInstanceEnabled())
+    private synchronized void queuePage(@NonNull String name, @Nullable Map<String, String> properties) {
+        if (!checkPreconditions())
             return;
         PageLog pageLog = new PageLog();
         pageLog.setName(name);
         pageLog.setProperties(properties);
-        send(pageLog);
+        mChannel.enqueue(pageLog, ANALYTICS_GROUP);
     }
 
     /**
@@ -250,14 +255,14 @@ public class Analytics extends AbstractAvalancheFeature {
      * @param name       event name.
      * @param properties optional properties.
      */
-    private void queueEvent(@NonNull String name, @Nullable Map<String, String> properties) {
-        if (!isInstanceEnabled())
+    private synchronized void queueEvent(@NonNull String name, @Nullable Map<String, String> properties) {
+        if (!checkPreconditions())
             return;
         EventLog eventLog = new EventLog();
         eventLog.setId(UUIDUtils.randomUUID());
         eventLog.setName(name);
         eventLog.setProperties(properties);
-        send(eventLog);
+        mChannel.enqueue(eventLog, ANALYTICS_GROUP);
     }
 
     /**

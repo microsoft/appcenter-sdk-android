@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Avalanche.setLogLevel(Log.VERBOSE);
         ErrorReporting.setListener(new AbstractErrorReportingListener() {
             @Override
             public boolean shouldAwaitUserConfirmation() {
@@ -84,7 +85,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Avalanche.setLogLevel(Log.VERBOSE);
         Avalanche.start(getApplication(), UUIDUtils.randomUUID().toString(), Analytics.class, ErrorReporting.class);
 
         TestFeatures.initialize(this);
