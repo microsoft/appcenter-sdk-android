@@ -23,4 +23,9 @@ public class InstantiationTest {
     public void deviceInfoHelper() {
         new DeviceInfoHelper();
     }
+
+    @Test
+    public void constants() {
+        new Constants();
+    }
 }
