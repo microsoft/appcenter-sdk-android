@@ -216,6 +216,11 @@ public class Analytics extends AbstractAvalancheFeature {
         }
     }
 
+    /**
+     * Check preconditions of this feature.
+     *
+     * @return <code>true</code> if the feature passed precondition checks, otherwise <code>false</code>.
+     */
     private synchronized boolean checkPreconditions() {
         if (mChannel == null) {
             AvalancheLog.error("Analytics feature not initialized, discarding calls.");
