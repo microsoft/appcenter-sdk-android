@@ -1,6 +1,7 @@
 package com.microsoft.sonoma.core;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.support.test.InstrumentationRegistry;
 
 import org.junit.Assert;
@@ -19,15 +20,21 @@ public class ConstantsAndroidTest {
     }
 
     @Test
-    public void loadFilesPath() {
+    public void loadFromContext() {
         Constants.loadFromContext(InstrumentationRegistry.getContext());
         Assert.assertNotNull(Constants.FILES_PATH);
     }
 
     @Test
-    public void loadFilesPathNullContext() {
+    public void loadFromContextNullContext() {
+        boolean debuggableFlag = Constants.APPLICATION_DEBUGGABLE;
         Constants.loadFromContext(null);
         Assert.assertNull(Constants.FILES_PATH);
+        Assert.assertEquals(debuggableFlag, Constants.APPLICATION_DEBUGGABLE);
+
+        debuggableFlag = Constants.APPLICATION_DEBUGGABLE = !debuggableFlag;
+        Constants.loadFromContext(null);
+        Assert.assertEquals(debuggableFlag, Constants.APPLICATION_DEBUGGABLE);
     }
 
     @Test
@@ -39,5 +46,20 @@ public class ConstantsAndroidTest {
 
         /* Should return null, not throw an exception. */
         Assert.assertNull(Constants.FILES_PATH);
+    }
+
+    @Test
+    public void loadDebuggableFlag() {
+        Context mockContext = mock(Context.class);
+        ApplicationInfo mockApplicationInfo = mock(ApplicationInfo.class);
+        when(mockContext.getApplicationInfo()).thenReturn(mockApplicationInfo);
+
+        mockApplicationInfo.flags = ApplicationInfo.FLAG_DEBUGGABLE;
+        Constants.loadFromContext(mockContext);
+        Assert.assertTrue(Constants.APPLICATION_DEBUGGABLE);
+
+        mockApplicationInfo.flags = 0;
+        Constants.loadFromContext(mockContext);
+        Assert.assertFalse(Constants.APPLICATION_DEBUGGABLE);
     }
 }
