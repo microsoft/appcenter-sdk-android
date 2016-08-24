@@ -1,30 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="avalanche_state_key">avalanche_state_key</string>
-    <string name="avalanche_state_title">Avalanche state</string>
-    <string name="avalanche_state_summary_enabled">Avalanche is enabled</string>
-    <string name="avalanche_state_summary_disabled">Avalanche is disabled</string>
+    <string name="sonoma_state_key">sonoma_state_key</string>
+    <string name="sonoma_state_title">Sonoma state</string>
+    <string name="sonoma_state_summary_enabled">Sonoma is enabled</string>
+    <string name="sonoma_state_summary_disabled">Sonoma is disabled</string>
 
-    <string name="analytics_key">avalanche_analytics</string>
+    <string name="analytics_key">sonoma_analytics</string>
     <string name="analytics_title">Analytics</string>
 
-    <string name="avalanche_analytics_state_key">avalanche_analytics_state_key</string>
-    <string name="avalanche_analytics_state_title">Analytics state</string>
-    <string name="avalanche_analytics_state_summary_enabled">Analytics is enabled</string>
-    <string name="avalanche_analytics_state_summary_disabled">Analytics is disabled</string>
+    <string name="sonoma_analytics_state_key">sonoma_analytics_state_key</string>
+    <string name="sonoma_analytics_state_title">Analytics state</string>
+    <string name="sonoma_analytics_state_summary_enabled">Analytics is enabled</string>
+    <string name="sonoma_analytics_state_summary_disabled">Analytics is disabled</string>
 
-    <string name="avalanche_auto_page_tracking_key">avalanche_auto_page_tracking_key</string>
-    <string name="avalanche_auto_page_tracking_title">Analytics automatic page tracking</string>
-    <string name="avalanche_auto_page_tracking_enabled">Automatic page tracking is enabled</string>
-    <string name="avalanche_auto_page_tracking_disabled">Automatic page tracking is disabled</string>
+    <string name="sonoma_auto_page_tracking_key">sonoma_auto_page_tracking_key</string>
+    <string name="sonoma_auto_page_tracking_title">Analytics automatic page tracking</string>
+    <string name="sonoma_auto_page_tracking_enabled">Automatic page tracking is enabled</string>
+    <string name="sonoma_auto_page_tracking_disabled">Automatic page tracking is disabled</string>
 
-    <string name="error_reporting_key">avalanche_errors</string>
+    <string name="error_reporting_key">sonoma_errors</string>
     <string name="error_reporting_title">Error Reporting</string>
 
-    <string name="avalanche_errors_state_key">avalanche_errors_state_key</string>
-    <string name="avalanche_errors_state_title">Error Reporting state</string>
-    <string name="avalanche_errors_state_summary_enabled">Error Reporting is enabled</string>
-    <string name="avalanche_errors_state_summary_disabled">Error Reporting is disabled</string>
+    <string name="sonoma_errors_state_key">sonoma_errors_state_key</string>
+    <string name="sonoma_errors_state_title">Error Reporting state</string>
+    <string name="sonoma_errors_state_summary_enabled">Error Reporting is enabled</string>
+    <string name="sonoma_errors_state_summary_disabled">Error Reporting is disabled</string>
 
     <string name="miscellaneous_key">miscellaneous</string>
     <string name="miscellaneous_title">Miscellaneous</string>
