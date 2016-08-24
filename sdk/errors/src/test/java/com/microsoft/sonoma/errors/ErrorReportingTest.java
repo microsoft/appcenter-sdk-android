@@ -3,6 +3,7 @@ package com.microsoft.sonoma.errors;
 import android.content.Context;
 import android.os.SystemClock;
 
+import com.microsoft.sonoma.core.Constants;
 import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.ingestion.models.Device;
 import com.microsoft.sonoma.core.ingestion.models.Log;
@@ -345,7 +346,14 @@ public class ErrorReportingTest {
     }
 
     @Test(expected = TestCrashException.class)
-    public void generateTestCrash() {
+    public void generateTestCrashInDebug() {
+        Constants.APPLICATION_DEBUGGABLE = true;
+        ErrorReporting.generateTestCrash();
+    }
+
+    @Test
+    public void generateTestCrashInRelease() {
+        Constants.APPLICATION_DEBUGGABLE = false;
         ErrorReporting.generateTestCrash();
     }
 

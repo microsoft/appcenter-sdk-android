@@ -1,6 +1,7 @@
 package com.microsoft.sonoma.core;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 
 import com.microsoft.sonoma.core.utils.SonomaLog;
 
@@ -17,6 +18,11 @@ public class Constants {
     public static String FILES_PATH = null;
 
     /**
+     * Flag indicates whether the host application is debuggable or not.
+     */
+    public static boolean APPLICATION_DEBUGGABLE = false;
+
+    /**
      * Initializes constants from the given context. The context is used to set
      * the package name, version code, and the files path.
      *
@@ -24,6 +30,7 @@ public class Constants {
      */
     public static void loadFromContext(Context context) {
         loadFilesPath(context);
+        setDebuggableFlag(context);
     }
 
     /**
@@ -44,6 +51,17 @@ public class Constants {
             } catch (Exception e) {
                 SonomaLog.error("Exception thrown when accessing the application filesystem", e);
             }
+        }
+    }
+
+    /**
+     * Helper method to determine whether the host application is debuggable or not.
+     *
+     * @param context The context to use. Usually your Activity object.
+     */
+    private static void setDebuggableFlag(Context context) {
+        if (context != null && context.getApplicationInfo() != null) {
+            APPLICATION_DEBUGGABLE = (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) > 0;
         }
     }
 }
