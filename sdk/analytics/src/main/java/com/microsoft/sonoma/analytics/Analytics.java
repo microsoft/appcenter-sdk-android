@@ -217,21 +217,20 @@ public class Analytics extends AbstractSonomaFeature {
     }
 
     /**
-     * Check preconditions of this feature.
+     * Check if this feature is not active: disabled or not started.
      *
-     * @return <code>true</code> if the feature passed precondition checks, otherwise <code>false</code>.
+     * @return <code>true</code> if the feature is inactive, <code>false</code> otherwise.
      */
-    private synchronized boolean checkPreconditions() {
+    private synchronized boolean isInactive() {
         if (mChannel == null) {
             SonomaLog.error("Analytics feature not initialized, discarding calls.");
-            return false;
+            return true;
         }
-
         if (!isInstanceEnabled()) {
             SonomaLog.info("Analytics feature not enabled, discarding calls.");
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     /**
@@ -241,7 +240,7 @@ public class Analytics extends AbstractSonomaFeature {
      * @param properties optional properties.
      */
     private synchronized void queuePage(@NonNull String name, @Nullable Map<String, String> properties) {
-        if (!checkPreconditions())
+        if (isInactive())
             return;
         PageLog pageLog = new PageLog();
         pageLog.setName(name);
@@ -256,7 +255,7 @@ public class Analytics extends AbstractSonomaFeature {
      * @param properties optional properties.
      */
     private synchronized void queueEvent(@NonNull String name, @Nullable Map<String, String> properties) {
-        if (!checkPreconditions())
+        if (isInactive())
             return;
         EventLog eventLog = new EventLog();
         eventLog.setId(UUIDUtils.randomUUID());

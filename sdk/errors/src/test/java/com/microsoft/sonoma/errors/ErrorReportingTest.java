@@ -66,7 +66,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class ErrorReportingTest {
 
     @Rule
-    private TemporaryFolder errorStorageDirectory = new TemporaryFolder();
+    private final TemporaryFolder errorStorageDirectory = new TemporaryFolder();
 
     private static void assertErrorEquals(JavaErrorLog errorLog, Throwable throwable, ErrorReport errorReport) {
         assertNotNull(errorReport);
