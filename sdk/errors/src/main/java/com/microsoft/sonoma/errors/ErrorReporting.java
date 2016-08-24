@@ -118,7 +118,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
     private ErrorReportingListener mErrorReportingListener;
 
     private ErrorReport mLastSessionErrorReport;
-    
+
     private ErrorReporting() {
         mFactories = new HashMap<>();
         mFactories.put(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
@@ -184,8 +184,8 @@ public class ErrorReporting extends AbstractSonomaFeature {
      *
      * @return {@code true} if a crash was recorded in the last session, otherwise {@code false}.
      */
-    public static synchronized boolean hasCrashedInLastSession() {
-        return getInstance().mLastSessionErrorReport != null;
+    public static boolean hasCrashedInLastSession() {
+        return getLastSessionErrorReport() != null;
     }
 
     /**
@@ -194,8 +194,15 @@ public class ErrorReporting extends AbstractSonomaFeature {
      * @return The error report from the last session if one was set.
      */
     @Nullable
-    public static synchronized ErrorReport getLastSessionErrorReport() {
-        return getInstance().mLastSessionErrorReport;
+    public static ErrorReport getLastSessionErrorReport() {
+        return getInstance().getInstanceLastSessionErrorReport();
+    }
+
+    /**
+     * Implements {@link #getLastSessionErrorReport()} at instance level.
+     */
+    private synchronized ErrorReport getInstanceLastSessionErrorReport() {
+        return mLastSessionErrorReport;
     }
 
     @Override
@@ -315,9 +322,9 @@ public class ErrorReporting extends AbstractSonomaFeature {
         if (enabled) {
             File logFile = ErrorLogHelper.getLastErrorLogFile();
             if (logFile != null) {
-                String logfileContents = StorageHelper.InternalStorage.read(logFile);
+                String logFileContents = StorageHelper.InternalStorage.read(logFile);
                 try {
-                    JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logfileContents);
+                    JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logFileContents);
                     if (log != null) {
                         mLastSessionErrorReport = buildErrorReport(log);
                     }
