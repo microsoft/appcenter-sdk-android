@@ -71,10 +71,10 @@ ext {
     versionCode = 1
     versionName = '1.0.0'
     minSdkVersion = 15
-    targetSdkVersion = 23
-    compileSdkVersion = 23
-    buildToolsVersion = '23.0.3'
-    supportLibVersion = '24.0.0'
+    targetSdkVersion = 24
+    compileSdkVersion = 24
+    buildToolsVersion = '24.0.1'
+    supportLibVersion = '24.2.0'
     testInstrumentationRunner = 'android.support.test.runner.AndroidJUnitRunner'
 }
 
