@@ -422,6 +422,11 @@ public class ErrorReporting extends AbstractSonomaFeature {
 
     @VisibleForTesting
     private synchronized void handleUserConfirmation(@ConfirmationDef int userConfirmation) {
+        if (mChannel == null) {
+            SonomaLog.error("ErrorReporting feature not initialized, discarding calls.");
+            return;
+        }
+
         if (userConfirmation == DONT_SEND) {
 
             /* Clean up all pending error log and throwable files. */
