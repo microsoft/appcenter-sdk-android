@@ -54,6 +54,7 @@ import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
@@ -108,6 +109,16 @@ public class ErrorReportingTest {
     @Test
     public void singleton() {
         Assert.assertSame(ErrorReporting.getInstance(), ErrorReporting.getInstance());
+    }
+
+    @Test
+    public void notInit() {
+
+        /* Just check log is discarded without throwing any exception. */
+        ErrorReporting.notifyUserConfirmation(ErrorReporting.SEND);
+
+        verifyStatic(times(1));
+        SonomaLog.error(anyString());
     }
 
     @Test
@@ -657,5 +668,4 @@ public class ErrorReportingTest {
         verifyStatic();
         SonomaLog.error(anyString(), eq(jsonException));
     }
-
 }
