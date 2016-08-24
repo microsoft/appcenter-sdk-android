@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.sonoma.core.AbstractSonomaFeature;
+import com.microsoft.sonoma.core.Constants;
 import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.ingestion.models.Log;
 import com.microsoft.sonoma.core.ingestion.models.json.DefaultLogSerializer;
@@ -155,7 +156,10 @@ public class ErrorReporting extends AbstractSonomaFeature {
      * Generates crash for test purpose.
      */
     public static void generateTestCrash() {
-        throw new TestCrashException();
+        if (Constants.APPLICATION_DEBUGGABLE)
+            throw new TestCrashException();
+        else
+            SonomaLog.warn("The application is not debuggable so SDK won't generate test crash");
     }
 
     /**
