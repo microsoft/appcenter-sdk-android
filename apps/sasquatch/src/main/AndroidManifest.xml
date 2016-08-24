@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
-          package="avalanche.sasquatch">
+          package="com.microsoft.sonoma.sasquatch">
 
     <application
         android:allowBackup="true"
@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning">
-        <activity android:name=".activities.MainActivity">
+        <activity android:name="com.microsoft.sonoma.sasquatch.activities.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -18,11 +18,11 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".activities.DeviceInfoActivity"/>
-        <activity android:name=".activities.EventActivity"/>
-        <activity android:name=".activities.PageActivity"/>
-        <activity android:name=".activities.DummyActivity"/>
-        <activity android:name=".activities.SettingsActivity"/>
+        <activity android:name="com.microsoft.sonoma.sasquatch.activities.DeviceInfoActivity"/>
+        <activity android:name="com.microsoft.sonoma.sasquatch.activities.EventActivity"/>
+        <activity android:name="com.microsoft.sonoma.sasquatch.activities.PageActivity"/>
+        <activity android:name="com.microsoft.sonoma.sasquatch.activities.DummyActivity"/>
+        <activity android:name="com.microsoft.sonoma.sasquatch.activities.SettingsActivity"/>
     </application>
 
 </manifest>
