@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.ingestion.Ingestion;
 import com.microsoft.sonoma.core.ingestion.ServiceCall;
 import com.microsoft.sonoma.core.ingestion.ServiceCallback;
@@ -98,7 +99,7 @@ public class IngestionRetryer extends IngestionDecorator {
                 String message = "Try #" + mRetryCount + " failed and will be retried in " + delay + " ms";
                 if (e instanceof UnknownHostException)
                     message += " (UnknownHostException)";
-                SonomaLog.warn(message, e);
+                SonomaLog.warn(Sonoma.LOG_TAG, message, e);
                 mHandler.postDelayed(this, delay);
             } else
                 mServiceCallback.onCallFailed(e);

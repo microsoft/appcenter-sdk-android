@@ -41,6 +41,11 @@ import java.util.UUID;
 public class ErrorReporting extends AbstractSonomaFeature {
 
     /**
+     * TAG used in logging for ErrorReporting
+     */
+    public static final String LOG_TAG = SonomaLog.LOG_TAG + "ErrorReporting";
+
+    /**
      * Constant for SEND crash report.
      */
     public static final int SEND = 0;
@@ -159,7 +164,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
         if (Constants.APPLICATION_DEBUGGABLE)
             throw new TestCrashException();
         else
-            SonomaLog.warn("The application is not debuggable so SDK won't generate test crash");
+            SonomaLog.warn(LOG_TAG, "The application is not debuggable so SDK won't generate test crash");
     }
 
     /**
@@ -215,12 +220,12 @@ public class ErrorReporting extends AbstractSonomaFeature {
         initialize();
         if (!enabled) {
             for (File file : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
-                SonomaLog.debug("Deleting file " + file);
+                SonomaLog.debug(LOG_TAG, "Deleting file " + file);
                 if (!file.delete()) {
-                    SonomaLog.warn("Failed to delete file " + file);
+                    SonomaLog.warn(LOG_TAG, "Failed to delete file " + file);
                 }
             }
-            SonomaLog.info("Deleted error reporting local files");
+            SonomaLog.info(LOG_TAG, "Deleted error reporting local files");
         }
     }
 
@@ -277,9 +282,9 @@ public class ErrorReporting extends AbstractSonomaFeature {
                             }
                         }
                     } else
-                        SonomaLog.warn("Cannot find error report for the error log: " + id);
+                        SonomaLog.warn(LOG_TAG, "Cannot find error report for the error log: " + id);
                 } else {
-                    SonomaLog.warn("A different type of log comes to error reporting: " + log.getClass().getName());
+                    SonomaLog.warn(LOG_TAG, "A different type of log comes to error reporting: " + log.getClass().getName());
                 }
             }
 
@@ -333,7 +338,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
                         mLastSessionErrorReport = buildErrorReport(log);
                     }
                 } catch (JSONException e) {
-                    SonomaLog.error("Error parsing last session error log", e);
+                    SonomaLog.error(LOG_TAG, "Error parsing last session error log", e);
                 }
             }
         }
@@ -341,23 +346,23 @@ public class ErrorReporting extends AbstractSonomaFeature {
 
     private void processPendingErrors() {
         for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
-            SonomaLog.debug("Process pending error file: " + logFile);
+            SonomaLog.debug(LOG_TAG, "Process pending error file: " + logFile);
             String logfileContents = StorageHelper.InternalStorage.read(logFile);
             try {
                 JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logfileContents);
                 if (log != null) {
                     UUID id = log.getId();
                     if (mErrorReportingListener.shouldProcess(buildErrorReport(log))) {
-                        SonomaLog.debug("ErrorReportingListener.shouldProcess returned true, continue processing log: " + id.toString());
+                        SonomaLog.debug(LOG_TAG, "ErrorReportingListener.shouldProcess returned true, continue processing log: " + id.toString());
                         mUnprocessedErrorReports.put(id, mErrorReportCache.get(id));
                     } else {
-                        SonomaLog.debug("ErrorReportingListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
+                        SonomaLog.debug(LOG_TAG, "ErrorReportingListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
                         ErrorLogHelper.removeStoredErrorLogFile(id);
                         removeStoredThrowable(id);
                     }
                 }
             } catch (JSONException e) {
-                SonomaLog.error("Error parsing error log", e);
+                SonomaLog.error(LOG_TAG, "Error parsing error log", e);
             }
         }
 
@@ -366,9 +371,9 @@ public class ErrorReporting extends AbstractSonomaFeature {
                 (StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false)
                         || !(shouldAwaitUserConfirmation = mErrorReportingListener.shouldAwaitUserConfirmation()))) {
             if (shouldAwaitUserConfirmation)
-                SonomaLog.debug("ErrorReportingListener.shouldAwaitUserConfirmation returned false, continue sending logs");
+                SonomaLog.debug(LOG_TAG, "ErrorReportingListener.shouldAwaitUserConfirmation returned false, continue sending logs");
             else
-                SonomaLog.debug("The flag for user confirmation is set to ALWAYS_SEND, continue sending logs");
+                SonomaLog.debug(LOG_TAG, "The flag for user confirmation is set to ALWAYS_SEND, continue sending logs");
             handleUserConfirmation(SEND);
         }
     }
@@ -402,9 +407,9 @@ public class ErrorReporting extends AbstractSonomaFeature {
                     mErrorReportCache.put(id, new ErrorLogReport(log, report));
                     return report;
                 } catch (ClassNotFoundException ignored) {
-                    SonomaLog.error("Cannot read throwable file " + file.getName(), ignored);
+                    SonomaLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), ignored);
                 } catch (IOException ignored) {
-                    SonomaLog.error("Cannot access serialized throwable file " + file.getName(), ignored);
+                    SonomaLog.error(LOG_TAG, "Cannot access serialized throwable file " + file.getName(), ignored);
                 }
             }
         }
@@ -427,7 +432,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
     @VisibleForTesting
     private synchronized void handleUserConfirmation(@ConfirmationDef int userConfirmation) {
         if (mChannel == null) {
-            SonomaLog.error("ErrorReporting feature not initialized, discarding calls.");
+            SonomaLog.error(LOG_TAG, "ErrorReporting feature not initialized, discarding calls.");
             return;
         }
 
@@ -454,7 +459,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
             ErrorLogReport errorLogReport = unprocessedEntry.getValue();
             ErrorAttachment attachment = mErrorReportingListener.getErrorAttachment(errorLogReport.report);
             if (attachment == null)
-                SonomaLog.debug("ErrorReportingListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
+                SonomaLog.debug(LOG_TAG, "ErrorReportingListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
             else
                 errorLogReport.log.setErrorAttachment(attachment);
             mChannel.enqueue(errorLogReport.log, ERROR_GROUP);

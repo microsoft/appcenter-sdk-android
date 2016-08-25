@@ -15,8 +15,6 @@ import java.util.Random;
 
 public final class AndroidTestUtils {
 
-    public static final String TAG = "TestRunner";
-
     private static final Random RANDOM = new Random();
 
     private AndroidTestUtils() {

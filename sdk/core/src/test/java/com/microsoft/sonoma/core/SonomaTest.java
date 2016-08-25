@@ -320,42 +320,42 @@ public class SonomaTest {
     public void invalidFeatureTest() {
         Sonoma.start(application, DUMMY_APP_SECRET, InvalidFeature.class);
         PowerMockito.verifyStatic();
-        SonomaLog.error(anyString(), any(NoSuchMethodException.class));
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString(), any(NoSuchMethodException.class));
     }
 
     @Test
     public void nullApplicationTest() {
         Sonoma.start(null, DUMMY_APP_SECRET, DummyFeature.class);
         PowerMockito.verifyStatic();
-        SonomaLog.error(anyString());
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString());
     }
 
     @Test
     public void nullAppIdentifierTest() {
         Sonoma.start(application, null, DummyFeature.class);
         PowerMockito.verifyStatic();
-        SonomaLog.error(anyString());
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString());
     }
 
     @Test
     public void emptyAppIdentifierTest() {
         Sonoma.start(application, "", DummyFeature.class);
         PowerMockito.verifyStatic();
-        SonomaLog.error(anyString(), any(IllegalArgumentException.class));
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString(), any(IllegalArgumentException.class));
     }
 
     @Test
     public void tooShortAppIdentifierTest() {
         Sonoma.start(application, "too-short", DummyFeature.class);
         PowerMockito.verifyStatic();
-        SonomaLog.error(anyString(), any(IllegalArgumentException.class));
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString(), any(IllegalArgumentException.class));
     }
 
     @Test
     public void invalidAppIdentifierTest() {
         Sonoma.start(application, "123xyz12-3xyz-123x-yz12-3xyz123xyz12", DummyFeature.class);
         PowerMockito.verifyStatic();
-        SonomaLog.error(anyString(), any(NumberFormatException.class));
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString(), any(NumberFormatException.class));
     }
 
     @Test

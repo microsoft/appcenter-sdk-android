@@ -6,6 +6,7 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.ingestion.Ingestion;
 import com.microsoft.sonoma.core.ingestion.ServiceCallback;
 import com.microsoft.sonoma.core.ingestion.http.DefaultUrlConnectionFactory;
@@ -34,11 +35,6 @@ import java.util.Map;
 import java.util.UUID;
 
 public class DefaultChannel implements Channel {
-
-    /**
-     * TAG used in logging.
-     */
-    private static final String TAG = SonomaLog.LOG_TAG + "Channel";
 
     /**
      * Application context.
@@ -140,7 +136,7 @@ public class DefaultChannel implements Channel {
     public synchronized void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
 
         /* Init group. */
-        SonomaLog.debug("addGroup(" + groupName + ")");
+        SonomaLog.debug(Sonoma.LOG_TAG, "addGroup(" + groupName + ")");
         mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener));
 
         /* Count pending logs. */
@@ -206,7 +202,7 @@ public class DefaultChannel implements Channel {
         try {
             mIngestion.close();
         } catch (IOException e) {
-            SonomaLog.error("Failed to close ingestion", e);
+            SonomaLog.error(Sonoma.LOG_TAG, "Failed to close ingestion", e);
         }
         if (deleteLogs)
             mPersistence.clear();
@@ -238,11 +234,11 @@ public class DefaultChannel implements Channel {
             return;
         }
         final GroupState groupState = mGroupStates.get(groupName);
-        SonomaLog.debug("triggerIngestion(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
+        SonomaLog.debug(Sonoma.LOG_TAG, "triggerIngestion(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
 
         /* Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending. */
         if (groupState.mSendingBatches.size() == groupState.mMaxParallelBatches) {
-            SonomaLog.debug(TAG, "Already sending " + groupState.mMaxParallelBatches + " batches of analytics data to the server.");
+            SonomaLog.debug(Sonoma.LOG_TAG, "Already sending " + groupState.mMaxParallelBatches + " batches of analytics data to the server.");
             return;
         }
 
@@ -260,7 +256,7 @@ public class DefaultChannel implements Channel {
 
             /* Decrement counter. */
             groupState.mPendingLogCount -= batch.size();
-            SonomaLog.debug(TAG, "ingestLogs(" + groupName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
+            SonomaLog.debug(Sonoma.LOG_TAG, "ingestLogs(" + groupName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
 
             /* Remember this batch. */
             groupState.mSendingBatches.put(batchId, batch);
@@ -316,7 +312,7 @@ public class DefaultChannel implements Channel {
      */
     private synchronized void handleSendingFailure(@NonNull final GroupState groupState, @NonNull final String batchId, @NonNull final Exception e) {
         String groupName = groupState.mName;
-        SonomaLog.error("Sending logs groupName=" + groupName + " id=" + batchId + " failed", e);
+        SonomaLog.error(Sonoma.LOG_TAG, "Sending logs groupName=" + groupName + " id=" + batchId + " failed", e);
         List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
         if (!HttpUtils.isRecoverableError(e))
             mPersistence.deleteLogs(groupName, batchId);
@@ -342,7 +338,7 @@ public class DefaultChannel implements Channel {
         /* Check group name is registered. */
         GroupState groupState = mGroupStates.get(groupName);
         if (groupState == null) {
-            SonomaLog.error("Invalid group name:" + groupName);
+            SonomaLog.error(Sonoma.LOG_TAG, "Invalid group name:" + groupName);
             return;
         }
 
@@ -358,7 +354,7 @@ public class DefaultChannel implements Channel {
                 try {
                     mDevice = DeviceInfoHelper.getDeviceInfo(mContext);
                 } catch (DeviceInfoHelper.DeviceInfoException e) {
-                    SonomaLog.error("Device log cannot be generated", e);
+                    SonomaLog.error(Sonoma.LOG_TAG, "Device log cannot be generated", e);
                     return;
                 }
             }
@@ -377,16 +373,16 @@ public class DefaultChannel implements Channel {
             /* Save log in database. */
             mPersistence.putLog(groupName, log);
             groupState.mPendingLogCount++;
-            SonomaLog.debug("enqueue(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
+            SonomaLog.debug(Sonoma.LOG_TAG, "enqueue(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
 
             /* Increment counters and schedule ingestion if we are not disabled. */
             if (!mEnabled) {
-                SonomaLog.warn(TAG, "Channel is disabled, event was saved to disk.");
+                SonomaLog.warn(Sonoma.LOG_TAG, "Channel is disabled, event was saved to disk.");
             } else {
                 checkPendingLogs(groupName);
             }
         } catch (Persistence.PersistenceException e) {
-            SonomaLog.error(TAG, "Error persisting event with exception: " + e.toString());
+            SonomaLog.error(Sonoma.LOG_TAG, "Error persisting event with exception: " + e.toString());
         }
     }
 
@@ -398,7 +394,7 @@ public class DefaultChannel implements Channel {
     private synchronized void checkPendingLogs(@NonNull String groupName) {
         GroupState groupState = mGroupStates.get(groupName);
         long pendingLogCount = groupState.mPendingLogCount;
-        SonomaLog.debug("checkPendingLogs(" + groupName + ") pendingLogCount=" + pendingLogCount);
+        SonomaLog.debug(Sonoma.LOG_TAG, "checkPendingLogs(" + groupName + ") pendingLogCount=" + pendingLogCount);
         if (pendingLogCount >= groupState.mMaxLogsPerBatch)
             triggerIngestion(groupName);
         else if (pendingLogCount > 0 && !groupState.mScheduled) {

@@ -2,6 +2,8 @@ package com.microsoft.sonoma.core.utils;
 
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.sonoma.core.Sonoma;
+
 import java.util.Random;
 import java.util.UUID;
 
@@ -44,7 +46,7 @@ public final class UUIDUtils {
             synchronized (UUIDUtils.class) {
                 if (sRandom == null) {
                     sRandom = new Random();
-                    SonomaLog.error("UUID.randomUUID failed, using Random as fallback", e);
+                    SonomaLog.error(Sonoma.LOG_TAG, "UUID.randomUUID failed, using Random as fallback", e);
                 }
             }
             long highest = (sRandom.nextLong() & -61441L) | 16384L;
