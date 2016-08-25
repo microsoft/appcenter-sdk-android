@@ -71,7 +71,7 @@ public class DatabaseManager implements Closeable {
     /**
      * SQLite helper instance.
      */
-    private final SQLiteOpenHelper mSQLiteOpenHelper;
+    private SQLiteOpenHelper mSQLiteOpenHelper;
 
     /**
      * In-memory database if SQLite cannot be used.
@@ -499,6 +499,17 @@ public class DatabaseManager implements Closeable {
         /* Trigger error listener. */
         if (mErrorListener != null)
             mErrorListener.onError(operation, exception);
+    }
+
+    /**
+     * Sets {@link SQLiteOpenHelper} instance.
+     *
+     * @param helper A {@link SQLiteOpenHelper} instance to be used for accessing database.
+     */
+    @VisibleForTesting
+    void setSQLiteOpenHelper(@NonNull SQLiteOpenHelper helper) {
+        mSQLiteOpenHelper.close();
+        mSQLiteOpenHelper = helper;
     }
 
     /**
