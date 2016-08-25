@@ -20,6 +20,7 @@ import org.mockito.stubbing.Answer;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.microsoft.sonoma.test.TestUtils.TAG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -52,7 +53,7 @@ public class ErrorReportingAndroidTest {
 
     @Before
     public void cleanup() {
-        SonomaLog.info("Cleanup");
+        android.util.Log.i(TAG, "Cleanup");
         Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
         StorageHelper.PreferencesStorage.clear();
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
@@ -64,7 +65,7 @@ public class ErrorReportingAndroidTest {
     public void testNoDuplicateCallbacksOrSending() throws InterruptedException {
 
         /* Crash on 1st process. */
-        SonomaLog.info("Process 1");
+        android.util.Log.i(TAG, "Process 1");
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
         Channel channel = mock(Channel.class);
@@ -88,7 +89,7 @@ public class ErrorReportingAndroidTest {
         verifyZeroInteractions(errorReportingListener);
 
         /* Second process: enqueue log but network is down... */
-        SonomaLog.info("Process 2");
+        android.util.Log.i(TAG, "Process 2");
         final AtomicReference<Log> log = new AtomicReference<>();
         doAnswer(new Answer() {
 
@@ -118,7 +119,7 @@ public class ErrorReportingAndroidTest {
         verifyNoMoreInteractions(errorReportingListener);
 
         /* Third process: sending succeeds. */
-        SonomaLog.info("Process 3");
+        android.util.Log.i(TAG, "Process 3");
         final AtomicReference<Channel.GroupListener> groupListener = new AtomicReference<>();
         channel = mock(Channel.class);
         doAnswer(new Answer() {
@@ -147,7 +148,7 @@ public class ErrorReportingAndroidTest {
     public void cleanupFilesOnDisable() throws InterruptedException {
 
         /* Crash on 1st process. */
-        SonomaLog.info("Process 1");
+        android.util.Log.i(TAG, "Process 1");
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
         ErrorReporting.getInstance().onChannelReady(sContext, mock(Channel.class));

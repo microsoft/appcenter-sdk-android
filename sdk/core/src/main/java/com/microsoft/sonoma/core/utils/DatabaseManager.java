@@ -13,6 +13,8 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
+import com.microsoft.sonoma.core.Sonoma;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
@@ -579,7 +581,7 @@ public class DatabaseManager implements Closeable {
                                     try {
                                         cursor.close();
                                     } catch (RuntimeException e1) {
-                                        SonomaLog.warn("Closing cursor failed", e1);
+                                        SonomaLog.warn(Sonoma.LOG_TAG, "Closing cursor failed", e1);
                                     }
                                     cursor = null;
 

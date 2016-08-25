@@ -2,6 +2,7 @@ package com.microsoft.sonoma.core.ingestion.models.json;
 
 import android.support.annotation.NonNull;
 
+import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.ingestion.models.Log;
 import com.microsoft.sonoma.core.ingestion.models.LogContainer;
 import com.microsoft.sonoma.core.utils.SonomaLog;
@@ -60,7 +61,7 @@ public class DefaultLogSerializer implements LogSerializer {
                 constructor.setAccessible(true);
                 writer = constructor.newInstance(2);
             } catch (Exception e) {
-                SonomaLog.error("Failed to setup pretty json, falling back to default one", e);
+                SonomaLog.error(Sonoma.LOG_TAG, "Failed to setup pretty json, falling back to default one", e);
             }
         }
         if (writer == null)

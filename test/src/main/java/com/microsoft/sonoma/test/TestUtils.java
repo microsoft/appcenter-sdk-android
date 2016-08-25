@@ -5,6 +5,11 @@ import static org.junit.Assert.assertNotEquals;
 
 public final class TestUtils {
 
+    /**
+     * TAG for test log.
+     */
+    public static final String TAG = "TestRunner";
+
     private TestUtils() {
     }
 

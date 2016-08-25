@@ -7,6 +7,8 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
+import com.microsoft.sonoma.core.Sonoma;
+
 import java.io.Closeable;
 import java.util.HashSet;
 import java.util.Set;
@@ -98,9 +100,9 @@ public class NetworkStateHelper implements Closeable {
              * Can fail with either SecurityException or even NullPointerException on "corrupted" devices.
              */
             networkInfo = null;
-            SonomaLog.error("Could not get network info and thus stuck in disconnected state, please check you declared android.permission.ACCESS_NETWORK_STATE");
+            SonomaLog.error(Sonoma.LOG_TAG, "Could not get network info and thus stuck in disconnected state, please check you declared android.permission.ACCESS_NETWORK_STATE");
         }
-        SonomaLog.debug("Active network info=" + networkInfo);
+        SonomaLog.debug(Sonoma.LOG_TAG, "Active network info=" + networkInfo);
 
         /* Update network type. null for not connected. */
         if (networkInfo != null && networkInfo.getState() == NetworkInfo.State.CONNECTED)

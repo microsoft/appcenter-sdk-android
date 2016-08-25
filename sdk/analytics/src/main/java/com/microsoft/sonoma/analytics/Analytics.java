@@ -28,6 +28,11 @@ import java.util.Map;
 public class Analytics extends AbstractSonomaFeature {
 
     /**
+     * TAG used in logging for Analytics.
+     */
+    public static final String LOG_TAG = SonomaLog.LOG_TAG + "Analytics";
+
+    /**
      * Constant marking event of the analytics group.
      */
     private static final String ANALYTICS_GROUP = "group_analytics";
@@ -223,11 +228,11 @@ public class Analytics extends AbstractSonomaFeature {
      */
     private synchronized boolean isInactive() {
         if (mChannel == null) {
-            SonomaLog.error("Analytics feature not initialized, discarding calls.");
+            SonomaLog.error(LOG_TAG, "Analytics feature not initialized, discarding calls.");
             return true;
         }
         if (!isInstanceEnabled()) {
-            SonomaLog.info("Analytics feature not enabled, discarding calls.");
+            SonomaLog.info(LOG_TAG, "Analytics feature not enabled, discarding calls.");
             return true;
         }
         return false;

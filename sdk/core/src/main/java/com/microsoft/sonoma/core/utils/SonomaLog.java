@@ -44,15 +44,6 @@ public class SonomaLog {
     }
 
     /**
-     * Log a message with level VERBOSE with the default tag
-     *
-     * @param message the log message
-     */
-    public static void verbose(String message) {
-        verbose(null, message);
-    }
-
-    /**
      * Log a message with level VERBOSE
      *
      * @param tag     the log tag for your message
@@ -63,17 +54,6 @@ public class SonomaLog {
         if (sLogLevel <= Log.VERBOSE) {
             Log.v(tag, message);
         }
-    }
-
-    /**
-     * Log a message with level VERBOSE with the default tag
-     *
-     * @param message   the log message
-     * @param throwable the throwable you want to log
-     */
-    @SuppressWarnings("SameParameterValue")
-    public static void verbose(String message, Throwable throwable) {
-        verbose(null, message, throwable);
     }
 
     /**
@@ -91,15 +71,6 @@ public class SonomaLog {
     }
 
     /**
-     * Log a message with level DEBUG with the default tag
-     *
-     * @param message the log message
-     */
-    public static void debug(String message) {
-        debug(null, message);
-    }
-
-    /**
      * Log a message with level DEBUG
      *
      * @param tag     the log tag for your message
@@ -110,17 +81,6 @@ public class SonomaLog {
         if (sLogLevel <= Log.DEBUG) {
             Log.d(tag, message);
         }
-    }
-
-    /**
-     * Log a message with level DEBUG with the default tag
-     *
-     * @param message   the log message
-     * @param throwable the throwable you want to log
-     */
-    @SuppressWarnings("SameParameterValue")
-    public static void debug(String message, Throwable throwable) {
-        debug(null, message, throwable);
     }
 
     /**
@@ -138,15 +98,6 @@ public class SonomaLog {
     }
 
     /**
-     * Log a message with level INFO with the default tag
-     *
-     * @param message the log message
-     */
-    public static void info(String message) {
-        info(null, message);
-    }
-
-    /**
      * Log a message with level INFO
      *
      * @param tag     the log tag for your message
@@ -157,17 +108,6 @@ public class SonomaLog {
         if (sLogLevel <= Log.INFO) {
             Log.i(tag, message);
         }
-    }
-
-    /**
-     * Log a message with level INFO with the default tag
-     *
-     * @param message   the log message
-     * @param throwable the throwable you want to log
-     */
-    @SuppressWarnings("SameParameterValue")
-    public static void info(String message, Throwable throwable) {
-        info(null, message, throwable);
     }
 
     /**
@@ -185,15 +125,6 @@ public class SonomaLog {
     }
 
     /**
-     * Log a message with level WARN with the default tag
-     *
-     * @param message the log message
-     */
-    public static void warn(String message) {
-        warn(null, message);
-    }
-
-    /**
      * Log a message with level WARN
      *
      * @param tag     the TAG
@@ -204,16 +135,6 @@ public class SonomaLog {
         if (sLogLevel <= Log.WARN) {
             Log.w(tag, message);
         }
-    }
-
-    /**
-     * Log a message with level WARN with the default tag
-     *
-     * @param message   the log message
-     * @param throwable the throwable you want to log
-     */
-    public static void warn(String message, Throwable throwable) {
-        warn(null, message, throwable);
     }
 
     /**
@@ -231,15 +152,6 @@ public class SonomaLog {
     }
 
     /**
-     * Log a message with level ERROR with the default tag
-     *
-     * @param message the log message
-     */
-    public static void error(String message) {
-        error(null, message);
-    }
-
-    /**
      * Log a message with level ERROR
      *
      * @param tag     the log tag for your message
@@ -250,16 +162,6 @@ public class SonomaLog {
         if (sLogLevel <= Log.ERROR) {
             Log.e(tag, message);
         }
-    }
-
-    /**
-     * Log a message with level ERROR with the default tag
-     *
-     * @param message   the log message
-     * @param throwable the throwable you want to log
-     */
-    public static void error(String message, Throwable throwable) {
-        error(null, message, throwable);
     }
 
     /**
@@ -290,5 +192,4 @@ public class SonomaLog {
 
         return tag;
     }
-
 }
