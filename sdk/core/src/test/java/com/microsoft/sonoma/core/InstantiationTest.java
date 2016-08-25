@@ -2,6 +2,9 @@ package com.microsoft.sonoma.core;
 
 
 import com.microsoft.sonoma.core.utils.DeviceInfoHelper;
+import com.microsoft.sonoma.core.utils.IdHelper;
+import com.microsoft.sonoma.core.utils.PrefStorageConstants;
+import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
 
 import org.junit.Test;
@@ -27,5 +30,20 @@ public class InstantiationTest {
     @Test
     public void constants() {
         new Constants();
+    }
+
+    @Test
+    public void prefStorageConstants() {
+        new PrefStorageConstants();
+    }
+
+    @Test
+    public void idHelper() {
+        new IdHelper();
+    }
+
+    @Test
+    public void sonomaLog() {
+        new SonomaLog();
     }
 }

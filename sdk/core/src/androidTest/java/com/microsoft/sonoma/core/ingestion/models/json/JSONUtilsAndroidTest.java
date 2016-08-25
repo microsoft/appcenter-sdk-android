@@ -1,6 +1,10 @@
 package com.microsoft.sonoma.core.ingestion.models.json;
 
+import android.util.Log;
+
 import com.microsoft.sonoma.core.AndroidTestUtils;
+import com.microsoft.sonoma.core.ingestion.models.LogContainer;
+import com.microsoft.sonoma.core.utils.SonomaLog;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,12 +19,14 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
 
 @SuppressWarnings("unused")
-public class JSONUtilsTest {
+public class JSONUtilsAndroidTest {
 
     @Test
     public void writeReadObject() throws JSONException {
+
         /* Write to JSON object. */
         JSONStringer writer = new JSONStringer();
         writer.object();
@@ -42,6 +48,7 @@ public class JSONUtilsTest {
 
     @Test
     public void writeReadMap() throws JSONException {
+
         /* Create a test map. */
         final Map<String, String> map = new HashMap<>();
         map.put("key", "value");
@@ -63,6 +70,7 @@ public class JSONUtilsTest {
 
     @Test
     public void writeReadArray() throws JSONException {
+
         /* Generate mock logs. */
         MockLog firstLog = AndroidTestUtils.generateMockLog();
         MockLog secondLog = AndroidTestUtils.generateMockLog();
@@ -94,6 +102,7 @@ public class JSONUtilsTest {
 
     @Test
     public void readKeyNotExists() throws JSONException {
+
         /* Create an empty JSON object. */
         JSONObject object = new JSONObject("{}");
 
@@ -103,5 +112,26 @@ public class JSONUtilsTest {
         assertNull(JSONUtils.readBoolean(object, "key"));
         assertNull(JSONUtils.readMap(object, "key"));
         assertNull(JSONUtils.readArray(object, "key", new MockLogFactory()));
+    }
+
+    @Test
+    public void serializeContainerWithDefaultWriter() throws JSONException {
+
+        /* Create a mock log container. */
+        LogContainer mockContainer = mock(LogContainer.class);
+
+        /* Set log level to VERBOSE to instantiate JSONStringer for pretty JSON string. */
+        SonomaLog.setLogLevel(Log.VERBOSE);
+        LogSerializer serializer = new DefaultLogSerializer();
+        String json = serializer.serializeContainer(mockContainer);
+
+        /* Remove new lines and spaces. */
+        json = json.replace("\n", "").replace(" ", "");
+
+        /* Set log level to ERROR to instantiate JSONStringer without indentations. */
+        SonomaLog.setLogLevel(Log.ERROR);
+
+        /* Verify. */
+        assertEquals(json, serializer.serializeContainer(mockContainer));
     }
 }

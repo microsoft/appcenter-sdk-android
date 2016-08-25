@@ -41,12 +41,7 @@ import static org.mockito.Mockito.spy;
 @SuppressWarnings("unused")
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class DatabasePersistenceTest {
-
-    /**
-     * Log tag.
-     */
-    private static final String TAG = "DatabasePersistenceTest";
+public class DatabasePersistenceAndroidTest {
 
     /**
      * Context instance.
@@ -78,7 +73,6 @@ public class DatabasePersistenceTest {
 
     @Test
     public void putLog() throws PersistenceException, IOException {
-        android.util.Log.i(TAG, "Testing Database Persistence putLog");
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putLog", 1);
@@ -114,7 +108,6 @@ public class DatabasePersistenceTest {
 
     @Test
     public void putTooManyLogs() throws PersistenceException, IOException {
-        android.util.Log.i(TAG, "Testing Database Persistence putLog with too many logs");
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putTooManyLogs", 1, 2);
@@ -150,7 +143,6 @@ public class DatabasePersistenceTest {
 
     @Test(expected = PersistenceException.class)
     public void putLogException() throws PersistenceException, IOException, JSONException {
-        android.util.Log.i(TAG, "Testing Database Persistence putLog with serialize exception");
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putLogException", 1);
@@ -172,7 +164,6 @@ public class DatabasePersistenceTest {
 
     @Test
     public void deleteLogs() throws PersistenceException, IOException {
-        android.util.Log.i(TAG, "Testing Database Persistence deleteLogs");
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence("test-persistence", "deleteLogs", 1);
@@ -260,7 +251,6 @@ public class DatabasePersistenceTest {
 
     @Test
     public void deleteLogsForGroup() throws PersistenceException, IOException {
-        android.util.Log.i(TAG, "Testing Database Persistence deleteLogs for group");
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence("test-persistence", "deleteLogsForGroup", 1);
@@ -323,7 +313,6 @@ public class DatabasePersistenceTest {
 
     @Test
     public void getLogs() throws PersistenceException, IOException {
-        android.util.Log.i(TAG, "Testing Database Persistence getLogs");
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence("test-persistence", "getLogs", 1);
@@ -387,7 +376,6 @@ public class DatabasePersistenceTest {
 
     @Test
     public void getLogsException() throws PersistenceException, IOException, JSONException {
-        android.util.Log.i(TAG, "Testing Database Persistence getLogs with deserialize exception");
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence("test-persistence", "getLogs", 1);
