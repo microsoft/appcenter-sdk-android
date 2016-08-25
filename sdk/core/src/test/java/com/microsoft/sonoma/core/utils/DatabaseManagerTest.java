@@ -1,8 +1,10 @@
 package com.microsoft.sonoma.core.utils;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 
 import org.junit.Test;
@@ -16,6 +18,7 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -201,5 +204,41 @@ public class DatabaseManagerTest {
 
         /* Next. */
         databaseManagerMock.getScanner(null, null).iterator().next();
+    }
+
+    @Test
+    public void getDatabaseFailedOnce() {
+
+        /* Mocking instances. */
+        Context contextMock = mock(Context.class);
+        SQLiteOpenHelper helperMock = mock(SQLiteOpenHelper.class);
+        when(helperMock.getWritableDatabase()).thenThrow(new RuntimeException()).thenReturn(mock(SQLiteDatabase.class));
+
+        /* Instantiate real instance for DatabaseManager. */
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null);
+        databaseManager.setSQLiteOpenHelper(helperMock);
+
+        /* Get database. */
+        SQLiteDatabase database = databaseManager.getDatabase();
+
+        /* Verify. */
+        assertNotNull(database);
+        verify(contextMock).deleteDatabase("database");
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void getDatabaseException() {
+
+        /* Mocking instances. */
+        Context contextMock = mock(Context.class);
+        SQLiteOpenHelper helperMock = mock(SQLiteOpenHelper.class);
+        when(helperMock.getWritableDatabase()).thenThrow(new RuntimeException()).thenThrow(new RuntimeException());
+
+        /* Instantiate real instance for DatabaseManager. */
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null);
+        databaseManager.setSQLiteOpenHelper(helperMock);
+
+        /* Get database. */
+        databaseManager.getDatabase();
     }
 }

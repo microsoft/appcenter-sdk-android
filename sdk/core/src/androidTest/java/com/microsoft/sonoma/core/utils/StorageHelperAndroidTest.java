@@ -359,6 +359,7 @@ public class StorageHelperAndroidTest {
                 "at java.io.FileOutputStream.<init>(FileOutputStream.java:72)\n" +
                 "at java.io.FileWriter.<init>(FileWriter.java:42)";
         String filename3 = prefix + "-" + UUIDUtils.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION;
+        String filename4 = prefix + "-" + UUIDUtils.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION;
 
         /* FilenameFilter to look up files that are created in current test. */
         FilenameFilter filter = new FilenameFilter() {
@@ -377,6 +378,8 @@ public class StorageHelperAndroidTest {
         /* Also write empty content to a test file. */
         TimeUnit.SECONDS.sleep(2);
         InternalStorage.write(sAndroidFilesPath + "/" + filename3, "");
+        TimeUnit.SECONDS.sleep(2);
+        InternalStorage.write(sAndroidFilesPath + "/" + filename4, "  ");
 
         /* Get file names in the root path. */
         String[] filenames = InternalStorage.getFilenames(sAndroidFilesPath + "/", filter);
@@ -388,6 +391,7 @@ public class StorageHelperAndroidTest {
         assertTrue(list.contains(filename1));
         assertTrue(list.contains(filename2));
         assertFalse(list.contains(filename3));
+        assertFalse(list.contains(filename4));
 
         /* Get the most recent file. */
         File lastModifiedFile = InternalStorage.lastModifiedFile(sAndroidFilesPath, filter);
