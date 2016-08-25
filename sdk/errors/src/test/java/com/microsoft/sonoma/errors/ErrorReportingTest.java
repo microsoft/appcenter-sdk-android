@@ -119,7 +119,7 @@ public class ErrorReportingTest {
         ErrorReporting.notifyUserConfirmation(ErrorReporting.SEND);
 
         verifyStatic(times(1));
-        SonomaLog.error(anyString());
+        SonomaLog.error(eq(ErrorReporting.LOG_TAG), anyString());
     }
 
     @Test
@@ -342,7 +342,7 @@ public class ErrorReportingTest {
         verify(mockChannel, never()).enqueue(any(Log.class), anyString());
 
         verifyStatic();
-        SonomaLog.error(anyString(), eq(jsonException));
+        SonomaLog.error(eq(ErrorReporting.LOG_TAG), anyString(), eq(jsonException));
     }
 
     @Test(expected = TestCrashException.class)
@@ -418,12 +418,12 @@ public class ErrorReportingTest {
 
         listener.onBeforeSending(errorLog);
         verifyStatic();
-        SonomaLog.warn(anyString());
+        SonomaLog.warn(eq(ErrorReporting.LOG_TAG), anyString());
         Mockito.verifyNoMoreInteractions(mockListener);
 
         listener.onSuccess(mock(Log.class));
         verifyStatic();
-        SonomaLog.warn(contains(Log.class.getName()));
+        SonomaLog.warn(eq(ErrorReporting.LOG_TAG), contains(Log.class.getName()));
         Mockito.verifyNoMoreInteractions(mockListener);
     }
 
@@ -535,8 +535,8 @@ public class ErrorReportingTest {
         assertNull(report);
 
         verifyStatic();
-        SonomaLog.error(anyString(), eq(classNotFoundException));
-        SonomaLog.error(anyString(), eq(ioException));
+        SonomaLog.error(eq(ErrorReporting.LOG_TAG), anyString(), eq(classNotFoundException));
+        SonomaLog.error(eq(ErrorReporting.LOG_TAG), anyString(), eq(ioException));
     }
 
     @Test
@@ -674,6 +674,6 @@ public class ErrorReportingTest {
         assertNull(ErrorReporting.getLastSessionErrorReport());
 
         verifyStatic();
-        SonomaLog.error(anyString(), eq(jsonException));
+        SonomaLog.error(eq(ErrorReporting.LOG_TAG), anyString(), eq(jsonException));
     }
 }

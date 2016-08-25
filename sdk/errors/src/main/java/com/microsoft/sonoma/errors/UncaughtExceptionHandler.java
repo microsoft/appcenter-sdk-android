@@ -47,15 +47,15 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
                 File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
                 File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
                 String errorLogString = mLogSerializer.serializeLog(errorLog);
-                SonomaLog.debug("Saving uncaught exception:", exception);
+                SonomaLog.debug(ErrorReporting.LOG_TAG, "Saving uncaught exception:", exception);
                 StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
-                SonomaLog.debug("Saved JSON content for ingestion into " + errorLogFile);
+                SonomaLog.debug(ErrorReporting.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
                 StorageHelper.InternalStorage.writeObject(throwableFile, exception);
-                SonomaLog.debug("Saved Throwable as is for client side inspection in " + throwableFile);
+                SonomaLog.debug(ErrorReporting.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile);
             } catch (JSONException e) {
-                SonomaLog.error("Error serializing error log to JSON", e);
+                SonomaLog.error(ErrorReporting.LOG_TAG, "Error serializing error log to JSON", e);
             } catch (IOException e) {
-                SonomaLog.error("Error writing error log to file", e);
+                SonomaLog.error(ErrorReporting.LOG_TAG, "Error writing error log to file", e);
             }
             if (mDefaultUncaughtExceptionHandler != null) {
                 mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);

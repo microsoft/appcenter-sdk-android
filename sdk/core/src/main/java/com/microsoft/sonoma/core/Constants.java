@@ -49,7 +49,7 @@ public class Constants {
                 File file = context.getFilesDir();
                 Constants.FILES_PATH = file.getAbsolutePath();
             } catch (Exception e) {
-                SonomaLog.error("Exception thrown when accessing the application filesystem", e);
+                SonomaLog.error(Sonoma.LOG_TAG, "Exception thrown when accessing the application filesystem", e);
             }
         }
     }

@@ -12,6 +12,7 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 import com.microsoft.sonoma.core.BuildConfig;
+import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.ingestion.models.Device;
 
 import java.util.Locale;
@@ -44,7 +45,7 @@ public class DeviceInfoHelper {
             device.setAppVersion(packageInfo.versionName);
             device.setAppBuild(String.valueOf(packageInfo.versionCode));
         } catch (Exception e) {
-            SonomaLog.error("Cannot retrieve package info", e);
+            SonomaLog.error(Sonoma.LOG_TAG, "Cannot retrieve package info", e);
             throw new DeviceInfoException("Cannot retrieve package info", e);
         }
 
@@ -57,7 +58,7 @@ public class DeviceInfoHelper {
             device.setCarrierCountry(telephonyManager.getNetworkCountryIso());
             device.setCarrierName(telephonyManager.getNetworkOperatorName());
         } catch (Exception e) {
-            SonomaLog.error("Cannot retrieve carrier info", e);
+            SonomaLog.error(Sonoma.LOG_TAG, "Cannot retrieve carrier info", e);
         }
 
         /* Locale. */
@@ -77,7 +78,7 @@ public class DeviceInfoHelper {
         try {
             device.setScreenSize(getScreenSize(context));
         } catch (Exception e) {
-            SonomaLog.error("Cannot retrieve screen size", e);
+            SonomaLog.error(Sonoma.LOG_TAG, "Cannot retrieve screen size", e);
         }
 
         /* SDK version. */

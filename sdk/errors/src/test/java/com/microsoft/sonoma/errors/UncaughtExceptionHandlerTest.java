@@ -188,7 +188,7 @@ public class UncaughtExceptionHandlerTest {
         exceptionHandler.uncaughtException(thread, exception);
 
         verifyStatic();
-        SonomaLog.error(anyString(), eq(jsonException));
+        SonomaLog.error(eq(ErrorReporting.LOG_TAG), anyString(), eq(jsonException));
 
         verify(defaultExceptionHandler).uncaughtException(thread, exception);
     }
@@ -206,7 +206,7 @@ public class UncaughtExceptionHandlerTest {
         exceptionHandler.uncaughtException(thread, exception);
 
         verifyStatic();
-        SonomaLog.error(anyString(), eq(ioException));
+        SonomaLog.error(eq(ErrorReporting.LOG_TAG), anyString(), eq(ioException));
 
         verify(defaultExceptionHandler).uncaughtException(thread, exception);
     }
