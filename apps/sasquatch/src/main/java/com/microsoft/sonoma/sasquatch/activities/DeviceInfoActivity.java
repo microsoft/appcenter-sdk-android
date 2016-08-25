@@ -20,6 +20,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DeviceInfoActivity extends AppCompatActivity implements NetworkStateHelper.Listener {
+
+    /**
+     * TAG used in logging.
+     */
+    private static final String TAG = "DeviceInfoActivity";
+
     private static final String[] METHOD_BLACK_LIST = {"getClass", "getToffset", "getType"};
 
     private NetworkStateHelper mNetworkStateHelper;
@@ -98,7 +104,7 @@ public class DeviceInfoActivity extends AppCompatActivity implements NetworkStat
     @Override
     public void onNetworkStateUpdated(boolean connected) {
         String message = "Network " + (connected ? "up" : "down");
-        SonomaLog.verbose(message);
+        SonomaLog.verbose(TAG, message);
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
