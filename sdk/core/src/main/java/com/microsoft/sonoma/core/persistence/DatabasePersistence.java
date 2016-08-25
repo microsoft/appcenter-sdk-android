@@ -6,6 +6,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.ingestion.models.Log;
 import com.microsoft.sonoma.core.utils.DatabaseManager;
 import com.microsoft.sonoma.core.utils.SonomaLog;
@@ -102,7 +103,7 @@ public class DatabasePersistence extends Persistence implements Closeable {
                 new DatabaseStorage.DatabaseErrorListener() {
                     @Override
                     public void onError(String operation, RuntimeException e) {
-                        SonomaLog.error("Cannot complete an operation (" + operation + ")", e);
+                        SonomaLog.error(Sonoma.LOG_TAG, "Cannot complete an operation (" + operation + ")", e);
                     }
                 });
     }
@@ -125,7 +126,7 @@ public class DatabasePersistence extends Persistence implements Closeable {
     public void putLog(@NonNull String group, @NonNull Log log) throws PersistenceException {
         /* Convert log to JSON string and put in the database. */
         try {
-            SonomaLog.debug("Storing a log to the persistence database for log type " + log.getType() + " with " + log.getSid());
+            SonomaLog.debug(Sonoma.LOG_TAG, "Storing a log to the persistence database for log type " + log.getType() + " with " + log.getSid());
             mDatabaseStorage.put(getContentValues(group, getLogSerializer().serializeLog(log)));
         } catch (JSONException e) {
             throw new PersistenceException("Cannot convert to JSON string", e);
@@ -135,13 +136,13 @@ public class DatabasePersistence extends Persistence implements Closeable {
     @Override
     public void deleteLogs(@NonNull String group, @NonNull String id) {
         /* Log. */
-        SonomaLog.info("Deleting logs from the persistence database for " + group + " with " + id);
-        SonomaLog.debug("The IDs for deleting log(s) is/are:");
+        SonomaLog.info(Sonoma.LOG_TAG, "Deleting logs from the persistence database for " + group + " with " + id);
+        SonomaLog.debug(Sonoma.LOG_TAG, "The IDs for deleting log(s) is/are:");
 
         List<Long> dbIdentifiers = mPendingDbIdentifiersGroups.remove(group + id);
         if (dbIdentifiers != null) {
             for (Long dbIdentifier : dbIdentifiers) {
-                SonomaLog.debug("\t" + dbIdentifier);
+                SonomaLog.debug(Sonoma.LOG_TAG, "\t" + dbIdentifier);
                 mDatabaseStorage.delete(dbIdentifier);
                 mPendingDbIdentifiers.remove(dbIdentifier);
             }
@@ -151,7 +152,7 @@ public class DatabasePersistence extends Persistence implements Closeable {
     @Override
     public void deleteLogs(String group) {
         /* Log. */
-        SonomaLog.info("Deleting all logs from the persistence database for " + group);
+        SonomaLog.info(Sonoma.LOG_TAG, "Deleting all logs from the persistence database for " + group);
 
         /* Delete from database. */
         mDatabaseStorage.delete(COLUMN_GROUP, group);
@@ -178,7 +179,7 @@ public class DatabasePersistence extends Persistence implements Closeable {
     @Nullable
     public String getLogs(@NonNull String group, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
         /* Log. */
-        SonomaLog.info("Trying to get " + limit + " logs from the persistence database for " + group);
+        SonomaLog.info(Sonoma.LOG_TAG, "Trying to get " + limit + " logs from the persistence database for " + group);
 
         /* Query database and get scanner. */
         DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group);
@@ -199,7 +200,7 @@ public class DatabasePersistence extends Persistence implements Closeable {
                     count++;
                 } catch (JSONException e) {
                     /* If it is not able to deserialize, delete and get another log. */
-                    SonomaLog.error("Cannot deserialize a log in the database", e);
+                    SonomaLog.error(Sonoma.LOG_TAG, "Cannot deserialize a log in the database", e);
 
                     /* Put the failed identifier to delete. */
                     failedDbIdentifiers.add(dbIdentifier);
@@ -211,12 +212,12 @@ public class DatabasePersistence extends Persistence implements Closeable {
         /* Delete any logs that cannot be deserialized. */
         if (failedDbIdentifiers.size() > 0) {
             mDatabaseStorage.delete(failedDbIdentifiers);
-            SonomaLog.info("Deleted logs that cannot be deserialized");
+            SonomaLog.info(Sonoma.LOG_TAG, "Deleted logs that cannot be deserialized");
         }
 
         /* No logs found. */
         if (candidates.size() <= 0) {
-            SonomaLog.info("No logs found in the persistence database at the moment");
+            SonomaLog.info(Sonoma.LOG_TAG, "No logs found in the persistence database at the moment");
             return null;
         }
 
@@ -224,8 +225,8 @@ public class DatabasePersistence extends Persistence implements Closeable {
         String id = UUIDUtils.randomUUID().toString();
 
         /* Log. */
-        SonomaLog.info("Returning " + candidates.size() + " log(s) with an ID, " + id);
-        SonomaLog.debug("The SID/ID pairs for returning log(s) is/are:");
+        SonomaLog.info(Sonoma.LOG_TAG, "Returning " + candidates.size() + " log(s) with an ID, " + id);
+        SonomaLog.debug(Sonoma.LOG_TAG, "The SID/ID pairs for returning log(s) is/are:");
 
         List<Long> pendingDbIdentifiersGroup = new ArrayList<>();
         for (Map.Entry<Long, Log> entry : candidates.entrySet()) {
@@ -241,7 +242,7 @@ public class DatabasePersistence extends Persistence implements Closeable {
             outLogs.add(entry.getValue());
 
             /* Log. */
-            SonomaLog.debug("\t" + entry.getValue().getSid() + " / " + dbIdentifier);
+            SonomaLog.debug(Sonoma.LOG_TAG, "\t" + entry.getValue().getSid() + " / " + dbIdentifier);
         }
 
         /* Update pending IDs. */
@@ -254,14 +255,14 @@ public class DatabasePersistence extends Persistence implements Closeable {
     public void clearPendingLogState() {
         mPendingDbIdentifiers.clear();
         mPendingDbIdentifiersGroups.clear();
-        SonomaLog.info("Cleared pending log states");
+        SonomaLog.info(Sonoma.LOG_TAG, "Cleared pending log states");
     }
 
     @Override
     public void clear() {
         clearPendingLogState();
         mDatabaseStorage.clear();
-        SonomaLog.info("Deleted logs from the persistence database");
+        SonomaLog.info(Sonoma.LOG_TAG, "Deleted logs from the persistence database");
     }
 
     @Override

@@ -28,6 +28,11 @@ import static android.util.Log.VERBOSE;
 public final class Sonoma {
 
     /**
+     * TAG used in logging.
+     */
+    public static final String LOG_TAG = SonomaLog.LOG_TAG + "Core";
+
+    /**
      * Shared instance.
      */
     private static Sonoma sInstance;
@@ -111,7 +116,7 @@ public final class Sonoma {
             Method getInstance = type.getMethod("getInstance");
             return (SonomaFeature) getInstance.invoke(null);
         } catch (Exception e) {
-            SonomaLog.error("Failed to instantiate feature '" + type.getName() + "'", e);
+            SonomaLog.error(LOG_TAG, "Failed to instantiate feature '" + type.getName() + "'", e);
             return null;
         }
     }
@@ -184,9 +189,9 @@ public final class Sonoma {
         boolean switchToDisabled = previouslyEnabled && !enabled;
         boolean switchToEnabled = !previouslyEnabled && enabled;
         if (switchToDisabled) {
-            SonomaLog.info("Sonoma disabled");
+            SonomaLog.info(LOG_TAG, "Sonoma disabled");
         } else if (switchToEnabled) {
-            SonomaLog.info("Sonoma enabled");
+            SonomaLog.info(LOG_TAG, "Sonoma enabled");
         }
 
         /* Apply change to features. */
@@ -218,22 +223,22 @@ public final class Sonoma {
 
         /* Parse and store parameters. */
         if (mApplication != null) {
-            SonomaLog.warn("Sonoma may only be init once");
+            SonomaLog.warn(LOG_TAG, "Sonoma may only be init once");
             return false;
         }
         if (application == null) {
-            SonomaLog.error("application may not be null");
+            SonomaLog.error(LOG_TAG, "application may not be null");
             return false;
         }
         if (appSecret == null) {
-            SonomaLog.error("appSecret may not be null");
+            SonomaLog.error(LOG_TAG, "appSecret may not be null");
             return false;
         }
         UUID appSecretUUID;
         try {
             appSecretUUID = UUID.fromString(appSecret);
         } catch (IllegalArgumentException e) {
-            SonomaLog.error("appSecret is invalid", e);
+            SonomaLog.error(LOG_TAG, "appSecret is invalid", e);
             return false;
         }
         mApplication = application;
