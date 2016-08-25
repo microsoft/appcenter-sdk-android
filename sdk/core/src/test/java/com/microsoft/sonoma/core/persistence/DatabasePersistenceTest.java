@@ -1,5 +1,6 @@
 package com.microsoft.sonoma.core.persistence;
 
+import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.ingestion.models.Log;
 import com.microsoft.sonoma.core.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.sonoma.core.ingestion.models.json.LogSerializer;
@@ -14,6 +15,7 @@ import java.io.IOException;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -44,6 +46,6 @@ public class DatabasePersistenceTest {
         }
 
         verifyStatic();
-        SonomaLog.error(anyString(), any(RuntimeException.class));
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 }
