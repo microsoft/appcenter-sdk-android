@@ -18,12 +18,7 @@ import java.io.IOException;
 @SuppressWarnings("unused")
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class PersistenceTest {
-
-    /**
-     * Log tag.
-     */
-    private static final String TAG = "DatabasePersistenceTest";
+public class PersistenceAndroidTest {
 
     /**
      * Context instance.
@@ -47,7 +42,6 @@ public class PersistenceTest {
 
     @Test(expected = IllegalStateException.class)
     public void missingLogSerializer() throws Persistence.PersistenceException, IOException {
-        android.util.Log.i(TAG, "Testing Database Persistence exception");
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence("test-persistence", "exception", 1);
