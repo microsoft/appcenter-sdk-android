@@ -3,6 +3,7 @@ package com.microsoft.sonoma.analytics.channel;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.sonoma.analytics.Analytics;
 import com.microsoft.sonoma.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.ingestion.models.Log;
@@ -109,11 +110,11 @@ public class SessionTracker implements Channel.Listener {
                     UUID sid = UUID.fromString(split[1]);
                     mSessions.put(time, sid);
                 } catch (RuntimeException e) {
-                    SonomaLog.warn("Ignore invalid session in store: " + session, e);
+                    SonomaLog.warn(Analytics.LOG_TAG, "Ignore invalid session in store: " + session, e);
                 }
             }
         }
-        SonomaLog.debug("Loaded stored sessions: " + mSessions);
+        SonomaLog.debug(Analytics.LOG_TAG, "Loaded stored sessions: " + mSessions);
     }
 
     @Override

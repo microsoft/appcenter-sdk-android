@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import java.util.Collections;
 
-import static com.microsoft.sonoma.core.AndroidTestUtils.TAG;
+import static com.microsoft.sonoma.test.TestUtils.TAG;
 import static com.microsoft.sonoma.core.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 
 @SuppressWarnings("unused")

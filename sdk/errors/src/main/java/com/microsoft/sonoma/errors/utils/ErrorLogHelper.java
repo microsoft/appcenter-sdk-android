@@ -15,6 +15,7 @@ import com.microsoft.sonoma.core.utils.DeviceInfoHelper;
 import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
+import com.microsoft.sonoma.errors.ErrorReporting;
 import com.microsoft.sonoma.errors.ingestion.models.JavaErrorLog;
 import com.microsoft.sonoma.errors.ingestion.models.JavaException;
 import com.microsoft.sonoma.errors.ingestion.models.JavaStackFrame;
@@ -60,7 +61,7 @@ public final class ErrorLogHelper {
         try {
             errorLog.setDevice(DeviceInfoHelper.getDeviceInfo(context));
         } catch (DeviceInfoHelper.DeviceInfoException e) {
-            SonomaLog.error("Could not attach device properties snapshot to error log, will attach at sending time", e);
+            SonomaLog.error(ErrorReporting.LOG_TAG, "Could not attach device properties snapshot to error log, will attach at sending time", e);
         }
 
         /* Process information. Parent one is not available on Android. */
@@ -153,7 +154,7 @@ public final class ErrorLogHelper {
     public static void removeStoredThrowableFile(@NonNull UUID id) {
         File file = getStoredThrowableFile(id);
         if (file != null) {
-            SonomaLog.info("Deleting throwable file " + file.getName());
+            SonomaLog.info(ErrorReporting.LOG_TAG, "Deleting throwable file " + file.getName());
             StorageHelper.InternalStorage.delete(file);
         }
     }
@@ -166,7 +167,7 @@ public final class ErrorLogHelper {
     public static void removeStoredErrorLogFile(@NonNull UUID id) {
         File file = getStoredErrorLogFile(id);
         if (file != null) {
-            SonomaLog.info("Deleting error log file " + file.getName());
+            SonomaLog.info(ErrorReporting.LOG_TAG, "Deleting error log file " + file.getName());
             StorageHelper.InternalStorage.delete(file);
         }
     }

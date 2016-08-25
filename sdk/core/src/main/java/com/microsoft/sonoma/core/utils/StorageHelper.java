@@ -9,6 +9,8 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
+import com.microsoft.sonoma.core.Sonoma;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.Closeable;
@@ -328,10 +330,10 @@ public final class StorageHelper {
                     contents.append(line).append(lineSeparator);
                 }
             } catch (FileNotFoundException ignored) {
-                // Log the exception and return an empty string.
-                SonomaLog.error("Cannot find file " + file.getAbsolutePath());
+                /* Log the exception and return an empty string. */
+                SonomaLog.error(Sonoma.LOG_TAG, "Cannot find file " + file.getAbsolutePath());
             } catch (IOException ignored) {
-                // Ignore IOException and return the already read contents.
+                /* Ignore IOException and return the already read contents. */
             } finally {
                 if (reader != null) {
                     try {
