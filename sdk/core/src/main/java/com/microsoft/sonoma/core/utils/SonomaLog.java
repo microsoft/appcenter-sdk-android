@@ -50,7 +50,6 @@ public class SonomaLog {
      * @param message the log message
      */
     public static void verbose(String tag, String message) {
-        tag = sanitizeTag(tag);
         if (sLogLevel <= Log.VERBOSE) {
             Log.v(tag, message);
         }
@@ -64,7 +63,6 @@ public class SonomaLog {
      * @param throwable the throwable you want to log
      */
     public static void verbose(String tag, String message, Throwable throwable) {
-        tag = sanitizeTag(tag);
         if (sLogLevel <= Log.VERBOSE) {
             Log.v(tag, message, throwable);
         }
@@ -77,7 +75,6 @@ public class SonomaLog {
      * @param message the log message
      */
     public static void debug(String tag, String message) {
-        tag = sanitizeTag(tag);
         if (sLogLevel <= Log.DEBUG) {
             Log.d(tag, message);
         }
@@ -91,7 +88,6 @@ public class SonomaLog {
      * @param throwable the throwable you want to log
      */
     public static void debug(String tag, String message, Throwable throwable) {
-        tag = sanitizeTag(tag);
         if (sLogLevel <= Log.DEBUG) {
             Log.d(tag, message, throwable);
         }
@@ -104,7 +100,6 @@ public class SonomaLog {
      * @param message the log message
      */
     public static void info(String tag, String message) {
-        tag = sanitizeTag(tag);
         if (sLogLevel <= Log.INFO) {
             Log.i(tag, message);
         }
@@ -118,7 +113,6 @@ public class SonomaLog {
      * @param throwable the throwable you want to log
      */
     public static void info(String tag, String message, Throwable throwable) {
-        tag = sanitizeTag(tag);
         if (sLogLevel <= Log.INFO) {
             Log.i(tag, message, throwable);
         }
@@ -131,7 +125,6 @@ public class SonomaLog {
      * @param message the log message
      */
     public static void warn(String tag, String message) {
-        tag = sanitizeTag(tag);
         if (sLogLevel <= Log.WARN) {
             Log.w(tag, message);
         }
@@ -145,7 +138,6 @@ public class SonomaLog {
      * @param throwable the throwable you want to log
      */
     public static void warn(String tag, String message, Throwable throwable) {
-        tag = sanitizeTag(tag);
         if (sLogLevel <= Log.WARN) {
             Log.w(tag, message, throwable);
         }
@@ -158,7 +150,6 @@ public class SonomaLog {
      * @param message the log message
      */
     public static void error(String tag, String message) {
-        tag = sanitizeTag(tag);
         if (sLogLevel <= Log.ERROR) {
             Log.e(tag, message);
         }
@@ -172,24 +163,8 @@ public class SonomaLog {
      * @param throwable the throwable you want to log
      */
     public static void error(String tag, String message, Throwable throwable) {
-        tag = sanitizeTag(tag);
         if (sLogLevel <= Log.ERROR) {
             Log.e(tag, message, throwable);
         }
-    }
-
-    /**
-     * Sanitize a TAG string
-     *
-     * @param tag the log tag for your message for the logging
-     * @return a sanitized TAG, defaults to 'Sonoma' in case the log tag for your message is null, empty or longer than
-     * 23 characters.
-     */
-    private static String sanitizeTag(String tag) {
-        if ((tag == null) || (tag.length() == 0) || (tag.length() > 23)) {
-            tag = LOG_TAG;
-        }
-
-        return tag;
     }
 }
