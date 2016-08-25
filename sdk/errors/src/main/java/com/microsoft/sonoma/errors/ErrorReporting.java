@@ -352,11 +352,14 @@ public class ErrorReporting extends AbstractSonomaFeature {
                 JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logfileContents);
                 if (log != null) {
                     UUID id = log.getId();
-                    if (mErrorReportingListener.shouldProcess(buildErrorReport(log))) {
+                    ErrorReport errorReport = buildErrorReport(log);
+                    if (errorReport != null && mErrorReportingListener.shouldProcess(errorReport)) {
                         SonomaLog.debug(LOG_TAG, "ErrorReportingListener.shouldProcess returned true, continue processing log: " + id.toString());
                         mUnprocessedErrorReports.put(id, mErrorReportCache.get(id));
                     } else {
-                        SonomaLog.debug(LOG_TAG, "ErrorReportingListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
+                        if (errorReport != null)
+                            SonomaLog.debug(LOG_TAG, "ErrorReportingListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
+
                         ErrorLogHelper.removeStoredErrorLogFile(id);
                         removeStoredThrowable(id);
                     }
@@ -394,6 +397,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
     }
 
     @VisibleForTesting
+    @Nullable
     ErrorReport buildErrorReport(JavaErrorLog log) {
         UUID id = log.getId();
         if (mErrorReportCache.containsKey(id)) {
