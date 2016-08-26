@@ -376,9 +376,7 @@ public class StorageHelperAndroidTest {
         Log.i(TAG, "Writing " + filename2);
         InternalStorage.write(sAndroidFilesPath + "/" + filename2, contents2);
         /* Also write empty content to a test file. */
-        TimeUnit.SECONDS.sleep(2);
         InternalStorage.write(sAndroidFilesPath + "/" + filename3, "");
-        TimeUnit.SECONDS.sleep(2);
         InternalStorage.write(sAndroidFilesPath + "/" + filename4, "  ");
 
         /* Get file names in the root path. */
