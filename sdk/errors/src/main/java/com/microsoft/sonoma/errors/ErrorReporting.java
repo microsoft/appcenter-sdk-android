@@ -353,13 +353,13 @@ public class ErrorReporting extends AbstractSonomaFeature {
                     UUID id = log.getId();
                     ErrorReport errorReport = buildErrorReport(log);
                     if (errorReport == null) {
-                        removeErrorLog(id);
+                        removeAllStoredErrorLogFiles(id);
                     } else if (mErrorReportingListener.shouldProcess(errorReport)) {
                         SonomaLog.debug(LOG_TAG, "ErrorReportingListener.shouldProcess returned true, continue processing log: " + id.toString());
                         mUnprocessedErrorReports.put(id, mErrorReportCache.get(id));
                     } else {
                         SonomaLog.debug(LOG_TAG, "ErrorReportingListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
-                        removeErrorLog(id);
+                        removeAllStoredErrorLogFiles(id);
                     }
                 } catch (JSONException e) {
                     SonomaLog.error(LOG_TAG, "Error parsing error log", e);
@@ -378,7 +378,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
         }
     }
 
-    private void removeErrorLog(UUID id) {
+    private void removeAllStoredErrorLogFiles(UUID id) {
         ErrorLogHelper.removeStoredErrorLogFile(id);
         removeStoredThrowable(id);
     }
@@ -448,7 +448,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
             for (Iterator<UUID> iterator = mUnprocessedErrorReports.keySet().iterator(); iterator.hasNext(); ) {
                 UUID id = iterator.next();
                 iterator.remove();
-                removeErrorLog(id);
+                removeAllStoredErrorLogFiles(id);
             }
             return;
         }
