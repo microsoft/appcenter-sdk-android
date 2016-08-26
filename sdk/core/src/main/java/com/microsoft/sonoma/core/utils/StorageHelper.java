@@ -16,7 +16,6 @@ import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -320,30 +319,25 @@ public final class StorageHelper {
          * @return The contents of the file.
          */
         public static String read(@NonNull File file) {
-            StringBuilder contents = new StringBuilder();
-            BufferedReader reader = null;
             try {
-                reader = new BufferedReader(new FileReader(file));
-                String line;
-                String lineSeparator = System.getProperty("line.separator");
-                while ((line = reader.readLine()) != null) {
-                    contents.append(line).append(lineSeparator);
-                }
-            } catch (FileNotFoundException ignored) {
-                /* Log the exception and return an empty string. */
-                SonomaLog.error(Sonoma.LOG_TAG, "Cannot find file " + file.getAbsolutePath());
-            } catch (IOException ignored) {
-                /* Ignore IOException and return the already read contents. */
-            } finally {
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (IOException ignored) {
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                StringBuilder contents;
+                //noinspection TryFinallyCanBeTryWithResources (requires min API level 19)
+                try {
+                    String line;
+                    String lineSeparator = System.getProperty("line.separator");
+                    contents = new StringBuilder();
+                    while ((line = reader.readLine()) != null) {
+                        contents.append(line).append(lineSeparator);
                     }
+                } finally {
+                    reader.close();
                 }
+                return contents.toString();
+            } catch (IOException e) {
+                SonomaLog.error(Sonoma.LOG_TAG, "Could not read file " + file.getAbsolutePath(), e);
             }
-
-            return contents.toString();
+            return null;
         }
 
         /**

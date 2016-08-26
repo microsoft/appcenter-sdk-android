@@ -26,6 +26,7 @@ public class DefaultLogSerializer implements LogSerializer {
 
     private final Map<String, LogFactory> mLogFactories = new HashMap<>();
 
+    @NonNull
     private JSONStringer writeLog(JSONStringer writer, Log log) throws JSONException {
         writer.object();
         log.write(writer);
@@ -33,6 +34,7 @@ public class DefaultLogSerializer implements LogSerializer {
         return writer;
     }
 
+    @NonNull
     private Log readLog(JSONObject object) throws JSONException {
         String type = object.getString(TYPE);
         Log log = mLogFactories.get(type).create();
@@ -40,16 +42,19 @@ public class DefaultLogSerializer implements LogSerializer {
         return log;
     }
 
+    @NonNull
     @Override
     public String serializeLog(@NonNull Log log) throws JSONException {
         return writeLog(new JSONStringer(), log).toString();
     }
 
+    @NonNull
     @Override
     public Log deserializeLog(@NonNull String json) throws JSONException {
         return readLog(new JSONObject(json));
     }
 
+    @NonNull
     @Override
     public String serializeContainer(@NonNull LogContainer logContainer) throws JSONException {
 
@@ -77,6 +82,7 @@ public class DefaultLogSerializer implements LogSerializer {
         return writer.toString();
     }
 
+    @NonNull
     @Override
     public LogContainer deserializeContainer(@NonNull String json) throws JSONException {
         JSONObject jContainer = new JSONObject(json);

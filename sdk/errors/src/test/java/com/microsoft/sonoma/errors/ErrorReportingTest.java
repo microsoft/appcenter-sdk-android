@@ -57,6 +57,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
@@ -189,7 +190,7 @@ public class ErrorReportingTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(errorReport);
-
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
 
         ErrorAttachment mockAttachment = mock(ErrorAttachment.class);
@@ -229,7 +230,7 @@ public class ErrorReportingTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(errorReport);
-
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
 
         ErrorReportingListener mockListener = mock(ErrorReportingListener.class);
@@ -261,7 +262,7 @@ public class ErrorReportingTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(errorReport);
-
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
         when(StorageHelper.PreferencesStorage.getBoolean(eq(ErrorReporting.PREF_KEY_ALWAYS_SEND), anyBoolean())).thenReturn(true);
 
@@ -285,6 +286,27 @@ public class ErrorReportingTest {
                 return log.equals(errorLog);
             }
         }), eq(errorReporting.getGroupName()));
+    }
+
+    @Test
+    public void processPendingErrorsCorrupted() throws JSONException {
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
+
+        ErrorReporting errorReporting = ErrorReporting.getInstance();
+
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString())).thenReturn(mock(JavaErrorLog.class));
+        errorReporting.setLogSerializer(logSerializer);
+
+        ErrorReportingListener listener = mock(ErrorReportingListener.class);
+        errorReporting.setInstanceListener(listener);
+
+        Channel channel = mock(Channel.class);
+        errorReporting.onChannelReady(mock(Context.class), channel);
+        verifyZeroInteractions(listener);
+        verify(channel, never()).enqueue(any(Log.class), anyString());
     }
 
     @Test
@@ -330,7 +352,7 @@ public class ErrorReportingTest {
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
-
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         ErrorReporting errorReporting = ErrorReporting.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
 
@@ -435,7 +457,7 @@ public class ErrorReportingTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenReturn(new ErrorReport());
-
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(null);
 
         ErrorReportingListener mockListener = mock(ErrorReportingListener.class);
@@ -610,6 +632,7 @@ public class ErrorReportingTest {
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(errorStorageDirectory.newFile("last-error-log.json"));
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(errorStorageDirectory.newFile());
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(JavaErrorLog.class), any(Throwable.class))).thenCallRealMethod();
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(throwable);
 
         ErrorReporting.getInstance().setLogSerializer(logSerializer);
@@ -649,10 +672,11 @@ public class ErrorReportingTest {
     @Test
     public void crashInLastSessionError() throws JSONException, IOException, ClassNotFoundException {
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(null);
+        when(logSerializer.deserializeLog(anyString())).thenReturn(mock(JavaErrorLog.class));
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(errorStorageDirectory.newFile("last-error-log.json"));
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
 
         ErrorReporting.getInstance().setLogSerializer(logSerializer);
 
@@ -675,5 +699,16 @@ public class ErrorReportingTest {
 
         verifyStatic();
         SonomaLog.error(eq(ErrorReporting.LOG_TAG), anyString(), eq(jsonException));
+    }
+
+    @Test
+    public void crashInLastSessionCorrupted() throws IOException {
+        mockStatic(ErrorLogHelper.class);
+        File file = errorStorageDirectory.newFile("last-error-log.json");
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{file});
+        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(file);
+        ErrorReporting.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
+        assertFalse(ErrorReporting.hasCrashedInLastSession());
+        assertNull(ErrorReporting.getLastSessionErrorReport());
     }
 }
