@@ -332,14 +332,13 @@ public class ErrorReporting extends AbstractSonomaFeature {
             File logFile = ErrorLogHelper.getLastErrorLogFile();
             if (logFile != null) {
                 String logFileContents = StorageHelper.InternalStorage.read(logFile);
-                try {
-                    JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logFileContents);
-                    if (log != null) {
+                if (logFileContents != null)
+                    try {
+                        JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logFileContents);
                         mLastSessionErrorReport = buildErrorReport(log);
+                    } catch (JSONException e) {
+                        SonomaLog.error(LOG_TAG, "Error parsing last session error log", e);
                     }
-                } catch (JSONException e) {
-                    SonomaLog.error(LOG_TAG, "Error parsing last session error log", e);
-                }
             }
         }
     }
@@ -348,25 +347,23 @@ public class ErrorReporting extends AbstractSonomaFeature {
         for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
             SonomaLog.debug(LOG_TAG, "Process pending error file: " + logFile);
             String logfileContents = StorageHelper.InternalStorage.read(logFile);
-            try {
-                JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logfileContents);
-                if (log != null) {
+            if (logfileContents != null)
+                try {
+                    JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logfileContents);
                     UUID id = log.getId();
                     ErrorReport errorReport = buildErrorReport(log);
-                    if (errorReport != null && mErrorReportingListener.shouldProcess(errorReport)) {
+                    if (errorReport == null) {
+                        removeErrorLog(id);
+                    } else if (mErrorReportingListener.shouldProcess(errorReport)) {
                         SonomaLog.debug(LOG_TAG, "ErrorReportingListener.shouldProcess returned true, continue processing log: " + id.toString());
                         mUnprocessedErrorReports.put(id, mErrorReportCache.get(id));
                     } else {
-                        if (errorReport != null)
-                            SonomaLog.debug(LOG_TAG, "ErrorReportingListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
-
-                        ErrorLogHelper.removeStoredErrorLogFile(id);
-                        removeStoredThrowable(id);
+                        SonomaLog.debug(LOG_TAG, "ErrorReportingListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
+                        removeErrorLog(id);
                     }
+                } catch (JSONException e) {
+                    SonomaLog.error(LOG_TAG, "Error parsing error log", e);
                 }
-            } catch (JSONException e) {
-                SonomaLog.error(LOG_TAG, "Error parsing error log", e);
-            }
         }
 
         boolean shouldAwaitUserConfirmation = true;
@@ -379,6 +376,11 @@ public class ErrorReporting extends AbstractSonomaFeature {
                 SonomaLog.debug(LOG_TAG, "The flag for user confirmation is set to ALWAYS_SEND, continue sending logs");
             handleUserConfirmation(SEND);
         }
+    }
+
+    private void removeErrorLog(UUID id) {
+        ErrorLogHelper.removeStoredErrorLogFile(id);
+        removeStoredThrowable(id);
     }
 
     private void removeStoredThrowable(UUID id) {
@@ -446,8 +448,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
             for (Iterator<UUID> iterator = mUnprocessedErrorReports.keySet().iterator(); iterator.hasNext(); ) {
                 UUID id = iterator.next();
                 iterator.remove();
-                ErrorLogHelper.removeStoredErrorLogFile(id);
-                removeStoredThrowable(id);
+                removeErrorLog(id);
             }
             return;
         }
