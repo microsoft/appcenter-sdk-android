@@ -402,6 +402,7 @@ public class StorageHelperAndroidTest {
         String actual = InternalStorage.read(lastModifiedFile);
 
         /* Verify the contents of the most recent file. */
+        assertNotNull(actual);
         assertEquals(contents2, actual.trim());
 
         /* Delete the files to clean up. */
@@ -414,7 +415,7 @@ public class StorageHelperAndroidTest {
         assertEquals(0, InternalStorage.getFilenames(sAndroidFilesPath, filter).length);
 
         /* Verify invalid accesses. */
-        assertEquals("", InternalStorage.read("not-exist-filename"));
+        assertNull(InternalStorage.read("not-exist-filename"));
         assertArrayEquals(new String[0], InternalStorage.getFilenames("not-exist-path", null));
         assertNull(InternalStorage.lastModifiedFile("not-exist-path", null));
     }

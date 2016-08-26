@@ -62,6 +62,7 @@ public class SonomaLog {
      * @param message   the log message
      * @param throwable the throwable you want to log
      */
+    @SuppressWarnings("SameParameterValue")
     public static void verbose(String tag, String message, Throwable throwable) {
         if (sLogLevel <= Log.VERBOSE) {
             Log.v(tag, message, throwable);
@@ -112,6 +113,7 @@ public class SonomaLog {
      * @param message   the log message
      * @param throwable the throwable you want to log
      */
+    @SuppressWarnings("SameParameterValue")
     public static void info(String tag, String message, Throwable throwable) {
         if (sLogLevel <= Log.INFO) {
             Log.i(tag, message, throwable);
