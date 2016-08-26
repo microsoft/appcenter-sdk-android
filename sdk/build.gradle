@@ -28,13 +28,14 @@ subprojects {
                 testCoverageEnabled true
             }
         }
+
         testOptions {
             unitTests {
                 all {
                     jvmArgs '-noverify'
                 }
+                returnDefaultValues = true
             }
-            unitTests.returnDefaultValues = true
         }
     }
 
