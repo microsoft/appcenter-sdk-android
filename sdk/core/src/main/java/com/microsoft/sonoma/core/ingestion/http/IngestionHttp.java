@@ -20,6 +20,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.UUID;
 
+import static com.microsoft.sonoma.core.Sonoma.LOG_TAG;
 import static java.lang.Math.max;
 
 public class IngestionHttp implements Ingestion {
@@ -53,11 +54,6 @@ public class IngestionHttp implements Ingestion {
      * Default string builder capacity.
      */
     private static final int DEFAULT_STRING_BUILDER_CAPACITY = 16;
-
-    /**
-     * Log tag for POST payload.
-     */
-    private static final String LOG_TAG = SonomaLog.LOG_TAG + "Http";
 
     /**
      * Content type header key.
