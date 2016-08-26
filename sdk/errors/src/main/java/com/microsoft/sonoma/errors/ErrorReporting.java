@@ -2,7 +2,6 @@ package com.microsoft.sonoma.errors;
 
 import android.content.Context;
 import android.os.SystemClock;
-import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
@@ -27,8 +26,6 @@ import org.json.JSONException;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -184,7 +181,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
      * @see #DONT_SEND
      * @see #ALWAYS_SEND
      */
-    public static void notifyUserConfirmation(@ConfirmationDef int userConfirmation) {
+    public static void notifyUserConfirmation(@UserConfirmationDef int userConfirmation) {
         getInstance().handleUserConfirmation(userConfirmation);
     }
 
@@ -436,7 +433,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
     }
 
     @VisibleForTesting
-    private synchronized void handleUserConfirmation(@ConfirmationDef int userConfirmation) {
+    private synchronized void handleUserConfirmation(@UserConfirmationDef int userConfirmation) {
         if (mChannel == null) {
             SonomaLog.error(LOG_TAG, "ErrorReporting feature not initialized, discarding calls.");
             return;
@@ -478,15 +475,6 @@ public class ErrorReporting extends AbstractSonomaFeature {
     @VisibleForTesting
     void setLogSerializer(LogSerializer logSerializer) {
         mLogSerializer = logSerializer;
-    }
-
-    @Retention(RetentionPolicy.SOURCE)
-    @IntDef({
-            SEND,
-            DONT_SEND,
-            ALWAYS_SEND
-    })
-    private @interface ConfirmationDef {
     }
 
     /**
