@@ -2,6 +2,7 @@ package com.microsoft.sonoma.core.ingestion.http;
 
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.sonoma.core.ingestion.Ingestion;
 import com.microsoft.sonoma.core.ingestion.ServiceCall;
@@ -81,11 +82,6 @@ public class IngestionHttp implements Ingestion {
     private static final int READ_TIMEOUT = 20000;
 
     /**
-     * Url connection factory.
-     */
-    private final UrlConnectionFactory mUrlConnectionFactory;
-
-    /**
      * Log serializer.
      */
     private final LogSerializer mLogSerializer;
@@ -98,72 +94,28 @@ public class IngestionHttp implements Ingestion {
     /**
      * Init.
      *
-     * @param urlConnectionFactory url connection factory.
-     * @param logSerializer        log serializer.
+     * @param logSerializer log serializer.
      */
-    public IngestionHttp(@NonNull UrlConnectionFactory urlConnectionFactory, @NonNull LogSerializer logSerializer) {
-        mUrlConnectionFactory = urlConnectionFactory;
+    public IngestionHttp(@NonNull LogSerializer logSerializer) {
         mLogSerializer = logSerializer;
         mBaseUrl = DEFAULT_BASE_URL;
     }
 
     /**
-     * Set the base url.
-     *
-     * @param baseUrl the base url.
-     */
-    @SuppressWarnings("SameParameterValue")
-    public void setBaseUrl(@NonNull String baseUrl) {
-        mBaseUrl = baseUrl;
-    }
-
-    @Override
-    public ServiceCall sendAsync(final UUID appSecret, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
-        final AsyncTask<Void, Void, Exception> call = new AsyncTask<Void, Void, Exception>() {
-
-            @Override
-            protected Exception doInBackground(Void... params) {
-                try {
-                    doCall(appSecret, installId, logContainer);
-                } catch (Exception e) {
-                    return e;
-                }
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Exception e) {
-                if (e == null)
-                    serviceCallback.onCallSucceeded();
-                else
-                    serviceCallback.onCallFailed(e);
-            }
-        };
-        call.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        return new ServiceCall() {
-
-            @Override
-            public void cancel() {
-                if (!call.isCancelled())
-                    call.cancel(true);
-            }
-        };
-    }
-
-    /**
      * Do the HTTP call now.
      *
-     * @param appSecret    a unique and secret key used to identify the application.
-     * @param installId    install identifier.
-     * @param logContainer payload.
-     * @throws Exception if an error occurs.
+     * @param baseUrl       API base URL (scheme + authority).
+     * @param logSerializer log serializer.
+     * @param appSecret     a unique and secret key used to identify the application.
+     * @param installId     install identifier.
+     * @param logContainer  payload.    @throws Exception if an error occurs.
      */
-    private void doCall(UUID appSecret, UUID installId, LogContainer logContainer) throws Exception {
+    private static void doCall(String baseUrl, LogSerializer logSerializer, UUID appSecret, UUID installId, LogContainer logContainer) throws Exception {
 
         /* HTTP session. */
-        URL url = new URL(mBaseUrl + API_PATH);
+        URL url = new URL(baseUrl + API_PATH);
         SonomaLog.verbose(LOG_TAG, "Calling " + url + " ...");
-        HttpURLConnection urlConnection = mUrlConnectionFactory.openConnection(url);
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         try {
 
             /* Configure connection timeouts. */
@@ -190,7 +142,7 @@ public class IngestionHttp implements Ingestion {
             /* Serialize payload. */
             String payload;
             try {
-                payload = mLogSerializer.serializeContainer(logContainer);
+                payload = logSerializer.serializeContainer(logContainer);
             } finally {
 
                 /* Restore original times, could be retried later. */
@@ -229,7 +181,7 @@ public class IngestionHttp implements Ingestion {
      * @return dumped string.
      * @throws IOException if an error occurred.
      */
-    private String dump(HttpURLConnection urlConnection) throws IOException {
+    private static String dump(HttpURLConnection urlConnection) throws IOException {
 
         /*
          * Though content length header value is less than actual payload length (gzip), we want to init
@@ -250,9 +202,76 @@ public class IngestionHttp implements Ingestion {
         return builder.toString();
     }
 
+    /**
+     * Set the base url.
+     *
+     * @param baseUrl the base url.
+     */
+    @SuppressWarnings("SameParameterValue")
+    public void setBaseUrl(@NonNull String baseUrl) {
+        mBaseUrl = baseUrl;
+    }
+
+    @Override
+    public ServiceCall sendAsync(final UUID appSecret, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
+        final Call call = new Call(mBaseUrl, mLogSerializer, appSecret, installId, logContainer, serviceCallback);
+        call.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        return new ServiceCall() {
+
+            @Override
+            public void cancel() {
+                if (!call.isCancelled())
+                    call.cancel(true);
+            }
+        };
+    }
+
     @Override
     public void close() throws IOException {
 
         /* No-op. A decorator can take care of tracking calls to cancel. */
+    }
+
+    @VisibleForTesting
+    static class Call extends AsyncTask<Void, Void, Exception> {
+
+        private final String mBaseUrl;
+
+        private final LogSerializer mLogSerializer;
+
+        private final UUID mAppSecret;
+
+        private final UUID mInstallId;
+
+        private final LogContainer mLogContainer;
+
+        private final ServiceCallback mServiceCallback;
+
+        Call(String baseUrl, LogSerializer logSerializer, UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
+            mBaseUrl = baseUrl;
+            mLogSerializer = logSerializer;
+            mAppSecret = appSecret;
+            mInstallId = installId;
+            mLogContainer = logContainer;
+            mServiceCallback = serviceCallback;
+        }
+
+        @Override
+        protected Exception doInBackground(Void... params) {
+            try {
+                doCall(mBaseUrl, mLogSerializer, mAppSecret, mInstallId, mLogContainer);
+            } catch (Exception e) {
+                return e;
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Exception e) {
+            if (e == null)
+                mServiceCallback.onCallSucceeded();
+            else
+                mServiceCallback.onCallFailed(e);
+        }
     }
 }
