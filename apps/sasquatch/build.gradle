@@ -3,3 +3,8 @@
 //
 
 evaluationDependsOn(':apps')
+
+dependencies {
+    compile project(':sdk:analytics')
+    compile project(':sdk:errors')
+}
