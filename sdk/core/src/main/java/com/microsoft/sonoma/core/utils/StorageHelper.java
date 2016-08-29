@@ -61,7 +61,7 @@ public final class StorageHelper {
     /**
      * PreferencesStorage Helper class
      */
-    public final static class PreferencesStorage {
+    public static class PreferencesStorage {
 
         /**
          * Retrieve a boolean value.
@@ -300,7 +300,8 @@ public final class StorageHelper {
     /**
      * InternalStorage Helper class
      */
-    public final static class InternalStorage {
+    public static class InternalStorage {
+
         /**
          * Read contents from a file.
          *

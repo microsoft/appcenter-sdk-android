@@ -1,6 +1,7 @@
 package com.microsoft.sonoma.errors;
 
 import android.content.Context;
+import android.os.Process;
 import android.os.SystemClock;
 
 import com.microsoft.sonoma.core.ingestion.models.Log;
@@ -14,8 +15,8 @@ import com.microsoft.sonoma.errors.utils.ErrorLogHelper;
 
 import org.json.JSONException;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
@@ -23,7 +24,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,12 +46,15 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({SystemClock.class, StorageHelper.class, ErrorReporting.class, ErrorLogHelper.class, DeviceInfoHelper.class, UncaughtExceptionHandler.ShutdownHelper.class, SonomaLog.class})
+@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, ErrorReporting.class, ErrorLogHelper.class, DeviceInfoHelper.class, UncaughtExceptionHandler.ShutdownHelper.class, SonomaLog.class, Process.class})
 public class UncaughtExceptionHandlerTest {
 
-    private Thread.UncaughtExceptionHandler defaultExceptionHandler;
-    private UncaughtExceptionHandler exceptionHandler;
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
+
+    private Thread.UncaughtExceptionHandler mDefaultExceptionHandler;
+
+    private UncaughtExceptionHandler mExceptionHandler;
 
     @Before
     public void setUp() {
@@ -61,7 +65,8 @@ public class UncaughtExceptionHandlerTest {
         mockStatic(StorageHelper.InternalStorage.class);
         mockStatic(ErrorLogHelper.class);
         mockStatic(DeviceInfoHelper.class);
-        mockStatic(UncaughtExceptionHandler.ShutdownHelper.class);
+        mockStatic(Process.class);
+        mockStatic(System.class);
 
         Context mockContext = mock(Context.class);
 
@@ -89,38 +94,38 @@ public class UncaughtExceptionHandlerTest {
         when(errorLogMock.getId()).thenReturn(UUID.randomUUID());
 
 
-        defaultExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
-        Thread.setDefaultUncaughtExceptionHandler(defaultExceptionHandler);
-        exceptionHandler = new UncaughtExceptionHandler(mockContext);
+        mDefaultExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
+        Thread.setDefaultUncaughtExceptionHandler(mDefaultExceptionHandler);
+        mExceptionHandler = new UncaughtExceptionHandler(mockContext);
     }
 
     @Test
     public void registerWorks() {
         // Verify that exception handler is default
-        assertEquals(defaultExceptionHandler, Thread.getDefaultUncaughtExceptionHandler());
-        exceptionHandler.register();
+        assertEquals(mDefaultExceptionHandler, Thread.getDefaultUncaughtExceptionHandler());
+        mExceptionHandler.register();
         // Verify that creation registers handler and previously defined handler is correctly saved
-        assertEquals(exceptionHandler, Thread.getDefaultUncaughtExceptionHandler());
-        assertEquals(defaultExceptionHandler, exceptionHandler.getDefaultUncaughtExceptionHandler());
+        assertEquals(mExceptionHandler, Thread.getDefaultUncaughtExceptionHandler());
+        assertEquals(mDefaultExceptionHandler, mExceptionHandler.getDefaultUncaughtExceptionHandler());
 
-        exceptionHandler.unregister();
-        assertEquals(defaultExceptionHandler, Thread.getDefaultUncaughtExceptionHandler());
+        mExceptionHandler.unregister();
+        assertEquals(mDefaultExceptionHandler, Thread.getDefaultUncaughtExceptionHandler());
 
-        exceptionHandler.setIgnoreDefaultExceptionHandler(true);
-        exceptionHandler.register();
-        assertEquals(exceptionHandler, Thread.getDefaultUncaughtExceptionHandler());
-        assertNull(exceptionHandler.getDefaultUncaughtExceptionHandler());
+        mExceptionHandler.setIgnoreDefaultExceptionHandler(true);
+        mExceptionHandler.register();
+        assertEquals(mExceptionHandler, Thread.getDefaultUncaughtExceptionHandler());
+        assertNull(mExceptionHandler.getDefaultUncaughtExceptionHandler());
     }
 
     @Test
     public void handleExceptionAndPassOn() {
-        exceptionHandler.register();
+        mExceptionHandler.register();
 
         // Verify that the exception is being handled and passed on to the previously defined UncaughtExceptionHandler
         Thread thread = Thread.currentThread();
         RuntimeException exception = new RuntimeException();
-        exceptionHandler.uncaughtException(thread, exception);
-        verify(defaultExceptionHandler).uncaughtException(thread, exception);
+        mExceptionHandler.uncaughtException(thread, exception);
+        verify(mDefaultExceptionHandler).uncaughtException(thread, exception);
 
         verifyStatic();
         ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong());
@@ -128,18 +133,29 @@ public class UncaughtExceptionHandlerTest {
 
     @Test
     public void handleExceptionAndIgnoreDefaultHandler() {
-        exceptionHandler.register();
+
+        // dummy coverage
+        new UncaughtExceptionHandler.ShutdownHelper();
+
+        // mock process id
+        when(Process.myPid()).thenReturn(123);
+
+        // Register crash handler
+        mExceptionHandler.register();
 
         // Verify that the exception is handled and not being passed on to the previous default UncaughtExceptionHandler
         Thread thread = Thread.currentThread();
         RuntimeException exception = new RuntimeException();
-        exceptionHandler.setIgnoreDefaultExceptionHandler(true);
-        exceptionHandler.uncaughtException(thread, exception);
-        verifyNoMoreInteractions(defaultExceptionHandler);
+        mExceptionHandler.setIgnoreDefaultExceptionHandler(true);
+        mExceptionHandler.uncaughtException(thread, exception);
+        verifyNoMoreInteractions(mDefaultExceptionHandler);
 
         verifyStatic();
         ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong());
-        UncaughtExceptionHandler.ShutdownHelper.shutdown();
+        verifyStatic();
+        Process.killProcess(123);
+        verifyStatic();
+        System.exit(10);
     }
 
     @Test
@@ -147,13 +163,13 @@ public class UncaughtExceptionHandlerTest {
         // Verify that when error reporting is disabled, an exception is instantly passed on
         when(ErrorReporting.isEnabled()).thenReturn(false);
 
-        exceptionHandler.register();
-        exceptionHandler.setIgnoreDefaultExceptionHandler(false);
+        mExceptionHandler.register();
+        mExceptionHandler.setIgnoreDefaultExceptionHandler(false);
 
         final Thread thread = Thread.currentThread();
         final RuntimeException exception = new RuntimeException();
-        exceptionHandler.uncaughtException(thread, exception);
-        verify(defaultExceptionHandler).uncaughtException(thread, exception);
+        mExceptionHandler.uncaughtException(thread, exception);
+        verify(mDefaultExceptionHandler).uncaughtException(thread, exception);
 
         PowerMockito.verifyNoMoreInteractions(ErrorLogHelper.class);
     }
@@ -163,39 +179,39 @@ public class UncaughtExceptionHandlerTest {
         // Verify that when error reporting is disabled, an exception is instantly passed on
         when(ErrorReporting.isEnabled()).thenReturn(false);
 
-        exceptionHandler.register();
-        exceptionHandler.setIgnoreDefaultExceptionHandler(true);
+        mExceptionHandler.register();
+        mExceptionHandler.setIgnoreDefaultExceptionHandler(true);
 
         final Thread thread = Thread.currentThread();
         final RuntimeException exception = new RuntimeException();
-        exceptionHandler.uncaughtException(thread, exception);
-        verifyNoMoreInteractions(defaultExceptionHandler);
+        mExceptionHandler.uncaughtException(thread, exception);
+        verifyNoMoreInteractions(mDefaultExceptionHandler);
         PowerMockito.verifyNoMoreInteractions(ErrorLogHelper.class);
     }
 
     @Test
     public void testInvalidJsonException() throws JSONException {
-        exceptionHandler.register();
+        mExceptionHandler.register();
 
         LogSerializer logSerializer = mock(LogSerializer.class);
         final JSONException jsonException = new JSONException("Fake JSON serializing exception");
         when(logSerializer.serializeLog(any(Log.class))).thenThrow(jsonException);
 
-        Whitebox.setInternalState(exceptionHandler, "mLogSerializer", logSerializer);
+        Whitebox.setInternalState(mExceptionHandler, "mLogSerializer", logSerializer);
 
         final Thread thread = Thread.currentThread();
         final RuntimeException exception = new RuntimeException();
-        exceptionHandler.uncaughtException(thread, exception);
+        mExceptionHandler.uncaughtException(thread, exception);
 
         verifyStatic();
         SonomaLog.error(eq(ErrorReporting.LOG_TAG), anyString(), eq(jsonException));
 
-        verify(defaultExceptionHandler).uncaughtException(thread, exception);
+        verify(mDefaultExceptionHandler).uncaughtException(thread, exception);
     }
 
     @Test
     public void testIOException() throws Exception {
-        exceptionHandler.register();
+        mExceptionHandler.register();
 
         IOException ioException = new IOException("Fake IO exception");
         PowerMockito.doThrow(ioException).when(StorageHelper.InternalStorage.class);
@@ -203,11 +219,11 @@ public class UncaughtExceptionHandlerTest {
 
         final Thread thread = Thread.currentThread();
         final RuntimeException exception = new RuntimeException();
-        exceptionHandler.uncaughtException(thread, exception);
+        mExceptionHandler.uncaughtException(thread, exception);
 
         verifyStatic();
         SonomaLog.error(eq(ErrorReporting.LOG_TAG), anyString(), eq(ioException));
 
-        verify(defaultExceptionHandler).uncaughtException(thread, exception);
+        verify(mDefaultExceptionHandler).uncaughtException(thread, exception);
     }
 }
