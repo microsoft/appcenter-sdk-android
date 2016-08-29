@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.verification.VerificationMode;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -16,6 +17,8 @@ import static junit.framework.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
@@ -35,28 +38,38 @@ public class SonomaLogTest {
         SonomaLog.verbose("my-tag", "verbose with my-tag with exception", new Exception());
     }
 
-    private static void verifyError() {
+    private static void verifyError(VerificationMode verificationMode) {
+        verifyStatic(verificationMode);
         Log.e("my-tag", "error with my-tag");
+        verifyStatic(verificationMode);
         Log.e(eq("my-tag"), eq("error with my-tag with exception"), any(Exception.class));
     }
 
-    private static void verifyWarn() {
+    private static void verifyWarn(VerificationMode verificationMode) {
+        verifyStatic(verificationMode);
         Log.w("my-tag", "warn with my-tag");
+        verifyStatic(verificationMode);
         Log.w(eq("my-tag"), eq("warn with my-tag with exception"), any(Exception.class));
     }
 
-    private static void verifyInfo() {
+    private static void verifyInfo(VerificationMode verificationMode) {
+        verifyStatic(verificationMode);
         Log.i("my-tag", "info with my-tag");
+        verifyStatic(verificationMode);
         Log.i(eq("my-tag"), eq("info with my-tag with exception"), any(Exception.class));
     }
 
-    private static void verifyDebug() {
+    private static void verifyDebug(VerificationMode verificationMode) {
+        verifyStatic(verificationMode);
         Log.d("my-tag", "debug with my-tag");
+        verifyStatic(verificationMode);
         Log.d(eq("my-tag"), eq("debug with my-tag with exception"), any(Exception.class));
     }
 
-    private static void verifyVerbose() {
+    private static void verifyVerbose(VerificationMode verificationMode) {
+        verifyStatic(verificationMode);
         Log.v("my-tag", "verbose with my-tag");
+        verifyStatic(verificationMode);
         Log.v(eq("my-tag"), eq("verbose with my-tag with exception"), any(Exception.class));
     }
 
@@ -78,12 +91,11 @@ public class SonomaLogTest {
         Sonoma.setLogLevel(Log.ASSERT);
         assertEquals(Sonoma.getLogLevel(), SonomaLog.getLogLevel());
         callLogs();
-        PowerMockito.verifyStatic(never());
-        verifyVerbose();
-        verifyDebug();
-        verifyInfo();
-        verifyWarn();
-        verifyError();
+        verifyVerbose(never());
+        verifyDebug(never());
+        verifyInfo(never());
+        verifyWarn(never());
+        verifyError(never());
     }
 
     @Test
@@ -91,13 +103,11 @@ public class SonomaLogTest {
         Sonoma.setLogLevel(Log.ERROR);
         assertEquals(Sonoma.getLogLevel(), SonomaLog.getLogLevel());
         callLogs();
-        PowerMockito.verifyStatic(never());
-        verifyVerbose();
-        verifyDebug();
-        verifyInfo();
-        verifyWarn();
-        PowerMockito.verifyStatic();
-        verifyError();
+        verifyVerbose(never());
+        verifyDebug(never());
+        verifyInfo(never());
+        verifyWarn(never());
+        verifyError(times(1));
     }
 
     @Test
@@ -105,13 +115,11 @@ public class SonomaLogTest {
         Sonoma.setLogLevel(Log.WARN);
         assertEquals(Sonoma.getLogLevel(), SonomaLog.getLogLevel());
         callLogs();
-        PowerMockito.verifyStatic(never());
-        verifyVerbose();
-        verifyDebug();
-        verifyInfo();
-        PowerMockito.verifyStatic();
-        verifyWarn();
-        verifyError();
+        verifyVerbose(never());
+        verifyDebug(never());
+        verifyInfo(never());
+        verifyWarn(times(1));
+        verifyError(times(1));
     }
 
     @Test
@@ -119,13 +127,11 @@ public class SonomaLogTest {
         Sonoma.setLogLevel(Log.INFO);
         assertEquals(Sonoma.getLogLevel(), SonomaLog.getLogLevel());
         callLogs();
-        PowerMockito.verifyStatic(never());
-        verifyVerbose();
-        verifyDebug();
-        PowerMockito.verifyStatic();
-        verifyInfo();
-        verifyWarn();
-        verifyError();
+        verifyVerbose(never());
+        verifyDebug(never());
+        verifyInfo(times(1));
+        verifyWarn(times(1));
+        verifyError(times(1));
     }
 
     @Test
@@ -133,13 +139,11 @@ public class SonomaLogTest {
         Sonoma.setLogLevel(Log.DEBUG);
         assertEquals(Sonoma.getLogLevel(), SonomaLog.getLogLevel());
         callLogs();
-        PowerMockito.verifyStatic(never());
-        verifyVerbose();
-        PowerMockito.verifyStatic();
-        verifyDebug();
-        verifyInfo();
-        verifyWarn();
-        verifyError();
+        verifyVerbose(never());
+        verifyDebug(times(1));
+        verifyInfo(times(1));
+        verifyWarn(times(1));
+        verifyError(times(1));
     }
 
     @Test
@@ -147,11 +151,10 @@ public class SonomaLogTest {
         Sonoma.setLogLevel(Log.VERBOSE);
         assertEquals(Sonoma.getLogLevel(), SonomaLog.getLogLevel());
         callLogs();
-        PowerMockito.verifyStatic();
-        verifyVerbose();
-        verifyDebug();
-        verifyInfo();
-        verifyWarn();
-        verifyError();
+        verifyVerbose(times(1));
+        verifyDebug(times(1));
+        verifyInfo(times(1));
+        verifyWarn(times(1));
+        verifyError(times(1));
     }
 }
