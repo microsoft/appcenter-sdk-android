@@ -108,8 +108,9 @@ public class AbstractSonomaFeatureTest {
         feature.setInstanceEnabled(true);
         assertTrue(feature.isInstanceEnabled());
         feature.setInstanceEnabled(true);
-        verifyStatic(times(1));
+        verifyStatic();
         StorageHelper.PreferencesStorage.putBoolean(feature.getEnabledPreferenceKey(), false);
+        verifyStatic();
         StorageHelper.PreferencesStorage.putBoolean(feature.getEnabledPreferenceKey(), true);
     }
 
