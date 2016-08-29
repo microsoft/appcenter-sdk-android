@@ -9,7 +9,6 @@ import android.support.annotation.VisibleForTesting;
 import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.ingestion.Ingestion;
 import com.microsoft.sonoma.core.ingestion.ServiceCallback;
-import com.microsoft.sonoma.core.ingestion.http.DefaultUrlConnectionFactory;
 import com.microsoft.sonoma.core.ingestion.http.HttpUtils;
 import com.microsoft.sonoma.core.ingestion.http.IngestionHttp;
 import com.microsoft.sonoma.core.ingestion.http.IngestionNetworkStateHandler;
@@ -118,7 +117,7 @@ public class DefaultChannel implements Channel {
      * Init ingestion for default constructor.
      */
     private static Ingestion buildDefaultIngestion(@NonNull Context context, @NonNull LogSerializer logSerializer) {
-        IngestionHttp api = new IngestionHttp(new DefaultUrlConnectionFactory(), logSerializer);
+        IngestionHttp api = new IngestionHttp(logSerializer);
         IngestionRetryer retryer = new IngestionRetryer(api);
         return new IngestionNetworkStateHandler(retryer, NetworkStateHelper.getSharedInstance(context));
     }
