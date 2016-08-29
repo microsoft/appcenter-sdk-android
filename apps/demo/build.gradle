@@ -1,0 +1,17 @@
+//
+// :apps:demo
+//
+
+evaluationDependsOn(':apps')
+
+apply plugin: 'maven'
+
+repositories {
+    maven {
+        url "https://dl.bintray.com/jaelim-ms/Test"
+    }
+}
+dependencies {
+    compile "com.microsoft.sonoma:analytics:1.0.0"
+    compile "com.microsoft.sonoma:errors:1.0.0"
+}
