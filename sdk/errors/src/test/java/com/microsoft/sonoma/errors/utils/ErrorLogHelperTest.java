@@ -54,6 +54,9 @@ public class ErrorLogHelperTest {
     @Test
     public void createErrorLog() throws DeviceInfoHelper.DeviceInfoException {
 
+        /* Dummy coverage of utils class. */
+        new ErrorLogHelper();
+
         /* Mock base. */
         Context mockContext = mock(Context.class);
         when(SystemClock.elapsedRealtime()).thenReturn(1000L);
