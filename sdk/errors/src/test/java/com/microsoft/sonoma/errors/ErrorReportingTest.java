@@ -478,6 +478,7 @@ public class ErrorReportingTest {
 
         verifyStatic();
         ErrorLogHelper.removeStoredErrorLogFile(errorLog.getId());
+        verifyStatic();
         ErrorLogHelper.removeStoredThrowableFile(errorLog.getId());
     }
 
@@ -558,6 +559,7 @@ public class ErrorReportingTest {
 
         verifyStatic();
         SonomaLog.error(eq(ErrorReporting.LOG_TAG), anyString(), eq(classNotFoundException));
+        verifyStatic();
         SonomaLog.error(eq(ErrorReporting.LOG_TAG), anyString(), eq(ioException));
     }
 
