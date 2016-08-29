@@ -15,9 +15,9 @@ import com.microsoft.sonoma.analytics.Analytics;
 import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
 import com.microsoft.sonoma.errors.AbstractErrorReportingListener;
+import com.microsoft.sonoma.errors.ErrorAttachments;
 import com.microsoft.sonoma.errors.ErrorReporting;
 import com.microsoft.sonoma.errors.model.ErrorAttachment;
-import com.microsoft.sonoma.errors.model.ErrorBinaryAttachment;
 import com.microsoft.sonoma.errors.model.ErrorReport;
 import com.microsoft.sonoma.sasquatch.R;
 import com.microsoft.sonoma.sasquatch.features.TestFeatures;
@@ -62,15 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public ErrorAttachment getErrorAttachment(ErrorReport errorReport) {
-                ErrorBinaryAttachment binaryAttachment = new ErrorBinaryAttachment();
-                binaryAttachment.setContentType("text/plain");
-                binaryAttachment.setFileName("binary.txt");
-                binaryAttachment.setData("Hello World!".getBytes());
-
-                ErrorAttachment attachment = new ErrorAttachment();
-                attachment.setTextAttachment("This is a text attachment.");
-                attachment.setBinaryAttachment(binaryAttachment);
-                return attachment;
+                return ErrorAttachments.attachment("This is a text attachment.", "This is a binary attachment.".getBytes(), "binary.txt", "text/plain");
             }
 
             @Override
