@@ -78,7 +78,6 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
         return mDefaultUncaughtExceptionHandler;
     }
 
-
     public void register() {
         if (!mIgnoreDefaultExceptionHandler) {
             mDefaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
@@ -93,7 +92,7 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
     }
 
     @VisibleForTesting
-    final static class ShutdownHelper {
+    static class ShutdownHelper {
 
         static void shutdown() {
             Process.killProcess(Process.myPid());

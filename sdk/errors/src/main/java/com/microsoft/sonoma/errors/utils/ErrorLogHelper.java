@@ -33,7 +33,7 @@ import java.util.UUID;
 /**
  * ErrorLogHelper to help constructing, serializing, and de-serializing locally stored error logs.
  */
-public final class ErrorLogHelper {
+public class ErrorLogHelper {
 
     public static final String ERROR_LOG_FILE_EXTENSION = ".json";
 
