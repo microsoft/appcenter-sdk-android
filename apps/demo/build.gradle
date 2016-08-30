@@ -8,7 +8,11 @@ apply plugin: 'maven'
 
 repositories {
     maven {
-        url "https://dl.bintray.com/jaelim-ms/Test"
+        credentials {
+            username rootProject.ext.bintrayUser
+            password rootProject.ext.bintrayKey
+        }
+        url "https://microsoftsonoma.bintray.com/sonoma"
     }
 }
 dependencies {
