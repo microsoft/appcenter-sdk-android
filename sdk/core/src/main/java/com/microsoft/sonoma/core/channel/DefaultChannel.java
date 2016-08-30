@@ -136,7 +136,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
+    public synchronized void addGroup(String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
 
         /* Init group. */
         SonomaLog.debug(Sonoma.LOG_TAG, "addGroup(" + groupName + ")");
@@ -214,8 +214,10 @@ public class DefaultChannel implements Channel {
     }
 
     private void cancelTimer(GroupState groupState) {
-        groupState.mScheduled = false;
-        mIngestionHandler.removeCallbacks(groupState.mRunnable);
+        if (groupState.mScheduled) {
+            groupState.mScheduled = false;
+            mIngestionHandler.removeCallbacks(groupState.mRunnable);
+        }
     }
 
     @VisibleForTesting
@@ -233,11 +235,12 @@ public class DefaultChannel implements Channel {
      * @param groupName the group name
      */
     private synchronized void triggerIngestion(final @NonNull String groupName) {
-        if (mAppSecret == null || mInstallId == null || !mEnabled) {
+        if (!mEnabled) {
             return;
         }
         final GroupState groupState = mGroupStates.get(groupName);
         SonomaLog.debug(Sonoma.LOG_TAG, "triggerIngestion(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
+        cancelTimer(groupState);
 
         /* Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending. */
         if (groupState.mSendingBatches.size() == groupState.mMaxParallelBatches) {
@@ -434,7 +437,7 @@ public class DefaultChannel implements Channel {
         /**
          * Time to wait before 2 batches, in ms.
          */
-        final int mBatchTimeInterval;
+        final long mBatchTimeInterval;
 
         /**
          * Maximum number of batches in parallel.
@@ -483,7 +486,7 @@ public class DefaultChannel implements Channel {
          * @param maxParallelBatches max number of parallel batches.
          * @param listener           listener for a feature.
          */
-        GroupState(String name, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, GroupListener listener) {
+        GroupState(String name, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener listener) {
             mName = name;
             mMaxLogsPerBatch = maxLogsPerBatch;
             mBatchTimeInterval = batchTimeInterval;
