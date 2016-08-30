@@ -1,0 +1,11 @@
+// Version constants
+
+project.ext {
+    versionCode = 1
+    versionName = '1.0.0'
+    minSdkVersion = 15
+    targetSdkVersion = 24
+    compileSdkVersion = 24
+    buildToolsVersion = '24.0.1'
+    supportLibVersion = '24.2.0'
+}
