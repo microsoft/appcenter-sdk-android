@@ -4,11 +4,11 @@ import com.microsoft.sonoma.core.ingestion.models.Log;
 import com.microsoft.sonoma.core.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.sonoma.core.ingestion.models.json.LogSerializer;
 import com.microsoft.sonoma.errors.ingestion.models.AbstractErrorLog;
-import com.microsoft.sonoma.errors.ingestion.models.JavaErrorLog;
-import com.microsoft.sonoma.errors.ingestion.models.JavaException;
-import com.microsoft.sonoma.errors.ingestion.models.JavaStackFrame;
-import com.microsoft.sonoma.errors.ingestion.models.JavaThread;
-import com.microsoft.sonoma.errors.ingestion.models.json.JavaErrorLogFactory;
+import com.microsoft.sonoma.errors.ingestion.models.Exception;
+import com.microsoft.sonoma.errors.ingestion.models.ManagedErrorLog;
+import com.microsoft.sonoma.errors.ingestion.models.StackFrame;
+import com.microsoft.sonoma.errors.ingestion.models.Thread;
+import com.microsoft.sonoma.errors.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.sonoma.errors.model.ErrorAttachment;
 import com.microsoft.sonoma.errors.model.ErrorBinaryAttachment;
 import com.microsoft.sonoma.test.TestUtils;
@@ -25,30 +25,56 @@ import static java.util.Collections.singletonList;
 @SuppressWarnings("unused")
 public class ErrorModelTest {
 
-    private static void checkSerialization(JavaErrorLog errorLog, LogSerializer serializer) throws JSONException {
+    private static void checkSerialization(ManagedErrorLog errorLog, LogSerializer serializer) throws JSONException {
         String payload = serializer.serializeLog(errorLog);
         Log deserializedLog = serializer.deserializeLog(payload);
         checkEquals(errorLog, deserializedLog);
     }
 
-    private static void checkExceptions(LogSerializer serializer, JavaErrorLog errorLog1, JavaErrorLog errorLog2, JavaException exception1, JavaException exception2) throws JSONException {
-        errorLog1.setExceptions(singletonList(exception1));
-        errorLog2.setExceptions(null);
+    private static void checkExceptions(LogSerializer serializer, ManagedErrorLog errorLog1, ManagedErrorLog errorLog2, Exception exception1, Exception exception2) throws JSONException {
+        errorLog1.setException(exception1);
+        errorLog2.setException(null);
         checkNotEquals(errorLog1, errorLog2);
         checkSerialization(errorLog1, serializer);
 
-        errorLog1.setExceptions(null);
-        errorLog2.setExceptions(singletonList(exception2));
+        errorLog1.setException(null);
+        errorLog2.setException(exception2);
         checkNotEquals(errorLog1, errorLog2);
 
-        errorLog1.setExceptions(singletonList(exception1));
+        errorLog1.setException(exception1);
         checkNotEquals(errorLog1, errorLog2);
 
-        errorLog2.setExceptions(errorLog1.getExceptions());
+        errorLog2.setException(errorLog1.getException());
         checkEquals(errorLog1, errorLog2);
+
+        {
+            Exception exception3 = new Exception();
+            exception3.setType(exception1.getType());
+            exception3.setMessage(exception1.getMessage());
+            exception3.setFrames(exception1.getFrames());
+            errorLog2.setException(exception3);
+            checkEquals(errorLog1, errorLog2);
+
+            Exception subException1 = new Exception();
+            subException1.setType("s1");
+            exception1.setInnerExceptions(singletonList(subException1));
+            checkNotEquals(errorLog1, errorLog2);
+
+            Exception subException3 = new Exception();
+            subException3.setType("s3");
+            exception3.setInnerExceptions(singletonList(subException3));
+            checkNotEquals(errorLog1, errorLog2);
+
+            exception3.setInnerExceptions(singletonList(subException1));
+            checkEquals(errorLog1, errorLog2);
+        }
+
+        errorLog2.setException(errorLog1.getException());
+        checkEquals(errorLog1, errorLog2);
+        exception1.setInnerExceptions(null);
     }
 
-    private static void checkFrames(LogSerializer serializer, JavaErrorLog errorLog1, JavaErrorLog errorLog2, JavaException exception1, JavaException exception2, JavaStackFrame frame1, JavaStackFrame frame2) throws JSONException {
+    private static void checkFrames(LogSerializer serializer, ManagedErrorLog errorLog1, ManagedErrorLog errorLog2, Exception exception1, Exception exception2, StackFrame frame1, StackFrame frame2) throws JSONException {
         exception1.setFrames(singletonList(frame1));
         exception2.setFrames(null);
         checkNotEquals(errorLog1, errorLog2);
@@ -65,7 +91,7 @@ public class ErrorModelTest {
         checkEquals(errorLog1, errorLog2);
     }
 
-    private static void checkThreads(LogSerializer serializer, JavaErrorLog errorLog1, JavaErrorLog errorLog2, JavaThread thread1, JavaThread thread2) throws JSONException {
+    private static void checkThreads(LogSerializer serializer, ManagedErrorLog errorLog1, ManagedErrorLog errorLog2, Thread thread1, Thread thread2) throws JSONException {
         errorLog1.setThreads(singletonList(thread1));
         errorLog2.setThreads(null);
         checkNotEquals(errorLog1, errorLog2);
@@ -82,7 +108,7 @@ public class ErrorModelTest {
         checkEquals(errorLog1, errorLog2);
     }
 
-    private static void checkFrames(LogSerializer serializer, JavaErrorLog errorLog1, JavaErrorLog errorLog2, JavaThread thread1, JavaThread thread2, JavaStackFrame frame1, JavaStackFrame frame2) throws JSONException {
+    private static void checkFrames(LogSerializer serializer, ManagedErrorLog errorLog1, ManagedErrorLog errorLog2, Thread thread1, Thread thread2, StackFrame frame1, StackFrame frame2) throws JSONException {
         thread1.setFrames(singletonList(frame1));
         thread2.setFrames(null);
         checkNotEquals(errorLog1, errorLog2);
@@ -108,13 +134,13 @@ public class ErrorModelTest {
     }
 
     @Test
-    public void javaErrorLog() throws JSONException {
+    public void managedErrorLog() throws JSONException {
 
         LogSerializer serializer = new DefaultLogSerializer();
-        serializer.addLogFactory(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
+        serializer.addLogFactory(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
 
-        JavaErrorLog errorLog1 = new JavaErrorLog();
-        JavaErrorLog errorLog2 = new JavaErrorLog();
+        ManagedErrorLog errorLog1 = new ManagedErrorLog();
+        ManagedErrorLog errorLog2 = new ManagedErrorLog();
 
         TestUtils.compareSelfNullClass(errorLog1);
         checkEquals(errorLog1, errorLog2);
@@ -230,8 +256,8 @@ public class ErrorModelTest {
             checkEquals(errorLog1, errorLog2);
         }
         {
-            JavaException exception1 = new JavaException();
-            JavaException exception2 = new JavaException();
+            Exception exception1 = new Exception();
+            Exception exception2 = new Exception();
 
             TestUtils.compareSelfNullClass(exception1);
             checkEquals(exception1, exception2);
@@ -259,11 +285,11 @@ public class ErrorModelTest {
                 checkEquals(exception1, exception2);
             }
             {
-                errorLog1.setExceptions(singletonList(exception1));
-                errorLog2.setExceptions(singletonList(exception2));
+                errorLog1.setException(exception1);
+                errorLog2.setException(exception2);
 
-                JavaStackFrame frame1 = new JavaStackFrame();
-                JavaStackFrame frame2 = new JavaStackFrame();
+                StackFrame frame1 = new StackFrame();
+                StackFrame frame2 = new StackFrame();
 
                 TestUtils.compareSelfNullClass(frame1);
                 checkEquals(frame1, frame2);
@@ -315,8 +341,8 @@ public class ErrorModelTest {
             }
         }
         {
-            JavaThread thread1 = new JavaThread();
-            JavaThread thread2 = new JavaThread();
+            Thread thread1 = new Thread();
+            Thread thread2 = new Thread();
 
             TestUtils.compareSelfNullClass(thread1);
             checkEquals(thread1, thread2);
@@ -347,8 +373,8 @@ public class ErrorModelTest {
                 errorLog1.setThreads(singletonList(thread1));
                 errorLog2.setThreads(singletonList(thread2));
 
-                JavaStackFrame frame1 = new JavaStackFrame();
-                JavaStackFrame frame2 = new JavaStackFrame();
+                StackFrame frame1 = new StackFrame();
+                StackFrame frame2 = new StackFrame();
 
                 TestUtils.compareSelfNullClass(frame1);
                 checkEquals(frame1, frame2);
