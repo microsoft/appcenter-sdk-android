@@ -7,7 +7,12 @@ ext {
     sdkDescription = 'Microsoft Sonoma SDK'
 
     Properties properties = new Properties()
-    properties.load(rootProject.file('local.properties').newDataInputStream())
+    File file = rootProject.file('local.properties')
+
+    if (file.exists()) {
+        properties.load(file.newDataInputStream())
+    }
+
     bintrayUser = properties.getProperty("bintray.user")
     bintrayKey = properties.getProperty("bintray.key")
     bintrayUserOrg = properties.getProperty("bintray.user.org")
