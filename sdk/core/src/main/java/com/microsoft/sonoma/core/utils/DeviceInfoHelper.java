@@ -33,6 +33,7 @@ public class DeviceInfoHelper {
      *
      * @param context The context of the application.
      * @return {@link Device}
+     * @throws DeviceInfoException If device information cannot be retrieved
      */
     public static Device getDeviceInfo(Context context) throws DeviceInfoException {
         Device device = new Device();

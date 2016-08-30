@@ -18,7 +18,5 @@ subprojects {
 
     dependencies {
         compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
-        compile project(':sdk:analytics')
-        compile project(':sdk:errors')
     }
 }

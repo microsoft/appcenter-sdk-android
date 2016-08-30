@@ -49,6 +49,8 @@ public class ErrorReport {
 
     /**
      * Sets the UUID for crash report.
+     *
+     * @param id A UUID for crash report to set.
      */
     public void setId(String id) {
         this.id = id;
@@ -65,6 +67,8 @@ public class ErrorReport {
 
     /**
      * Sets the thread name.
+     *
+     * @param threadName A thread name to set.
      */
     public void setThreadName(String threadName) {
         this.threadName = threadName;
@@ -81,6 +85,8 @@ public class ErrorReport {
 
     /**
      * Sets the throwable.
+     *
+     * @param throwable A throwable to set.
      */
     public void setThrowable(Throwable throwable) {
         this.throwable = throwable;
@@ -97,6 +103,8 @@ public class ErrorReport {
 
     /**
      * Sets the application start datetime.
+     *
+     * @param appStartTime An application start datetime to set.
      */
     public void setAppStartTime(Date appStartTime) {
         this.appStartTime = appStartTime;
@@ -113,6 +121,8 @@ public class ErrorReport {
 
     /**
      * Sets the application error datetime.
+     *
+     * @param appErrorTime An application error datetime to set.
      */
     public void setAppErrorTime(Date appErrorTime) {
         this.appErrorTime = appErrorTime;
@@ -129,6 +139,8 @@ public class ErrorReport {
 
     /**
      * Sets the device information.
+     *
+     * @param device A device information to set.
      */
     public void setDevice(Device device) {
         this.device = device;
