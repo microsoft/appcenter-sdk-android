@@ -1,0 +1,21 @@
+//
+// :apps:demo
+//
+
+evaluationDependsOn(':apps')
+
+apply plugin: 'maven'
+
+repositories {
+    maven {
+        credentials {
+            username rootProject.ext.bintrayUser
+            password rootProject.ext.bintrayKey
+        }
+        url "https://microsoftsonoma.bintray.com/sonoma"
+    }
+}
+dependencies {
+    compile "com.microsoft.sonoma:analytics:1.0.0"
+    compile "com.microsoft.sonoma:errors:1.0.0"
+}

@@ -346,7 +346,7 @@ public final class StorageHelper {
          *
          * @param path     The path of the file.
          * @param contents The contents to be written to the file.
-         * @throws IOException
+         * @throws IOException If an I/O error occurs
          */
         public static void write(@NonNull String path, @NonNull String contents) throws IOException {
             write(new File(path), contents);
@@ -357,7 +357,7 @@ public final class StorageHelper {
          *
          * @param file     The file instance.
          * @param contents The content to be written to the file. Must not be empty or whitespace only.
-         * @throws IOException
+         * @throws IOException If an I/O error occurs
          */
         public static void write(@NonNull File file, @NonNull String contents) throws IOException {
             if (TextUtils.isEmpty(contents) || TextUtils.getTrimmedLength(contents) <= 0) {
@@ -380,9 +380,10 @@ public final class StorageHelper {
          * Read an object from a file (deserialization).
          *
          * @param file The file to read from.
-         * @return The de-serialized instance.
-         * @throws IOException
-         * @throws ClassNotFoundException
+         * @param <T>  A type for the deserialized instance.
+         * @return The deserialized instance.
+         * @throws IOException            If an I/O error occurs
+         * @throws ClassNotFoundException If no class definition found for serialized instance.
          */
         @SuppressWarnings("unchecked")
         public static <T extends Serializable> T readObject(@NonNull File file)
@@ -404,7 +405,8 @@ public final class StorageHelper {
          *
          * @param file   The file to write to.
          * @param object The object to be written to the file.
-         * @throws IOException
+         * @param <T>  A type for the object.
+         * @throws IOException If an I/O error occurs
          */
         public static <T extends Serializable> void writeObject(@NonNull File file, @NonNull T object) throws IOException {
             ObjectOutputStream outputStream = null;
@@ -671,7 +673,7 @@ public final class StorageHelper {
         /**
          * Closes database and cleans up in-memory database.
          *
-         * @throws IOException
+         * @throws IOException If an I/O error occurs
          */
         @Override
         public void close() throws IOException {
@@ -703,6 +705,9 @@ public final class StorageHelper {
         public interface DatabaseErrorListener {
             /**
              * Notifies an exception
+             *
+             * @param operation A name of operation that caused the error.
+             * @param e         A runtime exception for the error.
              */
             void onError(String operation, RuntimeException e);
         }
