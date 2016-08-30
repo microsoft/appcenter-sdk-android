@@ -1,6 +1,6 @@
 // Bintray constants
 
-project.ext {
+ext {
     siteUrl = 'https://github.com/Microsoft/Sonoma-SDK-Android'
     gitUrl = 'https://github.com/Microsoft/Sonoma-SDK-Android.git'
     groupId = 'com.microsoft.sonoma'
