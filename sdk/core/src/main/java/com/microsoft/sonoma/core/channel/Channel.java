@@ -18,7 +18,7 @@ public interface Channel {
      * @param maxParallelBatches maximum number of batches in parallel.
      * @param groupListener      a listener for a feature.
      */
-    void addGroup(String groupName, int maxLogsPerBatch, int batchTimeInterval, int maxParallelBatches, GroupListener groupListener);
+    void addGroup(String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener groupListener);
 
     /**
      * Remove a group for logs.

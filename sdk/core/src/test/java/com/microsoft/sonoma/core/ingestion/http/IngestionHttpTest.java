@@ -194,7 +194,6 @@ public class IngestionHttpTest {
     public void failedConnection() throws Exception {
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
-        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
         IOException exception = new IOException("mock");
         when(url.openConnection()).thenThrow(exception);
         ServiceCallback serviceCallback = mock(ServiceCallback.class);

@@ -38,7 +38,7 @@ public final class AndroidTestUtils {
     }
 
     @NonNull
-    public static Device generateMockDevice() {
+    private static Device generateMockDevice() {
         Device device = new Device();
         device.setSdkVersion(String.format(Locale.ENGLISH, "%d.%d.%d", (RANDOM.nextInt(5) + 1), RANDOM.nextInt(10), RANDOM.nextInt(100)));
         device.setModel("S5");

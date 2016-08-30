@@ -1,5 +1,7 @@
 package com.microsoft.sonoma.core.utils;
 
+import android.support.annotation.NonNull;
+
 import com.microsoft.sonoma.core.Sonoma;
 
 import java.util.UUID;
@@ -12,6 +14,7 @@ public class IdHelper {
      * Get the installID from the Shared preferences. In case this fails, will generate a new installId.
      * @return the installID
      */
+    @NonNull
     public static UUID getInstallId() {
         String installIdString = StorageHelper.PreferencesStorage.getString(KEY_INSTALL_ID, "");
         UUID installId;
