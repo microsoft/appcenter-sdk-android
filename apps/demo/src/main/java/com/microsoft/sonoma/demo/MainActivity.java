@@ -1,4 +1,4 @@
-package com.microsoft.sonoma.puppet;
+package com.microsoft.sonoma.demo;
 
 import android.app.Activity;
 import android.os.Bundle;
