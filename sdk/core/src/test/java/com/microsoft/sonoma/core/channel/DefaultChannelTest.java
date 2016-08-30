@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -61,8 +60,10 @@ public class DefaultChannelTest {
     private static final String TEST_GROUP = "group_test";
     private static final long BATCH_TIME_INTERVAL = 500;
     private static final int MAX_PARALLEL_BATCHES = 3;
+
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
+
     @Mock
     private Handler mHandler;
 
@@ -139,9 +140,9 @@ public class DefaultChannelTest {
     @Test
     @SuppressWarnings("unchecked")
     public void analyticsSuccess() throws Persistence.PersistenceException, InterruptedException {
-        Persistence mockPersistence = Mockito.mock(Persistence.class);
-        IngestionHttp mockIngestion = Mockito.mock(IngestionHttp.class);
-        Channel.GroupListener mockListener = Mockito.mock(Channel.GroupListener.class);
+        Persistence mockPersistence = mock(Persistence.class);
+        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer(50)).then(getGetLogsAnswer(1)).then(getGetLogsAnswer(2));
 
@@ -243,8 +244,8 @@ public class DefaultChannelTest {
     @Test
     @SuppressWarnings("unchecked")
     public void maxRequests() throws Persistence.PersistenceException {
-        Persistence mockPersistence = Mockito.mock(Persistence.class);
-        IngestionHttp mockIngestion = Mockito.mock(IngestionHttp.class);
+        Persistence mockPersistence = mock(Persistence.class);
+        IngestionHttp mockIngestion = mock(IngestionHttp.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
 
@@ -294,8 +295,8 @@ public class DefaultChannelTest {
     @Test
     @SuppressWarnings("unchecked")
     public void maxRequestsInitial() throws Persistence.PersistenceException {
-        Persistence mockPersistence = Mockito.mock(Persistence.class);
-        IngestionHttp mockIngestion = Mockito.mock(IngestionHttp.class);
+        Persistence mockPersistence = mock(Persistence.class);
+        IngestionHttp mockIngestion = mock(IngestionHttp.class);
 
         when(mockPersistence.countLogs(any(String.class))).thenReturn(100);
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
@@ -348,9 +349,9 @@ public class DefaultChannelTest {
     @Test
     @SuppressWarnings("unchecked")
     public void analyticsRecoverable() throws Persistence.PersistenceException, InterruptedException {
-        Persistence mockPersistence = Mockito.mock(Persistence.class);
-        IngestionHttp mockIngestion = Mockito.mock(IngestionHttp.class);
-        Channel.GroupListener mockListener = Mockito.mock(Channel.GroupListener.class);
+        Persistence mockPersistence = mock(Persistence.class);
+        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer(50)).then(getGetLogsAnswer(50)).then(getGetLogsAnswer(20));
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException())).then(getSendAsyncAnswer());
@@ -423,8 +424,8 @@ public class DefaultChannelTest {
     @Test
     @SuppressWarnings("unchecked")
     public void analyticsFatal() throws Persistence.PersistenceException, InterruptedException {
-        Persistence mockPersistence = Mockito.mock(Persistence.class);
-        IngestionHttp mockIngestion = Mockito.mock(IngestionHttp.class);
+        Persistence mockPersistence = mock(Persistence.class);
+        IngestionHttp mockIngestion = mock(IngestionHttp.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer(50)).then(getGetLogsAnswer(20));
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(403))).then(getSendAsyncAnswer());
@@ -492,9 +493,9 @@ public class DefaultChannelTest {
     @Test
     @SuppressWarnings("unchecked")
     public void errorLogSuccess() throws Persistence.PersistenceException {
-        Persistence mockPersistence = Mockito.mock(Persistence.class);
-        Ingestion mockIngestion = Mockito.mock(Ingestion.class);
-        Channel.GroupListener mockListener = Mockito.mock(Channel.GroupListener.class);
+        Persistence mockPersistence = mock(Persistence.class);
+        Ingestion mockIngestion = mock(Ingestion.class);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
@@ -532,9 +533,9 @@ public class DefaultChannelTest {
     @Test
     @SuppressWarnings("unchecked")
     public void errorLogRecoverable() throws Persistence.PersistenceException, InterruptedException {
-        Persistence mockPersistence = Mockito.mock(Persistence.class);
-        Ingestion mockIngestion = Mockito.mock(Ingestion.class);
-        Channel.GroupListener mockListener = Mockito.mock(Channel.GroupListener.class);
+        Persistence mockPersistence = mock(Persistence.class);
+        Ingestion mockIngestion = mock(Ingestion.class);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException())).then(getSendAsyncAnswer());
@@ -585,12 +586,12 @@ public class DefaultChannelTest {
 
     @Test
     public void enqueuePersistenceFailure() throws Persistence.PersistenceException {
-        Persistence mockPersistence = Mockito.mock(Persistence.class);
+        Persistence mockPersistence = mock(Persistence.class);
 
         /* Simulate persistence failing. */
         doThrow(new Persistence.PersistenceException("mock", new IOException("mock"))).
                 when(mockPersistence).putLog(anyString(), any(Log.class));
-        IngestionHttp mockIngestion = Mockito.mock(IngestionHttp.class);
+        IngestionHttp mockIngestion = mock(IngestionHttp.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID(), mockPersistence, mockIngestion);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
@@ -610,9 +611,9 @@ public class DefaultChannelTest {
     public void setEnabled() throws IOException, InterruptedException {
 
         /* Send a log. */
-        Ingestion ingestion = Mockito.mock(Ingestion.class);
+        Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
-        Persistence persistence = Mockito.mock(Persistence.class);
+        Persistence persistence = mock(Persistence.class);
         when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer());
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID(), persistence, ingestion);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
@@ -639,9 +640,9 @@ public class DefaultChannelTest {
     @SuppressWarnings("unchecked")
     public void initialLogs() throws IOException, InterruptedException {
         AtomicReference<Runnable> runnable = catchPostRunnable();
-        Ingestion ingestion = Mockito.mock(Ingestion.class);
+        Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
-        Persistence persistence = Mockito.mock(Persistence.class);
+        Persistence persistence = mock(Persistence.class);
         when(persistence.countLogs(anyString())).thenReturn(3);
         when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(3));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID(), persistence, ingestion);
@@ -659,9 +660,9 @@ public class DefaultChannelTest {
     @SuppressWarnings("unchecked")
     public void initialLogsMoreThan1Batch() throws IOException, InterruptedException {
         AtomicReference<Runnable> runnable = catchPostRunnable();
-        Ingestion ingestion = Mockito.mock(Ingestion.class);
+        Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
-        Persistence persistence = Mockito.mock(Persistence.class);
+        Persistence persistence = mock(Persistence.class);
         when(persistence.countLogs(anyString())).thenReturn(103);
         when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(50)).thenAnswer(getGetLogsAnswer(50)).thenAnswer(getGetLogsAnswer(3));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID(), persistence, ingestion);
@@ -679,9 +680,9 @@ public class DefaultChannelTest {
     @SuppressWarnings("unchecked")
     public void initialLogsThenDisable() throws IOException, InterruptedException {
         AtomicReference<Runnable> runnable = catchPostRunnable();
-        Ingestion ingestion = Mockito.mock(Ingestion.class);
+        Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
-        Persistence persistence = Mockito.mock(Persistence.class);
+        Persistence persistence = mock(Persistence.class);
         when(persistence.countLogs(anyString())).thenReturn(3);
         when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(3));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID(), persistence, ingestion);
@@ -701,9 +702,9 @@ public class DefaultChannelTest {
     public void listener() throws Persistence.PersistenceException {
 
         @SuppressWarnings("ConstantConditions")
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, Mockito.mock(Persistence.class), Mockito.mock(IngestionHttp.class));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mock(Persistence.class), mock(IngestionHttp.class));
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
-        Channel.Listener listener = Mockito.mock(Channel.Listener.class);
+        Channel.Listener listener = mock(Channel.Listener.class);
         channel.addListener(listener);
         Log log = mock(Log.class);
         channel.enqueue(log, TEST_GROUP);
@@ -721,11 +722,11 @@ public class DefaultChannelTest {
 
         /* Setup mocking to make device properties generation fail. */
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new PackageManager.NameNotFoundException()));
-        Persistence persistence = Mockito.mock(Persistence.class);
+        Persistence persistence = mock(Persistence.class);
         @SuppressWarnings("ConstantConditions")
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, Mockito.mock(IngestionHttp.class));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, mock(IngestionHttp.class));
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
-        Channel.Listener listener = Mockito.mock(Channel.Listener.class);
+        Channel.Listener listener = mock(Channel.Listener.class);
         channel.addListener(listener);
 
         /* Enqueue a log: listener is called before but then attaching device properties fails before saving the log. */
@@ -741,9 +742,9 @@ public class DefaultChannelTest {
 
         /* Cover the if (batchId != null) test though it could happen only if the database content disappear after the timer... */
         AtomicReference<Runnable> runnable = catchPostRunnable();
-        Ingestion ingestion = Mockito.mock(Ingestion.class);
+        Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
-        Persistence persistence = Mockito.mock(Persistence.class);
+        Persistence persistence = mock(Persistence.class);
         when(persistence.countLogs(anyString())).thenReturn(2);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID(), persistence, ingestion);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
