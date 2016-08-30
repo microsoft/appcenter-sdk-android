@@ -15,8 +15,8 @@ import com.microsoft.sonoma.core.ingestion.models.json.LogFactory;
 import com.microsoft.sonoma.core.ingestion.models.json.LogSerializer;
 import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
-import com.microsoft.sonoma.errors.ingestion.models.JavaErrorLog;
-import com.microsoft.sonoma.errors.ingestion.models.json.JavaErrorLogFactory;
+import com.microsoft.sonoma.errors.ingestion.models.ManagedErrorLog;
+import com.microsoft.sonoma.errors.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.sonoma.errors.model.ErrorAttachment;
 import com.microsoft.sonoma.errors.model.ErrorReport;
 import com.microsoft.sonoma.errors.model.TestCrashException;
@@ -124,9 +124,9 @@ public class ErrorReporting extends AbstractSonomaFeature {
 
     private ErrorReporting() {
         mFactories = new HashMap<>();
-        mFactories.put(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
+        mFactories.put(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
         mLogSerializer = new DefaultLogSerializer();
-        mLogSerializer.addLogFactory(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
+        mLogSerializer.addLogFactory(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
         mErrorReportingListener = DEFAULT_ERROR_REPORTING_LISTENER;
         mUnprocessedErrorReports = new LinkedHashMap<>();
         mErrorReportCache = new LinkedHashMap<>();
@@ -259,8 +259,8 @@ public class ErrorReporting extends AbstractSonomaFeature {
             private static final int SENDING_FAILED = 2;
 
             private void callback(int type, Log log, Exception e) {
-                if (log instanceof JavaErrorLog) {
-                    JavaErrorLog errorLog = (JavaErrorLog) log;
+                if (log instanceof ManagedErrorLog) {
+                    ManagedErrorLog errorLog = (ManagedErrorLog) log;
                     ErrorReport report = buildErrorReport(errorLog);
                     UUID id = errorLog.getId();
                     if (report != null) {
@@ -331,7 +331,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
                 String logFileContents = StorageHelper.InternalStorage.read(logFile);
                 if (logFileContents != null)
                     try {
-                        JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logFileContents);
+                        ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logFileContents);
                         mLastSessionErrorReport = buildErrorReport(log);
                     } catch (JSONException e) {
                         SonomaLog.error(LOG_TAG, "Error parsing last session error log", e);
@@ -346,7 +346,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
             String logfileContents = StorageHelper.InternalStorage.read(logFile);
             if (logfileContents != null)
                 try {
-                    JavaErrorLog log = (JavaErrorLog) mLogSerializer.deserializeLog(logfileContents);
+                    ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logfileContents);
                     UUID id = log.getId();
                     ErrorReport errorReport = buildErrorReport(log);
                     if (errorReport == null) {
@@ -397,7 +397,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
 
     @VisibleForTesting
     @Nullable
-    ErrorReport buildErrorReport(JavaErrorLog log) {
+    ErrorReport buildErrorReport(ManagedErrorLog log) {
         UUID id = log.getId();
         if (mErrorReportCache.containsKey(id)) {
             return mErrorReportCache.get(id).report;
@@ -487,11 +487,11 @@ public class ErrorReporting extends AbstractSonomaFeature {
      * Class holding an error log and its corresponding error report.
      */
     private static class ErrorLogReport {
-        private final JavaErrorLog log;
+        private final ManagedErrorLog log;
 
         private final ErrorReport report;
 
-        private ErrorLogReport(JavaErrorLog log, ErrorReport report) {
+        private ErrorLogReport(ManagedErrorLog log, ErrorReport report) {
             this.log = log;
             this.report = report;
         }

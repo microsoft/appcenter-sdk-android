@@ -8,8 +8,8 @@ import com.microsoft.sonoma.core.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.sonoma.core.ingestion.models.json.LogSerializer;
 import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
-import com.microsoft.sonoma.errors.ingestion.models.JavaErrorLog;
-import com.microsoft.sonoma.errors.ingestion.models.json.JavaErrorLogFactory;
+import com.microsoft.sonoma.errors.ingestion.models.ManagedErrorLog;
+import com.microsoft.sonoma.errors.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.sonoma.errors.utils.ErrorLogHelper;
 
 import org.json.JSONException;
@@ -30,7 +30,7 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
     UncaughtExceptionHandler(Context context) {
         mContext = context;
         mLogSerializer = new DefaultLogSerializer();
-        mLogSerializer.addLogFactory(JavaErrorLog.TYPE, JavaErrorLogFactory.getInstance());
+        mLogSerializer.addLogFactory(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
     }
 
     @Override
@@ -40,7 +40,7 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
                 mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
             }
         } else {
-            JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, exception, Thread.getAllStackTraces(), ErrorReporting.getInstance().getInitializeTimestamp());
+            ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, exception, Thread.getAllStackTraces(), ErrorReporting.getInstance().getInitializeTimestamp());
             try {
                 File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
                 String filename = errorLog.getId().toString();

@@ -11,10 +11,10 @@ import android.os.SystemClock;
 import com.microsoft.sonoma.core.ingestion.models.Device;
 import com.microsoft.sonoma.core.utils.DeviceInfoHelper;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
-import com.microsoft.sonoma.errors.ingestion.models.JavaErrorLog;
-import com.microsoft.sonoma.errors.ingestion.models.JavaException;
-import com.microsoft.sonoma.errors.ingestion.models.JavaStackFrame;
-import com.microsoft.sonoma.errors.ingestion.models.JavaThread;
+import com.microsoft.sonoma.errors.ingestion.models.Exception;
+import com.microsoft.sonoma.errors.ingestion.models.ManagedErrorLog;
+import com.microsoft.sonoma.errors.ingestion.models.StackFrame;
+import com.microsoft.sonoma.errors.ingestion.models.Thread;
 import com.microsoft.sonoma.errors.model.ErrorReport;
 import com.microsoft.sonoma.errors.model.TestCrashException;
 
@@ -79,7 +79,7 @@ public class ErrorLogHelperTest {
         Whitebox.setInternalState(Build.class, "SUPPORTED_ABIS", new String[]{"armeabi-v7a", "arm"});
 
         /* Test. */
-        JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, Thread.currentThread(), new RuntimeException(new TestCrashException()), Thread.getAllStackTraces(), 900);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new TestCrashException()), java.lang.Thread.getAllStackTraces(), 900);
         assertNotNull(errorLog);
         assertNotNull(errorLog.getId());
         assertTrue(System.currentTimeMillis() - errorLog.getToffset() <= 1000);
@@ -89,39 +89,43 @@ public class ErrorLogHelperTest {
         assertNull(errorLog.getParentProcessId());
         assertNull(errorLog.getParentProcessName());
         assertEquals("armeabi-v7a", errorLog.getArchitecture());
-        assertEquals((Long) Thread.currentThread().getId(), errorLog.getErrorThreadId());
-        assertEquals(Thread.currentThread().getName(), errorLog.getErrorThreadName());
+        assertEquals((Long) java.lang.Thread.currentThread().getId(), errorLog.getErrorThreadId());
+        assertEquals(java.lang.Thread.currentThread().getName(), errorLog.getErrorThreadName());
         assertEquals(Boolean.TRUE, errorLog.getFatal());
         assertEquals(Long.valueOf(100), errorLog.getAppLaunchTOffset());
-        assertNotNull(errorLog.getExceptions());
-        assertEquals(2, errorLog.getExceptions().size());
-        for (JavaException exception : errorLog.getExceptions()) {
-            assertNotNull(exception);
-            assertNotNull(exception.getType());
-            assertNotNull(exception.getFrames());
-            assertFalse(exception.getFrames().isEmpty());
-            for (JavaStackFrame frame : exception.getFrames()) {
+        assertNotNull(errorLog.getException());
+        assertNotNull(errorLog.getException().getInnerExceptions());
+        assertEquals(1, errorLog.getException().getInnerExceptions().size());
+        sanityCheck(errorLog.getException());
+        sanityCheck(errorLog.getException().getInnerExceptions().get(0));
+        assertEquals(RuntimeException.class.getName(), errorLog.getException().getType());
+        assertNotNull(errorLog.getException().getMessage());
+        assertEquals(TestCrashException.class.getName(), errorLog.getException().getInnerExceptions().get(0).getType());
+        assertNotNull(errorLog.getException().getInnerExceptions().get(0).getMessage());
+        assertNotNull(errorLog.getThreads());
+        assertEquals(java.lang.Thread.getAllStackTraces().size(), errorLog.getThreads().size());
+        for (Thread thread : errorLog.getThreads()) {
+            assertNotNull(thread);
+            assertTrue(thread.getId() > 0);
+            assertNotNull(thread.getName());
+            assertNotNull(thread.getFrames());
+            for (StackFrame frame : thread.getFrames()) {
                 assertNotNull(frame);
                 assertNotNull(frame.getClassName());
                 assertNotNull(frame.getMethodName());
             }
         }
-        assertEquals(RuntimeException.class.getName(), errorLog.getExceptions().get(0).getType());
-        assertNotNull(errorLog.getExceptions().get(0).getMessage());
-        assertEquals(TestCrashException.class.getName(), errorLog.getExceptions().get(1).getType());
-        assertNotNull(errorLog.getExceptions().get(1).getMessage());
-        assertNotNull(errorLog.getThreads());
-        assertEquals(Thread.getAllStackTraces().size(), errorLog.getThreads().size());
-        for (JavaThread thread : errorLog.getThreads()) {
-            assertNotNull(thread);
-            assertTrue(thread.getId() > 0);
-            assertNotNull(thread.getName());
-            assertNotNull(thread.getFrames());
-            for (JavaStackFrame frame : thread.getFrames()) {
-                assertNotNull(frame);
-                assertNotNull(frame.getClassName());
-                assertNotNull(frame.getMethodName());
-            }
+    }
+
+    private void sanityCheck(Exception exception) {
+        assertNotNull(exception);
+        assertNotNull(exception.getType());
+        assertNotNull(exception.getFrames());
+        assertFalse(exception.getFrames().isEmpty());
+        for (StackFrame frame : exception.getFrames()) {
+            assertNotNull(frame);
+            assertNotNull(frame.getClassName());
+            assertNotNull(frame.getMethodName());
         }
     }
 
@@ -141,7 +145,7 @@ public class ErrorLogHelperTest {
         Whitebox.setInternalState(Build.class, "CPU_ABI", "armeabi-v7a");
 
         /* Test. */
-        JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, Thread.currentThread(), new Exception(), Thread.getAllStackTraces(), 900);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new java.lang.Exception(), java.lang.Thread.getAllStackTraces(), 900);
         assertNotNull(errorLog);
         assertNotNull(errorLog.getId());
         assertTrue(System.currentTimeMillis() - errorLog.getToffset() <= 1000);
@@ -151,8 +155,8 @@ public class ErrorLogHelperTest {
         assertNull(errorLog.getParentProcessId());
         assertNull(errorLog.getParentProcessName());
         assertEquals("armeabi-v7a", errorLog.getArchitecture());
-        assertEquals((Long) Thread.currentThread().getId(), errorLog.getErrorThreadId());
-        assertEquals(Thread.currentThread().getName(), errorLog.getErrorThreadName());
+        assertEquals((Long) java.lang.Thread.currentThread().getId(), errorLog.getErrorThreadId());
+        assertEquals(java.lang.Thread.currentThread().getName(), errorLog.getErrorThreadName());
         assertEquals(Boolean.TRUE, errorLog.getFatal());
         assertEquals(Long.valueOf(100), errorLog.getAppLaunchTOffset());
     }
@@ -182,7 +186,7 @@ public class ErrorLogHelperTest {
         Whitebox.setInternalState(Build.class, "SUPPORTED_ABIS", new String[]{"armeabi-v7a", "arm"});
 
         /* Create an error log. */
-        JavaErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, Thread.currentThread(), new RuntimeException(new TestCrashException()), Thread.getAllStackTraces(), 900);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new TestCrashException()), java.lang.Thread.getAllStackTraces(), 900);
         assertNotNull(errorLog);
 
         /* Test. */

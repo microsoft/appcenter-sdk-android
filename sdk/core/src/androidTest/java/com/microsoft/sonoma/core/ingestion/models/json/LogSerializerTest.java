@@ -11,8 +11,8 @@ import org.junit.Test;
 
 import java.util.Collections;
 
-import static com.microsoft.sonoma.test.TestUtils.TAG;
 import static com.microsoft.sonoma.core.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
+import static com.microsoft.sonoma.test.TestUtils.TAG;
 
 @SuppressWarnings("unused")
 public class LogSerializerTest {
@@ -29,7 +29,7 @@ public class LogSerializerTest {
     }
 
     @Test
-    public void deviceLog() throws JSONException {
+    public void oneLog() throws JSONException {
         LogContainer expectedContainer = AndroidTestUtils.generateMockLogContainer();
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
@@ -38,5 +38,15 @@ public class LogSerializerTest {
         LogContainer actualContainer = serializer.deserializeContainer(payload);
         Assert.assertEquals(expectedContainer, actualContainer);
         Assert.assertEquals(expectedContainer.hashCode(), actualContainer.hashCode());
+    }
+
+    @Test(expected = JSONException.class)
+    public void deserializeUnknownType() throws JSONException {
+        MockLog log = AndroidTestUtils.generateMockLog();
+        LogSerializer serializer = new DefaultLogSerializer();
+        serializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        String payload = serializer.serializeLog(log);
+        android.util.Log.v(TAG, payload);
+        new DefaultLogSerializer().deserializeLog(payload);
     }
 }
