@@ -18,6 +18,11 @@ import static junit.framework.Assert.assertTrue;
 public class HttpUtilsTest {
 
     @Test
+    public void utilsCoverage() {
+        new HttpUtils();
+    }
+
+    @Test
     public void isRecoverableErrorTest() {
         assertTrue(isRecoverableError(new EOFException()));
         assertTrue(isRecoverableError(new InterruptedIOException()));
