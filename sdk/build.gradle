@@ -120,6 +120,7 @@ subprojects {
         pkg {
             repo = ext.bintrayRepo
             name = ext.bintrayPackageNamePrefix + project.name
+            userOrg = ext.bintrayUserOrg
             websiteUrl = ext.siteUrl
             vcsUrl = ext.gitUrl
             licenses = ["Apache-2.0"]

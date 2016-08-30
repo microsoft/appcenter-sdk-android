@@ -10,6 +10,7 @@ ext {
     properties.load(rootProject.file('local.properties').newDataInputStream())
     bintrayUser = properties.getProperty("bintray.user")
     bintrayKey = properties.getProperty("bintray.key")
+    bintrayUserOrg = properties.getProperty("bintray.user.org")
     bintrayRepo = properties.getProperty("bintray.repo")
     bintrayPackageNamePrefix = properties.getProperty("bintray.package.prefix")
 
