@@ -1,0 +1,22 @@
+// Bintray constants
+
+project.ext {
+    siteUrl = 'https://github.com/Microsoft/Sonoma-SDK-Android'
+    gitUrl = 'https://github.com/Microsoft/Sonoma-SDK-Android.git'
+    groupId = 'com.microsoft.sonoma'
+    sdkDescription = 'Microsoft Sonoma SDK'
+
+    Properties properties = new Properties()
+    properties.load(rootProject.file('local.properties').newDataInputStream())
+    bintrayUser = properties.getProperty("bintray.user")
+    bintrayKey = properties.getProperty("bintray.key")
+    bintrayRepo = properties.getProperty("bintray.repo")
+    bintrayPackageNamePrefix = properties.getProperty("bintray.package.prefix")
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseSite = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+
+    developerId = 'microsoft'
+    developerName = 'Microsoft'
+    developerEmail = 'sonoma.sdk@gmail.com'
+}
