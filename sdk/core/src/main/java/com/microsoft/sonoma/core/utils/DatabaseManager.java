@@ -393,7 +393,7 @@ public class DatabaseManager implements Closeable {
     /**
      * Closes database and clean up in-memory database.
      *
-     * @throws IOException
+     * @throws IOException If an I/O error occurs
      */
     @Override
     public void close() throws IOException {

@@ -87,6 +87,10 @@ public class DefaultChannel implements Channel {
 
     /**
      * Creates and initializes a new instance.
+     *
+     * @param context       The context.
+     * @param appSecret     The application secret.
+     * @param logSerializer The log serializer.
      */
     public DefaultChannel(@NonNull Context context, @NonNull UUID appSecret, @NonNull LogSerializer logSerializer) {
         this(context, appSecret, buildDefaultPersistence(logSerializer), buildDefaultIngestion(context, logSerializer));

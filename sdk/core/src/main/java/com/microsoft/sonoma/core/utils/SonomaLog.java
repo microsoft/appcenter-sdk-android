@@ -9,7 +9,6 @@ import static android.util.Log.VERBOSE;
 
 /**
  * <h3>Description</h3>
- * <p/>
  * Wrapper class for logging in the SDK as well as
  * setting the desired log level for end users.
  * Log levels correspond to those of android.util.Log.
