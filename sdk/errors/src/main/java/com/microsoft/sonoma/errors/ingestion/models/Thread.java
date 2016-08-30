@@ -2,7 +2,7 @@ package com.microsoft.sonoma.errors.ingestion.models;
 
 import com.microsoft.sonoma.core.ingestion.models.Model;
 import com.microsoft.sonoma.core.ingestion.models.json.JSONUtils;
-import com.microsoft.sonoma.errors.ingestion.models.json.JavaStackFrameFactory;
+import com.microsoft.sonoma.errors.ingestion.models.json.StackFrameFactory;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,9 +15,9 @@ import static com.microsoft.sonoma.core.ingestion.models.CommonProperties.ID;
 import static com.microsoft.sonoma.core.ingestion.models.CommonProperties.NAME;
 
 /**
- * The JavaThread model.
+ * The Thread model.
  */
-public class JavaThread implements Model {
+public class Thread implements Model {
 
     /**
      * Thread identifier.
@@ -32,7 +32,7 @@ public class JavaThread implements Model {
     /**
      * Stack frames.
      */
-    private List<JavaStackFrame> frames;
+    private List<StackFrame> frames;
 
     /**
      * Get the id value.
@@ -75,7 +75,7 @@ public class JavaThread implements Model {
      *
      * @return the frames value
      */
-    public List<JavaStackFrame> getFrames() {
+    public List<StackFrame> getFrames() {
         return this.frames;
     }
 
@@ -84,7 +84,7 @@ public class JavaThread implements Model {
      *
      * @param frames the frames value to set
      */
-    public void setFrames(List<JavaStackFrame> frames) {
+    public void setFrames(List<StackFrame> frames) {
         this.frames = frames;
     }
 
@@ -92,7 +92,7 @@ public class JavaThread implements Model {
     public void read(JSONObject object) throws JSONException {
         setId(object.getLong(ID));
         setName(object.optString(NAME, null));
-        setFrames(JSONUtils.readArray(object, FRAMES, JavaStackFrameFactory.getInstance()));
+        setFrames(JSONUtils.readArray(object, FRAMES, StackFrameFactory.getInstance()));
     }
 
     @Override
@@ -108,7 +108,7 @@ public class JavaThread implements Model {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        JavaThread that = (JavaThread) o;
+        Thread that = (Thread) o;
 
         if (id != that.id) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;

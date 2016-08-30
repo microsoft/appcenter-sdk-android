@@ -2,7 +2,8 @@ package com.microsoft.sonoma.errors.ingestion.models;
 
 import com.microsoft.sonoma.core.ingestion.models.Model;
 import com.microsoft.sonoma.core.ingestion.models.json.JSONUtils;
-import com.microsoft.sonoma.errors.ingestion.models.json.JavaStackFrameFactory;
+import com.microsoft.sonoma.errors.ingestion.models.json.ExceptionFactory;
+import com.microsoft.sonoma.errors.ingestion.models.json.StackFrameFactory;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,11 +15,13 @@ import static com.microsoft.sonoma.core.ingestion.models.CommonProperties.FRAMES
 import static com.microsoft.sonoma.core.ingestion.models.CommonProperties.TYPE;
 
 /**
- * The JavaException model.
+ * The Exception model.
  */
-public class JavaException implements Model {
+public class Exception implements Model {
 
     private static final String MESSAGE = "message";
+
+    private static final String INNER_EXCEPTIONS = "innerExceptions";
 
     /**
      * Exception type (fully qualified class name).
@@ -33,7 +36,12 @@ public class JavaException implements Model {
     /**
      * Exception stack trace elements.
      */
-    private List<JavaStackFrame> frames;
+    private List<StackFrame> frames;
+
+    /**
+     * Inner exceptions of this exception.
+     */
+    private List<Exception> innerExceptions;
 
     /**
      * Get the type value.
@@ -76,7 +84,7 @@ public class JavaException implements Model {
      *
      * @return the frames value
      */
-    public List<JavaStackFrame> getFrames() {
+    public List<StackFrame> getFrames() {
         return this.frames;
     }
 
@@ -85,15 +93,34 @@ public class JavaException implements Model {
      *
      * @param frames the frames value to set
      */
-    public void setFrames(List<JavaStackFrame> frames) {
+    public void setFrames(List<StackFrame> frames) {
         this.frames = frames;
+    }
+
+    /**
+     * Get the innerExceptions value.
+     *
+     * @return the innerExceptions value
+     */
+    public List<Exception> getInnerExceptions() {
+        return this.innerExceptions;
+    }
+
+    /**
+     * Set the innerExceptions value.
+     *
+     * @param innerExceptions the innerExceptions value to set
+     */
+    public void setInnerExceptions(List<Exception> innerExceptions) {
+        this.innerExceptions = innerExceptions;
     }
 
     @Override
     public void read(JSONObject object) throws JSONException {
         setType(object.optString(TYPE, null));
         setMessage(object.optString(MESSAGE, null));
-        setFrames(JSONUtils.readArray(object, FRAMES, JavaStackFrameFactory.getInstance()));
+        setFrames(JSONUtils.readArray(object, FRAMES, StackFrameFactory.getInstance()));
+        setInnerExceptions(JSONUtils.readArray(object, INNER_EXCEPTIONS, ExceptionFactory.getInstance()));
     }
 
     @Override
@@ -101,6 +128,7 @@ public class JavaException implements Model {
         JSONUtils.write(writer, TYPE, getType());
         JSONUtils.write(writer, MESSAGE, getMessage());
         JSONUtils.writeArray(writer, FRAMES, getFrames());
+        JSONUtils.writeArray(writer, INNER_EXCEPTIONS, getInnerExceptions());
     }
 
     @Override
@@ -109,11 +137,14 @@ public class JavaException implements Model {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        JavaException that = (JavaException) o;
+        Exception exception = (Exception) o;
 
-        if (type != null ? !type.equals(that.type) : that.type != null) return false;
-        if (message != null ? !message.equals(that.message) : that.message != null) return false;
-        return frames != null ? frames.equals(that.frames) : that.frames == null;
+        if (type != null ? !type.equals(exception.type) : exception.type != null) return false;
+        if (message != null ? !message.equals(exception.message) : exception.message != null)
+            return false;
+        if (frames != null ? !frames.equals(exception.frames) : exception.frames != null)
+            return false;
+        return innerExceptions != null ? innerExceptions.equals(exception.innerExceptions) : exception.innerExceptions == null;
     }
 
     @Override
@@ -121,6 +152,7 @@ public class JavaException implements Model {
         int result = type != null ? type.hashCode() : 0;
         result = 31 * result + (message != null ? message.hashCode() : 0);
         result = 31 * result + (frames != null ? frames.hashCode() : 0);
+        result = 31 * result + (innerExceptions != null ? innerExceptions.hashCode() : 0);
         return result;
     }
 }

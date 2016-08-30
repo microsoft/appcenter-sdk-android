@@ -35,6 +35,8 @@ public abstract class AbstractErrorLog extends AbstractLog {
 
     private static final String ERROR_ATTACHMENT = "errorAttachment";
 
+    private static final String ARCHITECTURE = "architecture";
+
     /**
      * Error identifier.
      */
@@ -85,6 +87,11 @@ public abstract class AbstractErrorLog extends AbstractLog {
      * Error attachment.
      */
     private ErrorAttachment errorAttachment;
+
+    /**
+     * CPU architecture.
+     */
+    private String architecture;
 
     /**
      * Get the id value.
@@ -266,6 +273,24 @@ public abstract class AbstractErrorLog extends AbstractLog {
         this.errorAttachment = errorAttachment;
     }
 
+    /**
+     * Get the architecture value.
+     *
+     * @return the architecture value
+     */
+    public String getArchitecture() {
+        return this.architecture;
+    }
+
+    /**
+     * Set the architecture value.
+     *
+     * @param architecture the architecture value to set
+     */
+    public void setArchitecture(String architecture) {
+        this.architecture = architecture;
+    }
+
     @Override
     public void read(JSONObject object) throws JSONException {
         super.read(object);
@@ -283,6 +308,7 @@ public abstract class AbstractErrorLog extends AbstractLog {
             errorAttachment.read(object.getJSONObject(ERROR_ATTACHMENT));
             setErrorAttachment(errorAttachment);
         }
+        setArchitecture(object.optString(ARCHITECTURE, null));
     }
 
     @Override
@@ -301,7 +327,9 @@ public abstract class AbstractErrorLog extends AbstractLog {
             writer.key(ERROR_ATTACHMENT).object();
             getErrorAttachment().write(writer);
             writer.endObject();
+
         }
+        JSONUtils.write(writer, ARCHITECTURE, getArchitecture());
     }
 
     @Override
@@ -329,8 +357,9 @@ public abstract class AbstractErrorLog extends AbstractLog {
         if (fatal != null ? !fatal.equals(that.fatal) : that.fatal != null) return false;
         if (appLaunchTOffset != null ? !appLaunchTOffset.equals(that.appLaunchTOffset) : that.appLaunchTOffset != null)
             return false;
-        return errorAttachment != null ? errorAttachment.equals(that.errorAttachment) : that.errorAttachment == null;
-
+        if (errorAttachment != null ? !errorAttachment.equals(that.errorAttachment) : that.errorAttachment != null)
+            return false;
+        return architecture != null ? architecture.equals(that.architecture) : that.architecture == null;
     }
 
     @Override
@@ -346,6 +375,7 @@ public abstract class AbstractErrorLog extends AbstractLog {
         result = 31 * result + (fatal != null ? fatal.hashCode() : 0);
         result = 31 * result + (appLaunchTOffset != null ? appLaunchTOffset.hashCode() : 0);
         result = 31 * result + (errorAttachment != null ? errorAttachment.hashCode() : 0);
+        result = 31 * result + (architecture != null ? architecture.hashCode() : 0);
         return result;
     }
 }

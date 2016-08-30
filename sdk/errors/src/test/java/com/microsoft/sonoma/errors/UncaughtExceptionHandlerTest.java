@@ -10,7 +10,7 @@ import com.microsoft.sonoma.core.utils.DeviceInfoHelper;
 import com.microsoft.sonoma.core.utils.PrefStorageConstants;
 import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
-import com.microsoft.sonoma.errors.ingestion.models.JavaErrorLog;
+import com.microsoft.sonoma.errors.ingestion.models.ManagedErrorLog;
 import com.microsoft.sonoma.errors.utils.ErrorLogHelper;
 
 import org.json.JSONException;
@@ -86,7 +86,7 @@ public class UncaughtExceptionHandlerTest {
         }).when(StorageHelper.PreferencesStorage.class);
         StorageHelper.PreferencesStorage.putBoolean(eq(key), anyBoolean());
 
-        JavaErrorLog errorLogMock = mock(JavaErrorLog.class);
+        ManagedErrorLog errorLogMock = mock(ManagedErrorLog.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(new File("."));
         when(ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong()))
                 .thenReturn(errorLogMock);

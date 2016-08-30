@@ -37,7 +37,10 @@ public class DefaultLogSerializer implements LogSerializer {
     @NonNull
     private Log readLog(JSONObject object) throws JSONException {
         String type = object.getString(TYPE);
-        Log log = mLogFactories.get(type).create();
+        LogFactory logFactory = mLogFactories.get(type);
+        if (logFactory == null)
+            throw new JSONException("Unknown log type: " + type);
+        Log log = logFactory.create();
         log.read(object);
         return log;
     }
