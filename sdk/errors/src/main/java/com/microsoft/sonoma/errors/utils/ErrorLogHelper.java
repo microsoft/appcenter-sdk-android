@@ -16,15 +16,16 @@ import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
 import com.microsoft.sonoma.errors.ErrorReporting;
-import com.microsoft.sonoma.errors.ingestion.models.JavaErrorLog;
-import com.microsoft.sonoma.errors.ingestion.models.JavaException;
-import com.microsoft.sonoma.errors.ingestion.models.JavaStackFrame;
-import com.microsoft.sonoma.errors.ingestion.models.JavaThread;
+import com.microsoft.sonoma.errors.ingestion.models.Exception;
+import com.microsoft.sonoma.errors.ingestion.models.ManagedErrorLog;
+import com.microsoft.sonoma.errors.ingestion.models.StackFrame;
+import com.microsoft.sonoma.errors.ingestion.models.Thread;
 import com.microsoft.sonoma.errors.model.ErrorReport;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -48,10 +49,10 @@ public class ErrorLogHelper {
     private static File sErrorLogDirectory;
 
     @NonNull
-    public static JavaErrorLog createErrorLog(@NonNull Context context, @NonNull final Thread thread, @NonNull final Throwable exception, @NonNull final Map<Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
+    public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Throwable exception, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
 
         /* Build error log with a unique identifier. */
-        JavaErrorLog errorLog = new JavaErrorLog();
+        ManagedErrorLog errorLog = new ManagedErrorLog();
         errorLog.setId(UUIDUtils.randomUUID());
 
         /* Set absolute current time. Will be correlated to session and converted to relative later. */
@@ -89,12 +90,12 @@ public class ErrorLogHelper {
         errorLog.setAppLaunchTOffset(SystemClock.elapsedRealtime() - initializeTimestamp);
 
         /* Attach exceptions. */
-        errorLog.setExceptions(getJavaExceptionsFromThrowable(exception));
+        errorLog.setException(getModelExceptionFromThrowable(exception));
 
         /* Attach thread states. */
-        List<JavaThread> threads = new ArrayList<>(allStackTraces.size());
-        for (Map.Entry<Thread, StackTraceElement[]> entry : allStackTraces.entrySet()) {
-            JavaThread javaThread = new JavaThread();
+        List<Thread> threads = new ArrayList<>(allStackTraces.size());
+        for (Map.Entry<java.lang.Thread, StackTraceElement[]> entry : allStackTraces.entrySet()) {
+            Thread javaThread = new Thread();
             javaThread.setId(entry.getKey().getId());
             javaThread.setName(entry.getKey().getName());
             javaThread.setFrames(getJavaStackFramesFromStackTrace(entry.getValue()));
@@ -173,7 +174,7 @@ public class ErrorLogHelper {
     }
 
     @NonNull
-    public static ErrorReport getErrorReportFromErrorLog(@NonNull JavaErrorLog log, Throwable throwable) {
+    public static ErrorReport getErrorReportFromErrorLog(@NonNull ManagedErrorLog log, Throwable throwable) {
         ErrorReport report = new ErrorReport();
         report.setId(log.getId().toString());
         report.setThreadName(log.getErrorThreadName());
@@ -202,29 +203,35 @@ public class ErrorLogHelper {
     }
 
     @NonNull
-    private static List<JavaException> getJavaExceptionsFromThrowable(@NonNull Throwable t) {
-        List<JavaException> javaExceptions = new ArrayList<>();
-        for (Throwable cause = t; cause != null; cause = cause.getCause()) {
-            JavaException javaException = new JavaException();
-            javaException.setType(cause.getClass().getName());
-            javaException.setMessage(cause.getMessage());
-            javaException.setFrames(getJavaStackFramesFromStackTrace(cause.getStackTrace()));
-            javaExceptions.add(javaException);
+    private static Exception getModelExceptionFromThrowable(@NonNull Throwable t) {
+        Exception exception = buildBaseExceptionFromThrowable(t);
+        for (Throwable cause = t.getCause(); cause != null; cause = cause.getCause()) {
+            Exception innerException = buildBaseExceptionFromThrowable(cause);
+            exception.setInnerExceptions(Collections.singletonList(innerException));
         }
-        return javaExceptions;
+        return exception;
     }
 
     @NonNull
-    private static List<JavaStackFrame> getJavaStackFramesFromStackTrace(@NonNull StackTraceElement[] stackTrace) {
-        List<JavaStackFrame> javaStackFrames = new ArrayList<>();
+    private static Exception buildBaseExceptionFromThrowable(Throwable cause) {
+        Exception exception = new Exception();
+        exception.setType(cause.getClass().getName());
+        exception.setMessage(cause.getMessage());
+        exception.setFrames(getJavaStackFramesFromStackTrace(cause.getStackTrace()));
+        return exception;
+    }
+
+    @NonNull
+    private static List<StackFrame> getJavaStackFramesFromStackTrace(@NonNull StackTraceElement[] stackTrace) {
+        List<StackFrame> stackFrames = new ArrayList<>();
         for (StackTraceElement stackTraceElement : stackTrace) {
-            JavaStackFrame javaStackFrame = new JavaStackFrame();
-            javaStackFrame.setClassName(stackTraceElement.getClassName());
-            javaStackFrame.setMethodName(stackTraceElement.getMethodName());
-            javaStackFrame.setLineNumber(stackTraceElement.getLineNumber());
-            javaStackFrame.setFileName(stackTraceElement.getFileName());
-            javaStackFrames.add(javaStackFrame);
+            StackFrame stackFrame = new StackFrame();
+            stackFrame.setClassName(stackTraceElement.getClassName());
+            stackFrame.setMethodName(stackTraceElement.getMethodName());
+            stackFrame.setLineNumber(stackTraceElement.getLineNumber());
+            stackFrame.setFileName(stackTraceElement.getFileName());
+            stackFrames.add(stackFrame);
         }
-        return javaStackFrames;
+        return stackFrames;
     }
 }

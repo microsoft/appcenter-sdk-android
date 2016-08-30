@@ -8,9 +8,9 @@ import org.json.JSONObject;
 import org.json.JSONStringer;
 
 /**
- * The JavaStackFrame model.
+ * The StackFrame model.
  */
-public class JavaStackFrame implements Model {
+public class StackFrame implements Model {
 
     private static final String CLASS_NAME = "className";
 
@@ -138,7 +138,7 @@ public class JavaStackFrame implements Model {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        JavaStackFrame that = (JavaStackFrame) o;
+        StackFrame that = (StackFrame) o;
 
         if (className != null ? !className.equals(that.className) : that.className != null)
             return false;
