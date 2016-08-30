@@ -68,9 +68,13 @@ subprojects {
             if (config.versionName == null)
                 config.versionName ext.versionName
             if (config.testInstrumentationRunner == null)
-                config.testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+                config.testInstrumentationRunner ext.testInstrumentationRunner
         }
     }
+}
+
+ext {
+    testInstrumentationRunner = 'android.support.test.runner.AndroidJUnitRunner'
 }
 
 task clean(type: Delete) {
