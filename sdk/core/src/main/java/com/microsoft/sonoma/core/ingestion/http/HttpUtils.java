@@ -1,5 +1,7 @@
 package com.microsoft.sonoma.core.ingestion.http;
 
+import android.support.annotation.VisibleForTesting;
+
 import java.io.EOFException;
 import java.io.InterruptedIOException;
 import java.net.SocketException;
@@ -14,7 +16,8 @@ public final class HttpUtils {
             UnknownHostException.class
     };
 
-    private HttpUtils() {
+    @VisibleForTesting
+    HttpUtils() {
     }
 
     public static boolean isRecoverableError(Throwable t) {
