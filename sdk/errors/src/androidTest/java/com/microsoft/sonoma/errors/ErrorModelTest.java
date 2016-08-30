@@ -71,6 +71,7 @@ public class ErrorModelTest {
 
         errorLog2.setException(errorLog1.getException());
         checkEquals(errorLog1, errorLog2);
+        checkSerialization(errorLog1, serializer);
         exception1.setInnerExceptions(null);
     }
 
