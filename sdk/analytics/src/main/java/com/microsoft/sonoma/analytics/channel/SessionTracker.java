@@ -1,16 +1,14 @@
 package com.microsoft.sonoma.analytics.channel;
 
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.sonoma.analytics.Analytics;
 import com.microsoft.sonoma.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.ingestion.models.Log;
-import com.microsoft.sonoma.core.utils.AndroidTimeSource;
 import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
-import com.microsoft.sonoma.core.utils.TimeSource;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
 
 import java.util.HashSet;
@@ -51,16 +49,6 @@ public class SessionTracker implements Channel.Listener {
     private final Channel mChannel;
 
     /**
-     * Session timeout.
-     */
-    private final long mSessionTimeout;
-
-    /**
-     * Time source.
-     */
-    private final TimeSource mTimeSource;
-
-    /**
      * Past and current session identifiers sorted by session starting timestamp (ascending).
      */
     private final NavigableMap<Long, UUID> mSessions = new TreeMap<>();
@@ -91,14 +79,7 @@ public class SessionTracker implements Channel.Listener {
      * @param channel channel to decorate.
      */
     public SessionTracker(Channel channel) {
-        this(channel, SESSION_TIMEOUT, new AndroidTimeSource());
-    }
-
-    @VisibleForTesting
-    SessionTracker(Channel channel, long sessionTimeout, TimeSource timeSource) {
         mChannel = channel;
-        mSessionTimeout = sessionTimeout;
-        mTimeSource = timeSource;
 
         /* Try loading past sessions from storage. */
         Set<String> storedSessions = StorageHelper.PreferencesStorage.getStringSet(STORAGE_KEY);
@@ -153,7 +134,7 @@ public class SessionTracker implements Channel.Listener {
                 mSid = UUIDUtils.randomUUID();
 
                 /* Update session map. */
-                mSessions.put(mTimeSource.currentTimeMillis(), mSid);
+                mSessions.put(System.currentTimeMillis(), mSid);
 
                 /* Remove oldest session if we reached maximum storage capacity. */
                 if (mSessions.size() > STORAGE_MAX_SESSIONS)
@@ -175,7 +156,7 @@ public class SessionTracker implements Channel.Listener {
             log.setSid(mSid);
 
             /* Record queued time only if the log is using current session. */
-            mLastQueuedLogTime = mTimeSource.elapsedRealtime();
+            mLastQueuedLogTime = SystemClock.elapsedRealtime();
         }
     }
 
@@ -185,7 +166,7 @@ public class SessionTracker implements Channel.Listener {
     public synchronized void onActivityResumed() {
 
         /* Record resume time for session timeout management. */
-        mLastResumedTime = mTimeSource.elapsedRealtime();
+        mLastResumedTime = SystemClock.elapsedRealtime();
     }
 
     /**
@@ -194,7 +175,7 @@ public class SessionTracker implements Channel.Listener {
     public synchronized void onActivityPaused() {
 
         /* Record pause time for session timeout management. */
-        mLastPausedTime = mTimeSource.elapsedRealtime();
+        mLastPausedTime = SystemClock.elapsedRealtime();
     }
 
     /**
@@ -210,10 +191,10 @@ public class SessionTracker implements Channel.Listener {
      * @return true if current session has timed out, false otherwise.
      */
     private boolean hasSessionTimedOut() {
-        long now = mTimeSource.elapsedRealtime();
-        boolean noLogSentForLong = now - mLastQueuedLogTime >= mSessionTimeout;
-        boolean isBackgroundForLong = mLastPausedTime >= mLastResumedTime && now - mLastPausedTime >= mSessionTimeout;
-        boolean wasBackgroundForLong = mLastResumedTime - mLastPausedTime >= mSessionTimeout;
+        long now = SystemClock.elapsedRealtime();
+        boolean noLogSentForLong = now - mLastQueuedLogTime >= SESSION_TIMEOUT;
+        boolean isBackgroundForLong = mLastPausedTime >= mLastResumedTime && now - mLastPausedTime >= SESSION_TIMEOUT;
+        boolean wasBackgroundForLong = mLastResumedTime - mLastPausedTime >= SESSION_TIMEOUT;
         return noLogSentForLong && (isBackgroundForLong || wasBackgroundForLong);
     }
 }

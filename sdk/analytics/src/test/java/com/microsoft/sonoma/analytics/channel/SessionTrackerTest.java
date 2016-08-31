@@ -1,5 +1,6 @@
 package com.microsoft.sonoma.analytics.channel;
 
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 
 import com.microsoft.sonoma.analytics.ingestion.models.EventLog;
@@ -7,16 +8,15 @@ import com.microsoft.sonoma.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.ingestion.models.Log;
 import com.microsoft.sonoma.core.utils.StorageHelper;
-import com.microsoft.sonoma.core.utils.TimeSource;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -36,14 +36,15 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(StorageHelper.PreferencesStorage.class)
+@PrepareForTest({SessionTracker.class, StorageHelper.PreferencesStorage.class, SystemClock.class})
 public class SessionTrackerTest {
 
     private final static String TEST_GROUP = "group_test";
 
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
+
     private long mMockTime;
-    private TimeSource mTimeSource;
     private Channel mChannel;
     private SessionTracker mSessionTracker;
 
@@ -57,12 +58,14 @@ public class SessionTrackerTest {
 
     private void spendTime(long time) {
         mMockTime += time;
-        when(mTimeSource.elapsedRealtime()).thenReturn(mMockTime);
-        when(mTimeSource.currentTimeMillis()).thenReturn(mMockTime);
+        when(SystemClock.elapsedRealtime()).thenReturn(mMockTime);
+        when(System.currentTimeMillis()).thenReturn(mMockTime);
     }
 
     @Before
     public void setUp() {
+        mockStatic(System.class);
+        mockStatic(SystemClock.class);
         mockStatic(StorageHelper.PreferencesStorage.class);
         PowerMockito.doAnswer(new Answer<Void>() {
 
@@ -79,10 +82,9 @@ public class SessionTrackerTest {
         }).when(StorageHelper.PreferencesStorage.class);
         StorageHelper.PreferencesStorage.putStringSet(anyString(), anySetOf(String.class));
         when(StorageHelper.PreferencesStorage.getStringSet(anyString())).thenReturn(null);
-        mTimeSource = mock(TimeSource.class);
         spendTime(1000);
         mChannel = mock(Channel.class);
-        mSessionTracker = new SessionTracker(mChannel, 20, mTimeSource);
+        mSessionTracker = new SessionTracker(mChannel);
     }
 
     @Test
@@ -114,7 +116,7 @@ public class SessionTrackerTest {
 
         /* No usage from background for a long time: new session. */
         {
-            spendTime(30);
+            spendTime(30000);
             Log log = newEvent();
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
             mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
@@ -149,7 +151,7 @@ public class SessionTrackerTest {
 
         /* We are in foreground, even after timeout a log is still in session. */
         {
-            spendTime(30);
+            spendTime(30000);
             Log log = newEvent();
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
             mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
@@ -181,7 +183,7 @@ public class SessionTrackerTest {
 
         /* Background for a long time and coming back to foreground: new session. */
         {
-            spendTime(30);
+            spendTime(30000);
             mSessionTracker.onActivityResumed();
             Log log = newEvent();
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
@@ -199,14 +201,14 @@ public class SessionTrackerTest {
         Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
         assertNotNull(sessions);
         assertEquals(1, sessions.size());
-        spendTime(30);
+        spendTime(30000);
         String firstSession = sessions.iterator().next();
         for (int i = 2; i <= 5; i++) {
             mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
             Set<String> intermediateSessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
             assertNotNull(intermediateSessions);
             assertEquals(i, intermediateSessions.size());
-            spendTime(30);
+            spendTime(30000);
         }
         mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
         Set<String> finalSessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
@@ -245,7 +247,7 @@ public class SessionTrackerTest {
 
         /* No usage from background for a long time, should produce a new session but we'll correlate, correlation does not trigger a new session. */
         {
-            spendTime(30);
+            spendTime(30000);
             Log log = newEvent();
             log.setToffset(firstSessionTime + 1);
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
@@ -267,7 +269,7 @@ public class SessionTrackerTest {
 
         /* Correlate log to previous. */
         {
-            spendTime(30);
+            spendTime(30000);
             Log log = newEvent();
             log.setToffset(firstSessionTime + 1);
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
@@ -278,7 +280,7 @@ public class SessionTrackerTest {
         }
 
         /* Re-test with persistence now, no current session but same correlation will work and no session will be triggered on the new instance. */
-        mSessionTracker = new SessionTracker(mChannel, 20, mTimeSource);
+        mSessionTracker = new SessionTracker(mChannel);
         {
             Log log = newEvent();
             log.setToffset(firstSessionTime + 1);
@@ -315,7 +317,7 @@ public class SessionTrackerTest {
         sessions.add("400");
         sessions.add("500a/10abd355-40a5-4b51-8071-cb5a4c338535");
         when(StorageHelper.PreferencesStorage.getStringSet(anyString())).thenReturn(sessions);
-        mSessionTracker = new SessionTracker(mChannel, 20, mTimeSource);
+        mSessionTracker = new SessionTracker(mChannel);
 
         /* Generate a current session. */
         mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
