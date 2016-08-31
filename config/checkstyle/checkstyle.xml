@@ -1,6 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE module PUBLIC
-    "-//Puppy Crawl//DTD Check Configuration 1.3//EN"
-    "http://www.puppycrawl.com/dtds/configuration_1_3.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
 
 <!--
     This configuration file was written by the eclipse-cs plugin configuration editor
@@ -8,6 +6,7 @@
     Checkstyle-Configuration: Android_Checkstyle
     Description: none
 -->
+<!--suppress ALL -->
 <module name="Checker">
     <property name="severity" value="warning" />
     <module name="TreeWalker">
@@ -49,7 +48,7 @@
         <module name="AnonInnerLength" />
         <module name="LineLength">
             <metadata name="net.sf.eclipsecs.core.comment"
-                value="Give a few more characters to allow exlipse auto formatter some exceptions from 80 characters if it wants so..." />
+                      value="Give a few more characters to allow eclipse auto formatter some exceptions from 80 characters if it wants so..."/>
             <property name="severity" value="ignore" />
             <property name="ignorePattern" value="^import.*$" />
             <property name="max" value="100" />
