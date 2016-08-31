@@ -451,6 +451,15 @@ public class StorageHelperAndroidTest {
         /* Read the file. */
         DataModel actual = InternalStorage.readObject(file);
 
+        /* Read with class cast exception. */
+        Exception readCastException = null;
+        try {
+            String wrongType = InternalStorage.readObject(file);
+        } catch (Exception e) {
+            readCastException = e;
+        }
+        assertTrue(readCastException instanceof ClassCastException);
+
         /* Verify the deserialized instance and original instance are same. */
         assertNotNull(actual);
         assertEquals(model.number, actual.number);
