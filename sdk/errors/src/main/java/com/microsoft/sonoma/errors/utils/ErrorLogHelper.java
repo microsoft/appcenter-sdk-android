@@ -98,7 +98,7 @@ public class ErrorLogHelper {
             Thread javaThread = new Thread();
             javaThread.setId(entry.getKey().getId());
             javaThread.setName(entry.getKey().getName());
-            javaThread.setFrames(getJavaStackFramesFromStackTrace(entry.getValue()));
+            javaThread.setFrames(getModelFramesFromStackTrace(entry.getValue()));
             threads.add(javaThread);
         }
         errorLog.setThreads(threads);
@@ -204,25 +204,25 @@ public class ErrorLogHelper {
 
     @NonNull
     private static Exception getModelExceptionFromThrowable(@NonNull Throwable t) {
-        Exception exception = buildBaseExceptionFromThrowable(t);
-        for (Throwable cause = t.getCause(); cause != null; cause = cause.getCause()) {
-            Exception innerException = buildBaseExceptionFromThrowable(cause);
-            exception.setInnerExceptions(Collections.singletonList(innerException));
+        Exception topException = null;
+        Exception parentException = null;
+        for (Throwable cause = t; cause != null; cause = cause.getCause()) {
+            Exception exception = new Exception();
+            exception.setType(cause.getClass().getName());
+            exception.setMessage(cause.getMessage());
+            exception.setFrames(getModelFramesFromStackTrace(cause.getStackTrace()));
+            if (topException == null) {
+                topException = exception;
+            } else {
+                parentException.setInnerExceptions(Collections.singletonList(exception));
+            }
+            parentException = exception;
         }
-        return exception;
+        return topException;
     }
 
     @NonNull
-    private static Exception buildBaseExceptionFromThrowable(Throwable cause) {
-        Exception exception = new Exception();
-        exception.setType(cause.getClass().getName());
-        exception.setMessage(cause.getMessage());
-        exception.setFrames(getJavaStackFramesFromStackTrace(cause.getStackTrace()));
-        return exception;
-    }
-
-    @NonNull
-    private static List<StackFrame> getJavaStackFramesFromStackTrace(@NonNull StackTraceElement[] stackTrace) {
+    private static List<StackFrame> getModelFramesFromStackTrace(@NonNull StackTraceElement[] stackTrace) {
         List<StackFrame> stackFrames = new ArrayList<>();
         for (StackTraceElement stackTraceElement : stackTrace) {
             StackFrame stackFrame = new StackFrame();
