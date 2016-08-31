@@ -24,6 +24,11 @@ import static org.mockito.Mockito.when;
 public class AbstractLogTest {
 
     @Test
+    public void utilsCoverage() {
+        new CommonProperties();
+    }
+
+    @Test
     public void compareDifferentType() {
         TestUtils.compareSelfNullClass(new MockLog());
         MockLogWithProperties mockLogWithProperties = new MockLogWithProperties();

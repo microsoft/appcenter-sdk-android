@@ -20,6 +20,7 @@ import java.util.NoSuchElementException;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -76,8 +77,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor next failing but closing working. */
-            DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, null);
-            databaseManagerMock = spy(databaseManager);
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -95,8 +95,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor next failing and closing failing. */
-            DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, null);
-            databaseManagerMock = spy(databaseManager);
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -114,8 +113,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor closing failing. */
-            DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, null);
-            databaseManagerMock = spy(databaseManager);
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -159,7 +157,7 @@ public class DatabaseManagerTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void deleteException() {
+    public void deleteExceptionWithInvalidValue() {
         DatabaseManager databaseManagerMock;
 
         /* Switch over to in-memory database. */
@@ -171,7 +169,19 @@ public class DatabaseManagerTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void getException() {
+    public void deleteExceptionWithNullValue() {
+        DatabaseManager databaseManagerMock;
+
+        /* Switch over to in-memory database. */
+        databaseManagerMock = getDatabaseManagerMock();
+        databaseManagerMock.get(0);
+
+        /* Get. */
+        databaseManagerMock.delete(DatabaseManager.PRIMARY_KEY, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getExceptionWithInvalidValue() {
         DatabaseManager databaseManagerMock;
 
         /* Switch over to in-memory database. */
@@ -180,6 +190,30 @@ public class DatabaseManagerTest {
 
         /* Get. */
         databaseManagerMock.get(DatabaseManager.PRIMARY_KEY, "non-number");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getExceptionWithNullValue() {
+        DatabaseManager databaseManagerMock;
+
+        /* Switch over to in-memory database. */
+        databaseManagerMock = getDatabaseManagerMock();
+        databaseManagerMock.get(0);
+
+        /* Get. */
+        databaseManagerMock.get(DatabaseManager.PRIMARY_KEY, null);
+    }
+
+    @Test
+    public void updateFailure() {
+        /* Update returns 0 or less. */
+        DatabaseManager databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, null));
+        SQLiteDatabase sqliteDatabaseMock = mock(SQLiteDatabase.class);
+        when(databaseManagerMock.getDatabase()).thenReturn(sqliteDatabaseMock);
+        when(sqliteDatabaseMock.update(anyString(), any(ContentValues.class), anyString(), any(String[].class))).thenReturn(-1);
+
+        /* Verify. */
+        assertFalse(databaseManagerMock.update(0, new ContentValues()));
     }
 
     @Test(expected = UnsupportedOperationException.class)

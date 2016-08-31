@@ -11,6 +11,7 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 import com.microsoft.sonoma.core.BuildConfig;
+import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.ingestion.models.Device;
 
 import org.junit.Test;
@@ -25,6 +26,8 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -32,11 +35,13 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(Build.class)
+@PrepareForTest({Build.class, SonomaLog.class})
 public class DeviceInfoHelperTest {
 
     @Test
@@ -154,5 +159,52 @@ public class DeviceInfoHelperTest {
         when(packageManagerMock.getPackageInfo(anyString(), eq(0))).thenThrow(new PackageManager.NameNotFoundException());
 
         DeviceInfoHelper.getDeviceInfo(contextMock);
+    }
+
+    @Test
+    public void getDeviceInfoMissingCarrierInfo() throws DeviceInfoHelper.DeviceInfoException, PackageManager.NameNotFoundException {
+
+        /* Mocking instances. */
+        Context contextMock = mock(Context.class);
+        PackageManager packageManagerMock = mock(PackageManager.class);
+        WindowManager windowManagerMock = mock(WindowManager.class);
+        mockStatic(SonomaLog.class);
+
+        /* Delegates to mock instances. */
+        when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
+        when(contextMock.getSystemService(Context.TELEPHONY_SERVICE)).thenThrow(new RuntimeException());
+        when(contextMock.getSystemService(Context.WINDOW_SERVICE)).thenReturn(windowManagerMock);
+        //noinspection WrongConstant
+        when(packageManagerMock.getPackageInfo(anyString(), anyInt())).thenReturn(mock(PackageInfo.class));
+        when(windowManagerMock.getDefaultDisplay()).thenReturn(mock(Display.class));
+
+        /* Verify. */
+        Device device = DeviceInfoHelper.getDeviceInfo(contextMock);
+        assertNull(device.getCarrierCountry());
+        assertNull(device.getCarrierName());
+        verifyStatic();
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString(), any(Exception.class));
+    }
+
+    @Test
+    public void getDeviceInfoMissingScreenSize() throws DeviceInfoHelper.DeviceInfoException, PackageManager.NameNotFoundException {
+
+        /* Mocking instances. */
+        Context contextMock = mock(Context.class);
+        PackageManager packageManagerMock = mock(PackageManager.class);
+        mockStatic(SonomaLog.class);
+
+        /* Delegates to mock instances. */
+        when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
+        when(contextMock.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(mock(TelephonyManager.class));
+        when(contextMock.getSystemService(Context.WINDOW_SERVICE)).thenThrow(new RuntimeException());
+        //noinspection WrongConstant
+        when(packageManagerMock.getPackageInfo(anyString(), anyInt())).thenReturn(mock(PackageInfo.class));
+
+        /* Verify. */
+        Device device = DeviceInfoHelper.getDeviceInfo(contextMock);
+        assertNull(device.getScreenSize());
+        verifyStatic();
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString(), any(Exception.class));
     }
 }
