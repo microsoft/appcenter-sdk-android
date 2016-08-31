@@ -363,16 +363,12 @@ public final class StorageHelper {
             if (TextUtils.isEmpty(contents) || TextUtils.getTrimmedLength(contents) <= 0) {
                 return;
             }
-
-            BufferedWriter writer = null;
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            //noinspection TryFinallyCanBeTryWithResources
             try {
-                writer = new BufferedWriter(new FileWriter(file));
                 writer.write(contents);
-                writer.flush();
             } finally {
-                if (writer != null) {
-                    writer.close();
-                }
+                writer.close();
             }
         }
 
@@ -388,16 +384,13 @@ public final class StorageHelper {
         @SuppressWarnings("unchecked")
         public static <T extends Serializable> T readObject(@NonNull File file)
                 throws IOException, ClassNotFoundException {
-            ObjectInputStream inputStream = null;
-            T object;
+            ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(file));
+            //noinspection TryFinallyCanBeTryWithResources
             try {
-                inputStream = new ObjectInputStream(new FileInputStream(file));
-                object = (T) inputStream.readObject();
+                return (T) inputStream.readObject();
             } finally {
-                if (inputStream != null)
-                    inputStream.close();
+                inputStream.close();
             }
-            return object;
         }
 
         /**
@@ -405,17 +398,16 @@ public final class StorageHelper {
          *
          * @param file   The file to write to.
          * @param object The object to be written to the file.
-         * @param <T>  A type for the object.
+         * @param <T>    A type for the object.
          * @throws IOException If an I/O error occurs
          */
         public static <T extends Serializable> void writeObject(@NonNull File file, @NonNull T object) throws IOException {
-            ObjectOutputStream outputStream = null;
+            ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(file));
+            //noinspection TryFinallyCanBeTryWithResources
             try {
-                outputStream = new ObjectOutputStream(new FileOutputStream(file));
                 outputStream.writeObject(object);
             } finally {
-                if (outputStream != null)
-                    outputStream.close();
+                outputStream.close();
             }
         }
 
