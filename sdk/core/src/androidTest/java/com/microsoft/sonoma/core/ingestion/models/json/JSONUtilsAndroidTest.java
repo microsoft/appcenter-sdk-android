@@ -25,6 +25,11 @@ import static org.mockito.Mockito.mock;
 public class JSONUtilsAndroidTest {
 
     @Test
+    public void utilsCoverage() {
+        new JSONUtils();
+    }
+
+    @Test
     public void writeReadObject() throws JSONException {
 
         /* Write to JSON object. */
