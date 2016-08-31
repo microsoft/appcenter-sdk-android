@@ -72,6 +72,11 @@ public class StorageHelperAndroidTest {
      */
     private static ContentValues mSchema;
 
+    /**
+     * Boolean value to simulate both true and false.
+     */
+    private static boolean mRandomBooleanValue = false;
+
     @BeforeClass
     public static void setUpClass() {
         sContext = InstrumentationRegistry.getTargetContext();
@@ -197,7 +202,7 @@ public class StorageHelperAndroidTest {
         values.put("COL_LONG", RANDOM.nextLong());
         values.put("COL_FLOAT", RANDOM.nextFloat());
         values.put("COL_DOUBLE", RANDOM.nextDouble());
-        values.put("COL_BOOLEAN", Boolean.TRUE/*RANDOM.nextBoolean()*/);
+        values.put("COL_BOOLEAN", (mRandomBooleanValue = !mRandomBooleanValue)/*RANDOM.nextBoolean()*/);
         values.put("COL_BYTE_ARRAY", randomBytes);
         return values;
     }
@@ -227,7 +232,11 @@ public class StorageHelperAndroidTest {
 
         /* Get for in-memory database test. */
         if (imdbTest) {
-            ContentValues valueFromDatabase = databaseStorage.get("COL_STRING", value1.getAsString("COL_STRING"));
+            /* Try with invalid key. */
+            ContentValues valueFromDatabase = databaseStorage.get("COL_STRINGX", value1.getAsString("COL_STRING"));
+            assertNull(valueFromDatabase);
+            /* Try with valid key. */
+            valueFromDatabase = databaseStorage.get("COL_STRING", value1.getAsString("COL_STRING"));
             assertContentValuesEquals(value1, valueFromDatabase);
             valueFromDatabase = databaseStorage.get("COL_STRING", value1.getAsString("COL_STRING") + "X");
             assertNull(valueFromDatabase);
@@ -296,6 +305,13 @@ public class StorageHelperAndroidTest {
         Long value7Id = databaseStorage.put(value7);
         assertNotNull(value6Id);
         assertNotNull(value7Id);
+
+        /* Delete for in-memory database test. */
+        if (imdbTest) {
+            /* Try with invalid key. */
+            databaseStorage.delete("COL_STRINGX", value2.getAsString("COL_STRING"));
+            assertEquals(3, databaseStorage.size());
+        }
 
         /* Delete logs with condition. */
         databaseStorage.delete("COL_STRING", value2.getAsString("COL_STRING"));

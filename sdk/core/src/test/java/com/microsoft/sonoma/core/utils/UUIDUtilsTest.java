@@ -12,6 +12,11 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class UUIDUtilsTest {
 
     @Test
+    public void utilsCoverage() {
+        new UUIDUtils();
+    }
+
+    @Test
     public void secureRandom() {
         UUID uuid = UUIDUtils.randomUUID();
         System.out.println(uuid);

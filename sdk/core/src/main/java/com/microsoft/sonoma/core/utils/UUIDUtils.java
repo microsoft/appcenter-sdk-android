@@ -29,7 +29,8 @@ public final class UUIDUtils {
     /**
      * Utils pattern hides constructor.
      */
-    private UUIDUtils() {
+    @VisibleForTesting
+    UUIDUtils() {
     }
 
     /**
