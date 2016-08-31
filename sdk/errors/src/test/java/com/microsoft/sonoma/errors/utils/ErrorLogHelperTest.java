@@ -27,6 +27,7 @@ import org.powermock.reflect.Whitebox;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
@@ -79,7 +80,7 @@ public class ErrorLogHelperTest {
         Whitebox.setInternalState(Build.class, "SUPPORTED_ABIS", new String[]{"armeabi-v7a", "arm"});
 
         /* Test. */
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new TestCrashException()), java.lang.Thread.getAllStackTraces(), 900);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new IOException(new TestCrashException())), java.lang.Thread.getAllStackTraces(), 900);
         assertNotNull(errorLog);
         assertNotNull(errorLog.getId());
         assertTrue(System.currentTimeMillis() - errorLog.getToffset() <= 1000);
@@ -93,15 +94,30 @@ public class ErrorLogHelperTest {
         assertEquals(java.lang.Thread.currentThread().getName(), errorLog.getErrorThreadName());
         assertEquals(Boolean.TRUE, errorLog.getFatal());
         assertEquals(Long.valueOf(100), errorLog.getAppLaunchTOffset());
-        assertNotNull(errorLog.getException());
-        assertNotNull(errorLog.getException().getInnerExceptions());
-        assertEquals(1, errorLog.getException().getInnerExceptions().size());
-        sanityCheck(errorLog.getException());
-        sanityCheck(errorLog.getException().getInnerExceptions().get(0));
-        assertEquals(RuntimeException.class.getName(), errorLog.getException().getType());
-        assertNotNull(errorLog.getException().getMessage());
-        assertEquals(TestCrashException.class.getName(), errorLog.getException().getInnerExceptions().get(0).getType());
-        assertNotNull(errorLog.getException().getInnerExceptions().get(0).getMessage());
+
+        /* Check first exception. */
+        Exception topException = errorLog.getException();
+        sanityCheck(topException);
+        assertEquals(RuntimeException.class.getName(), topException.getType());
+        assertNotNull(topException.getMessage());
+        assertNotNull(topException.getInnerExceptions());
+        assertEquals(1, topException.getInnerExceptions().size());
+
+        /* Check second exception. */
+        Exception middleException = topException.getInnerExceptions().get(0);
+        sanityCheck(middleException);
+        assertEquals(IOException.class.getName(), middleException.getType());
+        assertNotNull(middleException.getInnerExceptions());
+        assertEquals(1, middleException.getInnerExceptions().size());
+
+        /* Check third exception. */
+        Exception rootCauseException = middleException.getInnerExceptions().get(0);
+        sanityCheck(rootCauseException);
+        assertEquals(TestCrashException.class.getName(), rootCauseException.getType());
+        assertNotNull(rootCauseException.getMessage());
+        assertNull(rootCauseException.getInnerExceptions());
+
+        /* Check threads. */
         assertNotNull(errorLog.getThreads());
         assertEquals(java.lang.Thread.getAllStackTraces().size(), errorLog.getThreads().size());
         for (Thread thread : errorLog.getThreads()) {
