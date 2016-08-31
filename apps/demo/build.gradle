@@ -15,7 +15,10 @@ repositories {
         url "https://microsoftsonoma.bintray.com/sonoma"
     }
 }
+
 dependencies {
-    compile "com.microsoft.sonoma:analytics:1.0.0"
-    compile "com.microsoft.sonoma:errors:1.0.0"
+    //noinspection GradleDynamicVersion
+    compile "com.microsoft.sonoma:analytics:+"
+    //noinspection GradleDynamicVersion
+    compile "com.microsoft.sonoma:errors:+"
 }
