@@ -1,5 +1,7 @@
 package com.microsoft.sonoma.core.ingestion.models;
 
+import android.support.annotation.VisibleForTesting;
+
 public final class CommonProperties {
 
     public static final String TYPE = "type";
@@ -10,6 +12,7 @@ public final class CommonProperties {
 
     public static final String FRAMES = "frames";
 
-    private CommonProperties() {
+    @VisibleForTesting
+    CommonProperties() {
     }
 }

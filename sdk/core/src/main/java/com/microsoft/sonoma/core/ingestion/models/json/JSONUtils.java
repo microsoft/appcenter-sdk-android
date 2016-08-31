@@ -1,5 +1,7 @@
 package com.microsoft.sonoma.core.ingestion.models.json;
 
+import android.support.annotation.VisibleForTesting;
+
 import com.microsoft.sonoma.core.ingestion.models.Model;
 
 import org.json.JSONArray;
@@ -14,7 +16,8 @@ import java.util.Map;
 
 public final class JSONUtils {
 
-    private JSONUtils() {
+    @VisibleForTesting
+    JSONUtils() {
     }
 
     public static Integer readInteger(JSONObject object, String key) throws JSONException {
