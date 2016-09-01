@@ -4,15 +4,17 @@
 
 evaluationDependsOn(':apps')
 
-apply plugin: 'maven'
-
+/*
+ * Not a secret, will be shared with private beta customers git itself is private.
+ * This account is read only, we use different secret credentials to publish.
+ */
 repositories {
     maven {
+        url 'http://microsoftsonoma.bintray.com/sonoma'
         credentials {
-            username rootProject.ext.bintrayUser
-            password rootProject.ext.bintrayKey
+            username 'sonoma-beta'
+            password 'cbaf881993ad1ab4128f71da716d060e8590906a'
         }
-        url "https://microsoftsonoma.bintray.com/sonoma"
     }
 }
 

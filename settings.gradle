@@ -4,9 +4,10 @@ include ':sdk:core'
 include ':sdk:errors'
 include ':sdk:analytics'
 
+// common test code
 include ':test'
 
 // test apps
 include ':apps'
 include ':apps:sasquatch'
-// include ':apps:demo'
+include ':apps:demo'
