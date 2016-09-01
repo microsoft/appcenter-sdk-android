@@ -11,7 +11,6 @@ import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
 
-import com.microsoft.sonoma.core.BuildConfig;
 import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.ingestion.models.Device;
 
@@ -82,8 +81,8 @@ public class DeviceInfoHelper {
             SonomaLog.error(Sonoma.LOG_TAG, "Cannot retrieve screen size", e);
         }
 
-        /* SDK version. */
-        device.setSdkVersion(BuildConfig.VERSION_NAME);
+        /* SDK version. Don't add the BuildConfig import or it will trigger a Javadoc warning... */
+        device.setSdkVersion(com.microsoft.sonoma.core.BuildConfig.VERSION_NAME);
 
         /* Timezone offset in minutes (including DST). */
         device.setTimeZoneOffset(TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 60 / 1000);
