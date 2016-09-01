@@ -186,14 +186,6 @@ task coverageReport(type: JacocoReport, dependsOn: subprojects.coverageReport) {
     executionData = files(subprojects.coverageReport.executionData)
 }
 
-task javadoc(type: Javadoc, dependsOn: subprojects.javadoc) {
-    // Do nothing for :sdk but run the task for its children.
-}
-
-task bintrayUpload(dependsOn: [subprojects.bintrayUpload, subprojects.assembleRelease]) {
-    // Do nothing for :sdk but run the task for its children.
-}
-
 task clean(type: Delete) {
     delete project.buildDir
 }
