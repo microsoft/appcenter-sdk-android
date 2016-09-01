@@ -17,9 +17,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -274,5 +277,36 @@ public class DatabaseManagerTest {
 
         /* Get database. */
         databaseManager.getDatabase();
+    }
+
+    @Test
+    public void inMemoryEviction() {
+
+        /* Mocking instances. */
+        Context contextMock = mock(Context.class);
+
+        /* Instantiate real instance for DatabaseManager. */
+        DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", "table", 1, null, 2, null));
+        databaseManager.switchToInMemory("test", null);
+
+        ContentValues value1 = mock(ContentValues.class);
+        ContentValues value2 = mock(ContentValues.class);
+        ContentValues value3 = mock(ContentValues.class);
+
+        long value1Id = databaseManager.put(value1);
+        verify(value1).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
+        assertEquals(1, databaseManager.getRowCount());
+
+        long value2Id = databaseManager.put(value2);
+        verify(value2).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
+        assertEquals(2, databaseManager.getRowCount());
+
+        long value3Id = databaseManager.put(value3);
+        verify(value3).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
+        assertEquals(2, databaseManager.getRowCount());
+
+        assertNull(databaseManager.get(value1Id));
+        assertNotNull(databaseManager.get(value2Id));
+        assertNotNull(databaseManager.get(value3Id));
     }
 }
