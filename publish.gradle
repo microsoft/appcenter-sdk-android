@@ -4,7 +4,7 @@ ext {
     siteUrl = 'https://github.com/Microsoft/Sonoma-SDK-Android'
     gitUrl = 'https://github.com/Microsoft/Sonoma-SDK-Android.git'
     groupId = 'com.microsoft.sonoma'
-    sdkDescription = 'Microsoft Sonoma SDK'
+    sdkDescription = 'Microsoft Sonoma SDK for Android'
 
     Properties properties = new Properties()
     File file = rootProject.file('local.properties')
@@ -19,10 +19,11 @@ ext {
     bintrayRepo = properties.getProperty("bintray.repo")
     bintrayPackageNamePrefix = properties.getProperty("bintray.package.prefix")
 
-    licenseName = 'The Apache Software License, Version 2.0'
-    licenseSite = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    licenseName = 'The MIT License (MIT)'
+    licenseSite = 'https://opensource.org/licenses/MIT'
+    licenseCode = 'MIT'
 
     developerId = 'microsoft'
     developerName = 'Microsoft'
-    developerEmail = 'sonoma.sdk@gmail.com'
+    developerEmail = 'mobiledevopssdk@microsoft.com'
 }

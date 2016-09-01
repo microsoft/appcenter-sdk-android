@@ -107,6 +107,9 @@ subprojects {
         from javadoc.destinationDir
     }
 
+    // FIXME On some machines the following task dependency seems broken, force it
+    bintrayUpload.dependsOn tasks.install
+
     artifacts {
         archives javadocJar
         archives sourcesJar
@@ -117,14 +120,16 @@ subprojects {
         key = ext.bintrayKey
 
         configurations = ['archives']
+
+        publish = true
+
         pkg {
             repo = ext.bintrayRepo
             name = ext.bintrayPackageNamePrefix + project.name
             userOrg = ext.bintrayUserOrg
             websiteUrl = ext.siteUrl
             vcsUrl = ext.gitUrl
-            licenses = ["Apache-2.0"]
-            publish = true
+            licenses = [ext.licenseCode]
         }
     }
 
