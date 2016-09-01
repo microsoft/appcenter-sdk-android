@@ -20,10 +20,12 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -109,5 +111,25 @@ public class StorageHelperTest {
         doThrow(new IOException("mock")).when(writer).writeObject(any());
         StorageHelper.InternalStorage.writeObject(mock(File.class), "test");
         verify(writer).close();
+    }
+
+    @Test
+    public void lastModifiedFile() {
+        File dir = mock(File.class);
+        FilenameFilter filter = mock(FilenameFilter.class);
+        when(dir.exists()).thenReturn(true);
+        when(dir.listFiles(any(FilenameFilter.class))).thenReturn(null);
+
+        assertNull(StorageHelper.InternalStorage.lastModifiedFile(dir, filter));
+
+        File file1 = mock(File.class);
+        File file2 = mock(File.class);
+        File file3 = mock(File.class);
+        when(file1.lastModified()).thenReturn(1L);
+        when(file2.lastModified()).thenReturn(2L);
+        when(file3.lastModified()).thenReturn(3L);
+        when(dir.listFiles(filter)).thenReturn(new File[]{file1, file3, file2});
+
+        assertEquals(file3, StorageHelper.InternalStorage.lastModifiedFile(dir, filter));
     }
 }
