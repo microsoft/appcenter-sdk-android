@@ -1,11 +1,11 @@
 //
-// :apps:demo
+// :apps:helloworld
 //
 
 evaluationDependsOn(':apps')
 
 /*
- * Not a secret, will be shared with private beta customers git itself is private.
+ * Not a secret, will be shared with private beta customers, git repo itself is private.
  * This account is read only, we use different secret credentials to publish.
  */
 repositories {

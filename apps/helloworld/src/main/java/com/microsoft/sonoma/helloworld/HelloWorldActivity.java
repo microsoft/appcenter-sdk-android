@@ -1,4 +1,4 @@
-package com.microsoft.sonoma.demo;
+package com.microsoft.sonoma.helloworld;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -9,7 +9,7 @@ import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
 import com.microsoft.sonoma.errors.ErrorReporting;
 
-public class MainActivity extends Activity {
+public class HelloWorldActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,5 +18,14 @@ public class MainActivity extends Activity {
 
         Sonoma.setLogLevel(Log.VERBOSE);
         Sonoma.start(getApplication(), UUIDUtils.randomUUID().toString(), Analytics.class, ErrorReporting.class);
+    }
+
+    @SuppressWarnings({"ConstantConditions", "ConstantIfStatement"})
+    @Override
+    protected void onDestroy() {
+
+        /* Trigger a super not called exception for testing crash reporting. */
+        if (false)
+            super.onDestroy();
     }
 }
