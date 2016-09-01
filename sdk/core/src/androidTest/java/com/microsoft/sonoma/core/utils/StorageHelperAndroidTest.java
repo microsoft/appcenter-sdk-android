@@ -454,6 +454,7 @@ public class StorageHelperAndroidTest {
         /* Read with class cast exception. */
         Exception readCastException = null;
         try {
+            @SuppressWarnings("UnusedAssignment")
             String wrongType = InternalStorage.readObject(file);
         } catch (Exception e) {
             readCastException = e;
