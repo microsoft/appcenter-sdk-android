@@ -289,24 +289,24 @@ public class DatabaseManagerTest {
         DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", "table", 1, null, 2, null));
         databaseManager.switchToInMemory("test", null);
 
-        ContentValues value1 = spy(new ContentValues());
-        ContentValues value2 = spy(new ContentValues());
-        ContentValues value3 = spy(new ContentValues());
+        ContentValues value1 = mock(ContentValues.class);
+        ContentValues value2 = mock(ContentValues.class);
+        ContentValues value3 = mock(ContentValues.class);
 
-        databaseManager.put(value1);
+        long value1Id = databaseManager.put(value1);
         verify(value1).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
         assertEquals(1, databaseManager.getRowCount());
 
-        databaseManager.put(value2);
+        long value2Id = databaseManager.put(value2);
         verify(value2).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
         assertEquals(2, databaseManager.getRowCount());
 
-        databaseManager.put(value3);
+        long value3Id = databaseManager.put(value3);
         verify(value3).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
         assertEquals(2, databaseManager.getRowCount());
 
-        assertNull(databaseManager.get(value1.getAsLong(DatabaseManager.PRIMARY_KEY)));
-        assertNotNull(databaseManager.get(value2.getAsLong(DatabaseManager.PRIMARY_KEY)));
-        assertNotNull(databaseManager.get(value3.getAsLong(DatabaseManager.PRIMARY_KEY)));
+        assertNull(databaseManager.get(value1Id));
+        assertNotNull(databaseManager.get(value2Id));
+        assertNotNull(databaseManager.get(value3Id));
     }
 }
