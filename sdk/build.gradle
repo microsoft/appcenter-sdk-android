@@ -107,7 +107,7 @@ subprojects {
         from javadoc.destinationDir
     }
 
-    // FIXME On some machines the following task dependency seems broken, force it
+    // This workaround is required only when using "org.gradle.configureondemand: true"
     bintrayUpload.dependsOn tasks.install
 
     artifacts {
