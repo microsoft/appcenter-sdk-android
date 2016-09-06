@@ -29,7 +29,7 @@ This document contains the following sections:
 Let's get started with setting up Sonoma Android SDK in your app to use these services:
 
 1. ### **Prerequisites** ###
-    Before you begin, please make sure that the following prerequisities are met:
+    Before you begin, please make sure that the following prerequisites are met:
 
   * Android project that is set up in Android Studio.
   * Device running Android Version 4.0.3 with API level >= 15 or higher.
@@ -73,7 +73,7 @@ Let's get started with setting up Sonoma Android SDK in your app to use these se
 
       Go over to the Sonoma portal, click on "Microsoft Azure Project Sonoma". Under "My apps", click on the app that you want the SDK to set up. Then click on "Manage app" and copy the "App Secret" to start the SDK.
 
-    * **Start the SDK :**  Sonoma provides developers with two modules to get started- Analytics and Error Reporting. In order to use these modules, you need to opt in for the module that you'd like, meaning by default no modules are included and you will have to explicitly call each of them when starting the SDK.
+    * **Start the SDK:**  Sonoma provides developers with two modules to get started- Analytics and Error Reporting. In order to use these modules, you need to opt in for the module that you'd like, meaning by default no modules are included and you will have to explicitly call each of them when starting the SDK.
 
         ```Java
         Sonoma.start(getApplication(), "<Your App Secret>", Analytics.class, ErrorReporting.class);
@@ -88,7 +88,7 @@ Let's get started with setting up Sonoma Android SDK in your app to use these se
     * **Custom Events:** You can track your own custom events with specific properties to know what's happening in your app, understand user actions and see the aggregates in Sonoma portal. Once you have started the SDK, use the trackEvent() method to track your events with properties.
 
         ```Java
-        Map<String,String> properties=new HashMap<String,String>();
+        Map<String,String> properties = new HashMap<String, String>();
         properties.put("Category", "Music");
         properties.put("FileName", "favourite.avi");
 
@@ -124,14 +124,14 @@ Let's get started with setting up Sonoma Android SDK in your app to use these se
       ErrorReporting.hasCrashedInLastSession()
       ```
 
-    * **Advanced Scenarios:**  Error Reporting module provides callback scenarios for developers to perform additional actions when sending crashes to Sonoma. You can add more power to your crash report by implementing any or all of these callback scenario. All these callbacks needs to be implemented on ErrorReportingListener.   
+    * **Advanced Scenarios:**  Error Reporting module provides callback scenarios for developers to perform additional actions when sending crashes to Sonoma. You can add more power to your crash report by implementing any or all of these callback scenario. All these callbacks need to be implemented on ErrorReportingListener.   
 
-        * **Should the crash be processed :**   Implement this callback if you'd like to decide if a particular crash needs to be processed or not. For example - there could be some system level crashes that you'd want to ignore and don't want to send to Sonoma.
+        * **Should the crash be processed:**   Implement this callback if you'd like to decide if a particular crash needs to be processed or not. For example - there could be some system level crashes that you'd want to ignore and don't want to send to Sonoma.
         ```Java
             boolean ErrorReportingListener.shouldProcess(ErrorReport errorReport)
         ```
 
-        * **User Confirmation :** If user privacy is important to you as a developer, you might want to get user confirmation before sending a crash to Sonoma. Our SDK exposes a callback where you can build your custom UI that prompts user to select one of these options - "Always Send", "Send". Based on the user input, the crash will be forwarded to Sonoma.
+        * **User Confirmation:** If user privacy is important to you as a developer, you might want to get user confirmation before sending a crash to Sonoma. Our SDK exposes a callback where you can build your custom UI that prompts user to select one of these options - "Always Send", "Send". Based on the user input, the crash will be forwarded to Sonoma.
         ```Java
             boolean ErrorReportingListener.shouldAwaitUserConfirmation()
         ```
@@ -143,22 +143,22 @@ Let's get started with setting up Sonoma Android SDK in your app to use these se
             userConfirmation should be one of SEND, DONT_SEND or ALWAYS_SEND
          ```
 
-        * **Binary attachment :**  If you'd like to attach text/binary data to a crash report, implement this callback. Before sending the crash, our SDK will add the attachment to the crash report and you can view it on the Sonoma dashboard.   
+        * **Binary attachment:**  If you'd like to attach text/binary data to a crash report, implement this callback. Before sending the crash, our SDK will add the attachment to the crash report and you can view it on the Sonoma dashboard.   
         ```Java
             ErrorAttachment getErrorAttachment(ErrorReport errorReport)
          ```
         
-        * **Before sending crash :**   This callback will be invoked just before the crash is sent to Sonoma.
+        * **Before sending crash:**   This callback will be invoked just before the crash is sent to Sonoma.
             ```Java
             void ErrorReportingListener.onBeforeSending(ErrorReport errorReport);
             ```
 
-        * **Crash sending succeeded :**   This callback will be invoked after sending crash reports succeeded.
+        * **Crash sending succeeded:**   This callback will be invoked after sending crash reports succeeded.
             ```Java
             void ErrorReportingListener.onSendingFailed(ErrorReport errorReport, Exception e);
             ```
 
-        * **Crash sending failed :**   This callback will be invoked after sending crash reports failed.
+        * **Crash sending failed:**   This callback will be invoked after sending crash reports failed.
             ```Java
             void ErrorReportingListener.onSendingSucceeded(ErrorReport errorReport)
             ```
@@ -179,7 +179,7 @@ Let's get started with setting up Sonoma Android SDK in your app to use these se
         Sonoma.setLogLevel(Log.VERBOSE)
     ```
 
-    * **Get Install Identifier** : Sonoma SDK creates an UUID for each device once the app is installed. This identifier remains same for a device when the app is updated and a new one is generated only when the app is re-installed. This API would be useful for debugging purpose.
+    * **Get Install Identifier**: Sonoma SDK creates an UUID for each device once the app is installed. This identifier remains same for a device when the app is updated and a new one is generated only when the app is re-installed. This API would be useful for debugging purpose.
     ```Java
         Sonoma.getInstallId()
     ``` 
