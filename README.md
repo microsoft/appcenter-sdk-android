@@ -34,7 +34,7 @@ Let's get started with setting up Sonoma Android SDK in your app to use these se
   * Android project that is set up in Android Studio.
   * Device running Android Version 4.0.3 with API level >= 15 or higher.
 
-2.  ### **Add Sonoma SDK modules** ###
+2. ### **Add Sonoma SDK modules** ###
 
     Sonoma SDK is designed with a modular approach where a developer needs to integrate only the modules of the services that interests them.
 
@@ -67,7 +67,7 @@ Let's get started with setting up Sonoma Android SDK in your app to use these se
 
     Now that you've integrated the SDK in your application, it's time to start the SDK and make use of Sonoma services.
      
-3.  ### **Start the SDK** ### 
+3. ### **Start the SDK** ### 
     To start the Sonoma SDK in your app, follow the steps:
     * **Get App Secret of your application:**   Before you call the API to start the SDK, you need to get your app specific Application Secret from the Sonoma portal that needs to be a part of the method call. This will make sure all the data collected by the SDK corresponds to your application. 
 
@@ -105,7 +105,7 @@ Let's get started with setting up Sonoma Android SDK in your app to use these se
         Analytics.isEnabled()
         ```
     
-5.  ### **Error Reporting APIs** ###
+5. ### **Error Reporting APIs** ###
 
     Once you set up and start Sonoma SDK to use Error Reporting module in your application, SDK will automatically start logging any crashes in the device's local storage. When the user opens the application again, crash log will be forwarded to Sonoma and you can analyze the crash along with the stack trace on the Sonoma dashboard. Follow the link to see how to [Start the SDK](#start-the-sdk) if you haven't already.
 
@@ -172,7 +172,7 @@ Let's get started with setting up Sonoma Android SDK in your app to use these se
         ErrorReporting.isEnabled()
         ```
 
-6.  ### **Advanced APIs** ###
+6. ### **Advanced APIs** ###
     
     * **Debugging**: You can control the amount of log messages from Sonoma SDK that show up in LogCat. Use setLogLevel() API to enable additional logging while debugging. By default, it is set it to ASSERT.
      ```Java
