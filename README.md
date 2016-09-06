@@ -43,7 +43,7 @@ Let's get started with setting up Sonoma Android SDK in your app to use these se
     * Open app level build.gradle file (app/build.gradle) and add the following lines after apply plugin. Since we are in private beta right now, you need to include credentials in order to get the libraries.
      
         apply plugin: 'com.android.application'
-        ```json 
+        ```groovy 
         repositories {
             maven {
                 url  'http://microsoftsonoma.bintray.com/sonoma'
@@ -56,7 +56,7 @@ Let's get started with setting up Sonoma Android SDK in your app to use these se
         ```
 
     * In the same file, include the dependencies that you want in your project. Each SDK module needs to be added as a separate dependency in this section. If you would want to use both Analytics and Errors, add the following lines:
-        ```json 
+        ```groovy 
         dependencies {
             compile 'com.microsoft.sonoma:analytics:+'
             compile 'com.microsoft.sonoma:errors:+'
@@ -76,7 +76,7 @@ Let's get started with setting up Sonoma Android SDK in your app to use these se
     * **Start the SDK:**  Sonoma provides developers with two modules to get started- Analytics and Error Reporting. In order to use these modules, you need to opt in for the module that you'd like, meaning by default no modules are included and you will have to explicitly call each of them when starting the SDK.
 
         ```Java
-        Sonoma.start(getApplication(), "<Your App Secret>", Analytics.class, ErrorReporting.class);
+        Sonoma.start(getApplication(), "{Your App Secret}", Analytics.class, ErrorReporting.class);
         ```
     The example above shows how to use start() method and include both Analytics and ErrorReporting module. If you wish not to use Analytics, remove the parameter from method call above. Note that unless you explicitly specify each module as parameters in the start method, you cannot use that Sonoma service. Also, start() API should be used only once in your app. Only the modules included in the first call would be available and all other calls will log a warning in the console.
 
