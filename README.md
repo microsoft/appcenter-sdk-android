@@ -131,9 +131,9 @@ Once you set up and start the Sonoma SDK to use the Error Reporting module in yo
 
 * **Did the app crash in last session:** At any time after starting the SDK, you can check if the app crashed in the previous session:
 
-```Java
-ErrorReporting.hasCrashedInLastSession();
-```
+    ```Java
+    ErrorReporting.hasCrashedInLastSession();
+    ```
 
 * **Details about the last crash:** If your app crashed previously, you can get details about the last crash:
 
@@ -141,64 +141,87 @@ ErrorReporting.hasCrashedInLastSession();
     ErrorReporting.getLastSessionErrorReport()
     ```
 
+* **Enable or disable the Error Reporting module:**  You can disable and opt out of using the ErrorReporting module by calling the `setEnabled()` API and the SDK will collect no crashes for your app. Use the same API to re-enable it by passing `true` as a parameter.
 
-* **Advanced Scenarios:**  Error Reporting module provides callback scenarios for developers to perform additional actions when sending crashes to Sonoma. You can add more power to your crash report by implementing any or all of these callback scenario. All these callbacks need to be implemented on ErrorReportingListener.   
+    ```Java
+    ErrorReporting.setEnabled(false);
+    ```
 
-    * **Should the crash be processed:**   Implement this callback if you'd like to decide if a particular crash needs to be processed or not. For example - there could be some system level crashes that you'd want to ignore and don't want to send to Sonoma.
+    You can also check if the module is enabled or not using the `isEnabled()` method:
+
+    ```Java
+    ErrorReporting.isEnabled();
+    ```
+
+* **Advanced Scenarios:**  The Error Reporting module provides callbacks for developers to perform additional actions before and when sending crash reports to Sonoma. This gives you added flexibility on the error reports that will be sent.
+To handle the callbacks, you must either implement all methods in the `ErrorReportingListener` interface, or override the `AbstractErrorReportingListener` class and pick only the ones you're interested in.
+You create your own Error Reporting listener and assign it like this:
+
+    ```Java
+    ErrorReportingListener customListener = new ErrorReportingListener() {
+        // implement callbacks as seen below
+    };
+
+    ErrorReporting.setListener(customListener);
+    ```
+
+    The following callbacks are provided:
+
+    * **Should the crash be processed:** Implement this callback if you'd like to decide if a particular crash needs to be processed or not. For example - there could be some system level crashes that you'd want to ignore and don't want to send to Sonoma.
 
         ```Java
-            boolean ErrorReportingListener.shouldProcess(ErrorReport errorReport)
+        boolean ErrorReportingListener.shouldProcess(ErrorReport errorReport) {
+            return true; // return true if the Error Report should be processed, otherwise false.
+        }
         ```
 
-    * **User Confirmation:** If user privacy is important to you as a developer, you might want to get user confirmation before sending a crash to Sonoma. Our SDK exposes a callback where you can build your custom UI that prompts user to select one of these options - "Always Send", "Send". Based on the user input, the crash will be forwarded to Sonoma.
+    * **User Confirmation:** If user privacy is important to you as a developer, you might want to get user confirmation before sending a crash report to Sonoma. The SDK exposes a callback where you can tell it to await user confirmation before sending any crash reports.
+    Your app is then responsible for obtaining confirmation, e.g. through a dialog prompt with one of these options - "Always Send", "Send", and "Don't send". Based on the user input, you will tell the SDK and the crash will then respecetively be forwarded to Sonoma or not.
 
         ```Java
-            boolean ErrorReportingListener.shouldAwaitUserConfirmation()
+        boolean ErrorReportingListener.shouldAwaitUserConfirmation() {
+            return true; // Return true if the SDK should await user confirmation, otherwise false.
+        }
         ```
 
-        Method API:
+        If you return `true`, your app should obtain user permission and message the SDK with the result using the following API:
 
         ```Java
-            ErrorReporting.notifyUserConfirmation(int userConfirmation)
-
-            userConfirmation should be one of SEND, DONT_SEND or ALWAYS_SEND
+        ErrorReporting.notifyUserConfirmation(int userConfirmation);
         ```
+        Pass one option of `SEND`, `DONT_SEND` or `ALWAYS_SEND`.
 
     * **Binary attachment:**  If you'd like to attach text/binary data to a crash report, implement this callback. Before sending the crash, our SDK will add the attachment to the crash report and you can view it on the Sonoma portal.   
 
         ```Java
-        ErrorAttachment getErrorAttachment(ErrorReport errorReport)
+        ErrorAttachment ErrorReportingListener.getErrorAttachment(ErrorReport errorReport) {
+            // return your own created ErrorAttachment object
+        }
         ```
 
-    * **Before sending crash:**   This callback will be invoked just before the crash is sent to Sonoma.
+    * **Before sending a crash report:** This callback will be invoked just before the crash is sent to Sonoma:
 
         ```Java
-        void ErrorReportingListener.onBeforeSending(ErrorReport errorReport);
+        void ErrorReportingListener.onBeforeSending(ErrorReport errorReport) {
+            …
+        }
         ```
 
-    * **Crash sending succeeded:**   This callback will be invoked after sending crash reports succeeded.
+    * **When sending a crash report succeeded:** This callback will be invoked after sending a crash report succeeded:
 
         ```Java
-        void ErrorReportingListener.onSendingFailed(ErrorReport errorReport, Exception e);
+        void ErrorReportingListener.onSendingSucceeded(ErrorReport errorReport) {
+            …
+        }
         ```
 
-    * **Crash sending failed:**   This callback will be invoked after sending crash reports failed.
+    * **When sending a crash report failed:** This callback will be invoked after sending a crash report failed:
 
         ```Java
-        void ErrorReportingListener.onSendingSucceeded(ErrorReport errorReport)
+        void ErrorReportingListener.onSendingFailed(ErrorReport errorReport, Exception e) {
+            …
+        }
         ```
-
-* **Enable or disable Error Reporting module:**  You can disable and opt out of using ErrorReporting module by calling setEnabled() API and the SDK will collect no crashes for your app. Use the same API to enable again by passing "true" as a parameter.
-
-    ```Java
-    ErrorReporting.setEnabled(false)
-    ```
-
-    You can also check if the module is enabled or not using isEnabled() method:
-
-    ```Java
-    ErrorReporting.isEnabled()
-    ```
 
 ## 6. Advanced APIs
 
