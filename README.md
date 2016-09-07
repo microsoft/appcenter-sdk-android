@@ -16,26 +16,26 @@ The SDK is currently in private beta release and we support the following servic
 
 This document contains the following sections:
 
-1. [Prerequisites](#prerequisites)
-2. [Add Sonoma SDK modules](#add-sonoma-sdk-modules)
-3. [Start the SDK](#start-the-sdk)
-4. [Analytics APIs](#analytics-apis)
-5. [Error Reporting APIs](#error-reporting-apis)
-6. [Advanced APIs](#advanced-apis)
-7. [Troubleshooting](#troubleshooting)
-8. [List of available libraries](#list-of-available-libraries)
+1. [Prerequisites](#1-prerequisites)
+2. [Add Sonoma SDK modules](#2-add-sonoma-sdk-modules)
+3. [Start the SDK](#3-start-the-sdk)
+4. [Analytics APIs](#4-analytics-apis)
+5. [Error Reporting APIs](#5-error-reporting-apis)
+6. [Advanced APIs](#6-advanced-apis)
+7. [Troubleshooting](#7-troubleshooting)
+8. [List of available libraries](#8-list-of-available-libraries)
 
 
 Let's get started with setting up Sonoma Android SDK in your app to use these services:
 
-### **Prerequisites**
+## 1. Prerequisites
 
 Before you begin, please make sure that the following prerequisites are met:
 
 * Android project that is set up in Android Studio.
 * Device running Android Version 4.0.3 with API level >= 15 or higher.
 
-### **Add Sonoma SDK modules**
+## 2. Add Sonoma SDK modules
 
 Sonoma SDK is designed with a modular approach where a developer needs to integrate only the modules of the services that interests them.
 
@@ -68,7 +68,7 @@ Below are the steps on how to integrate our compiled libraries in your applicati
 
 Now that you've integrated the SDK in your application, it's time to start the SDK and make use of Sonoma services.
 
-### **Start the SDK**
+## 3. Start the SDK
 
 To start the Sonoma SDK in your app, follow the steps:
 
@@ -84,7 +84,7 @@ To start the Sonoma SDK in your app, follow the steps:
 
     The example above shows how to use start() method and include both Analytics and ErrorReporting module. If you wish not to use Analytics, remove the parameter from method call above. Note that unless you explicitly specify each module as parameters in the start method, you cannot use that Sonoma service. Also, start() API should be used only once in your app. Only the modules included in the first call would be available and all other calls will log a warning in the console.
 
-### **Analytics APIs**
+## 4. Analytics APIs
 
 * **Track Session, Device Properties:**  Once Analytics module is included in your app and SDK is started, we automatically track sessions, device properties like OSVersion, Model, Manufacture etc. and you don’t need to add any line of code.
     Look at the section above on how to [Start the SDK](#start-the-sdk) if you haven't started yet.
@@ -111,7 +111,7 @@ To start the Sonoma SDK in your app, follow the steps:
     Analytics.isEnabled()
     ```
 
-### **Error Reporting APIs**
+## 5. Error Reporting APIs
 
 Once you set up and start Sonoma SDK to use Error Reporting module in your application, SDK will automatically start logging any crashes in the device's local storage. When the user opens the application again, crash log will be forwarded to Sonoma and you can analyze the crash along with the stack trace on the Sonoma dashboard. Follow the link to see how to [Start the SDK](#start-the-sdk) if you haven't already.
 
@@ -191,7 +191,7 @@ Once you set up and start Sonoma SDK to use Error Reporting module in your appli
     ErrorReporting.isEnabled()
     ```
 
-### **Advanced APIs**
+## 6. Advanced APIs
 
 * **Debugging**: You can control the amount of log messages from Sonoma SDK that show up in LogCat. Use setLogLevel() API to enable additional logging while debugging. By default, it is set it to `ASSERT`.
 
@@ -211,7 +211,7 @@ Once you set up and start Sonoma SDK to use Error Reporting module in your appli
         Sonoma.setEnabled(false)
     ```
 
-### **Troubleshooting**
+## 7. Troubleshooting
 
 * How long to wait for Analytics data to appear on the dashboard?
 
@@ -230,7 +230,7 @@ Once you set up and start Sonoma SDK to use Error Reporting module in your appli
 
 * Any privacy information tracked by SDK?
 
-### **List of available libraries**
+## 8. List of available libraries
 
  Gradle Dependency                       | Service          
  --------------------------------------- | ---------------
