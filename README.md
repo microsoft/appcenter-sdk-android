@@ -9,10 +9,10 @@ Android Sonoma SDK lets you add Sonoma services in your Android application.
 
 The SDK is currently in private beta release and we support the following services:
 
-1. Analytics: Sonoma Analytics helps you understand user behavior and customer engagement to improve your Android app. The SDK automatically captures session count, device properties like Model, OS Version etc. and pages. You can define your own custom events to measure things that matter
+1. **Analytics**: Sonoma Analytics helps you understand user behavior and customer engagement to improve your Android app. The SDK automatically captures session count, device properties like Model, OS Version etc. and pages. You can define your own custom events to measure things that matter
     to your business. All the information captured is available in Sonoma dashboard for you to analyze the data.
- 
-2. Error Reporting: Sonoma SDK will automatically collect crash log every time your app crashes. The log is first written to the device's storage and when the user starts the app again, the crash report will be forwarded to Sonoma. Collecting crashes works for both beta and live apps, i.e. those submitted to Google Play or other app stores. Crash logs contain viable information for you to help resolve the issue. The SDK lets you add a lot of power to a crash where a developer can collect and add additional information to the report if they'd like.
+
+2. **Error Reporting**: Sonoma SDK will automatically collect crash log every time your app crashes. The log is first written to the device's storage and when the user starts the app again, the crash report will be forwarded to Sonoma. Collecting crashes works for both beta and live apps, i.e. those submitted to Google Play or other app stores. Crash logs contain viable information for you to help resolve the issue. The SDK lets you add a lot of power to a crash where a developer can collect and add additional information to the report if they'd like.
 
 This document contains the following sections:
 
@@ -28,21 +28,21 @@ This document contains the following sections:
 
 Let's get started with setting up Sonoma Android SDK in your app to use these services:
 
-### Prerequisites
+### **Prerequisites**
 
 Before you begin, please make sure that the following prerequisites are met:
 
 * Android project that is set up in Android Studio.
 * Device running Android Version 4.0.3 with API level >= 15 or higher.
 
-### Add Sonoma SDK modules
+### **Add Sonoma SDK modules**
 
 Sonoma SDK is designed with a modular approach where a developer needs to integrate only the modules of the services that interests them.
 
 Below are the steps on how to integrate our compiled libraries in your application using Android Studio and Gradle.
 
 * Open app level build.gradle file (app/build.gradle) and add the following lines after apply plugin. Since we are in private beta right now, you need to include credentials in order to get the libraries.
-     
+
     ```groovy
     repositories {
         maven {
@@ -68,11 +68,11 @@ Below are the steps on how to integrate our compiled libraries in your applicati
 
 Now that you've integrated the SDK in your application, it's time to start the SDK and make use of Sonoma services.
 
-### Start the SDK
+### **Start the SDK**
 
 To start the Sonoma SDK in your app, follow the steps:
 
-* **Get App Secret of your application:**   Before you call the API to start the SDK, you need to get your app specific Application Secret from the Sonoma portal that needs to be a part of the method call. This will make sure all the data collected by the SDK corresponds to your application. 
+* **Get App Secret of your application:**   Before you call the API to start the SDK, you need to get your app specific Application Secret from the Sonoma portal that needs to be a part of the method call. This will make sure all the data collected by the SDK corresponds to your application.
 
     Go over to the Sonoma portal, click on "Microsoft Azure Project Sonoma". Under "My apps", click on the app that you want the SDK to set up. Then click on "Manage app" and copy the "App Secret" to start the SDK.
 
@@ -84,7 +84,7 @@ To start the Sonoma SDK in your app, follow the steps:
 
     The example above shows how to use start() method and include both Analytics and ErrorReporting module. If you wish not to use Analytics, remove the parameter from method call above. Note that unless you explicitly specify each module as parameters in the start method, you cannot use that Sonoma service. Also, start() API should be used only once in your app. Only the modules included in the first call would be available and all other calls will log a warning in the console.
 
-### Analytics APIs
+### **Analytics APIs**
 
 * **Track Session, Device Properties:**  Once Analytics module is included in your app and SDK is started, we automatically track sessions, device properties like OSVersion, Model, Manufacture etc. and you don’t need to add any line of code.
     Look at the section above on how to [Start the SDK](#start-the-sdk) if you haven't started yet.
@@ -95,7 +95,7 @@ To start the Sonoma SDK in your app, follow the steps:
     Map<String, String> properties = new HashMap<String, String>();
     properties.put("Category", "Music");
     properties.put("FileName", "favourite.avi");
-    
+
     Analytics.trackEvent("Video clicked", properties);
     ```
 
@@ -111,11 +111,11 @@ To start the Sonoma SDK in your app, follow the steps:
     Analytics.isEnabled()
     ```
 
-### Error Reporting APIs
+### **Error Reporting APIs**
 
 Once you set up and start Sonoma SDK to use Error Reporting module in your application, SDK will automatically start logging any crashes in the device's local storage. When the user opens the application again, crash log will be forwarded to Sonoma and you can analyze the crash along with the stack trace on the Sonoma dashboard. Follow the link to see how to [Start the SDK](#start-the-sdk) if you haven't already.
 
-* **Generate a test crash:**   We provide you with a static API to generate a test crash for easy testing of SDK. Note that this API can only be used in test/beta apps and won't work in production apps. 
+* **Generate a test crash:**   We provide you with a static API to generate a test crash for easy testing of SDK. Note that this API can only be used in test/beta apps and won't work in production apps.
 
     ```Java
     ErrorReporting.generateTestCrash()
@@ -136,22 +136,22 @@ Once you set up and start Sonoma SDK to use Error Reporting module in your appli
 * **Advanced Scenarios:**  Error Reporting module provides callback scenarios for developers to perform additional actions when sending crashes to Sonoma. You can add more power to your crash report by implementing any or all of these callback scenario. All these callbacks need to be implemented on ErrorReportingListener.   
 
     * **Should the crash be processed:**   Implement this callback if you'd like to decide if a particular crash needs to be processed or not. For example - there could be some system level crashes that you'd want to ignore and don't want to send to Sonoma.
-    
+
         ```Java
             boolean ErrorReportingListener.shouldProcess(ErrorReport errorReport)
         ```
-    
+
     * **User Confirmation:** If user privacy is important to you as a developer, you might want to get user confirmation before sending a crash to Sonoma. Our SDK exposes a callback where you can build your custom UI that prompts user to select one of these options - "Always Send", "Send". Based on the user input, the crash will be forwarded to Sonoma.
 
         ```Java
             boolean ErrorReportingListener.shouldAwaitUserConfirmation()
         ```
-    
+
         Method API:
-    
+
         ```Java
             ErrorReporting.notifyUserConfirmation(int userConfirmation)
-        
+
             userConfirmation should be one of SEND, DONT_SEND or ALWAYS_SEND
         ```
 
@@ -191,7 +191,7 @@ Once you set up and start Sonoma SDK to use Error Reporting module in your appli
     ErrorReporting.isEnabled()
     ```
 
-### Advanced APIs
+### **Advanced APIs**
 
 * **Debugging**: You can control the amount of log messages from Sonoma SDK that show up in LogCat. Use setLogLevel() API to enable additional logging while debugging. By default, it is set it to `ASSERT`.
 
@@ -203,15 +203,15 @@ Once you set up and start Sonoma SDK to use Error Reporting module in your appli
 
     ```Java
         Sonoma.getInstallId()
-    ``` 
+    ```
 
 * **Enable/Disable Sonoma SDK:** If you want Sonoma SDK to be disabled completely, use setEnabled() API. Once used, our SDK will collect no information for any of the modules that were added.
 
     ```Java
         Sonoma.setEnabled(false)
-    ``` 
+    ```
 
-### Troubleshooting
+### **Troubleshooting**
 
 * How long to wait for Analytics data to appear on the dashboard?
 
@@ -221,7 +221,8 @@ Once you set up and start Sonoma SDK to use Error Reporting module in your appli
   No, you can just include Sonoma modules that interests you. Once you integrate any module, Sonoma Core module will be included by default which contains logic for persistence, forwarding etc.
 
 * Can't see crashes on the dashboard
-    * Check if the App Secret used to start the SDK matches the App Secret in Sonoma portal.
+
+* Check if the App Secret used to start the SDK matches the App Secret in Sonoma portal.
 
 * What data does SDK automatically collect for Analytics?
 
@@ -229,7 +230,7 @@ Once you set up and start Sonoma SDK to use Error Reporting module in your appli
 
 * Any privacy information tracked by SDK?
 
-### List of available libraries
+### **List of available libraries**
 
  Gradle Dependency                       | Service          
  --------------------------------------- | ---------------
