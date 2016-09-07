@@ -138,7 +138,7 @@ Once you set up and start the Sonoma SDK to use the Error Reporting module in yo
 * **Details about the last crash:** If your app crashed previously, you can get details about the last crash:
 
     ```Java
-    ErrorReporting.getLastSessionErrorReport()
+    ErrorReporting.getLastSessionErrorReport();
     ```
 
 * **Enable or disable the Error Reporting module:**  You can disable and opt out of using the ErrorReporting module by calling the `setEnabled()` API and the SDK will collect no crashes for your app. Use the same API to re-enable it by passing `true` as a parameter.
