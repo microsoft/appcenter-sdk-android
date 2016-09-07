@@ -41,7 +41,7 @@ The Sonoma SDK is designed with a modular approach – a developer only needs to
 
 Below are the steps on how to integrate our compiled libraries in your application using Android Studio and Gradle.
 
-* Open app level build.gradle file (app/build.gradle) and add the following lines after apply plugin. Since we are in private beta right now, you need to include credentials in order to get the libraries.
+1. Open your app level build.gradle file (app/build.gradle) and add the following lines after `apply plugin`. During the private beta, you need to include these credentials in order to get the libraries.
 
     ```groovy
     repositories {
@@ -55,7 +55,7 @@ Below are the steps on how to integrate our compiled libraries in your applicati
     }
     ```
 
-* In the same file, include the dependencies that you want in your project. Each SDK module needs to be added as a separate dependency in this section. If you would want to use both Analytics and Errors, add the following lines:
+2. In the same file, include the dependencies that you want in your project. Each SDK module needs to be added as a separate dependency in this section. If you would want to use both Analytics and Error Reporting, add the following lines:
 
     ```groovy
     dependencies {
@@ -64,25 +64,25 @@ Below are the steps on how to integrate our compiled libraries in your applicati
     }
     ```
 
-* Save your build.gradle file and make sure to trigger a Gradle sync.
+3. Save your build.gradle file and make sure to trigger a Gradle sync in Android Studio.
 
 Now that you've integrated the SDK in your application, it's time to start the SDK and make use of Sonoma services.
 
 ## 3. Start the SDK
 
-To start the Sonoma SDK in your app, follow the steps:
+To start the Sonoma SDK in your app, follow these steps:
 
-* **Get App Secret of your application:**   Before you call the API to start the SDK, you need to get your app specific Application Secret from the Sonoma portal that needs to be a part of the method call. This will make sure all the data collected by the SDK corresponds to your application.
+1. **Get the App Secret of your application:** Before you call the API to start the SDK, you need to get your app specific Application Secret from the Sonoma portal that needs to be a part of the method call. This will make sure all the data collected by the SDK corresponds to your application.
 
-    Go over to the Sonoma portal, click on "Microsoft Azure Project Sonoma". Under "My apps", click on the app that you want the SDK to set up. Then click on "Manage app" and copy the "App Secret" to start the SDK.
+    Go over to the Sonoma portal, click on "Microsoft Azure Project Sonoma". Under "My apps", click on the app that you want the SDK to set up for. Then click on "Manage app" and make note of the "App Secret" value.
 
-* **Start the SDK:**  Sonoma provides developers with two modules to get started- Analytics and Error Reporting. In order to use these modules, you need to opt in for the module that you'd like, meaning by default no modules are included and you will have to explicitly call each of them when starting the SDK.
+2. **Start the SDK:**  Sonoma provides developers with two modules to get started – Analytics and Error Reporting. In order to use these modules, you need to opt in for the module(s) that you'd like, meaning by default no modules are started and you will have to explicitly call each of them when starting the SDK. Insert the following line inside your app's main activity class' `onCreate` callback.
 
     ```Java
     Sonoma.start(getApplication(), "{Your App Secret}", Analytics.class, ErrorReporting.class);
     ```
 
-    The example above shows how to use start() method and include both Analytics and ErrorReporting module. If you wish not to use Analytics, remove the parameter from method call above. Note that unless you explicitly specify each module as parameters in the start method, you cannot use that Sonoma service. Also, start() API should be used only once in your app. Only the modules included in the first call would be available and all other calls will log a warning in the console.
+The example above shows how to use the `start()` method and include both the Analytics and Error Reporting module. If you wish not to use Analytics, remove the parameter from the method call above. Note that, unless you explicitly specify each module as parameters in the start method, you can't use that Sonoma service. Also, the `start()` API can be used only once in the lifecycle of your app – all other calls will log a warning to the console and only the modules included in the first call will be available.
 
 ## 4. Analytics APIs
 
