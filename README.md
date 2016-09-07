@@ -225,22 +225,22 @@ You create your own Error Reporting listener and assign it like this:
 
 ## 6. Advanced APIs
 
-* **Debugging**: You can control the amount of log messages from Sonoma SDK that show up in LogCat. Use setLogLevel() API to enable additional logging while debugging. By default, it is set it to `ASSERT`.
+* **Debugging**: You can control the amount of log messages that show up from the Sonoma SDK in LogCat. Use the `Sonoma.setLogLevel()` API to enable additional logging while debugging. The log levels correspond to the ones defined in `android.util.Log`. By default, it is set it to `ASSERT`.
 
     ```Java
-        Sonoma.setLogLevel(Log.VERBOSE)
+        Sonoma.setLogLevel(Log.VERBOSE);
     ```
 
-* **Get Install Identifier**: Sonoma SDK creates an UUID for each device once the app is installed. This identifier remains same for a device when the app is updated and a new one is generated only when the app is re-installed. This API would be useful for debugging purpose.
+* **Get Install Identifier**: The Sonoma SDK creates a UUID for each device once the app is installed. This identifier remains the same for a device when the app is updated and a new one is generated only when the app is re-installed. The following API is useful for debugging purposes:
 
     ```Java
-        Sonoma.getInstallId()
+        UUID installId = Sonoma.getInstallId();
     ```
 
-* **Enable/Disable Sonoma SDK:** If you want Sonoma SDK to be disabled completely, use setEnabled() API. Once used, our SDK will collect no information for any of the modules that were added.
+* **Enable/Disable Sonoma SDK:** If you want the Sonoma SDK to be disabled completely, use the `setEnabled()` API. When disabled, the SDK will collect no more information for any of the modules that were added:
 
     ```Java
-        Sonoma.setEnabled(false)
+        Sonoma.setEnabled(false);
     ```
 
 ## 7. Troubleshooting
