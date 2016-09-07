@@ -5,14 +5,14 @@
 
 ## Introduction
 
-Android Sonoma SDK lets you add Sonoma services in your Android application.
+The Sonoma Android SDK lets you add Sonoma services to your Android application.
 
 The SDK is currently in private beta release and we support the following services:
 
-1. **Analytics**: Sonoma Analytics helps you understand user behavior and customer engagement to improve your Android app. The SDK automatically captures session count, device properties like Model, OS Version etc. and pages. You can define your own custom events to measure things that matter
-    to your business. All the information captured is available in Sonoma dashboard for you to analyze the data.
+1. **Analytics**: Sonoma Analytics helps you understand user behavior and customer engagement to improve your Android app. The SDK automatically captures session count, device properties like model, OS Version etc. and pages. You can define your own custom events to measure things that matter
+    to your business. All the information captured is available in the Sonoma dashboard for you to analyze the data.
 
-2. **Error Reporting**: Sonoma SDK will automatically collect crash log every time your app crashes. The log is first written to the device's storage and when the user starts the app again, the crash report will be forwarded to Sonoma. Collecting crashes works for both beta and live apps, i.e. those submitted to Google Play or other app stores. Crash logs contain viable information for you to help resolve the issue. The SDK lets you add a lot of power to a crash where a developer can collect and add additional information to the report if they'd like.
+2. **Error Reporting**: The Sonoma SDK will automatically generate a crash log every time your app crashes. The log is first written to the device's storage and when the user starts the app again, the crash report will be forwarded to Sonoma. Collecting crashes works for both beta and live apps, i.e. those submitted to Google Play or other app stores. Crash logs contain viable information for you to help resolve the issue. The SDK gives you a lot of flexibility how to handle a crash log. As a developer you can collect and add additional information to the report if you like.
 
 This document contains the following sections:
 
@@ -32,12 +32,12 @@ Let's get started with setting up Sonoma Android SDK in your app to use these se
 
 Before you begin, please make sure that the following prerequisites are met:
 
-* Android project that is set up in Android Studio.
-* Device running Android Version 4.0.3 with API level >= 15 or higher.
+* An Android project that is set up in Android Studio.
+* A device running Android Version 4.0.3 or API level 15 or higher.
 
 ## 2. Add Sonoma SDK modules
 
-Sonoma SDK is designed with a modular approach where a developer needs to integrate only the modules of the services that interests them.
+The Sonoma SDK is designed with a modular approach – a developer only needs to integrate the modules of the services that they're interested in.
 
 Below are the steps on how to integrate our compiled libraries in your application using Android Studio and Gradle.
 
