@@ -10,7 +10,7 @@ The Sonoma Android SDK lets you add Sonoma services to your Android application.
 The SDK is currently in private beta release and we support the following services:
 
 1. **Analytics**: Sonoma Analytics helps you understand user behavior and customer engagement to improve your Android app. The SDK automatically captures session count, device properties like model, OS Version etc. and pages. You can define your own custom events to measure things that matter
-    to your business. All the information captured is available in the Sonoma dashboard for you to analyze the data.
+    to your business. All the information captured is available in the Sonoma portal for you to analyze the data.
 
 2. **Error Reporting**: The Sonoma SDK will automatically generate a crash log every time your app crashes. The log is first written to the device's storage and when the user starts the app again, the crash report will be forwarded to Sonoma. Collecting crashes works for both beta and live apps, i.e. those submitted to Google Play or other app stores. Crash logs contain viable information for you to help resolve the issue. The SDK gives you a lot of flexibility how to handle a crash log. As a developer you can collect and add additional information to the report if you like.
 
@@ -113,7 +113,7 @@ To start the Sonoma SDK in your app, follow the steps:
 
 ## 5. Error Reporting APIs
 
-Once you set up and start Sonoma SDK to use Error Reporting module in your application, SDK will automatically start logging any crashes in the device's local storage. When the user opens the application again, crash log will be forwarded to Sonoma and you can analyze the crash along with the stack trace on the Sonoma dashboard. Follow the link to see how to [Start the SDK](#start-the-sdk) if you haven't already.
+Once you set up and start Sonoma SDK to use Error Reporting module in your application, SDK will automatically start logging any crashes in the device's local storage. When the user opens the application again, crash log will be forwarded to Sonoma and you can analyze the crash along with the stack trace on the Sonoma portal. Follow the link to see how to [Start the SDK](#start-the-sdk) if you haven't already.
 
 * **Generate a test crash:**   We provide you with a static API to generate a test crash for easy testing of SDK. Note that this API can only be used in test/beta apps and won't work in production apps.
 
@@ -155,7 +155,7 @@ Once you set up and start Sonoma SDK to use Error Reporting module in your appli
             userConfirmation should be one of SEND, DONT_SEND or ALWAYS_SEND
         ```
 
-    * **Binary attachment:**  If you'd like to attach text/binary data to a crash report, implement this callback. Before sending the crash, our SDK will add the attachment to the crash report and you can view it on the Sonoma dashboard.   
+    * **Binary attachment:**  If you'd like to attach text/binary data to a crash report, implement this callback. Before sending the crash, our SDK will add the attachment to the crash report and you can view it on the Sonoma portal.   
 
         ```Java
         ErrorAttachment getErrorAttachment(ErrorReport errorReport)
@@ -213,14 +213,14 @@ Once you set up and start Sonoma SDK to use Error Reporting module in your appli
 
 ## 7. Troubleshooting
 
-* How long to wait for Analytics data to appear on the dashboard?
+* How long to wait for Analytics data to appear on the portal?
 
-* How long to wait for crashes to appear on the dashboard?
+* How long to wait for crashes to appear on the portal?
 
 * Do I need to include all the libraries? Is there anything included by default?  
   No, you can just include Sonoma modules that interests you. Once you integrate any module, Sonoma Core module will be included by default which contains logic for persistence, forwarding etc.
 
-* Can't see crashes on the dashboard
+* Can't see crashes on the portal
 
 * Check if the App Secret used to start the SDK matches the App Secret in Sonoma portal.
 
