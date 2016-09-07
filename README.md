@@ -119,25 +119,28 @@ The example above shows how to use the `start()` method and include both the Ana
 
 ## 5. Error Reporting APIs
 
-Once you set up and start Sonoma SDK to use Error Reporting module in your application, SDK will automatically start logging any crashes in the device's local storage. When the user opens the application again, crash log will be forwarded to Sonoma and you can analyze the crash along with the stack trace on the Sonoma portal. Follow the link to see how to [Start the SDK](#start-the-sdk) if you haven't already.
+Once you set up and start the Sonoma SDK to use the Error Reporting module in your application, the SDK will automatically start logging any crashes in the device's local storage. When the user opens the application again, all pending crash logs will automatically be forwarded to Sonoma and you can analyze the crash along with the stack trace on the Sonoma portal. Refer to the section to [Start the SDK](#3-start-the-sdk) if you haven't done so already.
 
-* **Generate a test crash:**   We provide you with a static API to generate a test crash for easy testing of SDK. Note that this API can only be used in test/beta apps and won't work in production apps.
+* **Generate a test crash:** The SDK provides you with a static API to generate a test crash for easy testing of the SDK:
 
     ```Java
-    ErrorReporting.generateTestCrash()
+    ErrorReporting.generateTestCrash();
     ```
 
-* **Details about the last crash:**   You can get the details about the crash that occurred in the last app session.
+    Note that this API can only be used in test/beta apps and won't work in production apps.
+
+* **Did the app crash in last session:** At any time after starting the SDK, you can check if the app crashed in the previous session:
+
+```Java
+ErrorReporting.hasCrashedInLastSession();
+```
+
+* **Details about the last crash:** If your app crashed previously, you can get details about the last crash:
 
     ```Java
     ErrorReporting.getLastSessionErrorReport()
     ```
 
-* **Did the app crash in last session:**   Alternatively, if you'd like to check upon startup if the app crashed before, use the API below:
-
-    ```Java
-    ErrorReporting.hasCrashedInLastSession()
-    ```
 
 * **Advanced Scenarios:**  Error Reporting module provides callback scenarios for developers to perform additional actions when sending crashes to Sonoma. You can add more power to your crash report by implementing any or all of these callback scenario. All these callbacks need to be implemented on ErrorReportingListener.   
 
