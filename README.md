@@ -86,29 +86,35 @@ The example above shows how to use the `start()` method and include both the Ana
 
 ## 4. Analytics APIs
 
-* **Track Session, Device Properties:**  Once Analytics module is included in your app and SDK is started, we automatically track sessions, device properties like OSVersion, Model, Manufacture etc. and you don’t need to add any line of code.
-    Look at the section above on how to [Start the SDK](#start-the-sdk) if you haven't started yet.
+* **Track Session, Device Properties:**  Once the Analytics module is included in your app and the SDK is started, it will automatically track sessions, device properties like OS Version, model, manufacturer etc. and you don’t need to add any additional code.
+    Look at the section above on how to [Start the SDK](#3-start-the-sdk) if you haven't started it yet.
 
-* **Custom Events:** You can track your own custom events with specific properties to know what's happening in your app, understand user actions and see the aggregates in Sonoma portal. Once you have started the SDK, use the trackEvent() method to track your events with properties.
+* **Custom Events:** You can track your own custom events with specific properties to know what's happening in your app, understand user actions, and see the aggregates in the Sonoma portal. Once you have started the SDK, use the `trackEvent()` method to track your events with properties.
 
     ```Java
     Map<String, String> properties = new HashMap<String, String>();
     properties.put("Category", "Music");
-    properties.put("FileName", "favourite.avi");
+    properties.put("FileName", "favorite.avi");
 
     Analytics.trackEvent("Video clicked", properties);
     ```
 
-* **Enable or disable Analytics:**  You can disable and opt out of using Analytics module by calling setEnabled() API and the SDK will collect no Analytics information for your app. To enable again, pass "true" as a parameter in the same method.
+    Of course, properties for events are entirely optional – if you just want to track an event use this sample instead:
 
     ```Java
-    Analytics.setEnabled(false)
+    Analytics.trackEvent("Video clicked");
     ```
 
-    You can also check if the module is enabled or not using isEnabled() method:
+* **Enable or disable Analytics:**  You can change the enabled state of the Analytics module at runtime by calling the `Analytics.setEnabled()` method. If you disable it, the SDK will not collect any more analytics information for the app. To re-enable it, pass `true` as a parameter in the same method.
 
     ```Java
-    Analytics.isEnabled()
+    Analytics.setEnabled(false);
+    ```
+
+    You can also check, if the module is enabled or not using the `isEnabled()` method:
+
+    ```Java
+    Analytics.isEnabled();
     ```
 
 ## 5. Error Reporting APIs
