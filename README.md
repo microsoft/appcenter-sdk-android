@@ -84,7 +84,7 @@ To start the Sonoma SDK in your app, follow these steps:
 
     The example above shows how to use the `start()` method and include both the Analytics and Error Reporting module. If you wish not to use Analytics, remove the parameter from the method call above. Note that, unless you explicitly specify each module as parameters in the start method, you can't use that Sonoma service. Also, the `start()` API can be used only once in the lifecycle of your app – all other calls will log a warning to the console and only the modules included in the first call will be available.
 
-    Android Studio should automatically add the required import statements once you call `start()` method but if you see an error that the class names are not recognized, add the following lines after the import statements in MainActivity.java:  
+    Android Studio will automatically suggest the required import statements once you insert the `start()` method-call, but if you see an error that the class names are not recognized, add the following lines to the import statements in your activity class:
     
     ```Java
     import com.microsoft.sonoma.core.Sonoma;
