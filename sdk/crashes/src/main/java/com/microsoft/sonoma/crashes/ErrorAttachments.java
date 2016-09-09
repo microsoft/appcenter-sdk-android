@@ -21,7 +21,7 @@ public final class ErrorAttachments {
     }
 
     /**
-     * Build an attachment with text suitable for using in {@link ErrorReportingListener#getErrorAttachment(ErrorReport)}.
+     * Build an attachment with text suitable for using in {@link CrashesListener#getErrorAttachment(ErrorReport)}.
      *
      * @param text text to attach to error report.
      * @return error attachment or null if null text is passed.
@@ -31,7 +31,7 @@ public final class ErrorAttachments {
     }
 
     /**
-     * Build an attachment with binary suitable for using in {@link ErrorReportingListener#getErrorAttachment(ErrorReport)}.
+     * Build an attachment with binary suitable for using in {@link CrashesListener#getErrorAttachment(ErrorReport)}.
      *
      * @param data        binary data.
      * @param fileName    file name to use on reports.
@@ -43,7 +43,7 @@ public final class ErrorAttachments {
     }
 
     /**
-     * Build an attachment with text and binary suitable for using in {@link ErrorReportingListener#getErrorAttachment(ErrorReport)}.
+     * Build an attachment with text and binary suitable for using in {@link CrashesListener#getErrorAttachment(ErrorReport)}.
      *
      * @param text        text data.
      * @param data        binary data.

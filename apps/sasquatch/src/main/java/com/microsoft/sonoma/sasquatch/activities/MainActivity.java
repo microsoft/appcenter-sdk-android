@@ -14,9 +14,9 @@ import android.widget.Toast;
 import com.microsoft.sonoma.analytics.Analytics;
 import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
-import com.microsoft.sonoma.crashes.AbstractErrorReportingListener;
+import com.microsoft.sonoma.crashes.AbstractCrashesListener;
+import com.microsoft.sonoma.crashes.Crashes;
 import com.microsoft.sonoma.crashes.ErrorAttachments;
-import com.microsoft.sonoma.crashes.ErrorReporting;
 import com.microsoft.sonoma.crashes.model.ErrorAttachment;
 import com.microsoft.sonoma.crashes.model.ErrorReport;
 import com.microsoft.sonoma.sasquatch.R;
@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Sonoma.setLogLevel(Log.VERBOSE);
-        ErrorReporting.setListener(new AbstractErrorReportingListener() {
+        Crashes.setListener(new AbstractCrashesListener() {
             @Override
             public boolean shouldAwaitUserConfirmation() {
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -41,19 +41,19 @@ public class MainActivity extends AppCompatActivity {
                         .setPositiveButton(R.string.crash_confirmation_dialog_send_button, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                ErrorReporting.notifyUserConfirmation(ErrorReporting.SEND);
+                                Crashes.notifyUserConfirmation(Crashes.SEND);
                             }
                         })
                         .setNegativeButton(R.string.crash_confirmation_dialog_not_send_button, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                ErrorReporting.notifyUserConfirmation(ErrorReporting.DONT_SEND);
+                                Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
                             }
                         })
                         .setNeutralButton(R.string.crash_confirmation_dialog_always_send_button, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                ErrorReporting.notifyUserConfirmation(ErrorReporting.ALWAYS_SEND);
+                                Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
                             }
                         });
                 builder.create().show();
@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Sonoma.start(getApplication(), UUIDUtils.randomUUID().toString(), Analytics.class, ErrorReporting.class);
+        Sonoma.start(getApplication(), UUIDUtils.randomUUID().toString(), Analytics.class, Crashes.class);
 
         TestFeatures.initialize(this);
         ListView listView = (ListView) findViewById(R.id.list);

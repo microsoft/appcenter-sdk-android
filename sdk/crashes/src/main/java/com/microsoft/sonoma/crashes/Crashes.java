@@ -35,12 +35,12 @@ import java.util.UUID;
 /**
  * Error reporting feature set.
  */
-public class ErrorReporting extends AbstractSonomaFeature {
+public class Crashes extends AbstractSonomaFeature {
 
     /**
-     * TAG used in logging for ErrorReporting
+     * TAG used in logging for Crashes
      */
-    public static final String LOG_TAG = SonomaLog.LOG_TAG + "ErrorReporting";
+    public static final String LOG_TAG = SonomaLog.LOG_TAG + "Crashes";
 
     /**
      * Constant for SEND crash report.
@@ -73,12 +73,12 @@ public class ErrorReporting extends AbstractSonomaFeature {
     /**
      * Default error reporting listener.
      */
-    private static final ErrorReportingListener DEFAULT_ERROR_REPORTING_LISTENER = new DefaultErrorReportingListener();
+    private static final CrashesListener DEFAULT_ERROR_REPORTING_LISTENER = new DefaultCrashesListener();
 
     /**
      * Singleton.
      */
-    private static ErrorReporting sInstance = null;
+    private static Crashes sInstance = null;
 
     /**
      * Log factories managed by this feature.
@@ -118,24 +118,24 @@ public class ErrorReporting extends AbstractSonomaFeature {
     /**
      * Custom error reporting listener.
      */
-    private ErrorReportingListener mErrorReportingListener;
+    private CrashesListener mCrashesListener;
 
     private ErrorReport mLastSessionErrorReport;
 
-    private ErrorReporting() {
+    private Crashes() {
         mFactories = new HashMap<>();
         mFactories.put(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
-        mErrorReportingListener = DEFAULT_ERROR_REPORTING_LISTENER;
+        mCrashesListener = DEFAULT_ERROR_REPORTING_LISTENER;
         mUnprocessedErrorReports = new LinkedHashMap<>();
         mErrorReportCache = new LinkedHashMap<>();
     }
 
     @NonNull
-    public static synchronized ErrorReporting getInstance() {
+    public static synchronized Crashes getInstance() {
         if (sInstance == null) {
-            sInstance = new ErrorReporting();
+            sInstance = new Crashes();
         }
         return sInstance;
     }
@@ -169,7 +169,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
      *
      * @param listener The custom error reporting listener.
      */
-    public static void setListener(ErrorReportingListener listener) {
+    public static void setListener(CrashesListener listener) {
         getInstance().setInstanceListener(listener);
     }
 
@@ -266,16 +266,16 @@ public class ErrorReporting extends AbstractSonomaFeature {
                     if (report != null) {
 
                         if (type == BEFORE_SENDING) {
-                            mErrorReportingListener.onBeforeSending(report);
+                            mCrashesListener.onBeforeSending(report);
                         } else {
 
                             /* Clean up before calling callbacks. */
                             removeStoredThrowable(id);
 
                             if (type == SENDING_SUCCEEDED) {
-                                mErrorReportingListener.onSendingSucceeded(report);
+                                mCrashesListener.onSendingSucceeded(report);
                             } else {
-                                mErrorReportingListener.onSendingFailed(report, e);
+                                mCrashesListener.onSendingFailed(report, e);
                             }
                         }
                     } else
@@ -351,11 +351,11 @@ public class ErrorReporting extends AbstractSonomaFeature {
                     ErrorReport errorReport = buildErrorReport(log);
                     if (errorReport == null) {
                         removeAllStoredErrorLogFiles(id);
-                    } else if (mErrorReportingListener.shouldProcess(errorReport)) {
-                        SonomaLog.debug(LOG_TAG, "ErrorReportingListener.shouldProcess returned true, continue processing log: " + id.toString());
+                    } else if (mCrashesListener.shouldProcess(errorReport)) {
+                        SonomaLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + id.toString());
                         mUnprocessedErrorReports.put(id, mErrorReportCache.get(id));
                     } else {
-                        SonomaLog.debug(LOG_TAG, "ErrorReportingListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
+                        SonomaLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
                         removeAllStoredErrorLogFiles(id);
                     }
                 } catch (JSONException e) {
@@ -366,9 +366,9 @@ public class ErrorReporting extends AbstractSonomaFeature {
         boolean shouldAwaitUserConfirmation = true;
         if (mUnprocessedErrorReports.size() > 0 &&
                 (StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false)
-                        || !(shouldAwaitUserConfirmation = mErrorReportingListener.shouldAwaitUserConfirmation()))) {
+                        || !(shouldAwaitUserConfirmation = mCrashesListener.shouldAwaitUserConfirmation()))) {
             if (shouldAwaitUserConfirmation)
-                SonomaLog.debug(LOG_TAG, "ErrorReportingListener.shouldAwaitUserConfirmation returned false, continue sending logs");
+                SonomaLog.debug(LOG_TAG, "CrashesListener.shouldAwaitUserConfirmation returned false, continue sending logs");
             else
                 SonomaLog.debug(LOG_TAG, "The flag for user confirmation is set to ALWAYS_SEND, continue sending logs");
             handleUserConfirmation(SEND);
@@ -420,22 +420,22 @@ public class ErrorReporting extends AbstractSonomaFeature {
     }
 
     @VisibleForTesting
-    ErrorReportingListener getInstanceListener() {
-        return mErrorReportingListener;
+    CrashesListener getInstanceListener() {
+        return mCrashesListener;
     }
 
     @VisibleForTesting
-    synchronized void setInstanceListener(ErrorReportingListener listener) {
+    synchronized void setInstanceListener(CrashesListener listener) {
         if (listener == null) {
             listener = DEFAULT_ERROR_REPORTING_LISTENER;
         }
-        mErrorReportingListener = listener;
+        mCrashesListener = listener;
     }
 
     @VisibleForTesting
     private synchronized void handleUserConfirmation(@UserConfirmationDef int userConfirmation) {
         if (mChannel == null) {
-            SonomaLog.error(LOG_TAG, "ErrorReporting feature not initialized, discarding calls.");
+            SonomaLog.error(LOG_TAG, "Crashes feature not initialized, discarding calls.");
             return;
         }
 
@@ -459,9 +459,9 @@ public class ErrorReporting extends AbstractSonomaFeature {
 
             Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
             ErrorLogReport errorLogReport = unprocessedEntry.getValue();
-            ErrorAttachment attachment = mErrorReportingListener.getErrorAttachment(errorLogReport.report);
+            ErrorAttachment attachment = mCrashesListener.getErrorAttachment(errorLogReport.report);
             if (attachment == null)
-                SonomaLog.debug(LOG_TAG, "ErrorReportingListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
+                SonomaLog.debug(LOG_TAG, "CrashesListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
             else
                 errorLogReport.log.setErrorAttachment(attachment);
             mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
@@ -480,7 +480,7 @@ public class ErrorReporting extends AbstractSonomaFeature {
     /**
      * Default error reporting listener class.
      */
-    private static class DefaultErrorReportingListener extends AbstractErrorReportingListener {
+    private static class DefaultCrashesListener extends AbstractCrashesListener {
     }
 
     /**

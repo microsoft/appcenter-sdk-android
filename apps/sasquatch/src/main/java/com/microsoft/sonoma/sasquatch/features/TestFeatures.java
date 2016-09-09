@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.view.View;
 import android.widget.AdapterView;
 
-import com.microsoft.sonoma.crashes.ErrorReporting;
+import com.microsoft.sonoma.crashes.Crashes;
 import com.microsoft.sonoma.sasquatch.R;
 import com.microsoft.sonoma.sasquatch.activities.DeviceInfoActivity;
 import com.microsoft.sonoma.sasquatch.activities.DummyActivity;
@@ -29,7 +29,7 @@ public final class TestFeatures {
             public void onClick(View v) {
 
                 /* Make the app crash on purpose for testing report. */
-                ErrorReporting.generateTestCrash();
+                Crashes.generateTestCrash();
             }
         }));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
