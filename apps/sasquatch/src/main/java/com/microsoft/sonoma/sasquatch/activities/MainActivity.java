@@ -61,18 +61,18 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public ErrorAttachment getErrorAttachment(ErrorReport errorReport) {
+            public ErrorAttachment getErrorAttachment(ErrorReport crashReport) {
                 return ErrorAttachments.attachment("This is a text attachment.", "This is a binary attachment.".getBytes(), "binary.txt", "text/plain");
             }
 
             @Override
-            public void onSendingFailed(ErrorReport errorReport, Exception e) {
+            public void onSendingFailed(ErrorReport crashReport, Exception e) {
                 Toast.makeText(MainActivity.this, R.string.crash_sent_failed, Toast.LENGTH_SHORT).show();
             }
 
             @Override
-            public void onSendingSucceeded(ErrorReport errorReport) {
-                String message = String.format("%s\nCrash ID: %s\nThrowable: %s", R.string.crash_sent_succeeded, errorReport.getId(), errorReport.getThrowable().toString());
+            public void onSendingSucceeded(ErrorReport crashReport) {
+                String message = String.format("%s\nCrash ID: %s\nThrowable: %s", R.string.crash_sent_succeeded, crashReport.getId(), crashReport.getThrowable().toString());
                 Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
