@@ -10,8 +10,6 @@ import com.microsoft.sonoma.core.utils.DeviceInfoHelper;
 import com.microsoft.sonoma.core.utils.PrefStorageConstants;
 import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
-import com.microsoft.sonoma.crashes.ErrorReporting;
-import com.microsoft.sonoma.crashes.UncaughtExceptionHandler;
 import com.microsoft.sonoma.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.sonoma.crashes.utils.ErrorLogHelper;
 
@@ -48,7 +46,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
-@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, ErrorReporting.class, ErrorLogHelper.class, DeviceInfoHelper.class, UncaughtExceptionHandler.ShutdownHelper.class, SonomaLog.class, Process.class})
+@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, UncaughtExceptionHandler.ShutdownHelper.class, SonomaLog.class, Process.class})
 public class UncaughtExceptionHandlerTest {
 
     @Rule
@@ -60,7 +58,7 @@ public class UncaughtExceptionHandlerTest {
 
     @Before
     public void setUp() {
-        ErrorReporting.unsetInstance();
+        Crashes.unsetInstance();
         mockStatic(SonomaLog.class);
         mockStatic(SystemClock.class);
         mockStatic(StorageHelper.PreferencesStorage.class);
@@ -72,7 +70,7 @@ public class UncaughtExceptionHandlerTest {
 
         Context mockContext = mock(Context.class);
 
-        final String key = PrefStorageConstants.KEY_ENABLED + "_" + ErrorReporting.getInstance().getGroupName();
+        final String key = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getGroupName();
         when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
@@ -163,7 +161,7 @@ public class UncaughtExceptionHandlerTest {
     @Test
     public void passDefaultHandler() {
         // Verify that when error reporting is disabled, an exception is instantly passed on
-        when(ErrorReporting.isEnabled()).thenReturn(false);
+        when(Crashes.isEnabled()).thenReturn(false);
 
         mExceptionHandler.register();
         mExceptionHandler.setIgnoreDefaultExceptionHandler(false);
@@ -179,7 +177,7 @@ public class UncaughtExceptionHandlerTest {
     @Test
     public void errorReportingDisabledNoDefaultHandler() {
         // Verify that when error reporting is disabled, an exception is instantly passed on
-        when(ErrorReporting.isEnabled()).thenReturn(false);
+        when(Crashes.isEnabled()).thenReturn(false);
 
         mExceptionHandler.register();
         mExceptionHandler.setIgnoreDefaultExceptionHandler(true);
@@ -206,7 +204,7 @@ public class UncaughtExceptionHandlerTest {
         mExceptionHandler.uncaughtException(thread, exception);
 
         verifyStatic();
-        SonomaLog.error(eq(ErrorReporting.LOG_TAG), anyString(), eq(jsonException));
+        SonomaLog.error(eq(Crashes.LOG_TAG), anyString(), eq(jsonException));
 
         verify(mDefaultExceptionHandler).uncaughtException(thread, exception);
     }
@@ -224,7 +222,7 @@ public class UncaughtExceptionHandlerTest {
         mExceptionHandler.uncaughtException(thread, exception);
 
         verifyStatic();
-        SonomaLog.error(eq(ErrorReporting.LOG_TAG), anyString(), eq(ioException));
+        SonomaLog.error(eq(Crashes.LOG_TAG), anyString(), eq(ioException));
 
         verify(mDefaultExceptionHandler).uncaughtException(thread, exception);
     }

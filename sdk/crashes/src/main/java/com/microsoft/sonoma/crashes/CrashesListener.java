@@ -7,7 +7,7 @@ import com.microsoft.sonoma.crashes.model.ErrorReport;
  * Interface for error reporting listener.
  */
 @SuppressWarnings({"WeakerAccess", "UnusedReturnValue", "SameReturnValue", "UnusedParameters"})
-public interface ErrorReportingListener {
+public interface CrashesListener {
 
     /**
      * Called to determine whether an error report should be processed or not.
@@ -21,7 +21,7 @@ public interface ErrorReportingListener {
      * Called to determine whether it should wait for user confirmation before sending error reports.
      *
      * @return <code>true</code> if it requires to be confirmed by a user, otherwise <code>false</code>.
-     *         If this method returns <code>true</code>, {@link ErrorReporting#notifyUserConfirmation(int)} must be called by yourself.
+     *         If this method returns <code>true</code>, {@link Crashes#notifyUserConfirmation(int)} must be called by yourself.
      */
     boolean shouldAwaitUserConfirmation();
 

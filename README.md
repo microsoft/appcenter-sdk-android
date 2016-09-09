@@ -12,7 +12,7 @@ The SDK is currently in private beta release and we support the following servic
 1. **Analytics**: Sonoma Analytics helps you understand user behavior and customer engagement to improve your Android app. The SDK automatically captures session count, device properties like model, OS Version etc. and pages. You can define your own custom events to measure things that matter
     to your business. All the information captured is available in the Sonoma portal for you to analyze the data.
 
-2. **Error Reporting**: The Sonoma SDK will automatically generate a crash log every time your app crashes. The log is first written to the device's storage and when the user starts the app again, the crash report will be forwarded to Sonoma. Collecting crashes works for both beta and live apps, i.e. those submitted to Google Play or other app stores. Crash logs contain viable information for you to help resolve the issue. The SDK gives you a lot of flexibility how to handle a crash log. As a developer you can collect and add additional information to the report if you like.
+2. **Crashes**: The Sonoma SDK will automatically generate a crash log every time your app crashes. The log is first written to the device's storage and when the user starts the app again, the crash report will be forwarded to Sonoma. Collecting crashes works for both beta and live apps, i.e. those submitted to Google Play or other app stores. Crash logs contain viable information for you to help resolve the issue. The SDK gives you a lot of flexibility how to handle a crash log. As a developer you can collect and add additional information to the report if you like.
 
 This document contains the following sections:
 
@@ -20,7 +20,7 @@ This document contains the following sections:
 2. [Add Sonoma SDK modules](#2-add-sonoma-sdk-modules)
 3. [Start the SDK](#3-start-the-sdk)
 4. [Analytics APIs](#4-analytics-apis)
-5. [Error Reporting APIs](#5-error-reporting-apis)
+5. [Crashes APIs](#5-crashes-apis)
 6. [Advanced APIs](#6-advanced-apis)
 7. [Troubleshooting](#7-troubleshooting)
 8. [List of available libraries](#8-list-of-available-libraries)
@@ -55,12 +55,12 @@ Below are the steps on how to integrate our compiled libraries in your applicati
     }
     ```
 
-2. In the same file, include the dependencies that you want in your project. Each SDK module needs to be added as a separate dependency in this section. If you would want to use both Analytics and Error Reporting, add the following lines:
+2. In the same file, include the dependencies that you want in your project. Each SDK module needs to be added as a separate dependency in this section. If you would want to use both Analytics and Crashes, add the following lines:
 
     ```groovy
     dependencies {
         compile 'com.microsoft.sonoma:analytics:+'
-        compile 'com.microsoft.sonoma:errors:+'
+        compile 'com.microsoft.sonoma:crashes:+'
     }
     ```
 
@@ -76,20 +76,20 @@ To start the Sonoma SDK in your app, follow these steps:
 
     Go over to the Sonoma portal, click on "Microsoft Azure Project Sonoma". Under "My apps", click on the app that you want the SDK to set up for. Then click on "Manage app" and make note of the "App Secret" value.
 
-2. **Start the SDK:**  Sonoma provides developers with two modules to get started – Analytics and Error Reporting. In order to use these modules, you need to opt in for the module(s) that you'd like, meaning by default no modules are started and you will have to explicitly call each of them when starting the SDK. Insert the following line inside your app's main activity class' `onCreate` callback.
+2. **Start the SDK:**  Sonoma provides developers with two modules to get started – Analytics and Crashes. In order to use these modules, you need to opt in for the module(s) that you'd like, meaning by default no modules are started and you will have to explicitly call each of them when starting the SDK. Insert the following line inside your app's main activity class' `onCreate` callback.
 
     ```Java
-    Sonoma.start(getApplication(), "{Your App Secret}", Analytics.class, ErrorReporting.class);
+    Sonoma.start(getApplication(), "{Your App Secret}", Analytics.class, Crashes.class);
     ```
 
-    The example above shows how to use the `start()` method and include both the Analytics and Error Reporting module. If you wish not to use Analytics, remove the parameter from the method call above. Note that, unless you explicitly specify each module as parameters in the start method, you can't use that Sonoma service. Also, the `start()` API can be used only once in the lifecycle of your app – all other calls will log a warning to the console and only the modules included in the first call will be available.
+    The example above shows how to use the `start()` method and include both the Analytics and Crashes module. If you wish not to use Analytics, remove the parameter from the method call above. Note that, unless you explicitly specify each module as parameters in the start method, you can't use that Sonoma service. Also, the `start()` API can be used only once in the lifecycle of your app – all other calls will log a warning to the console and only the modules included in the first call will be available.
 
     Android Studio will automatically suggest the required import statements once you insert the `start()` method-call, but if you see an error that the class names are not recognized, add the following lines to the import statements in your activity class:
     
     ```Java
     import com.microsoft.sonoma.core.Sonoma;
     import com.microsoft.sonoma.analytics.Analytics;
-    import com.microsoft.sonoma.errors.ErrorReporting;
+    import com.microsoft.sonoma.crashes.Crashes;
     ```
 
 ## 4. Analytics APIs
@@ -125,14 +125,14 @@ To start the Sonoma SDK in your app, follow these steps:
     Analytics.isEnabled();
     ```
 
-## 5. Error Reporting APIs
+## 5. Crashes APIs
 
-Once you set up and start the Sonoma SDK to use the Error Reporting module in your application, the SDK will automatically start logging any crashes in the device's local storage. When the user opens the application again, all pending crash logs will automatically be forwarded to Sonoma and you can analyze the crash along with the stack trace on the Sonoma portal. Refer to the section to [Start the SDK](#3-start-the-sdk) if you haven't done so already.
+Once you set up and start the Sonoma SDK to use the Crashes module in your application, the SDK will automatically start logging any crashes in the device's local storage. When the user opens the application again, all pending crash logs will automatically be forwarded to Sonoma and you can analyze the crash along with the stack trace on the Sonoma portal. Refer to the section to [Start the SDK](#3-start-the-sdk) if you haven't done so already.
 
 * **Generate a test crash:** The SDK provides you with a static API to generate a test crash for easy testing of the SDK:
 
     ```Java
-    ErrorReporting.generateTestCrash();
+    Crashes.generateTestCrash();
     ```
 
     Note that this API can only be used in test/beta apps and won't work in production apps.
@@ -140,37 +140,37 @@ Once you set up and start the Sonoma SDK to use the Error Reporting module in yo
 * **Did the app crash in last session:** At any time after starting the SDK, you can check if the app crashed in the previous session:
 
     ```Java
-    ErrorReporting.hasCrashedInLastSession();
+    Crashes.hasCrashedInLastSession();
     ```
 
 * **Details about the last crash:** If your app crashed previously, you can get details about the last crash:
 
     ```Java
-    ErrorReporting.getLastSessionErrorReport();
+    Crashes.getLastSessionErrorReport();
     ```
 
-* **Enable or disable the Error Reporting module:**  You can disable and opt out of using the ErrorReporting module by calling the `setEnabled()` API and the SDK will collect no crashes for your app. Use the same API to re-enable it by passing `true` as a parameter.
+* **Enable or disable the Crashes module:**  You can disable and opt out of using the Crashes module by calling the `setEnabled()` API and the SDK will collect no crashes for your app. Use the same API to re-enable it by passing `true` as a parameter.
 
     ```Java
-    ErrorReporting.setEnabled(false);
+    Crashes.setEnabled(false);
     ```
 
     You can also check if the module is enabled or not using the `isEnabled()` method:
 
     ```Java
-    ErrorReporting.isEnabled();
+    Crashes.isEnabled();
     ```
 
-* **Advanced Scenarios:**  The Error Reporting module provides callbacks for developers to perform additional actions before and when sending crash reports to Sonoma. This gives you added flexibility on the error reports that will be sent.
-To handle the callbacks, you must either implement all methods in the `ErrorReportingListener` interface, or override the `AbstractErrorReportingListener` class and pick only the ones you're interested in.
-You create your own Error Reporting listener and assign it like this:
+* **Advanced Scenarios:**  The Crashes module provides callbacks for developers to perform additional actions before and when sending crash reports to Sonoma. This gives you added flexibility on the error reports that will be sent.
+To handle the callbacks, you must either implement all methods in the `CrashesListener` interface, or override the `AbstractCrashesListener` class and pick only the ones you're interested in.
+You create your own Crashes listener and assign it like this:
 
     ```Java
-    ErrorReportingListener customListener = new ErrorReportingListener() {
+    CrashesListener customListener = new CrashesListener() {
         // implement callbacks as seen below
     };
 
-    ErrorReporting.setListener(customListener);
+    Crashes.setListener(customListener);
     ```
 
     The following callbacks are provided:
@@ -178,7 +178,7 @@ You create your own Error Reporting listener and assign it like this:
     * **Should the crash be processed:** Implement this callback if you'd like to decide if a particular crash needs to be processed or not. For example - there could be some system level crashes that you'd want to ignore and don't want to send to Sonoma.
 
         ```Java
-        boolean ErrorReportingListener.shouldProcess(ErrorReport errorReport) {
+        boolean CrashesListener.shouldProcess(ErrorReport errorReport) {
             return true; // return true if the Error Report should be processed, otherwise false.
         }
         ```
@@ -187,7 +187,7 @@ You create your own Error Reporting listener and assign it like this:
     Your app is then responsible for obtaining confirmation, e.g. through a dialog prompt with one of these options - "Always Send", "Send", and "Don't send". Based on the user input, you will tell the SDK and the crash will then respecetively be forwarded to Sonoma or not.
 
         ```Java
-        boolean ErrorReportingListener.shouldAwaitUserConfirmation() {
+        boolean CrashesListener.shouldAwaitUserConfirmation() {
             return true; // Return true if the SDK should await user confirmation, otherwise false.
         }
         ```
@@ -195,14 +195,14 @@ You create your own Error Reporting listener and assign it like this:
         If you return `true`, your app should obtain user permission and message the SDK with the result using the following API:
 
         ```Java
-        ErrorReporting.notifyUserConfirmation(int userConfirmation);
+        Crashes.notifyUserConfirmation(int userConfirmation);
         ```
         Pass one option of `SEND`, `DONT_SEND` or `ALWAYS_SEND`.
 
     * **Binary attachment:**  If you'd like to attach text/binary data to a crash report, implement this callback. Before sending the crash, our SDK will add the attachment to the crash report and you can view it on the Sonoma portal.   
 
         ```Java
-        ErrorAttachment ErrorReportingListener.getErrorAttachment(ErrorReport errorReport) {
+        ErrorAttachment CrashesListener.getErrorAttachment(ErrorReport errorReport) {
             // return your own created ErrorAttachment object
         }
         ```
@@ -210,7 +210,7 @@ You create your own Error Reporting listener and assign it like this:
     * **Before sending a crash report:** This callback will be invoked just before the crash is sent to Sonoma:
 
         ```Java
-        void ErrorReportingListener.onBeforeSending(ErrorReport errorReport) {
+        void CrashesListener.onBeforeSending(ErrorReport errorReport) {
             …
         }
         ```
@@ -218,7 +218,7 @@ You create your own Error Reporting listener and assign it like this:
     * **When sending a crash report succeeded:** This callback will be invoked after sending a crash report succeeded:
 
         ```Java
-        void ErrorReportingListener.onSendingSucceeded(ErrorReport errorReport) {
+        void CrashesListener.onSendingSucceeded(ErrorReport errorReport) {
             …
         }
         ```
@@ -226,7 +226,7 @@ You create your own Error Reporting listener and assign it like this:
     * **When sending a crash report failed:** This callback will be invoked after sending a crash report failed:
 
         ```Java
-        void ErrorReportingListener.onSendingFailed(ErrorReport errorReport, Exception e) {
+        void CrashesListener.onSendingFailed(ErrorReport errorReport, Exception e) {
             …
         }
         ```
@@ -275,4 +275,4 @@ You create your own Error Reporting listener and assign it like this:
  Gradle Dependency                       | Service          
  --------------------------------------- | ---------------
  com.microsoft.sonoma:analytics:+        | Analytics    
- com.microsoft.sonoma:errors:+           | Error Reporting
+ com.microsoft.sonoma:crashes:+          | Crashes

@@ -35,27 +35,27 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
     @Override
     public void uncaughtException(Thread thread, Throwable exception) {
-        if (!ErrorReporting.isEnabled()) {
+        if (!Crashes.isEnabled()) {
             if (mDefaultUncaughtExceptionHandler != null) {
                 mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
             }
         } else {
-            ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, exception, Thread.getAllStackTraces(), ErrorReporting.getInstance().getInitializeTimestamp());
+            ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, exception, Thread.getAllStackTraces(), Crashes.getInstance().getInitializeTimestamp());
             try {
                 File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
                 String filename = errorLog.getId().toString();
                 File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
                 File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
                 String errorLogString = mLogSerializer.serializeLog(errorLog);
-                SonomaLog.debug(ErrorReporting.LOG_TAG, "Saving uncaught exception:", exception);
+                SonomaLog.debug(Crashes.LOG_TAG, "Saving uncaught exception:", exception);
                 StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
-                SonomaLog.debug(ErrorReporting.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
+                SonomaLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
                 StorageHelper.InternalStorage.writeObject(throwableFile, exception);
-                SonomaLog.debug(ErrorReporting.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile);
+                SonomaLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile);
             } catch (JSONException e) {
-                SonomaLog.error(ErrorReporting.LOG_TAG, "Error serializing error log to JSON", e);
+                SonomaLog.error(Crashes.LOG_TAG, "Error serializing error log to JSON", e);
             } catch (IOException e) {
-                SonomaLog.error(ErrorReporting.LOG_TAG, "Error writing error log to file", e);
+                SonomaLog.error(Crashes.LOG_TAG, "Error writing error log to file", e);
             }
             if (mDefaultUncaughtExceptionHandler != null) {
                 mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);

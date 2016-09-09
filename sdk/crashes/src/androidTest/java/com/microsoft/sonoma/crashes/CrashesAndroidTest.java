@@ -8,8 +8,6 @@ import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.ingestion.models.Log;
 import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
-import com.microsoft.sonoma.crashes.ErrorReporting;
-import com.microsoft.sonoma.crashes.ErrorReportingListener;
 import com.microsoft.sonoma.crashes.model.ErrorReport;
 import com.microsoft.sonoma.crashes.utils.ErrorLogHelper;
 
@@ -38,7 +36,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("unused")
-public class ErrorReportingAndroidTest {
+public class CrashesAndroidTest {
 
     private static Context sContext;
 
@@ -71,11 +69,11 @@ public class ErrorReportingAndroidTest {
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
         Channel channel = mock(Channel.class);
-        ErrorReporting.getInstance().onChannelReady(sContext, channel);
-        ErrorReportingListener errorReportingListener = mock(ErrorReportingListener.class);
-        when(errorReportingListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
-        when(errorReportingListener.shouldAwaitUserConfirmation()).thenReturn(true);
-        ErrorReporting.setListener(errorReportingListener);
+        Crashes.getInstance().onChannelReady(sContext, channel);
+        CrashesListener crashesListener = mock(CrashesListener.class);
+        when(crashesListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
+        when(crashesListener.shouldAwaitUserConfirmation()).thenReturn(true);
+        Crashes.setListener(crashesListener);
         final RuntimeException exception = new RuntimeException();
         final Thread thread = new Thread() {
 
@@ -88,7 +86,7 @@ public class ErrorReportingAndroidTest {
         thread.join();
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
-        verifyZeroInteractions(errorReportingListener);
+        verifyZeroInteractions(crashesListener);
 
         /* Second process: enqueue log but network is down... */
         android.util.Log.i(TAG, "Process 2");
@@ -101,24 +99,24 @@ public class ErrorReportingAndroidTest {
                 return null;
             }
         }).when(channel).enqueue(any(Log.class), anyString());
-        ErrorReporting.unsetInstance();
-        ErrorReporting.setListener(errorReportingListener);
-        ErrorReporting.getInstance().onChannelReady(sContext, channel);
+        Crashes.unsetInstance();
+        Crashes.setListener(crashesListener);
+        Crashes.getInstance().onChannelReady(sContext, channel);
 
         /* Waiting user confirmation so no log sent yet. */
         verify(channel, never()).enqueue(any(Log.class), anyString());
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
-        verify(errorReportingListener).shouldProcess(any(ErrorReport.class));
-        verify(errorReportingListener).shouldAwaitUserConfirmation();
-        verifyNoMoreInteractions(errorReportingListener);
+        verify(crashesListener).shouldProcess(any(ErrorReport.class));
+        verify(crashesListener).shouldAwaitUserConfirmation();
+        verifyNoMoreInteractions(crashesListener);
 
         /* Confirm to resume processing. */
-        ErrorReporting.notifyUserConfirmation(ErrorReporting.ALWAYS_SEND);
+        Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
         verify(channel).enqueue(any(Log.class), anyString());
         assertNotNull(log.get());
         assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
-        verify(errorReportingListener).getErrorAttachment(any(ErrorReport.class));
-        verifyNoMoreInteractions(errorReportingListener);
+        verify(crashesListener).getErrorAttachment(any(ErrorReport.class));
+        verifyNoMoreInteractions(crashesListener);
 
         /* Third process: sending succeeds. */
         android.util.Log.i(TAG, "Process 3");
@@ -134,16 +132,16 @@ public class ErrorReportingAndroidTest {
                 return null;
             }
         }).when(channel).addGroup(anyString(), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
-        ErrorReporting.unsetInstance();
-        ErrorReporting.setListener(errorReportingListener);
-        ErrorReporting.getInstance().onChannelReady(sContext, channel);
+        Crashes.unsetInstance();
+        Crashes.setListener(crashesListener);
+        Crashes.getInstance().onChannelReady(sContext, channel);
         assertNotNull(groupListener.get());
         groupListener.get().onSuccess(log.get());
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
         verify(channel, never()).enqueue(any(Log.class), anyString());
-        verify(errorReportingListener).onBeforeSending(any(ErrorReport.class));
-        verify(errorReportingListener).onSendingSucceeded(any(ErrorReport.class));
-        verifyNoMoreInteractions(errorReportingListener);
+        verify(crashesListener).onBeforeSending(any(ErrorReport.class));
+        verify(crashesListener).onSendingSucceeded(any(ErrorReport.class));
+        verifyNoMoreInteractions(crashesListener);
     }
 
     @Test
@@ -153,7 +151,7 @@ public class ErrorReportingAndroidTest {
         android.util.Log.i(TAG, "Process 1");
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
-        ErrorReporting.getInstance().onChannelReady(sContext, mock(Channel.class));
+        Crashes.getInstance().onChannelReady(sContext, mock(Channel.class));
         final RuntimeException exception = new RuntimeException();
         final Thread thread = new Thread() {
 
@@ -168,8 +166,8 @@ public class ErrorReportingAndroidTest {
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
 
         /* Disable in process 2. */
-        ErrorReporting.unsetInstance();
-        ErrorReporting.setEnabled(false);
+        Crashes.unsetInstance();
+        Crashes.setEnabled(false);
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
     }
 }

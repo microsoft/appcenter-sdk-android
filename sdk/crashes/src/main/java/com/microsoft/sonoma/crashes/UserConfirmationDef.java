@@ -7,9 +7,9 @@ import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.SOURCE)
 @IntDef({
-        ErrorReporting.SEND,
-        ErrorReporting.DONT_SEND,
-        ErrorReporting.ALWAYS_SEND
+        Crashes.SEND,
+        Crashes.DONT_SEND,
+        Crashes.ALWAYS_SEND
 })
 @interface UserConfirmationDef {
 }

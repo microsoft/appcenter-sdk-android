@@ -6,7 +6,7 @@ import com.microsoft.sonoma.crashes.model.ErrorReport;
 /**
  * Abstract class with default behaviors for error reporting listener.
  */
-public abstract class AbstractErrorReportingListener implements ErrorReportingListener {
+public abstract class AbstractCrashesListener implements CrashesListener {
     @Override
     public boolean shouldProcess(ErrorReport errorReport) {
         return true;
