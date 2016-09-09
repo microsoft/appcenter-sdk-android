@@ -399,18 +399,18 @@ public class CrashesTest {
 
         Crashes.setListener(new AbstractCrashesListener() {
             @Override
-            public void onBeforeSending(ErrorReport errorReport) {
-                assertErrorEquals(errorLog, exception, errorReport);
+            public void onBeforeSending(ErrorReport crashReport) {
+                assertErrorEquals(errorLog, exception, crashReport);
             }
 
             @Override
-            public void onSendingSucceeded(ErrorReport errorReport) {
-                assertErrorEquals(errorLog, exception, errorReport);
+            public void onSendingSucceeded(ErrorReport crashReport) {
+                assertErrorEquals(errorLog, exception, crashReport);
             }
 
             @Override
-            public void onSendingFailed(ErrorReport errorReport, Exception e) {
-                assertErrorEquals(errorLog, exception, errorReport);
+            public void onSendingFailed(ErrorReport crashReport, Exception e) {
+                assertErrorEquals(errorLog, exception, crashReport);
             }
         });
 
@@ -569,7 +569,7 @@ public class CrashesTest {
         CrashesListener defaultListener = crashes.getInstanceListener();
         crashes.setInstanceListener(new CrashesListener() {
             @Override
-            public boolean shouldProcess(ErrorReport errorReport) {
+            public boolean shouldProcess(ErrorReport crashReport) {
                 return false;
             }
 
@@ -579,20 +579,20 @@ public class CrashesTest {
             }
 
             @Override
-            public ErrorAttachment getErrorAttachment(ErrorReport errorReport) {
+            public ErrorAttachment getErrorAttachment(ErrorReport crashReport) {
                 return null;
             }
 
             @Override
-            public void onBeforeSending(ErrorReport errorReport) {
+            public void onBeforeSending(ErrorReport crashReport) {
             }
 
             @Override
-            public void onSendingFailed(ErrorReport errorReport, Exception e) {
+            public void onSendingFailed(ErrorReport crashReport, Exception e) {
             }
 
             @Override
-            public void onSendingSucceeded(ErrorReport errorReport) {
+            public void onSendingSucceeded(ErrorReport crashReport) {
             }
         });
 
@@ -640,13 +640,13 @@ public class CrashesTest {
         Crashes.getInstance().setLogSerializer(logSerializer);
 
         assertFalse(Crashes.hasCrashedInLastSession());
-        assertNull(Crashes.getLastSessionErrorReport());
+        assertNull(Crashes.getLastSessionCrashReport());
 
         // Last session error is only fetched upon initialization (triggered by setting the module to enabled)
         Crashes.setEnabled(true);
 
         assertTrue(Crashes.hasCrashedInLastSession());
-        ErrorReport report = Crashes.getLastSessionErrorReport();
+        ErrorReport report = Crashes.getLastSessionCrashReport();
         assertNotNull(report);
         assertEquals(errorLog.getId().toString(), report.getId());
         assertEquals(errorLog.getErrorThreadName(), report.getThreadName());
@@ -665,7 +665,7 @@ public class CrashesTest {
         Crashes.setEnabled(false);
 
         assertFalse(Crashes.hasCrashedInLastSession());
-        assertNull(Crashes.getLastSessionErrorReport());
+        assertNull(Crashes.getLastSessionCrashReport());
 
         verifyStatic(never());
         ErrorLogHelper.getLastErrorLogFile();
@@ -683,13 +683,13 @@ public class CrashesTest {
         Crashes.getInstance().setLogSerializer(logSerializer);
 
         assertFalse(Crashes.hasCrashedInLastSession());
-        assertNull(Crashes.getLastSessionErrorReport());
+        assertNull(Crashes.getLastSessionCrashReport());
 
         // Last session error is only fetched upon initialization (triggered by setting the module to enabled)
         Crashes.setEnabled(true);
 
         assertFalse(Crashes.hasCrashedInLastSession());
-        assertNull(Crashes.getLastSessionErrorReport());
+        assertNull(Crashes.getLastSessionCrashReport());
 
         JSONException jsonException = new JSONException("Fake JSON exception");
         when(logSerializer.deserializeLog(anyString())).thenThrow(jsonException);
@@ -697,7 +697,7 @@ public class CrashesTest {
         Crashes.setEnabled(true);
 
         assertFalse(Crashes.hasCrashedInLastSession());
-        assertNull(Crashes.getLastSessionErrorReport());
+        assertNull(Crashes.getLastSessionCrashReport());
 
         verifyStatic();
         SonomaLog.error(eq(Crashes.LOG_TAG), anyString(), eq(jsonException));
@@ -711,6 +711,6 @@ public class CrashesTest {
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(file);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession());
-        assertNull(Crashes.getLastSessionErrorReport());
+        assertNull(Crashes.getLastSessionCrashReport());
     }
 }

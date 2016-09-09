@@ -191,7 +191,7 @@ public class Crashes extends AbstractSonomaFeature {
      * @return {@code true} if a crash was recorded in the last session, otherwise {@code false}.
      */
     public static boolean hasCrashedInLastSession() {
-        return getLastSessionErrorReport() != null;
+        return getLastSessionCrashReport() != null;
     }
 
     /**
@@ -200,14 +200,14 @@ public class Crashes extends AbstractSonomaFeature {
      * @return The error report from the last session if one was set.
      */
     @Nullable
-    public static ErrorReport getLastSessionErrorReport() {
-        return getInstance().getInstanceLastSessionErrorReport();
+    public static ErrorReport getLastSessionCrashReport() {
+        return getInstance().getInstanceLastSessionCrashReport();
     }
 
     /**
-     * Implements {@link #getLastSessionErrorReport()} at instance level.
+     * Implements {@link #getLastSessionCrashReport()} at instance level.
      */
-    private synchronized ErrorReport getInstanceLastSessionErrorReport() {
+    private synchronized ErrorReport getInstanceLastSessionCrashReport() {
         return mLastSessionErrorReport;
     }
 
