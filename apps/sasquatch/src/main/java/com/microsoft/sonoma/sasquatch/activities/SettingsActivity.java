@@ -11,7 +11,7 @@ import android.widget.Toast;
 import com.microsoft.sonoma.analytics.Analytics;
 import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.utils.StorageHelper;
-import com.microsoft.sonoma.errors.ErrorReporting;
+import com.microsoft.sonoma.crashes.ErrorReporting;
 import com.microsoft.sonoma.sasquatch.R;
 
 public class SettingsActivity extends AppCompatActivity {
