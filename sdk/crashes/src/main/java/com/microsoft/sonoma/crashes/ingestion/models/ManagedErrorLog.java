@@ -7,7 +7,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
-import java.lang.*;
 import java.util.List;
 
 /**
@@ -27,7 +26,7 @@ public class ManagedErrorLog extends AbstractErrorLog {
     /**
      * Exception.
      */
-    private com.microsoft.sonoma.crashes.ingestion.models.Exception exception;
+    private Exception exception;
 
     /**
      * Thread stack traces associated to the error.
