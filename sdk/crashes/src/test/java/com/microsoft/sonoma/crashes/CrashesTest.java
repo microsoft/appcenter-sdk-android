@@ -596,7 +596,7 @@ public class CrashesTest {
             }
         });
 
-        /* Verify error reporting has default listener when null is assigned. */
+        /* Verify crashes has default listener when null is assigned. */
         crashes.setInstanceListener(null);
         CrashesListener listener = crashes.getInstanceListener();
         assertEquals(defaultListener, listener);

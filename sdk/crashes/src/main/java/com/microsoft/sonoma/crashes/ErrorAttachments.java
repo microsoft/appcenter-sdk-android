@@ -23,8 +23,8 @@ public final class ErrorAttachments {
     /**
      * Build an attachment with text suitable for using in {@link CrashesListener#getErrorAttachment(ErrorReport)}.
      *
-     * @param text text to attach to error report.
-     * @return error attachment or null if null text is passed.
+     * @param text Text to attach to the error report.
+     * @return error Attachment or null if null text is passed.
      */
     public static ErrorAttachment attachmentWithText(String text) {
         return attachment(text, null, null, null);
