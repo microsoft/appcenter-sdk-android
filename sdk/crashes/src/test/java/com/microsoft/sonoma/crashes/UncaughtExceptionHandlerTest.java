@@ -160,7 +160,7 @@ public class UncaughtExceptionHandlerTest {
 
     @Test
     public void passDefaultHandler() {
-        // Verify that when error reporting is disabled, an exception is instantly passed on
+        // Verify that when crashes is disabled, an exception is instantly passed on
         when(Crashes.isEnabled()).thenReturn(false);
 
         mExceptionHandler.register();
@@ -175,8 +175,8 @@ public class UncaughtExceptionHandlerTest {
     }
 
     @Test
-    public void errorReportingDisabledNoDefaultHandler() {
-        // Verify that when error reporting is disabled, an exception is instantly passed on
+    public void crashesDisabledNoDefaultHandler() {
+        // Verify that when crashes is disabled, an exception is instantly passed on
         when(Crashes.isEnabled()).thenReturn(false);
 
         mExceptionHandler.register();

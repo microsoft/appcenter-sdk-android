@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Error reporting feature set.
+ * Crashes feature.
  */
 public class Crashes extends AbstractSonomaFeature {
 
@@ -71,7 +71,7 @@ public class Crashes extends AbstractSonomaFeature {
     static final String ERROR_GROUP = "group_errors";
 
     /**
-     * Default error reporting listener.
+     * Default crashes listener.
      */
     private static final CrashesListener DEFAULT_ERROR_REPORTING_LISTENER = new DefaultCrashesListener();
 
@@ -86,7 +86,7 @@ public class Crashes extends AbstractSonomaFeature {
     private final Map<String, LogFactory> mFactories;
 
     /**
-     * Error reports not processed yet.
+     * Crash reports not processed yet.
      */
     private final Map<UUID, ErrorLogReport> mUnprocessedErrorReports;
 
@@ -116,7 +116,7 @@ public class Crashes extends AbstractSonomaFeature {
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
 
     /**
-     * Custom error reporting listener.
+     * Custom crashes listener.
      */
     private CrashesListener mCrashesListener;
 
@@ -165,9 +165,9 @@ public class Crashes extends AbstractSonomaFeature {
     }
 
     /**
-     * Sets an error reporting listener.
+     * Sets a crashes listener.
      *
-     * @param listener The custom error reporting listener.
+     * @param listener The custom crashes listener.
      */
     public static void setListener(CrashesListener listener) {
         getInstance().setInstanceListener(listener);
@@ -222,7 +222,7 @@ public class Crashes extends AbstractSonomaFeature {
                     SonomaLog.warn(LOG_TAG, "Failed to delete file " + file);
                 }
             }
-            SonomaLog.info(LOG_TAG, "Deleted error reporting local files");
+            SonomaLog.info(LOG_TAG, "Deleted crashes local files");
         }
     }
 
@@ -348,10 +348,10 @@ public class Crashes extends AbstractSonomaFeature {
                 try {
                     ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logfileContents);
                     UUID id = log.getId();
-                    ErrorReport errorReport = buildErrorReport(log);
-                    if (errorReport == null) {
+                    ErrorReport report = buildErrorReport(log);
+                    if (report == null) {
                         removeAllStoredErrorLogFiles(id);
-                    } else if (mCrashesListener.shouldProcess(errorReport)) {
+                    } else if (mCrashesListener.shouldProcess(report)) {
                         SonomaLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + id.toString());
                         mUnprocessedErrorReports.put(id, mErrorReportCache.get(id));
                     } else {
@@ -478,7 +478,7 @@ public class Crashes extends AbstractSonomaFeature {
     }
 
     /**
-     * Default error reporting listener class.
+     * Default crashes listener class.
      */
     private static class DefaultCrashesListener extends AbstractCrashesListener {
     }
