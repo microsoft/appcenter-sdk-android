@@ -7,7 +7,7 @@ import android.util.Log;
 import com.microsoft.sonoma.analytics.Analytics;
 import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
-import com.microsoft.sonoma.errors.ErrorReporting;
+import com.microsoft.sonoma.crashes.Crashes;
 
 public class HelloWorldActivity extends Activity {
 
@@ -17,7 +17,7 @@ public class HelloWorldActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         Sonoma.setLogLevel(Log.VERBOSE);
-        Sonoma.start(getApplication(), UUIDUtils.randomUUID().toString(), Analytics.class, ErrorReporting.class);
+        Sonoma.start(getApplication(), UUIDUtils.randomUUID().toString(), Analytics.class, Crashes.class);
     }
 
     @SuppressWarnings({"ConstantConditions", "ConstantIfStatement"})
