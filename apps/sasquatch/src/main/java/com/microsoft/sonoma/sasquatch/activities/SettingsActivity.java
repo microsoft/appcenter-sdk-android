@@ -11,7 +11,7 @@ import android.widget.Toast;
 import com.microsoft.sonoma.analytics.Analytics;
 import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.utils.StorageHelper;
-import com.microsoft.sonoma.errors.ErrorReporting;
+import com.microsoft.sonoma.crashes.Crashes;
 import com.microsoft.sonoma.sasquatch.R;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -48,11 +48,11 @@ public class SettingsActivity extends AppCompatActivity {
                     Analytics.setEnabled(enabled);
                 }
             });
-            initCheckBoxSetting(R.string.sonoma_errors_state_key, ErrorReporting.isEnabled(), R.string.sonoma_errors_state_summary_enabled, R.string.sonoma_errors_state_summary_disabled, new SetEnabled() {
+            initCheckBoxSetting(R.string.sonoma_errors_state_key, Crashes.isEnabled(), R.string.sonoma_errors_state_summary_enabled, R.string.sonoma_errors_state_summary_disabled, new SetEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
-                    ErrorReporting.setEnabled(enabled);
+                    Crashes.setEnabled(enabled);
                 }
             });
             initCheckBoxSetting(R.string.sonoma_auto_page_tracking_key, Analytics.isAutoPageTrackingEnabled(), R.string.sonoma_auto_page_tracking_enabled, R.string.sonoma_auto_page_tracking_disabled, new SetEnabled() {
@@ -66,7 +66,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    StorageHelper.PreferencesStorage.remove(ErrorReporting.PREF_KEY_ALWAYS_SEND);
+                    StorageHelper.PreferencesStorage.remove(Crashes.PREF_KEY_ALWAYS_SEND);
                     Toast.makeText(getActivity(), R.string.clear_crash_user_confirmation_toast, Toast.LENGTH_SHORT).show();
                     return true;
                 }

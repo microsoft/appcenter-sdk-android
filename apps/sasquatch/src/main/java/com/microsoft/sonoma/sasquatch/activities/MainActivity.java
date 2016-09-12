@@ -14,11 +14,11 @@ import android.widget.Toast;
 import com.microsoft.sonoma.analytics.Analytics;
 import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
-import com.microsoft.sonoma.errors.AbstractErrorReportingListener;
-import com.microsoft.sonoma.errors.ErrorAttachments;
-import com.microsoft.sonoma.errors.ErrorReporting;
-import com.microsoft.sonoma.errors.model.ErrorAttachment;
-import com.microsoft.sonoma.errors.model.ErrorReport;
+import com.microsoft.sonoma.crashes.AbstractCrashesListener;
+import com.microsoft.sonoma.crashes.Crashes;
+import com.microsoft.sonoma.crashes.ErrorAttachments;
+import com.microsoft.sonoma.crashes.model.ErrorAttachment;
+import com.microsoft.sonoma.crashes.model.ErrorReport;
 import com.microsoft.sonoma.sasquatch.R;
 import com.microsoft.sonoma.sasquatch.features.TestFeatures;
 import com.microsoft.sonoma.sasquatch.features.TestFeaturesListAdapter;
@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Sonoma.setLogLevel(Log.VERBOSE);
-        ErrorReporting.setListener(new AbstractErrorReportingListener() {
+        Crashes.setListener(new AbstractCrashesListener() {
             @Override
             public boolean shouldAwaitUserConfirmation() {
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -41,19 +41,19 @@ public class MainActivity extends AppCompatActivity {
                         .setPositiveButton(R.string.crash_confirmation_dialog_send_button, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                ErrorReporting.notifyUserConfirmation(ErrorReporting.SEND);
+                                Crashes.notifyUserConfirmation(Crashes.SEND);
                             }
                         })
                         .setNegativeButton(R.string.crash_confirmation_dialog_not_send_button, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                ErrorReporting.notifyUserConfirmation(ErrorReporting.DONT_SEND);
+                                Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
                             }
                         })
                         .setNeutralButton(R.string.crash_confirmation_dialog_always_send_button, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                ErrorReporting.notifyUserConfirmation(ErrorReporting.ALWAYS_SEND);
+                                Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
                             }
                         });
                 builder.create().show();
@@ -61,23 +61,23 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public ErrorAttachment getErrorAttachment(ErrorReport errorReport) {
+            public ErrorAttachment getErrorAttachment(ErrorReport report) {
                 return ErrorAttachments.attachment("This is a text attachment.", "This is a binary attachment.".getBytes(), "binary.txt", "text/plain");
             }
 
             @Override
-            public void onSendingFailed(ErrorReport errorReport, Exception e) {
+            public void onSendingFailed(ErrorReport report, Exception e) {
                 Toast.makeText(MainActivity.this, R.string.crash_sent_failed, Toast.LENGTH_SHORT).show();
             }
 
             @Override
-            public void onSendingSucceeded(ErrorReport errorReport) {
-                String message = String.format("%s\nCrash ID: %s\nThrowable: %s", R.string.crash_sent_succeeded, errorReport.getId(), errorReport.getThrowable().toString());
+            public void onSendingSucceeded(ErrorReport report) {
+                String message = String.format("%s\nCrash ID: %s\nThrowable: %s", R.string.crash_sent_succeeded, report.getId(), report.getThrowable().toString());
                 Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
 
-        Sonoma.start(getApplication(), UUIDUtils.randomUUID().toString(), Analytics.class, ErrorReporting.class);
+        Sonoma.start(getApplication(), UUIDUtils.randomUUID().toString(), Analytics.class, Crashes.class);
 
         TestFeatures.initialize(this);
         ListView listView = (ListView) findViewById(R.id.list);

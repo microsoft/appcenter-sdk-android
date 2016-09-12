@@ -1,0 +1,8 @@
+//
+// :sdk:crashes
+//
+evaluationDependsOn(':sdk')
+
+dependencies {
+    compile project(':sdk:core')
+}

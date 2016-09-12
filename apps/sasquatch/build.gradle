@@ -7,5 +7,5 @@ evaluationDependsOn(':apps')
 dependencies {
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     compile project(':sdk:analytics')
-    compile project(':sdk:errors')
+    compile project(':sdk:crashes')
 }
