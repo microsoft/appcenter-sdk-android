@@ -161,7 +161,7 @@ Once you set up and start the Sonoma SDK to use the Crashes module in your appli
     Crashes.isEnabled();
     ```
 
-* **Advanced Scenarios:**  The Crashes module provides callbacks for developers to perform additional actions before and when sending crash reports to Sonoma. This gives you added flexibility on the error reports that will be sent.
+* **Advanced Scenarios:**  The Crashes module provides callbacks for developers to perform additional actions before and when sending crash reports to Sonoma. This gives you added flexibility on the crash reports that will be sent.
 To handle the callbacks, you must either implement all methods in the `CrashesListener` interface, or override the `AbstractCrashesListener` class and pick only the ones you're interested in.
 You create your own Crashes listener and assign it like this:
 
@@ -179,7 +179,7 @@ You create your own Crashes listener and assign it like this:
 
         ```Java
         boolean CrashesListener.shouldProcess(ErrorReport report) {
-            return true; // return true if the Error Report should be processed, otherwise false.
+            return true; // return true if the crash report should be processed, otherwise false.
         }
         ```
 

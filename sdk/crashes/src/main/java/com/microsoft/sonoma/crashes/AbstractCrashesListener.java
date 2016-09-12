@@ -4,7 +4,7 @@ import com.microsoft.sonoma.crashes.model.ErrorAttachment;
 import com.microsoft.sonoma.crashes.model.ErrorReport;
 
 /**
- * Abstract class with default behaviors for error reporting listener.
+ * Abstract class with default behaviors for the crashes listener.
  */
 public abstract class AbstractCrashesListener implements CrashesListener {
     @Override
