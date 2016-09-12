@@ -22,5 +22,5 @@ dependencies {
     //noinspection GradleDynamicVersion
     compile "com.microsoft.sonoma:analytics:+"
     //noinspection GradleDynamicVersion
-    compile "com.microsoft.sonoma:errors:+"
+    compile "com.microsoft.sonoma:crashes:+"
 }
