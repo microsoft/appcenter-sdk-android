@@ -73,7 +73,7 @@ public abstract class AbstractErrorLog extends AbstractLog {
     private String errorThreadName;
 
     /**
-     * If true, this error report is an application crash.
+     * If true, this crash report is an application crash.
      */
     private Boolean fatal;
 

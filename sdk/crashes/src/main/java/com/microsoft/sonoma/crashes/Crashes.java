@@ -195,9 +195,9 @@ public class Crashes extends AbstractSonomaFeature {
     }
 
     /**
-     * Provides information about any available error report from the last session, if it crashed.
+     * Provides information about any available crash report from the last session, if it crashed.
      *
-     * @return The error report from the last session if one was set.
+     * @return The crash report from the last session if one was set.
      */
     @Nullable
     public static ErrorReport getLastSessionCrashReport() {
@@ -279,9 +279,9 @@ public class Crashes extends AbstractSonomaFeature {
                             }
                         }
                     } else
-                        SonomaLog.warn(LOG_TAG, "Cannot find error report for the error log: " + id);
+                        SonomaLog.warn(LOG_TAG, "Cannot find crash report for the error log: " + id);
                 } else {
-                    SonomaLog.warn(LOG_TAG, "A different type of log comes to error reporting: " + log.getClass().getName());
+                    SonomaLog.warn(LOG_TAG, "A different type of log comes to crashes: " + log.getClass().getName());
                 }
             }
 
@@ -484,7 +484,7 @@ public class Crashes extends AbstractSonomaFeature {
     }
 
     /**
-     * Class holding an error log and its corresponding error report.
+     * Class holding an error log and its corresponding crash report.
      */
     private static class ErrorLogReport {
         private final ManagedErrorLog log;
