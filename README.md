@@ -178,7 +178,7 @@ You create your own Crashes listener and assign it like this:
     * **Should the crash be processed:** Implement this callback if you'd like to decide if a particular crash needs to be processed or not. For example - there could be some system level crashes that you'd want to ignore and don't want to send to Sonoma.
 
         ```Java
-        boolean CrashesListener.shouldProcess(ErrorReport errorReport) {
+        boolean CrashesListener.shouldProcess(ErrorReport report) {
             return true; // return true if the Error Report should be processed, otherwise false.
         }
         ```
@@ -202,7 +202,7 @@ You create your own Crashes listener and assign it like this:
     * **Binary attachment:**  If you'd like to attach text/binary data to a crash report, implement this callback. Before sending the crash, our SDK will add the attachment to the crash report and you can view it on the Sonoma portal.   
 
         ```Java
-        ErrorAttachment CrashesListener.getErrorAttachment(ErrorReport errorReport) {
+        ErrorAttachment CrashesListener.getErrorAttachment(ErrorReport report) {
             // return your own created ErrorAttachment object
         }
         ```
@@ -210,7 +210,7 @@ You create your own Crashes listener and assign it like this:
     * **Before sending a crash report:** This callback will be invoked just before the crash is sent to Sonoma:
 
         ```Java
-        void CrashesListener.onBeforeSending(ErrorReport errorReport) {
+        void CrashesListener.onBeforeSending(ErrorReport report) {
             …
         }
         ```
@@ -218,7 +218,7 @@ You create your own Crashes listener and assign it like this:
     * **When sending a crash report succeeded:** This callback will be invoked after sending a crash report succeeded:
 
         ```Java
-        void CrashesListener.onSendingSucceeded(ErrorReport errorReport) {
+        void CrashesListener.onSendingSucceeded(ErrorReport report) {
             …
         }
         ```
@@ -226,7 +226,7 @@ You create your own Crashes listener and assign it like this:
     * **When sending a crash report failed:** This callback will be invoked after sending a crash report failed:
 
         ```Java
-        void CrashesListener.onSendingFailed(ErrorReport errorReport, Exception e) {
+        void CrashesListener.onSendingFailed(ErrorReport report, Exception e) {
             …
         }
         ```
