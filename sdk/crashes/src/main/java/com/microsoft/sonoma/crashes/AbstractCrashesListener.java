@@ -8,7 +8,7 @@ import com.microsoft.sonoma.crashes.model.ErrorReport;
  */
 public abstract class AbstractCrashesListener implements CrashesListener {
     @Override
-    public boolean shouldProcess(ErrorReport crashReport) {
+    public boolean shouldProcess(ErrorReport report) {
         return true;
     }
 
@@ -18,22 +18,22 @@ public abstract class AbstractCrashesListener implements CrashesListener {
     }
 
     @Override
-    public ErrorAttachment getErrorAttachment(ErrorReport crashReport) {
+    public ErrorAttachment getErrorAttachment(ErrorReport report) {
         return null;
     }
 
     @SuppressWarnings("EmptyMethod")
     @Override
-    public void onBeforeSending(ErrorReport crashReport) {
+    public void onBeforeSending(ErrorReport report) {
     }
 
     @SuppressWarnings("EmptyMethod")
     @Override
-    public void onSendingFailed(ErrorReport crashReport, Exception e) {
+    public void onSendingFailed(ErrorReport report, Exception e) {
     }
 
     @SuppressWarnings("EmptyMethod")
     @Override
-    public void onSendingSucceeded(ErrorReport crashReport) {
+    public void onSendingSucceeded(ErrorReport report) {
     }
 }

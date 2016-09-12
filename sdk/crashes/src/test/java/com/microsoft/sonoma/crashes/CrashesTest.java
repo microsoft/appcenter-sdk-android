@@ -399,18 +399,18 @@ public class CrashesTest {
 
         Crashes.setListener(new AbstractCrashesListener() {
             @Override
-            public void onBeforeSending(ErrorReport crashReport) {
-                assertErrorEquals(errorLog, exception, crashReport);
+            public void onBeforeSending(ErrorReport report) {
+                assertErrorEquals(errorLog, exception, report);
             }
 
             @Override
-            public void onSendingSucceeded(ErrorReport crashReport) {
-                assertErrorEquals(errorLog, exception, crashReport);
+            public void onSendingSucceeded(ErrorReport report) {
+                assertErrorEquals(errorLog, exception, report);
             }
 
             @Override
-            public void onSendingFailed(ErrorReport crashReport, Exception e) {
-                assertErrorEquals(errorLog, exception, crashReport);
+            public void onSendingFailed(ErrorReport report, Exception e) {
+                assertErrorEquals(errorLog, exception, report);
             }
         });
 
@@ -569,7 +569,7 @@ public class CrashesTest {
         CrashesListener defaultListener = crashes.getInstanceListener();
         crashes.setInstanceListener(new CrashesListener() {
             @Override
-            public boolean shouldProcess(ErrorReport crashReport) {
+            public boolean shouldProcess(ErrorReport report) {
                 return false;
             }
 
@@ -579,20 +579,20 @@ public class CrashesTest {
             }
 
             @Override
-            public ErrorAttachment getErrorAttachment(ErrorReport crashReport) {
+            public ErrorAttachment getErrorAttachment(ErrorReport report) {
                 return null;
             }
 
             @Override
-            public void onBeforeSending(ErrorReport crashReport) {
+            public void onBeforeSending(ErrorReport report) {
             }
 
             @Override
-            public void onSendingFailed(ErrorReport crashReport, Exception e) {
+            public void onSendingFailed(ErrorReport report, Exception e) {
             }
 
             @Override
-            public void onSendingSucceeded(ErrorReport crashReport) {
+            public void onSendingSucceeded(ErrorReport report) {
             }
         });
 
