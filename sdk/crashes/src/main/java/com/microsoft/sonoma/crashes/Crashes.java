@@ -484,7 +484,7 @@ public class Crashes extends AbstractSonomaFeature {
     }
 
     /**
-     * Class holding an error log and its corresponding crash report.
+     * Class holding an error log and its corresponding error report.
      */
     private static class ErrorLogReport {
         private final ManagedErrorLog log;
