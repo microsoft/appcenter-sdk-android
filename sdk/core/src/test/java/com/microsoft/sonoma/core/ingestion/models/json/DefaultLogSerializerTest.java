@@ -25,7 +25,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 /**
  * Supplements tests in LogSerializerTest.
  */
-@SuppressWarnings("unusued")
+@SuppressWarnings("unused")
 @PrepareForTest({DefaultLogSerializer.class, SonomaLog.class})
 public class DefaultLogSerializerTest {
 
