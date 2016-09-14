@@ -146,7 +146,7 @@ Once you set up and start the Sonoma SDK to use the Crashes module in your appli
 * **Details about the last crash:** If your app crashed previously, you can get details about the last crash:
 
     ```Java
-    Crashes.getLastSessionErrorReport();
+    Crashes.getLastSessionCrashReport();
     ```
 
 * **Enable or disable the Crashes module:**  You can disable and opt out of using the Crashes module by calling the `setEnabled()` API and the SDK will collect no crashes for your app. Use the same API to re-enable it by passing `true` as a parameter.
