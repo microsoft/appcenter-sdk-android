@@ -263,16 +263,14 @@ You create your own Crashes listener and assign it like this:
 
 * Can't see crashes on the portal?
     * Make sure SDK `start()` API is used correctly and Crashes module is initialzied. Also, you need to restart the app after a crash and our SDK will forward the crash log only after it's restarted.
-    * The user needs to upload the symbols that match the UUID of the build that triggered the crash.
     * Make sure your device is connected to a working internet.
     * Check if the App Secret used to start the SDK matches the App Secret in Sonoma portal.
     * Don't use any other SDK that provides Crash Reporting functionality.
 
-* Check if the App Secret used to start the SDK matches the App Secret in Sonoma portal.
-
 * What data does SDK automatically collect for Analytics?
 
 * What permissions are required for the SDK?
+  Core module in Sonoma Android SDK adds "Internet" and "Access Network State" permissions in an app.
 
 * Any privacy information tracked by SDK?
 
