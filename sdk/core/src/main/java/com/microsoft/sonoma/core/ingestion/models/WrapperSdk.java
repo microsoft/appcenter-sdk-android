@@ -50,6 +50,11 @@ public class WrapperSdk implements Model {
         return this.wrapperSdkName;
     }
 
+    /**
+     * Set the wrapperSdkName value.
+     *
+     * @param wrapperSdkName the wrapperSdkName value to set
+     */
     public void setWrapperSdkName(String wrapperSdkName) {
         this.wrapperSdkName = wrapperSdkName;
     }
