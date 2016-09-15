@@ -13,7 +13,10 @@ import android.view.WindowManager;
 import com.microsoft.sonoma.core.BuildConfig;
 import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.ingestion.models.Device;
+import com.microsoft.sonoma.core.ingestion.models.WrapperSdk;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
@@ -43,6 +46,12 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Build.class, SonomaLog.class})
 public class DeviceInfoHelperTest {
+
+    @Before
+    @After
+    public void cleanWrapperSdk() {
+        DeviceInfoHelper.setWrapperSdk(null);
+    }
 
     @Test
     public void getDeviceInfo() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
@@ -111,39 +120,59 @@ public class DeviceInfoHelperTest {
         Whitebox.setInternalState(Build.VERSION.class, "RELEASE", osVersion);
 
         /* First call */
-        Device log = DeviceInfoHelper.getDeviceInfo(contextMock);
+        Device device = DeviceInfoHelper.getDeviceInfo(contextMock);
 
         /* Verify device information. */
-        assertEquals(BuildConfig.VERSION_NAME, log.getSdkVersion());
-        assertEquals(appVersion, log.getAppVersion());
-        assertEquals(appBuild, log.getAppBuild());
-        assertEquals(appNamespace, log.getAppNamespace());
-        assertEquals(carrierCountry, log.getCarrierCountry());
-        assertEquals(carrierName, log.getCarrierName());
-        assertEquals(locale.toString(), log.getLocale());
-        assertEquals(model, log.getModel());
-        assertEquals(oemName, log.getOemName());
-        assertEquals(osApiLevel, log.getOsApiLevel());
-        assertEquals(osName, log.getOsName());
-        assertEquals(osVersion, log.getOsVersion());
-        assertEquals(osBuild, log.getOsBuild());
-        assertEquals(screenSizeLandscape, log.getScreenSize());
-        assertEquals(timeZoneOffset, log.getTimeZoneOffset());
+        assertNull(device.getWrapperSdkName());
+        assertNull(device.getWrapperSdkVersion());
+        assertEquals(BuildConfig.VERSION_NAME, device.getSdkVersion());
+        assertEquals(appVersion, device.getAppVersion());
+        assertEquals(appBuild, device.getAppBuild());
+        assertEquals(appNamespace, device.getAppNamespace());
+        assertEquals(carrierCountry, device.getCarrierCountry());
+        assertEquals(carrierName, device.getCarrierName());
+        assertEquals(locale.toString(), device.getLocale());
+        assertEquals(model, device.getModel());
+        assertEquals(oemName, device.getOemName());
+        assertEquals(osApiLevel, device.getOsApiLevel());
+        assertEquals(osName, device.getOsName());
+        assertEquals(osVersion, device.getOsVersion());
+        assertEquals(osBuild, device.getOsBuild());
+        assertEquals(screenSizeLandscape, device.getScreenSize());
+        assertEquals(timeZoneOffset, device.getTimeZoneOffset());
 
         /* Verify screen size based on different orientations (Surface.ROTATION_90). */
-        log = DeviceInfoHelper.getDeviceInfo(contextMock);
-        assertEquals(screenSizePortrait, log.getScreenSize());
+        device = DeviceInfoHelper.getDeviceInfo(contextMock);
+        assertEquals(screenSizePortrait, device.getScreenSize());
 
         /* Verify screen size based on different orientations (Surface.ROTATION_180). */
-        log = DeviceInfoHelper.getDeviceInfo(contextMock);
-        assertEquals(screenSizeLandscape, log.getScreenSize());
+        device = DeviceInfoHelper.getDeviceInfo(contextMock);
+        assertEquals(screenSizeLandscape, device.getScreenSize());
 
         /* Verify screen size based on different orientations (Surface.ROTATION_270). */
-        log = DeviceInfoHelper.getDeviceInfo(contextMock);
-        assertEquals(screenSizePortrait, log.getScreenSize());
+        device = DeviceInfoHelper.getDeviceInfo(contextMock);
+        assertEquals(screenSizePortrait, device.getScreenSize());
 
         /* Make sure screen size is verified for all orientations. */
         verify(displayMock, times(4)).getRotation();
+
+        /* Set wrapper sdk information. */
+        WrapperSdk wrapperSdk = new WrapperSdk();
+        wrapperSdk.setWrapperSdkVersion("1.2.3.4");
+        wrapperSdk.setWrapperSdkName("Xamarin");
+        DeviceInfoHelper.setWrapperSdk(wrapperSdk);
+        Device device2 = DeviceInfoHelper.getDeviceInfo(contextMock);
+        assertEquals(wrapperSdk.getWrapperSdkVersion(), device2.getWrapperSdkVersion());
+        assertEquals(wrapperSdk.getWrapperSdkName(), device2.getWrapperSdkName());
+
+        /* Check non wrapped sdk information are still generated correctly. */
+        device2.setWrapperSdkVersion(null);
+        device2.setWrapperSdkName(null);
+        assertEquals(device, device2);
+
+        /* Remove wrapper SDK information. */
+        DeviceInfoHelper.setWrapperSdk(null);
+        assertEquals(device, DeviceInfoHelper.getDeviceInfo(contextMock));
     }
 
     @Test(expected = DeviceInfoHelper.DeviceInfoException.class)

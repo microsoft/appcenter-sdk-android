@@ -6,9 +6,11 @@ import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.channel.DefaultChannel;
+import com.microsoft.sonoma.core.ingestion.models.WrapperSdk;
 import com.microsoft.sonoma.core.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.sonoma.core.ingestion.models.json.LogFactory;
 import com.microsoft.sonoma.core.ingestion.models.json.LogSerializer;
+import com.microsoft.sonoma.core.utils.DeviceInfoHelper;
 import com.microsoft.sonoma.core.utils.IdHelper;
 import com.microsoft.sonoma.core.utils.PrefStorageConstants;
 import com.microsoft.sonoma.core.utils.SonomaLog;
@@ -67,6 +69,15 @@ public final class Sonoma {
     @VisibleForTesting
     static synchronized void unsetInstance() {
         sInstance = null;
+    }
+
+    /**
+     * A wrapper SDK can use this method to pass extra information to device properties.
+     *
+     * @param wrapperSdk wrapper SDK information.
+     */
+    public static void setWrapperSdk(WrapperSdk wrapperSdk) {
+        DeviceInfoHelper.setWrapperSdk(wrapperSdk);
     }
 
     /**

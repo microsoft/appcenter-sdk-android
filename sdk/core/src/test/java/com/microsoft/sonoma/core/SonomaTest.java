@@ -5,7 +5,9 @@ import android.content.ContentValues;
 import android.content.Context;
 
 import com.microsoft.sonoma.core.channel.Channel;
+import com.microsoft.sonoma.core.ingestion.models.WrapperSdk;
 import com.microsoft.sonoma.core.ingestion.models.json.LogFactory;
+import com.microsoft.sonoma.core.utils.DeviceInfoHelper;
 import com.microsoft.sonoma.core.utils.IdHelper;
 import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
@@ -45,10 +47,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Constants.class, SonomaLog.class, StorageHelper.class, StorageHelper.PreferencesStorage.class, IdHelper.class, StorageHelper.DatabaseStorage.class})
+@PrepareForTest({Constants.class, SonomaLog.class, StorageHelper.class, StorageHelper.PreferencesStorage.class, IdHelper.class, StorageHelper.DatabaseStorage.class, DeviceInfoHelper.class})
 public class SonomaTest {
 
     private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
@@ -364,6 +367,15 @@ public class SonomaTest {
 
         // Verify that only one module has been loaded and configured
         assertEquals(1, Sonoma.getInstance().getFeatures().size());
+    }
+
+    @Test
+    public void setWrapperSdkTest() {
+        mockStatic(DeviceInfoHelper.class);
+        WrapperSdk wrapperSdk = new WrapperSdk();
+        Sonoma.setWrapperSdk(wrapperSdk);
+        verifyStatic();
+        DeviceInfoHelper.setWrapperSdk(wrapperSdk);
     }
 
     private static class DummyFeature extends AbstractSonomaFeature {

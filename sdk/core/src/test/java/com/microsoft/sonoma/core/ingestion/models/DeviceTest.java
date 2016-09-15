@@ -13,6 +13,7 @@ public class DeviceTest {
     @Test
     public void compareDifferentType() {
         TestUtils.compareSelfNullClass(new Device());
+        TestUtils.compareSelfNullClass(new WrapperSdk());
     }
 
     @Test
@@ -22,6 +23,25 @@ public class DeviceTest {
         Device a = new Device();
         Device b = new Device();
         checkEquals(a, b);
+
+        /* Wrapper SDK information. */
+        {
+            /* Wrapper SDK version. */
+            a.setWrapperSdkVersion("a");
+            checkNotEquals(a, b);
+            b.setWrapperSdkVersion("b");
+            checkNotEquals(a, b);
+            b.setWrapperSdkVersion("a");
+            checkEquals(a, b);
+
+            /* Wrapper SDK name. */
+            a.setWrapperSdkName("a");
+            checkNotEquals(a, b);
+            b.setWrapperSdkName("b");
+            checkNotEquals(a, b);
+            b.setWrapperSdkName("a");
+            checkEquals(a, b);
+        }
 
         /* Sdk version. */
         a.setSdkVersion("a");
