@@ -34,7 +34,7 @@ public class IngestionHttp implements Ingestion {
     /**
      * API Path.
      */
-    private static final String API_PATH = "/logs?api-version=1.0.0-preview20160708";
+    private static final String API_PATH = "/logs?api_version=1.0.0-preview20160914";
 
     /**
      * Content type header value.

@@ -89,7 +89,7 @@ public class IngestionHttpTest {
 
         /* Configure mock HTTP. */
         URL url = mock(URL.class);
-        whenNew(URL.class).withArguments("http://mock/logs?api-version=1.0.0-preview20160708").thenReturn(url);
+        whenNew(URL.class).withArguments("http://mock/logs?api_version=1.0.0-preview20160914").thenReturn(url);
         HttpURLConnection urlConnection = mock(HttpURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(200);
