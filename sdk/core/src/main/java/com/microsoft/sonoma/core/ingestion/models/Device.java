@@ -9,7 +9,7 @@ import org.json.JSONStringer;
 /**
  * Device characteristic log.
  */
-public class Device implements Model {
+public class Device extends WrapperSdk {
 
     private static final String SDK_VERSION = "sdk_version";
 
@@ -391,6 +391,7 @@ public class Device implements Model {
 
     @Override
     public void read(JSONObject object) throws JSONException {
+        super.read(object);
         setSdkVersion(object.getString(SDK_VERSION));
         setModel(object.getString(MODEL));
         setOemName(object.getString(OEM_NAME));
@@ -410,6 +411,7 @@ public class Device implements Model {
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
+        super.write(writer);
         writer.key(SDK_VERSION).value(getSdkVersion());
         writer.key(MODEL).value(getModel());
         writer.key(OEM_NAME).value(getOemName());
@@ -432,6 +434,7 @@ public class Device implements Model {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
 
         Device device = (Device) o;
 
@@ -465,7 +468,8 @@ public class Device implements Model {
 
     @Override
     public int hashCode() {
-        int result = sdkVersion != null ? sdkVersion.hashCode() : 0;
+        int result = super.hashCode();
+        result = 31 * result + (sdkVersion != null ? sdkVersion.hashCode() : 0);
         result = 31 * result + (model != null ? model.hashCode() : 0);
         result = 31 * result + (oemName != null ? oemName.hashCode() : 0);
         result = 31 * result + (osName != null ? osName.hashCode() : 0);
