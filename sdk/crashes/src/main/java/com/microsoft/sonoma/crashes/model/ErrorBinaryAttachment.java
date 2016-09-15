@@ -19,12 +19,12 @@ public class ErrorBinaryAttachment implements Model {
     /**
      * contentType property.
      */
-    private static final String CONTENT_TYPE = "contentType";
+    private static final String CONTENT_TYPE = "content_type";
 
     /**
      * fileName property.
      */
-    private static final String FILE_NAME = "fileName";
+    private static final String FILE_NAME = "file_name";
 
     /**
      * data property.

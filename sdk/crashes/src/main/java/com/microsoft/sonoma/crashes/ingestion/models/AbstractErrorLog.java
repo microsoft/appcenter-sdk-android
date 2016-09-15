@@ -17,23 +17,23 @@ import static com.microsoft.sonoma.core.ingestion.models.CommonProperties.ID;
  */
 public abstract class AbstractErrorLog extends AbstractLog {
 
-    private static final String PROCESS_ID = "processId";
+    private static final String PROCESS_ID = "process_id";
 
-    private static final String PROCESS_NAME = "processName";
+    private static final String PROCESS_NAME = "process_name";
 
-    private static final String PARENT_PROCESS_ID = "parentProcessId";
+    private static final String PARENT_PROCESS_ID = "parent_process_id";
 
-    private static final String PARENT_PROCESS_NAME = "parentProcessName";
+    private static final String PARENT_PROCESS_NAME = "parent_process_name";
 
-    private static final String ERROR_THREAD_ID = "errorThreadId";
+    private static final String ERROR_THREAD_ID = "error_thread_id";
 
-    private static final String ERROR_THREAD_NAME = "errorThreadName";
+    private static final String ERROR_THREAD_NAME = "error_thread_name";
 
     private static final String FATAL = "fatal";
 
-    private static final String APP_LAUNCH_T_OFFSET = "appLaunchTOffset";
+    private static final String APP_LAUNCH_TOFFSET = "app_launch_toffset";
 
-    private static final String ERROR_ATTACHMENT = "errorAttachment";
+    private static final String ERROR_ATTACHMENT = "error_attachment";
 
     private static final String ARCHITECTURE = "architecture";
 
@@ -302,7 +302,7 @@ public abstract class AbstractErrorLog extends AbstractLog {
         setErrorThreadId(JSONUtils.readLong(object, ERROR_THREAD_ID));
         setErrorThreadName(object.optString(ERROR_THREAD_NAME, null));
         setFatal(JSONUtils.readBoolean(object, FATAL));
-        setAppLaunchTOffset(JSONUtils.readLong(object, APP_LAUNCH_T_OFFSET));
+        setAppLaunchTOffset(JSONUtils.readLong(object, APP_LAUNCH_TOFFSET));
         if (object.has(ERROR_ATTACHMENT)) {
             ErrorAttachment errorAttachment = new ErrorAttachment();
             errorAttachment.read(object.getJSONObject(ERROR_ATTACHMENT));
@@ -322,7 +322,7 @@ public abstract class AbstractErrorLog extends AbstractLog {
         JSONUtils.write(writer, ERROR_THREAD_ID, getErrorThreadId());
         JSONUtils.write(writer, ERROR_THREAD_NAME, getErrorThreadName());
         JSONUtils.write(writer, FATAL, getFatal());
-        JSONUtils.write(writer, APP_LAUNCH_T_OFFSET, getAppLaunchTOffset());
+        JSONUtils.write(writer, APP_LAUNCH_TOFFSET, getAppLaunchTOffset());
         if (getErrorAttachment() != null) {
             writer.key(ERROR_ATTACHMENT).object();
             getErrorAttachment().write(writer);
