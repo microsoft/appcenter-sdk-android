@@ -21,7 +21,7 @@ public class Exception implements Model {
 
     private static final String MESSAGE = "message";
 
-    private static final String INNER_EXCEPTIONS = "innerExceptions";
+    private static final String INNER_EXCEPTIONS = "inner_exceptions";
 
     /**
      * Exception type (fully qualified class name).
