@@ -7,7 +7,7 @@ import com.microsoft.sonoma.core.ingestion.models.AbstractLog;
  */
 public class StartSessionLog extends AbstractLog {
 
-    public static final String TYPE = "startSession";
+    public static final String TYPE = "start_session";
 
     @Override
     public String getType() {
