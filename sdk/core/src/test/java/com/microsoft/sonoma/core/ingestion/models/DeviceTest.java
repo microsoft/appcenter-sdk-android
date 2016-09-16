@@ -41,6 +41,30 @@ public class DeviceTest {
             checkNotEquals(a, b);
             b.setWrapperSdkName("a");
             checkEquals(a, b);
+
+            /* Live update release label. */
+            a.setLiveUpdateReleaseLabel("a");
+            checkNotEquals(a, b);
+            b.setLiveUpdateReleaseLabel("b");
+            checkNotEquals(a, b);
+            b.setLiveUpdateReleaseLabel("a");
+            checkEquals(a, b);
+
+            /* Live update deployment key. */
+            a.setLiveUpdateDeploymentKey("a");
+            checkNotEquals(a, b);
+            b.setLiveUpdateDeploymentKey("b");
+            checkNotEquals(a, b);
+            b.setLiveUpdateDeploymentKey("a");
+            checkEquals(a, b);
+
+            /* Live update package hash. */
+            a.setLiveUpdatePackageHash("a");
+            checkNotEquals(a, b);
+            b.setLiveUpdatePackageHash("b");
+            checkNotEquals(a, b);
+            b.setLiveUpdatePackageHash("a");
+            checkEquals(a, b);
         }
 
         /* Sdk name. */
