@@ -132,10 +132,28 @@ public class Analytics extends AbstractSonomaFeature {
      * Track a page.
      *
      * @param name       page name.
+     */
+    public static void trackPage(@NonNull String name) {
+        trackPage(name, null);
+    }
+
+    /**
+     * Track a page.
+     *
+     * @param name       page name.
      * @param properties optional properties.
      */
     public static void trackPage(@NonNull String name, @Nullable Map<String, String> properties) {
         getInstance().queuePage(name, properties);
+    }
+
+    /**
+     * Track an event.
+     *
+     * @param name       event name.
+     */
+    public static void trackEvent(@NonNull String name) {
+        trackEvent(name, null);
     }
 
     /**
