@@ -99,10 +99,12 @@ public class AnalyticsTest {
     public void notInit() {
 
         /* Just check log is discarded without throwing any exception. */
+        Analytics.trackEvent("test");
         Analytics.trackEvent("test", new HashMap<String, String>());
+        Analytics.trackPage("test");
         Analytics.trackPage("test", new HashMap<String, String>());
 
-        verifyStatic(times(2));
+        verifyStatic(times(4));
         SonomaLog.error(eq(Analytics.LOG_TAG), anyString());
     }
 
@@ -200,8 +202,8 @@ public class AnalyticsTest {
         analytics.onChannelReady(mock(Context.class), channel);
         verify(channel).clear(analytics.getGroupName());
         verify(channel).removeGroup(eq(analytics.getGroupName()));
-        Analytics.trackEvent("test", null);
-        Analytics.trackPage("test", null);
+        Analytics.trackEvent("test");
+        Analytics.trackPage("test");
         analytics.onActivityResumed(new Activity());
         analytics.onActivityPaused(new Activity());
         verifyNoMoreInteractions(channel);
@@ -213,8 +215,8 @@ public class AnalyticsTest {
         assertTrue(Analytics.isEnabled());
         verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
         verify(channel).addListener(any(SessionTracker.class));
-        Analytics.trackEvent("test", null);
-        Analytics.trackPage("test", null);
+        Analytics.trackEvent("test");
+        Analytics.trackPage("test");
         verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
         /* Disable again. */
@@ -224,8 +226,8 @@ public class AnalyticsTest {
         verify(channel, times(2)).clear(analytics.getGroupName());
         verify(channel, times(2)).removeGroup(eq(analytics.getGroupName()));
         verify(channel).removeListener(any(SessionTracker.class));
-        Analytics.trackEvent("test", null);
-        Analytics.trackPage("test", null);
+        Analytics.trackEvent("test");
+        Analytics.trackPage("test");
         analytics.onActivityResumed(new Activity());
         analytics.onActivityPaused(new Activity());
         verifyNoMoreInteractions(channel);
