@@ -43,6 +43,14 @@ public class DeviceTest {
             checkEquals(a, b);
         }
 
+        /* Sdk name. */
+        a.setSdkName("a");
+        checkNotEquals(a, b);
+        b.setSdkName("b");
+        checkNotEquals(a, b);
+        b.setSdkName("a");
+        checkEquals(a, b);
+
         /* Sdk version. */
         a.setSdkVersion("a");
         checkNotEquals(a, b);
