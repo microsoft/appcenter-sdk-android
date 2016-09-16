@@ -87,7 +87,8 @@ public class DeviceInfoHelper {
             SonomaLog.error(Sonoma.LOG_TAG, "Cannot retrieve screen size", e);
         }
 
-        /* SDK version. Don't add the BuildConfig import or it will trigger a Javadoc warning... */
+        /* Set SDK name and version. Don't add the BuildConfig import or it will trigger a Javadoc warning... */
+        device.setSdkName(com.microsoft.sonoma.core.BuildConfig.SDK_NAME);
         device.setSdkVersion(com.microsoft.sonoma.core.BuildConfig.VERSION_NAME);
 
         /* Timezone offset in minutes (including DST). */
