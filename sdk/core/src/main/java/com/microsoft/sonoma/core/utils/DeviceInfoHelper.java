@@ -34,9 +34,6 @@ public class DeviceInfoHelper {
     private static WrapperSdk sWrapperSdk;
 
     /**
-     * Se
-     * <p/>
-     * /**
      * Gets device information.
      *
      * @param context The context of the application.
