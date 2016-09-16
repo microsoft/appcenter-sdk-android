@@ -32,6 +32,7 @@ public class AnalyticsSerializerTest {
     public void someBatch() throws JSONException {
         LogContainer expectedContainer = new LogContainer();
         Device device = new Device();
+        device.setSdkName("sonoma.android");
         device.setSdkVersion("1.2.3");
         device.setModel("S5");
         device.setOemName("HTC");

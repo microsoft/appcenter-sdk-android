@@ -31,9 +31,11 @@ subprojects {
 
         buildTypes {
             release {
+                buildConfigField 'String', "SDK_NAME", "\"${ext.sdkName}\""
                 minifyEnabled false
             }
             debug {
+                buildConfigField 'String', "SDK_NAME", "\"${ext.sdkName}\""
                 testCoverageEnabled true
             }
         }

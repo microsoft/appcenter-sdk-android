@@ -11,6 +11,8 @@ import org.json.JSONStringer;
  */
 public class Device extends WrapperSdk {
 
+    private static final String SDK_NAME = "sdk_name";
+
     private static final String SDK_VERSION = "sdk_version";
 
     private static final String MODEL = "model";
@@ -40,6 +42,11 @@ public class Device extends WrapperSdk {
     private static final String APP_BUILD = "app_build";
 
     private static final String APP_NAMESPACE = "app_namespace";
+
+    /**
+     * Name of the SDK.
+     */
+    private String sdkName;
 
     /**
      * Version of the SDK.
@@ -117,6 +124,24 @@ public class Device extends WrapperSdk {
      * what the individual platforms use,  .e.g com.microsoft.example.
      */
     private String appNamespace;
+
+    /**
+     * Get the sdkName value.
+     *
+     * @return the sdkName value
+     */
+    public String getSdkName() {
+        return sdkName;
+    }
+
+    /**
+     * Set the sdkName value.
+     *
+     * @param sdkName the sdkName value to set
+     */
+    public void setSdkName(String sdkName) {
+        this.sdkName = sdkName;
+    }
 
     /**
      * Get the sdkVersion value.
@@ -392,6 +417,7 @@ public class Device extends WrapperSdk {
     @Override
     public void read(JSONObject object) throws JSONException {
         super.read(object);
+        setSdkName(object.getString(SDK_NAME));
         setSdkVersion(object.getString(SDK_VERSION));
         setModel(object.getString(MODEL));
         setOemName(object.getString(OEM_NAME));
@@ -412,6 +438,7 @@ public class Device extends WrapperSdk {
     @Override
     public void write(JSONStringer writer) throws JSONException {
         super.write(writer);
+        writer.key(SDK_NAME).value(getSdkName());
         writer.key(SDK_VERSION).value(getSdkVersion());
         writer.key(MODEL).value(getModel());
         writer.key(OEM_NAME).value(getOemName());
@@ -438,6 +465,8 @@ public class Device extends WrapperSdk {
 
         Device device = (Device) o;
 
+        if (sdkName != null ? !sdkName.equals(device.sdkName) : device.sdkName!= null)
+            return false;
         if (sdkVersion != null ? !sdkVersion.equals(device.sdkVersion) : device.sdkVersion != null)
             return false;
         if (model != null ? !model.equals(device.model) : device.model != null) return false;
@@ -469,6 +498,7 @@ public class Device extends WrapperSdk {
     @Override
     public int hashCode() {
         int result = super.hashCode();
+        result = 31 * result + (sdkName != null ? sdkName.hashCode() : 0);
         result = 31 * result + (sdkVersion != null ? sdkVersion.hashCode() : 0);
         result = 31 * result + (model != null ? model.hashCode() : 0);
         result = 31 * result + (oemName != null ? oemName.hashCode() : 0);
