@@ -253,26 +253,30 @@ You create your own Crashes listener and assign it like this:
 
 ## 7. Troubleshooting
 
-* How long to wait for Analytics data to appear on the portal?
+* **How long to wait for Analytics data to appear on the portal?**
 
-* How long to wait for crashes to appear on the portal?   
-  After restarting the app after the crash and with a working internet connection, the crash should appear on the portal within a few minutes.
+* **How long do I have to wait for crashes to appear on the portal?**
+    Make sure your device has a working internet connection and restart the crashed app. The crash reports should appear on the portal within a few minutes.
 
-* Do I need to include all the libraries? Is there anything included by default?  
-  No, you can just include Sonoma modules that interests you. Once you integrate any module, Sonoma Core module will be included by default which contains logic for persistence, forwarding etc.
+* **Do I need to include all the modules? Is there anything included by default?**
+    You only include the modules for the features you want to use. They all have a dependency on the Sonoma Core module, so this will be included once you pull down the dependencies.
 
-* Can't see crashes on the portal?   
-    * Make sure SDK `start()` API is used correctly and Crashes module is initialized. Also, you need to restart the app after a crash and our SDK will forward the crash log only after it's restarted.
-    * Make sure your device is connected to a working internet.
-    * Check if the App Secret used to start the SDK matches the App Secret in Sonoma portal.
-    * Don't use any other SDK that provides Crash Reporting functionality.
+* **Debugging steps, when you can't see crash reports on the portal:**
+    1. Make sure the SDK `start()` API is used correctly and the Crashes module is initialized. Also, you need to restart the app after a crash – our SDK will forward the crash log only after it's restarted.
+    2. Make sure your device is connected to the internet.
+    3. Check if the App Secret used to start the SDK matches the App Secret in the Sonoma portal.
+    4. Disable any other SDK that provides Crash Reporting functionality, as those might interfere with the Sonoma SDK.
+    5. Gather additional information through [debug logs](#6-advanced-apis) and have them ready when you contact our SDK support.
 
-* What data does SDK automatically collect for Analytics?
+* **What data does SDK automatically collect for Analytics?**
 
-* What permissions are required for the SDK?  
-  Core module in Sonoma Android SDK adds "Internet" and "Access Network State" permissions in an app.
+* **What Android permissions are required for the SDK?**
+    Depending on the features you use, the following permissions are required:
+    - Analytics, Crashes: `INTERNET`, `ACCESS_NETWORK_STATE`
 
-* Any privacy information tracked by SDK?
+    Required permissions will automatically be merged into your app's manifest by the SDK. Where possible, the SDK will use [Run Time permissions](https://developer.android.com/training/permissions/requesting.html).
+
+* **Any privacy information tracked by SDK?**
 
 ## 8. List of available libraries
 
