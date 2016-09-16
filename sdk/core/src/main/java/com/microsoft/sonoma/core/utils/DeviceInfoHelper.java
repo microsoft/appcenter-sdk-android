@@ -98,6 +98,9 @@ public class DeviceInfoHelper {
         if (sWrapperSdk != null) {
             device.setWrapperSdkVersion(sWrapperSdk.getWrapperSdkVersion());
             device.setWrapperSdkName(sWrapperSdk.getWrapperSdkName());
+            device.setLiveUpdateReleaseLabel(sWrapperSdk.getLiveUpdateReleaseLabel());
+            device.setLiveUpdateDeploymentKey(sWrapperSdk.getLiveUpdateDeploymentKey());
+            device.setLiveUpdatePackageHash(sWrapperSdk.getLiveUpdatePackageHash());
         }
 
         /* Return device properties. */
