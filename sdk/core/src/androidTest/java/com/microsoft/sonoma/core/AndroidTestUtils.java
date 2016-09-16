@@ -54,6 +54,11 @@ public final class AndroidTestUtils {
         device.setAppVersion(String.format(Locale.ENGLISH, "%d.%d.%d", (RANDOM.nextInt(5) + 1), RANDOM.nextInt(10), RANDOM.nextInt(100)));
         device.setAppBuild(Integer.toString(RANDOM.nextInt(1000) + 1));
         device.setAppNamespace("com.microsoft.unittest");
+        device.setWrapperSdkVersion("1.2.3.4");
+        device.setWrapperSdkName("ReactNative");
+        device.setLiveUpdateReleaseLabel("2.0.3-beta2");
+        device.setLiveUpdateDeploymentKey("staging");
+        device.setLiveUpdatePackageHash("aa896f791b26a7f464c0f62b0ba69f2b");
         return device;
     }
 }
