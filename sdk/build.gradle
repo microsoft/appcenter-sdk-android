@@ -22,6 +22,8 @@ subprojects {
 
     def ext = rootProject.ext
 
+    ext.sdkName = 'sonoma.android'
+
     android {
         buildToolsVersion ext.buildToolsVersion
 
