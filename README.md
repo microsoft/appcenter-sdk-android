@@ -184,7 +184,7 @@ You create your own Crashes listener and assign it like this:
         ```
 
     * **User Confirmation:** If user privacy is important to you as a developer, you might want to get user confirmation before sending a crash report to Sonoma. The SDK exposes a callback where you can tell it to await user confirmation before sending any crash reports.
-    Your app is then responsible for obtaining confirmation, e.g. through a dialog prompt with one of these options - "Always Send", "Send", and "Don't send". Based on the user input, you will tell the SDK and the crash will then respecetively be forwarded to Sonoma or not.
+    Your app is then responsible for obtaining confirmation, e.g. through a dialog prompt with one of these options - "Always Send", "Send", and "Don't send". Based on the user input, you will tell the SDK and the crash will then respectively be forwarded to Sonoma or not.
 
         ```Java
         boolean CrashesListener.shouldAwaitUserConfirmation() {
@@ -262,7 +262,7 @@ You create your own Crashes listener and assign it like this:
   No, you can just include Sonoma modules that interests you. Once you integrate any module, Sonoma Core module will be included by default which contains logic for persistence, forwarding etc.
 
 * Can't see crashes on the portal?   
-    * Make sure SDK `start()` API is used correctly and Crashes module is initialzied. Also, you need to restart the app after a crash and our SDK will forward the crash log only after it's restarted.
+    * Make sure SDK `start()` API is used correctly and Crashes module is initialized. Also, you need to restart the app after a crash and our SDK will forward the crash log only after it's restarted.
     * Make sure your device is connected to a working internet.
     * Check if the App Secret used to start the SDK matches the App Secret in Sonoma portal.
     * Don't use any other SDK that provides Crash Reporting functionality.
