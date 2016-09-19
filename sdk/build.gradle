@@ -95,13 +95,14 @@ subprojects {
         }
     }
 
-    task javadoc(type: Javadoc, dependsOn: project.assembleRelease) {
+    task javadoc(type: Javadoc) {
         afterEvaluate {
             source = android.sourceSets.main.java.srcDirs
             classpath += configurations.javadocDeps
             classpath += fileTree(dir: "$buildDir/intermediates/exploded-aar/", include: "**/classes.jar")
             //noinspection GroovyAssignabilityCheck
             classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+            javadoc.dependsOn project.assembleRelease
         }
     }
 
@@ -194,7 +195,14 @@ task javadoc(type: Javadoc, dependsOn: subprojects.javadoc) {
     // Do nothing for :sdk but run the task for its children.
 }
 
-task bintrayUpload(dependsOn: [subprojects.bintrayUpload, subprojects.assembleRelease]) {
+// Since Android Studio 2.2.0 we can't use sub project assembleRelease task dependency before the sub project evaluation
+configure(subprojects.findAll { it.subprojects.isEmpty() }) {
+    afterEvaluate {
+        bintrayUpload.dependsOn assembleRelease
+    }
+}
+
+task bintrayUpload(dependsOn: [subprojects.bintrayUpload]) {
     // Do nothing for :sdk but run the task for its children.
 }
 
