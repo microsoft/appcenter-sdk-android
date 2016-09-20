@@ -1,5 +1,6 @@
 package com.microsoft.sonoma.core.utils;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -41,6 +42,7 @@ public final class StorageHelper {
     /**
      * Application context instance.
      */
+    @SuppressLint("StaticFieldLeak")
     private static Context sContext;
 
     /**
@@ -103,7 +105,7 @@ public final class StorageHelper {
          * @param key The key for which the value is to be retrieved.
          * @return The value of {@code key} or 0f if key is not set.
          */
-        @SuppressWarnings("unused")
+        @SuppressWarnings({"WeakerAccess", "unused"})
         public static float getFloat(@NonNull String key) {
             return getFloat(key, 0f);
         }
@@ -115,7 +117,7 @@ public final class StorageHelper {
          * @param defValue The default value to return if no value is set for {@code key}.
          * @return The value of {@code key} or the default value if key is not set.
          */
-        @SuppressWarnings("SameParameterValue")
+        @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
         public static float getFloat(@NonNull String key, float defValue) {
             return sSharedPreferences.getFloat(key, defValue);
         }
@@ -126,7 +128,7 @@ public final class StorageHelper {
          * @param key   The key to store the value for.
          * @param value The value to store for the key.
          */
-        @SuppressWarnings("unused")
+        @SuppressWarnings({"WeakerAccess", "unused"})
         public static void putFloat(@NonNull String key, float value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putFloat(key, value);
@@ -139,7 +141,7 @@ public final class StorageHelper {
          * @param key The key for which the value is to be retrieved.
          * @return The value of {@code key} or 0 if key is not set.
          */
-        @SuppressWarnings("unused")
+        @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
         public static int getInt(@NonNull String key) {
             return getInt(key, 0);
         }
@@ -151,7 +153,7 @@ public final class StorageHelper {
          * @param defValue The default value to return if no value is set for {@code key}.
          * @return The value of {@code key} or the default value if key is not set.
          */
-        @SuppressWarnings("SameParameterValue")
+        @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
         public static int getInt(@NonNull String key, int defValue) {
             return sSharedPreferences.getInt(key, defValue);
         }
@@ -162,7 +164,7 @@ public final class StorageHelper {
          * @param key   The key to store the value for.
          * @param value The value to store for the key.
          */
-        @SuppressWarnings("unused")
+        @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
         public static void putInt(@NonNull String key, int value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putInt(key, value);
@@ -175,7 +177,7 @@ public final class StorageHelper {
          * @param key The key for which the value is to be retrieved.
          * @return The value of {@code key} or 0L if key is not set.
          */
-        @SuppressWarnings("unused")
+        @SuppressWarnings({"WeakerAccess", "unused"})
         public static long getLong(@NonNull String key) {
             return getLong(key, 0L);
         }
@@ -187,7 +189,7 @@ public final class StorageHelper {
          * @param defValue The default value to return if no value is set for {@code key}.
          * @return The value of {@code key} or the default value if key is not set.
          */
-        @SuppressWarnings("SameParameterValue")
+        @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
         public static long getLong(@NonNull String key, long defValue) {
             return sSharedPreferences.getLong(key, defValue);
         }
@@ -198,7 +200,7 @@ public final class StorageHelper {
          * @param key   The key to store the value for.
          * @param value The value to store for the key.
          */
-        @SuppressWarnings("unused")
+        @SuppressWarnings({"WeakerAccess", "unused"})
         public static void putLong(@NonNull String key, long value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putLong(key, value);
@@ -233,7 +235,7 @@ public final class StorageHelper {
          * @param key   The key to store the value for.
          * @param value The value to store for the key.
          */
-        @SuppressWarnings("SameParameterValue")
+        @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
         public static void putString(@NonNull String key, String value) {
             SharedPreferences.Editor editor = sSharedPreferences.edit();
             editor.putString(key, value);
@@ -258,7 +260,7 @@ public final class StorageHelper {
          * @param defValue The default value to return if no value is set for {@code key}.
          * @return The value of {@code key} or the default value if key is not set.
          */
-        @SuppressWarnings("SameParameterValue")
+        @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
         public static Set<String> getStringSet(@NonNull String key, Set<String> defValue) {
             return sSharedPreferences.getStringSet(key, defValue);
         }
@@ -332,6 +334,7 @@ public final class StorageHelper {
                         contents.append(line).append(lineSeparator);
                     }
                 } finally {
+                    //noinspection ThrowFromFinallyBlock
                     reader.close();
                 }
                 return contents.toString();
@@ -368,6 +371,7 @@ public final class StorageHelper {
             try {
                 writer.write(contents);
             } finally {
+                //noinspection ThrowFromFinallyBlock
                 writer.close();
             }
         }
@@ -389,6 +393,7 @@ public final class StorageHelper {
             try {
                 return (T) inputStream.readObject();
             } finally {
+                //noinspection ThrowFromFinallyBlock
                 inputStream.close();
             }
         }
@@ -407,6 +412,7 @@ public final class StorageHelper {
             try {
                 outputStream.writeObject(object);
             } finally {
+                //noinspection ThrowFromFinallyBlock
                 outputStream.close();
             }
         }
@@ -418,6 +424,7 @@ public final class StorageHelper {
          * @param filter The filter to match file names against, may be {@code null}.
          * @return An array of filename that doesn't include paths.
          */
+        @SuppressWarnings("WeakerAccess")
         @NonNull
         public static String[] getFilenames(@NonNull String path, @Nullable FilenameFilter filter) {
             File dir = new File(path);
@@ -435,6 +442,7 @@ public final class StorageHelper {
          * @param filter The filter to match file names against, may be {@code null}.
          * @return The last modified file in the directory matching the specified filter, if any matches. {@code null} otherwise.
          */
+        @SuppressWarnings("WeakerAccess")
         @Nullable
         public static File lastModifiedFile(@NonNull String path, @Nullable FilenameFilter filter) {
             return lastModifiedFile(new File(path), filter);
@@ -531,6 +539,7 @@ public final class StorageHelper {
          * @param listener The error listener.
          * @return database storage.
          */
+        @SuppressWarnings("WeakerAccess")
         public static DatabaseStorage getDatabaseStorage(@NonNull String database,
                                                          @NonNull String table,
                                                          @IntRange(from = 1) int version,
@@ -640,6 +649,7 @@ public final class StorageHelper {
          *
          * @return A scanner to iterate all values.
          */
+        @SuppressWarnings("WeakerAccess")
         public DatabaseScanner getScanner() {
             return getScanner(null, null);
         }

@@ -1,5 +1,6 @@
 package com.microsoft.sonoma.core.persistence;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
@@ -46,6 +47,7 @@ public class DatabasePersistenceAndroidTest {
     /**
      * Context instance.
      */
+    @SuppressLint("StaticFieldLeak")
     private static Context sContext;
 
     @BeforeClass
@@ -102,6 +104,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(1, persistence.countLogs("test-p1"));
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -137,6 +140,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(2, persistence.countLogs("test-p1"));
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -158,6 +162,7 @@ public class DatabasePersistenceAndroidTest {
             persistence.putLog("test-p1", log);
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -245,6 +250,7 @@ public class DatabasePersistenceAndroidTest {
 
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -307,6 +313,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(0, persistence.countLogs("test-p3"));
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -354,6 +361,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(0, persistence.countLogs("test"));
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -413,6 +421,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(2, persistence.mDatabaseStorage.size());
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }

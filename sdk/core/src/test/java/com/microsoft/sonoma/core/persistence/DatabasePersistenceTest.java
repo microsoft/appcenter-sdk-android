@@ -42,6 +42,7 @@ public class DatabasePersistenceTest {
             mockPersistence.putLog("test-p1", log);
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             mockPersistence.close();
         }
 
