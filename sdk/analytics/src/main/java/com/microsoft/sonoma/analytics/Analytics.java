@@ -91,18 +91,18 @@ public class Analytics extends AbstractSonomaFeature {
     }
 
     /**
-     * Check whether this feature is enabled.
+     * Check whether Analytics module is enabled or not.
      *
-     * @return true if enabled, false otherwise.
+     * @return <code>true</code> if enabled, <code>false</code> otherwise.
      */
     public static boolean isEnabled() {
         return getInstance().isInstanceEnabled();
     }
 
     /**
-     * Enable or disable this feature.
+     * Enable or disable Analytics module.
      *
-     * @param enabled true to enable, false to disable.
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
     public static void setEnabled(boolean enabled) {
         getInstance().setInstanceEnabled(enabled);
@@ -130,9 +130,9 @@ public class Analytics extends AbstractSonomaFeature {
     }
 
     /**
-     * Track a page.
+     * Track a custom page with name.
      *
-     * @param name       page name.
+     * @param name A page name.
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public static void trackPage(@NonNull String name) {
@@ -140,19 +140,19 @@ public class Analytics extends AbstractSonomaFeature {
     }
 
     /**
-     * Track a page.
+     * Track a custom page with name and optional properties.
      *
-     * @param name       page name.
-     * @param properties optional properties.
+     * @param name       A page name.
+     * @param properties Optional properties.
      */
     public static void trackPage(@NonNull String name, @Nullable Map<String, String> properties) {
         getInstance().queuePage(name, properties);
     }
 
     /**
-     * Track an event.
+     * Track a custom event with name.
      *
-     * @param name       event name.
+     * @param name An event name.
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public static void trackEvent(@NonNull String name) {
@@ -160,10 +160,10 @@ public class Analytics extends AbstractSonomaFeature {
     }
 
     /**
-     * Track an event.
+     * Track a custom event with name and optional properties.
      *
-     * @param name       event name.
-     * @param properties optional properties.
+     * @param name       An event name.
+     * @param properties Optional properties.
      */
     public static void trackEvent(@NonNull String name, @Nullable Map<String, String> properties) {
         getInstance().queueEvent(name, properties);

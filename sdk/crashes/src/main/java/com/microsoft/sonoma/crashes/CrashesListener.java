@@ -51,9 +51,9 @@ public interface CrashesListener {
     void onSendingFailed(ErrorReport report, Exception e);
 
     /**
-     * Called when a crash report was sent successfully.
+     * Called when a crash report is sent successfully.
      *
-     * @param report The crash report that was sent.
+     * @param report The crash report that was sent successfully.
      */
     void onSendingSucceeded(ErrorReport report);
 }
