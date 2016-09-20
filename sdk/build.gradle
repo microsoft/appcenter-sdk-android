@@ -72,6 +72,20 @@ subprojects {
         androidTestCompile project(':test')
     }
 
+    // Android Studio 2.2.0 broke a lot of scripting, could not find another way of doing this rename trick
+    def createDebugCoverageReportExecutionDataFile = file("${buildDir}/outputs/code-coverage/connected/coverage.ec")
+
+    task renameCreateDebugCoverageReportExecutionDataFile {
+        doLast {
+            def file = file(createDebugCoverageReportExecutionDataFile.getParentFile()).listFiles().first()
+            file.renameTo(createDebugCoverageReportExecutionDataFile)
+        }
+    }
+
+    afterEvaluate {
+        createDebugCoverageReport.finalizedBy renameCreateDebugCoverageReportExecutionDataFile
+    }
+
     task coverageReport(type: JacocoReport, dependsOn: ['createDebugCoverageReport', 'testDebugUnitTest']) {
         reports {
             xml.enabled = false
@@ -85,7 +99,7 @@ subprojects {
         sourceDirectories = files([mainSrc])
         classDirectories = files([debugTree])
         executionData = files(["${buildDir}/jacoco/testDebugUnitTest.exec",
-                               "${buildDir}/outputs/code-coverage/connected/coverage.ec"])
+                               createDebugCoverageReportExecutionDataFile])
     }
 
     task sourcesJar(type: Jar) {
