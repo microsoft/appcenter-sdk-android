@@ -82,11 +82,7 @@ subprojects {
         }
     }
 
-    afterEvaluate {
-        createDebugCoverageReport.finalizedBy renameCreateDebugCoverageReportExecutionDataFile
-    }
-
-    task coverageReport(type: JacocoReport, dependsOn: ['createDebugCoverageReport', 'testDebugUnitTest']) {
+    task coverageReport(type: JacocoReport, dependsOn: ['createDebugCoverageReport', 'renameCreateDebugCoverageReportExecutionDataFile', 'testDebugUnitTest']) {
         reports {
             xml.enabled = false
             html.enabled = true
