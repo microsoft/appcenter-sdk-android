@@ -12,6 +12,7 @@ import com.microsoft.sonoma.core.utils.IdHelper;
 import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -101,6 +102,11 @@ public class SonomaTest {
         StorageHelper.DatabaseStorage.DatabaseScanner databaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
         when(databaseStorage.getScanner(anyString(), anyObject())).thenReturn(databaseScanner);
         when(databaseScanner.iterator()).thenReturn(mDataBaseScannerIterator);
+    }
+
+    @After
+    public void tearDown() {
+        Constants.APPLICATION_DEBUGGABLE = false;
     }
 
     @Test
@@ -378,10 +384,38 @@ public class SonomaTest {
         DeviceInfoHelper.setWrapperSdk(wrapperSdk);
     }
 
+
+    @Test
+    public void setDefaultLogLevelRelease() {
+        Sonoma.start(application, DUMMY_APP_SECRET, DummyFeature.class);
+        verifyStatic(never());
+        SonomaLog.setLogLevel(anyInt());
+    }
+
+    @Test
+    public void setDefaultLogLevelDebug() {
+        Constants.APPLICATION_DEBUGGABLE = true;
+        Sonoma.start(application, DUMMY_APP_SECRET, DummyFeature.class);
+        verifyStatic();
+        SonomaLog.setLogLevel(android.util.Log.WARN);
+    }
+
+    @Test
+    public void dontSetDefaultLogLevel() {
+        Constants.APPLICATION_DEBUGGABLE = true;
+        Sonoma.setLogLevel(android.util.Log.VERBOSE);
+        verifyStatic();
+        SonomaLog.setLogLevel(android.util.Log.VERBOSE);
+        Sonoma.start(application, DUMMY_APP_SECRET, DummyFeature.class);
+        verifyStatic(never());
+        SonomaLog.setLogLevel(android.util.Log.WARN);
+    }
+
     private static class DummyFeature extends AbstractSonomaFeature {
 
         private static DummyFeature sharedInstance;
 
+        @SuppressWarnings("WeakerAccess")
         public static DummyFeature getInstance() {
             if (sharedInstance == null) {
                 sharedInstance = spy(new DummyFeature());
@@ -399,6 +433,7 @@ public class SonomaTest {
 
         private static AnotherDummyFeature sharedInstance;
 
+        @SuppressWarnings("WeakerAccess")
         public static AnotherDummyFeature getInstance() {
             if (sharedInstance == null) {
                 sharedInstance = spy(new AnotherDummyFeature());
