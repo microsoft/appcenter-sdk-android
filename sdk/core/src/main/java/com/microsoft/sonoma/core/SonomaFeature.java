@@ -17,16 +17,16 @@ import java.util.Map;
 public interface SonomaFeature extends Application.ActivityLifecycleCallbacks {
 
     /**
-     * Check whether this feature is enabled.
+     * Check whether this feature is enabled or not.
      *
-     * @return true if enabled, false otherwise.
+     * @return <code>true</code> if enabled, <code>false</code> otherwise.
      */
     boolean isInstanceEnabled();
 
     /**
      * Enable or disable this feature.
      *
-     * @param enabled true to enable, false to disable.
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
     void setInstanceEnabled(boolean enabled);
 
