@@ -4,6 +4,7 @@ android {
     //noinspection GroovyAssignabilityCheck
     buildToolsVersion rootProject.ext.buildToolsVersion
 
+    //noinspection GroovyMissingReturnStatement
     lintOptions {
         disable 'InvalidPackage'
     }

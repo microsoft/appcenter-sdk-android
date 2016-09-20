@@ -37,8 +37,7 @@ public class SonomaLog {
      *
      * @param logLevel The log level for SDK logging.
      */
-    @IntRange(from = VERBOSE, to = ASSERT)
-    public static void setLogLevel(int logLevel) {
+    public static void setLogLevel(@IntRange(from = VERBOSE, to = ASSERT) int logLevel) {
         sLogLevel = logLevel;
     }
 

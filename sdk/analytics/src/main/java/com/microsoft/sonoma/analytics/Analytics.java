@@ -77,6 +77,7 @@ public class Analytics extends AbstractSonomaFeature {
      *
      * @return shared instance.
      */
+    @SuppressWarnings("WeakerAccess")
     public static synchronized Analytics getInstance() {
         if (sInstance == null) {
             sInstance = new Analytics();
@@ -133,6 +134,7 @@ public class Analytics extends AbstractSonomaFeature {
      *
      * @param name       page name.
      */
+    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public static void trackPage(@NonNull String name) {
         trackPage(name, null);
     }
@@ -152,6 +154,7 @@ public class Analytics extends AbstractSonomaFeature {
      *
      * @param name       event name.
      */
+    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public static void trackEvent(@NonNull String name) {
         trackEvent(name, null);
     }

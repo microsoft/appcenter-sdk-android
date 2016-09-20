@@ -72,6 +72,20 @@ subprojects {
         androidTestCompile project(':test')
     }
 
+    // Android Studio 2.2.0 broke a lot of scripting, could not find another way of doing this rename trick
+    def createDebugCoverageReportExecutionDataFile = file("${buildDir}/outputs/code-coverage/connected/coverage.ec")
+
+    task renameCreateDebugCoverageReportExecutionDataFile {
+        doLast {
+            def file = file(createDebugCoverageReportExecutionDataFile.getParentFile()).listFiles().first()
+            file.renameTo(createDebugCoverageReportExecutionDataFile)
+        }
+    }
+
+    afterEvaluate {
+        createDebugCoverageReport.finalizedBy renameCreateDebugCoverageReportExecutionDataFile
+    }
+
     task coverageReport(type: JacocoReport, dependsOn: ['createDebugCoverageReport', 'testDebugUnitTest']) {
         reports {
             xml.enabled = false
@@ -85,7 +99,7 @@ subprojects {
         sourceDirectories = files([mainSrc])
         classDirectories = files([debugTree])
         executionData = files(["${buildDir}/jacoco/testDebugUnitTest.exec",
-                               "${buildDir}/outputs/code-coverage/connected/coverage.ec"])
+                               createDebugCoverageReportExecutionDataFile])
     }
 
     task sourcesJar(type: Jar) {
@@ -95,13 +109,14 @@ subprojects {
         }
     }
 
-    task javadoc(type: Javadoc, dependsOn: project.assembleRelease) {
+    task javadoc(type: Javadoc) {
         afterEvaluate {
             source = android.sourceSets.main.java.srcDirs
             classpath += configurations.javadocDeps
             classpath += fileTree(dir: "$buildDir/intermediates/exploded-aar/", include: "**/classes.jar")
             //noinspection GroovyAssignabilityCheck
             classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+            javadoc.dependsOn project.assembleRelease
         }
     }
 
@@ -194,7 +209,14 @@ task javadoc(type: Javadoc, dependsOn: subprojects.javadoc) {
     // Do nothing for :sdk but run the task for its children.
 }
 
-task bintrayUpload(dependsOn: [subprojects.bintrayUpload, subprojects.assembleRelease]) {
+// Since Android Studio 2.2.0 we can't use sub project assembleRelease task dependency before the sub project evaluation
+configure(subprojects.findAll { it.subprojects.isEmpty() }) {
+    afterEvaluate {
+        bintrayUpload.dependsOn assembleRelease
+    }
+}
+
+task bintrayUpload(dependsOn: [subprojects.bintrayUpload]) {
     // Do nothing for :sdk but run the task for its children.
 }
 

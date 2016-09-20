@@ -1,5 +1,6 @@
 package com.microsoft.sonoma.core.persistence;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -23,6 +24,7 @@ public class PersistenceAndroidTest {
     /**
      * Context instance.
      */
+    @SuppressLint("StaticFieldLeak")
     private static Context sContext;
 
     @BeforeClass
@@ -52,6 +54,7 @@ public class PersistenceAndroidTest {
             persistence.putLog("exception", new MockLog());
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
