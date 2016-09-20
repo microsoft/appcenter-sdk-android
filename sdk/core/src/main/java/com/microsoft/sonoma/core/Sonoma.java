@@ -1,5 +1,6 @@
 package com.microsoft.sonoma.core;
 
+import android.annotation.SuppressLint;
 import android.app.Application;
 import android.support.annotation.IntRange;
 import android.support.annotation.VisibleForTesting;
@@ -37,6 +38,7 @@ public final class Sonoma {
     /**
      * Shared instance.
      */
+    @SuppressLint("StaticFieldLeak")
     private static Sonoma sInstance;
 
     /**
@@ -76,6 +78,7 @@ public final class Sonoma {
      *
      * @param wrapperSdk wrapper SDK information.
      */
+    @SuppressWarnings("WeakerAccess")
     public static void setWrapperSdk(WrapperSdk wrapperSdk) {
         DeviceInfoHelper.setWrapperSdk(wrapperSdk);
     }

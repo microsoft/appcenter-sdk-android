@@ -1,5 +1,6 @@
 package com.microsoft.sonoma.crashes;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
@@ -78,6 +79,7 @@ public class Crashes extends AbstractSonomaFeature {
     /**
      * Singleton.
      */
+    @SuppressLint("StaticFieldLeak")
     private static Crashes sInstance = null;
 
     /**
@@ -190,6 +192,7 @@ public class Crashes extends AbstractSonomaFeature {
      *
      * @return {@code true} if a crash was recorded in the last session, otherwise {@code false}.
      */
+    @SuppressWarnings("WeakerAccess")
     public static boolean hasCrashedInLastSession() {
         return getLastSessionCrashReport() != null;
     }
@@ -199,6 +202,7 @@ public class Crashes extends AbstractSonomaFeature {
      *
      * @return The crash report from the last session if one was set.
      */
+    @SuppressWarnings("WeakerAccess")
     @Nullable
     public static ErrorReport getLastSessionCrashReport() {
         return getInstance().getInstanceLastSessionCrashReport();

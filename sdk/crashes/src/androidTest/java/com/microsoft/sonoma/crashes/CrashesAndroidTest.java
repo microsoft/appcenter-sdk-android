@@ -1,5 +1,6 @@
 package com.microsoft.sonoma.crashes;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
@@ -38,6 +39,7 @@ import static org.mockito.Mockito.when;
 @SuppressWarnings("unused")
 public class CrashesAndroidTest {
 
+    @SuppressLint("StaticFieldLeak")
     private static Context sContext;
 
     private static Thread.UncaughtExceptionHandler sDefaultCrashHandler;

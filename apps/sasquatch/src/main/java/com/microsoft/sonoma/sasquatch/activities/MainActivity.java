@@ -13,7 +13,6 @@ import android.widget.Toast;
 
 import com.microsoft.sonoma.analytics.Analytics;
 import com.microsoft.sonoma.core.Sonoma;
-import com.microsoft.sonoma.core.utils.UUIDUtils;
 import com.microsoft.sonoma.crashes.AbstractCrashesListener;
 import com.microsoft.sonoma.crashes.Crashes;
 import com.microsoft.sonoma.crashes.ErrorAttachments;
@@ -77,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Sonoma.start(getApplication(), UUIDUtils.randomUUID().toString(), Analytics.class, Crashes.class);
+        Sonoma.start(getApplication(), "6ad16901-9d7d-4135-a3d5-085813b01a4b", Analytics.class, Crashes.class);
 
         TestFeatures.initialize(this);
         ListView listView = (ListView) findViewById(R.id.list);

@@ -1,11 +1,13 @@
 package com.microsoft.sonoma.core.utils;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.sonoma.core.Sonoma;
 
@@ -24,6 +26,7 @@ public class NetworkStateHelper implements Closeable {
     /**
      * Shared instance.
      */
+    @SuppressLint("StaticFieldLeak")
     private static NetworkStateHelper sSharedInstance;
 
     /**
@@ -56,7 +59,8 @@ public class NetworkStateHelper implements Closeable {
      *
      * @param context any Android context.
      */
-    protected NetworkStateHelper(Context context) {
+    @VisibleForTesting
+    NetworkStateHelper(Context context) {
         mContext = context.getApplicationContext();
         mConnectivityManager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
         mConnectivityReceiver = new ConnectivityReceiver();
