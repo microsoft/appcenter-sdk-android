@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Application;
 import android.support.annotation.IntRange;
 import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 
 import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.channel.DefaultChannel;
@@ -42,6 +43,11 @@ public final class Sonoma {
     private static Sonoma sInstance;
 
     /**
+     * Remember if log level was configured using this class.
+     */
+    private static boolean slogLevelConfigured;
+
+    /**
      * Application context.
      */
     private Application mApplication;
@@ -71,6 +77,7 @@ public final class Sonoma {
     @VisibleForTesting
     static synchronized void unsetInstance() {
         sInstance = null;
+        slogLevelConfigured = false;
     }
 
     /**
@@ -179,7 +186,8 @@ public final class Sonoma {
      *
      * @param logLevel log level as defined by {@link android.util.Log}.
      */
-    public static void setLogLevel(@IntRange(from = VERBOSE, to = ASSERT) int logLevel) {
+    public synchronized static void setLogLevel(@IntRange(from = VERBOSE, to = ASSERT) int logLevel) {
+        slogLevelConfigured = true;
         SonomaLog.setLogLevel(logLevel);
     }
 
@@ -235,6 +243,16 @@ public final class Sonoma {
      */
     private boolean initialize(Application application, String appSecret) {
 
+        /* Load some global constants. */
+        Constants.loadFromContext(application);
+
+        /* Enable a default log level for debuggable applications. */
+        synchronized (Sonoma.class) {
+            if (!slogLevelConfigured && Constants.APPLICATION_DEBUGGABLE) {
+                SonomaLog.setLogLevel(Log.WARN);
+            }
+        }
+
         /* Parse and store parameters. */
         if (mApplication != null) {
             SonomaLog.warn(LOG_TAG, "Sonoma may only be init once");
@@ -258,7 +276,6 @@ public final class Sonoma {
         mApplication = application;
 
         /* If parameters are valid, init context related resources. */
-        Constants.loadFromContext(application);
         StorageHelper.initialize(application);
         mFeatures = new HashSet<>();
 
