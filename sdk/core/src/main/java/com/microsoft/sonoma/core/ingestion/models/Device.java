@@ -130,6 +130,7 @@ public class Device extends WrapperSdk {
      *
      * @return the sdkName value
      */
+    @SuppressWarnings("WeakerAccess")
     public String getSdkName() {
         return sdkName;
     }

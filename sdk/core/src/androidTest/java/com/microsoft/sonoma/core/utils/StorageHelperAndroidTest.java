@@ -1,5 +1,6 @@
 package com.microsoft.sonoma.core.utils;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -60,6 +61,7 @@ public class StorageHelperAndroidTest {
     /**
      * Context instance.
      */
+    @SuppressLint("StaticFieldLeak")
     private static Context sContext;
 
     /**
@@ -489,6 +491,7 @@ public class StorageHelperAndroidTest {
             runDatabaseStorageTest(databaseStorage, false);
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             databaseStorage.close();
         }
     }
@@ -518,6 +521,7 @@ public class StorageHelperAndroidTest {
             assertEquals(2, databaseStorage.getColumnNames().length);
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             databaseStorage.close();
         }
 
@@ -533,6 +537,7 @@ public class StorageHelperAndroidTest {
             assertEquals(11, databaseStorage.getColumnNames().length);
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             databaseStorage.close();
         }
     }
@@ -568,6 +573,7 @@ public class StorageHelperAndroidTest {
             assertEquals(capacity, databaseStorage.size());
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             databaseStorage.close();
         }
     }
@@ -589,6 +595,7 @@ public class StorageHelperAndroidTest {
             databaseStorage.getScanner().iterator().remove();
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             databaseStorage.close();
         }
     }
@@ -610,6 +617,7 @@ public class StorageHelperAndroidTest {
             databaseStorage.getScanner().iterator().next();
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             databaseStorage.close();
         }
     }
@@ -635,6 +643,7 @@ public class StorageHelperAndroidTest {
             runDatabaseStorageTest(databaseStorage, true);
         } finally {
             /* Close. */
+            //noinspection ThrowFromFinallyBlock
             databaseStorage.close();
         }
     }
