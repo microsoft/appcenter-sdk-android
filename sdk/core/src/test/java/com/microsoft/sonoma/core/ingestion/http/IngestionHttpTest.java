@@ -101,7 +101,7 @@ public class IngestionHttpTest {
         LogSerializer serializer = mock(LogSerializer.class);
         when(serializer.serializeContainer(any(LogContainer.class))).thenReturn("mockPayload");
         IngestionHttp httpClient = new IngestionHttp(serializer);
-        httpClient.setBaseUrl("http://mock");
+        httpClient.setServerUrl("http://mock");
 
         /* Test calling code. */
         UUID appSecret = UUIDUtils.randomUUID();

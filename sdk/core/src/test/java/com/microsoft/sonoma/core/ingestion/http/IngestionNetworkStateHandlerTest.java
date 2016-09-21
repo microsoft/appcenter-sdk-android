@@ -379,4 +379,13 @@ public class IngestionNetworkStateHandlerTest {
         decorator.close();
         verify(ingestion).close();
     }
+
+    @Test
+    public void setServerUrl() {
+        Ingestion ingestion = mock(Ingestion.class);
+        Ingestion retryer = new IngestionNetworkStateHandler(ingestion, mock(NetworkStateHelper.class));
+        String serverUrl = "http://someServerUrl";
+        retryer.setServerUrl(serverUrl);
+        verify(ingestion).setServerUrl(serverUrl);
+    }
 }

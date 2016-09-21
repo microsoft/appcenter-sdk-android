@@ -181,6 +181,11 @@ public class DefaultChannel implements Channel {
             suspend(true);
     }
 
+    @Override
+    public void setServerUrl(String serverUrl) {
+        mIngestion.setServerUrl(serverUrl);
+    }
+
     /**
      * Delete all persisted logs for the given group.
      *
