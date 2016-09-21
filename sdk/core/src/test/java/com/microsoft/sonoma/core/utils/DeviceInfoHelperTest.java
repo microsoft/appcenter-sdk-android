@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.os.Build;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
@@ -44,7 +45,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Build.class, SonomaLog.class})
+@PrepareForTest({Build.class, SonomaLog.class, TextUtils.class})
 public class DeviceInfoHelperTest {
 
     @Before
@@ -222,6 +223,30 @@ public class DeviceInfoHelperTest {
         assertNull(device.getCarrierName());
         verifyStatic();
         SonomaLog.error(eq(Sonoma.LOG_TAG), anyString(), any(Exception.class));
+    }
+
+    @Test
+    public void getDeviceInfoEmptyCarrierInfo() throws DeviceInfoHelper.DeviceInfoException, PackageManager.NameNotFoundException {
+
+        /* Mocking instances. */
+        Context contextMock = mock(Context.class);
+        PackageManager packageManagerMock = mock(PackageManager.class);
+
+        /* Delegates to mock instances. */
+        when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
+        //noinspection WrongConstant
+        when(packageManagerMock.getPackageInfo(anyString(), anyInt())).thenReturn(mock(PackageInfo.class));
+        TelephonyManager telephonyManager = mock(TelephonyManager.class);
+        when(telephonyManager.getNetworkCountryIso()).thenReturn("");
+        when(telephonyManager.getNetworkOperatorName()).thenReturn("");
+        when(contextMock.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(telephonyManager);
+        mockStatic(TextUtils.class);
+        when(TextUtils.isEmpty(anyString())).thenReturn(true);
+
+        /* Verify. */
+        Device device = DeviceInfoHelper.getDeviceInfo(contextMock);
+        assertNull(device.getCarrierCountry());
+        assertNull(device.getCarrierName());
     }
 
     @Test

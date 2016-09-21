@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.os.Build;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
@@ -61,8 +62,12 @@ public class DeviceInfoHelper {
         /* Carrier info. */
         try {
             TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            device.setCarrierCountry(telephonyManager.getNetworkCountryIso());
-            device.setCarrierName(telephonyManager.getNetworkOperatorName());
+            String networkCountryIso = telephonyManager.getNetworkCountryIso();
+            if (!TextUtils.isEmpty(networkCountryIso))
+                device.setCarrierCountry(networkCountryIso);
+            String networkOperatorName = telephonyManager.getNetworkOperatorName();
+            if (!TextUtils.isEmpty(networkOperatorName))
+                device.setCarrierName(networkOperatorName);
         } catch (Exception e) {
             SonomaLog.error(Sonoma.LOG_TAG, "Cannot retrieve carrier info", e);
         }
