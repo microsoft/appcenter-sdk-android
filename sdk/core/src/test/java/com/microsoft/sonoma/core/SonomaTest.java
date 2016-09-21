@@ -380,12 +380,29 @@ public class SonomaTest {
     }
 
     @Test
-    public void setWrapperSdkTest() {
+    public void setWrapperSdkTest() throws Exception {
+
+        /* Setup  mocking. */
+        DefaultChannel channel = mock(DefaultChannel.class);
+        whenNew(DefaultChannel.class).withAnyArguments().thenReturn(channel);
         mockStatic(DeviceInfoHelper.class);
+
+        /* Call method. */
         WrapperSdk wrapperSdk = new WrapperSdk();
         Sonoma.setWrapperSdk(wrapperSdk);
+
+        /* Check propagation. */
         verifyStatic();
         DeviceInfoHelper.setWrapperSdk(wrapperSdk);
+
+        /* Since the channel was not created when setting wrapper, no need to refresh channel after start. */
+        Sonoma.start(application, DUMMY_APP_SECRET, DummyFeature.class);
+        verify(channel, never()).invalidateDeviceCache();
+
+        /* Update wrapper SDK and check channel refreshed. */
+        wrapperSdk = new WrapperSdk();
+        Sonoma.setWrapperSdk(wrapperSdk);
+        verify(channel).invalidateDeviceCache();
     }
 
 

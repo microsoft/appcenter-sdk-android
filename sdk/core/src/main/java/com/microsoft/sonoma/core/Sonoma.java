@@ -91,7 +91,7 @@ public final class Sonoma {
      */
     @SuppressWarnings("WeakerAccess")
     public static void setWrapperSdk(WrapperSdk wrapperSdk) {
-        DeviceInfoHelper.setWrapperSdk(wrapperSdk);
+        getInstance().setInstanceWrapperSdk(wrapperSdk);
     }
 
     /**
@@ -208,6 +208,17 @@ public final class Sonoma {
      */
     public static UUID getInstallId() {
         return IdHelper.getInstallId();
+    }
+
+    /**
+     * {@link #setWrapperSdk(WrapperSdk)} implementation at instance level.
+     *
+     * @param wrapperSdk wrapper SDK information.
+     */
+    private synchronized void setInstanceWrapperSdk(WrapperSdk wrapperSdk) {
+        DeviceInfoHelper.setWrapperSdk(wrapperSdk);
+        if (mChannel != null)
+            mChannel.invalidateDeviceCache();
     }
 
     /**
