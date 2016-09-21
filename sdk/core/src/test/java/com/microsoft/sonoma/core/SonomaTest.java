@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.content.Context;
 
 import com.microsoft.sonoma.core.channel.Channel;
+import com.microsoft.sonoma.core.channel.DefaultChannel;
 import com.microsoft.sonoma.core.ingestion.models.WrapperSdk;
 import com.microsoft.sonoma.core.ingestion.models.json.LogFactory;
 import com.microsoft.sonoma.core.utils.DeviceInfoHelper;
@@ -14,14 +15,14 @@ import com.microsoft.sonoma.core.utils.StorageHelper;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -49,18 +50,21 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({Constants.class, SonomaLog.class, StorageHelper.class, StorageHelper.PreferencesStorage.class, IdHelper.class, StorageHelper.DatabaseStorage.class, DeviceInfoHelper.class})
+@PrepareForTest({Sonoma.class, Channel.class, Constants.class, SonomaLog.class, StorageHelper.class, StorageHelper.PreferencesStorage.class, IdHelper.class, StorageHelper.DatabaseStorage.class, DeviceInfoHelper.class})
 public class SonomaTest {
 
     private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
 
-    private Application application;
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
     private Iterator<ContentValues> mDataBaseScannerIterator;
+
+    private Application application;
 
     @Before
     public void setUp() {
@@ -409,6 +413,28 @@ public class SonomaTest {
         Sonoma.start(application, DUMMY_APP_SECRET, DummyFeature.class);
         verifyStatic(never());
         SonomaLog.setLogLevel(android.util.Log.WARN);
+    }
+
+    @Test
+    public void setServerUrl() throws Exception {
+
+        /* Change server URL before start. */
+        DefaultChannel channel = mock(DefaultChannel.class);
+        whenNew(DefaultChannel.class).withAnyArguments().thenReturn(channel);
+        String serverUrl = "http://mock";
+        Sonoma.setServerUrl(serverUrl);
+
+        /* No effect for now. */
+        verify(channel, never()).setServerUrl(serverUrl);
+
+        /* Start should propagate the server url. */
+        Sonoma.start(application, DUMMY_APP_SECRET, DummyFeature.class);
+        verify(channel).setServerUrl(serverUrl);
+
+        /* Change it after, should work immediately. */
+        serverUrl = "http://mock2";
+        Sonoma.setServerUrl(serverUrl);
+        verify(channel).setServerUrl(serverUrl);
     }
 
     private static class DummyFeature extends AbstractSonomaFeature {

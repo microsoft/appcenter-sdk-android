@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * StorageHelper class to access local storage.
  */
-public final class StorageHelper {
+public class StorageHelper {
 
     /**
      * Name of preferences.
@@ -512,7 +512,7 @@ public final class StorageHelper {
     /**
      * DatabaseStorage Helper class
      */
-    public final static class DatabaseStorage implements Closeable {
+    public static class DatabaseStorage implements Closeable {
 
         /**
          * DatabaseManager instance.
