@@ -21,7 +21,9 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
@@ -33,16 +35,22 @@ public class ChannelLogDecorateTest {
     public void checkLogAttributes() throws DeviceInfoHelper.DeviceInfoException {
         mockStatic(DeviceInfoHelper.class);
         Device device = mock(Device.class);
-        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(device).thenReturn(null);
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(device);
         mockStatic(IdHelper.class);
         Channel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID(), mock(Persistence.class), mock(Ingestion.class));
         channel.addGroup("", 0, 0, 0, null);
 
         /* Test a log that should be decorated. */
-        Log log = mock(Log.class);
-        channel.enqueue(log, "");
-        verify(log).setDevice(device);
-        verify(log).setToffset(anyLong());
+        for (int i = 0; i < 3; i++) {
+            Log log = mock(Log.class);
+            channel.enqueue(log, "");
+            verify(log).setDevice(device);
+            verify(log).setToffset(anyLong());
+        }
+
+        /* Check cache was used, meaning only 1 call to generate a device. */
+        verifyStatic();
+        DeviceInfoHelper.getDeviceInfo(any(Context.class));
 
         /* Test a log that is already decorated. */
         Log log2 = mock(Log.class);
@@ -51,5 +59,22 @@ public class ChannelLogDecorateTest {
         channel.enqueue(log2, "");
         verify(log2, never()).setDevice(any(Device.class));
         verify(log2, never()).setToffset(anyLong());
+
+        /* Simulate update to wrapper SDK. */
+        Device device2 = mock(Device.class);
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(device2);
+        channel.invalidateDeviceCache();
+
+        /* Generate some logs to verify device properties have been updated. */
+        for (int i = 0; i < 3; i++) {
+            Log log3 = mock(Log.class);
+            channel.enqueue(log3, "");
+            verify(log3).setDevice(device2);
+            verify(log3).setToffset(anyLong());
+        }
+
+        /* Check only 1 device has been generated after cache invalidate. */
+        verifyStatic(times(2));
+        DeviceInfoHelper.getDeviceInfo(any(Context.class));
     }
 }

@@ -196,6 +196,11 @@ public class DefaultChannel implements Channel {
         mPersistence.deleteLogs(groupName);
     }
 
+    @Override
+    public synchronized void invalidateDeviceCache() {
+        mDevice = null;
+    }
+
     /**
      * Stop sending logs until app is restarted or the channel is enabled again.
      *
