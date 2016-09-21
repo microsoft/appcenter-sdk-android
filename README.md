@@ -59,8 +59,9 @@ Below are the steps on how to integrate our compiled libraries in your applicati
 
     ```groovy
     dependencies {
-        compile 'com.microsoft.sonoma:analytics:+'
-        compile 'com.microsoft.sonoma:crashes:+'
+        def sonomaSdkVersion = '0.1.0.5'
+        compile "com.microsoft.sonoma:analytics:${sonomaSdkVersion}"
+        compile "com.microsoft.sonoma:crashes:${sonomaSdkVersion}"
     }
     ```
 
@@ -282,5 +283,5 @@ You create your own Crashes listener and assign it like this:
 
  Gradle Dependency                       | Service          
  --------------------------------------- | ---------------
- com.microsoft.sonoma:analytics:+        | Analytics    
- com.microsoft.sonoma:crashes:+          | Crashes
+ com.microsoft.sonoma:analytics:0.1.0.5  | Analytics    
+ com.microsoft.sonoma:crashes:0.1.0.5    | Crashes
