@@ -45,7 +45,12 @@ public final class Sonoma {
     /**
      * Remember if log level was configured using this class.
      */
-    private static boolean slogLevelConfigured;
+    private boolean mLogLevelConfigured;
+
+    /**
+     * Custom server Url if any.
+     */
+    private String mServerUrl;
 
     /**
      * Application context.
@@ -77,7 +82,6 @@ public final class Sonoma {
     @VisibleForTesting
     static synchronized void unsetInstance() {
         sInstance = null;
-        slogLevelConfigured = false;
     }
 
     /**
@@ -88,6 +92,40 @@ public final class Sonoma {
     @SuppressWarnings("WeakerAccess")
     public static void setWrapperSdk(WrapperSdk wrapperSdk) {
         DeviceInfoHelper.setWrapperSdk(wrapperSdk);
+    }
+
+    /**
+     * Return log level filter for logs coming from this SDK.
+     *
+     * @return log level as defined by {@link android.util.Log}.
+     */
+    @IntRange(from = VERBOSE, to = ASSERT)
+    public static int getLogLevel() {
+        return SonomaLog.getLogLevel();
+    }
+
+    /**
+     * Set a log level for logs coming from Sonoma SDK.
+     *
+     * @param logLevel A log level as defined by {@link android.util.Log}.
+     * @see android.util.Log#VERBOSE
+     * @see android.util.Log#DEBUG
+     * @see android.util.Log#INFO
+     * @see android.util.Log#WARN
+     * @see android.util.Log#ERROR
+     * @see android.util.Log#ASSERT
+     */
+    public static void setLogLevel(@IntRange(from = VERBOSE, to = ASSERT) int logLevel) {
+        getInstance().setInstanceLogLevel(logLevel);
+    }
+
+    /**
+     * Change the base URL (scheme + authority + port only) used to communicate with the backend.
+     *
+     * @param serverUrl base URL to use for server communication.
+     */
+    public static void setServerUrl(String serverUrl) {
+        getInstance().setInstanceServerUrl(serverUrl);
     }
 
     /**
@@ -173,29 +211,24 @@ public final class Sonoma {
     }
 
     /**
-     * Return log level filter for logs coming from this SDK.
+     * {@link #setLogLevel(int)} implementation at instance level.
      *
-     * @return log level as defined by {@link android.util.Log}.
+     * @param logLevel log level.
      */
-    @IntRange(from = VERBOSE, to = ASSERT)
-    public static int getLogLevel() {
-        return SonomaLog.getLogLevel();
+    private synchronized void setInstanceLogLevel(int logLevel) {
+        mLogLevelConfigured = true;
+        SonomaLog.setLogLevel(logLevel);
     }
 
     /**
-     * Set a log level for logs coming from Sonoma SDK.
+     * {@link #setServerUrl(String)} implementation at instance level.
      *
-     * @param logLevel A log level as defined by {@link android.util.Log}.
-     * @see android.util.Log#VERBOSE
-     * @see android.util.Log#DEBUG
-     * @see android.util.Log#INFO
-     * @see android.util.Log#WARN
-     * @see android.util.Log#ERROR
-     * @see android.util.Log#ASSERT
+     * @param serverUrl server URL.
      */
-    public synchronized static void setLogLevel(@IntRange(from = VERBOSE, to = ASSERT) int logLevel) {
-        slogLevelConfigured = true;
-        SonomaLog.setLogLevel(logLevel);
+    private synchronized void setInstanceServerUrl(String serverUrl) {
+        mServerUrl = serverUrl;
+        if (mChannel != null)
+            mChannel.setServerUrl(serverUrl);
     }
 
     /**
@@ -248,16 +281,14 @@ public final class Sonoma {
      * @param appSecret   a unique and secret key used to identify the application.
      * @return true if init was successful, false otherwise.
      */
-    private boolean initialize(Application application, String appSecret) {
+    private synchronized boolean initialize(Application application, String appSecret) {
 
         /* Load some global constants. */
         Constants.loadFromContext(application);
 
         /* Enable a default log level for debuggable applications. */
-        synchronized (Sonoma.class) {
-            if (!slogLevelConfigured && Constants.APPLICATION_DEBUGGABLE) {
-                SonomaLog.setLogLevel(Log.WARN);
-            }
+        if (!mLogLevelConfigured && Constants.APPLICATION_DEBUGGABLE) {
+            SonomaLog.setLogLevel(Log.WARN);
         }
 
         /* Parse and store parameters. */
@@ -290,6 +321,8 @@ public final class Sonoma {
         mLogSerializer = new DefaultLogSerializer();
         mChannel = new DefaultChannel(application, appSecretUUID, mLogSerializer);
         mChannel.setEnabled(isInstanceEnabled());
+        if (mServerUrl != null)
+            mChannel.setServerUrl(mServerUrl);
         return true;
     }
 

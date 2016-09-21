@@ -51,6 +51,13 @@ public interface Channel {
     void setEnabled(boolean enabled);
 
     /**
+     * Update server url.
+     *
+     * @param serverUrl server url.
+     */
+    void setServerUrl(String serverUrl);
+
+    /**
      * Clear all persisted logs for the given group.
      *
      * @param groupName the group name.

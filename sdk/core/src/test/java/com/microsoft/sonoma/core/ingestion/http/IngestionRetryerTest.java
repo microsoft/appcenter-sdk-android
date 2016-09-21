@@ -177,4 +177,13 @@ public class IngestionRetryerTest {
         verifyNoMoreInteractions(callback);
         verify(call).cancel();
     }
+
+    @Test
+    public void setServerUrl() {
+        Ingestion ingestion = mock(Ingestion.class);
+        Ingestion retryer = new IngestionRetryer(ingestion, mock(Handler.class));
+        String serverUrl = "http://someServerUrl";
+        retryer.setServerUrl(serverUrl);
+        verify(ingestion).setServerUrl(serverUrl);
+    }
 }
