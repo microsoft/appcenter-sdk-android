@@ -65,6 +65,11 @@ public interface Channel {
     void clear(String groupName);
 
     /**
+     * Invalidate device cache that this channel may have.
+     */
+    void invalidateDeviceCache();
+
+    /**
      * Add a global listener to the channel.
      *
      * @param listener listener to add.
