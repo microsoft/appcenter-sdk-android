@@ -207,8 +207,9 @@ public class IngestionHttp implements Ingestion {
      *
      * @param baseUrl the base url.
      */
+    @Override
     @SuppressWarnings("SameParameterValue")
-    public void setBaseUrl(@NonNull String baseUrl) {
+    public void setServerUrl(@NonNull String baseUrl) {
         mBaseUrl = baseUrl;
     }
 

@@ -9,7 +9,12 @@ abstract class IngestionDecorator implements Ingestion {
     final Ingestion mDecoratedApi;
 
     IngestionDecorator(Ingestion decoratedApi) {
-        this.mDecoratedApi = decoratedApi;
+        mDecoratedApi = decoratedApi;
+    }
+
+    @Override
+    public void setServerUrl(String serverUrl) {
+        mDecoratedApi.setServerUrl(serverUrl);
     }
 
     @Override

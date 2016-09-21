@@ -638,6 +638,16 @@ public class DefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    public void setServerUrl() {
+        Ingestion ingestion = mock(Ingestion.class);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID(), mock(Persistence.class), ingestion);
+        String serverUrl = "http://mockUrl";
+        channel.setServerUrl(serverUrl);
+        verify(ingestion).setServerUrl(serverUrl);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     public void initialLogs() throws IOException, InterruptedException {
         AtomicReference<Runnable> runnable = catchPostRunnable();
         Ingestion ingestion = mock(Ingestion.class);
