@@ -163,9 +163,10 @@ public final class Sonoma {
     }
 
     /**
-     * Get unique installation identifier.
+     * Get a unique installation identifier.
+     * The identifier is persisted until the application is uninstalled and installed again.
      *
-     * @return unique install identifier.
+     * @return A unique installation identifier.
      */
     public static UUID getInstallId() {
         return IdHelper.getInstallId();
@@ -182,9 +183,15 @@ public final class Sonoma {
     }
 
     /**
-     * Set log level filter for logs coming from this SDK.
+     * Set a log level for logs coming from Sonoma SDK.
      *
-     * @param logLevel log level as defined by {@link android.util.Log}.
+     * @param logLevel A log level as defined by {@link android.util.Log}.
+     * @see android.util.Log#VERBOSE
+     * @see android.util.Log#DEBUG
+     * @see android.util.Log#INFO
+     * @see android.util.Log#WARN
+     * @see android.util.Log#ERROR
+     * @see android.util.Log#ASSERT
      */
     public synchronized static void setLogLevel(@IntRange(from = VERBOSE, to = ASSERT) int logLevel) {
         slogLevelConfigured = true;
