@@ -148,10 +148,20 @@ public class Crashes extends AbstractSonomaFeature {
         sInstance = null;
     }
 
+    /**
+     * Check whether Crashes module is enabled or not.
+     *
+     * @return <code>true</code> if enabled, <code>false</code> otherwise.
+     */
     public static boolean isEnabled() {
         return getInstance().isInstanceEnabled();
     }
 
+    /**
+     * Enable or disable Crashes module.
+     *
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     */
     public static void setEnabled(boolean enabled) {
         getInstance().setInstanceEnabled(enabled);
     }
@@ -176,9 +186,9 @@ public class Crashes extends AbstractSonomaFeature {
     }
 
     /**
-     * Notifies a user confirmation for crashes.
+     * Notifies SDK with a confirmation to handle the crash report.
      *
-     * @param userConfirmation A response of the confirmation. Should be one of {@link #SEND}, {@link #DONT_SEND} or {@link #ALWAYS_SEND}
+     * @param userConfirmation A user confirmation. Should be one of {@link #SEND}, {@link #DONT_SEND} or {@link #ALWAYS_SEND}
      * @see #SEND
      * @see #DONT_SEND
      * @see #ALWAYS_SEND

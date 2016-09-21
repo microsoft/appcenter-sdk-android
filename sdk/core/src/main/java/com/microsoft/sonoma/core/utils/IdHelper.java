@@ -12,6 +12,7 @@ public class IdHelper {
 
     /**
      * Get the installID from the Shared preferences. In case this fails, will generate a new installId.
+     *
      * @return the installID
      */
     @NonNull
@@ -20,8 +21,7 @@ public class IdHelper {
         UUID installId;
         try {
             installId = UUID.fromString(installIdString);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             SonomaLog.warn(Sonoma.LOG_TAG, "Unable to get installID from Shared Preferences");
             installId = UUIDUtils.randomUUID();
             StorageHelper.PreferencesStorage.putString(KEY_INSTALL_ID, installId.toString());
