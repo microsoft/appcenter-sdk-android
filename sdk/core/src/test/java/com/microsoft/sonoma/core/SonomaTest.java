@@ -35,6 +35,7 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertSame;
 import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
@@ -129,12 +130,22 @@ public class SonomaTest {
     }
 
     @Test
-    public void nullVarargFeatures() {
-        Sonoma.start(application, DUMMY_APP_SECRET, (SonomaFeature) null);
+    public void nullVarargArray() {
+        //noinspection ConfusingArgumentToVarargsMethod
+        Sonoma.start(application, DUMMY_APP_SECRET, (Class<? extends SonomaFeature>[]) null);
+        Sonoma.start((Class<? extends SonomaFeature>) null);
+        //noinspection ConfusingArgumentToVarargsMethod
+        Sonoma.start((Class<? extends SonomaFeature>[]) null);
 
         // Verify that no modules have been auto-loaded since none are configured for this
         assertEquals(0, Sonoma.getInstance().getFeatures().size());
         assertEquals(application, Sonoma.getInstance().getApplication());
+    }
+
+    @Test
+    public void startFeatureBeforeInit() {
+        Sonoma.start(DummyFeature.class);
+        assertNull(Sonoma.getInstance().getFeatures());
     }
 
     @Test
@@ -151,7 +162,21 @@ public class SonomaTest {
     }
 
     @Test
-    public void startTwiceTest() {
+    public void useDummyFeatureTestSplitCall() {
+        Sonoma.initialize(application, DUMMY_APP_SECRET);
+        Sonoma.start(DummyFeature.class);
+
+        // Verify that single module has been loaded and configured
+        assertEquals(1, Sonoma.getInstance().getFeatures().size());
+        DummyFeature feature = DummyFeature.getInstance();
+        assertTrue(Sonoma.getInstance().getFeatures().contains(feature));
+        verify(feature).getLogFactories();
+        verify(feature).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(application).registerActivityLifecycleCallbacks(feature);
+    }
+
+    @Test
+    public void initAndStartTwiceTest() {
         Sonoma.start(application, DUMMY_APP_SECRET, DummyFeature.class);
         Sonoma.start(application, DUMMY_APP_SECRET, AnotherDummyFeature.class); //ignored
 
@@ -163,6 +188,22 @@ public class SonomaTest {
         verify(feature).onChannelReady(any(Context.class), notNull(Channel.class));
         verify(application).registerActivityLifecycleCallbacks(feature);
     }
+
+    @Test
+    public void initTwiceTest() {
+        Sonoma.initialize(application, DUMMY_APP_SECRET);
+        Sonoma.initialize(application, DUMMY_APP_SECRET); //ignored
+        Sonoma.start(DummyFeature.class);
+
+        /* Verify that single module has been loaded and configured */
+        assertEquals(1, Sonoma.getInstance().getFeatures().size());
+        DummyFeature feature = DummyFeature.getInstance();
+        assertTrue(Sonoma.getInstance().getFeatures().contains(feature));
+        verify(feature).getLogFactories();
+        verify(feature).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(application).registerActivityLifecycleCallbacks(feature);
+    }
+
 
     @Test
     public void startTwoFeaturesTest() {
@@ -182,6 +223,106 @@ public class SonomaTest {
             verify(AnotherDummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(AnotherDummyFeature.getInstance());
         }
+    }
+
+    @Test
+    public void startTwoFeaturesSplit() {
+        Sonoma.initialize(application, DUMMY_APP_SECRET);
+        Sonoma.start(DummyFeature.class, AnotherDummyFeature.class);
+
+        // Verify that the right amount of modules have been loaded and configured
+        assertEquals(2, Sonoma.getInstance().getFeatures().size());
+        {
+            assertTrue(Sonoma.getInstance().getFeatures().contains(DummyFeature.getInstance()));
+            verify(DummyFeature.getInstance()).getLogFactories();
+            verify(DummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(DummyFeature.getInstance());
+        }
+        {
+            assertTrue(Sonoma.getInstance().getFeatures().contains(AnotherDummyFeature.getInstance()));
+            verify(AnotherDummyFeature.getInstance()).getLogFactories();
+            verify(AnotherDummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(AnotherDummyFeature.getInstance());
+        }
+    }
+
+    @Test
+    public void startTwoFeaturesSplitEvenMore() {
+        Sonoma.initialize(application, DUMMY_APP_SECRET);
+        Sonoma.start(DummyFeature.class);
+        Sonoma.start(AnotherDummyFeature.class);
+
+        // Verify that the right amount of modules have been loaded and configured
+        assertEquals(2, Sonoma.getInstance().getFeatures().size());
+        {
+            assertTrue(Sonoma.getInstance().getFeatures().contains(DummyFeature.getInstance()));
+            verify(DummyFeature.getInstance()).getLogFactories();
+            verify(DummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(DummyFeature.getInstance());
+        }
+        {
+            assertTrue(Sonoma.getInstance().getFeatures().contains(AnotherDummyFeature.getInstance()));
+            verify(AnotherDummyFeature.getInstance()).getLogFactories();
+            verify(AnotherDummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(AnotherDummyFeature.getInstance());
+        }
+    }
+
+    @Test
+    public void startTwoFeaturesWithSomeInvalidReferences() {
+        Sonoma.start(application, DUMMY_APP_SECRET, null, DummyFeature.class, null, InvalidFeature.class, AnotherDummyFeature.class, null);
+
+        // Verify that the right amount of modules have been loaded and configured
+        assertEquals(2, Sonoma.getInstance().getFeatures().size());
+        {
+            assertTrue(Sonoma.getInstance().getFeatures().contains(DummyFeature.getInstance()));
+            verify(DummyFeature.getInstance()).getLogFactories();
+            verify(DummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(DummyFeature.getInstance());
+        }
+        {
+            assertTrue(Sonoma.getInstance().getFeatures().contains(AnotherDummyFeature.getInstance()));
+            verify(AnotherDummyFeature.getInstance()).getLogFactories();
+            verify(AnotherDummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(AnotherDummyFeature.getInstance());
+        }
+    }
+
+    @Test
+    public void startTwoFeaturesWithSomeInvalidReferencesSplit() {
+        Sonoma.initialize(application, DUMMY_APP_SECRET);
+        Sonoma.start(null, DummyFeature.class, null);
+        Sonoma.start(InvalidFeature.class, AnotherDummyFeature.class, null);
+
+        // Verify that the right amount of modules have been loaded and configured
+        assertEquals(2, Sonoma.getInstance().getFeatures().size());
+        {
+            assertTrue(Sonoma.getInstance().getFeatures().contains(DummyFeature.getInstance()));
+            verify(DummyFeature.getInstance()).getLogFactories();
+            verify(DummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(DummyFeature.getInstance());
+        }
+        {
+            assertTrue(Sonoma.getInstance().getFeatures().contains(AnotherDummyFeature.getInstance()));
+            verify(AnotherDummyFeature.getInstance()).getLogFactories();
+            verify(AnotherDummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(AnotherDummyFeature.getInstance());
+        }
+    }
+
+    @Test
+    public void startFeatureTwice() {
+        Sonoma.initialize(application, DUMMY_APP_SECRET);
+        Sonoma.start(DummyFeature.class);
+        Sonoma.start(DummyFeature.class); // ignored
+
+        /* Verify that single module has been loaded and configured */
+        assertEquals(1, Sonoma.getInstance().getFeatures().size());
+        DummyFeature feature = DummyFeature.getInstance();
+        assertTrue(Sonoma.getInstance().getFeatures().contains(feature));
+        verify(feature).getLogFactories();
+        verify(feature).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(application).registerActivityLifecycleCallbacks(feature);
     }
 
     @Test

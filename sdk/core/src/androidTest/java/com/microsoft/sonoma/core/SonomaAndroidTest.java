@@ -33,7 +33,7 @@ public class SonomaAndroidTest {
 
     @Test
     public void getInstallId() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
-        Sonoma.start(mApplication, UUIDUtils.randomUUID().toString(), new SonomaFeature[]{});
+        Sonoma.start(mApplication, UUIDUtils.randomUUID().toString());
         StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
         UUID installId = Sonoma.getInstallId();
         assertNotNull(installId);
@@ -47,7 +47,7 @@ public class SonomaAndroidTest {
     @Test
     public void setDefaultLogLevelDebug() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
         SonomaLog.setLogLevel(Log.ASSERT);
-        Sonoma.start(mApplication, UUIDUtils.randomUUID().toString(), new SonomaFeature[]{});
+        Sonoma.start(mApplication, UUIDUtils.randomUUID().toString());
         assertEquals(Log.WARN, Sonoma.getLogLevel());
     }
 }

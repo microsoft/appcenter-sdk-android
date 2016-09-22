@@ -3,6 +3,7 @@ package com.microsoft.sonoma.core;
 import android.annotation.SuppressLint;
 import android.app.Application;
 import android.support.annotation.IntRange;
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.util.Log;
 
@@ -18,10 +19,7 @@ import com.microsoft.sonoma.core.utils.PrefStorageConstants;
 import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -129,7 +127,29 @@ public final class Sonoma {
     }
 
     /**
-     * Initialize the SDK with the list of features to use.
+     * Initialize the SDK.
+     * This may be called only once per application process lifetime.
+     *
+     * @param application Your application object.
+     * @param appSecret   A unique and secret key used to identify the application.
+     */
+    public static void initialize(Application application, String appSecret) {
+        getInstance().instanceInitialize(application, appSecret);
+    }
+
+    /**
+     * Start features.
+     * This may be called only once per feature per application process lifetime.
+     *
+     * @param features List of features to use.
+     */
+    @SafeVarargs
+    public static void start(Class<? extends SonomaFeature>... features) {
+        getInstance().startFeatures(features);
+    }
+
+    /**
+     * Initialize the SDK with the list of features to start.
      * This may be called only once per application process lifetime.
      *
      * @param application Your application object.
@@ -138,46 +158,7 @@ public final class Sonoma {
      */
     @SafeVarargs
     public static void start(Application application, String appSecret, Class<? extends SonomaFeature>... features) {
-        Set<Class<? extends SonomaFeature>> featureClassSet = new HashSet<>();
-        List<SonomaFeature> featureList = new ArrayList<>();
-        for (Class<? extends SonomaFeature> featureClass : features)
-            /* Skip instantiation if the feature is already added. */
-            if (featureClass != null && !featureClassSet.contains(featureClass)) {
-                featureClassSet.add(featureClass);
-                SonomaFeature feature = instantiateFeature(featureClass);
-                if (feature != null)
-                    featureList.add(feature);
-            }
-        start(application, appSecret, featureList.toArray(new SonomaFeature[featureList.size()]));
-    }
-
-    /**
-     * Initializer only visible for testing.
-     *
-     * @param application Your application object.
-     * @param appSecret   A unique and secret key used to identify the application.
-     * @param features    List of features to use.
-     */
-    @VisibleForTesting
-    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-    static void start(Application application, String appSecret, SonomaFeature... features) {
-        Sonoma instance = getInstance();
-        synchronized (instance) {
-            boolean initializedSuccessfully = instance.initialize(application, appSecret);
-            if (initializedSuccessfully)
-                for (SonomaFeature feature : features)
-                    instance.addFeature(feature);
-        }
-    }
-
-    private static SonomaFeature instantiateFeature(Class<? extends SonomaFeature> type) {
-        try {
-            Method getInstance = type.getMethod("getInstance");
-            return (SonomaFeature) getInstance.invoke(null);
-        } catch (Exception e) {
-            SonomaLog.error(LOG_TAG, "Failed to instantiate feature '" + type.getName() + "'", e);
-            return null;
-        }
+        getInstance().initializeAndStartFeatures(application, appSecret, features);
     }
 
     /**
@@ -243,6 +224,110 @@ public final class Sonoma {
     }
 
     /**
+     * Internal SDK initialization.
+     *
+     * @param application application context.
+     * @param appSecret   a unique and secret key used to identify the application.
+     * @return true if init was successful, false otherwise.
+     */
+    private synchronized boolean instanceInitialize(Application application, String appSecret) {
+
+        /* Load some global constants. */
+        Constants.loadFromContext(application);
+
+        /* Enable a default log level for debuggable applications. */
+        if (!mLogLevelConfigured && Constants.APPLICATION_DEBUGGABLE) {
+            SonomaLog.setLogLevel(Log.WARN);
+        }
+
+        /* Parse and store parameters. */
+        if (mApplication != null) {
+            SonomaLog.warn(LOG_TAG, "Sonoma may only be initialized once");
+            return false;
+        }
+        if (application == null) {
+            SonomaLog.error(LOG_TAG, "application may not be null");
+            return false;
+        }
+        if (appSecret == null) {
+            SonomaLog.error(LOG_TAG, "appSecret may not be null");
+            return false;
+        }
+        UUID appSecretUUID;
+        try {
+            appSecretUUID = UUID.fromString(appSecret);
+        } catch (IllegalArgumentException e) {
+            SonomaLog.error(LOG_TAG, "appSecret is invalid", e);
+            return false;
+        }
+        mApplication = application;
+
+        /* If parameters are valid, init context related resources. */
+        StorageHelper.initialize(application);
+        mFeatures = new HashSet<>();
+
+        /* Init channel. */
+        mLogSerializer = new DefaultLogSerializer();
+        mChannel = new DefaultChannel(application, appSecretUUID, mLogSerializer);
+        mChannel.setEnabled(isInstanceEnabled());
+        if (mServerUrl != null)
+            mChannel.setServerUrl(mServerUrl);
+        return true;
+    }
+
+    @SafeVarargs
+    private final synchronized void startFeatures(Class<? extends SonomaFeature>... features) {
+        if (features == null) {
+            SonomaLog.error(LOG_TAG, "Start feature array is null");
+            return;
+        }
+        if (mApplication == null) {
+            SonomaLog.error(LOG_TAG, "Cannot start features, Sonoma has not been initialized");
+            return;
+        }
+        for (Class<? extends SonomaFeature> feature : features) {
+            if (feature == null) {
+                SonomaLog.warn(LOG_TAG, "Skipping null feature, please check your varags/array does not contain any null reference.");
+            } else {
+                try {
+                    startFeature((SonomaFeature) feature.getMethod("getInstance").invoke(null));
+                } catch (Exception e) {
+                    SonomaLog.error(LOG_TAG, "Failed to get feature instance '" + feature.getName() + "', skipping it.", e);
+                }
+            }
+        }
+    }
+
+    /**
+     * Start a feature.
+     *
+     * @param feature feature to start.
+     */
+    private synchronized void startFeature(@NonNull SonomaFeature feature) {
+        if (mFeatures.contains(feature)) {
+            SonomaLog.warn(LOG_TAG, "Sonoma already has started the feature with class name: " + feature.getClass().getName());
+            return;
+        }
+        Map<String, LogFactory> logFactories = feature.getLogFactories();
+        if (logFactories != null) {
+            for (Map.Entry<String, LogFactory> logFactory : logFactories.entrySet())
+                mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
+        }
+        mFeatures.add(feature);
+        feature.onChannelReady(mApplication, mChannel);
+        if (isInstanceEnabled())
+            mApplication.registerActivityLifecycleCallbacks(feature);
+    }
+
+    @SafeVarargs
+    private final synchronized void initializeAndStartFeatures(Application application, String appSecret, Class<? extends SonomaFeature>... features) {
+        boolean initializedSuccessfully = instanceInitialize(application, appSecret);
+        if (initializedSuccessfully) {
+            startFeatures(features);
+        }
+    }
+
+    /**
      * Implements {@link #isEnabled()}.
      */
     private synchronized boolean isInstanceEnabled() {
@@ -283,77 +368,6 @@ public final class Sonoma {
 
         /* Update state. */
         StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, enabled);
-    }
-
-    /**
-     * Initialize the SDK.
-     *
-     * @param application application context.
-     * @param appSecret   a unique and secret key used to identify the application.
-     * @return true if init was successful, false otherwise.
-     */
-    private synchronized boolean initialize(Application application, String appSecret) {
-
-        /* Load some global constants. */
-        Constants.loadFromContext(application);
-
-        /* Enable a default log level for debuggable applications. */
-        if (!mLogLevelConfigured && Constants.APPLICATION_DEBUGGABLE) {
-            SonomaLog.setLogLevel(Log.WARN);
-        }
-
-        /* Parse and store parameters. */
-        if (mApplication != null) {
-            SonomaLog.warn(LOG_TAG, "Sonoma may only be init once");
-            return false;
-        }
-        if (application == null) {
-            SonomaLog.error(LOG_TAG, "application may not be null");
-            return false;
-        }
-        if (appSecret == null) {
-            SonomaLog.error(LOG_TAG, "appSecret may not be null");
-            return false;
-        }
-        UUID appSecretUUID;
-        try {
-            appSecretUUID = UUID.fromString(appSecret);
-        } catch (IllegalArgumentException e) {
-            SonomaLog.error(LOG_TAG, "appSecret is invalid", e);
-            return false;
-        }
-        mApplication = application;
-
-        /* If parameters are valid, init context related resources. */
-        StorageHelper.initialize(application);
-        mFeatures = new HashSet<>();
-
-        /* Init channel. */
-        mLogSerializer = new DefaultLogSerializer();
-        mChannel = new DefaultChannel(application, appSecretUUID, mLogSerializer);
-        mChannel.setEnabled(isInstanceEnabled());
-        if (mServerUrl != null)
-            mChannel.setServerUrl(mServerUrl);
-        return true;
-    }
-
-    /**
-     * Add a feature.
-     *
-     * @param feature feature to add.
-     */
-    private void addFeature(SonomaFeature feature) {
-        if (feature == null)
-            return;
-        Map<String, LogFactory> logFactories = feature.getLogFactories();
-        if (logFactories != null) {
-            for (Map.Entry<String, LogFactory> logFactory : logFactories.entrySet())
-                mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
-        }
-        mFeatures.add(feature);
-        feature.onChannelReady(mApplication, mChannel);
-        if (isInstanceEnabled())
-            mApplication.registerActivityLifecycleCallbacks(feature);
     }
 
     @VisibleForTesting
