@@ -127,12 +127,23 @@ public final class Sonoma {
     }
 
     /**
+     * Check whether SDK has already been initialized.
+     *
+     * @return true if initialized, false otherwise.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static boolean isInitialized() {
+        return getInstance().isInstanceInitialized();
+    }
+
+    /**
      * Initialize the SDK.
      * This may be called only once per application process lifetime.
      *
      * @param application Your application object.
      * @param appSecret   A unique and secret key used to identify the application.
      */
+    @SuppressWarnings("SameParameterValue")
     public static void initialize(Application application, String appSecret) {
         getInstance().instanceInitialize(application, appSecret);
     }
@@ -224,6 +235,13 @@ public final class Sonoma {
     }
 
     /**
+     * {@link #isInitialized()} implementation at instance level.
+     */
+    private synchronized boolean isInstanceInitialized() {
+        return mApplication != null;
+    }
+
+    /**
      * Internal SDK initialization.
      *
      * @param application application context.
@@ -287,7 +305,7 @@ public final class Sonoma {
         }
         for (Class<? extends SonomaFeature> feature : features) {
             if (feature == null) {
-                SonomaLog.warn(LOG_TAG, "Skipping null feature, please check your varags/array does not contain any null reference.");
+                SonomaLog.warn(LOG_TAG, "Skipping null feature, please check your varargs/array does not contain any null reference.");
             } else {
                 try {
                     startFeature((SonomaFeature) feature.getMethod("getInstance").invoke(null));

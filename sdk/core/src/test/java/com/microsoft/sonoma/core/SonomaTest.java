@@ -125,6 +125,7 @@ public class SonomaTest {
         Sonoma.start(application, DUMMY_APP_SECRET, (Class<? extends SonomaFeature>) null);
 
         // Verify that no modules have been auto-loaded since none are configured for this
+        assertTrue(Sonoma.isInitialized());
         assertEquals(0, Sonoma.getInstance().getFeatures().size());
         assertEquals(application, Sonoma.getInstance().getApplication());
     }
@@ -138,6 +139,7 @@ public class SonomaTest {
         Sonoma.start((Class<? extends SonomaFeature>[]) null);
 
         // Verify that no modules have been auto-loaded since none are configured for this
+        assertTrue(Sonoma.isInitialized());
         assertEquals(0, Sonoma.getInstance().getFeatures().size());
         assertEquals(application, Sonoma.getInstance().getApplication());
     }
@@ -145,6 +147,7 @@ public class SonomaTest {
     @Test
     public void startFeatureBeforeInit() {
         Sonoma.start(DummyFeature.class);
+        assertFalse(Sonoma.isInitialized());
         assertNull(Sonoma.getInstance().getFeatures());
     }
 
@@ -163,7 +166,9 @@ public class SonomaTest {
 
     @Test
     public void useDummyFeatureTestSplitCall() {
+        assertFalse(Sonoma.isInitialized());
         Sonoma.initialize(application, DUMMY_APP_SECRET);
+        assertTrue(Sonoma.isInitialized());
         Sonoma.start(DummyFeature.class);
 
         // Verify that single module has been loaded and configured
