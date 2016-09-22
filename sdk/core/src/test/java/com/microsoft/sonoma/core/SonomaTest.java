@@ -317,14 +317,24 @@ public class SonomaTest {
 
     @Test
     public void startFeatureTwice() {
+
+        /* Start once. */
         Sonoma.initialize(application, DUMMY_APP_SECRET);
         Sonoma.start(DummyFeature.class);
-        Sonoma.start(DummyFeature.class); // ignored
 
-        /* Verify that single module has been loaded and configured */
+        /* Check. */
         assertEquals(1, Sonoma.getInstance().getFeatures().size());
         DummyFeature feature = DummyFeature.getInstance();
         assertTrue(Sonoma.getInstance().getFeatures().contains(feature));
+        verify(feature).getLogFactories();
+        verify(feature).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(application).registerActivityLifecycleCallbacks(feature);
+
+        /* Start twice, this call is ignored. */
+        Sonoma.start(DummyFeature.class);
+
+        /* Verify that single module has been loaded and configured (only once interaction). */
+        assertEquals(1, Sonoma.getInstance().getFeatures().size());
         verify(feature).getLogFactories();
         verify(feature).onChannelReady(any(Context.class), notNull(Channel.class));
         verify(application).registerActivityLifecycleCallbacks(feature);
