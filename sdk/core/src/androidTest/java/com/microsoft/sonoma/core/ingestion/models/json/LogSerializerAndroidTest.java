@@ -15,7 +15,7 @@ import static com.microsoft.sonoma.core.ingestion.models.json.MockLog.MOCK_LOG_T
 import static com.microsoft.sonoma.test.TestUtils.TAG;
 
 @SuppressWarnings("unused")
-public class LogSerializerTest {
+public class LogSerializerAndroidTest {
 
     @Test
     public void emptyLogs() throws JSONException {
