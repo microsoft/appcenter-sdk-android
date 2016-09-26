@@ -15,7 +15,7 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
 @SuppressWarnings("unused")
-public class HttpUtilsTest {
+public class HttpUtilsAndroidTest {
 
     @Test
     public void utilsCoverage() {
