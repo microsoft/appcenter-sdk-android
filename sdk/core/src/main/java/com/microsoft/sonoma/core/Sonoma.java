@@ -178,7 +178,9 @@ public final class Sonoma {
      * @return true if enabled, false otherwise.
      */
     public static boolean isEnabled() {
-        return getInstance().isInstanceEnabled();
+        if (checkPrecondition("isEnabled"))
+            return getInstance().isInstanceEnabled();
+        return false;
     }
 
     /**
@@ -189,7 +191,8 @@ public final class Sonoma {
      * @param enabled true to enable, false to disable.
      */
     public static void setEnabled(boolean enabled) {
-        getInstance().setInstanceEnabled(enabled);
+        if (checkPrecondition("setEnabled"))
+            getInstance().setInstanceEnabled(enabled);
     }
 
     /**
@@ -199,7 +202,23 @@ public final class Sonoma {
      * @return A unique installation identifier.
      */
     public static UUID getInstallId() {
-        return IdHelper.getInstallId();
+        if (checkPrecondition("getInstallId"))
+            return IdHelper.getInstallId();
+        return null;
+    }
+
+    /**
+     * Check whether the SDK is ready for use or not.
+     *
+     * @param methodName A method name that is being called by a host application.
+     * @return <code>true</code> if the SDK is ready, <code>false</code> otherwise.
+     */
+    private static boolean checkPrecondition(String methodName) {
+        if (getInstance().isInstanceInitialized())
+            return true;
+
+        SonomaLog.error(LOG_TAG, "Sonoma has not been initialized and is not ready for " + methodName);
+        return false;
     }
 
     /**
