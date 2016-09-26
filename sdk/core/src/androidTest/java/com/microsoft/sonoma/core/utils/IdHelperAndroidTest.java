@@ -14,7 +14,7 @@ import static org.junit.Assert.assertNotEquals;
 
 
 @SuppressWarnings("unused")
-public class IdHelperTest {
+public class IdHelperAndroidTest {
 
     private static final String TAG = "IdHelper";
 
