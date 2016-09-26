@@ -124,7 +124,7 @@ public class SonomaTest {
     public void nullVarargClass() {
         Sonoma.start(application, DUMMY_APP_SECRET, (Class<? extends SonomaFeature>) null);
 
-        // Verify that no modules have been auto-loaded since none are configured for this
+        /* Verify that no modules have been auto-loaded since none are configured for this */
         assertTrue(Sonoma.isInitialized());
         assertEquals(0, Sonoma.getInstance().getFeatures().size());
         assertEquals(application, Sonoma.getInstance().getApplication());
@@ -138,7 +138,7 @@ public class SonomaTest {
         //noinspection ConfusingArgumentToVarargsMethod
         Sonoma.start((Class<? extends SonomaFeature>[]) null);
 
-        // Verify that no modules have been auto-loaded since none are configured for this
+        /* Verify that no modules have been auto-loaded since none are configured for this */
         assertTrue(Sonoma.isInitialized());
         assertEquals(0, Sonoma.getInstance().getFeatures().size());
         assertEquals(application, Sonoma.getInstance().getApplication());
@@ -155,7 +155,7 @@ public class SonomaTest {
     public void useDummyFeatureTest() {
         Sonoma.start(application, DUMMY_APP_SECRET, DummyFeature.class);
 
-        // Verify that single module has been loaded and configured
+        /* Verify that single module has been loaded and configured */
         assertEquals(1, Sonoma.getInstance().getFeatures().size());
         DummyFeature feature = DummyFeature.getInstance();
         assertTrue(Sonoma.getInstance().getFeatures().contains(feature));
@@ -171,7 +171,7 @@ public class SonomaTest {
         assertTrue(Sonoma.isInitialized());
         Sonoma.start(DummyFeature.class);
 
-        // Verify that single module has been loaded and configured
+        /* Verify that single module has been loaded and configured */
         assertEquals(1, Sonoma.getInstance().getFeatures().size());
         DummyFeature feature = DummyFeature.getInstance();
         assertTrue(Sonoma.getInstance().getFeatures().contains(feature));
@@ -185,7 +185,7 @@ public class SonomaTest {
         Sonoma.start(application, DUMMY_APP_SECRET, DummyFeature.class);
         Sonoma.start(application, DUMMY_APP_SECRET, AnotherDummyFeature.class); //ignored
 
-        // Verify that single module has been loaded and configured
+        /* Verify that single module has been loaded and configured */
         assertEquals(1, Sonoma.getInstance().getFeatures().size());
         DummyFeature feature = DummyFeature.getInstance();
         assertTrue(Sonoma.getInstance().getFeatures().contains(feature));
@@ -214,7 +214,7 @@ public class SonomaTest {
     public void startTwoFeaturesTest() {
         Sonoma.start(application, DUMMY_APP_SECRET, DummyFeature.class, AnotherDummyFeature.class);
 
-        // Verify that the right amount of modules have been loaded and configured
+        /* Verify that the right amount of modules have been loaded and configured */
         assertEquals(2, Sonoma.getInstance().getFeatures().size());
         {
             assertTrue(Sonoma.getInstance().getFeatures().contains(DummyFeature.getInstance()));
@@ -235,7 +235,7 @@ public class SonomaTest {
         Sonoma.initialize(application, DUMMY_APP_SECRET);
         Sonoma.start(DummyFeature.class, AnotherDummyFeature.class);
 
-        // Verify that the right amount of modules have been loaded and configured
+        /* Verify that the right amount of modules have been loaded and configured */
         assertEquals(2, Sonoma.getInstance().getFeatures().size());
         {
             assertTrue(Sonoma.getInstance().getFeatures().contains(DummyFeature.getInstance()));
@@ -257,7 +257,7 @@ public class SonomaTest {
         Sonoma.start(DummyFeature.class);
         Sonoma.start(AnotherDummyFeature.class);
 
-        // Verify that the right amount of modules have been loaded and configured
+        /* Verify that the right amount of modules have been loaded and configured */
         assertEquals(2, Sonoma.getInstance().getFeatures().size());
         {
             assertTrue(Sonoma.getInstance().getFeatures().contains(DummyFeature.getInstance()));
@@ -277,7 +277,7 @@ public class SonomaTest {
     public void startTwoFeaturesWithSomeInvalidReferences() {
         Sonoma.start(application, DUMMY_APP_SECRET, null, DummyFeature.class, null, InvalidFeature.class, AnotherDummyFeature.class, null);
 
-        // Verify that the right amount of modules have been loaded and configured
+        /* Verify that the right amount of modules have been loaded and configured */
         assertEquals(2, Sonoma.getInstance().getFeatures().size());
         {
             assertTrue(Sonoma.getInstance().getFeatures().contains(DummyFeature.getInstance()));
@@ -299,7 +299,7 @@ public class SonomaTest {
         Sonoma.start(null, DummyFeature.class, null);
         Sonoma.start(InvalidFeature.class, AnotherDummyFeature.class, null);
 
-        // Verify that the right amount of modules have been loaded and configured
+        /* Verify that the right amount of modules have been loaded and configured */
         assertEquals(2, Sonoma.getInstance().getFeatures().size());
         {
             assertTrue(Sonoma.getInstance().getFeatures().contains(DummyFeature.getInstance()));
@@ -342,12 +342,18 @@ public class SonomaTest {
 
     @Test
     public void enableTest() {
+        /* Test isEnabled and setEnabled before initialize */
+        assertFalse(Sonoma.isEnabled());
+        Sonoma.setEnabled(true);
+        assertFalse(Sonoma.isEnabled());
+
+        /* Start Sonoma SDK */
         Sonoma.start(application, DUMMY_APP_SECRET, DummyFeature.class, AnotherDummyFeature.class);
         Channel channel = mock(Channel.class);
         Sonoma sonoma = Sonoma.getInstance();
         sonoma.setChannel(channel);
 
-        // Verify modules are enabled by default
+        /* Verify modules are enabled by default */
         Set<SonomaFeature> features = sonoma.getFeatures();
         assertTrue(Sonoma.isEnabled());
         DummyFeature dummyFeature = DummyFeature.getInstance();
@@ -356,7 +362,7 @@ public class SonomaTest {
             assertTrue(feature.isInstanceEnabled());
         }
 
-        // Explicit set enabled should not change that
+        /* Explicit set enabled should not change that */
         Sonoma.setEnabled(true);
         assertTrue(Sonoma.isEnabled());
         for (SonomaFeature feature : features) {
@@ -366,7 +372,7 @@ public class SonomaTest {
         verify(anotherDummyFeature, never()).setInstanceEnabled(anyBoolean());
         verify(channel).setEnabled(true);
 
-        // Verify disabling base disables all modules
+        /* Verify disabling base disables all modules */
         Sonoma.setEnabled(false);
         assertFalse(Sonoma.isEnabled());
         for (SonomaFeature feature : features) {
@@ -378,7 +384,7 @@ public class SonomaTest {
         verify(application).unregisterActivityLifecycleCallbacks(anotherDummyFeature);
         verify(channel).setEnabled(false);
 
-        // Verify re-enabling base re-enables all modules
+        /* Verify re-enabling base re-enables all modules */
         Sonoma.setEnabled(true);
         assertTrue(Sonoma.isEnabled());
         for (SonomaFeature feature : features) {
@@ -390,7 +396,7 @@ public class SonomaTest {
         verify(application, times(2)).registerActivityLifecycleCallbacks(anotherDummyFeature);
         verify(channel, times(2)).setEnabled(true);
 
-        // Verify that disabling one module leaves base and other modules enabled
+        /* Verify that disabling one module leaves base and other modules enabled */
         dummyFeature.setInstanceEnabled(false);
         assertFalse(dummyFeature.isInstanceEnabled());
         assertTrue(Sonoma.isEnabled());
@@ -531,8 +537,13 @@ public class SonomaTest {
     public void duplicateFeatureTest() {
         Sonoma.start(application, DUMMY_APP_SECRET, DummyFeature.class, DummyFeature.class);
 
-        // Verify that only one module has been loaded and configured
+        /* Verify that only one module has been loaded and configured */
         assertEquals(1, Sonoma.getInstance().getFeatures().size());
+    }
+
+    @Test
+    public void getInstallIdBeforeStart() {
+        assertNull(Sonoma.getInstallId());
     }
 
     @Test
