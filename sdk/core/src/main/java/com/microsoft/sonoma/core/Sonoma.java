@@ -178,9 +178,7 @@ public final class Sonoma {
      * @return true if enabled, false otherwise.
      */
     public static boolean isEnabled() {
-        if (checkPrecondition("isEnabled"))
-            return getInstance().isInstanceEnabled();
-        return false;
+        return checkPrecondition("isEnabled") && getInstance().isInstanceEnabled();
     }
 
     /**
