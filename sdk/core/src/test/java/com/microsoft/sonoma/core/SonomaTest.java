@@ -342,11 +342,6 @@ public class SonomaTest {
 
     @Test
     public void enableTest() {
-        /* Test isEnabled and setEnabled before initialize */
-        assertFalse(Sonoma.isEnabled());
-        Sonoma.setEnabled(true);
-        assertFalse(Sonoma.isEnabled());
-
         /* Start Sonoma SDK */
         Sonoma.start(application, DUMMY_APP_SECRET, DummyFeature.class, AnotherDummyFeature.class);
         Channel channel = mock(Channel.class);
@@ -412,16 +407,17 @@ public class SonomaTest {
         verify(anotherDummyFeature).setInstanceEnabled(true);
         verify(channel, times(3)).setEnabled(true);
 
-        /* Enable 1 feature only after disable all. */
+        /* Enable feature after the SDK is disabled. */
         Sonoma.setEnabled(false);
         assertFalse(Sonoma.isEnabled());
         for (SonomaFeature feature : features) {
             assertFalse(feature.isInstanceEnabled());
         }
         dummyFeature.setInstanceEnabled(true);
-        assertTrue(dummyFeature.isInstanceEnabled());
+        assertFalse(dummyFeature.isInstanceEnabled());
+        PowerMockito.verifyStatic();
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString());
         assertFalse(Sonoma.isEnabled());
-        assertFalse(anotherDummyFeature.isInstanceEnabled());
         verify(channel, times(2)).setEnabled(false);
 
         /* Disable back via main class. */
@@ -437,6 +433,16 @@ public class SonomaTest {
         verify(dummyFeature).onChannelReady(any(Context.class), any(Channel.class));
         verify(anotherDummyFeature).getLogFactories();
         verify(anotherDummyFeature).onChannelReady(any(Context.class), any(Channel.class));
+    }
+
+    @Test
+    public void enableBeforeInitializedTest() {
+        /* Test isEnabled and setEnabled before initialize */
+        assertFalse(Sonoma.isEnabled());
+        Sonoma.setEnabled(true);
+        assertFalse(Sonoma.isEnabled());
+        PowerMockito.verifyStatic(times(3));
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString());
     }
 
     @Test

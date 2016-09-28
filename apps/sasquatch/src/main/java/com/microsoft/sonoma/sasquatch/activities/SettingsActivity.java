@@ -31,35 +31,57 @@ public class SettingsActivity extends AppCompatActivity {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.settings);
             final CheckBoxPreference analyticsEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.sonoma_analytics_state_key));
-            final CheckBoxPreference errorsEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.sonoma_errors_state_key));
-            initCheckBoxSetting(R.string.sonoma_state_key, Sonoma.isEnabled(), R.string.sonoma_state_summary_enabled, R.string.sonoma_state_summary_disabled, new SetEnabled() {
+            final CheckBoxPreference crashesEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.sonoma_crashes_state_key));
+            initCheckBoxSetting(R.string.sonoma_state_key, Sonoma.isEnabled(), R.string.sonoma_state_summary_enabled, R.string.sonoma_state_summary_disabled, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
                     Sonoma.setEnabled(enabled);
-                    analyticsEnabledPreference.setChecked(enabled);
-                    errorsEnabledPreference.setChecked(enabled);
+                    analyticsEnabledPreference.setChecked(Analytics.isEnabled());
+                    crashesEnabledPreference.setChecked(Crashes.isEnabled());
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    return Sonoma.isEnabled();
                 }
             });
-            initCheckBoxSetting(R.string.sonoma_analytics_state_key, Analytics.isEnabled(), R.string.sonoma_analytics_state_summary_enabled, R.string.sonoma_analytics_state_summary_disabled, new SetEnabled() {
+            initCheckBoxSetting(R.string.sonoma_analytics_state_key, Analytics.isEnabled(), R.string.sonoma_analytics_state_summary_enabled, R.string.sonoma_analytics_state_summary_disabled, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
                     Analytics.setEnabled(enabled);
+                    analyticsEnabledPreference.setChecked(Analytics.isEnabled());
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    return Analytics.isEnabled();
                 }
             });
-            initCheckBoxSetting(R.string.sonoma_errors_state_key, Crashes.isEnabled(), R.string.sonoma_errors_state_summary_enabled, R.string.sonoma_errors_state_summary_disabled, new SetEnabled() {
+            initCheckBoxSetting(R.string.sonoma_crashes_state_key, Crashes.isEnabled(), R.string.sonoma_crashes_state_summary_enabled, R.string.sonoma_crashes_state_summary_disabled, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
                     Crashes.setEnabled(enabled);
+                    crashesEnabledPreference.setChecked(Analytics.isEnabled());
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    return Crashes.isEnabled();
                 }
             });
-            initCheckBoxSetting(R.string.sonoma_auto_page_tracking_key, Analytics.isAutoPageTrackingEnabled(), R.string.sonoma_auto_page_tracking_enabled, R.string.sonoma_auto_page_tracking_disabled, new SetEnabled() {
+            initCheckBoxSetting(R.string.sonoma_auto_page_tracking_key, Analytics.isAutoPageTrackingEnabled(), R.string.sonoma_auto_page_tracking_enabled, R.string.sonoma_auto_page_tracking_disabled, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
                     Analytics.setAutoPageTrackingEnabled(enabled);
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    return Analytics.isAutoPageTrackingEnabled();
                 }
             });
             initClickableSetting(R.string.clear_crash_user_confirmation_key, new Preference.OnPreferenceClickListener() {
@@ -73,7 +95,7 @@ public class SettingsActivity extends AppCompatActivity {
             });
         }
 
-        private void initCheckBoxSetting(int key, boolean enabled, final int enabledSummary, final int disabledSummary, final SetEnabled setEnabled) {
+        private void initCheckBoxSetting(int key, boolean enabled, final int enabledSummary, final int disabledSummary, final HasEnabled hasEnabled) {
             CheckBoxPreference preference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(key));
             updateSummary(preference, enabled, enabledSummary, disabledSummary);
             preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
@@ -81,9 +103,13 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     boolean enabled = (Boolean) newValue;
-                    setEnabled.setEnabled(enabled);
-                    updateSummary(preference, enabled, enabledSummary, disabledSummary);
-                    return true;
+                    hasEnabled.setEnabled(enabled);
+                    if (hasEnabled.isEnabled() == enabled) {
+                        updateSummary(preference, enabled, enabledSummary, disabledSummary);
+                        return true;
+                    }
+
+                    return false;
                 }
             });
             preference.setChecked(enabled);
@@ -102,8 +128,10 @@ public class SettingsActivity extends AppCompatActivity {
                 preference.setSummary(disabledSummary);
         }
 
-        private interface SetEnabled {
+        private interface HasEnabled {
             void setEnabled(boolean enabled);
+
+            boolean isEnabled();
         }
     }
 }
