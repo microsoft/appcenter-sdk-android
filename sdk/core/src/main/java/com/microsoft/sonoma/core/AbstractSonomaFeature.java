@@ -7,10 +7,12 @@ import android.support.annotation.NonNull;
 
 import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.ingestion.models.json.LogFactory;
+import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
 
 import java.util.Map;
 
+import static com.microsoft.sonoma.core.Sonoma.LOG_TAG;
 import static com.microsoft.sonoma.core.utils.PrefStorageConstants.KEY_ENABLED;
 
 public abstract class AbstractSonomaFeature implements SonomaFeature {
@@ -75,8 +77,14 @@ public abstract class AbstractSonomaFeature implements SonomaFeature {
     @Override
     public synchronized void setInstanceEnabled(boolean enabled) {
 
+        /* Check if the SDK is disabled. */
+        if (!Sonoma.isEnabled() && enabled) {
+            SonomaLog.error(LOG_TAG, "The SDK is disabled. Re-enable the SDK from the core module first before enabling a specific feature");
+            return;
+        }
+
         /* Nothing to do if state does not change. */
-        if (enabled == isInstanceEnabled())
+        else if (enabled == isInstanceEnabled())
             return;
 
         /* If channel initialized. */

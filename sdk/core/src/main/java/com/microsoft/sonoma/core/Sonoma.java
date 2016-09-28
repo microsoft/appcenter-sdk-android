@@ -389,6 +389,9 @@ public final class Sonoma {
             SonomaLog.info(LOG_TAG, "Sonoma enabled");
         }
 
+        /* Update state. */
+        StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, enabled);
+
         /* Apply change to features. */
         for (SonomaFeature feature : mFeatures) {
 
@@ -402,9 +405,6 @@ public final class Sonoma {
             if (feature.isInstanceEnabled() != enabled)
                 feature.setInstanceEnabled(enabled);
         }
-
-        /* Update state. */
-        StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, enabled);
     }
 
     @VisibleForTesting

@@ -10,6 +10,7 @@ import com.microsoft.sonoma.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.sonoma.analytics.ingestion.models.json.EventLogFactory;
 import com.microsoft.sonoma.analytics.ingestion.models.json.PageLogFactory;
 import com.microsoft.sonoma.analytics.ingestion.models.json.StartSessionLogFactory;
+import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.ingestion.models.Log;
 import com.microsoft.sonoma.core.ingestion.models.json.LogFactory;
@@ -52,7 +53,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, SonomaLog.class})
+@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, SonomaLog.class, Sonoma.class})
 public class AnalyticsTest {
 
     @Before
@@ -60,6 +61,8 @@ public class AnalyticsTest {
         Analytics.unsetInstance();
         mockStatic(SystemClock.class);
         mockStatic(SonomaLog.class);
+        mockStatic(Sonoma.class);
+        when(Sonoma.isEnabled()).thenReturn(true);
 
         /* First call to com.microsoft.sonoma.isInstanceEnabled shall return true, initial state. */
         mockStatic(StorageHelper.PreferencesStorage.class);
