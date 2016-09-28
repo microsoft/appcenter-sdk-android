@@ -12,16 +12,17 @@ import com.microsoft.sonoma.sasquatch.activities.DummyActivity;
 import com.microsoft.sonoma.sasquatch.activities.EventActivity;
 import com.microsoft.sonoma.sasquatch.activities.PageActivity;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class TestFeatures {
     private static List<TestFeatureModel> sTestFeatureModel;
-    private static Activity sParentActivity;
+    private static WeakReference<Activity> sParentActivity;
 
     public static void initialize(Activity parentActivity) {
         sTestFeatureModel = new ArrayList<>();
-        sParentActivity = parentActivity;
+        sParentActivity = new WeakReference<>(parentActivity);
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_crash, R.string.description_crash, new View.OnClickListener() {
 
             @Override
@@ -56,7 +57,7 @@ public final class TestFeatures {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sParentActivity.startActivity(new Intent(sParentActivity, clazz));
+                sParentActivity.get().startActivity(new Intent(sParentActivity.get(), clazz));
             }
         };
     }
@@ -71,8 +72,8 @@ public final class TestFeatures {
         }
 
         public TestFeatureModel(int title, int description, View.OnClickListener listener) {
-            this.mTitle = title > 0 ? sParentActivity.getResources().getString(title) : "";
-            this.mDescription = description > 0 ? sParentActivity.getResources().getString(description) : "";
+            this.mTitle = title > 0 ? sParentActivity.get().getResources().getString(title) : "";
+            this.mDescription = description > 0 ? sParentActivity.get().getResources().getString(description) : "";
             this.mOnClickListener = listener;
         }
 
