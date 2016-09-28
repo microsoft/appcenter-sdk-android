@@ -18,13 +18,13 @@
     <string name="sonoma_auto_page_tracking_enabled">Automatic page tracking is enabled</string>
     <string name="sonoma_auto_page_tracking_disabled">Automatic page tracking is disabled</string>
 
-    <string name="error_reporting_key">sonoma_errors</string>
-    <string name="error_reporting_title">Error Reporting</string>
+    <string name="crashes_key">sonoma_crashes</string>
+    <string name="crashes_title">Crashes</string>
 
-    <string name="sonoma_errors_state_key">sonoma_errors_state_key</string>
-    <string name="sonoma_errors_state_title">Error Reporting state</string>
-    <string name="sonoma_errors_state_summary_enabled">Error Reporting is enabled</string>
-    <string name="sonoma_errors_state_summary_disabled">Error Reporting is disabled</string>
+    <string name="sonoma_crashes_state_key">sonoma_crashes_state_key</string>
+    <string name="sonoma_crashes_state_title">Crashes state</string>
+    <string name="sonoma_crashes_state_summary_enabled">Crashes is enabled</string>
+    <string name="sonoma_crashes_state_summary_disabled">Crashes is disabled</string>
 
     <string name="miscellaneous_key">miscellaneous</string>
     <string name="miscellaneous_title">Miscellaneous</string>

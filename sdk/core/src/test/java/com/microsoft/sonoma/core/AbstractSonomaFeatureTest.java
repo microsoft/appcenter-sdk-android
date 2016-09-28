@@ -30,7 +30,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(StorageHelper.PreferencesStorage.class)
+@PrepareForTest({StorageHelper.PreferencesStorage.class, Sonoma.class})
 public class AbstractSonomaFeatureTest {
 
     private AbstractSonomaFeature feature;
@@ -43,6 +43,9 @@ public class AbstractSonomaFeatureTest {
                 return "group_test";
             }
         };
+
+        mockStatic(Sonoma.class);
+        when(Sonoma.isEnabled()).thenReturn(true);
 
         /* First call to com.microsoft.sonoma.isInstanceEnabled shall return true, initial state. */
         mockStatic(StorageHelper.PreferencesStorage.class);
