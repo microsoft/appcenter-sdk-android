@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.SystemClock;
 
 import com.microsoft.sonoma.core.Constants;
+import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.ingestion.models.Device;
 import com.microsoft.sonoma.core.ingestion.models.Log;
@@ -65,7 +66,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, SonomaLog.class})
+@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, SonomaLog.class, Sonoma.class})
 public class CrashesTest {
 
     @Rule
@@ -90,6 +91,8 @@ public class CrashesTest {
         mockStatic(StorageHelper.PreferencesStorage.class);
         mockStatic(SonomaLog.class);
         when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
+        mockStatic(Sonoma.class);
+        Mockito.when(Sonoma.isEnabled()).thenReturn(true);
 
         final String key = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getGroupName();
         when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(true);
