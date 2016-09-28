@@ -12,7 +12,6 @@ import java.util.List;
 /**
  * Abstract class for Persistence service.
  */
-/* TODO (jaelim): Interface vs Abstract class. Need to revisit to finalize. */
 public abstract class Persistence {
 
     /**
