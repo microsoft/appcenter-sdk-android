@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Sonoma.start(getApplication(), "6ad16901-9d7d-4135-a3d5-085813b01a4b", Analytics.class, Crashes.class);
+        Sonoma.start(getApplication(), "45d1d9f6-2492-4e68-bd44-7190351eb5f3", Analytics.class, Crashes.class);
 
         TestFeatures.initialize(this);
         ListView listView = (ListView) findViewById(R.id.list);
