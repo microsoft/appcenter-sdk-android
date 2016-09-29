@@ -101,7 +101,7 @@ To start the Sonoma SDK in your app, follow these steps:
 * **Custom Events:** You can track your own custom events with specific properties to know what's happening in your app, understand user actions, and see the aggregates in the Sonoma portal. Once you have started the SDK, use the `trackEvent()` method to track your events with properties.
 
     ```Java
-    Map<String, String> properties = new HashMap<String, String>();
+    Map<String,String>properties=new HashMap<String,String>();
     properties.put("Category", "Music");
     properties.put("FileName", "favorite.avi");
 
