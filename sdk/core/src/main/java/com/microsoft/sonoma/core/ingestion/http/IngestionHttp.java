@@ -29,7 +29,7 @@ public class IngestionHttp implements Ingestion {
     /**
      * Default base URL.
      */
-    private static final String DEFAULT_BASE_URL = "http://in-integration.dev.avalanch.es:8081";
+    private static final String DEFAULT_BASE_URL = "https://in.sonoma.hockeyapp.com";
 
     /**
      * API Path.
