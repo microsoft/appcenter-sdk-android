@@ -75,14 +75,15 @@ To start the Sonoma SDK in your app, follow these steps:
 
 1. **Get the App Secret of your application:** Before you call the API to start the SDK, you need to get your app specific Application Secret from the Sonoma portal that needs to be a part of the method call. This will make sure all the data collected by the SDK corresponds to your application.
 
-    Go over to the Sonoma portal, click on "Microsoft Azure Project Sonoma". Under "My apps", click on the app that you want the SDK to set up for. Then click on "Manage app" and make note of the "App Secret" value.
+    Go over to the Sonoma portal, click on "Microsoft Azure Sonoma". Under "My apps", click on the app that you want the SDK to set up for. Then click on "Manage app" and make note of the "App Secret" value.
 
 2. **Start the SDK:**  Sonoma provides developers with two modules to get started – Analytics and Crashes. In order to use these modules, you need to opt in for the module(s) that you'd like, meaning by default no modules are started and you will have to explicitly call each of them when starting the SDK. Insert the following line inside your app's main activity class' `onCreate` callback.
 
     ```Java
     Sonoma.start(getApplication(), "{Your App Secret}", Analytics.class, Crashes.class);
     ```
-
+    Make sure to replace {Your App Secret} text with the actual value for your application.
+    
     The example above shows how to use the `start()` method and include both the Analytics and Crashes module. If you wish not to use Analytics, remove the parameter from the method call above. Note that, unless you explicitly specify each module as parameters in the start method, you can't use that Sonoma service. Also, the `start()` API can be used only once in the lifecycle of your app – all other calls will log a warning to the console and only the modules included in the first call will be available.
 
     Android Studio will automatically suggest the required import statements once you insert the `start()` method-call, but if you see an error that the class names are not recognized, add the following lines to the import statements in your activity class:
@@ -147,7 +148,7 @@ Once you set up and start the Sonoma SDK to use the Crashes module in your appli
 * **Details about the last crash:** If your app crashed previously, you can get details about the last crash:
 
     ```Java
-    Crashes.getLastSessionCrashReport();
+    ErrorReport crashReport = Crashes.getLastSessionCrashReport();
     ```
 
 * **Enable or disable the Crashes module:**  You can disable and opt out of using the Crashes module by calling the `setEnabled()` API and the SDK will collect no crashes for your app. Use the same API to re-enable it by passing `true` as a parameter.
@@ -240,13 +241,13 @@ You create your own Crashes listener and assign it like this:
         Sonoma.setLogLevel(Log.VERBOSE);
     ```
 
-* **Get Install Identifier**: The Sonoma SDK creates a UUID for each device once the app is installed. This identifier remains the same for a device when the app is updated and a new one is generated only when the app is re-installed. The following API is useful for debugging purposes:
+* **Get Install Identifier**: The Sonoma SDK creates a UUID for each device once the app is installed. This identifier remains the same for a device when the app is updated and a new one is generated only when the app is re-installed. The following API is useful for debugging purposes.
 
     ```Java
         UUID installId = Sonoma.getInstallId();
     ```
 
-* **Enable/Disable Sonoma SDK:** If you want the Sonoma SDK to be disabled completely, use the `setEnabled()` API. When disabled, the SDK will collect no more information for any of the modules that were added:
+* **Enable/Disable Sonoma SDK:** If you want the Sonoma SDK to be disabled completely, use the `setEnabled()` API. When disabled, the SDK will not forward any information to Sonoma.
 
     ```Java
         Sonoma.setEnabled(false);
