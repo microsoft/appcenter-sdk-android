@@ -235,7 +235,7 @@ You create your own Crashes listener and assign it like this:
 
 ## 6. Advanced APIs
 
-* **Debugging**: You can control the amount of log messages that show up from the Sonoma SDK in LogCat. Use the `Sonoma.setLogLevel()` API to enable additional logging while debugging. The log levels correspond to the ones defined in `android.util.Log`. By default, it is set it to `ASSERT`.
+* **Debugging**: You can control the amount of log messages that show up from the Sonoma SDK in LogCat. Use the `Sonoma.setLogLevel()` API to enable additional logging while debugging. The log levels correspond to the ones defined in `android.util.Log`. By default, it is set it to `ASSERT` for non-debuggable applications and `WARN` for debuggable applications.
 
     ```Java
         Sonoma.setLogLevel(Log.VERBOSE);
