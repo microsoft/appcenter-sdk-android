@@ -121,12 +121,7 @@ public class SettingsActivity extends AppCompatActivity {
                                     }
                                 }
                             })
-                            .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-
-                                }
-                            })
+                            .setNegativeButton(R.string.cancel, null)
                             .create().show();
                     return true;
                 }
