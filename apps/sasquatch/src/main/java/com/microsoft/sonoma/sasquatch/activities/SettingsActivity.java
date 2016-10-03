@@ -1,18 +1,25 @@
 package com.microsoft.sonoma.sasquatch.activities;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.microsoft.sonoma.analytics.Analytics;
 import com.microsoft.sonoma.core.Sonoma;
+import com.microsoft.sonoma.core.utils.PrefStorageConstants;
 import com.microsoft.sonoma.core.utils.StorageHelper;
 import com.microsoft.sonoma.crashes.Crashes;
 import com.microsoft.sonoma.sasquatch.R;
+
+import java.util.UUID;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -75,13 +82,13 @@ public class SettingsActivity extends AppCompatActivity {
             initCheckBoxSetting(R.string.sonoma_auto_page_tracking_key, Analytics.isAutoPageTrackingEnabled(), R.string.sonoma_auto_page_tracking_enabled, R.string.sonoma_auto_page_tracking_disabled, new HasEnabled() {
 
                 @Override
-                public void setEnabled(boolean enabled) {
-                    Analytics.setAutoPageTrackingEnabled(enabled);
+                public boolean isEnabled() {
+                    return Analytics.isAutoPageTrackingEnabled();
                 }
 
                 @Override
-                public boolean isEnabled() {
-                    return Analytics.isAutoPageTrackingEnabled();
+                public void setEnabled(boolean enabled) {
+                    Analytics.setAutoPageTrackingEnabled(enabled);
                 }
             });
             initClickableSetting(R.string.clear_crash_user_confirmation_key, new Preference.OnPreferenceClickListener() {
@@ -90,6 +97,32 @@ public class SettingsActivity extends AppCompatActivity {
                 public boolean onPreferenceClick(Preference preference) {
                     StorageHelper.PreferencesStorage.remove(Crashes.PREF_KEY_ALWAYS_SEND);
                     Toast.makeText(getActivity(), R.string.clear_crash_user_confirmation_toast, Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+            });
+            initClickableSetting(R.string.install_id_key, new Preference.OnPreferenceClickListener() {
+
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    final EditText input = new EditText(getActivity());
+                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                    input.setText(Sonoma.getInstallId().toString());
+
+                    new AlertDialog.Builder(getActivity()).setTitle(R.string.install_id_title).setView(input)
+                            .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    try {
+                                        UUID uuid = UUID.fromString(input.getText().toString());
+                                        StorageHelper.PreferencesStorage.putString(PrefStorageConstants.KEY_INSTALL_ID, uuid.toString());
+                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.install_id_changed_format), uuid.toString()), Toast.LENGTH_LONG).show();
+                                    } catch (Exception e) {
+                                        Toast.makeText(getActivity(), R.string.install_id_invalid, Toast.LENGTH_LONG).show();
+                                    }
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .create().show();
                     return true;
                 }
             });
@@ -129,9 +162,9 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         private interface HasEnabled {
-            void setEnabled(boolean enabled);
-
             boolean isEnabled();
+
+            void setEnabled(boolean enabled);
         }
     }
 }

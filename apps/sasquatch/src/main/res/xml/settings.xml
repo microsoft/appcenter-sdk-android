@@ -29,5 +29,8 @@
         <Preference
             android:key="@string/clear_crash_user_confirmation_key"
             android:title="@string/clear_crash_user_confirmation_title"/>
+        <Preference
+            android:key="@string/install_id_key"
+            android:title="@string/install_id_title"/>
     </PreferenceCategory>
 </PreferenceScreen>

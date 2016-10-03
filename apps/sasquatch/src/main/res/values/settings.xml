@@ -32,4 +32,12 @@
     <string name="clear_crash_user_confirmation_key">clear_crash_user_confirmation_key</string>
     <string name="clear_crash_user_confirmation_title">Clear crash user confirmation</string>
     <string name="clear_crash_user_confirmation_toast">Cleared</string>
+
+    <string name="install_id_key">install_id_key</string>
+    <string name="install_id_title">Show install ID</string>
+
+    <string name="install_id_changed_format">Install ID is changed to %s successfully.</string>
+    <string name="install_id_invalid">Install ID is not valid.</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
 </resources>
