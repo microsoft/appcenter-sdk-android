@@ -2,6 +2,7 @@ package com.microsoft.sonoma.sasquatch.activities;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
@@ -21,6 +22,8 @@ import com.microsoft.sonoma.sasquatch.R;
 
 import java.util.UUID;
 
+import static com.microsoft.sonoma.sasquatch.activities.MainActivity.APP_SECRET_KEY;
+
 public class SettingsActivity extends AppCompatActivity {
 
     @Override
@@ -32,6 +35,8 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public static class SettingsFragment extends PreferenceFragment {
+
+        private static String UUID_FORMAT_REGEX = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -112,18 +117,57 @@ public class SettingsActivity extends AppCompatActivity {
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    try {
+                                    if (input.getText().toString().matches(UUID_FORMAT_REGEX)) {
                                         UUID uuid = UUID.fromString(input.getText().toString());
                                         StorageHelper.PreferencesStorage.putString(PrefStorageConstants.KEY_INSTALL_ID, uuid.toString());
-                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.install_id_changed_format), uuid.toString()), Toast.LENGTH_LONG).show();
-                                    } catch (Exception e) {
-                                        Toast.makeText(getActivity(), R.string.install_id_invalid, Toast.LENGTH_LONG).show();
+                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.install_id_changed_format), uuid.toString()), Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Toast.makeText(getActivity(), R.string.install_id_invalid, Toast.LENGTH_SHORT).show();
                                     }
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)
                             .create().show();
                     return true;
+                }
+            });
+            initClickableSetting(R.string.app_secret_key, new Preference.OnPreferenceClickListener() {
+
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    final EditText input = new EditText(getActivity());
+                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                    input.setText(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
+
+                    new AlertDialog.Builder(getActivity()).setTitle(R.string.app_secret_title).setView(input)
+                            .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (input.getText().toString().matches(UUID_FORMAT_REGEX)) {
+                                        UUID uuid = UUID.fromString(input.getText().toString());
+                                        setAppSecret(uuid);
+                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), uuid.toString()), Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Toast.makeText(getActivity(), R.string.app_secret_invalid, Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            })
+                            .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    setAppSecret(UUID.fromString(MainActivity.APP_SECRET));
+                                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), MainActivity.APP_SECRET), Toast.LENGTH_SHORT).show();
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .create().show();
+                    return true;
+                }
+
+                private void setAppSecret(UUID uuid) {
+                    SharedPreferences.Editor editor = MainActivity.sSharedPreferences.edit();
+                    editor.putString(APP_SECRET_KEY, uuid.toString());
+                    editor.apply();
                 }
             });
         }
