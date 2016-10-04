@@ -32,5 +32,8 @@
         <Preference
             android:key="@string/install_id_key"
             android:title="@string/install_id_title"/>
+        <Preference
+            android:key="@string/app_secret_key"
+            android:title="@string/app_secret_title"/>
     </PreferenceCategory>
 </PreferenceScreen>
