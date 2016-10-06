@@ -88,7 +88,7 @@ public class SessionTrackerTest {
     }
 
     @Test
-    public void session() {
+    public void longSessionStartingFromBackground() {
 
         /* Application is in background, send a log, verify decoration. */
         UUID firstSid;
@@ -136,7 +136,17 @@ public class SessionTrackerTest {
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
 
-        /* Switch to another activity. */
+        /* We are in foreground, even after timeout a log is still in session. */
+        {
+            spendTime(30000);
+            Log log = newEvent();
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            assertEquals(expectedSid, log.getSid());
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
+        }
+
+        /* Switch to another activity and send a log, still session. */
         {
             spendTime(2);
             mSessionTracker.onActivityPaused();
@@ -191,6 +201,117 @@ public class SessionTrackerTest {
             assertNotEquals(expectedSid, log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
+        }
+
+        /* Background for a long time sending a log: new session. */
+        {
+            mSessionTracker.onActivityPaused();
+            spendTime(30000);
+            Log log = newEvent();
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            assertNotEquals(expectedSid, log.getSid());
+            expectedSid = log.getSid();
+            expectedStartSessionLog.setSid(expectedSid);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
+        }
+    }
+
+    @Test
+    public void goBackgroundAndComeBackMuchLater() {
+
+        /* Application is in foreground, send a log, verify decoration with a new session. */
+        mSessionTracker.onActivityResumed();
+        UUID expectedSid;
+        StartSessionLog expectedStartSessionLog = new StartSessionLog();
+        {
+            Log log = newEvent();
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            assertNotNull(log.getSid());
+            expectedSid = log.getSid();
+            expectedStartSessionLog.setSid(expectedSid);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
+        }
+
+        /* Go background. */
+        spendTime(1);
+        mSessionTracker.onActivityPaused();
+
+        /* Come back after a long time. */
+        spendTime(30000);
+        mSessionTracker.onActivityResumed();
+
+        /* Send a log again: new session. */
+        {
+            Log log = newEvent();
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            assertNotEquals(expectedSid, log.getSid());
+            expectedSid = log.getSid();
+            expectedStartSessionLog.setSid(expectedSid);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
+        }
+    }
+
+    @Test
+    public void sdkInitializedBetweenPauseAndResume() {
+
+        /* Pause application before we saw the first resume event (integration problem). We are handling that gracefully though. */
+        mSessionTracker.onActivityPaused();
+
+        /* Application is in background, send a log, verify decoration. */
+        UUID expectedSid;
+        StartSessionLog expectedStartSessionLog = new StartSessionLog();
+        {
+            Log log = newEvent();
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            assertNotNull(log.getSid());
+            expectedSid = log.getSid();
+            expectedStartSessionLog.setSid(expectedSid);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
+        }
+
+        /* Verify session reused for second log. */
+        {
+            Log log = newEvent();
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            assertEquals(expectedSid, log.getSid());
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
+        }
+
+        /* No usage from background for a long time: new session. */
+        {
+            spendTime(30000);
+            Log log = newEvent();
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            assertNotEquals(expectedSid, log.getSid());
+            expectedSid = log.getSid();
+            expectedStartSessionLog.setSid(expectedSid);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
+        }
+
+        /* App comes to foreground and sends a log, we were in background for a long time but we sent a log recently, still session. */
+        {
+            mSessionTracker.onActivityResumed();
+            Log log = newEvent();
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            assertEquals(expectedSid, log.getSid());
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
+        }
+
+        /* We are in foreground, even after timeout a log is still in session. */
+        {
+            spendTime(30000);
+            Log log = newEvent();
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            assertEquals(expectedSid, log.getSid());
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
     }
