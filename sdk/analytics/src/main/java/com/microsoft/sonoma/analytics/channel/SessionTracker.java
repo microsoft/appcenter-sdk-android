@@ -65,13 +65,15 @@ public class SessionTracker implements Channel.Listener {
 
     /**
      * Timestamp of the last time the application went to foreground.
+     * This value is null when the application resume event has not yet been seen.
      */
-    private long mLastResumedTime;
+    private Long mLastResumedTime;
 
     /**
      * Timestamp of the last time the application went to background.
+     * This value is null when the application pause event has not yet been seen.
      */
-    private long mLastPausedTime;
+    private Long mLastPausedTime;
 
     /**
      * Init.
@@ -166,6 +168,7 @@ public class SessionTracker implements Channel.Listener {
     public synchronized void onActivityResumed() {
 
         /* Record resume time for session timeout management. */
+        SonomaLog.debug(Analytics.LOG_TAG, "onActivityResumed");
         mLastResumedTime = SystemClock.elapsedRealtime();
     }
 
@@ -175,6 +178,7 @@ public class SessionTracker implements Channel.Listener {
     public synchronized void onActivityPaused() {
 
         /* Record pause time for session timeout management. */
+        SonomaLog.debug(Analytics.LOG_TAG, "onActivityPaused");
         mLastPausedTime = SystemClock.elapsedRealtime();
     }
 
@@ -191,10 +195,29 @@ public class SessionTracker implements Channel.Listener {
      * @return true if current session has timed out, false otherwise.
      */
     private boolean hasSessionTimedOut() {
+
+        /* Compute how long we have not sent a log. */
         long now = SystemClock.elapsedRealtime();
         boolean noLogSentForLong = now - mLastQueuedLogTime >= SESSION_TIMEOUT;
+
+        /* Corner case: we have not been paused yet, typically we stayed on the first activity or we are called from background (for example a broadcast intent that wakes up application, new process). */
+        if (mLastPausedTime == null) {
+
+            /* If we saw a resume in event, we are in foreground, so no expiration. If we are in background, check how long. */
+            return mLastResumedTime == null && noLogSentForLong;
+        }
+
+        /* Corner case 2: we saw a pause but not a resume event: we are in background, check how long. */
+        if (mLastResumedTime == null) {
+
+            /* Note that this corner case is likely an integration issue. It's not supposed to happen. Likely the SDK has been initialized too late. */
+            return noLogSentForLong;
+        }
+
+        /* Normal case: we saw both resume and paused events, compare all times. */
         boolean isBackgroundForLong = mLastPausedTime >= mLastResumedTime && now - mLastPausedTime >= SESSION_TIMEOUT;
-        boolean wasBackgroundForLong = mLastResumedTime - mLastPausedTime >= SESSION_TIMEOUT;
+        boolean wasBackgroundForLong = mLastResumedTime - Math.max(mLastPausedTime, mLastQueuedLogTime) >= SESSION_TIMEOUT;
+        SonomaLog.debug(Analytics.LOG_TAG, "noLogSentForLong=" + noLogSentForLong + " isBackgroundForLong=" + isBackgroundForLong + " wasBackgroundForLong=" + wasBackgroundForLong);
         return noLogSentForLong && (isBackgroundForLong || wasBackgroundForLong);
     }
 }
