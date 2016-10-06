@@ -20,6 +20,7 @@ import com.microsoft.sonoma.core.ingestion.models.json.LogSerializer;
 import com.microsoft.sonoma.core.persistence.DatabasePersistence;
 import com.microsoft.sonoma.core.persistence.DatabasePersistenceAsync;
 import com.microsoft.sonoma.core.persistence.DatabasePersistenceAsync.DatabasePersistenceAsyncCallback;
+import com.microsoft.sonoma.core.persistence.DatabasePersistenceAsync.AbstractDatabasePersistenceAsyncCallback;
 import com.microsoft.sonoma.core.persistence.Persistence;
 import com.microsoft.sonoma.core.utils.DeviceInfoHelper;
 import com.microsoft.sonoma.core.utils.IdHelper;
@@ -145,7 +146,7 @@ public class DefaultChannel implements Channel {
         mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener));
 
         /* Count pending logs. */
-        mPersistence.countLogs(groupName, new DatabasePersistenceAsyncCallback() {
+        mPersistence.countLogs(groupName, new AbstractDatabasePersistenceAsyncCallback() {
 
             @Override
             public void onSuccess(Object result) {
@@ -153,11 +154,6 @@ public class DefaultChannel implements Channel {
 
                 /* Schedule sending any pending log. */
                 checkPendingLogs(groupName);
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                /* Do nothing. countLogs won't call onFailure callback. */
             }
         });
     }
@@ -273,7 +269,7 @@ public class DefaultChannel implements Channel {
 
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(groupState.mMaxLogsPerBatch);
-        mPersistence.getLogs(groupName, groupState.mMaxLogsPerBatch, batch, new DatabasePersistenceAsyncCallback() {
+        mPersistence.getLogs(groupName, groupState.mMaxLogsPerBatch, batch, new AbstractDatabasePersistenceAsyncCallback() {
 
             @Override
             public void onSuccess(Object result) {
@@ -314,11 +310,6 @@ public class DefaultChannel implements Channel {
                     /* Check for more pending logs. */
                     checkPendingLogs(groupName);
                 }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                /* Do nothing. getLogs won't call onFailure callback. */
             }
         });
     }

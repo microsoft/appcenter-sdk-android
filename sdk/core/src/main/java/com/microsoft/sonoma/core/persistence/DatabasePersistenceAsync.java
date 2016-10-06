@@ -261,4 +261,14 @@ public class DatabasePersistenceAsync {
          */
         void onFailure(Exception e);
     }
+
+    /**
+     * Abstract callback for {@link DatabasePersistenceAsync}. Do nothing when {@link #onFailure(Exception)} is called.
+     */
+    public abstract static class AbstractDatabasePersistenceAsyncCallback implements DatabasePersistenceAsyncCallback {
+
+        @Override
+        public final void onFailure(Exception e) {
+        }
+    }
 }
