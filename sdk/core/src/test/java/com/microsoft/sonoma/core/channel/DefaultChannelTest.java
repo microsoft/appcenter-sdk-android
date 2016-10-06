@@ -3,6 +3,8 @@ package com.microsoft.sonoma.core.channel;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 
 import com.microsoft.sonoma.core.ingestion.Ingestion;
@@ -12,6 +14,7 @@ import com.microsoft.sonoma.core.ingestion.http.IngestionHttp;
 import com.microsoft.sonoma.core.ingestion.models.Device;
 import com.microsoft.sonoma.core.ingestion.models.Log;
 import com.microsoft.sonoma.core.ingestion.models.LogContainer;
+import com.microsoft.sonoma.core.persistence.DatabasePersistenceAsync;
 import com.microsoft.sonoma.core.persistence.Persistence;
 import com.microsoft.sonoma.core.utils.DeviceInfoHelper;
 import com.microsoft.sonoma.core.utils.IdHelper;
@@ -34,6 +37,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.microsoft.sonoma.core.persistence.DatabasePersistenceAsync.THREAD_NAME;
 import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -44,17 +48,18 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class})
+@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, DatabasePersistenceAsync.class})
 public class DefaultChannelTest {
 
     private static final String TEST_GROUP = "group_test";
@@ -121,7 +126,24 @@ public class DefaultChannelTest {
         mockStatic(IdHelper.class, new Returns(UUIDUtils.randomUUID()));
         mockStatic(DeviceInfoHelper.class);
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mock(Device.class));
-        whenNew(Handler.class).withAnyArguments().thenReturn(mHandler);
+        mHandler = mock(Handler.class);
+        whenNew(Handler.class).withParameterTypes(Looper.class).withArguments(Looper.getMainLooper()).thenReturn(mHandler);
+
+        /* Mock handler for asynchronous Persistence */
+        HandlerThread mockHandlerThread = mock(HandlerThread.class);
+        Looper mockLooper = mock(Looper.class);
+        whenNew(HandlerThread.class).withArguments(THREAD_NAME).thenReturn(mockHandlerThread);
+        when(mockHandlerThread.getLooper()).thenReturn(mockLooper);
+        Handler mockPersistenceHandler = mock(Handler.class);
+        whenNew(Handler.class).withArguments(mockLooper).thenReturn(mockPersistenceHandler);
+        when(mockPersistenceHandler.post(any(Runnable.class))).then(new Answer<Boolean>() {
+
+            @Override
+            public Boolean answer(InvocationOnMock invocation) throws Throwable {
+                ((Runnable) invocation.getArguments()[0]).run();
+                return true;
+            }
+        });
     }
 
     @Test
@@ -171,7 +193,7 @@ public class DefaultChannelTest {
         /* Verify that we have called sendAsync on the ingestion. */
         verify(mockIngestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        /* Verify that we have called deleteLogs on the persistence. */
+        /* Verify that we have called deleteLogs on the Persistence. */
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
         /* Verify that we have called onBeforeSending in the listener. */
@@ -372,7 +394,7 @@ public class DefaultChannelTest {
         /* Verify that we have called sendAsync on the ingestion. */
         verify(mockIngestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        /* Verify that we have not called deleteLogs on the persistence. */
+        /* Verify that we have not called deleteLogs on the Persistence. */
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
         /* Verify that the Channel is disabled. */
@@ -407,7 +429,7 @@ public class DefaultChannelTest {
         /* Verify that we have called sendAsync on the ingestion 3 times total. */
         verify(mockIngestion, times(3)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        /* Verify that we have called deleteLogs on the persistence (2 successful batches, the first call was a recoverable failure). */
+        /* Verify that we have called deleteLogs on the Persistence (2 successful batches, the first call was a recoverable failure). */
         verify(mockPersistence, times(2)).deleteLogs(any(String.class), any(String.class));
 
         /* Verify that we have called onBeforeSending in the listener. getLogs will return 50, 50, 50 and 25. */
@@ -423,10 +445,12 @@ public class DefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void analyticsFatal() throws Persistence.PersistenceException, InterruptedException {
+    public void analyticsFatal() throws Exception {
         Persistence mockPersistence = mock(Persistence.class);
         IngestionHttp mockIngestion = mock(IngestionHttp.class);
 
+        DatabasePersistenceAsync mockPersistenceAsync = spy(new DatabasePersistenceAsync(mockPersistence));
+        whenNew(DatabasePersistenceAsync.class).withArguments(mockPersistence).thenReturn(mockPersistenceAsync);
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer(50)).then(getGetLogsAnswer(20));
         when(mockIngestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(403))).then(getSendAsyncAnswer());
 
@@ -482,7 +506,7 @@ public class DefaultChannelTest {
         /* Verify that we have called sendAsync on the ingestion 2 times total: 1 failure then 1 success. */
         verify(mockIngestion, times(2)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        /* Verify that we have called deleteLogs on the persistence for the batches. */
+        /* Verify that we have called deleteLogs on the Persistence for the batches. */
         verify(mockPersistence, times(2)).deleteLogs(any(String.class), any(String.class));
 
         /* Verify timer. */
@@ -513,7 +537,7 @@ public class DefaultChannelTest {
         /* Verify that we have called sendAsync on the ingestion twice as batch size is 1. */
         verify(mockIngestion, times(2)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        /* Verify that we have called deleteLogs on the persistence. */
+        /* Verify that we have called deleteLogs on the Persistence. */
         verify(mockPersistence, times(2)).deleteLogs(any(String.class), any(String.class));
 
         /* Verify that we have called onBeforeSending in the listener. */
@@ -553,7 +577,7 @@ public class DefaultChannelTest {
         /* Verify that we have called sendAsync on the ingestion once for the first item, but not more than that. */
         verify(mockIngestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        /* Verify that we have not called deleteLogs on the persistence. */
+        /* Verify that we have not called deleteLogs on the Persistence. */
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
         /* Verify that we have called onBeforeSending in the listener. */
@@ -576,7 +600,7 @@ public class DefaultChannelTest {
         /* Verify that we have called sendAsync on the ingestion 6 times total: 1 failure before re-enabling, 5 success after. */
         verify(mockIngestion, times(6)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        /* Verify that we have called deleteLogs on the persistence 5 times. */
+        /* Verify that we have called deleteLogs on the Persistence 5 times. */
         verify(mockPersistence, times(5)).deleteLogs(any(String.class), any(String.class));
 
         /* Verify timer. */
@@ -588,14 +612,14 @@ public class DefaultChannelTest {
     public void enqueuePersistenceFailure() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
 
-        /* Simulate persistence failing. */
+        /* Simulate Persistence failing. */
         doThrow(new Persistence.PersistenceException("mock", new IOException("mock"))).
                 when(mockPersistence).putLog(anyString(), any(Log.class));
         IngestionHttp mockIngestion = mock(IngestionHttp.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID(), mockPersistence, mockIngestion);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
-        /* Verify no request is sent if persistence fails. */
+        /* Verify no request is sent if Persistence fails. */
         for (int i = 0; i < 50; i++) {
             channel.enqueue(mock(Log.class), TEST_GROUP);
         }
