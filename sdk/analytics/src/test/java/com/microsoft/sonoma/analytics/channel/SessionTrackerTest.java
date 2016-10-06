@@ -219,6 +219,41 @@ public class SessionTrackerTest {
     }
 
     @Test
+    public void stayOnFirstScreenForLong() {
+
+        /* Application is in foreground, send a log, verify decoration with a new session. */
+        mSessionTracker.onActivityResumed();
+        UUID expectedSid;
+        StartSessionLog expectedStartSessionLog = new StartSessionLog();
+        {
+            Log log = newEvent();
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            assertNotNull(log.getSid());
+            expectedSid = log.getSid();
+            expectedStartSessionLog.setSid(expectedSid);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
+        }
+
+        /* Wait a long time. */
+        spendTime(30000);
+
+        /* Go to another activity. */
+        mSessionTracker.onActivityPaused();
+        spendTime(2);
+        mSessionTracker.onActivityResumed();
+
+        /* Send a log again: session must be reused. */
+        {
+            Log log = newEvent();
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            assertEquals(expectedSid, log.getSid());
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
+        }
+    }
+
+    @Test
     public void goBackgroundAndComeBackMuchLater() {
 
         /* Application is in foreground, send a log, verify decoration with a new session. */
