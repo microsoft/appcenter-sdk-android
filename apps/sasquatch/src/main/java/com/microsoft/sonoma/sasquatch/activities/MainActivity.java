@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -81,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().build());
         Sonoma.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class);
 
         TestFeatures.initialize(this);
