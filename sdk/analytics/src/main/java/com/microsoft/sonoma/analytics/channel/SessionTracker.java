@@ -216,7 +216,7 @@ public class SessionTracker implements Channel.Listener {
 
         /* Normal case: we saw both resume and paused events, compare all times. */
         boolean isBackgroundForLong = mLastPausedTime >= mLastResumedTime && now - mLastPausedTime >= SESSION_TIMEOUT;
-        boolean wasBackgroundForLong = mLastResumedTime - mLastQueuedLogTime >= SESSION_TIMEOUT;
+        boolean wasBackgroundForLong = mLastResumedTime - Math.max(mLastPausedTime, mLastQueuedLogTime) >= SESSION_TIMEOUT;
         SonomaLog.debug(Analytics.LOG_TAG, "noLogSentForLong=" + noLogSentForLong + " isBackgroundForLong=" + isBackgroundForLong + " wasBackgroundForLong=" + wasBackgroundForLong);
         return noLogSentForLong && (isBackgroundForLong || wasBackgroundForLong);
     }
