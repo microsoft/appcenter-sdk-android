@@ -7,12 +7,13 @@ import android.support.annotation.Nullable;
 import com.microsoft.sonoma.core.ingestion.models.Log;
 import com.microsoft.sonoma.core.ingestion.models.json.LogSerializer;
 
+import java.io.Closeable;
 import java.util.List;
 
 /**
  * Abstract class for Persistence service.
  */
-public abstract class Persistence {
+public abstract class Persistence implements Closeable {
 
     /**
      * Storage capacity in number of logs
@@ -29,7 +30,7 @@ public abstract class Persistence {
      *
      * @param group The group of the storage for the log.
      * @param log   The log to be placed in the storage.
-     * @throws PersistenceException Exception will be thrown if persistence cannot write a log to the storage.
+     * @throws PersistenceException Exception will be thrown if Persistence cannot write a log to the storage.
      */
     public abstract void putLog(@NonNull String group, @NonNull Log log) throws PersistenceException;
 
@@ -42,17 +43,17 @@ public abstract class Persistence {
     public abstract void deleteLogs(@NonNull String group, @NonNull String id);
 
     /**
-     * Deletes all logs for the given {@code group}
+     * Deletes all logs for the given {@code group}.
      *
      * @param group The group of the storage for the log.
      */
     public abstract void deleteLogs(String group);
 
     /**
-     * Count number of logs for the given {@code group}.
+     * Gets the number of logs for the given {@code group}.
      *
      * @param group The group of the storage for the log.
-     * @return number of logs for the given {@code group}.
+     * @return The number of logs for the given {@code group}.
      */
     public abstract int countLogs(@NonNull String group);
 
@@ -68,7 +69,7 @@ public abstract class Persistence {
     public abstract String getLogs(@NonNull String group, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs);
 
     /**
-     * Clears all associations between logs and ids returned by {@link #getLogs(String, int, List)} ()}.
+     * Clears all associations between logs and ids returned by {@link #getLogs(String, int, List)}}.
      */
     public abstract void clearPendingLogState();
 

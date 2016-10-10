@@ -1,8 +1,11 @@
 package com.microsoft.sonoma.sasquatch.activities;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -23,6 +26,9 @@ import com.microsoft.sonoma.sasquatch.features.TestFeatures;
 import com.microsoft.sonoma.sasquatch.features.TestFeaturesListAdapter;
 
 public class MainActivity extends AppCompatActivity {
+    static final String APP_SECRET = "45d1d9f6-2492-4e68-bd44-7190351eb5f3";
+    static final String APP_SECRET_KEY = "appSecret";
+    static SharedPreferences sSharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +82,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Sonoma.start(getApplication(), "45d1d9f6-2492-4e68-bd44-7190351eb5f3", Analytics.class, Crashes.class);
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().build());
+        Sonoma.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class);
 
         TestFeatures.initialize(this);
         ListView listView = (ListView) findViewById(R.id.list);
@@ -98,5 +105,18 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
         return true;
+    }
+
+    private String getAppSecret() {
+        sSharedPreferences = getSharedPreferences("Sasquatch", Context.MODE_PRIVATE);
+        String appSecret = sSharedPreferences.getString(APP_SECRET_KEY, null);
+        if (appSecret == null) {
+            SharedPreferences.Editor editor = sSharedPreferences.edit();
+            editor.putString(APP_SECRET_KEY, APP_SECRET);
+            editor.apply();
+            appSecret = sSharedPreferences.getString(APP_SECRET_KEY, null);
+        }
+        Toast.makeText(this, String.format(getString(R.string.app_secret_toast), appSecret), Toast.LENGTH_SHORT).show();
+        return appSecret;
     }
 }

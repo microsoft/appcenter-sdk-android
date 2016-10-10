@@ -18,6 +18,7 @@
     <string name="properties">Properties</string>
     <string name="key">Key</string>
     <string name="value">Value</string>
+    <string name="app_secret_toast">App Secret: %s</string>
     <string name="crash_confirmation_dialog_title">Unexpected crash found</string>
     <string name="crash_confirmation_dialog_message">Would you like to send an anonymous report so we can fix the problem?</string>
     <string name="crash_confirmation_dialog_not_send_button">Don\'t Send</string>

@@ -3,6 +3,9 @@ package com.microsoft.sonoma.core;
 import android.app.Application;
 import android.content.ContentValues;
 import android.content.Context;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 
 import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.channel.DefaultChannel;
@@ -29,6 +32,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import static com.microsoft.sonoma.core.persistence.DatabasePersistenceAsync.THREAD_NAME;
 import static com.microsoft.sonoma.core.utils.PrefStorageConstants.KEY_ENABLED;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
@@ -341,7 +345,24 @@ public class SonomaTest {
     }
 
     @Test
-    public void enableTest() {
+    public void enableTest() throws Exception {
+
+        /* Mock handler for asynchronous persistence */
+        HandlerThread mockHandlerThread = PowerMockito.mock(HandlerThread.class);
+        Looper mockLooper = PowerMockito.mock(Looper.class);
+        whenNew(HandlerThread.class).withArguments(THREAD_NAME).thenReturn(mockHandlerThread);
+        when(mockHandlerThread.getLooper()).thenReturn(mockLooper);
+        Handler mockPersistenceHandler = PowerMockito.mock(Handler.class);
+        whenNew(Handler.class).withArguments(mockLooper).thenReturn(mockPersistenceHandler);
+        when(mockPersistenceHandler.post(any(Runnable.class))).then(new Answer<Boolean>() {
+
+            @Override
+            public Boolean answer(InvocationOnMock invocation) throws Throwable {
+                ((Runnable) invocation.getArguments()[0]).run();
+                return true;
+            }
+        });
+
         /* Start Sonoma SDK */
         Sonoma.start(application, DUMMY_APP_SECRET, DummyFeature.class, AnotherDummyFeature.class);
         Channel channel = mock(Channel.class);
