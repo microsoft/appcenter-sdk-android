@@ -36,7 +36,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     public static class SettingsFragment extends PreferenceFragment {
 
-        private static String UUID_FORMAT_REGEX = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+        private static final String UUID_FORMAT_REGEX = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -111,7 +111,7 @@ public class SettingsActivity extends AppCompatActivity {
                 public boolean onPreferenceClick(Preference preference) {
                     final EditText input = new EditText(getActivity());
                     input.setInputType(InputType.TYPE_CLASS_TEXT);
-                    input.setText(Sonoma.getInstallId().toString());
+                    input.setText(String.valueOf(Sonoma.getInstallId()));
 
                     new AlertDialog.Builder(getActivity()).setTitle(R.string.install_id_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {

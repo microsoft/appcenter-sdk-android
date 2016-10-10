@@ -26,9 +26,9 @@ import com.microsoft.sonoma.sasquatch.features.TestFeatures;
 import com.microsoft.sonoma.sasquatch.features.TestFeaturesListAdapter;
 
 public class MainActivity extends AppCompatActivity {
-    protected static final String APP_SECRET = "45d1d9f6-2492-4e68-bd44-7190351eb5f3";
-    protected static final String APP_SECRET_KEY = "appSecret";
-    protected static SharedPreferences sSharedPreferences;
+    static final String APP_SECRET = "45d1d9f6-2492-4e68-bd44-7190351eb5f3";
+    static final String APP_SECRET_KEY = "appSecret";
+    static SharedPreferences sSharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
