@@ -18,6 +18,9 @@ import com.microsoft.sonoma.core.ingestion.models.Log;
 import com.microsoft.sonoma.core.ingestion.models.LogContainer;
 import com.microsoft.sonoma.core.ingestion.models.json.LogSerializer;
 import com.microsoft.sonoma.core.persistence.DatabasePersistence;
+import com.microsoft.sonoma.core.persistence.DatabasePersistenceAsync;
+import com.microsoft.sonoma.core.persistence.DatabasePersistenceAsync.DatabasePersistenceAsyncCallback;
+import com.microsoft.sonoma.core.persistence.DatabasePersistenceAsync.AbstractDatabasePersistenceAsyncCallback;
 import com.microsoft.sonoma.core.persistence.Persistence;
 import com.microsoft.sonoma.core.utils.DeviceInfoHelper;
 import com.microsoft.sonoma.core.utils.IdHelper;
@@ -66,9 +69,9 @@ public class DefaultChannel implements Channel {
     private final Collection<Listener> mListeners;
 
     /**
-     * The persistence object used to store events in the local storage.
+     * The Persistence instance used to store events in the local storage asynchronously.
      */
-    private final Persistence mPersistence;
+    private final DatabasePersistenceAsync mPersistence;
 
     /**
      * The ingestion object used to send batches to the server.
@@ -112,7 +115,7 @@ public class DefaultChannel implements Channel {
         mIngestionHandler = new Handler(Looper.getMainLooper());
         mGroupStates = new HashMap<>();
         mListeners = new HashSet<>();
-        mPersistence = persistence;
+        mPersistence = new DatabasePersistenceAsync(persistence);
         mIngestion = ingestion;
         mEnabled = true;
     }
@@ -127,7 +130,7 @@ public class DefaultChannel implements Channel {
     }
 
     /**
-     * Init persistence for default constructor.
+     * Init Persistence for default constructor.
      */
     private static Persistence buildDefaultPersistence(@NonNull LogSerializer logSerializer) {
         Persistence persistence = new DatabasePersistence();
@@ -136,17 +139,23 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void addGroup(String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
+    public synchronized void addGroup(final String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
 
         /* Init group. */
         SonomaLog.debug(Sonoma.LOG_TAG, "addGroup(" + groupName + ")");
         mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener));
 
         /* Count pending logs. */
-        mGroupStates.get(groupName).mPendingLogCount = mPersistence.countLogs(groupName);
+        mPersistence.countLogs(groupName, new AbstractDatabasePersistenceAsyncCallback() {
 
-        /* Schedule sending any pending log. */
-        checkPendingLogs(groupName);
+            @Override
+            public void onSuccess(Object result) {
+                mGroupStates.get(groupName).mPendingLogCount = (Integer) result;
+
+                /* Schedule sending any pending log. */
+                checkPendingLogs(groupName);
+            }
+        });
     }
 
     @Override
@@ -204,7 +213,7 @@ public class DefaultChannel implements Channel {
     /**
      * Stop sending logs until app is restarted or the channel is enabled again.
      *
-     * @param deleteLogs in addition to suspending, if this is true, delete all logs from persistence.
+     * @param deleteLogs in addition to suspending, if this is true, delete all logs from Persistence.
      */
     private void suspend(boolean deleteLogs) {
         mEnabled = false;
@@ -258,45 +267,51 @@ public class DefaultChannel implements Channel {
             return;
         }
 
-        /* Get a batch from persistence. */
-        List<Log> batch = new ArrayList<>(groupState.mMaxLogsPerBatch);
-        final String batchId = mPersistence.getLogs(groupName, groupState.mMaxLogsPerBatch, batch);
-        if (batchId != null) {
+        /* Get a batch from Persistence. */
+        final List<Log> batch = new ArrayList<>(groupState.mMaxLogsPerBatch);
+        mPersistence.getLogs(groupName, groupState.mMaxLogsPerBatch, batch, new AbstractDatabasePersistenceAsyncCallback() {
 
-            /* Call group listener before sending logs to ingestion service. */
-            if (groupState.mListener != null) {
-                for (Log log : batch) {
-                    groupState.mListener.onBeforeSending(log);
-                }
-            }
+            @Override
+            public void onSuccess(Object result) {
+                final String batchId = (String) result;
+                if (batchId != null) {
 
-            /* Decrement counter. */
-            groupState.mPendingLogCount -= batch.size();
-            SonomaLog.debug(Sonoma.LOG_TAG, "ingestLogs(" + groupName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
-
-            /* Remember this batch. */
-            groupState.mSendingBatches.put(batchId, batch);
-
-            /* Send logs. */
-            LogContainer logContainer = new LogContainer();
-            logContainer.setLogs(batch);
-            mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
-
-                        @Override
-                        public void onCallSucceeded() {
-                            handleSendingSuccess(groupState, batchId);
-                        }
-
-                        @Override
-                        public void onCallFailed(Exception e) {
-                            handleSendingFailure(groupState, batchId, e);
+                    /* Call group listener before sending logs to ingestion service. */
+                    if (groupState.mListener != null) {
+                        for (Log log : batch) {
+                            groupState.mListener.onBeforeSending(log);
                         }
                     }
-            );
 
-            /* Check for more pending logs. */
-            checkPendingLogs(groupName);
-        }
+                    /* Decrement counter. */
+                    groupState.mPendingLogCount -= batch.size();
+                    SonomaLog.debug(Sonoma.LOG_TAG, "ingestLogs(" + groupName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
+
+                    /* Remember this batch. */
+                    groupState.mSendingBatches.put(batchId, batch);
+
+                    /* Send logs. */
+                    LogContainer logContainer = new LogContainer();
+                    logContainer.setLogs(batch);
+                    mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
+
+                                @Override
+                                public void onCallSucceeded() {
+                                    handleSendingSuccess(groupState, batchId);
+                                }
+
+                                @Override
+                                public void onCallFailed(Exception e) {
+                                    handleSendingFailure(groupState, batchId, e);
+                                }
+                            }
+                    );
+
+                    /* Check for more pending logs. */
+                    checkPendingLogs(groupName);
+                }
+            }
+        });
     }
 
     /**
@@ -349,10 +364,10 @@ public class DefaultChannel implements Channel {
      * @param groupName the queue to use
      */
     @Override
-    public synchronized void enqueue(@NonNull Log log, @NonNull String groupName) {
+    public synchronized void enqueue(@NonNull Log log, @NonNull final String groupName) {
 
         /* Check group name is registered. */
-        GroupState groupState = mGroupStates.get(groupName);
+        final GroupState groupState = mGroupStates.get(groupName);
         if (groupState == null) {
             SonomaLog.error(Sonoma.LOG_TAG, "Invalid group name:" + groupName);
             return;
@@ -384,22 +399,25 @@ public class DefaultChannel implements Channel {
             log.setToffset(System.currentTimeMillis());
 
         /* Persist log. */
-        try {
+        mPersistence.putLog(groupName, log, new DatabasePersistenceAsyncCallback() {
+            @Override
+            public void onSuccess(Object result) {
+                groupState.mPendingLogCount++;
+                SonomaLog.debug(Sonoma.LOG_TAG, "enqueue(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
 
-            /* Save log in database. */
-            mPersistence.putLog(groupName, log);
-            groupState.mPendingLogCount++;
-            SonomaLog.debug(Sonoma.LOG_TAG, "enqueue(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
-
-            /* Increment counters and schedule ingestion if we are not disabled. */
-            if (!mEnabled) {
-                SonomaLog.warn(Sonoma.LOG_TAG, "Channel is disabled, event was saved to disk.");
-            } else {
-                checkPendingLogs(groupName);
+                /* Increment counters and schedule ingestion if we are not disabled. */
+                if (!mEnabled) {
+                    SonomaLog.warn(Sonoma.LOG_TAG, "Channel is disabled, event was saved to disk.");
+                } else {
+                    checkPendingLogs(groupName);
+                }
             }
-        } catch (Persistence.PersistenceException e) {
-            SonomaLog.error(Sonoma.LOG_TAG, "Error persisting event with exception: " + e.toString());
-        }
+
+            @Override
+            public void onFailure(Exception e) {
+                SonomaLog.error(Sonoma.LOG_TAG, "Error persisting event with exception: " + e.toString());
+            }
+        });
     }
 
     /**
