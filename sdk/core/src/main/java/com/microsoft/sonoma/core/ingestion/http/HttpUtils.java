@@ -24,7 +24,7 @@ public final class HttpUtils {
         if (t instanceof HttpException) {
             HttpException exception = (HttpException) t;
             int code = exception.getStatusCode();
-            return code >= 500 || code == 408 || code == 429;
+            return code >= 500 || code == 408 || code == 429 || code == 401;
         }
         for (Class<?> type : RECOVERABLE_EXCEPTIONS)
             if (type.isAssignableFrom(t.getClass()))
