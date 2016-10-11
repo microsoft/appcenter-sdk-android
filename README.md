@@ -73,16 +73,12 @@ Now that you've integrated the SDK in your application, it's time to start the S
 
 To start the Sonoma SDK in your app, follow these steps:
 
-1. **Get the App Secret of your application:** Before you call the API to start the SDK, you need to get your app specific Application Secret from the Sonoma portal that needs to be a part of the method call. This will make sure all the data collected by the SDK corresponds to your application.
-
-    Go over to the Sonoma portal, click on "Microsoft Azure Sonoma". Under "My apps", click on the app that you want the SDK to set up for. Then click on "Manage app" and make note of the "App Secret" value.
-
-2. **Start the SDK:**  Sonoma provides developers with two modules to get started – Analytics and Crashes. In order to use these modules, you need to opt in for the module(s) that you'd like, meaning by default no modules are started and you will have to explicitly call each of them when starting the SDK. Insert the following line inside your app's main activity class' `onCreate` callback.
+1. **Start the SDK:**  Sonoma provides developers with two modules to get started – Analytics and Crashes. In order to use these modules, you need to opt in for the module(s) that you'd like, meaning by default no modules are started and you will have to explicitly call each of them when starting the SDK. Insert the following line inside your app's main activity class' `onCreate` callback.
 
     ```Java
     Sonoma.start(getApplication(), "{Your App Secret}", Analytics.class, Crashes.class);
     ```
-    Make sure to replace {Your App Secret} text with the actual value for your application.
+    You can also copy paste the `start` method call from the Overview page on Sonoma portal once your app is selected. It already includes the App Secret so that all the data collected by the SDK corresponds to your application. Make sure to replace {Your App Secret} text with the actual value for your application.
     
     The example above shows how to use the `start()` method and include both the Analytics and Crashes module. If you wish not to use Analytics, remove the parameter from the method call above. Note that, unless you explicitly specify each module as parameters in the start method, you can't use that Sonoma service. Also, the `start()` API can be used only once in the lifecycle of your app – all other calls will log a warning to the console and only the modules included in the first call will be available.
 
