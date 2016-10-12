@@ -9,6 +9,7 @@ import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.ingestion.models.Log;
 import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
+import com.microsoft.sonoma.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.sonoma.crashes.model.ErrorReport;
 import com.microsoft.sonoma.crashes.utils.ErrorLogHelper;
 
@@ -28,6 +29,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -171,5 +173,42 @@ public class CrashesAndroidTest {
         Crashes.unsetInstance();
         Crashes.setEnabled(false);
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+    }
+
+    @Test
+    public void wrapperSdkOverrideLog() throws InterruptedException {
+
+        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
+        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+        Channel channel = mock(Channel.class);
+        Crashes.getInstance().onChannelReady(sContext, channel);
+        Crashes.WrapperSdkListener wrapperSdkListener = mock(Crashes.WrapperSdkListener.class);
+        Crashes.getInstance().setWrapperSdkListener(wrapperSdkListener);
+        doAnswer(new Answer() {
+
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                ManagedErrorLog errorLog = (ManagedErrorLog) invocationOnMock.getArguments()[0];
+                errorLog.setErrorThreadName("ReplacedErrorThreadName");
+                Crashes.getInstance().saveWrapperSdkErrorLog(errorLog);
+                return null;
+            }
+        }).when(wrapperSdkListener).onCrashCaptured(notNull(ManagedErrorLog.class));
+        final RuntimeException exception = new RuntimeException("mock");
+        final Thread thread = new Thread() {
+
+            @Override
+            public void run() {
+                throw exception;
+            }
+        };
+        thread.start();
+        thread.join();
+        verify(wrapperSdkListener).onCrashCaptured(notNull(ManagedErrorLog.class));
+        Crashes.unsetInstance();
+        Crashes.getInstance().onChannelReady(sContext, channel);
+        ErrorReport lastSessionCrashReport = Crashes.getLastSessionCrashReport();
+        assertNotNull(lastSessionCrashReport);
+        assertEquals("ReplacedErrorThreadName", lastSessionCrashReport.getThreadName());
     }
 }
