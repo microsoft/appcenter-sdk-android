@@ -42,6 +42,11 @@ public class AbstractSonomaFeatureTest {
             protected String getGroupName() {
                 return "group_test";
             }
+
+            @Override
+            protected String getFeatureName() {
+                return "Test";
+            }
         };
 
         mockStatic(Sonoma.class);

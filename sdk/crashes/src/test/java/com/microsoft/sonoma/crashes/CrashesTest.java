@@ -153,8 +153,10 @@ public class CrashesTest {
         Crashes.notifyUserConfirmation(Crashes.SEND);
         Crashes.trackException(new Exception("Test"));
 
-        verifyStatic(times(2));
+        verifyStatic(times(1));
         SonomaLog.error(eq(Crashes.LOG_TAG), anyString());
+        verifyStatic(times(1));
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString());
     }
 
     @Test

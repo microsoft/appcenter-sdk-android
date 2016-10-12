@@ -39,11 +39,6 @@ import java.util.UUID;
 public class Crashes extends AbstractSonomaFeature {
 
     /**
-     * TAG used in logging for Crashes
-     */
-    public static final String LOG_TAG = SonomaLog.LOG_TAG + "Crashes";
-
-    /**
      * Constant for SEND crash report.
      */
     public static final int SEND = 0;
@@ -70,6 +65,16 @@ public class Crashes extends AbstractSonomaFeature {
      */
     @VisibleForTesting
     static final String ERROR_GROUP = "group_errors";
+
+    /**
+     * Name of the feature.
+     */
+    private static final String FEATURE_NAME = "Crashes";
+
+    /**
+     * TAG used in logging for Crashes.
+     */
+    public static final String LOG_TAG = SonomaLog.LOG_TAG + FEATURE_NAME;
 
     /**
      * Default crashes listener.
@@ -277,14 +282,25 @@ public class Crashes extends AbstractSonomaFeature {
     public synchronized void trackException(@NonNull com.microsoft.sonoma.crashes.ingestion.models.Exception exception) {
         if (isInactive())
             return;
-        ManagedErrorLog errorLog = new ManagedErrorLog();
-        errorLog.setException(exception);
+
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(
+                mContext,
+                Thread.currentThread(),
+                exception,
+                Thread.getAllStackTraces(),
+                getInitializeTimestamp(),
+                false);
         mChannel.enqueue(errorLog, ERROR_GROUP);
     }
 
     @Override
     protected String getGroupName() {
         return ERROR_GROUP;
+    }
+
+    @Override
+    protected String getFeatureName() {
+        return FEATURE_NAME;
     }
 
     @Override
@@ -351,23 +367,6 @@ public class Crashes extends AbstractSonomaFeature {
     @VisibleForTesting
     synchronized long getInitializeTimestamp() {
         return mInitializeTimestamp;
-    }
-
-    /**
-     * Check if this feature is not active: disabled or not started.
-     *
-     * @return <code>true</code> if the feature is inactive, <code>false</code> otherwise.
-     */
-    private synchronized boolean isInactive() {
-        if (mChannel == null) {
-            SonomaLog.error(LOG_TAG, "Crashes feature not initialized, discarding calls.");
-            return true;
-        }
-        if (!isInstanceEnabled()) {
-            SonomaLog.info(LOG_TAG, "Crashes feature not enabled, discarding calls.");
-            return true;
-        }
-        return false;
     }
 
     /**
