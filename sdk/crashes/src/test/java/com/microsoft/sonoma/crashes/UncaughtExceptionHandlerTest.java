@@ -38,6 +38,7 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -68,8 +69,6 @@ public class UncaughtExceptionHandlerTest {
         mockStatic(Process.class);
         mockStatic(System.class);
 
-        Context mockContext = mock(Context.class);
-
         final String key = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getGroupName();
         when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(true);
 
@@ -96,7 +95,7 @@ public class UncaughtExceptionHandlerTest {
 
         mDefaultExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(mDefaultExceptionHandler);
-        mExceptionHandler = new UncaughtExceptionHandler(mockContext);
+        mExceptionHandler = new UncaughtExceptionHandler();
     }
 
     @Test
@@ -197,7 +196,7 @@ public class UncaughtExceptionHandlerTest {
         final JSONException jsonException = new JSONException("Fake JSON serializing exception");
         when(logSerializer.serializeLog(any(Log.class))).thenThrow(jsonException);
 
-        Whitebox.setInternalState(mExceptionHandler, "mLogSerializer", logSerializer);
+        Whitebox.setInternalState(Crashes.getInstance(), "mLogSerializer", logSerializer);
 
         final Thread thread = Thread.currentThread();
         final RuntimeException exception = new RuntimeException();
@@ -225,5 +224,13 @@ public class UncaughtExceptionHandlerTest {
         SonomaLog.error(eq(Crashes.LOG_TAG), anyString(), eq(ioException));
 
         verify(mDefaultExceptionHandler).uncaughtException(thread, exception);
+    }
+
+    @Test
+    public void withWrapperSdkListener() {
+        Crashes.WrapperSdkListener wrapperSdkListener = mock(Crashes.WrapperSdkListener.class);
+        Crashes.getInstance().setWrapperSdkListener(wrapperSdkListener);
+        handleExceptionAndPassOn();
+        verify(wrapperSdkListener).onCrashCaptured(notNull(ManagedErrorLog.class));
     }
 }
