@@ -122,6 +122,11 @@ public class Crashes extends AbstractSonomaFeature {
      */
     private CrashesListener mCrashesListener;
 
+    /**
+     * Wrapper SDK listener.
+     */
+    private WrapperSdkListener mWrapperSdkListener;
+
     private ErrorReport mLastSessionErrorReport;
 
     private Crashes() {
@@ -321,6 +326,7 @@ public class Crashes extends AbstractSonomaFeature {
      *
      * @return initialization timestamp expressed using {@link SystemClock#elapsedRealtime()}.
      */
+    @VisibleForTesting
     synchronized long getInitializeTimestamp() {
         return mInitializeTimestamp;
     }
@@ -335,7 +341,7 @@ public class Crashes extends AbstractSonomaFeature {
                 mUncaughtExceptionHandler = null;
             }
         } else if (mContext != null) {
-            mUncaughtExceptionHandler = new UncaughtExceptionHandler(mContext);
+            mUncaughtExceptionHandler = new UncaughtExceptionHandler();
             mUncaughtExceptionHandler.register();
         }
 
@@ -446,6 +452,16 @@ public class Crashes extends AbstractSonomaFeature {
         mCrashesListener = listener;
     }
 
+    /**
+     * Set wrapper SDK listener.
+     *
+     * @param wrapperSdkListener listener.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public void setWrapperSdkListener(WrapperSdkListener wrapperSdkListener) {
+        mWrapperSdkListener = wrapperSdkListener;
+    }
+
     @VisibleForTesting
     private synchronized void handleUserConfirmation(@UserConfirmationDef int userConfirmation) {
         if (mChannel == null) {
@@ -492,15 +508,83 @@ public class Crashes extends AbstractSonomaFeature {
     }
 
     /**
+     * Save a crash.
+     *
+     * @param thread    origin thread.
+     * @param exception exception.
+     */
+    void saveUncaughtException(Thread thread, Throwable exception) {
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, exception, Thread.getAllStackTraces(), mInitializeTimestamp);
+        try {
+            File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
+            String filename = errorLog.getId().toString();
+            SonomaLog.debug(Crashes.LOG_TAG, "Saving uncaught exception:", exception);
+            saveErrorLog(errorLog, errorStorageDirectory, filename);
+            File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
+            StorageHelper.InternalStorage.writeObject(throwableFile, exception);
+            SonomaLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile);
+            if (mWrapperSdkListener != null) {
+                mWrapperSdkListener.onCrashCaptured(errorLog);
+            }
+        } catch (JSONException e) {
+            SonomaLog.error(Crashes.LOG_TAG, "Error serializing error log to JSON", e);
+        } catch (IOException e) {
+            SonomaLog.error(Crashes.LOG_TAG, "Error writing error log to file", e);
+        }
+    }
+
+    /**
+     * Serialize error log to a file.
+     */
+    private void saveErrorLog(ManagedErrorLog errorLog, File errorStorageDirectory, String filename) throws JSONException, IOException {
+        File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
+        String errorLogString = mLogSerializer.serializeLog(errorLog);
+        StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
+        SonomaLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
+    }
+
+    /**
+     * Save error log modified by a wrapper SDK.
+     *
+     * @param errorLog error log to  save or overwrite.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public void saveWrapperSdkErrorLog(ManagedErrorLog errorLog) {
+        try {
+            saveErrorLog(errorLog, ErrorLogHelper.getErrorStorageDirectory(), errorLog.getId().toString());
+        } catch (JSONException e) {
+            SonomaLog.error(Crashes.LOG_TAG, "Error serializing error log to JSON", e);
+        } catch (IOException e) {
+            SonomaLog.error(Crashes.LOG_TAG, "Error writing error log to file", e);
+        }
+    }
+
+    /**
+     * Listener for Wrapper SDK. Meant only for internal use by wrapper SDK developers.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public interface WrapperSdkListener {
+
+        /**
+         * Called when crash has been caught and saved.
+         *
+         * @param errorLog generated error log for the crash.
+         */
+        void onCrashCaptured(ManagedErrorLog errorLog);
+    }
+
+    /**
      * Default crashes listener class.
      */
     private static class DefaultCrashesListener extends AbstractCrashesListener {
+
     }
 
     /**
      * Class holding an error log and its corresponding error report.
      */
     private static class ErrorLogReport {
+
         private final ManagedErrorLog log;
 
         private final ErrorReport report;
