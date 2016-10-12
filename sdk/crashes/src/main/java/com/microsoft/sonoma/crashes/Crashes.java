@@ -269,6 +269,19 @@ public class Crashes extends AbstractSonomaFeature {
         return mFactories;
     }
 
+    /**
+     * Track an exception.
+     *
+     * @param exception An exception.
+     */
+    public synchronized void trackException(@NonNull com.microsoft.sonoma.crashes.ingestion.models.Exception exception) {
+        if (isInactive())
+            return;
+        ManagedErrorLog errorLog = new ManagedErrorLog();
+        errorLog.setException(exception);
+        mChannel.enqueue(errorLog, ERROR_GROUP);
+    }
+
     @Override
     protected String getGroupName() {
         return ERROR_GROUP;
