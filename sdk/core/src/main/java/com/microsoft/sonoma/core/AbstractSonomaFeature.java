@@ -133,6 +133,13 @@ public abstract class AbstractSonomaFeature implements SonomaFeature {
      */
     protected abstract String getGroupName();
 
+    /**
+     * Gets a name of the feature.
+     *
+     * @return The name of the feature.
+     */
+    protected abstract String getFeatureName();
+
     @SuppressWarnings("WeakerAccess")
     @NonNull
     protected String getEnabledPreferenceKey() {
@@ -176,5 +183,22 @@ public abstract class AbstractSonomaFeature implements SonomaFeature {
     @SuppressWarnings({"WeakerAccess", "SameReturnValue"})
     protected Channel.GroupListener getChannelListener() {
         return null;
+    }
+
+    /**
+     * Check if the feature is not active: disabled or not started.
+     *
+     * @return <code>true</code> if the feature is inactive, <code>false</code> otherwise.
+     */
+    protected synchronized boolean isInactive() {
+        if (mChannel == null) {
+            SonomaLog.error(LOG_TAG, getFeatureName() + " feature not initialized, discarding calls.");
+            return true;
+        }
+        if (!isInstanceEnabled()) {
+            SonomaLog.info(LOG_TAG, getFeatureName() + " feature not enabled, discarding calls.");
+            return true;
+        }
+        return false;
     }
 }

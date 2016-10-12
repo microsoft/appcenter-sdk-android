@@ -9,6 +9,8 @@
     <string name="title_generate_page_log">Generate page logs</string>
     <string name="description_generate_page_log">Simulate page open and close 5 times</string>
     <string name="error_device_info">Couldn\'t retrieve device information</string>
+    <string name="title_error">Errors</string>
+    <string name="description_error">Send an exception</string>
     <string name="title_event">Events</string>
     <string name="description_event">Send a custom event</string>
     <string name="title_page">Pages</string>

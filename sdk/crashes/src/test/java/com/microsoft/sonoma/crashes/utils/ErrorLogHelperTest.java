@@ -17,7 +17,6 @@ import com.microsoft.sonoma.crashes.ingestion.models.StackFrame;
 import com.microsoft.sonoma.crashes.ingestion.models.Thread;
 import com.microsoft.sonoma.crashes.model.ErrorReport;
 import com.microsoft.sonoma.crashes.model.TestCrashException;
-import com.microsoft.sonoma.crashes.utils.ErrorLogHelper;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -81,7 +80,7 @@ public class ErrorLogHelperTest {
         Whitebox.setInternalState(Build.class, "SUPPORTED_ABIS", new String[]{"armeabi-v7a", "arm"});
 
         /* Test. */
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new IOException(new TestCrashException())), java.lang.Thread.getAllStackTraces(), 900);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new IOException(new TestCrashException())), java.lang.Thread.getAllStackTraces(), 900, true);
         assertNotNull(errorLog);
         assertNotNull(errorLog.getId());
         assertTrue(System.currentTimeMillis() - errorLog.getToffset() <= 1000);
@@ -162,7 +161,7 @@ public class ErrorLogHelperTest {
         Whitebox.setInternalState(Build.class, "CPU_ABI", "armeabi-v7a");
 
         /* Test. */
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new java.lang.Exception(), java.lang.Thread.getAllStackTraces(), 900);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new java.lang.Exception(), java.lang.Thread.getAllStackTraces(), 900, true);
         assertNotNull(errorLog);
         assertNotNull(errorLog.getId());
         assertTrue(System.currentTimeMillis() - errorLog.getToffset() <= 1000);
@@ -203,7 +202,7 @@ public class ErrorLogHelperTest {
         Whitebox.setInternalState(Build.class, "SUPPORTED_ABIS", new String[]{"armeabi-v7a", "arm"});
 
         /* Create an error log. */
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new TestCrashException()), java.lang.Thread.getAllStackTraces(), 900);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new TestCrashException()), java.lang.Thread.getAllStackTraces(), 900, true);
         assertNotNull(errorLog);
 
         /* Test. */
