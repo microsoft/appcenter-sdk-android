@@ -15,6 +15,7 @@ import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
 import com.microsoft.sonoma.crashes.ingestion.models.ManagedErrorLog;
+import com.microsoft.sonoma.crashes.ingestion.models.StackFrame;
 import com.microsoft.sonoma.crashes.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.sonoma.crashes.model.ErrorAttachment;
 import com.microsoft.sonoma.crashes.model.ErrorReport;
@@ -43,6 +44,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -437,6 +439,34 @@ public class CrashesTest {
             @Override
             public boolean matches(Object item) {
                 return item instanceof ManagedErrorLog && exception.getMessage().equals(((ManagedErrorLog) item).getException().getMessage());
+            }
+        }), eq(crashes.getGroupName()));
+    }
+
+    @Test
+    public void trackExceptionForWrapperSdk() {
+        StackFrame frame = new StackFrame();
+        frame.setClassName("1");
+        frame.setFileName("2");
+        frame.setLineNumber(3);
+        frame.setMethodName("4");
+        final com.microsoft.sonoma.crashes.ingestion.models.Exception exception = new com.microsoft.sonoma.crashes.ingestion.models.Exception();
+        exception.setType("5");
+        exception.setMessage("6");
+        exception.setFrames(singletonList(frame));
+
+        Crashes crashes = Crashes.getInstance();
+        Channel mockChannel = mock(Channel.class);
+
+        Crashes.getInstance().trackException(exception);
+        verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
+        crashes.onChannelReady(mock(Context.class), mockChannel);
+        Crashes.getInstance().trackException(exception);
+        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                return item instanceof ManagedErrorLog && exception.equals(((ManagedErrorLog) item).getException());
             }
         }), eq(crashes.getGroupName()));
     }
