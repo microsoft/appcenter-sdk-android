@@ -664,6 +664,11 @@ public class SonomaTest {
         protected String getGroupName() {
             return "group_dummy";
         }
+
+        @Override
+        protected String getFeatureName() {
+            return "Dummy";
+        }
     }
 
     private static class AnotherDummyFeature extends AbstractSonomaFeature {
@@ -689,6 +694,11 @@ public class SonomaTest {
         protected String getGroupName() {
             return "group_another_dummy";
         }
+
+        @Override
+        protected String getFeatureName() {
+            return "AnotherDummy";
+        }
     }
 
     private static class InvalidFeature extends AbstractSonomaFeature {
@@ -696,6 +706,11 @@ public class SonomaTest {
         @Override
         protected String getGroupName() {
             return "group_invalid";
+        }
+
+        @Override
+        protected String getFeatureName() {
+            return "Invalid";
         }
     }
 }

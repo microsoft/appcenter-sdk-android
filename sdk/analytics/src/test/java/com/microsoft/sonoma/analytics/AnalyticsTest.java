@@ -108,7 +108,7 @@ public class AnalyticsTest {
         Analytics.trackPage("test", new HashMap<String, String>());
 
         verifyStatic(times(4));
-        SonomaLog.error(eq(Analytics.LOG_TAG), anyString());
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString());
     }
 
     private void activityResumed(final String expectedName, android.app.Activity activity) {

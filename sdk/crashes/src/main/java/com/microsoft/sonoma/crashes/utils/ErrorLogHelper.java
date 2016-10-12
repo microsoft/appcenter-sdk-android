@@ -50,6 +50,11 @@ public class ErrorLogHelper {
 
     @NonNull
     public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Throwable throwable, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp, boolean fatal) {
+        return createErrorLog(context, thread, getModelExceptionFromThrowable(throwable), allStackTraces, initializeTimestamp, fatal);
+    }
+
+    @NonNull
+    public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Exception exception, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp, boolean fatal) {
 
         /* Build error log with a unique identifier. */
         ManagedErrorLog errorLog = new ManagedErrorLog();
@@ -90,7 +95,7 @@ public class ErrorLogHelper {
         errorLog.setAppLaunchTOffset(SystemClock.elapsedRealtime() - initializeTimestamp);
 
         /* Attach exceptions. */
-        errorLog.setException(getModelExceptionFromThrowable(throwable));
+        errorLog.setException(exception);
 
         /* Attach thread states. */
         List<Thread> threads = new ArrayList<>(allStackTraces.size());

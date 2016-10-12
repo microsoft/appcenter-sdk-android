@@ -28,9 +28,14 @@ import java.util.Map;
 public class Analytics extends AbstractSonomaFeature {
 
     /**
+     * Name of the feature.
+     */
+    private static final String FEATURE_NAME = "Analytics";
+
+    /**
      * TAG used in logging for Analytics.
      */
-    public static final String LOG_TAG = SonomaLog.LOG_TAG + "Analytics";
+    public static final String LOG_TAG = SonomaLog.LOG_TAG + FEATURE_NAME;
 
     /**
      * Constant marking event of the analytics group.
@@ -190,6 +195,11 @@ public class Analytics extends AbstractSonomaFeature {
     }
 
     @Override
+    protected String getFeatureName() {
+        return FEATURE_NAME;
+    }
+
+    @Override
     public Map<String, LogFactory> getLogFactories() {
         return mFactories;
     }
@@ -240,23 +250,6 @@ public class Analytics extends AbstractSonomaFeature {
             mSessionTracker.clearSessions();
             mSessionTracker = null;
         }
-    }
-
-    /**
-     * Check if this feature is not active: disabled or not started.
-     *
-     * @return <code>true</code> if the feature is inactive, <code>false</code> otherwise.
-     */
-    private synchronized boolean isInactive() {
-        if (mChannel == null) {
-            SonomaLog.error(LOG_TAG, "Analytics feature not initialized, discarding calls.");
-            return true;
-        }
-        if (!isInstanceEnabled()) {
-            SonomaLog.info(LOG_TAG, "Analytics feature not enabled, discarding calls.");
-            return true;
-        }
-        return false;
     }
 
     /**
