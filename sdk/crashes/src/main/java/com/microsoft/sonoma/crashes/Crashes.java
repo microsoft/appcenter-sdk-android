@@ -172,6 +172,15 @@ public class Crashes extends AbstractSonomaFeature {
     }
 
     /**
+     * Track an exception.
+     *
+     * @param throwable An exception.
+     */
+    public static void trackException(@NonNull Throwable throwable) {
+        getInstance().queueException(throwable);
+    }
+
+    /**
      * Generates crash for test purpose.
      */
     public static void generateTestCrash() {
@@ -329,6 +338,41 @@ public class Crashes extends AbstractSonomaFeature {
     @VisibleForTesting
     synchronized long getInitializeTimestamp() {
         return mInitializeTimestamp;
+    }
+
+    /**
+     * Check if this feature is not active: disabled or not started.
+     *
+     * @return <code>true</code> if the feature is inactive, <code>false</code> otherwise.
+     */
+    private synchronized boolean isInactive() {
+        if (mChannel == null) {
+            SonomaLog.error(LOG_TAG, "Crashes feature not initialized, discarding calls.");
+            return true;
+        }
+        if (!isInstanceEnabled()) {
+            SonomaLog.info(LOG_TAG, "Crashes feature not enabled, discarding calls.");
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Send an exception.
+     *
+     * @param throwable An exception.
+     */
+    private synchronized void queueException(@NonNull final Throwable throwable) {
+        if (isInactive())
+            return;
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(
+                mContext,
+                Thread.currentThread(),
+                throwable,
+                Thread.getAllStackTraces(),
+                getInitializeTimestamp(),
+                false);
+        mChannel.enqueue(errorLog, ERROR_GROUP);
     }
 
     private void initialize() {
@@ -514,7 +558,7 @@ public class Crashes extends AbstractSonomaFeature {
      * @param exception exception.
      */
     void saveUncaughtException(Thread thread, Throwable exception) {
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, exception, Thread.getAllStackTraces(), mInitializeTimestamp);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, exception, Thread.getAllStackTraces(), mInitializeTimestamp, true);
         try {
             File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
             String filename = errorLog.getId().toString();
