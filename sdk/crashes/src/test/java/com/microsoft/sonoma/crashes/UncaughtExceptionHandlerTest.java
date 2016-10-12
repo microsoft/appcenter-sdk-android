@@ -87,7 +87,7 @@ public class UncaughtExceptionHandlerTest {
 
         ManagedErrorLog errorLogMock = mock(ManagedErrorLog.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(new File("."));
-        when(ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong()))
+        when(ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean()))
                 .thenReturn(errorLogMock);
 
         when(errorLogMock.getId()).thenReturn(UUID.randomUUID());
@@ -127,7 +127,7 @@ public class UncaughtExceptionHandlerTest {
         verify(mDefaultExceptionHandler).uncaughtException(thread, exception);
 
         verifyStatic();
-        ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong());
+        ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean());
     }
 
     @Test
@@ -150,7 +150,7 @@ public class UncaughtExceptionHandlerTest {
         verifyNoMoreInteractions(mDefaultExceptionHandler);
 
         verifyStatic();
-        ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong());
+        ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean());
         verifyStatic();
         Process.killProcess(123);
         verifyStatic();

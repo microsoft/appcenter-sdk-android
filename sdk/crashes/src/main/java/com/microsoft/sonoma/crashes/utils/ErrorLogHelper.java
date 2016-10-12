@@ -49,7 +49,12 @@ public class ErrorLogHelper {
     private static File sErrorLogDirectory;
 
     @NonNull
-    public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Throwable exception, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
+    public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Throwable throwable, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp, boolean fatal) {
+        return createErrorLog(context, thread, getModelExceptionFromThrowable(throwable), allStackTraces, initializeTimestamp, fatal);
+    }
+
+    @NonNull
+    public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Exception exception, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp, boolean fatal) {
 
         /* Build error log with a unique identifier. */
         ManagedErrorLog errorLog = new ManagedErrorLog();
@@ -83,14 +88,14 @@ public class ErrorLogHelper {
         errorLog.setErrorThreadId(thread.getId());
         errorLog.setErrorThreadName(thread.getName());
 
-        /* For now we monitor only uncaught exceptions: a crash, fatal. */
-        errorLog.setFatal(true);
+        /* Uncaught exception or managed exception. */
+        errorLog.setFatal(fatal);
 
         /* Relative application launch time to error time. */
         errorLog.setAppLaunchTOffset(SystemClock.elapsedRealtime() - initializeTimestamp);
 
         /* Attach exceptions. */
-        errorLog.setException(getModelExceptionFromThrowable(exception));
+        errorLog.setException(exception);
 
         /* Attach thread states. */
         List<Thread> threads = new ArrayList<>(allStackTraces.size());
