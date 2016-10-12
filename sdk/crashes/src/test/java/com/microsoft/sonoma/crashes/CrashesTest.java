@@ -50,6 +50,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.contains;
@@ -59,6 +61,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
@@ -715,5 +718,47 @@ public class CrashesTest {
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession());
         assertNull(Crashes.getLastSessionCrashReport());
+    }
+
+    @Test
+    public void setWrapperSdkListener() {
+        mockStatic(ErrorLogHelper.class);
+        ManagedErrorLog errorLog = new ManagedErrorLog();
+        errorLog.setId(UUIDUtils.randomUUID());
+        when(ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), anyMapOf(Thread.class, StackTraceElement[].class), anyLong())).thenReturn(errorLog);
+        Crashes.getInstance().setLogSerializer(mock(LogSerializer.class));
+        Crashes.WrapperSdkListener wrapperSdkListener = mock(Crashes.WrapperSdkListener.class);
+        Crashes.getInstance().setWrapperSdkListener(wrapperSdkListener);
+        Crashes.getInstance().saveUncaughtException(Thread.currentThread(), new TestCrashException());
+        verify(wrapperSdkListener).onCrashCaptured(errorLog);
+    }
+
+    @Test
+    public void saveWrapperSdkErrorLogJSONException() throws JSONException {
+        mockStatic(SonomaLog.class);
+        ManagedErrorLog errorLog = new ManagedErrorLog();
+        errorLog.setId(UUIDUtils.randomUUID());
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.serializeLog(errorLog)).thenThrow(new JSONException("mock"));
+        Crashes.getInstance().setLogSerializer(logSerializer);
+        Crashes.getInstance().saveWrapperSdkErrorLog(errorLog);
+        verifyStatic();
+        SonomaLog.error(anyString(), anyString(), any(JSONException.class));
+    }
+
+    @Test
+    public void saveWrapperSdkErrorLogIOException() throws IOException, JSONException {
+        mockStatic(SonomaLog.class);
+        ManagedErrorLog errorLog = new ManagedErrorLog();
+        errorLog.setId(UUIDUtils.randomUUID());
+        mockStatic(StorageHelper.InternalStorage.class);
+        doThrow(new IOException()).when(StorageHelper.InternalStorage.class);
+        StorageHelper.InternalStorage.write(any(File.class), anyString());
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.serializeLog(errorLog)).thenReturn("mock");
+        Crashes.getInstance().setLogSerializer(logSerializer);
+        Crashes.getInstance().saveWrapperSdkErrorLog(errorLog);
+        verifyStatic();
+        SonomaLog.error(anyString(), anyString(), any(IOException.class));
     }
 }
