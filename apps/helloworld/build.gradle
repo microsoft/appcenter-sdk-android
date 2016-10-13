@@ -19,8 +19,7 @@ repositories {
 }
 
 dependencies {
-    //noinspection GradleDynamicVersion
-    compile "com.microsoft.sonoma:analytics:+"
-    //noinspection GradleDynamicVersion
-    compile "com.microsoft.sonoma:crashes:+"
+    def version = "0.1.1"
+    compile "com.microsoft.sonoma:analytics:${version}"
+    compile "com.microsoft.sonoma:crashes:${version}"
 }

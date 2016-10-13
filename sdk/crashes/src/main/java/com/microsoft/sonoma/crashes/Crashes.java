@@ -279,6 +279,7 @@ public class Crashes extends AbstractSonomaFeature {
      *
      * @param exception An exception.
      */
+    @SuppressWarnings("WeakerAccess")
     public synchronized void trackException(@NonNull com.microsoft.sonoma.crashes.ingestion.models.Exception exception) {
         if (isInactive())
             return;
