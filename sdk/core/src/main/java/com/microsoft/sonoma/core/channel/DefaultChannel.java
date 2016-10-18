@@ -19,8 +19,8 @@ import com.microsoft.sonoma.core.ingestion.models.LogContainer;
 import com.microsoft.sonoma.core.ingestion.models.json.LogSerializer;
 import com.microsoft.sonoma.core.persistence.DatabasePersistence;
 import com.microsoft.sonoma.core.persistence.DatabasePersistenceAsync;
-import com.microsoft.sonoma.core.persistence.DatabasePersistenceAsync.DatabasePersistenceAsyncCallback;
 import com.microsoft.sonoma.core.persistence.DatabasePersistenceAsync.AbstractDatabasePersistenceAsyncCallback;
+import com.microsoft.sonoma.core.persistence.DatabasePersistenceAsync.DatabasePersistenceAsyncCallback;
 import com.microsoft.sonoma.core.persistence.Persistence;
 import com.microsoft.sonoma.core.utils.DeviceInfoHelper;
 import com.microsoft.sonoma.core.utils.IdHelper;
@@ -82,6 +82,12 @@ public class DefaultChannel implements Channel {
      * Is channel enabled?
      */
     private boolean mEnabled;
+
+    /**
+     * Is channel disabled due to connectivity issues or was the problem fatal?
+     * In that case we stop accepting new logs in database.
+     */
+    private boolean mDiscardLogs;
 
     /**
      * Device properties.
@@ -184,6 +190,7 @@ public class DefaultChannel implements Channel {
             return;
         if (enabled) {
             mEnabled = true;
+            mDiscardLogs = false;
             for (String groupName : mGroupStates.keySet())
                 checkPendingLogs(groupName);
         } else
@@ -217,6 +224,7 @@ public class DefaultChannel implements Channel {
      */
     private void suspend(boolean deleteLogs) {
         mEnabled = false;
+        mDiscardLogs = deleteLogs;
         for (GroupState groupState : mGroupStates.values()) {
             cancelTimer(groupState);
             groupState.mSendingBatches.clear();
@@ -345,16 +353,16 @@ public class DefaultChannel implements Channel {
         String groupName = groupState.mName;
         SonomaLog.error(Sonoma.LOG_TAG, "Sending logs groupName=" + groupName + " id=" + batchId + " failed", e);
         List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
-        if (!HttpUtils.isRecoverableError(e))
-            mPersistence.deleteLogs(groupName, batchId);
-        else
+        boolean recoverableError = HttpUtils.isRecoverableError(e);
+        if (recoverableError) {
             groupState.mPendingLogCount += removedLogsForBatchId.size();
+        }
         GroupListener groupListener = groupState.mListener;
         if (groupListener != null) {
             for (Log log : removedLogsForBatchId)
                 groupListener.onFailure(log, e);
         }
-        suspend(false);
+        suspend(!recoverableError);
     }
 
     /**
@@ -365,6 +373,12 @@ public class DefaultChannel implements Channel {
      */
     @Override
     public synchronized void enqueue(@NonNull Log log, @NonNull final String groupName) {
+
+        /* Check if disabled with discarding logs. */
+        if (mDiscardLogs) {
+            SonomaLog.warn(Sonoma.LOG_TAG, "Channel is disabled, log are discarded.");
+            return;
+        }
 
         /* Check group name is registered. */
         final GroupState groupState = mGroupStates.get(groupName);
@@ -400,6 +414,7 @@ public class DefaultChannel implements Channel {
 
         /* Persist log. */
         mPersistence.putLog(groupName, log, new DatabasePersistenceAsyncCallback() {
+
             @Override
             public void onSuccess(Object result) {
                 groupState.mPendingLogCount++;
@@ -407,7 +422,7 @@ public class DefaultChannel implements Channel {
 
                 /* Increment counters and schedule ingestion if we are not disabled. */
                 if (!mEnabled) {
-                    SonomaLog.warn(Sonoma.LOG_TAG, "Channel is disabled, event was saved to disk.");
+                    SonomaLog.warn(Sonoma.LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
                 } else {
                     checkPendingLogs(groupName);
                 }
@@ -415,7 +430,7 @@ public class DefaultChannel implements Channel {
 
             @Override
             public void onFailure(Exception e) {
-                SonomaLog.error(Sonoma.LOG_TAG, "Error persisting event with exception: " + e.toString());
+                SonomaLog.error(Sonoma.LOG_TAG, "Error persisting log with exception: " + e.toString());
             }
         });
     }
