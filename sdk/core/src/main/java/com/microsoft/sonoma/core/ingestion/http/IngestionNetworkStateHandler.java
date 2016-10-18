@@ -95,7 +95,7 @@ public class IngestionNetworkStateHandler extends IngestionDecorator implements 
             }
         }
 
-        public void pauseCall() {
+        void pauseCall() {
             synchronized (mCalls) {
                 if (mServiceCall != null)
                     mServiceCall.cancel();
