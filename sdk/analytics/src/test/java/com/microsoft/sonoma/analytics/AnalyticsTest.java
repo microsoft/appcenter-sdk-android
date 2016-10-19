@@ -154,7 +154,20 @@ public class AnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onChannelReady(mock(Context.class), channel);
         analytics.onActivityResumed(new MyActivity());
-        verify(channel, never()).enqueue(any(Log.class), anyString());
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof StartSessionLog;
+            }
+        }), anyString());
+        verify(channel, never()).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof PageLog;
+            }
+        }), anyString());
         Analytics.setAutoPageTrackingEnabled(true);
         assertTrue(Analytics.isAutoPageTrackingEnabled());
         analytics.onActivityResumed(new SomeScreen());
