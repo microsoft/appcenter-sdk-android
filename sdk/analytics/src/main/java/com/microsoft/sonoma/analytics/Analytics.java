@@ -240,7 +240,7 @@ public class Analytics extends AbstractSonomaFeature {
 
         /* Delayed initialization once channel ready and enabled (both conditions). */
         if (enabled && mChannel != null && mSessionTracker == null) {
-            mSessionTracker = new SessionTracker(mChannel);
+            mSessionTracker = new SessionTracker(mChannel, ANALYTICS_GROUP);
             mChannel.addListener(mSessionTracker);
         }
 
