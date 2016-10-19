@@ -21,6 +21,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -29,7 +30,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.notNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -84,7 +89,7 @@ public class SessionTrackerTest {
         when(StorageHelper.PreferencesStorage.getStringSet(anyString())).thenReturn(null);
         spendTime(1000);
         mChannel = mock(Channel.class);
-        mSessionTracker = new SessionTracker(mChannel);
+        mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);
     }
 
     @Test
@@ -291,6 +296,42 @@ public class SessionTrackerTest {
     }
 
     @Test
+    public void startSessionWithoutLogs() {
+
+        final AtomicReference<StartSessionLog> startSessionLog = new AtomicReference<>();
+        doAnswer(new Answer() {
+
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                startSessionLog.set((StartSessionLog) invocation.getArguments()[0]);
+                return null;
+            }
+        }).when(mChannel).enqueue(notNull(StartSessionLog.class), eq(TEST_GROUP));
+
+        /* Go foreground, start session is sent. */
+        mSessionTracker.onActivityResumed();
+        verify(mChannel, times(1)).enqueue(notNull(StartSessionLog.class), eq(TEST_GROUP));
+        assertNotNull(startSessionLog.get());
+        UUID sid = startSessionLog.get().getSid();
+        assertNotNull(sid);
+
+        /* Change screen after a long time, session reused. */
+        spendTime(30000);
+        mSessionTracker.onActivityPaused();
+        spendTime(1);
+        mSessionTracker.onActivityResumed();
+        verify(mChannel, times(1)).enqueue(notNull(StartSessionLog.class), eq(TEST_GROUP));
+
+        /* Go background and come back after timeout, second session. */
+        spendTime(1);
+        mSessionTracker.onActivityPaused();
+        spendTime(30000);
+        mSessionTracker.onActivityResumed();
+        verify(mChannel, times(2)).enqueue(notNull(StartSessionLog.class), eq(TEST_GROUP));
+        assertNotEquals(sid, startSessionLog.get().getSid());
+    }
+
+    @Test
     public void sdkInitializedBetweenPauseAndResume() {
 
         /* Pause application before we saw the first resume event (integration problem). We are handling that gracefully though. */
@@ -436,7 +477,7 @@ public class SessionTrackerTest {
         }
 
         /* Re-test with persistence now, no current session but same correlation will work and no session will be triggered on the new instance. */
-        mSessionTracker = new SessionTracker(mChannel);
+        mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);
         {
             Log log = newEvent();
             log.setToffset(firstSessionTime + 1);
@@ -473,7 +514,7 @@ public class SessionTrackerTest {
         sessions.add("400");
         sessions.add("500a/10abd355-40a5-4b51-8071-cb5a4c338535");
         when(StorageHelper.PreferencesStorage.getStringSet(anyString())).thenReturn(sessions);
-        mSessionTracker = new SessionTracker(mChannel);
+        mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);
 
         /* Generate a current session. */
         mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
