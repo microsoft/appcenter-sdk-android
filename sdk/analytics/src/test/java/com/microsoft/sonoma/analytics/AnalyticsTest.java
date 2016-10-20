@@ -253,6 +253,72 @@ public class AnalyticsTest {
         StorageHelper.PreferencesStorage.remove("sessions");
     }
 
+    @Test
+    public void startSessionAfterUserApproval() {
+
+        /*
+         * Disable analytics while in background to set up the initial condition
+         * simulating the optin use case.
+         */
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onChannelReady(mock(Context.class), channel);
+        Analytics.setEnabled(false);
+
+        /* App in foreground: no log yet, we are disabled. */
+        analytics.onActivityResumed(new Activity());
+        verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
+
+        /* Enable: start session sent retroactively. */
+        Analytics.setEnabled(true);
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof StartSessionLog;
+            }
+        }), eq(analytics.getGroupName()));
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof PageLog;
+            }
+        }), eq(analytics.getGroupName()));
+
+        /* Go background. */
+        analytics.onActivityPaused(new Activity());
+
+        /* Disable/enable: nothing happens on background. */
+        Analytics.setEnabled(false);
+        Analytics.setEnabled(true);
+
+        /* No additional log. */
+        verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
+    }
+
+    @Test
+    public void startSessionAfterUserApprovalWeakReference() {
+
+        /*
+         * Disable analytics while in background to set up the initial condition
+         * simulating the optin use case.
+         */
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onChannelReady(mock(Context.class), channel);
+        Analytics.setEnabled(false);
+
+        /* App in foreground: no log yet, we are disabled. */
+        analytics.onActivityResumed(new Activity());
+        System.gc();
+        verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
+
+        /* Enable: start session not sent retroactively, weak reference lost. */
+        Analytics.setEnabled(true);
+        verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
+    }
+
     /**
      * Activity with page name automatically resolving to "My" (no "Activity" suffix).
      */
