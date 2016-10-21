@@ -94,6 +94,7 @@ public interface Channel {
          * @param log       log being enqueued.
          * @param groupName group of the log.
          */
+        @SuppressWarnings("UnusedParameters")
         void onEnqueuingLog(@NonNull Log log, @NonNull String groupName);
     }
 
