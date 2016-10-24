@@ -1,0 +1,49 @@
+Index: apps/sasquatch/build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- apps/sasquatch/build.gradle	(date 1476127104000)
++++ apps/sasquatch/build.gradle	(revision )
+@@ -4,8 +4,23 @@
+ 
+ evaluationDependsOn(':apps')
+ 
++/*
++ * Not a secret, will be shared with private beta customers, git repo itself is private.
++ * This account is read only, we use different secret credentials to publish.
++ */
++repositories {
++    maven {
++        url 'http://microsoftsonoma.bintray.com/sonoma'
++        credentials {
++            username 'sonoma-beta'
++            password 'cbaf881993ad1ab4128f71da716d060e8590906a'
++        }
++    }
++}
++
+ dependencies {
+     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
+-    compile project(':sdk:analytics')
+-    compile project(':sdk:crashes')
++    def sonomaSdkVersion = '0.1.1'
++    compile "com.microsoft.sonoma:analytics:${sonomaSdkVersion}"
++    compile "com.microsoft.sonoma:crashes:${sonomaSdkVersion}"
+ }
+\ No newline at end of file
+Index: apps/sasquatch/src/main/java/com/microsoft/sonoma/sasquatch/features/TestFeatures.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- apps/sasquatch/src/main/java/com/microsoft/sonoma/sasquatch/features/TestFeatures.java	(date 1476127104000)
++++ apps/sasquatch/src/main/java/com/microsoft/sonoma/sasquatch/features/TestFeatures.java	(revision )
+@@ -30,6 +30,7 @@
+             public void onClick(View v) {
+ 
+                 /* Make the app crash on purpose for testing report. */
++                int i = 1 / 0;
+                 Crashes.generateTestCrash();
+             }
+         }));

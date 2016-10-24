@@ -15,6 +15,7 @@ import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.StorageHelper;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
 import com.microsoft.sonoma.crashes.ingestion.models.ManagedErrorLog;
+import com.microsoft.sonoma.crashes.ingestion.models.StackFrame;
 import com.microsoft.sonoma.crashes.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.sonoma.crashes.model.ErrorAttachment;
 import com.microsoft.sonoma.crashes.model.ErrorReport;
@@ -43,6 +44,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -50,6 +52,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.contains;
@@ -59,10 +64,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
@@ -117,13 +123,40 @@ public class CrashesTest {
     }
 
     @Test
+    public void initializeWhenDisabled() {
+
+        /* Setup mock. */
+        Crashes crashes = Crashes.getInstance();
+        mockStatic(ErrorLogHelper.class);
+        File dir = mock(File.class);
+        File file1 = mock(File.class);
+        File file2 = mock(File.class);
+        UncaughtExceptionHandler mockHandler = mock(UncaughtExceptionHandler.class);
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(dir);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{});
+        when(dir.listFiles()).thenReturn(new File[]{file1, file2});
+        crashes.setUncaughtExceptionHandler(mockHandler);
+        crashes.setInstanceEnabled(false);
+        crashes.onChannelReady(mock(Context.class), mock(Channel.class));
+
+        /* Test. */
+        assertFalse(Crashes.isEnabled());
+        assertEquals(crashes.getInitializeTimestamp(), -1);
+        assertNull(crashes.getUncaughtExceptionHandler());
+        verify(mockHandler).unregister();
+    }
+
+    @Test
     public void notInit() {
 
         /* Just check log is discarded without throwing any exception. */
         Crashes.notifyUserConfirmation(Crashes.SEND);
+        Crashes.trackException(new Exception("Test"));
 
         verifyStatic(times(1));
         SonomaLog.error(eq(Crashes.LOG_TAG), anyString());
+        verifyStatic(times(1));
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString());
     }
 
     @Test
@@ -141,29 +174,43 @@ public class CrashesTest {
     public void setEnabled() {
 
         /* Setup mock. */
+        Crashes crashes = Crashes.getInstance();
         mockStatic(ErrorLogHelper.class);
+        Channel mockChannel = mock(Channel.class);
         File dir = mock(File.class);
         File file1 = mock(File.class);
         File file2 = mock(File.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(dir);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{});
         when(dir.listFiles()).thenReturn(new File[]{file1, file2});
-        Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
 
         /* Test. */
         assertTrue(Crashes.isEnabled());
-        assertTrue(Crashes.getInstance().getInitializeTimestamp() > 0);
-        assertTrue(Thread.getDefaultUncaughtExceptionHandler() instanceof UncaughtExceptionHandler);
+        Crashes.setEnabled(true);
+        assertTrue(Crashes.isEnabled());
+        assertTrue(crashes.getInitializeTimestamp() > 0);
         Crashes.setEnabled(false);
         assertFalse(Crashes.isEnabled());
-        assertEquals(Crashes.getInstance().getInitializeTimestamp(), -1);
+        crashes.onChannelReady(mock(Context.class), mockChannel);
+        verify(mockChannel).clear(crashes.getGroupName());
+        verify(mockChannel).removeGroup(eq(crashes.getGroupName()));
+        assertEquals(crashes.getInitializeTimestamp(), -1);
         assertFalse(Thread.getDefaultUncaughtExceptionHandler() instanceof UncaughtExceptionHandler);
         assertFalse(verify(file1).delete());
         assertFalse(verify(file2).delete());
+        Crashes.trackException(new Exception("Test"));
+        verifyNoMoreInteractions(mockChannel);
+
+        /* Enable back, testing double calls. */
         Crashes.setEnabled(true);
         assertTrue(Crashes.isEnabled());
-        assertTrue(Crashes.getInstance().getInitializeTimestamp() > 0);
+        assertTrue(crashes.getInitializeTimestamp() > 0);
         assertTrue(Thread.getDefaultUncaughtExceptionHandler() instanceof UncaughtExceptionHandler);
+        Crashes.setEnabled(true);
+        assertTrue(Crashes.isEnabled());
+        verify(mockChannel).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
+        Crashes.trackException(new Exception("Test"));
+        verify(mockChannel, times(1)).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
     }
 
     @Test
@@ -186,7 +233,7 @@ public class CrashesTest {
         Context mockContext = mock(Context.class);
         Channel mockChannel = mock(Channel.class);
 
-        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0, true);
         ErrorReport report = new ErrorReport();
 
         mockStatic(ErrorLogHelper.class);
@@ -226,7 +273,7 @@ public class CrashesTest {
         Context mockContext = mock(Context.class);
         Channel mockChannel = mock(Channel.class);
 
-        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0, true);
         ErrorReport report = new ErrorReport();
 
         mockStatic(ErrorLogHelper.class);
@@ -258,7 +305,7 @@ public class CrashesTest {
         Context mockContext = mock(Context.class);
         Channel mockChannel = mock(Channel.class);
 
-        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0, true);
         ErrorReport report = new ErrorReport();
 
         mockStatic(ErrorLogHelper.class);
@@ -383,8 +430,52 @@ public class CrashesTest {
     }
 
     @Test
+    public void trackException() {
+        Crashes crashes = Crashes.getInstance();
+        Channel mockChannel = mock(Channel.class);
+        crashes.onChannelReady(mock(Context.class), mockChannel);
+        final Exception exception = new Exception("Test Exception for trackException");
+        Crashes.trackException(exception);
+        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                return item instanceof ManagedErrorLog && exception.getMessage().equals(((ManagedErrorLog) item).getException().getMessage());
+            }
+        }), eq(crashes.getGroupName()));
+    }
+
+    @Test
+    public void trackExceptionForWrapperSdk() {
+        StackFrame frame = new StackFrame();
+        frame.setClassName("1");
+        frame.setFileName("2");
+        frame.setLineNumber(3);
+        frame.setMethodName("4");
+        final com.microsoft.sonoma.crashes.ingestion.models.Exception exception = new com.microsoft.sonoma.crashes.ingestion.models.Exception();
+        exception.setType("5");
+        exception.setMessage("6");
+        exception.setFrames(singletonList(frame));
+
+        Crashes crashes = Crashes.getInstance();
+        Channel mockChannel = mock(Channel.class);
+
+        Crashes.getInstance().trackException(exception);
+        verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
+        crashes.onChannelReady(mock(Context.class), mockChannel);
+        Crashes.getInstance().trackException(exception);
+        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                return item instanceof ManagedErrorLog && exception.equals(((ManagedErrorLog) item).getException());
+            }
+        }), eq(crashes.getGroupName()));
+    }
+
+    @Test
     public void getChannelListener() throws IOException, ClassNotFoundException {
-        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0, true);
         final String exceptionMessage = "This is a test exception.";
         final Exception exception = new Exception() {
             @Override
@@ -425,7 +516,7 @@ public class CrashesTest {
 
     @Test
     public void getChannelListenerErrors() throws IOException, ClassNotFoundException {
-        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0, true);
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
@@ -454,7 +545,7 @@ public class CrashesTest {
 
     @Test
     public void handleUserConfirmationDoNotSend() throws IOException, ClassNotFoundException, JSONException {
-        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0, true);
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
@@ -487,7 +578,7 @@ public class CrashesTest {
 
     @Test
     public void handleUserConfirmationAlwaysSend() throws IOException, ClassNotFoundException, JSONException {
-        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0, true);
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
@@ -515,7 +606,7 @@ public class CrashesTest {
 
     @Test
     public void buildErrorReport() throws IOException, ClassNotFoundException {
-        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0, true);
         final String exceptionMessage = "This is a test exception.";
         final Exception exception = new Exception() {
             @Override
@@ -542,7 +633,7 @@ public class CrashesTest {
 
     @Test
     public void buildErrorReportError() throws IOException, ClassNotFoundException {
-        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        final ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0, true);
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{new File(".")});
@@ -715,5 +806,47 @@ public class CrashesTest {
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession());
         assertNull(Crashes.getLastSessionCrashReport());
+    }
+
+    @Test
+    public void setWrapperSdkListener() {
+        mockStatic(ErrorLogHelper.class);
+        ManagedErrorLog errorLog = new ManagedErrorLog();
+        errorLog.setId(UUIDUtils.randomUUID());
+        when(ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), anyMapOf(Thread.class, StackTraceElement[].class), anyLong(), anyBoolean())).thenReturn(errorLog);
+        Crashes.getInstance().setLogSerializer(mock(LogSerializer.class));
+        Crashes.WrapperSdkListener wrapperSdkListener = mock(Crashes.WrapperSdkListener.class);
+        Crashes.getInstance().setWrapperSdkListener(wrapperSdkListener);
+        Crashes.getInstance().saveUncaughtException(Thread.currentThread(), new TestCrashException());
+        verify(wrapperSdkListener).onCrashCaptured(errorLog);
+    }
+
+    @Test
+    public void saveWrapperSdkErrorLogJSONException() throws JSONException {
+        mockStatic(SonomaLog.class);
+        ManagedErrorLog errorLog = new ManagedErrorLog();
+        errorLog.setId(UUIDUtils.randomUUID());
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.serializeLog(errorLog)).thenThrow(new JSONException("mock"));
+        Crashes.getInstance().setLogSerializer(logSerializer);
+        Crashes.getInstance().saveWrapperSdkErrorLog(errorLog);
+        verifyStatic();
+        SonomaLog.error(anyString(), anyString(), any(JSONException.class));
+    }
+
+    @Test
+    public void saveWrapperSdkErrorLogIOException() throws IOException, JSONException {
+        mockStatic(SonomaLog.class);
+        ManagedErrorLog errorLog = new ManagedErrorLog();
+        errorLog.setId(UUIDUtils.randomUUID());
+        mockStatic(StorageHelper.InternalStorage.class);
+        doThrow(new IOException()).when(StorageHelper.InternalStorage.class);
+        StorageHelper.InternalStorage.write(any(File.class), anyString());
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.serializeLog(errorLog)).thenReturn("mock");
+        Crashes.getInstance().setLogSerializer(logSerializer);
+        Crashes.getInstance().saveWrapperSdkErrorLog(errorLog);
+        verifyStatic();
+        SonomaLog.error(anyString(), anyString(), any(IOException.class));
     }
 }

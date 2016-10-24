@@ -470,21 +470,22 @@ public class DefaultChannelTest {
         /* Verify that we have called sendAsync on the ingestion. */
         verify(mockIngestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        /* Verify that we have deleted the failed batch. */
-        verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
-
         /* Verify that the Channel is disabled. */
         assertFalse(channel.isEnabled());
-        verify(mockPersistence).clearPendingLogState();
-        verify(mockPersistence, never()).clear();
+
+        /* Verify that we have cleared the logs. */
+        verify(mockPersistence).clear();
+
+        /* Verify counter. */
+        assertEquals(0, channel.getCounter(TEST_GROUP));
 
         /* Enqueuing 20 more events. */
         for (int i = 0; i < 20; i++) {
             channel.enqueue(mock(Log.class), TEST_GROUP);
         }
 
-        /* The counter should now be 20. */
-        assertEquals(20, channel.getCounter(TEST_GROUP));
+        /* The counter should still be 0 as logs are discarded by channel now. */
+        assertEquals(0, channel.getCounter(TEST_GROUP));
 
         /* No more timer yet at this point. */
         verify(mHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
@@ -493,8 +494,14 @@ public class DefaultChannelTest {
         /* Prepare to mock timer. */
         AtomicReference<Runnable> runnable = catchPostRunnable();
 
-        /* Enable channel. */
+        /* Enable channel to see if it can work again after that error state. */
         channel.setEnabled(true);
+
+        /* Enqueuing 20 more events. */
+        for (int i = 0; i < 20; i++) {
+            channel.enqueue(mock(Log.class), TEST_GROUP);
+        }
+        assertEquals(20, channel.getCounter(TEST_GROUP));
 
         /* Wait for timer. */
         assertNotNull(runnable.get());
@@ -503,14 +510,16 @@ public class DefaultChannelTest {
         /* The counter should back to 0 now. */
         assertEquals(0, channel.getCounter(TEST_GROUP));
 
-        /* Verify that we have called sendAsync on the ingestion 2 times total: 1 failure then 1 success. */
+        /* Verify that we have called sendAsync on the ingestion 2 times total: 1 earlier failure then 1 success. */
         verify(mockIngestion, times(2)).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        /* Verify that we have called deleteLogs on the Persistence for the batches. */
-        verify(mockPersistence, times(2)).deleteLogs(any(String.class), any(String.class));
+        /* Verify that we have called deleteLogs on the Persistence for the successful batch after re-enabling. */
+        verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
-        /* Verify timer. */
+        /* Verify 1 more timer call. */
         verify(mHandler, times(2)).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
+
+        /* Verify no more cancel timer. */
         verify(mHandler).removeCallbacks(any(Runnable.class));
     }
 

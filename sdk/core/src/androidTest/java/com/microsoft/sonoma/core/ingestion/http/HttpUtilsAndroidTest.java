@@ -33,10 +33,11 @@ public class HttpUtilsAndroidTest {
         assertFalse(isRecoverableError(new MalformedURLException()));
         for (int i = 0; i <= 4; i++)
             assertTrue(isRecoverableError(new HttpException(500 + i)));
-        for (int i = 0; i <= 6; i++)
+        for (int i = 2; i <= 6; i++)
             assertFalse(isRecoverableError(new HttpException(400 + i)));
         assertTrue(isRecoverableError(new HttpException(408)));
         assertFalse(isRecoverableError(new HttpException(413)));
         assertTrue(isRecoverableError(new HttpException(429)));
+        assertTrue(isRecoverableError(new HttpException(401)));
     }
 }

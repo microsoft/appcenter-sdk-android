@@ -19,6 +19,7 @@ import com.microsoft.sonoma.core.ingestion.models.json.LogFactory;
 import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,9 +29,14 @@ import java.util.Map;
 public class Analytics extends AbstractSonomaFeature {
 
     /**
+     * Name of the feature.
+     */
+    private static final String FEATURE_NAME = "Analytics";
+
+    /**
      * TAG used in logging for Analytics.
      */
-    public static final String LOG_TAG = SonomaLog.LOG_TAG + "Analytics";
+    public static final String LOG_TAG = SonomaLog.LOG_TAG + FEATURE_NAME;
 
     /**
      * Constant marking event of the analytics group.
@@ -51,6 +57,11 @@ public class Analytics extends AbstractSonomaFeature {
      * Log factories managed by this module.
      */
     private final Map<String, LogFactory> mFactories;
+
+    /**
+     * Current activity to replay onResume when enabled in foreground.
+     */
+    private WeakReference<Activity> mCurrentActivity;
 
     /**
      * Session tracker.
@@ -190,6 +201,11 @@ public class Analytics extends AbstractSonomaFeature {
     }
 
     @Override
+    protected String getFeatureName() {
+        return FEATURE_NAME;
+    }
+
+    @Override
     public Map<String, LogFactory> getLogFactories() {
         return mFactories;
     }
@@ -202,17 +218,31 @@ public class Analytics extends AbstractSonomaFeature {
 
     @Override
     public synchronized void onActivityResumed(Activity activity) {
-        if (mSessionTracker == null)
-            return;
+        mCurrentActivity = new WeakReference<>(activity);
+        if (mSessionTracker != null) {
+            processOnResume(activity);
+        }
+    }
+
+    /**
+     * On an activity being resumed, start a new session if needed
+     * and track current page automatically if that mode is enabled.
+     *
+     * @param activity current activity.
+     */
+    private void processOnResume(Activity activity) {
         mSessionTracker.onActivityResumed();
-        if (mAutoPageTrackingEnabled)
+        if (mAutoPageTrackingEnabled) {
             queuePage(generatePageName(activity.getClass()), null);
+        }
     }
 
     @Override
     public synchronized void onActivityPaused(Activity activity) {
-        if (mSessionTracker != null)
+        mCurrentActivity = null;
+        if (mSessionTracker != null) {
             mSessionTracker.onActivityPaused();
+        }
     }
 
     @Override
@@ -230,8 +260,14 @@ public class Analytics extends AbstractSonomaFeature {
 
         /* Delayed initialization once channel ready and enabled (both conditions). */
         if (enabled && mChannel != null && mSessionTracker == null) {
-            mSessionTracker = new SessionTracker(mChannel);
+            mSessionTracker = new SessionTracker(mChannel, ANALYTICS_GROUP);
             mChannel.addListener(mSessionTracker);
+            if (mCurrentActivity != null) {
+                Activity activity = mCurrentActivity.get();
+                if (activity != null) {
+                    processOnResume(activity);
+                }
+            }
         }
 
         /* Release resources if disabled and enabled before with resources. */
@@ -240,23 +276,6 @@ public class Analytics extends AbstractSonomaFeature {
             mSessionTracker.clearSessions();
             mSessionTracker = null;
         }
-    }
-
-    /**
-     * Check if this feature is not active: disabled or not started.
-     *
-     * @return <code>true</code> if the feature is inactive, <code>false</code> otherwise.
-     */
-    private synchronized boolean isInactive() {
-        if (mChannel == null) {
-            SonomaLog.error(LOG_TAG, "Analytics feature not initialized, discarding calls.");
-            return true;
-        }
-        if (!isInstanceEnabled()) {
-            SonomaLog.info(LOG_TAG, "Analytics feature not enabled, discarding calls.");
-            return true;
-        }
-        return false;
     }
 
     /**

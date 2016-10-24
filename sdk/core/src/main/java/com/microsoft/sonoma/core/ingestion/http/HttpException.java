@@ -35,6 +35,7 @@ public class HttpException extends IOException {
      * @param status  HTTP status code.
      * @param payload HTTP payload.
      */
+    @SuppressWarnings("WeakerAccess")
     public HttpException(int status, @NonNull String payload) {
         super(getDetailMessage(status, payload));
         this.payload = payload;
@@ -53,6 +54,7 @@ public class HttpException extends IOException {
      *
      * @return HTTP status code.
      */
+    @SuppressWarnings("WeakerAccess")
     public int getStatusCode() {
         return statusCode;
     }
@@ -62,6 +64,7 @@ public class HttpException extends IOException {
      *
      * @return HTTP payload. Can be empty string.
      */
+    @SuppressWarnings("WeakerAccess")
     @NonNull
     public String getPayload() {
         return payload;
