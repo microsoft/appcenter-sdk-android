@@ -10,6 +10,7 @@ import com.microsoft.sonoma.sasquatch.R;
 import com.microsoft.sonoma.sasquatch.activities.DeviceInfoActivity;
 import com.microsoft.sonoma.sasquatch.activities.DummyActivity;
 import com.microsoft.sonoma.sasquatch.activities.EventActivity;
+import com.microsoft.sonoma.sasquatch.activities.ManagedErrorActivity;
 import com.microsoft.sonoma.sasquatch.activities.PageActivity;
 
 import java.lang.ref.WeakReference;
@@ -34,6 +35,7 @@ public final class TestFeatures {
             }
         }));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
+        sTestFeatureModel.add(new TestFeatureModel(R.string.title_error, R.string.description_error, ManagedErrorActivity.class));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_event, R.string.description_event, EventActivity.class));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_page, R.string.description_page, PageActivity.class));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_generate_page_log, R.string.description_generate_page_log, DummyActivity.class));

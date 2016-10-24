@@ -108,7 +108,7 @@ public class AnalyticsTest {
         Analytics.trackPage("test", new HashMap<String, String>());
 
         verifyStatic(times(4));
-        SonomaLog.error(eq(Analytics.LOG_TAG), anyString());
+        SonomaLog.error(eq(Sonoma.LOG_TAG), anyString());
     }
 
     private void activityResumed(final String expectedName, android.app.Activity activity) {
@@ -154,7 +154,20 @@ public class AnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onChannelReady(mock(Context.class), channel);
         analytics.onActivityResumed(new MyActivity());
-        verify(channel, never()).enqueue(any(Log.class), anyString());
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof StartSessionLog;
+            }
+        }), anyString());
+        verify(channel, never()).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof PageLog;
+            }
+        }), anyString());
         Analytics.setAutoPageTrackingEnabled(true);
         assertTrue(Analytics.isAutoPageTrackingEnabled());
         analytics.onActivityResumed(new SomeScreen());
@@ -238,6 +251,72 @@ public class AnalyticsTest {
         /* Verify session state has been cleared. */
         verifyStatic();
         StorageHelper.PreferencesStorage.remove("sessions");
+    }
+
+    @Test
+    public void startSessionAfterUserApproval() {
+
+        /*
+         * Disable analytics while in background to set up the initial condition
+         * simulating the optin use case.
+         */
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onChannelReady(mock(Context.class), channel);
+        Analytics.setEnabled(false);
+
+        /* App in foreground: no log yet, we are disabled. */
+        analytics.onActivityResumed(new Activity());
+        verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
+
+        /* Enable: start session sent retroactively. */
+        Analytics.setEnabled(true);
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof StartSessionLog;
+            }
+        }), eq(analytics.getGroupName()));
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof PageLog;
+            }
+        }), eq(analytics.getGroupName()));
+
+        /* Go background. */
+        analytics.onActivityPaused(new Activity());
+
+        /* Disable/enable: nothing happens on background. */
+        Analytics.setEnabled(false);
+        Analytics.setEnabled(true);
+
+        /* No additional log. */
+        verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
+    }
+
+    @Test
+    public void startSessionAfterUserApprovalWeakReference() {
+
+        /*
+         * Disable analytics while in background to set up the initial condition
+         * simulating the optin use case.
+         */
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onChannelReady(mock(Context.class), channel);
+        Analytics.setEnabled(false);
+
+        /* App in foreground: no log yet, we are disabled. */
+        analytics.onActivityResumed(new Activity());
+        System.gc();
+        verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
+
+        /* Enable: start session not sent retroactively, weak reference lost. */
+        Analytics.setEnabled(true);
+        verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
     }
 
     /**

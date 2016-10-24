@@ -49,6 +49,11 @@ public class SessionTracker implements Channel.Listener {
     private final Channel mChannel;
 
     /**
+     * Group name used to send generated logs.
+     */
+    private final String mGroupName;
+
+    /**
      * Past and current session identifiers sorted by session starting timestamp (ascending).
      */
     private final NavigableMap<Long, UUID> mSessions = new TreeMap<>();
@@ -79,9 +84,11 @@ public class SessionTracker implements Channel.Listener {
      * Init.
      *
      * @param channel channel to decorate.
+     * @param groupName group name used to send generated logs.
      */
-    public SessionTracker(Channel channel) {
+    public SessionTracker(Channel channel, String groupName) {
         mChannel = channel;
+        mGroupName = groupName;
 
         /* Try loading past sessions from storage. */
         Set<String> storedSessions = StorageHelper.PreferencesStorage.getStringSet(STORAGE_KEY);
@@ -121,44 +128,49 @@ public class SessionTracker implements Channel.Listener {
         /* If the log is not correlated to a past session. */
         if (log.getSid() == null) {
 
-            /*
-             * Generate a new session identifier if the first time or
-             * we went in background for more X seconds or
-             * if enough time has elapsed since the last background usage of the API.
-             *
-             * Indeed the API can be used for events or crashes only for example, we need to renew
-             * the session even when no pages are triggered but at the same time we want to keep using
-             * the same session as long as the current activity is not paused (long video for example).
-             */
-            if (mSid == null || hasSessionTimedOut()) {
-
-                /* New session: generate a new identifier. */
-                mSid = UUIDUtils.randomUUID();
-
-                /* Update session map. */
-                mSessions.put(System.currentTimeMillis(), mSid);
-
-                /* Remove oldest session if we reached maximum storage capacity. */
-                if (mSessions.size() > STORAGE_MAX_SESSIONS)
-                    mSessions.pollFirstEntry();
-
-                /* Persist sessions. */
-                Set<String> sessionStorage = new HashSet<>();
-                for (Map.Entry<Long, UUID> session : mSessions.entrySet())
-                    sessionStorage.add(session.getKey() + STORAGE_KEY_VALUE_SEPARATOR + session.getValue());
-                StorageHelper.PreferencesStorage.putStringSet(STORAGE_KEY, sessionStorage);
-
-                /* Enqueue a start session log. */
-                StartSessionLog startSessionLog = new StartSessionLog();
-                startSessionLog.setSid(mSid);
-                mChannel.enqueue(startSessionLog, groupName);
-            }
+            /* Send a new start session log if needed. */
+            sendStartSessionIfNeeded();
 
             /* Set current session identifier. */
             log.setSid(mSid);
 
             /* Record queued time only if the log is using current session. */
             mLastQueuedLogTime = SystemClock.elapsedRealtime();
+        }
+    }
+
+    /**
+     * Generate a new session identifier if the first time or
+     * we went in background for more X seconds or
+     * if enough time has elapsed since the last background usage of the API.
+     * <p>
+     * Indeed the API can be used for events or crashes only for example, we need to renew
+     * the session even when no pages are triggered but at the same time we want to keep using
+     * the same session as long as the current activity is not paused (long video for example).
+     */
+    private void sendStartSessionIfNeeded() {
+        if (mSid == null || hasSessionTimedOut()) {
+
+            /* New session: generate a new identifier. */
+            mSid = UUIDUtils.randomUUID();
+
+            /* Update session map. */
+            mSessions.put(System.currentTimeMillis(), mSid);
+
+            /* Remove oldest session if we reached maximum storage capacity. */
+            if (mSessions.size() > STORAGE_MAX_SESSIONS)
+                mSessions.pollFirstEntry();
+
+            /* Persist sessions. */
+            Set<String> sessionStorage = new HashSet<>();
+            for (Map.Entry<Long, UUID> session : mSessions.entrySet())
+                sessionStorage.add(session.getKey() + STORAGE_KEY_VALUE_SEPARATOR + session.getValue());
+            StorageHelper.PreferencesStorage.putStringSet(STORAGE_KEY, sessionStorage);
+
+            /* Enqueue a start session log. */
+            StartSessionLog startSessionLog = new StartSessionLog();
+            startSessionLog.setSid(mSid);
+            mChannel.enqueue(startSessionLog, mGroupName);
         }
     }
 
@@ -170,6 +182,7 @@ public class SessionTracker implements Channel.Listener {
         /* Record resume time for session timeout management. */
         SonomaLog.debug(Analytics.LOG_TAG, "onActivityResumed");
         mLastResumedTime = SystemClock.elapsedRealtime();
+        sendStartSessionIfNeeded();
     }
 
     /**
