@@ -7,7 +7,7 @@ import com.microsoft.sonoma.analytics.ingestion.models.EventLog;
 import com.microsoft.sonoma.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.ingestion.models.Log;
-import com.microsoft.sonoma.core.utils.StorageHelper;
+import com.microsoft.sonoma.core.utils.storage.StorageHelper;
 
 import org.junit.Before;
 import org.junit.Rule;

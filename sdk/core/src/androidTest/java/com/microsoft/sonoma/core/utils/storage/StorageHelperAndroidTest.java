@@ -1,4 +1,4 @@
-package com.microsoft.sonoma.core.utils;
+package com.microsoft.sonoma.core.utils.storage;
 
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
@@ -7,6 +7,8 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
+import com.microsoft.sonoma.core.utils.UUIDUtils;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -28,9 +30,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.microsoft.sonoma.core.utils.StorageHelper.DatabaseStorage;
-import static com.microsoft.sonoma.core.utils.StorageHelper.InternalStorage;
-import static com.microsoft.sonoma.core.utils.StorageHelper.PreferencesStorage;
+import static com.microsoft.sonoma.core.utils.storage.StorageHelper.DatabaseStorage;
+import static com.microsoft.sonoma.core.utils.storage.StorageHelper.InternalStorage;
+import static com.microsoft.sonoma.core.utils.storage.StorageHelper.PreferencesStorage;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
