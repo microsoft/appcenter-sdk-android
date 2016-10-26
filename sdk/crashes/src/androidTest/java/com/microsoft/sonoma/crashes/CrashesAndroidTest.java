@@ -8,7 +8,7 @@ import com.microsoft.sonoma.core.Constants;
 import com.microsoft.sonoma.core.channel.Channel;
 import com.microsoft.sonoma.core.ingestion.models.Log;
 import com.microsoft.sonoma.core.utils.SonomaLog;
-import com.microsoft.sonoma.core.utils.StorageHelper;
+import com.microsoft.sonoma.core.utils.storage.StorageHelper;
 import com.microsoft.sonoma.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.sonoma.crashes.model.ErrorReport;
 import com.microsoft.sonoma.crashes.utils.ErrorLogHelper;

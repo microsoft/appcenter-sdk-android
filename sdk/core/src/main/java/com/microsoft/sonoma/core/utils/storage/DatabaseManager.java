@@ -1,4 +1,4 @@
-package com.microsoft.sonoma.core.utils;
+package com.microsoft.sonoma.core.utils.storage;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -14,6 +14,7 @@ import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
 import com.microsoft.sonoma.core.Sonoma;
+import com.microsoft.sonoma.core.utils.SonomaLog;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -367,7 +368,7 @@ public class DatabaseManager implements Closeable {
      * @param value The optional value for query.
      * @return A scanner to iterate all values.
      */
-    public Scanner getScanner(String key, Object value) {
+    Scanner getScanner(String key, Object value) {
         return new Scanner(key, value);
     }
 
@@ -418,7 +419,7 @@ public class DatabaseManager implements Closeable {
      *
      * @return The number of records in the table.
      */
-    public final long getRowCount() {
+    final long getRowCount() {
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
@@ -525,7 +526,7 @@ public class DatabaseManager implements Closeable {
     /**
      * Scanner specification.
      */
-    public class Scanner implements Iterable<ContentValues>, Closeable {
+    class Scanner implements Iterable<ContentValues>, Closeable {
         /**
          * Filter key.
          */

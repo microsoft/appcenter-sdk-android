@@ -13,8 +13,8 @@ import android.support.annotation.VisibleForTesting;
 import com.microsoft.sonoma.core.Constants;
 import com.microsoft.sonoma.core.utils.DeviceInfoHelper;
 import com.microsoft.sonoma.core.utils.SonomaLog;
-import com.microsoft.sonoma.core.utils.StorageHelper;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
+import com.microsoft.sonoma.core.utils.storage.StorageHelper;
 import com.microsoft.sonoma.crashes.Crashes;
 import com.microsoft.sonoma.crashes.ingestion.models.Exception;
 import com.microsoft.sonoma.crashes.ingestion.models.ManagedErrorLog;
@@ -166,7 +166,7 @@ public class ErrorLogHelper {
     }
 
     @Nullable
-    public static File getStoredErrorLogFile(@NonNull UUID id) {
+    static File getStoredErrorLogFile(@NonNull UUID id) {
         return getStoredFile(id, ERROR_LOG_FILE_EXTENSION);
     }
 

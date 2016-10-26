@@ -3,6 +3,7 @@ package com.microsoft.sonoma.core.utils;
 import android.support.annotation.NonNull;
 
 import com.microsoft.sonoma.core.Sonoma;
+import com.microsoft.sonoma.core.utils.storage.StorageHelper;
 
 import java.util.UUID;
 
