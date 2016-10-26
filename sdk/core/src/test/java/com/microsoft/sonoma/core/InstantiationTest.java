@@ -5,7 +5,7 @@ import com.microsoft.sonoma.core.utils.DeviceInfoHelper;
 import com.microsoft.sonoma.core.utils.IdHelper;
 import com.microsoft.sonoma.core.utils.PrefStorageConstants;
 import com.microsoft.sonoma.core.utils.SonomaLog;
-import com.microsoft.sonoma.core.utils.StorageHelper;
+import com.microsoft.sonoma.core.utils.storage.StorageHelper;
 
 import org.junit.Test;
 

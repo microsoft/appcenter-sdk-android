@@ -16,7 +16,7 @@ import android.widget.Toast;
 import com.microsoft.sonoma.analytics.Analytics;
 import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.utils.PrefStorageConstants;
-import com.microsoft.sonoma.core.utils.StorageHelper;
+import com.microsoft.sonoma.core.utils.storage.StorageHelper;
 import com.microsoft.sonoma.crashes.Crashes;
 import com.microsoft.sonoma.sasquatch.R;
 

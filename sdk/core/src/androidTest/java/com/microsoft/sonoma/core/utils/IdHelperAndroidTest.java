@@ -3,6 +3,8 @@ package com.microsoft.sonoma.core.utils;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
+import com.microsoft.sonoma.core.utils.storage.StorageHelper;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 

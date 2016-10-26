@@ -3,7 +3,7 @@ package com.microsoft.sonoma.core;
 import android.text.TextUtils;
 
 import com.microsoft.sonoma.core.utils.SonomaLog;
-import com.microsoft.sonoma.core.utils.StorageHelper;
+import com.microsoft.sonoma.core.utils.storage.StorageHelper;
 
 import org.junit.Rule;
 import org.junit.Test;
