@@ -1,4 +1,4 @@
-package com.microsoft.sonoma.core.utils;
+package com.microsoft.sonoma.core.utils.storage;
 
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
@@ -11,6 +11,7 @@ import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
 import com.microsoft.sonoma.core.Sonoma;
+import com.microsoft.sonoma.core.utils.SonomaLog;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

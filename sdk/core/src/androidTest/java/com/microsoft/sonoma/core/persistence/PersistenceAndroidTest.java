@@ -7,7 +7,7 @@ import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
 import com.microsoft.sonoma.core.ingestion.models.json.MockLog;
-import com.microsoft.sonoma.core.utils.StorageHelper;
+import com.microsoft.sonoma.core.utils.storage.StorageHelper;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

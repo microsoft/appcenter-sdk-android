@@ -15,7 +15,7 @@ import com.microsoft.sonoma.core.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.sonoma.core.ingestion.models.json.LogFactory;
 import com.microsoft.sonoma.core.ingestion.models.json.LogSerializer;
 import com.microsoft.sonoma.core.utils.SonomaLog;
-import com.microsoft.sonoma.core.utils.StorageHelper;
+import com.microsoft.sonoma.core.utils.storage.StorageHelper;
 import com.microsoft.sonoma.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.sonoma.crashes.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.sonoma.crashes.model.ErrorAttachment;

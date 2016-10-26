@@ -12,8 +12,8 @@ import com.microsoft.sonoma.core.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.sonoma.core.ingestion.models.json.LogSerializer;
 import com.microsoft.sonoma.core.ingestion.models.json.MockLogFactory;
 import com.microsoft.sonoma.core.persistence.Persistence.PersistenceException;
-import com.microsoft.sonoma.core.utils.StorageHelper;
-import com.microsoft.sonoma.core.utils.StorageHelper.DatabaseStorage.DatabaseScanner;
+import com.microsoft.sonoma.core.utils.storage.StorageHelper;
+import com.microsoft.sonoma.core.utils.storage.StorageHelper.DatabaseStorage.DatabaseScanner;
 
 import org.json.JSONException;
 import org.junit.After;
