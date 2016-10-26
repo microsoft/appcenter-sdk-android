@@ -1,4 +1,4 @@
-package com.microsoft.sonoma.core.utils;
+package com.microsoft.sonoma.core.utils.storage;
 
 import android.content.ContentValues;
 import android.content.Context;

@@ -3,7 +3,7 @@ package com.microsoft.sonoma.core;
 import android.content.Context;
 
 import com.microsoft.sonoma.core.channel.Channel;
-import com.microsoft.sonoma.core.utils.StorageHelper;
+import com.microsoft.sonoma.core.utils.storage.StorageHelper;
 
 import org.junit.Assert;
 import org.junit.Before;

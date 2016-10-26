@@ -3,8 +3,7 @@ package com.microsoft.sonoma.crashes.utils;
 import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.sonoma.core.Constants;
-import com.microsoft.sonoma.core.utils.StorageHelper;
-import com.microsoft.sonoma.crashes.utils.ErrorLogHelper;
+import com.microsoft.sonoma.core.utils.storage.StorageHelper;
 
 import org.junit.After;
 import org.junit.Before;
