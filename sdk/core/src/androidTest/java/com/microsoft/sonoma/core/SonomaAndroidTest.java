@@ -7,8 +7,8 @@ import android.util.Log;
 
 import com.microsoft.sonoma.core.utils.PrefStorageConstants;
 import com.microsoft.sonoma.core.utils.SonomaLog;
-import com.microsoft.sonoma.core.utils.StorageHelper;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
+import com.microsoft.sonoma.core.utils.storage.StorageHelper;
 
 import org.junit.Before;
 import org.junit.Test;

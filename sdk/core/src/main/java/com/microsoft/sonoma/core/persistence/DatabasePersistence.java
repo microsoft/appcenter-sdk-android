@@ -8,9 +8,9 @@ import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.ingestion.models.Log;
-import com.microsoft.sonoma.core.utils.DatabaseManager;
 import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.core.utils.UUIDUtils;
+import com.microsoft.sonoma.core.utils.storage.DatabaseManager;
 
 import org.json.JSONException;
 
@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static com.microsoft.sonoma.core.utils.StorageHelper.DatabaseStorage;
+import static com.microsoft.sonoma.core.utils.storage.StorageHelper.DatabaseStorage;
 
 public class DatabasePersistence extends Persistence {
 
@@ -95,7 +95,7 @@ public class DatabasePersistence extends Persistence {
      * @param version    The version of current schema.
      * @param maxRecords The maximum number of records allowed in the table.
      */
-    public DatabasePersistence(String database, String table, int version, int maxRecords) {
+    DatabasePersistence(String database, String table, int version, int maxRecords) {
         mPendingDbIdentifiersGroups = new HashMap<>();
         mPendingDbIdentifiers = new HashSet<>();
         mDatabaseStorage = DatabaseStorage.getDatabaseStorage(database, table, version, SCHEMA, maxRecords,
