@@ -1,10 +1,8 @@
 package com.microsoft.sonoma.core.utils;
 
-
 import android.support.annotation.IntRange;
 import android.util.Log;
 
-import static android.util.Log.ASSERT;
 import static android.util.Log.VERBOSE;
 
 /**
@@ -17,8 +15,19 @@ import static android.util.Log.VERBOSE;
  */
 public class SonomaLog {
 
+    /**
+     * Log tag prefix that the SDK uses for all logs.
+     */
     public static final String LOG_TAG = "Sonoma";
 
+    /**
+     * Log level to disable all logs, even assert logs.
+     */
+    public static final int NONE = 8;
+
+    /**
+     * Current log level.
+     */
     private static int sLogLevel = Log.ASSERT;
 
     /**
@@ -27,7 +36,7 @@ public class SonomaLog {
      *
      * @return the log level
      */
-    @IntRange(from = VERBOSE, to = ASSERT)
+    @IntRange(from = VERBOSE, to = NONE)
     public static int getLogLevel() {
         return sLogLevel;
     }
@@ -37,7 +46,7 @@ public class SonomaLog {
      *
      * @param logLevel The log level for SDK logging.
      */
-    public static void setLogLevel(@IntRange(from = VERBOSE, to = ASSERT) int logLevel) {
+    public static void setLogLevel(@IntRange(from = VERBOSE, to = NONE) int logLevel) {
         sLogLevel = logLevel;
     }
 
@@ -165,6 +174,33 @@ public class SonomaLog {
     public static void error(String tag, String message, Throwable throwable) {
         if (sLogLevel <= Log.ERROR) {
             Log.e(tag, message, throwable);
+        }
+    }
+
+    /**
+     * Log a message with level ASSERT
+     *
+     * @param tag     the log tag for your message
+     * @param message the log message
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static void logAssert(String tag, String message) {
+        if (sLogLevel <= Log.ASSERT) {
+            Log.println(Log.ASSERT, tag, message);
+        }
+    }
+
+    /**
+     * Log a message with level ASSERT
+     *
+     * @param tag       the log tag for your message
+     * @param message   the log message
+     * @param throwable the throwable you want to log
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static void logAssert(String tag, String message, Throwable throwable) {
+        if (sLogLevel <= Log.ASSERT) {
+            Log.println(Log.ASSERT, tag, message + "\n" + Log.getStackTraceString(throwable));
         }
     }
 }

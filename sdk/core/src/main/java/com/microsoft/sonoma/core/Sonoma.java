@@ -26,6 +26,7 @@ import java.util.UUID;
 
 import static android.util.Log.ASSERT;
 import static android.util.Log.VERBOSE;
+import static com.microsoft.sonoma.core.utils.SonomaLog.NONE;
 
 public final class Sonoma {
 
@@ -112,8 +113,9 @@ public final class Sonoma {
      * @see android.util.Log#WARN
      * @see android.util.Log#ERROR
      * @see android.util.Log#ASSERT
+     * @see SonomaLog#NONE
      */
-    public static void setLogLevel(@IntRange(from = VERBOSE, to = ASSERT) int logLevel) {
+    public static void setLogLevel(@IntRange(from = VERBOSE, to = NONE) int logLevel) {
         getInstance().setInstanceLogLevel(logLevel);
     }
 
