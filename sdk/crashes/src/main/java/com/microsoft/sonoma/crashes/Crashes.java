@@ -177,7 +177,9 @@ public class Crashes extends AbstractSonomaFeature {
     }
 
     /**
-     * Track an exception. TODO This feature is not supported by backend yet, hence not public.
+     * Track an exception.
+     *
+     * TODO the backend does not support that feature yet, will be public method later.
      *
      * @param throwable An exception.
      */
@@ -275,7 +277,9 @@ public class Crashes extends AbstractSonomaFeature {
     }
 
     /**
-     * Track an exception. TODO not supported by backend yet, need to be public after.
+     * Track an exception.
+     *
+     * TODO the backend does not support that feature yet, will be public method later.
      *
      * @param exception An exception.
      */

@@ -123,6 +123,8 @@ public class Analytics extends AbstractSonomaFeature {
     /**
      * Check if automatic page tracking is enabled.
      *
+     * TODO the backend does not support that feature yet, will be public method later.
+     *
      * @return true if automatic page tracking is enabled. false otherwise.
      * @see #setAutoPageTrackingEnabled(boolean)
      */
@@ -135,6 +137,8 @@ public class Analytics extends AbstractSonomaFeature {
      * automatically every time an activity is resumed, with a generated name and no properties.
      * Call this method with false if you want to track pages yourself in your application.
      *
+     * TODO the backend does not support that feature yet, will be public method later.
+     *
      * @param autoPageTrackingEnabled true to let the module track pages automatically, false otherwise (default state is true).
      */
     static void setAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
@@ -143,6 +147,8 @@ public class Analytics extends AbstractSonomaFeature {
 
     /**
      * Track a custom page with name.
+     *
+     * TODO the backend does not support that feature yet, will be public method later.
      *
      * @param name A page name.
      */
@@ -153,6 +159,8 @@ public class Analytics extends AbstractSonomaFeature {
 
     /**
      * Track a custom page with name and optional properties.
+     *
+     * TODO the backend does not support that feature yet, will be public method later.
      *
      * @param name       A page name.
      * @param properties Optional properties.
