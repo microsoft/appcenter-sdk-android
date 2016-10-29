@@ -70,8 +70,9 @@ public class Analytics extends AbstractSonomaFeature {
 
     /**
      * Automatic page tracking flag.
+     * TODO the backend does not support pages yet so the default value would be true after the feature becomes public.
      */
-    private boolean mAutoPageTrackingEnabled = true;
+    private boolean mAutoPageTrackingEnabled = false;
 
     /**
      * Init.
@@ -125,7 +126,7 @@ public class Analytics extends AbstractSonomaFeature {
      * @return true if automatic page tracking is enabled. false otherwise.
      * @see #setAutoPageTrackingEnabled(boolean)
      */
-    public static boolean isAutoPageTrackingEnabled() {
+    static boolean isAutoPageTrackingEnabled() {
         return getInstance().isInstanceAutoPageTrackingEnabled();
     }
 
@@ -136,7 +137,7 @@ public class Analytics extends AbstractSonomaFeature {
      *
      * @param autoPageTrackingEnabled true to let the module track pages automatically, false otherwise (default state is true).
      */
-    public static void setAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
+    static void setAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
         getInstance().setInstanceAutoPageTrackingEnabled(autoPageTrackingEnabled);
     }
 
@@ -146,7 +147,7 @@ public class Analytics extends AbstractSonomaFeature {
      * @param name A page name.
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
-    public static void trackPage(@NonNull String name) {
+    static void trackPage(@NonNull String name) {
         trackPage(name, null);
     }
 
@@ -156,7 +157,7 @@ public class Analytics extends AbstractSonomaFeature {
      * @param name       A page name.
      * @param properties Optional properties.
      */
-    public static void trackPage(@NonNull String name, @Nullable Map<String, String> properties) {
+    static void trackPage(@NonNull String name, @Nullable Map<String, String> properties) {
         getInstance().queuePage(name, properties);
     }
 

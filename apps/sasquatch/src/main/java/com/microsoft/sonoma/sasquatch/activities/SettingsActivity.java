@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.microsoft.sonoma.analytics.Analytics;
+import com.microsoft.sonoma.analytics.AnalyticsPrivateHelper;
 import com.microsoft.sonoma.core.Sonoma;
 import com.microsoft.sonoma.core.utils.PrefStorageConstants;
 import com.microsoft.sonoma.core.utils.storage.StorageHelper;
@@ -84,16 +85,16 @@ public class SettingsActivity extends AppCompatActivity {
                     return Crashes.isEnabled();
                 }
             });
-            initCheckBoxSetting(R.string.sonoma_auto_page_tracking_key, Analytics.isAutoPageTrackingEnabled(), R.string.sonoma_auto_page_tracking_enabled, R.string.sonoma_auto_page_tracking_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.sonoma_auto_page_tracking_key, AnalyticsPrivateHelper.isAutoPageTrackingEnabled(), R.string.sonoma_auto_page_tracking_enabled, R.string.sonoma_auto_page_tracking_disabled, new HasEnabled() {
 
                 @Override
                 public boolean isEnabled() {
-                    return Analytics.isAutoPageTrackingEnabled();
+                    return AnalyticsPrivateHelper.isAutoPageTrackingEnabled();
                 }
 
                 @Override
                 public void setEnabled(boolean enabled) {
-                    Analytics.setAutoPageTrackingEnabled(enabled);
+                    AnalyticsPrivateHelper.setAutoPageTrackingEnabled(enabled);
                 }
             });
             initClickableSetting(R.string.clear_crash_user_confirmation_key, new Preference.OnPreferenceClickListener() {

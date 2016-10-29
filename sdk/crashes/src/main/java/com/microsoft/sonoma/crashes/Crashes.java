@@ -177,11 +177,11 @@ public class Crashes extends AbstractSonomaFeature {
     }
 
     /**
-     * Track an exception.
+     * Track an exception. TODO This feature is not supported by backend yet, hence not public.
      *
      * @param throwable An exception.
      */
-    public static void trackException(@NonNull Throwable throwable) {
+    static void trackException(@NonNull Throwable throwable) {
         getInstance().queueException(throwable);
     }
 
@@ -275,12 +275,11 @@ public class Crashes extends AbstractSonomaFeature {
     }
 
     /**
-     * Track an exception.
+     * Track an exception. TODO not supported by backend yet, need to be public after.
      *
      * @param exception An exception.
      */
-    @SuppressWarnings("WeakerAccess")
-    public synchronized void trackException(@NonNull com.microsoft.sonoma.crashes.ingestion.models.Exception exception) {
+    synchronized void trackException(@NonNull com.microsoft.sonoma.crashes.ingestion.models.Exception exception) {
         if (isInactive())
             return;
 
