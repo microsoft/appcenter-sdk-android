@@ -11,7 +11,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.microsoft.sonoma.crashes.Crashes;
+import com.microsoft.sonoma.crashes.CrashesPrivateHelper;
 import com.microsoft.sonoma.sasquatch.R;
 
 import java.util.Arrays;
@@ -68,7 +68,7 @@ public class ManagedErrorActivity extends AppCompatActivity {
                 try {
                     @SuppressWarnings("unchecked")
                     Class<? extends Throwable> clazz = (Class<? extends Throwable>) parent.getItemAtPosition(position);
-                    Crashes.trackException(clazz.getConstructor(String.class).newInstance("Test Exception"));
+                    CrashesPrivateHelper.trackException(clazz.getConstructor(String.class).newInstance("Test Exception"));
                 } catch (Exception e) {
 
                     /* This is not expected behavior so let the application crashes. */

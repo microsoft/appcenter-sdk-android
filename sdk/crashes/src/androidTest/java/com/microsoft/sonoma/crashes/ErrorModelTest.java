@@ -52,6 +52,7 @@ public class ErrorModelTest {
             exception3.setType(exception1.getType());
             exception3.setMessage(exception1.getMessage());
             exception3.setFrames(exception1.getFrames());
+            exception3.setWrapperSdkName(exception1.getWrapperSdkName());
             errorLog2.setException(exception3);
             checkEquals(errorLog1, errorLog2);
 
@@ -339,6 +340,17 @@ public class ErrorModelTest {
                     frame2.setFileName(frame1.getFileName());
                     checkEquals(frame1, frame2);
                 }
+            }
+            {
+                exception1.setWrapperSdkName("1");
+                checkNotEquals(exception1, exception2);
+                checkExceptions(serializer, errorLog1, errorLog2, exception1, exception2);
+
+                exception2.setWrapperSdkName("2");
+                checkNotEquals(exception1, exception2);
+
+                exception2.setWrapperSdkName(exception1.getWrapperSdkName());
+                checkEquals(exception1, exception2);
             }
         }
         {

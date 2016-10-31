@@ -23,6 +23,8 @@ public class Exception implements Model {
 
     private static final String INNER_EXCEPTIONS = "inner_exceptions";
 
+    private static final String WRAPPER_SDK_NAME = "wrapper_sdk_name";
+
     /**
      * Exception type (fully qualified class name).
      */
@@ -42,6 +44,13 @@ public class Exception implements Model {
      * Inner exceptions of this exception.
      */
     private List<Exception> innerExceptions;
+
+    /**
+     * Name of the wrapper SDK that emitted this exception.
+     * Consists of the name of the SDK and the wrapper platform,
+     * e.g. "sonomasdk.xamarin", "hockeysdk.cordova".
+     */
+    private String wrapperSdkName;
 
     /**
      * Get the type value.
@@ -115,12 +124,31 @@ public class Exception implements Model {
         this.innerExceptions = innerExceptions;
     }
 
+    /**
+     * Get the wrapperSdkName value.
+     *
+     * @return the wrapperSdkName value
+     */
+    public String getWrapperSdkName() {
+        return wrapperSdkName;
+    }
+
+    /**
+     * Set the wrapperSdkName value.
+     *
+     * @param wrapperSdkName the wrapperSdkName value to set
+     */
+    public void setWrapperSdkName(String wrapperSdkName) {
+        this.wrapperSdkName = wrapperSdkName;
+    }
+
     @Override
     public void read(JSONObject object) throws JSONException {
         setType(object.optString(TYPE, null));
         setMessage(object.optString(MESSAGE, null));
         setFrames(JSONUtils.readArray(object, FRAMES, StackFrameFactory.getInstance()));
         setInnerExceptions(JSONUtils.readArray(object, INNER_EXCEPTIONS, ExceptionFactory.getInstance()));
+        setWrapperSdkName(object.optString(WRAPPER_SDK_NAME, null));
     }
 
     @Override
@@ -129,6 +157,7 @@ public class Exception implements Model {
         JSONUtils.write(writer, MESSAGE, getMessage());
         JSONUtils.writeArray(writer, FRAMES, getFrames());
         JSONUtils.writeArray(writer, INNER_EXCEPTIONS, getInnerExceptions());
+        JSONUtils.write(writer, WRAPPER_SDK_NAME, getWrapperSdkName());
     }
 
     @Override
@@ -144,7 +173,9 @@ public class Exception implements Model {
             return false;
         if (frames != null ? !frames.equals(exception.frames) : exception.frames != null)
             return false;
-        return innerExceptions != null ? innerExceptions.equals(exception.innerExceptions) : exception.innerExceptions == null;
+        if (innerExceptions != null ? !innerExceptions.equals(exception.innerExceptions) : exception.innerExceptions != null)
+            return false;
+        return wrapperSdkName != null ? wrapperSdkName.equals(exception.wrapperSdkName) : exception.wrapperSdkName == null;
     }
 
     @Override
@@ -153,6 +184,7 @@ public class Exception implements Model {
         result = 31 * result + (message != null ? message.hashCode() : 0);
         result = 31 * result + (frames != null ? frames.hashCode() : 0);
         result = 31 * result + (innerExceptions != null ? innerExceptions.hashCode() : 0);
+        result = 31 * result + (wrapperSdkName != null ? wrapperSdkName.hashCode() : 0);
         return result;
     }
 }
