@@ -400,12 +400,9 @@ public class Crashes extends AbstractSonomaFeature {
                 mUncaughtExceptionHandler.unregister();
                 mUncaughtExceptionHandler = null;
             }
-        } else if (mContext != null) {
+        } else if (mContext != null && mUncaughtExceptionHandler == null) {
             mUncaughtExceptionHandler = new UncaughtExceptionHandler();
             mUncaughtExceptionHandler.register();
-        }
-
-        if (enabled) {
             File logFile = ErrorLogHelper.getLastErrorLogFile();
             if (logFile != null) {
                 String logFileContents = StorageHelper.InternalStorage.read(logFile);

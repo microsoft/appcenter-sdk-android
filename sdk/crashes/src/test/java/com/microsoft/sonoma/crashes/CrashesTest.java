@@ -725,9 +725,11 @@ public class CrashesTest {
         Throwable throwable = mock(Throwable.class);
 
         mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(errorStorageDirectory.newFile("last-error-log.json"));
+        File lastErrorLogFile = errorStorageDirectory.newFile("last-error-log.json");
+        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(lastErrorLogFile);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(errorStorageDirectory.newFile());
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenCallRealMethod();
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{lastErrorLogFile});
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(throwable);
 
@@ -736,8 +738,12 @@ public class CrashesTest {
         assertFalse(Crashes.hasCrashedInLastSession());
         assertNull(Crashes.getLastSessionCrashReport());
 
-        // Last session error is only fetched upon initialization (triggered by setting the module to enabled)
-        Crashes.setEnabled(true);
+        /*
+         * Last session error is only fetched upon initialization: enabled and channel ready.
+         * Here the module is enabled by default but we are waiting channel to be ready, simulate that.
+         */
+        assertTrue(Crashes.isEnabled());
+        Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
 
         assertTrue(Crashes.hasCrashedInLastSession());
         ErrorReport report = Crashes.getLastSessionCrashReport();
@@ -771,7 +777,9 @@ public class CrashesTest {
         when(logSerializer.deserializeLog(anyString())).thenReturn(mock(ManagedErrorLog.class));
 
         mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(errorStorageDirectory.newFile("last-error-log.json"));
+        File lastErrorLogFile = errorStorageDirectory.newFile("last-error-log.json");
+        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(lastErrorLogFile);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{lastErrorLogFile});
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
 
         Crashes.getInstance().setLogSerializer(logSerializer);
@@ -779,21 +787,24 @@ public class CrashesTest {
         assertFalse(Crashes.hasCrashedInLastSession());
         assertNull(Crashes.getLastSessionCrashReport());
 
-        // Last session error is only fetched upon initialization (triggered by setting the module to enabled)
-        Crashes.setEnabled(true);
-
-        assertFalse(Crashes.hasCrashedInLastSession());
-        assertNull(Crashes.getLastSessionCrashReport());
-
         JSONException jsonException = new JSONException("Fake JSON exception");
         when(logSerializer.deserializeLog(anyString())).thenThrow(jsonException);
 
-        Crashes.setEnabled(true);
+        /*
+         * Last session error is only fetched upon initialization: enabled and channel ready.
+         * Here the module is enabled by default but we are waiting channel to be ready, simulate that.
+         */
+        assertTrue(Crashes.isEnabled());
+        Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
 
         assertFalse(Crashes.hasCrashedInLastSession());
         assertNull(Crashes.getLastSessionCrashReport());
 
-        verifyStatic();
+        /*
+         * Deserializing fails twice: processing the log from last time as part of the bulk processing.
+         * And loading that same file for exposing it in getLastErrorReport.
+         */
+        verifyStatic(times(2));
         SonomaLog.error(eq(Crashes.LOG_TAG), anyString(), eq(jsonException));
     }
 
