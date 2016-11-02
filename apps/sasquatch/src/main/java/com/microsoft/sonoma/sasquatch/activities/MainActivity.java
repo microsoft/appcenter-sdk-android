@@ -26,6 +26,7 @@ import com.microsoft.sonoma.sasquatch.features.TestFeatures;
 import com.microsoft.sonoma.sasquatch.features.TestFeaturesListAdapter;
 
 public class MainActivity extends AppCompatActivity {
+    static final String LOG_TAG = "SonomaSasquatch";
     static final String APP_SECRET = "45d1d9f6-2492-4e68-bd44-7190351eb5f3";
     static final String APP_SECRET_KEY = "appSecret";
     static SharedPreferences sSharedPreferences;
@@ -84,6 +85,12 @@ public class MainActivity extends AppCompatActivity {
 
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().build());
         Sonoma.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class);
+
+        Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
+        ErrorReport lastSessionCrashReport = Crashes.getLastSessionCrashReport();
+        if (lastSessionCrashReport != null) {
+            Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", lastSessionCrashReport.getThrowable());
+        }
 
         TestFeatures.initialize(this);
         ListView listView = (ListView) findViewById(R.id.list);
