@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import com.microsoft.sonoma.analytics.Analytics;
 import com.microsoft.sonoma.core.Sonoma;
+import com.microsoft.sonoma.core.utils.SonomaLog;
 import com.microsoft.sonoma.crashes.AbstractCrashesListener;
 import com.microsoft.sonoma.crashes.Crashes;
 import com.microsoft.sonoma.crashes.ErrorAttachments;
@@ -26,6 +27,7 @@ import com.microsoft.sonoma.sasquatch.features.TestFeatures;
 import com.microsoft.sonoma.sasquatch.features.TestFeaturesListAdapter;
 
 public class MainActivity extends AppCompatActivity {
+    static final String LOG_TAG = "SonomaSasquatch";
     static final String APP_SECRET = "45d1d9f6-2492-4e68-bd44-7190351eb5f3";
     static final String APP_SECRET_KEY = "appSecret";
     static SharedPreferences sSharedPreferences;
@@ -84,6 +86,12 @@ public class MainActivity extends AppCompatActivity {
 
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().build());
         Sonoma.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class);
+
+        SonomaLog.info(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
+        ErrorReport lastSessionCrashReport = Crashes.getLastSessionCrashReport();
+        if (lastSessionCrashReport != null) {
+            SonomaLog.info(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", lastSessionCrashReport.getThrowable());
+        }
 
         TestFeatures.initialize(this);
         ListView listView = (ListView) findViewById(R.id.list);
