@@ -58,6 +58,7 @@ public class CrashesAndroidTest {
     @Before
     public void cleanup() {
         android.util.Log.i(TAG, "Cleanup");
+        Crashes.unsetInstance();
         Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
         StorageHelper.PreferencesStorage.clear();
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
@@ -210,5 +211,31 @@ public class CrashesAndroidTest {
         ErrorReport lastSessionCrashReport = Crashes.getLastSessionCrashReport();
         assertNotNull(lastSessionCrashReport);
         assertEquals("ReplacedErrorThreadName", lastSessionCrashReport.getThreadName());
+    }
+
+    @Test
+    public void setEnabledWhileAlreadyEnabledShouldNotDuplicateCrashReport() throws InterruptedException {
+
+        /* Test the fix of the duplicate crash sending bug. */
+        android.util.Log.i(TAG, "Process 1");
+        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
+        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+        Channel channel = mock(Channel.class);
+        Crashes.getInstance().onChannelReady(sContext, channel);
+        Crashes.setEnabled(true);
+        final RuntimeException exception = new RuntimeException();
+        final Thread thread = new Thread() {
+
+            @Override
+            public void run() {
+                throw exception;
+            }
+        };
+        thread.start();
+        thread.join();
+        verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
+
+        /* Check there are only 2 files: the throwable and the json one. */
+        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
     }
 }
