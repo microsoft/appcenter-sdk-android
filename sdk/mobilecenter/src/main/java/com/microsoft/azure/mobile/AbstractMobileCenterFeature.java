@@ -79,7 +79,7 @@ public abstract class AbstractMobileCenterFeature implements MobileCenterFeature
 
         /* Check if the SDK is disabled. */
         if (!MobileCenter.isEnabled() && enabled) {
-            MobileCenterLog.error(LOG_TAG, "The SDK is disabled. Re-enable the SDK from the core module first before enabling a specific feature");
+            MobileCenterLog.error(LOG_TAG, "The SDK is disabled. Call MobileCenter.setEnabled(true) first before enabling a specific feature");
             return;
         }
 
