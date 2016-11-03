@@ -1,6 +1,6 @@
 // sdk modules
 include ':sdk'
-include ':sdk:core'
+include ':sdk:mobilecenter'
 include ':sdk:crashes'
 include ':sdk:analytics'
 
@@ -10,4 +10,4 @@ include ':test'
 // test apps
 include ':apps'
 include ':apps:sasquatch'
-include ':apps:helloworld'
+//include ':apps:helloworld'

@@ -1,0 +1,716 @@
+package com.microsoft.azure.mobile;
+
+import android.app.Application;
+import android.content.ContentValues;
+import android.content.Context;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
+
+import com.microsoft.azure.mobile.channel.Channel;
+import com.microsoft.azure.mobile.channel.DefaultChannel;
+import com.microsoft.azure.mobile.ingestion.models.WrapperSdk;
+import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
+import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
+import com.microsoft.azure.mobile.utils.IdHelper;
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.storage.StorageHelper;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.rule.PowerMockRule;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
+import static com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync.THREAD_NAME;
+import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertSame;
+import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.notNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
+@SuppressWarnings("unused")
+@PrepareForTest({MobileCenter.class, Channel.class, Constants.class, MobileCenterLog.class, StorageHelper.class, StorageHelper.PreferencesStorage.class, IdHelper.class, StorageHelper.DatabaseStorage.class, DeviceInfoHelper.class})
+public class MobileCenterTest {
+
+    private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
+
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
+
+    @Mock
+    private Iterator<ContentValues> mDataBaseScannerIterator;
+
+    private Application application;
+
+    @Before
+    public void setUp() {
+        MobileCenter.unsetInstance();
+        DummyFeature.sharedInstance = null;
+        AnotherDummyFeature.sharedInstance = null;
+
+        application = mock(Application.class);
+        when(application.getApplicationContext()).thenReturn(application);
+
+        mockStatic(Constants.class);
+        mockStatic(MobileCenterLog.class);
+        mockStatic(StorageHelper.class);
+        mockStatic(StorageHelper.PreferencesStorage.class);
+        mockStatic(IdHelper.class);
+        mockStatic(StorageHelper.DatabaseStorage.class);
+
+        /* First call to com.microsoft.azure.mobile.MobileCenter.isEnabled shall return true, initial state. */
+        when(StorageHelper.PreferencesStorage.getBoolean(anyString(), eq(true))).thenReturn(true);
+
+        /* Then simulate further changes to state. */
+        PowerMockito.doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+
+                /* Whenever the new state is persisted, make further calls return the new state. */
+                String key = (String) invocation.getArguments()[0];
+                boolean enabled = (Boolean) invocation.getArguments()[1];
+                when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(enabled);
+                return null;
+            }
+        }).when(StorageHelper.PreferencesStorage.class);
+        StorageHelper.PreferencesStorage.putBoolean(anyString(), anyBoolean());
+
+        /* Mock empty database. */
+        StorageHelper.DatabaseStorage databaseStorage = mock(StorageHelper.DatabaseStorage.class);
+        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class), anyInt(), any(StorageHelper.DatabaseStorage.DatabaseErrorListener.class))).thenReturn(databaseStorage);
+        StorageHelper.DatabaseStorage.DatabaseScanner databaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
+        when(databaseStorage.getScanner(anyString(), anyObject())).thenReturn(databaseScanner);
+        when(databaseScanner.iterator()).thenReturn(mDataBaseScannerIterator);
+    }
+
+    @After
+    public void tearDown() {
+        Constants.APPLICATION_DEBUGGABLE = false;
+    }
+
+    @Test
+    public void singleton() {
+        assertNotNull(MobileCenter.getInstance());
+        assertSame(MobileCenter.getInstance(), MobileCenter.getInstance());
+    }
+
+    @Test
+    public void nullVarargClass() {
+        MobileCenter.start(application, DUMMY_APP_SECRET, (Class<? extends MobileCenterFeature>) null);
+
+        /* Verify that no modules have been auto-loaded since none are configured for this */
+        assertTrue(MobileCenter.isInitialized());
+        assertEquals(0, MobileCenter.getInstance().getFeatures().size());
+        assertEquals(application, MobileCenter.getInstance().getApplication());
+    }
+
+    @Test
+    public void nullVarargArray() {
+        //noinspection ConfusingArgumentToVarargsMethod
+        MobileCenter.start(application, DUMMY_APP_SECRET, (Class<? extends MobileCenterFeature>[]) null);
+        MobileCenter.start((Class<? extends MobileCenterFeature>) null);
+        //noinspection ConfusingArgumentToVarargsMethod
+        MobileCenter.start((Class<? extends MobileCenterFeature>[]) null);
+
+        /* Verify that no modules have been auto-loaded since none are configured for this */
+        assertTrue(MobileCenter.isInitialized());
+        assertEquals(0, MobileCenter.getInstance().getFeatures().size());
+        assertEquals(application, MobileCenter.getInstance().getApplication());
+    }
+
+    @Test
+    public void startFeatureBeforeInit() {
+        MobileCenter.start(DummyFeature.class);
+        assertFalse(MobileCenter.isInitialized());
+        assertNull(MobileCenter.getInstance().getFeatures());
+    }
+
+    @Test
+    public void useDummyFeatureTest() {
+        MobileCenter.start(application, DUMMY_APP_SECRET, DummyFeature.class);
+
+        /* Verify that single module has been loaded and configured */
+        assertEquals(1, MobileCenter.getInstance().getFeatures().size());
+        DummyFeature feature = DummyFeature.getInstance();
+        assertTrue(MobileCenter.getInstance().getFeatures().contains(feature));
+        verify(feature).getLogFactories();
+        verify(feature).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(application).registerActivityLifecycleCallbacks(feature);
+    }
+
+    @Test
+    public void useDummyFeatureTestSplitCall() {
+        assertFalse(MobileCenter.isInitialized());
+        MobileCenter.initialize(application, DUMMY_APP_SECRET);
+        assertTrue(MobileCenter.isInitialized());
+        MobileCenter.start(DummyFeature.class);
+
+        /* Verify that single module has been loaded and configured */
+        assertEquals(1, MobileCenter.getInstance().getFeatures().size());
+        DummyFeature feature = DummyFeature.getInstance();
+        assertTrue(MobileCenter.getInstance().getFeatures().contains(feature));
+        verify(feature).getLogFactories();
+        verify(feature).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(application).registerActivityLifecycleCallbacks(feature);
+    }
+
+    @Test
+    public void initAndStartTwiceTest() {
+        MobileCenter.start(application, DUMMY_APP_SECRET, DummyFeature.class);
+        MobileCenter.start(application, DUMMY_APP_SECRET, AnotherDummyFeature.class); //ignored
+
+        /* Verify that single module has been loaded and configured */
+        assertEquals(1, MobileCenter.getInstance().getFeatures().size());
+        DummyFeature feature = DummyFeature.getInstance();
+        assertTrue(MobileCenter.getInstance().getFeatures().contains(feature));
+        verify(feature).getLogFactories();
+        verify(feature).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(application).registerActivityLifecycleCallbacks(feature);
+    }
+
+    @Test
+    public void initTwiceTest() {
+        MobileCenter.initialize(application, DUMMY_APP_SECRET);
+        MobileCenter.initialize(application, DUMMY_APP_SECRET); //ignored
+        MobileCenter.start(DummyFeature.class);
+
+        /* Verify that single module has been loaded and configured */
+        assertEquals(1, MobileCenter.getInstance().getFeatures().size());
+        DummyFeature feature = DummyFeature.getInstance();
+        assertTrue(MobileCenter.getInstance().getFeatures().contains(feature));
+        verify(feature).getLogFactories();
+        verify(feature).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(application).registerActivityLifecycleCallbacks(feature);
+    }
+
+
+    @Test
+    public void startTwoFeaturesTest() {
+        MobileCenter.start(application, DUMMY_APP_SECRET, DummyFeature.class, AnotherDummyFeature.class);
+
+        /* Verify that the right amount of modules have been loaded and configured */
+        assertEquals(2, MobileCenter.getInstance().getFeatures().size());
+        {
+            assertTrue(MobileCenter.getInstance().getFeatures().contains(DummyFeature.getInstance()));
+            verify(DummyFeature.getInstance()).getLogFactories();
+            verify(DummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(DummyFeature.getInstance());
+        }
+        {
+            assertTrue(MobileCenter.getInstance().getFeatures().contains(AnotherDummyFeature.getInstance()));
+            verify(AnotherDummyFeature.getInstance()).getLogFactories();
+            verify(AnotherDummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(AnotherDummyFeature.getInstance());
+        }
+    }
+
+    @Test
+    public void startTwoFeaturesSplit() {
+        MobileCenter.initialize(application, DUMMY_APP_SECRET);
+        MobileCenter.start(DummyFeature.class, AnotherDummyFeature.class);
+
+        /* Verify that the right amount of modules have been loaded and configured */
+        assertEquals(2, MobileCenter.getInstance().getFeatures().size());
+        {
+            assertTrue(MobileCenter.getInstance().getFeatures().contains(DummyFeature.getInstance()));
+            verify(DummyFeature.getInstance()).getLogFactories();
+            verify(DummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(DummyFeature.getInstance());
+        }
+        {
+            assertTrue(MobileCenter.getInstance().getFeatures().contains(AnotherDummyFeature.getInstance()));
+            verify(AnotherDummyFeature.getInstance()).getLogFactories();
+            verify(AnotherDummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(AnotherDummyFeature.getInstance());
+        }
+    }
+
+    @Test
+    public void startTwoFeaturesSplitEvenMore() {
+        MobileCenter.initialize(application, DUMMY_APP_SECRET);
+        MobileCenter.start(DummyFeature.class);
+        MobileCenter.start(AnotherDummyFeature.class);
+
+        /* Verify that the right amount of modules have been loaded and configured */
+        assertEquals(2, MobileCenter.getInstance().getFeatures().size());
+        {
+            assertTrue(MobileCenter.getInstance().getFeatures().contains(DummyFeature.getInstance()));
+            verify(DummyFeature.getInstance()).getLogFactories();
+            verify(DummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(DummyFeature.getInstance());
+        }
+        {
+            assertTrue(MobileCenter.getInstance().getFeatures().contains(AnotherDummyFeature.getInstance()));
+            verify(AnotherDummyFeature.getInstance()).getLogFactories();
+            verify(AnotherDummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(AnotherDummyFeature.getInstance());
+        }
+    }
+
+    @Test
+    public void startTwoFeaturesWithSomeInvalidReferences() {
+        MobileCenter.start(application, DUMMY_APP_SECRET, null, DummyFeature.class, null, InvalidFeature.class, AnotherDummyFeature.class, null);
+
+        /* Verify that the right amount of modules have been loaded and configured */
+        assertEquals(2, MobileCenter.getInstance().getFeatures().size());
+        {
+            assertTrue(MobileCenter.getInstance().getFeatures().contains(DummyFeature.getInstance()));
+            verify(DummyFeature.getInstance()).getLogFactories();
+            verify(DummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(DummyFeature.getInstance());
+        }
+        {
+            assertTrue(MobileCenter.getInstance().getFeatures().contains(AnotherDummyFeature.getInstance()));
+            verify(AnotherDummyFeature.getInstance()).getLogFactories();
+            verify(AnotherDummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(AnotherDummyFeature.getInstance());
+        }
+    }
+
+    @Test
+    public void startTwoFeaturesWithSomeInvalidReferencesSplit() {
+        MobileCenter.initialize(application, DUMMY_APP_SECRET);
+        MobileCenter.start(null, DummyFeature.class, null);
+        MobileCenter.start(InvalidFeature.class, AnotherDummyFeature.class, null);
+
+        /* Verify that the right amount of modules have been loaded and configured */
+        assertEquals(2, MobileCenter.getInstance().getFeatures().size());
+        {
+            assertTrue(MobileCenter.getInstance().getFeatures().contains(DummyFeature.getInstance()));
+            verify(DummyFeature.getInstance()).getLogFactories();
+            verify(DummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(DummyFeature.getInstance());
+        }
+        {
+            assertTrue(MobileCenter.getInstance().getFeatures().contains(AnotherDummyFeature.getInstance()));
+            verify(AnotherDummyFeature.getInstance()).getLogFactories();
+            verify(AnotherDummyFeature.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(application).registerActivityLifecycleCallbacks(AnotherDummyFeature.getInstance());
+        }
+    }
+
+    @Test
+    public void startFeatureTwice() {
+
+        /* Start once. */
+        MobileCenter.initialize(application, DUMMY_APP_SECRET);
+        MobileCenter.start(DummyFeature.class);
+
+        /* Check. */
+        assertEquals(1, MobileCenter.getInstance().getFeatures().size());
+        DummyFeature feature = DummyFeature.getInstance();
+        assertTrue(MobileCenter.getInstance().getFeatures().contains(feature));
+        verify(feature).getLogFactories();
+        verify(feature).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(application).registerActivityLifecycleCallbacks(feature);
+
+        /* Start twice, this call is ignored. */
+        MobileCenter.start(DummyFeature.class);
+
+        /* Verify that single module has been loaded and configured (only once interaction). */
+        assertEquals(1, MobileCenter.getInstance().getFeatures().size());
+        verify(feature).getLogFactories();
+        verify(feature).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(application).registerActivityLifecycleCallbacks(feature);
+    }
+
+    @Test
+    public void enableTest() throws Exception {
+
+        /* Mock handler for asynchronous persistence */
+        HandlerThread mockHandlerThread = PowerMockito.mock(HandlerThread.class);
+        Looper mockLooper = PowerMockito.mock(Looper.class);
+        whenNew(HandlerThread.class).withArguments(THREAD_NAME).thenReturn(mockHandlerThread);
+        when(mockHandlerThread.getLooper()).thenReturn(mockLooper);
+        Handler mockPersistenceHandler = PowerMockito.mock(Handler.class);
+        whenNew(Handler.class).withArguments(mockLooper).thenReturn(mockPersistenceHandler);
+        when(mockPersistenceHandler.post(any(Runnable.class))).then(new Answer<Boolean>() {
+
+            @Override
+            public Boolean answer(InvocationOnMock invocation) throws Throwable {
+                ((Runnable) invocation.getArguments()[0]).run();
+                return true;
+            }
+        });
+
+        /* Start MobileCenter SDK */
+        MobileCenter.start(application, DUMMY_APP_SECRET, DummyFeature.class, AnotherDummyFeature.class);
+        Channel channel = mock(Channel.class);
+        MobileCenter mobileCenter = MobileCenter.getInstance();
+        mobileCenter.setChannel(channel);
+
+        /* Verify modules are enabled by default */
+        Set<MobileCenterFeature> features = mobileCenter.getFeatures();
+        assertTrue(MobileCenter.isEnabled());
+        DummyFeature dummyFeature = DummyFeature.getInstance();
+        AnotherDummyFeature anotherDummyFeature = AnotherDummyFeature.getInstance();
+        for (MobileCenterFeature feature : features) {
+            assertTrue(feature.isInstanceEnabled());
+        }
+
+        /* Explicit set enabled should not change that */
+        MobileCenter.setEnabled(true);
+        assertTrue(MobileCenter.isEnabled());
+        for (MobileCenterFeature feature : features) {
+            assertTrue(feature.isInstanceEnabled());
+        }
+        verify(dummyFeature, never()).setInstanceEnabled(anyBoolean());
+        verify(anotherDummyFeature, never()).setInstanceEnabled(anyBoolean());
+        verify(channel).setEnabled(true);
+
+        /* Verify disabling base disables all modules */
+        MobileCenter.setEnabled(false);
+        assertFalse(MobileCenter.isEnabled());
+        for (MobileCenterFeature feature : features) {
+            assertFalse(feature.isInstanceEnabled());
+        }
+        verify(dummyFeature).setInstanceEnabled(false);
+        verify(anotherDummyFeature).setInstanceEnabled(false);
+        verify(application).unregisterActivityLifecycleCallbacks(dummyFeature);
+        verify(application).unregisterActivityLifecycleCallbacks(anotherDummyFeature);
+        verify(channel).setEnabled(false);
+
+        /* Verify re-enabling base re-enables all modules */
+        MobileCenter.setEnabled(true);
+        assertTrue(MobileCenter.isEnabled());
+        for (MobileCenterFeature feature : features) {
+            assertTrue(feature.isInstanceEnabled());
+        }
+        verify(dummyFeature).setInstanceEnabled(true);
+        verify(anotherDummyFeature).setInstanceEnabled(true);
+        verify(application, times(2)).registerActivityLifecycleCallbacks(dummyFeature);
+        verify(application, times(2)).registerActivityLifecycleCallbacks(anotherDummyFeature);
+        verify(channel, times(2)).setEnabled(true);
+
+        /* Verify that disabling one module leaves base and other modules enabled */
+        dummyFeature.setInstanceEnabled(false);
+        assertFalse(dummyFeature.isInstanceEnabled());
+        assertTrue(MobileCenter.isEnabled());
+        assertTrue(anotherDummyFeature.isInstanceEnabled());
+
+        /* Enable back via main class. */
+        MobileCenter.setEnabled(true);
+        assertTrue(MobileCenter.isEnabled());
+        for (MobileCenterFeature feature : features) {
+            assertTrue(feature.isInstanceEnabled());
+        }
+        verify(dummyFeature, times(2)).setInstanceEnabled(true);
+        verify(anotherDummyFeature).setInstanceEnabled(true);
+        verify(channel, times(3)).setEnabled(true);
+
+        /* Enable feature after the SDK is disabled. */
+        MobileCenter.setEnabled(false);
+        assertFalse(MobileCenter.isEnabled());
+        for (MobileCenterFeature feature : features) {
+            assertFalse(feature.isInstanceEnabled());
+        }
+        dummyFeature.setInstanceEnabled(true);
+        assertFalse(dummyFeature.isInstanceEnabled());
+        PowerMockito.verifyStatic();
+        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        assertFalse(MobileCenter.isEnabled());
+        verify(channel, times(2)).setEnabled(false);
+
+        /* Disable back via main class. */
+        MobileCenter.setEnabled(false);
+        assertFalse(MobileCenter.isEnabled());
+        for (MobileCenterFeature feature : features) {
+            assertFalse(feature.isInstanceEnabled());
+        }
+        verify(channel, times(3)).setEnabled(false);
+
+        /* Check factories / channel only once interactions. */
+        verify(dummyFeature).getLogFactories();
+        verify(dummyFeature).onChannelReady(any(Context.class), any(Channel.class));
+        verify(anotherDummyFeature).getLogFactories();
+        verify(anotherDummyFeature).onChannelReady(any(Context.class), any(Channel.class));
+    }
+
+    @Test
+    public void enableBeforeInitializedTest() {
+        /* Test isEnabled and setEnabled before initialize */
+        assertFalse(MobileCenter.isEnabled());
+        MobileCenter.setEnabled(true);
+        assertFalse(MobileCenter.isEnabled());
+        PowerMockito.verifyStatic(times(3));
+        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+    }
+
+    @Test
+    public void disablePersisted() {
+        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
+        MobileCenter.start(application, DUMMY_APP_SECRET, DummyFeature.class, AnotherDummyFeature.class);
+        Channel channel = mock(Channel.class);
+        MobileCenter mobileCenter = MobileCenter.getInstance();
+        mobileCenter.setChannel(channel);
+
+        /* Verify modules are enabled by default but core is disabled. */
+        assertFalse(MobileCenter.isEnabled());
+        for (MobileCenterFeature feature : mobileCenter.getFeatures()) {
+            assertTrue(feature.isInstanceEnabled());
+            verify(application, never()).registerActivityLifecycleCallbacks(feature);
+        }
+
+        /* Verify we can enable back. */
+        MobileCenter.setEnabled(true);
+        assertTrue(MobileCenter.isEnabled());
+        for (MobileCenterFeature feature : mobileCenter.getFeatures()) {
+            assertTrue(feature.isInstanceEnabled());
+            verify(application).registerActivityLifecycleCallbacks(feature);
+            verify(application, never()).unregisterActivityLifecycleCallbacks(feature);
+        }
+    }
+
+    @Test
+    public void disablePersistedAndDisable() {
+        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
+        MobileCenter.start(application, DUMMY_APP_SECRET, DummyFeature.class, AnotherDummyFeature.class);
+        Channel channel = mock(Channel.class);
+        MobileCenter mobileCenter = MobileCenter.getInstance();
+        mobileCenter.setChannel(channel);
+
+        /* Its already disabled so disable should have no effect on core but should disable features. */
+        MobileCenter.setEnabled(false);
+        assertFalse(MobileCenter.isEnabled());
+        for (MobileCenterFeature feature : mobileCenter.getFeatures()) {
+            assertFalse(feature.isInstanceEnabled());
+            verify(application, never()).registerActivityLifecycleCallbacks(feature);
+            verify(application, never()).unregisterActivityLifecycleCallbacks(feature);
+        }
+
+        /* Verify we can enable the core back, should have no effect on features except registering the application life cycle callbacks. */
+        MobileCenter.setEnabled(true);
+        assertTrue(MobileCenter.isEnabled());
+        for (MobileCenterFeature feature : mobileCenter.getFeatures()) {
+            assertTrue(feature.isInstanceEnabled());
+            verify(application).registerActivityLifecycleCallbacks(feature);
+            verify(application, never()).unregisterActivityLifecycleCallbacks(feature);
+        }
+    }
+
+    @Test
+    public void invalidFeatureTest() {
+        MobileCenter.start(application, DUMMY_APP_SECRET, InvalidFeature.class);
+        PowerMockito.verifyStatic();
+        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString(), any(NoSuchMethodException.class));
+    }
+
+    @Test
+    public void nullApplicationTest() {
+        MobileCenter.start(null, DUMMY_APP_SECRET, DummyFeature.class);
+        PowerMockito.verifyStatic();
+        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+    }
+
+    @Test
+    public void nullAppIdentifierTest() {
+        MobileCenter.start(application, null, DummyFeature.class);
+        PowerMockito.verifyStatic();
+        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+    }
+
+    @Test
+    public void emptyAppIdentifierTest() {
+        MobileCenter.start(application, "", DummyFeature.class);
+        PowerMockito.verifyStatic();
+        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString(), any(IllegalArgumentException.class));
+    }
+
+    @Test
+    public void tooShortAppIdentifierTest() {
+        MobileCenter.start(application, "too-short", DummyFeature.class);
+        PowerMockito.verifyStatic();
+        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString(), any(IllegalArgumentException.class));
+    }
+
+    @Test
+    public void invalidAppIdentifierTest() {
+        MobileCenter.start(application, "123xyz12-3xyz-123x-yz12-3xyz123xyz12", DummyFeature.class);
+        PowerMockito.verifyStatic();
+        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString(), any(NumberFormatException.class));
+    }
+
+    @Test
+    public void duplicateFeatureTest() {
+        MobileCenter.start(application, DUMMY_APP_SECRET, DummyFeature.class, DummyFeature.class);
+
+        /* Verify that only one module has been loaded and configured */
+        assertEquals(1, MobileCenter.getInstance().getFeatures().size());
+    }
+
+    @Test
+    public void getInstallIdBeforeStart() {
+        assertNull(MobileCenter.getInstallId());
+    }
+
+    @Test
+    public void setWrapperSdkTest() throws Exception {
+
+        /* Setup  mocking. */
+        DefaultChannel channel = mock(DefaultChannel.class);
+        whenNew(DefaultChannel.class).withAnyArguments().thenReturn(channel);
+        mockStatic(DeviceInfoHelper.class);
+
+        /* Call method. */
+        WrapperSdk wrapperSdk = new WrapperSdk();
+        MobileCenter.setWrapperSdk(wrapperSdk);
+
+        /* Check propagation. */
+        verifyStatic();
+        DeviceInfoHelper.setWrapperSdk(wrapperSdk);
+
+        /* Since the channel was not created when setting wrapper, no need to refresh channel after start. */
+        MobileCenter.start(application, DUMMY_APP_SECRET, DummyFeature.class);
+        verify(channel, never()).invalidateDeviceCache();
+
+        /* Update wrapper SDK and check channel refreshed. */
+        wrapperSdk = new WrapperSdk();
+        MobileCenter.setWrapperSdk(wrapperSdk);
+        verify(channel).invalidateDeviceCache();
+    }
+
+
+    @Test
+    public void setDefaultLogLevelRelease() {
+        MobileCenter.start(application, DUMMY_APP_SECRET, DummyFeature.class);
+        verifyStatic(never());
+        MobileCenterLog.setLogLevel(anyInt());
+    }
+
+    @Test
+    public void setDefaultLogLevelDebug() {
+        Constants.APPLICATION_DEBUGGABLE = true;
+        MobileCenter.start(application, DUMMY_APP_SECRET, DummyFeature.class);
+        verifyStatic();
+        MobileCenterLog.setLogLevel(android.util.Log.WARN);
+    }
+
+    @Test
+    public void dontSetDefaultLogLevel() {
+        Constants.APPLICATION_DEBUGGABLE = true;
+        MobileCenter.setLogLevel(android.util.Log.VERBOSE);
+        verifyStatic();
+        MobileCenterLog.setLogLevel(android.util.Log.VERBOSE);
+        MobileCenter.start(application, DUMMY_APP_SECRET, DummyFeature.class);
+        verifyStatic(never());
+        MobileCenterLog.setLogLevel(android.util.Log.WARN);
+    }
+
+    @Test
+    public void setServerUrl() throws Exception {
+
+        /* Change server URL before start. */
+        DefaultChannel channel = mock(DefaultChannel.class);
+        whenNew(DefaultChannel.class).withAnyArguments().thenReturn(channel);
+        String serverUrl = "http://mock";
+        MobileCenter.setServerUrl(serverUrl);
+
+        /* No effect for now. */
+        verify(channel, never()).setServerUrl(serverUrl);
+
+        /* Start should propagate the server url. */
+        MobileCenter.start(application, DUMMY_APP_SECRET, DummyFeature.class);
+        verify(channel).setServerUrl(serverUrl);
+
+        /* Change it after, should work immediately. */
+        serverUrl = "http://mock2";
+        MobileCenter.setServerUrl(serverUrl);
+        verify(channel).setServerUrl(serverUrl);
+    }
+
+    private static class DummyFeature extends AbstractMobileCenterFeature {
+
+        private static DummyFeature sharedInstance;
+
+        @SuppressWarnings("WeakerAccess")
+        public static DummyFeature getInstance() {
+            if (sharedInstance == null) {
+                sharedInstance = spy(new DummyFeature());
+            }
+            return sharedInstance;
+        }
+
+        @Override
+        protected String getGroupName() {
+            return "group_dummy";
+        }
+
+        @Override
+        protected String getFeatureName() {
+            return "Dummy";
+        }
+    }
+
+    private static class AnotherDummyFeature extends AbstractMobileCenterFeature {
+
+        private static AnotherDummyFeature sharedInstance;
+
+        @SuppressWarnings("WeakerAccess")
+        public static AnotherDummyFeature getInstance() {
+            if (sharedInstance == null) {
+                sharedInstance = spy(new AnotherDummyFeature());
+            }
+            return sharedInstance;
+        }
+
+        @Override
+        public Map<String, LogFactory> getLogFactories() {
+            HashMap<String, LogFactory> logFactories = new HashMap<>();
+            logFactories.put("mock", mock(LogFactory.class));
+            return logFactories;
+        }
+
+        @Override
+        protected String getGroupName() {
+            return "group_another_dummy";
+        }
+
+        @Override
+        protected String getFeatureName() {
+            return "AnotherDummy";
+        }
+    }
+
+    private static class InvalidFeature extends AbstractMobileCenterFeature {
+
+        @Override
+        protected String getGroupName() {
+            return "group_invalid";
+        }
+
+        @Override
+        protected String getFeatureName() {
+            return "Invalid";
+        }
+    }
+}

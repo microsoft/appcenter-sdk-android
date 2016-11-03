@@ -4,5 +4,5 @@
 evaluationDependsOn(':sdk')
 
 dependencies {
-    compile project(':sdk:core')
+    compile project(':sdk:mobilecenter')
 }

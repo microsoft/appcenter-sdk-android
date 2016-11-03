@@ -1,0 +1,4 @@
+//
+// :sdk:mobilecenter
+//
+evaluationDependsOn(':sdk')
