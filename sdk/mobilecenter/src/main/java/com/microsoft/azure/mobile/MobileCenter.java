@@ -184,7 +184,7 @@ public final class MobileCenter {
     }
 
     /**
-     * Enable or disable the SDK as a whole. In addition to the core resources,
+     * Enable or disable the SDK as a whole. In addition to the MobileCenter resources,
      * it will also enable or disable
      * all features registered via {@link #start(Application, String, Class[])}.
      *
@@ -319,7 +319,7 @@ public final class MobileCenter {
             return;
         }
         if (mApplication == null) {
-            MobileCenterLog.error(LOG_TAG, "Cannot start features, MobileCenter has not been initialized");
+            MobileCenterLog.error(LOG_TAG, "Cannot start features, Mobile Center has not been initialized");
             return;
         }
         for (Class<? extends MobileCenterFeature> feature : features) {
@@ -342,7 +342,7 @@ public final class MobileCenter {
      */
     private synchronized void startFeature(@NonNull MobileCenterFeature feature) {
         if (mFeatures.contains(feature)) {
-            MobileCenterLog.warn(LOG_TAG, "MobileCenter already has started the feature with class name: " + feature.getClass().getName());
+            MobileCenterLog.warn(LOG_TAG, "Mobile Center has already started the feature with class name: " + feature.getClass().getName());
             return;
         }
         Map<String, LogFactory> logFactories = feature.getLogFactories();

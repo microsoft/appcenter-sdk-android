@@ -474,7 +474,7 @@ public class MobileCenterTest {
         MobileCenter mobileCenter = MobileCenter.getInstance();
         mobileCenter.setChannel(channel);
 
-        /* Verify modules are enabled by default but core is disabled. */
+        /* Verify modules are enabled by default but MobileCenter is disabled. */
         assertFalse(MobileCenter.isEnabled());
         for (MobileCenterFeature feature : mobileCenter.getFeatures()) {
             assertTrue(feature.isInstanceEnabled());
@@ -499,7 +499,7 @@ public class MobileCenterTest {
         MobileCenter mobileCenter = MobileCenter.getInstance();
         mobileCenter.setChannel(channel);
 
-        /* Its already disabled so disable should have no effect on core but should disable features. */
+        /* Its already disabled so disable should have no effect on MobileCenter but should disable features. */
         MobileCenter.setEnabled(false);
         assertFalse(MobileCenter.isEnabled());
         for (MobileCenterFeature feature : mobileCenter.getFeatures()) {
@@ -508,7 +508,7 @@ public class MobileCenterTest {
             verify(application, never()).unregisterActivityLifecycleCallbacks(feature);
         }
 
-        /* Verify we can enable the core back, should have no effect on features except registering the application life cycle callbacks. */
+        /* Verify we can enable MobileCenter back, should have no effect on features except registering the application life cycle callbacks. */
         MobileCenter.setEnabled(true);
         assertTrue(MobileCenter.isEnabled());
         for (MobileCenterFeature feature : mobileCenter.getFeatures()) {
