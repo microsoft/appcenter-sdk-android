@@ -1,30 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="sonoma_state_key">sonoma_state_key</string>
-    <string name="sonoma_state_title">Sonoma state</string>
-    <string name="sonoma_state_summary_enabled">Sonoma is enabled</string>
-    <string name="sonoma_state_summary_disabled">Sonoma is disabled</string>
+    <string name="mobile_center_state_key">mobile_center_state_key</string>
+    <string name="mobile_center_state_title">Mobile Center state</string>
+    <string name="mobile_center_state_summary_enabled">Mobile Center is enabled</string>
+    <string name="mobile_center_state_summary_disabled">Mobile Center is disabled</string>
 
-    <string name="analytics_key">sonoma_analytics</string>
+    <string name="analytics_key">mobile_center_analytics</string>
     <string name="analytics_title">Analytics</string>
 
-    <string name="sonoma_analytics_state_key">sonoma_analytics_state_key</string>
-    <string name="sonoma_analytics_state_title">Analytics state</string>
-    <string name="sonoma_analytics_state_summary_enabled">Analytics is enabled</string>
-    <string name="sonoma_analytics_state_summary_disabled">Analytics is disabled</string>
+    <string name="mobile_center_analytics_state_key">mobile_center_analytics_state_key</string>
+    <string name="mobile_center_analytics_state_title">Analytics state</string>
+    <string name="mobile_center_analytics_state_summary_enabled">Analytics is enabled</string>
+    <string name="mobile_center_analytics_state_summary_disabled">Analytics is disabled</string>
 
-    <string name="sonoma_auto_page_tracking_key">sonoma_auto_page_tracking_key</string>
-    <string name="sonoma_auto_page_tracking_title">Analytics automatic page tracking</string>
-    <string name="sonoma_auto_page_tracking_enabled">Automatic page tracking is enabled</string>
-    <string name="sonoma_auto_page_tracking_disabled">Automatic page tracking is disabled</string>
+    <string name="mobile_center_auto_page_tracking_key">mobile_center_auto_page_tracking_key</string>
+    <string name="mobile_center_auto_page_tracking_title">Analytics automatic page tracking</string>
+    <string name="mobile_center_auto_page_tracking_enabled">Automatic page tracking is enabled</string>
+    <string name="mobile_center_auto_page_tracking_disabled">Automatic page tracking is disabled</string>
 
-    <string name="crashes_key">sonoma_crashes</string>
+    <string name="crashes_key">mobile_center_crashes</string>
     <string name="crashes_title">Crashes</string>
 
-    <string name="sonoma_crashes_state_key">sonoma_crashes_state_key</string>
-    <string name="sonoma_crashes_state_title">Crashes state</string>
-    <string name="sonoma_crashes_state_summary_enabled">Crashes is enabled</string>
-    <string name="sonoma_crashes_state_summary_disabled">Crashes is disabled</string>
+    <string name="mobile_center_crashes_state_key">mobile_center_crashes_state_key</string>
+    <string name="mobile_center_crashes_state_title">Crashes state</string>
+    <string name="mobile_center_crashes_state_summary_enabled">Crashes is enabled</string>
+    <string name="mobile_center_crashes_state_summary_disabled">Crashes is disabled</string>
 
     <string name="miscellaneous_key">miscellaneous</string>
     <string name="miscellaneous_title">Miscellaneous</string>

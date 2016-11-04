@@ -22,7 +22,7 @@ subprojects {
 
     def ext = rootProject.ext
 
-    ext.sdkName = 'sonoma.android'
+    ext.sdkName = 'mobilecenter.android'
 
     android {
         buildToolsVersion ext.buildToolsVersion
@@ -140,7 +140,7 @@ subprojects {
 
         pkg {
             repo = ext.bintrayRepo
-            name = ext.bintrayPackageNamePrefix + project.name
+            name = project.name
             userOrg = ext.bintrayUserOrg
             websiteUrl = ext.siteUrl
             vcsUrl = ext.gitUrl

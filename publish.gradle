@@ -1,10 +1,10 @@
 // Bintray constants
 
 ext {
-    siteUrl = 'https://github.com/Microsoft/Sonoma-SDK-Android'
-    gitUrl = 'https://github.com/Microsoft/Sonoma-SDK-Android.git'
-    groupId = 'com.microsoft.sonoma'
-    sdkDescription = 'Microsoft Sonoma SDK for Android'
+    siteUrl = 'https://github.com/Microsoft/MobileCenter-SDK-Android'
+    gitUrl = 'https://github.com/Microsoft/MobileCenter-SDK-Android.git'
+    groupId = 'com.microsoft.azure.mobile'
+    sdkDescription = 'Microsoft Mobile Center SDK for Android'
 
     Properties properties = new Properties()
     File file = rootProject.file('local.properties')
@@ -17,7 +17,6 @@ ext {
     bintrayKey = properties.getProperty("bintray.key")
     bintrayUserOrg = properties.getProperty("bintray.user.org")
     bintrayRepo = properties.getProperty("bintray.repo")
-    bintrayPackageNamePrefix = properties.getProperty("bintray.package.prefix")
 
     licenseName = 'The MIT License (MIT)'
     licenseSite = 'https://opensource.org/licenses/MIT'
