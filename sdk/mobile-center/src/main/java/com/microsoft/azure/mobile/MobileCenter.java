@@ -315,13 +315,15 @@ public final class MobileCenter {
     @SafeVarargs
     private final synchronized void startServices(Class<? extends MobileCenterService>... services) {
         if (services == null) {
-            MobileCenterLog.error(LOG_TAG, "Start service array is null");
+            MobileCenterLog.logAssert(LOG_TAG, "Cannot start services, services array is null. Failed to start Mobile Center SDK");
             return;
         }
         if (mApplication == null) {
-            MobileCenterLog.error(LOG_TAG, "Cannot start services, Mobile Center has not been initialized");
+            MobileCenterLog.logAssert(LOG_TAG, "Cannot start services, Mobile Center has not been initialized. Failed to start Mobile Center SDK");
             return;
         }
+
+        boolean succeed = true;
         for (Class<? extends MobileCenterService> service : services) {
             if (service == null) {
                 MobileCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
@@ -330,9 +332,14 @@ public final class MobileCenter {
                     startService((MobileCenterService) service.getMethod("getInstance").invoke(null));
                 } catch (Exception e) {
                     MobileCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
+                    succeed = false;
                 }
             }
         }
+        if (succeed)
+            MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK started successfully");
+        else
+            MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK started with error(s)");
     }
 
     /**
@@ -359,9 +366,10 @@ public final class MobileCenter {
     @SafeVarargs
     private final synchronized void initializeAndStartServices(Application application, String appSecret, Class<? extends MobileCenterService>... services) {
         boolean initializedSuccessfully = instanceInitialize(application, appSecret);
-        if (initializedSuccessfully) {
+        if (initializedSuccessfully)
             startServices(services);
-        }
+        else
+            MobileCenterLog.logAssert(LOG_TAG, "Failed to initialize Mobile Center SDK");
     }
 
     /**
