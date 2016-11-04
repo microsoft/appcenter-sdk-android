@@ -279,5 +279,5 @@ You create your own Crashes listener and assign it like this:
 
  Gradle Dependency                                            | Service          
  ------------------------------------------------------------ | ---------------
- com.microsoft.azure.mobile:mobile-center-analytics:0.1.1     | Analytics    
- com.microsoft.azure.mobile:mobile-center-crashes:0.1.1       | Crashes
+ com.microsoft.azure.mobile:mobile-center-analytics:0.2.0     | Analytics    
+ com.microsoft.azure.mobile:mobile-center-crashes:0.2.0       | Crashes
