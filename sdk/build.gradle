@@ -21,6 +21,8 @@ subprojects {
     apply plugin: 'com.github.dcendents.android-maven'
 
     def ext = rootProject.ext
+    // FIX ME: This is coupled with the name of a project.
+    def artifactName = ext.bintrayPackageNamePrefix + (project.name == "mobilecenter" ? "" : "-" + project.name)
 
     ext.sdkName = 'mobilecenter.android'
 
@@ -140,7 +142,7 @@ subprojects {
 
         pkg {
             repo = ext.bintrayRepo
-            name = ext.bintrayPackageNamePrefix + project.name
+            name = artifactName
             userOrg = ext.bintrayUserOrg
             websiteUrl = ext.siteUrl
             vcsUrl = ext.gitUrl
@@ -156,7 +158,8 @@ subprojects {
                     packaging 'aar'
 
                     //noinspection GroovyAssignabilityCheck
-                    name project.name
+                    artifactId = artifactName
+                    name artifactName
                     description = ext.sdkDescription
                     url = ext.siteUrl
 
