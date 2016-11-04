@@ -6,6 +6,6 @@ evaluationDependsOn(':apps')
 
 dependencies {
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
-    compile project(':sdk:analytics')
-    compile project(':sdk:crashes')
+    compile project(':sdk:mobile-center-analytics')
+    compile project(':sdk:mobile-center-crashes')
 }
