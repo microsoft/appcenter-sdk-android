@@ -392,7 +392,7 @@ public class DefaultChannel implements Channel {
         for (Listener listener : mListeners)
             listener.onEnqueuingLog(log, groupName);
 
-        /* Attach device properties to every log if its not already attached by a feature. */
+        /* Attach device properties to every log if its not already attached by a service. */
         if (log.getDevice() == null) {
 
             /* Generate device properties only once per process life time. */
@@ -409,7 +409,7 @@ public class DefaultChannel implements Channel {
             log.setDevice(mDevice);
         }
 
-        /* Set an absolute timestamp, we'll convert to relative just before sending. Don't do it if the feature already set a timestamp.*/
+        /* Set an absolute timestamp, we'll convert to relative just before sending. Don't do it if the service already set a timestamp.*/
         if (log.getToffset() == 0L)
             log.setToffset(System.currentTimeMillis());
 
@@ -494,7 +494,7 @@ public class DefaultChannel implements Channel {
         final Map<String, List<Log>> mSendingBatches = new HashMap<>();
 
         /**
-         * A listener for a feature.
+         * A listener for a service.
          */
         final GroupListener mListener;
 
@@ -528,7 +528,7 @@ public class DefaultChannel implements Channel {
          * @param maxLogsPerBatch    max batch size.
          * @param batchTimeInterval  batch interval in ms.
          * @param maxParallelBatches max number of parallel batches.
-         * @param listener           listener for a feature.
+         * @param listener           listener for a service.
          */
         GroupState(String name, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener listener) {
             mName = name;

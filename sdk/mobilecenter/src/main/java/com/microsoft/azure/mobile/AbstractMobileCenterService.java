@@ -15,7 +15,7 @@ import java.util.Map;
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 
-public abstract class AbstractMobileCenterFeature implements MobileCenterFeature {
+public abstract class AbstractMobileCenterService implements MobileCenterService {
 
     /**
      * Separator for preference key.
@@ -79,7 +79,7 @@ public abstract class AbstractMobileCenterFeature implements MobileCenterFeature
 
         /* Check if the SDK is disabled. */
         if (!MobileCenter.isEnabled() && enabled) {
-            MobileCenterLog.error(LOG_TAG, "The SDK is disabled. Call MobileCenter.setEnabled(true) first before enabling a specific feature");
+            MobileCenterLog.error(LOG_TAG, "The SDK is disabled. Call MobileCenter.setEnabled(true) first before enabling a specific service.");
             return;
         }
 
@@ -90,11 +90,11 @@ public abstract class AbstractMobileCenterFeature implements MobileCenterFeature
         /* If channel initialized. */
         if (mChannel != null) {
 
-            /* Register feature to channel on enabling. */
+            /* Register service to channel on enabling. */
             if (enabled)
                 mChannel.addGroup(getGroupName(), getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
 
-            /* Otherwise, clear all persisted logs and remove a group for the feature. */
+            /* Otherwise, clear all persisted logs and remove a group for the service. */
             else {
                 /* TODO: Expose a method and do this in one place. */
                 mChannel.clear(getGroupName());
@@ -110,11 +110,11 @@ public abstract class AbstractMobileCenterFeature implements MobileCenterFeature
     public synchronized void onChannelReady(@NonNull Context context, @NonNull Channel channel) {
         channel.removeGroup(getGroupName());
 
-        /* Add a group to the channel if the feature is enabled */
+        /* Add a group to the channel if the service is enabled */
         if (isInstanceEnabled())
             channel.addGroup(getGroupName(), getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
 
-        /* Otherwise, clear all persisted logs for the feature. */
+        /* Otherwise, clear all persisted logs for the service. */
         else
             channel.clear(getGroupName());
 
@@ -127,18 +127,18 @@ public abstract class AbstractMobileCenterFeature implements MobileCenterFeature
     }
 
     /**
-     * Gets a name of group for the feature.
+     * Gets a name of group for the service.
      *
      * @return The group name.
      */
     protected abstract String getGroupName();
 
     /**
-     * Gets a name of the feature.
+     * Gets a name of the service.
      *
-     * @return The name of the feature.
+     * @return The name of the service.
      */
-    protected abstract String getFeatureName();
+    protected abstract String getServiceName();
 
     @SuppressWarnings("WeakerAccess")
     @NonNull
@@ -186,17 +186,17 @@ public abstract class AbstractMobileCenterFeature implements MobileCenterFeature
     }
 
     /**
-     * Check if the feature is not active: disabled or not started.
+     * Check if the service is not active: disabled or not started.
      *
-     * @return <code>true</code> if the feature is inactive, <code>false</code> otherwise.
+     * @return <code>true</code> if the service is inactive, <code>false</code> otherwise.
      */
     protected synchronized boolean isInactive() {
         if (mChannel == null) {
-            MobileCenterLog.error(LOG_TAG, getFeatureName() + " feature not initialized, discarding calls.");
+            MobileCenterLog.error(LOG_TAG, getServiceName() + " service not initialized, discarding calls.");
             return true;
         }
         if (!isInstanceEnabled()) {
-            MobileCenterLog.info(LOG_TAG, getFeatureName() + " feature not enabled, discarding calls.");
+            MobileCenterLog.info(LOG_TAG, getServiceName() + " service not enabled, discarding calls.");
             return true;
         }
         return false;

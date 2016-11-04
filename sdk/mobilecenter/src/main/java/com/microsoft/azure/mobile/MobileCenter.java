@@ -57,9 +57,9 @@ public final class MobileCenter {
     private Application mApplication;
 
     /**
-     * Configured features.
+     * Configured services.
      */
-    private Set<MobileCenterFeature> mFeatures;
+    private Set<MobileCenterService> mServices;
 
     /**
      * Log serializer.
@@ -151,27 +151,27 @@ public final class MobileCenter {
     }
 
     /**
-     * Start features.
-     * This may be called only once per feature per application process lifetime.
+     * Start services.
+     * This may be called only once per service per application process lifetime.
      *
-     * @param features List of features to use.
+     * @param services List of services to use.
      */
     @SafeVarargs
-    public static void start(Class<? extends MobileCenterFeature>... features) {
-        getInstance().startFeatures(features);
+    public static void start(Class<? extends MobileCenterService>... services) {
+        getInstance().startServices(services);
     }
 
     /**
-     * Initialize the SDK with the list of features to start.
+     * Initialize the SDK with the list of services to start.
      * This may be called only once per application process lifetime.
      *
      * @param application Your application object.
      * @param appSecret   A unique and secret key used to identify the application.
-     * @param features    List of features to use.
+     * @param services    List of services to use.
      */
     @SafeVarargs
-    public static void start(Application application, String appSecret, Class<? extends MobileCenterFeature>... features) {
-        getInstance().initializeAndStartFeatures(application, appSecret, features);
+    public static void start(Application application, String appSecret, Class<? extends MobileCenterService>... services) {
+        getInstance().initializeAndStartServices(application, appSecret, services);
     }
 
     /**
@@ -186,7 +186,7 @@ public final class MobileCenter {
     /**
      * Enable or disable the SDK as a whole. In addition to the MobileCenter resources,
      * it will also enable or disable
-     * all features registered via {@link #start(Application, String, Class[])}.
+     * all services registered via {@link #start(Application, String, Class[])}.
      *
      * @param enabled true to enable, false to disable.
      */
@@ -301,7 +301,7 @@ public final class MobileCenter {
 
         /* If parameters are valid, init context related resources. */
         StorageHelper.initialize(application);
-        mFeatures = new HashSet<>();
+        mServices = new HashSet<>();
 
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
@@ -313,54 +313,54 @@ public final class MobileCenter {
     }
 
     @SafeVarargs
-    private final synchronized void startFeatures(Class<? extends MobileCenterFeature>... features) {
-        if (features == null) {
-            MobileCenterLog.error(LOG_TAG, "Start feature array is null");
+    private final synchronized void startServices(Class<? extends MobileCenterService>... services) {
+        if (services == null) {
+            MobileCenterLog.error(LOG_TAG, "Start service array is null");
             return;
         }
         if (mApplication == null) {
-            MobileCenterLog.error(LOG_TAG, "Cannot start features, Mobile Center has not been initialized");
+            MobileCenterLog.error(LOG_TAG, "Cannot start services, Mobile Center has not been initialized");
             return;
         }
-        for (Class<? extends MobileCenterFeature> feature : features) {
-            if (feature == null) {
-                MobileCenterLog.warn(LOG_TAG, "Skipping null feature, please check your varargs/array does not contain any null reference.");
+        for (Class<? extends MobileCenterService> service : services) {
+            if (service == null) {
+                MobileCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
             } else {
                 try {
-                    startFeature((MobileCenterFeature) feature.getMethod("getInstance").invoke(null));
+                    startService((MobileCenterService) service.getMethod("getInstance").invoke(null));
                 } catch (Exception e) {
-                    MobileCenterLog.error(LOG_TAG, "Failed to get feature instance '" + feature.getName() + "', skipping it.", e);
+                    MobileCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
                 }
             }
         }
     }
 
     /**
-     * Start a feature.
+     * Start a service.
      *
-     * @param feature feature to start.
+     * @param service service to start.
      */
-    private synchronized void startFeature(@NonNull MobileCenterFeature feature) {
-        if (mFeatures.contains(feature)) {
-            MobileCenterLog.warn(LOG_TAG, "Mobile Center has already started the feature with class name: " + feature.getClass().getName());
+    private synchronized void startService(@NonNull MobileCenterService service) {
+        if (mServices.contains(service)) {
+            MobileCenterLog.warn(LOG_TAG, "Mobile Center has already started the service with class name: " + service.getClass().getName());
             return;
         }
-        Map<String, LogFactory> logFactories = feature.getLogFactories();
+        Map<String, LogFactory> logFactories = service.getLogFactories();
         if (logFactories != null) {
             for (Map.Entry<String, LogFactory> logFactory : logFactories.entrySet())
                 mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
         }
-        mFeatures.add(feature);
-        feature.onChannelReady(mApplication, mChannel);
+        mServices.add(service);
+        service.onChannelReady(mApplication, mChannel);
         if (isInstanceEnabled())
-            mApplication.registerActivityLifecycleCallbacks(feature);
+            mApplication.registerActivityLifecycleCallbacks(service);
     }
 
     @SafeVarargs
-    private final synchronized void initializeAndStartFeatures(Application application, String appSecret, Class<? extends MobileCenterFeature>... features) {
+    private final synchronized void initializeAndStartServices(Application application, String appSecret, Class<? extends MobileCenterService>... services) {
         boolean initializedSuccessfully = instanceInitialize(application, appSecret);
         if (initializedSuccessfully) {
-            startFeatures(features);
+            startServices(services);
         }
     }
 
@@ -392,24 +392,24 @@ public final class MobileCenter {
         /* Update state. */
         StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, enabled);
 
-        /* Apply change to features. */
-        for (MobileCenterFeature feature : mFeatures) {
+        /* Apply change to services. */
+        for (MobileCenterService service : mServices) {
 
             /* Add or remove callbacks depending on state change. */
             if (switchToDisabled)
-                mApplication.unregisterActivityLifecycleCallbacks(feature);
+                mApplication.unregisterActivityLifecycleCallbacks(service);
             else if (switchToEnabled)
-                mApplication.registerActivityLifecycleCallbacks(feature);
+                mApplication.registerActivityLifecycleCallbacks(service);
 
             /* Forward status change. */
-            if (feature.isInstanceEnabled() != enabled)
-                feature.setInstanceEnabled(enabled);
+            if (service.isInstanceEnabled() != enabled)
+                service.setInstanceEnabled(enabled);
         }
     }
 
     @VisibleForTesting
-    Set<MobileCenterFeature> getFeatures() {
-        return mFeatures;
+    Set<MobileCenterService> getServices() {
+        return mServices;
     }
 
     @VisibleForTesting
