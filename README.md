@@ -84,7 +84,7 @@ To start the Mobile Center SDK in your app, follow these steps:
     Android Studio will automatically suggest the required import statements once you insert the `start()` method-call, but if you see an error that the class names are not recognized, add the following lines to the import statements in your activity class:
     
     ```Java
-    import com.microsoft.azure.mobile.core.MobileCenter;
+    import com.microsoft.azure.mobile.MobileCenter;
     import com.microsoft.azure.mobile.analytics.Analytics;
     import com.microsoft.azure.mobile.crashes.Crashes;
     ```
@@ -256,7 +256,7 @@ You create your own Crashes listener and assign it like this:
     Make sure your device has a working internet connection and restart the crashed app. The crash reports should appear on the portal within a few minutes.
 
 * **Do I need to include all the modules? Is there anything included by default?**
-    You only include the modules for the services you want to use. They all have a dependency on the Mobile Center Core module, so this will be included once you pull down the dependencies.
+    You only include the modules for the services you want to use. They all have a dependency on the Mobile Center module, so this will be included once you pull down the dependencies.
 
 * **Debugging steps, when you can't see crash reports on the portal:**
     1. Make sure the SDK `start()` API is used correctly and the Crashes module is initialized. Also, you need to restart the app after a crash – our SDK will forward the crash log only after it's restarted.
