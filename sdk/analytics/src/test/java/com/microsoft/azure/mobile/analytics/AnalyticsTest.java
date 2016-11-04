@@ -82,8 +82,8 @@ public class AnalyticsTest {
         }).when(StorageHelper.PreferencesStorage.class);
         StorageHelper.PreferencesStorage.putBoolean(eq(key), anyBoolean());
 
-        /* Pretend automatic page tracking is enabled by default, this will be the case if feature becomes public. */
-        // TODO remove that after feature is public
+        /* Pretend automatic page tracking is enabled by default, this will be the case if service becomes public. */
+        // TODO remove that after service is public
         assertFalse(Analytics.isAutoPageTrackingEnabled());
         Analytics.setAutoPageTrackingEnabled(true);
     }

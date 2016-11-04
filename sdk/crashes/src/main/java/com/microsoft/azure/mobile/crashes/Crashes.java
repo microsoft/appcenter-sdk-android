@@ -7,7 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.azure.mobile.AbstractMobileCenterFeature;
+import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.Constants;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
@@ -34,9 +34,9 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Crashes feature.
+ * Crashes service.
  */
-public class Crashes extends AbstractMobileCenterFeature {
+public class Crashes extends AbstractMobileCenterService {
 
     /**
      * Constant for SEND crash report.
@@ -67,14 +67,14 @@ public class Crashes extends AbstractMobileCenterFeature {
     static final String ERROR_GROUP = "group_errors";
 
     /**
-     * Name of the feature.
+     * Name of the service.
      */
-    private static final String FEATURE_NAME = "Crashes";
+    private static final String SERVICE_NAME = "Crashes";
 
     /**
      * TAG used in logging for Crashes.
      */
-    public static final String LOG_TAG = MobileCenterLog.LOG_TAG + FEATURE_NAME;
+    public static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
      * Default crashes listener.
@@ -88,7 +88,7 @@ public class Crashes extends AbstractMobileCenterFeature {
     private static Crashes sInstance = null;
 
     /**
-     * Log factories managed by this feature.
+     * Log factories managed by this service.
      */
     private final Map<String, LogFactory> mFactories;
 
@@ -179,7 +179,7 @@ public class Crashes extends AbstractMobileCenterFeature {
     /**
      * Track an exception.
      *
-     * TODO the backend does not support that feature yet, will be public method later.
+     * TODO the backend does not support that service yet, will be public method later.
      *
      * @param throwable An exception.
      */
@@ -277,7 +277,7 @@ public class Crashes extends AbstractMobileCenterFeature {
     /**
      * Track an exception.
      *
-     * TODO the backend does not support that feature yet, will be public method later.
+     * TODO the backend does not support that service yet, will be public method later.
      *
      * @param exception An exception.
      */
@@ -301,8 +301,8 @@ public class Crashes extends AbstractMobileCenterFeature {
     }
 
     @Override
-    protected String getFeatureName() {
-        return FEATURE_NAME;
+    protected String getServiceName() {
+        return SERVICE_NAME;
     }
 
     @Override
@@ -520,7 +520,7 @@ public class Crashes extends AbstractMobileCenterFeature {
     @VisibleForTesting
     private synchronized void handleUserConfirmation(@UserConfirmationDef int userConfirmation) {
         if (mChannel == null) {
-            MobileCenterLog.error(LOG_TAG, "Crashes feature not initialized, discarding calls.");
+            MobileCenterLog.error(LOG_TAG, "Crashes service not initialized, discarding calls.");
             return;
         }
 

@@ -6,7 +6,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.azure.mobile.AbstractMobileCenterFeature;
+import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.analytics.channel.SessionTracker;
 import com.microsoft.azure.mobile.analytics.ingestion.models.EventLog;
 import com.microsoft.azure.mobile.analytics.ingestion.models.PageLog;
@@ -24,19 +24,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Analytics feature.
+ * Analytics service.
  */
-public class Analytics extends AbstractMobileCenterFeature {
+public class Analytics extends AbstractMobileCenterService {
 
     /**
-     * Name of the feature.
+     * Name of the service.
      */
-    private static final String FEATURE_NAME = "Analytics";
+    private static final String SERVICE_NAME = "Analytics";
 
     /**
      * TAG used in logging for Analytics.
      */
-    public static final String LOG_TAG = MobileCenterLog.LOG_TAG + FEATURE_NAME;
+    public static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
      * Constant marking event of the analytics group.
@@ -70,7 +70,7 @@ public class Analytics extends AbstractMobileCenterFeature {
 
     /**
      * Automatic page tracking flag.
-     * TODO the backend does not support pages yet so the default value would be true after the feature becomes public.
+     * TODO the backend does not support pages yet so the default value would be true after the service becomes public.
      */
     private boolean mAutoPageTrackingEnabled = false;
 
@@ -123,7 +123,7 @@ public class Analytics extends AbstractMobileCenterFeature {
     /**
      * Check if automatic page tracking is enabled.
      *
-     * TODO the backend does not support that feature yet, will be public method later.
+     * TODO the backend does not support that service yet, will be public method later.
      *
      * @return true if automatic page tracking is enabled. false otherwise.
      * @see #setAutoPageTrackingEnabled(boolean)
@@ -137,7 +137,7 @@ public class Analytics extends AbstractMobileCenterFeature {
      * automatically every time an activity is resumed, with a generated name and no properties.
      * Call this method with false if you want to track pages yourself in your application.
      *
-     * TODO the backend does not support that feature yet, will be public method later.
+     * TODO the backend does not support that service yet, will be public method later.
      *
      * @param autoPageTrackingEnabled true to let the module track pages automatically, false otherwise (default state is true).
      */
@@ -148,7 +148,7 @@ public class Analytics extends AbstractMobileCenterFeature {
     /**
      * Track a custom page with name.
      *
-     * TODO the backend does not support that feature yet, will be public method later.
+     * TODO the backend does not support that service yet, will be public method later.
      *
      * @param name A page name.
      */
@@ -160,7 +160,7 @@ public class Analytics extends AbstractMobileCenterFeature {
     /**
      * Track a custom page with name and optional properties.
      *
-     * TODO the backend does not support that feature yet, will be public method later.
+     * TODO the backend does not support that service yet, will be public method later.
      *
      * @param name       A page name.
      * @param properties Optional properties.
@@ -210,8 +210,8 @@ public class Analytics extends AbstractMobileCenterFeature {
     }
 
     @Override
-    protected String getFeatureName() {
-        return FEATURE_NAME;
+    protected String getServiceName() {
+        return SERVICE_NAME;
     }
 
     @Override

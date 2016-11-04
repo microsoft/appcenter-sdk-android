@@ -16,7 +16,7 @@ public interface Channel {
      * @param maxLogsPerBatch    maximum log count per batch.
      * @param batchTimeInterval  time interval for a next batch.
      * @param maxParallelBatches maximum number of batches in parallel.
-     * @param groupListener      a listener for a feature.
+     * @param groupListener      a listener for a service.
      */
     void addGroup(String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener groupListener);
 

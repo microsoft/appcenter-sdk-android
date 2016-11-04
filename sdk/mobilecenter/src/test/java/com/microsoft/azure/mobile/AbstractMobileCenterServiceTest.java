@@ -31,20 +31,20 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({StorageHelper.PreferencesStorage.class, MobileCenter.class})
-public class AbstractMobileCenterFeatureTest {
+public class AbstractMobileCenterServiceTest {
 
-    private AbstractMobileCenterFeature feature;
+    private AbstractMobileCenterService service;
 
     @Before
     public void setUp() {
-        feature = new AbstractMobileCenterFeature() {
+        service = new AbstractMobileCenterService() {
             @Override
             protected String getGroupName() {
                 return "group_test";
             }
 
             @Override
-            protected String getFeatureName() {
+            protected String getServiceName() {
                 return "Test";
             }
         };
@@ -73,92 +73,92 @@ public class AbstractMobileCenterFeatureTest {
 
     @Test
     public void onActivityCreated() {
-        feature.onActivityCreated(null, null);
+        service.onActivityCreated(null, null);
     }
 
     @Test
     public void onActivityStarted() {
-        feature.onActivityStarted(null);
+        service.onActivityStarted(null);
     }
 
     @Test
     public void onActivityResumed() {
-        feature.onActivityResumed(null);
+        service.onActivityResumed(null);
     }
 
     @Test
     public void onActivityPaused() {
-        feature.onActivityPaused(null);
+        service.onActivityPaused(null);
     }
 
     @Test
     public void onActivityStopped() {
-        feature.onActivityStopped(null);
+        service.onActivityStopped(null);
     }
 
     @Test
     public void onActivitySaveInstanceState() {
-        feature.onActivitySaveInstanceState(null, null);
+        service.onActivitySaveInstanceState(null, null);
     }
 
     @Test
     public void onActivityDestroyed() {
-        feature.onActivityDestroyed(null);
+        service.onActivityDestroyed(null);
     }
 
     @Test
     public void setEnabled() {
-        assertTrue(feature.isInstanceEnabled());
-        feature.setInstanceEnabled(true);
-        feature.setInstanceEnabled(false);
-        assertFalse(feature.isInstanceEnabled());
-        feature.setInstanceEnabled(false);
-        feature.setInstanceEnabled(true);
-        assertTrue(feature.isInstanceEnabled());
-        feature.setInstanceEnabled(true);
+        assertTrue(service.isInstanceEnabled());
+        service.setInstanceEnabled(true);
+        service.setInstanceEnabled(false);
+        assertFalse(service.isInstanceEnabled());
+        service.setInstanceEnabled(false);
+        service.setInstanceEnabled(true);
+        assertTrue(service.isInstanceEnabled());
+        service.setInstanceEnabled(true);
         verifyStatic();
-        StorageHelper.PreferencesStorage.putBoolean(feature.getEnabledPreferenceKey(), false);
+        StorageHelper.PreferencesStorage.putBoolean(service.getEnabledPreferenceKey(), false);
         verifyStatic();
-        StorageHelper.PreferencesStorage.putBoolean(feature.getEnabledPreferenceKey(), true);
+        StorageHelper.PreferencesStorage.putBoolean(service.getEnabledPreferenceKey(), true);
     }
 
     @Test
     public void getLogFactories() {
-        Assert.assertNull(null, feature.getLogFactories());
+        Assert.assertNull(null, service.getLogFactories());
     }
 
     @Test
     public void onChannelReadyEnabledThenDisable() {
         Channel channel = mock(Channel.class);
-        feature.onChannelReady(mock(Context.class), channel);
-        verify(channel).removeGroup(feature.getGroupName());
-        verify(channel).addGroup(feature.getGroupName(), feature.getTriggerCount(), feature.getTriggerInterval(), feature.getTriggerMaxParallelRequests(), feature.getChannelListener());
+        service.onChannelReady(mock(Context.class), channel);
+        verify(channel).removeGroup(service.getGroupName());
+        verify(channel).addGroup(service.getGroupName(), service.getTriggerCount(), service.getTriggerInterval(), service.getTriggerMaxParallelRequests(), service.getChannelListener());
         verifyNoMoreInteractions(channel);
-        Assert.assertSame(channel, feature.mChannel);
+        Assert.assertSame(channel, service.mChannel);
 
-        feature.setInstanceEnabled(false);
-        verify(channel, times(2)).removeGroup(feature.getGroupName());
-        verify(channel).clear(feature.getGroupName());
+        service.setInstanceEnabled(false);
+        verify(channel, times(2)).removeGroup(service.getGroupName());
+        verify(channel).clear(service.getGroupName());
         verifyNoMoreInteractions(channel);
     }
 
     @Test
     public void onChannelReadyDisabledThenEnable() {
         Channel channel = mock(Channel.class);
-        feature.setInstanceEnabled(false);
-        feature.onChannelReady(mock(Context.class), channel);
-        verify(channel).removeGroup(feature.getGroupName());
-        verify(channel).clear(feature.getGroupName());
+        service.setInstanceEnabled(false);
+        service.onChannelReady(mock(Context.class), channel);
+        verify(channel).removeGroup(service.getGroupName());
+        verify(channel).clear(service.getGroupName());
         verifyNoMoreInteractions(channel);
-        Assert.assertSame(channel, feature.mChannel);
+        Assert.assertSame(channel, service.mChannel);
 
-        feature.setInstanceEnabled(true);
-        verify(channel).addGroup(feature.getGroupName(), feature.getTriggerCount(), feature.getTriggerInterval(), feature.getTriggerMaxParallelRequests(), feature.getChannelListener());
+        service.setInstanceEnabled(true);
+        verify(channel).addGroup(service.getGroupName(), service.getTriggerCount(), service.getTriggerInterval(), service.getTriggerMaxParallelRequests(), service.getChannelListener());
         verifyNoMoreInteractions(channel);
     }
 
     @Test
     public void getGroupName() {
-        Assert.assertEquals("group_test", feature.getGroupName());
+        Assert.assertEquals("group_test", service.getGroupName());
     }
 }
