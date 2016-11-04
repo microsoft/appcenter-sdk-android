@@ -1,12 +1,13 @@
 package com.microsoft.sonoma.helloworld;
 
+import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.analytics.Analytics;
+import com.microsoft.azure.mobile.crashes.Crashes;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.microsoft.sonoma.analytics.Analytics;
-import com.microsoft.sonoma.core.Sonoma;
-import com.microsoft.sonoma.crashes.Crashes;
 
 public class HelloWorldActivity extends Activity {
 
@@ -15,8 +16,8 @@ public class HelloWorldActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Sonoma.setLogLevel(Log.VERBOSE);
-        Sonoma.start(getApplication(), "45d1d9f6-2492-4e68-bd44-7190351eb5f3", Analytics.class, Crashes.class);
+        MobileCenter.setLogLevel(Log.VERBOSE);
+        MobileCenter.start(getApplication(), "45d1d9f6-2492-4e68-bd44-7190351eb5f3", Analytics.class, Crashes.class);
     }
 
     @SuppressWarnings({"ConstantConditions", "ConstantIfStatement"})

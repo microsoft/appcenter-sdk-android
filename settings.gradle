@@ -1,8 +1,8 @@
 // sdk modules
 include ':sdk'
-include ':sdk:core'
-include ':sdk:crashes'
-include ':sdk:analytics'
+include ':sdk:mobile-center'
+include ':sdk:mobile-center-crashes'
+include ':sdk:mobile-center-analytics'
 
 // common test code
 include ':test'
