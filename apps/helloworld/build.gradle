@@ -10,7 +10,7 @@ evaluationDependsOn(':apps')
  */
 repositories {
     maven {
-        url 'http://microsoftsonoma.bintray.com/sonoma'
+        url 'http://microsoftsonoma.bintray.com/mobilecenter'
         credentials {
             username 'sonoma-beta'
             password 'cbaf881993ad1ab4128f71da716d060e8590906a'
@@ -19,7 +19,7 @@ repositories {
 }
 
 dependencies {
-    def version = "0.1.1"
-    compile "com.microsoft.sonoma:analytics:${version}"
-    compile "com.microsoft.sonoma:crashes:${version}"
+    def version = "0.2.0-3"
+    compile "com.microsoft.azure.mobile:mobile-center-analytics:${version}"
+    compile "com.microsoft.azure.mobile:mobile-center-crashes:${version}"
 }
