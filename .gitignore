@@ -18,7 +18,6 @@ out/
 build/
 /*/build/
 
-
 # Local configuration file (sdk path, etc)
 local.properties
 
@@ -41,3 +40,6 @@ captures/
 
 # Keystore files
 *.jks
+
+# Mac files
+.DS_Store
