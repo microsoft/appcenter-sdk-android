@@ -1,4 +1,5 @@
 //
 // :sdk:mobilecenter
 //
+description = 'This package contains the basic functionalities that all Mobile Center services use to communicate with the backend.'
 evaluationDependsOn(':sdk')
