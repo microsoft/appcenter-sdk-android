@@ -4,7 +4,6 @@ ext {
     siteUrl = 'https://github.com/Microsoft/MobileCenter-SDK-Android'
     gitUrl = 'https://github.com/Microsoft/MobileCenter-SDK-Android.git'
     groupId = 'com.microsoft.azure.mobile'
-    sdkDescription = 'Microsoft Mobile Center SDK for Android'
 
     Properties properties = new Properties()
     File file = rootProject.file('local.properties')

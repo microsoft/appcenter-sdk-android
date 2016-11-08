@@ -149,36 +149,38 @@ subprojects {
     }
 
     install {
-        repositories.mavenInstaller {
-            pom {
-                //noinspection GroovyAssignabilityCheck
-                project {
-                    packaging 'aar'
-
+        afterEvaluate {
+            repositories.mavenInstaller {
+                pom {
                     //noinspection GroovyAssignabilityCheck
-                    name project.name
-                    description = ext.sdkDescription
-                    url = ext.siteUrl
+                    project {
+                        packaging 'aar'
 
-                    licenses {
-                        license {
-                            //noinspection GroovyAssignabilityCheck
-                            name ext.licenseName
-                            url ext.licenseSite
+                        //noinspection GroovyAssignabilityCheck
+                        name project.name
+                        description = project.description
+                        url = ext.siteUrl
+
+                        licenses {
+                            license {
+                                //noinspection GroovyAssignabilityCheck
+                                name ext.licenseName
+                                url ext.licenseSite
+                            }
                         }
-                    }
-                    developers {
-                        developer {
-                            id ext.developerId
-                            //noinspection GroovyAssignabilityCheck
-                            name ext.developerName
-                            email ext.developerEmail
+                        developers {
+                            developer {
+                                id ext.developerId
+                                //noinspection GroovyAssignabilityCheck
+                                name ext.developerName
+                                email ext.developerEmail
+                            }
                         }
-                    }
-                    scm {
-                        connection ext.gitUrl
-                        developerConnection ext.gitUrl
-                        url ext.siteUrl
+                        scm {
+                            connection ext.gitUrl
+                            developerConnection ext.gitUrl
+                            url ext.siteUrl
+                        }
                     }
                 }
             }
