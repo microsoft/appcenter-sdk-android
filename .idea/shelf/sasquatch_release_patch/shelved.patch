@@ -3,7 +3,7 @@ IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- apps/sasquatch/build.gradle	(date 1476127104000)
+--- apps/sasquatch/build.gradle	(revision 154c7d4ddb2d5f8d9c239fe85bef27a16cab2190)
 +++ apps/sasquatch/build.gradle	(revision )
 @@ -4,8 +4,23 @@
  
@@ -15,31 +15,31 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 + */
 +repositories {
 +    maven {
-+        url 'http://microsoftsonoma.bintray.com/sonoma'
++        url 'http://microsoftsonoma.bintray.com/mobilecenter'
 +        credentials {
-+            username 'sonoma-beta'
-+            password 'cbaf881993ad1ab4128f71da716d060e8590906a'
++            username 'mobile-center'
++            password '9263658ba66b541c798b704723cc020cb40c6f78'
 +        }
 +    }
 +}
 +
  dependencies {
      compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
--    compile project(':sdk:analytics')
--    compile project(':sdk:crashes')
-+    def sonomaSdkVersion = '0.1.1'
-+    compile "com.microsoft.sonoma:analytics:${sonomaSdkVersion}"
-+    compile "com.microsoft.sonoma:crashes:${sonomaSdkVersion}"
+-    compile project(':sdk:mobile-center-analytics')
+-    compile project(':sdk:mobile-center-crashes')
++    def mobileCenterSdkVersion = '0.2.0-9'
++    compile "com.microsoft.azure.mobile:mobile-center-analytics:${mobileCenterSdkVersion}"
++    compile "com.microsoft.azure.mobile:mobile-center-crashes:${mobileCenterSdkVersion}"
  }
 \ No newline at end of file
-Index: apps/sasquatch/src/main/java/com/microsoft/sonoma/sasquatch/features/TestFeatures.java
+Index: apps/sasquatch/src/main/java/com/microsoft/azure/mobile/sasquatch/features/TestFeatures.java
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- apps/sasquatch/src/main/java/com/microsoft/sonoma/sasquatch/features/TestFeatures.java	(date 1476127104000)
-+++ apps/sasquatch/src/main/java/com/microsoft/sonoma/sasquatch/features/TestFeatures.java	(revision )
-@@ -30,6 +30,7 @@
+--- apps/sasquatch/src/main/java/com/microsoft/azure/mobile/sasquatch/features/TestFeatures.java	(revision 154c7d4ddb2d5f8d9c239fe85bef27a16cab2190)
++++ apps/sasquatch/src/main/java/com/microsoft/azure/mobile/sasquatch/features/TestFeatures.java	(revision )
+@@ -31,6 +31,7 @@
              public void onClick(View v) {
  
                  /* Make the app crash on purpose for testing report. */

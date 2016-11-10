@@ -5,13 +5,13 @@ import android.content.Intent;
 import android.view.View;
 import android.widget.AdapterView;
 
-import com.microsoft.azure.mobile.sasquatch.activities.DummyActivity;
-import com.microsoft.azure.mobile.sasquatch.activities.ManagedErrorActivity;
 import com.microsoft.azure.mobile.crashes.Crashes;
-import com.microsoft.azure.mobile.sasquatch.activities.DeviceInfoActivity;
-import com.microsoft.azure.mobile.sasquatch.activities.EventActivity;
-import com.microsoft.azure.mobile.sasquatch.activities.PageActivity;
 import com.microsoft.azure.mobile.sasquatch.R;
+import com.microsoft.azure.mobile.sasquatch.activities.DeviceInfoActivity;
+import com.microsoft.azure.mobile.sasquatch.activities.DummyActivity;
+import com.microsoft.azure.mobile.sasquatch.activities.EventActivity;
+import com.microsoft.azure.mobile.sasquatch.activities.ManagedErrorActivity;
+import com.microsoft.azure.mobile.sasquatch.activities.PageActivity;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -64,26 +64,26 @@ public final class TestFeatures {
         };
     }
 
-    public static class TestFeatureModel {
+    static class TestFeatureModel {
         private final String mTitle;
         private final String mDescription;
         private final View.OnClickListener mOnClickListener;
 
-        public TestFeatureModel(int title, int description, Class<? extends Activity> clazz) {
+        TestFeatureModel(int title, int description, Class<? extends Activity> clazz) {
             this(title, description, getDefaultOnClickListener(clazz));
         }
 
-        public TestFeatureModel(int title, int description, View.OnClickListener listener) {
+        TestFeatureModel(int title, int description, View.OnClickListener listener) {
             this.mTitle = title > 0 ? sParentActivity.get().getResources().getString(title) : "";
             this.mDescription = description > 0 ? sParentActivity.get().getResources().getString(description) : "";
             this.mOnClickListener = listener;
         }
 
-        public String getTitle() {
+        String getTitle() {
             return mTitle;
         }
 
-        public String getDescription() {
+        String getDescription() {
             return mDescription;
         }
     }
