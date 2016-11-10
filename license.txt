@@ -1,4 +1,4 @@
-Sonoma SDK for Android
+Microsoft Mobile Center SDK for Android
 
 Copyright (c) Microsoft Corporation
 

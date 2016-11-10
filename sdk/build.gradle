@@ -22,7 +22,7 @@ subprojects {
 
     def ext = rootProject.ext
 
-    ext.sdkName = 'sonoma.android'
+    ext.sdkName = 'mobilecenter.android'
 
     android {
         buildToolsVersion ext.buildToolsVersion
@@ -140,7 +140,7 @@ subprojects {
 
         pkg {
             repo = ext.bintrayRepo
-            name = ext.bintrayPackageNamePrefix + project.name
+            name = project.name
             userOrg = ext.bintrayUserOrg
             websiteUrl = ext.siteUrl
             vcsUrl = ext.gitUrl
@@ -149,36 +149,38 @@ subprojects {
     }
 
     install {
-        repositories.mavenInstaller {
-            pom {
-                //noinspection GroovyAssignabilityCheck
-                project {
-                    packaging 'aar'
-
+        afterEvaluate {
+            repositories.mavenInstaller {
+                pom {
                     //noinspection GroovyAssignabilityCheck
-                    name project.name
-                    description = ext.sdkDescription
-                    url = ext.siteUrl
+                    project {
+                        packaging 'aar'
 
-                    licenses {
-                        license {
-                            //noinspection GroovyAssignabilityCheck
-                            name ext.licenseName
-                            url ext.licenseSite
+                        //noinspection GroovyAssignabilityCheck
+                        name project.name
+                        description = project.description
+                        url = ext.siteUrl
+
+                        licenses {
+                            license {
+                                //noinspection GroovyAssignabilityCheck
+                                name ext.licenseName
+                                url ext.licenseSite
+                            }
                         }
-                    }
-                    developers {
-                        developer {
-                            id ext.developerId
-                            //noinspection GroovyAssignabilityCheck
-                            name ext.developerName
-                            email ext.developerEmail
+                        developers {
+                            developer {
+                                id ext.developerId
+                                //noinspection GroovyAssignabilityCheck
+                                name ext.developerName
+                                email ext.developerEmail
+                            }
                         }
-                    }
-                    scm {
-                        connection ext.gitUrl
-                        developerConnection ext.gitUrl
-                        url ext.siteUrl
+                        scm {
+                            connection ext.gitUrl
+                            developerConnection ext.gitUrl
+                            url ext.siteUrl
+                        }
                     }
                 }
             }
