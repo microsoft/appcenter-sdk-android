@@ -1,0 +1,9 @@
+//
+// :sdk:crashes
+//
+project.description = 'This package contains functionalities to collect crash reports for your application.'
+evaluationDependsOn(':sdk')
+
+dependencies {
+    compile project(':sdk:mobile-center')
+}
