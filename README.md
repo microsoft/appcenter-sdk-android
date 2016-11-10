@@ -47,8 +47,8 @@ Below are the steps on how to integrate our compiled libraries in your applicati
         maven {
             url  'http://microsoftsonoma.bintray.com/mobilecenter'
             credentials {
-                username 'sonoma-beta'
-                password 'cbaf881993ad1ab4128f71da716d060e8590906a'
+                username 'mobile-center'
+                password '9263658ba66b541c798b704723cc020cb40c6f78'
             }
         }
     }
