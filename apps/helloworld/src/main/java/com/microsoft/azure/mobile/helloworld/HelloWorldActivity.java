@@ -1,12 +1,12 @@
-package com.microsoft.sonoma.helloworld;
-
-import com.microsoft.azure.mobile.MobileCenter;
-import com.microsoft.azure.mobile.analytics.Analytics;
-import com.microsoft.azure.mobile.crashes.Crashes;
+package com.microsoft.azure.mobile.helloworld;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
+
+import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.analytics.Analytics;
+import com.microsoft.azure.mobile.crashes.Crashes;
 
 
 public class HelloWorldActivity extends Activity {
