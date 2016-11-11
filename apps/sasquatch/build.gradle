@@ -18,6 +18,17 @@ repositories {
     }
 }
 
+android {
+    productFlavors {
+        projectDependency {
+            applicationIdSuffix ".project"
+        }
+        jcenterDependency {
+            applicationIdSuffix ".jcenter"
+        }
+    }
+}
+
 dependencies {
     def version = "0.2.0"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"

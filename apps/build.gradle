@@ -14,10 +14,5 @@ subprojects {
                 proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             }
         }
-
-        productFlavors {
-            projectDependency
-            jcenterDependency
-        }
     }
 }
