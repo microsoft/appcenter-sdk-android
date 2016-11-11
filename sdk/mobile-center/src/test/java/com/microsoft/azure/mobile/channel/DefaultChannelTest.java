@@ -7,6 +7,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 
+import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.ingestion.Ingestion;
 import com.microsoft.azure.mobile.ingestion.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.http.HttpException;
@@ -18,6 +19,7 @@ import com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync;
 import com.microsoft.azure.mobile.persistence.Persistence;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.IdHelper;
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 
 import org.junit.Before;
@@ -47,6 +49,7 @@ import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -56,10 +59,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, DatabasePersistenceAsync.class})
+@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, DatabasePersistenceAsync.class, MobileCenterLog.class})
 public class DefaultChannelTest {
 
     private static final String TEST_GROUP = "group_test";
@@ -667,6 +671,36 @@ public class DefaultChannelTest {
         assertNotNull(runnable.get());
         runnable.get().run();
         verify(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void disableBeforeCheckingPendingLogs() throws IOException {
+        mockStatic(MobileCenterLog.class);
+        Ingestion ingestion = mock(Ingestion.class);
+        Persistence persistence = mock(Persistence.class);
+        final DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID(), persistence, ingestion);
+        when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(1));
+        when(ingestion.sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).thenAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+
+                /* Simulate a service disabled in the middle of network transaction. */
+                ServiceCallback callback = (ServiceCallback) invocation.getArguments()[3];
+                channel.removeGroup(TEST_GROUP);
+                callback.onCallSucceeded();
+                return null;
+            }
+        });
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+        channel.enqueue(mock(Log.class), TEST_GROUP);
+
+        verify(mHandler, never()).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
+
+        /* checkPendingLogs is getting called twice from triggerIngestion and a callback for ingestion.
+           It can be failed because of timing issue so checking at least once instead. */
+        verifyStatic(atLeastOnce());
+        MobileCenterLog.info(eq(MobileCenter.LOG_TAG), anyString());
     }
 
     @Test
