@@ -10,7 +10,7 @@ evaluationDependsOn(':apps')
  */
 repositories {
     maven {
-        url 'http://mobilecenter.bintray.com/mobilecenter-snapshot'
+        url 'http://mobilecenter.bintray.com/mobilecenter'
         credentials {
             username 'mobile-center'
             password '9263658ba66b541c798b704723cc020cb40c6f78'
@@ -19,7 +19,7 @@ repositories {
 }
 
 dependencies {
-    def version = "0.2.0-15"
+    def version = "0.2.0"
     compile "com.microsoft.azure.mobile:mobile-center-analytics:${version}"
     compile "com.microsoft.azure.mobile:mobile-center-crashes:${version}"
 }
