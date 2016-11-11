@@ -1,24 +1,9 @@
-Index: apps/sasquatch/src/main/java/com/microsoft/azure/mobile/sasquatch/features/TestFeatures.java
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
---- apps/sasquatch/src/main/java/com/microsoft/azure/mobile/sasquatch/features/TestFeatures.java	(revision 5dc27b6e30a6671851f0e19c1e623f468abc676c)
-+++ apps/sasquatch/src/main/java/com/microsoft/azure/mobile/sasquatch/features/TestFeatures.java	(revision )
-@@ -31,6 +31,7 @@
-             public void onClick(View v) {
- 
-                 /* Make the app crash on purpose for testing report. */
-+                int i = 1 / 0;
-                 Crashes.generateTestCrash();
-             }
-         }));
 Index: apps/sasquatch/build.gradle
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- apps/sasquatch/build.gradle	(revision 5dc27b6e30a6671851f0e19c1e623f468abc676c)
+--- apps/sasquatch/build.gradle	(revision 501c26e8cc91186e3252c2c8e185fa61f2c124a8)
 +++ apps/sasquatch/build.gradle	(revision )
 @@ -4,8 +4,23 @@
  
@@ -30,7 +15,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 + */
 +repositories {
 +    maven {
-+        url 'http://mobilecenter.bintray.com/mobilecenter-snapshot'
++        url 'http://mobilecenter.bintray.com/mobilecenter'
 +        credentials {
 +            username 'mobile-center'
 +            password '9263658ba66b541c798b704723cc020cb40c6f78'
@@ -42,8 +27,23 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
      compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
 -    compile project(':sdk:mobile-center-analytics')
 -    compile project(':sdk:mobile-center-crashes')
-+    def mobileCenterSdkVersion = '0.2.0-15'
++    def mobileCenterSdkVersion = '0.2.0'
 +    compile "com.microsoft.azure.mobile:mobile-center-analytics:${mobileCenterSdkVersion}"
 +    compile "com.microsoft.azure.mobile:mobile-center-crashes:${mobileCenterSdkVersion}"
  }
 \ No newline at end of file
+Index: apps/sasquatch/src/main/java/com/microsoft/azure/mobile/sasquatch/features/TestFeatures.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- apps/sasquatch/src/main/java/com/microsoft/azure/mobile/sasquatch/features/TestFeatures.java	(revision 501c26e8cc91186e3252c2c8e185fa61f2c124a8)
++++ apps/sasquatch/src/main/java/com/microsoft/azure/mobile/sasquatch/features/TestFeatures.java	(revision )
+@@ -31,6 +31,7 @@
+             public void onClick(View v) {
+ 
+                 /* Make the app crash on purpose for testing report. */
++                int i = 1 / 0;
+                 Crashes.generateTestCrash();
+             }
+         }));
