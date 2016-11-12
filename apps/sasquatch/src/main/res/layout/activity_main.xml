@@ -8,6 +8,13 @@
               android:padding="16dp"
               tools:context=".activities.MainActivity">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:id="@+id/package_name"
+        android:textColor="@android:color/holo_red_dark"/>
+
     <ListView
         android:id="@+id/list"
         android:layout_width="match_parent"
