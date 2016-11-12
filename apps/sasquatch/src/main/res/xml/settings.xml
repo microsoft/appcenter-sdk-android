@@ -2,17 +2,17 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <CheckBoxPreference
         android:key="@string/mobile_center_state_key"
-        android:title="@string/mobile_center_state_title"/>
+        android:title="@string/mobile_center_state_title" />
 
     <PreferenceCategory
         android:key="@string/analytics_key"
         android:title="@string/analytics_title">
         <CheckBoxPreference
             android:key="@string/mobile_center_analytics_state_key"
-            android:title="@string/mobile_center_analytics_state_title"/>
+            android:title="@string/mobile_center_analytics_state_title" />
         <CheckBoxPreference
             android:key="@string/mobile_center_auto_page_tracking_key"
-            android:title="@string/mobile_center_auto_page_tracking_title"/>
+            android:title="@string/mobile_center_auto_page_tracking_title" />
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -20,7 +20,18 @@
         android:title="@string/crashes_title">
         <CheckBoxPreference
             android:key="@string/mobile_center_crashes_state_key"
-            android:title="@string/mobile_center_crashes_state_title"/>
+            android:title="@string/mobile_center_crashes_state_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="application_info_key"
+        android:title="@string/application_info_title">
+        <Preference
+            android:key="@string/install_id_key"
+            android:title="@string/install_id_title" />
+        <Preference
+            android:key="@string/app_secret_key"
+            android:title="@string/app_secret_title" />
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -28,12 +39,9 @@
         android:title="@string/miscellaneous_title">
         <Preference
             android:key="@string/clear_crash_user_confirmation_key"
-            android:title="@string/clear_crash_user_confirmation_title"/>
+            android:title="@string/clear_crash_user_confirmation_title" />
         <Preference
-            android:key="@string/install_id_key"
-            android:title="@string/install_id_title"/>
-        <Preference
-            android:key="@string/app_secret_key"
-            android:title="@string/app_secret_title"/>
+            android:key="@string/server_url_key"
+            android:title="@string/server_url_title" />
     </PreferenceCategory>
 </PreferenceScreen>
