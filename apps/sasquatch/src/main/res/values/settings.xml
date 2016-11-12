@@ -26,12 +26,8 @@
     <string name="mobile_center_crashes_state_summary_enabled">Crashes is enabled</string>
     <string name="mobile_center_crashes_state_summary_disabled">Crashes is disabled</string>
 
-    <string name="miscellaneous_key">miscellaneous</string>
-    <string name="miscellaneous_title">Miscellaneous</string>
-
-    <string name="clear_crash_user_confirmation_key">clear_crash_user_confirmation_key</string>
-    <string name="clear_crash_user_confirmation_title">Clear crash user confirmation</string>
-    <string name="clear_crash_user_confirmation_toast">Cleared</string>
+    <string name="application_info_key">application_info</string>
+    <string name="application_info_title">Application Information</string>
 
     <string name="install_id_key">install_id_key</string>
     <string name="install_id_title">Show install ID</string>
@@ -40,8 +36,21 @@
 
     <string name="app_secret_key">app_secret_key</string>
     <string name="app_secret_title">Show App Secret</string>
-    <string name="app_secret_changed_format">App Secret is changed to %s successfully. Please close the application completely and relaunch again.</string>
+    <string name="app_secret_changed_format">App Secret has been changed to %s successfully. Please close the application completely and relaunch again.</string>
     <string name="app_secret_invalid">App Secret is not valid.</string>
+
+    <string name="miscellaneous_key">miscellaneous</string>
+    <string name="miscellaneous_title">Miscellaneous</string>
+
+    <string name="clear_crash_user_confirmation_key">clear_crash_user_confirmation_key</string>
+    <string name="clear_crash_user_confirmation_title">Clear crash user confirmation</string>
+    <string name="clear_crash_user_confirmation_toast">Cleared</string>
+
+    <string name="server_url_key">server_url_key</string>
+    <string name="server_url_title">Show Server URL</string>
+    <string name="server_url_changed_format">Show Server URL has been changed to %s successfully. Please close the application completely and relaunch again.</string>
+    <string name="server_url_invalid">Server URL is not valid.</string>
+    <string name="server_url_production">Server URL currently set to the production.</string>
 
     <string name="save">Save</string>
     <string name="reset">Reset</string>

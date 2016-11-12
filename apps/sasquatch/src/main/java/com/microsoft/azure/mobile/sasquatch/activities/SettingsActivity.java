@@ -10,6 +10,7 @@ import android.preference.PreferenceFragment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
+import android.util.Patterns;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -24,6 +25,7 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.APP_SECRET_KEY;
+import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.SERVER_URL_KEY;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -97,19 +99,10 @@ public class SettingsActivity extends AppCompatActivity {
                     AnalyticsPrivateHelper.setAutoPageTrackingEnabled(enabled);
                 }
             });
-            initClickableSetting(R.string.clear_crash_user_confirmation_key, new Preference.OnPreferenceClickListener() {
+            initClickableSetting(R.string.install_id_key, String.valueOf(MobileCenter.getInstallId()), new Preference.OnPreferenceClickListener() {
 
                 @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    StorageHelper.PreferencesStorage.remove(Crashes.PREF_KEY_ALWAYS_SEND);
-                    Toast.makeText(getActivity(), R.string.clear_crash_user_confirmation_toast, Toast.LENGTH_SHORT).show();
-                    return true;
-                }
-            });
-            initClickableSetting(R.string.install_id_key, new Preference.OnPreferenceClickListener() {
-
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
+                public boolean onPreferenceClick(final Preference preference) {
                     final EditText input = new EditText(getActivity());
                     input.setInputType(InputType.TYPE_CLASS_TEXT);
                     input.setText(String.valueOf(MobileCenter.getInstallId()));
@@ -125,6 +118,7 @@ public class SettingsActivity extends AppCompatActivity {
                                     } else {
                                         Toast.makeText(getActivity(), R.string.install_id_invalid, Toast.LENGTH_SHORT).show();
                                     }
+                                    preference.setSummary(String.valueOf(MobileCenter.getInstallId()));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)
@@ -132,10 +126,10 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            initClickableSetting(R.string.app_secret_key, new Preference.OnPreferenceClickListener() {
+            initClickableSetting(R.string.app_secret_key, MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null), new Preference.OnPreferenceClickListener() {
 
                 @Override
-                public boolean onPreferenceClick(Preference preference) {
+                public boolean onPreferenceClick(final Preference preference) {
                     final EditText input = new EditText(getActivity());
                     input.setInputType(InputType.TYPE_CLASS_TEXT);
                     input.setText(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
@@ -146,18 +140,66 @@ public class SettingsActivity extends AppCompatActivity {
                                 public void onClick(DialogInterface dialog, int which) {
                                     if (input.getText().toString().matches(UUID_FORMAT_REGEX)) {
                                         UUID uuid = UUID.fromString(input.getText().toString());
-                                        setAppSecret(uuid);
+                                        setKeyValue(APP_SECRET_KEY, uuid);
                                         Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), uuid.toString()), Toast.LENGTH_SHORT).show();
                                     } else {
                                         Toast.makeText(getActivity(), R.string.app_secret_invalid, Toast.LENGTH_SHORT).show();
                                     }
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
                                 }
                             })
                             .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    setAppSecret(UUID.fromString(MainActivity.APP_SECRET));
+                                    setKeyValue(APP_SECRET_KEY, UUID.fromString(MainActivity.APP_SECRET));
                                     Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), MainActivity.APP_SECRET), Toast.LENGTH_SHORT).show();
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .create().show();
+                    return true;
+                }
+            });
+            initClickableSetting(R.string.clear_crash_user_confirmation_key, new Preference.OnPreferenceClickListener() {
+
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    StorageHelper.PreferencesStorage.remove(Crashes.PREF_KEY_ALWAYS_SEND);
+                    Toast.makeText(getActivity(), R.string.clear_crash_user_confirmation_toast, Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+            });
+            initClickableSetting(R.string.server_url_key, MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, getString(R.string.server_url_production)), new Preference.OnPreferenceClickListener() {
+
+                @Override
+                public boolean onPreferenceClick(final Preference preference) {
+                    final EditText input = new EditText(getActivity());
+                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                    input.setText(MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, null));
+                    input.setHint(R.string.server_url_production);
+
+                    new AlertDialog.Builder(getActivity()).setTitle(R.string.server_url_title).setView(input)
+                            .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (Patterns.WEB_URL.matcher(input.getText().toString()).matches()) {
+                                        String url = input.getText().toString();
+                                        setKeyValue(SERVER_URL_KEY, url);
+                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.server_url_changed_format), url), Toast.LENGTH_SHORT).show();
+                                    } else if (input.getText().toString().isEmpty()) {
+                                        setProductionUrl();
+                                    } else {
+                                        Toast.makeText(getActivity(), R.string.server_url_invalid, Toast.LENGTH_SHORT).show();
+                                    }
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, getString(R.string.server_url_production)));
+                                }
+                            })
+                            .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    setProductionUrl();
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, getString(R.string.server_url_production)));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)
@@ -165,10 +207,9 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
 
-                private void setAppSecret(UUID uuid) {
-                    SharedPreferences.Editor editor = MainActivity.sSharedPreferences.edit();
-                    editor.putString(APP_SECRET_KEY, uuid.toString());
-                    editor.apply();
+                private void setProductionUrl() {
+                    setKeyValue(SERVER_URL_KEY, null);
+                    Toast.makeText(getActivity(), R.string.server_url_production, Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -195,8 +236,16 @@ public class SettingsActivity extends AppCompatActivity {
 
         @SuppressWarnings("SameParameterValue")
         private void initClickableSetting(int key, Preference.OnPreferenceClickListener listener) {
+            initClickableSetting(key, null, listener);
+        }
+
+        @SuppressWarnings("SameParameterValue")
+        private void initClickableSetting(int key, String summary, Preference.OnPreferenceClickListener clickListener) {
             Preference preference = getPreferenceManager().findPreference(getString(key));
-            preference.setOnPreferenceClickListener(listener);
+            preference.setOnPreferenceClickListener(clickListener);
+            if (summary != null) {
+                preference.setSummary(summary);
+            }
         }
 
         private void updateSummary(Preference preference, boolean enabled, int enabledSummary, int disabledSummary) {
@@ -204,6 +253,15 @@ public class SettingsActivity extends AppCompatActivity {
                 preference.setSummary(enabledSummary);
             else
                 preference.setSummary(disabledSummary);
+        }
+
+        private void setKeyValue(String key, Object value) {
+            SharedPreferences.Editor editor = MainActivity.sSharedPreferences.edit();
+            if (value == null)
+                editor.remove(key);
+            else
+                editor.putString(key, value.toString());
+            editor.apply();
         }
 
         private interface HasEnabled {
