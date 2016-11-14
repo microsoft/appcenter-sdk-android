@@ -197,7 +197,7 @@ public class MobileCenterLog {
      * @param message   the log message
      * @param throwable the throwable you want to log
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public static void logAssert(String tag, String message, Throwable throwable) {
         if (sLogLevel <= Log.ASSERT) {
             Log.println(Log.ASSERT, tag, message + "\n" + Log.getStackTraceString(throwable));
