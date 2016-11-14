@@ -58,7 +58,7 @@ Below are the steps on how to integrate our compiled libraries in your applicati
 
     ```groovy
     dependencies {
-        def mobileCenterSdkVersion = '0.2.0'
+        def mobileCenterSdkVersion = '0.3.0'
         compile "com.microsoft.azure.mobile:mobile-center-analytics:${mobileCenterSdkVersion}"
         compile "com.microsoft.azure.mobile:mobile-center-crashes:${mobileCenterSdkVersion}"
     }
@@ -259,7 +259,7 @@ You create your own Crashes listener and assign it like this:
     You only include the modules for the services you want to use. They all have a dependency on the Mobile Center module, so this will be included once you pull down the dependencies.
 
 * **Debugging steps, when you can't see crash reports on the portal:**
-    1. Make sure the SDK `start()` API is used correctly and the Crashes module is initialized. Also, you need to restart the app after a crash – our SDK will forward the crash log only after it's restarted.
+    1. Make sure the SDK `start()` API is used correctly and the Crashes module is configured. Also, you need to restart the app after a crash – our SDK will forward the crash log only after it's restarted.
     2. Make sure your device is connected to the internet.
     3. Check if the App Secret used to start the SDK matches the App Secret in the Mobile Center portal.
     4. Disable any other SDK that provides Crash Reporting functionality, as those might interfere with the Mobile Center SDK.
@@ -279,5 +279,5 @@ You create your own Crashes listener and assign it like this:
 
  Gradle Dependency                                            | Service          
  ------------------------------------------------------------ | ---------------
- com.microsoft.azure.mobile:mobile-center-analytics:0.2.0     | Analytics    
- com.microsoft.azure.mobile:mobile-center-crashes:0.2.0       | Crashes
+ com.microsoft.azure.mobile:mobile-center-analytics:0.3.0     | Analytics    
+ com.microsoft.azure.mobile:mobile-center-crashes:0.3.0       | Crashes

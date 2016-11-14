@@ -332,7 +332,7 @@ public class SessionTrackerTest {
     }
 
     @Test
-    public void sdkInitializedBetweenPauseAndResume() {
+    public void sdkConfiguredBetweenPauseAndResume() {
 
         /* Pause application before we saw the first resume event (integration problem). We are handling that gracefully though. */
         mSessionTracker.onActivityPaused();

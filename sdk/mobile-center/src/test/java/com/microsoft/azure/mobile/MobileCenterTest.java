@@ -129,7 +129,7 @@ public class MobileCenterTest {
         MobileCenter.start(application, DUMMY_APP_SECRET, (Class<? extends MobileCenterService>) null);
 
         /* Verify that no modules have been auto-loaded since none are configured for this */
-        assertTrue(MobileCenter.isInitialized());
+        assertTrue(MobileCenter.isConfigured());
         assertEquals(0, MobileCenter.getInstance().getServices().size());
         assertEquals(application, MobileCenter.getInstance().getApplication());
     }
@@ -143,15 +143,15 @@ public class MobileCenterTest {
         MobileCenter.start((Class<? extends MobileCenterService>[]) null);
 
         /* Verify that no modules have been auto-loaded since none are configured for this */
-        assertTrue(MobileCenter.isInitialized());
+        assertTrue(MobileCenter.isConfigured());
         assertEquals(0, MobileCenter.getInstance().getServices().size());
         assertEquals(application, MobileCenter.getInstance().getApplication());
     }
 
     @Test
-    public void startServiceBeforeInit() {
+    public void startServiceBeforeConfigure() {
         MobileCenter.start(DummyService.class);
-        assertFalse(MobileCenter.isInitialized());
+        assertFalse(MobileCenter.isConfigured());
         assertNull(MobileCenter.getInstance().getServices());
     }
 
@@ -170,9 +170,9 @@ public class MobileCenterTest {
 
     @Test
     public void useDummyServiceTestSplitCall() {
-        assertFalse(MobileCenter.isInitialized());
-        MobileCenter.initialize(application, DUMMY_APP_SECRET);
-        assertTrue(MobileCenter.isInitialized());
+        assertFalse(MobileCenter.isConfigured());
+        MobileCenter.configure(application, DUMMY_APP_SECRET);
+        assertTrue(MobileCenter.isConfigured());
         MobileCenter.start(DummyService.class);
 
         /* Verify that single module has been loaded and configured */
@@ -185,7 +185,7 @@ public class MobileCenterTest {
     }
 
     @Test
-    public void initAndStartTwiceTest() {
+    public void configureAndStartTwiceTest() {
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class);
         MobileCenter.start(application, DUMMY_APP_SECRET, AnotherDummyService.class); //ignored
 
@@ -199,9 +199,9 @@ public class MobileCenterTest {
     }
 
     @Test
-    public void initTwiceTest() {
-        MobileCenter.initialize(application, DUMMY_APP_SECRET);
-        MobileCenter.initialize(application, DUMMY_APP_SECRET); //ignored
+    public void configureTwiceTest() {
+        MobileCenter.configure(application, DUMMY_APP_SECRET);
+        MobileCenter.configure(application, DUMMY_APP_SECRET); //ignored
         MobileCenter.start(DummyService.class);
 
         /* Verify that single module has been loaded and configured */
@@ -236,7 +236,7 @@ public class MobileCenterTest {
 
     @Test
     public void startTwoServicesSplit() {
-        MobileCenter.initialize(application, DUMMY_APP_SECRET);
+        MobileCenter.configure(application, DUMMY_APP_SECRET);
         MobileCenter.start(DummyService.class, AnotherDummyService.class);
 
         /* Verify that the right amount of modules have been loaded and configured */
@@ -257,7 +257,7 @@ public class MobileCenterTest {
 
     @Test
     public void startTwoServicesSplitEvenMore() {
-        MobileCenter.initialize(application, DUMMY_APP_SECRET);
+        MobileCenter.configure(application, DUMMY_APP_SECRET);
         MobileCenter.start(DummyService.class);
         MobileCenter.start(AnotherDummyService.class);
 
@@ -299,7 +299,7 @@ public class MobileCenterTest {
 
     @Test
     public void startTwoServicesWithSomeInvalidReferencesSplit() {
-        MobileCenter.initialize(application, DUMMY_APP_SECRET);
+        MobileCenter.configure(application, DUMMY_APP_SECRET);
         MobileCenter.start(null, DummyService.class, null);
         MobileCenter.start(InvalidService.class, AnotherDummyService.class, null);
 
@@ -323,7 +323,7 @@ public class MobileCenterTest {
     public void startServiceTwice() {
 
         /* Start once. */
-        MobileCenter.initialize(application, DUMMY_APP_SECRET);
+        MobileCenter.configure(application, DUMMY_APP_SECRET);
         MobileCenter.start(DummyService.class);
 
         /* Check. */
@@ -457,8 +457,8 @@ public class MobileCenterTest {
     }
 
     @Test
-    public void enableBeforeInitializedTest() {
-        /* Test isEnabled and setEnabled before initialize */
+    public void enableBeforeConfiguredTest() {
+        /* Test isEnabled and setEnabled before configure */
         assertFalse(MobileCenter.isEnabled());
         MobileCenter.setEnabled(true);
         assertFalse(MobileCenter.isEnabled());

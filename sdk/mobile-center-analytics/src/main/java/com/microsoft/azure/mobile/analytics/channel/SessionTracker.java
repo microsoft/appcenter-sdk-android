@@ -223,7 +223,7 @@ public class SessionTracker implements Channel.Listener {
         /* Corner case 2: we saw a pause but not a resume event: we are in background, check how long. */
         if (mLastResumedTime == null) {
 
-            /* Note that this corner case is likely an integration issue. It's not supposed to happen. Likely the SDK has been initialized too late. */
+            /* Note that this corner case is likely an integration issue. It's not supposed to happen. Likely the SDK has been configured too late. */
             return noLogSentForLong;
         }
 

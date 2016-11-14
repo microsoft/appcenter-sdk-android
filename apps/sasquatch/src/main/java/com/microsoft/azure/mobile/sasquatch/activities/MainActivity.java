@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
@@ -27,9 +28,10 @@ import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
 
 
 public class MainActivity extends AppCompatActivity {
-    static final String LOG_TAG = "MobileCenterSasquatch";
+    private static final String LOG_TAG = "MobileCenterSasquatch";
     static final String APP_SECRET = "45d1d9f6-2492-4e68-bd44-7190351eb5f3";
     static final String APP_SECRET_KEY = "appSecret";
+    static final String SERVER_URL_KEY = "serverUrl";
     static SharedPreferences sSharedPreferences;
 
     @Override
@@ -37,8 +39,60 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        sSharedPreferences = getSharedPreferences("Sasquatch", Context.MODE_PRIVATE);
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().build());
+
+        String serverUrl = sSharedPreferences.getString(SERVER_URL_KEY, null);
+        if (serverUrl != null) {
+            MobileCenter.setServerUrl(serverUrl);
+        }
         MobileCenter.setLogLevel(Log.VERBOSE);
-        Crashes.setListener(new AbstractCrashesListener() {
+        Crashes.setListener(getCrashesListener());
+        MobileCenter.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class);
+
+        Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
+        ErrorReport lastSessionCrashReport = Crashes.getLastSessionCrashReport();
+        if (lastSessionCrashReport != null) {
+            Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", lastSessionCrashReport.getThrowable());
+        }
+
+        ((TextView) findViewById(R.id.package_name)).setText(String.format(getString(R.string.sdk_source_format), getPackageName().substring(getPackageName().lastIndexOf(".") + 1)));
+        TestFeatures.initialize(this);
+        ListView listView = (ListView) findViewById(R.id.list);
+        listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
+        listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                startActivity(new Intent(this, SettingsActivity.class));
+                break;
+        }
+        return true;
+    }
+
+    private String getAppSecret() {
+        String appSecret = sSharedPreferences.getString(APP_SECRET_KEY, null);
+        if (appSecret == null) {
+            SharedPreferences.Editor editor = sSharedPreferences.edit();
+            editor.putString(APP_SECRET_KEY, APP_SECRET);
+            editor.apply();
+            appSecret = sSharedPreferences.getString(APP_SECRET_KEY, null);
+        }
+        Toast.makeText(this, String.format(getString(R.string.app_secret_toast), appSecret), Toast.LENGTH_SHORT).show();
+        return appSecret;
+    }
+
+    private AbstractCrashesListener getCrashesListener () {
+        return new AbstractCrashesListener() {
             @Override
             public boolean shouldAwaitUserConfirmation() {
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -82,49 +136,6 @@ public class MainActivity extends AppCompatActivity {
                 String message = String.format("%s\nCrash ID: %s\nThrowable: %s", R.string.crash_sent_succeeded, report.getId(), report.getThrowable().toString());
                 Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
             }
-        });
-
-        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().build());
-        MobileCenter.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class);
-
-        Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
-        ErrorReport lastSessionCrashReport = Crashes.getLastSessionCrashReport();
-        if (lastSessionCrashReport != null) {
-            Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", lastSessionCrashReport.getThrowable());
-        }
-
-        TestFeatures.initialize(this);
-        ListView listView = (ListView) findViewById(R.id.list);
-        listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
-        listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                startActivity(new Intent(this, SettingsActivity.class));
-                break;
-        }
-        return true;
-    }
-
-    private String getAppSecret() {
-        sSharedPreferences = getSharedPreferences("Sasquatch", Context.MODE_PRIVATE);
-        String appSecret = sSharedPreferences.getString(APP_SECRET_KEY, null);
-        if (appSecret == null) {
-            SharedPreferences.Editor editor = sSharedPreferences.edit();
-            editor.putString(APP_SECRET_KEY, APP_SECRET);
-            editor.apply();
-            appSecret = sSharedPreferences.getString(APP_SECRET_KEY, null);
-        }
-        Toast.makeText(this, String.format(getString(R.string.app_secret_toast), appSecret), Toast.LENGTH_SHORT).show();
-        return appSecret;
+        };
     }
 }

@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Sasquatch App</string>
+    <string name="sdk_source_format">SDK source: %s</string>
     <string name="settings">Settings</string>
     <string name="title_crash">Crash me</string>
-    <string name="description_crash">Simulate application crashes</string>
+    <string name="description_crash">generateTestCrashes</string>
+    <string name="title_crash_2">Crash me</string>
+    <string name="description_crash_2">Divide 42 by 0</string>
     <string name="title_device_info">Device info</string>
     <string name="description_device_info">Display device information</string>
     <string name="title_generate_page_log">Generate page logs</string>
