@@ -129,25 +129,25 @@ public final class MobileCenter {
     }
 
     /**
-     * Check whether SDK has already been initialized.
+     * Check whether SDK has already been configured.
      *
-     * @return true if initialized, false otherwise.
+     * @return true if configured, false otherwise.
      */
     @SuppressWarnings("WeakerAccess")
-    public static boolean isInitialized() {
-        return getInstance().isInstanceInitialized();
+    public static boolean isConfigured() {
+        return getInstance().isInstanceConfigured();
     }
 
     /**
-     * Initialize the SDK.
+     * Configure the SDK.
      * This may be called only once per application process lifetime.
      *
      * @param application Your application object.
      * @param appSecret   A unique and secret key used to identify the application.
      */
     @SuppressWarnings("SameParameterValue")
-    public static void initialize(Application application, String appSecret) {
-        getInstance().instanceInitialize(application, appSecret);
+    public static void configure(Application application, String appSecret) {
+        getInstance().instanceConfigure(application, appSecret);
     }
 
     /**
@@ -162,7 +162,7 @@ public final class MobileCenter {
     }
 
     /**
-     * Initialize the SDK with the list of services to start.
+     * Configure the SDK with the list of services to start.
      * This may be called only once per application process lifetime.
      *
      * @param application Your application object.
@@ -171,7 +171,7 @@ public final class MobileCenter {
      */
     @SafeVarargs
     public static void start(Application application, String appSecret, Class<? extends MobileCenterService>... services) {
-        getInstance().initializeAndStartServices(application, appSecret, services);
+        getInstance().configureAndStartServices(application, appSecret, services);
     }
 
     /**
@@ -214,10 +214,10 @@ public final class MobileCenter {
      * @return <code>true</code> if the SDK is ready, <code>false</code> otherwise.
      */
     private static boolean checkPrecondition(String methodName) {
-        if (getInstance().isInstanceInitialized())
+        if (getInstance().isInstanceConfigured())
             return true;
 
-        MobileCenterLog.error(LOG_TAG, "Mobile Center has not been initialized and is not ready for " + methodName);
+        MobileCenterLog.error(LOG_TAG, "Mobile Center has not been configured and is not ready for " + methodName);
         return false;
     }
 
@@ -254,20 +254,20 @@ public final class MobileCenter {
     }
 
     /**
-     * {@link #isInitialized()} implementation at instance level.
+     * {@link #isConfigured()} implementation at instance level.
      */
-    private synchronized boolean isInstanceInitialized() {
+    private synchronized boolean isInstanceConfigured() {
         return mApplication != null;
     }
 
     /**
-     * Internal SDK initialization.
+     * Internal SDK configuration.
      *
      * @param application application context.
      * @param appSecret   a unique and secret key used to identify the application.
-     * @return true if init was successful, false otherwise.
+     * @return true if configuration was successful, false otherwise.
      */
-    private synchronized boolean instanceInitialize(Application application, String appSecret) {
+    private synchronized boolean instanceConfigure(Application application, String appSecret) {
 
         /* Load some global constants. */
         Constants.loadFromContext(application);
@@ -279,7 +279,7 @@ public final class MobileCenter {
 
         /* Parse and store parameters. */
         if (mApplication != null) {
-            MobileCenterLog.warn(LOG_TAG, "Mobile Center may only be initialized once");
+            MobileCenterLog.warn(LOG_TAG, "Mobile Center may only be configured once");
             return false;
         }
         if (application == null) {
@@ -319,7 +319,7 @@ public final class MobileCenter {
             return;
         }
         if (mApplication == null) {
-            MobileCenterLog.logAssert(LOG_TAG, "Cannot start services, Mobile Center has not been initialized. Failed to start Mobile Center SDK");
+            MobileCenterLog.logAssert(LOG_TAG, "Cannot start services, Mobile Center has not been configured. Failed to start Mobile Center SDK");
             return;
         }
 
@@ -364,12 +364,12 @@ public final class MobileCenter {
     }
 
     @SafeVarargs
-    private final synchronized void initializeAndStartServices(Application application, String appSecret, Class<? extends MobileCenterService>... services) {
-        boolean initializedSuccessfully = instanceInitialize(application, appSecret);
-        if (initializedSuccessfully)
+    private final synchronized void configureAndStartServices(Application application, String appSecret, Class<? extends MobileCenterService>... services) {
+        boolean configuredSuccessfully = instanceConfigure(application, appSecret);
+        if (configuredSuccessfully)
             startServices(services);
         else
-            MobileCenterLog.logAssert(LOG_TAG, "Failed to initialize Mobile Center SDK");
+            MobileCenterLog.logAssert(LOG_TAG, "Failed to configure Mobile Center SDK");
     }
 
     /**

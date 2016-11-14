@@ -34,6 +34,14 @@ public final class TestFeatures {
                 Crashes.generateTestCrash();
             }
         }));
+        sTestFeatureModel.add(new TestFeatureModel(R.string.title_crash_2, R.string.description_crash_2, new View.OnClickListener() {
+
+            @Override
+            @SuppressWarnings({"ConstantConditions", "ResultOfMethodCallIgnored"})
+            public void onClick(View v) {
+                ("" + (42 / Integer.valueOf("0"))).toCharArray();
+            }
+        }));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_error, R.string.description_error, ManagedErrorActivity.class));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_event, R.string.description_event, EventActivity.class));
