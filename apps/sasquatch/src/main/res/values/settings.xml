@@ -30,12 +30,12 @@
     <string name="application_info_title">Application Information</string>
 
     <string name="install_id_key">install_id_key</string>
-    <string name="install_id_title">Show install ID</string>
+    <string name="install_id_title">Install ID</string>
     <string name="install_id_changed_format">Install ID is changed to %s successfully.</string>
     <string name="install_id_invalid">Install ID is not valid.</string>
 
     <string name="app_secret_key">app_secret_key</string>
-    <string name="app_secret_title">Show App Secret</string>
+    <string name="app_secret_title">App Secret</string>
     <string name="app_secret_changed_format">App Secret has been changed to %s successfully. Please close the application completely and relaunch again.</string>
     <string name="app_secret_invalid">App Secret is not valid.</string>
 
@@ -47,7 +47,7 @@
     <string name="clear_crash_user_confirmation_toast">Cleared</string>
 
     <string name="server_url_key">server_url_key</string>
-    <string name="server_url_title">Show Server URL</string>
+    <string name="server_url_title">Server URL</string>
     <string name="server_url_changed_format">Show Server URL has been changed to %s successfully. Please close the application completely and relaunch again.</string>
     <string name="server_url_invalid">Server URL is not valid.</string>
     <string name="server_url_production">Server URL currently set to the production.</string>
