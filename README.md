@@ -58,7 +58,7 @@ Below are the steps on how to integrate our compiled libraries in your applicati
 
     ```groovy
     dependencies {
-        def mobileCenterSdkVersion = '0.3.0'
+        def mobileCenterSdkVersion = '0.3.1'
         compile "com.microsoft.azure.mobile:mobile-center-analytics:${mobileCenterSdkVersion}"
         compile "com.microsoft.azure.mobile:mobile-center-crashes:${mobileCenterSdkVersion}"
     }
@@ -279,5 +279,5 @@ You create your own Crashes listener and assign it like this:
 
  Gradle Dependency                                            | Service          
  ------------------------------------------------------------ | ---------------
- com.microsoft.azure.mobile:mobile-center-analytics:0.3.0     | Analytics    
- com.microsoft.azure.mobile:mobile-center-crashes:0.3.0       | Crashes
+ com.microsoft.azure.mobile:mobile-center-analytics:0.3.1     | Analytics    
+ com.microsoft.azure.mobile:mobile-center-crashes:0.3.1       | Crashes
