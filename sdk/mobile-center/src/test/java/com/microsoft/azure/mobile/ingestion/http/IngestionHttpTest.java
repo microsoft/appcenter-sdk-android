@@ -55,7 +55,7 @@ public class IngestionHttpTest {
 
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                final IngestionHttp.Call call = new IngestionHttp.Call(invocation.getArguments()[0].toString(), (LogSerializer) invocation.getArguments()[1], (UUID) invocation.getArguments()[2], (UUID) invocation.getArguments()[3], (LogContainer) invocation.getArguments()[4], (ServiceCallback) invocation.getArguments()[5]);
+                final IngestionHttp.Call call = new IngestionHttp.Call(invocation.getArguments()[0].toString(), (LogSerializer) invocation.getArguments()[1],(String) invocation.getArguments()[2], (UUID) invocation.getArguments()[3], (LogContainer) invocation.getArguments()[4], (ServiceCallback) invocation.getArguments()[5]);
                 IngestionHttp.Call spyCall = spy(call);
                 when(spyCall.executeOnExecutor(any(Executor.class))).then(new Answer<IngestionHttp.Call>() {
 
@@ -104,7 +104,7 @@ public class IngestionHttpTest {
         httpClient.setServerUrl("http://mock");
 
         /* Test calling code. */
-        UUID appSecret = UUIDUtils.randomUUID();
+        String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
@@ -112,7 +112,7 @@ public class IngestionHttpTest {
         verify(serviceCallback).onCallSucceeded();
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
-        verify(urlConnection).setRequestProperty("App-Secret", appSecret.toString());
+        verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
         verify(urlConnection).disconnect();
         httpClient.close();
@@ -157,7 +157,7 @@ public class IngestionHttpTest {
         IngestionHttp httpClient = new IngestionHttp(logSerializer);
 
         /* Test calling code. */
-        UUID appSecret = UUIDUtils.randomUUID();
+        String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
@@ -178,7 +178,7 @@ public class IngestionHttpTest {
         when(mockCall.isCancelled()).thenReturn(false).thenReturn(true);
         IngestionHttp httpClient = new IngestionHttp(mock(LogSerializer.class));
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        ServiceCall call = httpClient.sendAsync(UUIDUtils.randomUUID(), UUIDUtils.randomUUID(), new LogContainer(), serviceCallback);
+        ServiceCall call = httpClient.sendAsync(UUIDUtils.randomUUID().toString(), UUIDUtils.randomUUID(), new LogContainer(), serviceCallback);
 
         /* Cancel and verify. */
         call.cancel();
@@ -199,7 +199,7 @@ public class IngestionHttpTest {
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         IngestionHttp httpClient = new IngestionHttp(mock(LogSerializer.class));
         mockCall();
-        httpClient.sendAsync(UUIDUtils.randomUUID(), UUIDUtils.randomUUID(), new LogContainer(), serviceCallback);
+        httpClient.sendAsync(UUIDUtils.randomUUID().toString(), UUIDUtils.randomUUID(), new LogContainer(), serviceCallback);
         verify(serviceCallback).onCallFailed(exception);
         verifyZeroInteractions(serviceCallback);
     }
@@ -234,7 +234,7 @@ public class IngestionHttpTest {
         IngestionHttp httpClient = new IngestionHttp(serializer);
 
         /* Test calling code. */
-        UUID appSecret = UUID.randomUUID();
+        String appSecret = UUID.randomUUID().toString();
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
