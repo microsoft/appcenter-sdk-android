@@ -63,7 +63,7 @@ public class IngestionRetryer extends IngestionDecorator {
     }
 
     @Override
-    public ServiceCall sendAsync(UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
 
         /* Wrap the call with the retry logic and call delegate. */
         RetryableCall retryableCall = new RetryableCall(mDecoratedApi, appSecret, installId, logContainer, serviceCallback);
@@ -81,7 +81,7 @@ public class IngestionRetryer extends IngestionDecorator {
          */
         private int mRetryCount;
 
-        RetryableCall(Ingestion decoratedApi, UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
+        RetryableCall(Ingestion decoratedApi, String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
             super(decoratedApi, appSecret, installId, logContainer, serviceCallback);
         }
 

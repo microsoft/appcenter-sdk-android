@@ -543,21 +543,7 @@ public class MobileCenterTest {
     public void emptyAppIdentifierTest() {
         MobileCenter.start(application, "", DummyService.class);
         PowerMockito.verifyStatic();
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString(), any(IllegalArgumentException.class));
-    }
-
-    @Test
-    public void tooShortAppIdentifierTest() {
-        MobileCenter.start(application, "too-short", DummyService.class);
-        PowerMockito.verifyStatic();
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString(), any(IllegalArgumentException.class));
-    }
-
-    @Test
-    public void invalidAppIdentifierTest() {
-        MobileCenter.start(application, "123xyz12-3xyz-123x-yz12-3xyz123xyz12", DummyService.class);
-        PowerMockito.verifyStatic();
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString(), any(NumberFormatException.class));
+        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
     }
 
     @Test
