@@ -215,6 +215,11 @@ public class Analytics extends AbstractMobileCenterService {
     }
 
     @Override
+    protected String getLoggerTag() {
+        return LOG_TAG;
+    }
+
+    @Override
     public Map<String, LogFactory> getLogFactories() {
         return mFactories;
     }

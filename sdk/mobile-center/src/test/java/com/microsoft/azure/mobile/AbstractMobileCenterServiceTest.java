@@ -47,6 +47,11 @@ public class AbstractMobileCenterServiceTest {
             protected String getServiceName() {
                 return "Test";
             }
+
+            @Override
+            protected String getLoggerTag() {
+                return "TestLog";
+            }
         };
 
         mockStatic(MobileCenter.class);
