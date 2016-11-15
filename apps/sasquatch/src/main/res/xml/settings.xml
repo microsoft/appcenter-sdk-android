@@ -24,7 +24,7 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:key="application_info_key"
+        android:key="@string/application_info_key"
         android:title="@string/application_info_title">
         <Preference
             android:key="@string/install_id_key"
