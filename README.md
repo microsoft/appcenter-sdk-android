@@ -110,7 +110,7 @@ To start the Mobile Center SDK in your app, follow these steps:
     Analytics.trackEvent("Video clicked");
     ```
 
-* **Enable or disable the Analytics service:**  You can change the enabled state of the Analytics service at runtime by calling the `Analytics.setEnabled()` method. If you disable it, the SDK will not collect any more analytics information for the app. To re-enable it, pass `true` as a parameter in the same method.
+* **Enable or disable Analytics:**  You can change the enabled state of the Analytics service at runtime by calling the `Analytics.setEnabled()` method. If you disable it, the SDK will not collect any more analytics information for the app. To re-enable it, pass `true` as a parameter in the same method.
 
     ```Java
     Analytics.setEnabled(false);
@@ -146,7 +146,7 @@ Once you set up and start the Mobile Center SDK to use the Crashes service in yo
     ErrorReport crashReport = Crashes.getLastSessionCrashReport();
     ```
 
-* **Enable or disable the Crashes service:**  You can disable and opt out of using Crashes by calling the `setEnabled()` API and the SDK will collect no crashes for your app. Use the same API to re-enable it by passing `true` as a parameter.
+* **Enable or disable Crashes:**  You can disable and opt out of using Crashes by calling the `setEnabled()` API and the SDK will collect no crashes for your app. Use the same API to re-enable it by passing `true` as a parameter.
 
     ```Java
     Crashes.setEnabled(false);
