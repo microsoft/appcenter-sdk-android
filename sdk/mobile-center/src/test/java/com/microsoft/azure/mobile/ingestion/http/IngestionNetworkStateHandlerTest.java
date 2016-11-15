@@ -32,7 +32,7 @@ public class IngestionNetworkStateHandlerTest {
     public void success() throws IOException {
 
         /* Configure mock wrapped API. */
-        UUID appSecret = UUIDUtils.randomUUID();
+        String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
@@ -69,7 +69,7 @@ public class IngestionNetworkStateHandlerTest {
     public void failure() throws IOException {
 
         /* Configure mock wrapped API. */
-        UUID appSecret = UUIDUtils.randomUUID();
+        String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
@@ -106,7 +106,7 @@ public class IngestionNetworkStateHandlerTest {
     public void networkDownBecomesUp() throws IOException {
 
         /* Configure mock wrapped API. */
-        UUID appSecret = UUIDUtils.randomUUID();
+        String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
@@ -147,7 +147,7 @@ public class IngestionNetworkStateHandlerTest {
     public void networkDownCancelBeforeUp() throws IOException {
 
         /* Configure mock wrapped API. */
-        UUID appSecret = UUIDUtils.randomUUID();
+        String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
@@ -185,7 +185,7 @@ public class IngestionNetworkStateHandlerTest {
     public void cancelRunningCall() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        UUID appSecret = UUIDUtils.randomUUID();
+        String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
@@ -250,7 +250,7 @@ public class IngestionNetworkStateHandlerTest {
     public void cancelRunningCallByClosing() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        UUID appSecret = UUIDUtils.randomUUID();
+        String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
@@ -312,7 +312,7 @@ public class IngestionNetworkStateHandlerTest {
     public void networkLossDuringCall() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        UUID appSecret = UUIDUtils.randomUUID();
+        String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         LogContainer container = mock(LogContainer.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
