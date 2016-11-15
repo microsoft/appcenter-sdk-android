@@ -406,6 +406,8 @@ public final class MobileCenter {
             if (service.isInstanceEnabled() != enabled)
                 service.setInstanceEnabled(enabled);
         }
+
+        MobileCenterLog.info(LOG_TAG, "Mobile Center has been ." + (enabled ? "enabled" : "disabled"));
     }
 
     @VisibleForTesting
