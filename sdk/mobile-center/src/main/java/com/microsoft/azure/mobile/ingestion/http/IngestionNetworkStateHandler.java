@@ -39,7 +39,7 @@ public class IngestionNetworkStateHandler extends IngestionDecorator implements 
     }
 
     @Override
-    public ServiceCall sendAsync(UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
         Call ingestionCall = new Call(mDecoratedApi, appSecret, installId, logContainer, serviceCallback);
         synchronized (mCalls) {
             mCalls.add(ingestionCall);
@@ -76,7 +76,7 @@ public class IngestionNetworkStateHandler extends IngestionDecorator implements 
      */
     private class Call extends IngestionCallDecorator implements Runnable, ServiceCallback {
 
-        Call(Ingestion decoratedApi, UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
+        Call(Ingestion decoratedApi, String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
             super(decoratedApi, appSecret, installId, logContainer, serviceCallback);
         }
 

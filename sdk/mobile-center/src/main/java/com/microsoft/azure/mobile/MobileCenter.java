@@ -286,15 +286,8 @@ public final class MobileCenter {
             MobileCenterLog.error(LOG_TAG, "application may not be null");
             return false;
         }
-        if (appSecret == null) {
-            MobileCenterLog.error(LOG_TAG, "appSecret may not be null");
-            return false;
-        }
-        UUID appSecretUUID;
-        try {
-            appSecretUUID = UUID.fromString(appSecret);
-        } catch (IllegalArgumentException e) {
-            MobileCenterLog.error(LOG_TAG, "appSecret is invalid", e);
+        if (appSecret == null || appSecret.isEmpty()) {
+            MobileCenterLog.error(LOG_TAG, "appSecret may not be null or empty");
             return false;
         }
         mApplication = application;
@@ -305,7 +298,7 @@ public final class MobileCenter {
 
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
-        mChannel = new DefaultChannel(application, appSecretUUID, mLogSerializer);
+        mChannel = new DefaultChannel(application, appSecret, mLogSerializer);
         mChannel.setEnabled(isInstanceEnabled());
         if (mServerUrl != null)
             mChannel.setServerUrl(mServerUrl);

@@ -47,7 +47,7 @@ public class DefaultChannel implements Channel {
     /**
      * The application secret for the ingestion service.
      */
-    private final UUID mAppSecret;
+    private final String mAppSecret;
 
     /**
      * The installId that's required for forwarding to ingestion.
@@ -102,7 +102,7 @@ public class DefaultChannel implements Channel {
      * @param appSecret     The application secret.
      * @param logSerializer The log serializer.
      */
-    public DefaultChannel(@NonNull Context context, @NonNull UUID appSecret, @NonNull LogSerializer logSerializer) {
+    public DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull LogSerializer logSerializer) {
         this(context, appSecret, buildDefaultPersistence(logSerializer), buildDefaultIngestion(context, logSerializer));
     }
 
@@ -115,7 +115,7 @@ public class DefaultChannel implements Channel {
      * @param ingestion   Ingestion object for dependency injection.
      */
     @VisibleForTesting
-    DefaultChannel(@NonNull Context context, @NonNull UUID appSecret, @NonNull Persistence persistence, @NonNull Ingestion ingestion) {
+    DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull Persistence persistence, @NonNull Ingestion ingestion) {
         mContext = context;
         mAppSecret = appSecret;
         mInstallId = IdHelper.getInstallId();

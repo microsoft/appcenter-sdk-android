@@ -110,7 +110,7 @@ public class IngestionHttp implements Ingestion {
      * @param installId     install identifier.
      * @param logContainer  payload.    @throws Exception if an error occurs.
      */
-    private static void doCall(String baseUrl, LogSerializer logSerializer, UUID appSecret, UUID installId, LogContainer logContainer) throws Exception {
+    private static void doCall(String baseUrl, LogSerializer logSerializer, String appSecret, UUID installId, LogContainer logContainer) throws Exception {
 
         /* HTTP session. */
         URL url = new URL(baseUrl + API_PATH);
@@ -124,7 +124,7 @@ public class IngestionHttp implements Ingestion {
 
             /* Set headers. */
             urlConnection.setRequestProperty(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
-            urlConnection.setRequestProperty(APP_SECRET, appSecret.toString());
+            urlConnection.setRequestProperty(APP_SECRET, appSecret);
             urlConnection.setRequestProperty(INSTALL_ID, installId.toString());
             MobileCenterLog.verbose(LOG_TAG, "Headers: " + urlConnection.getRequestProperties());
 
@@ -214,7 +214,7 @@ public class IngestionHttp implements Ingestion {
     }
 
     @Override
-    public ServiceCall sendAsync(final UUID appSecret, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(final String appSecret, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         final Call call = new Call(mBaseUrl, mLogSerializer, appSecret, installId, logContainer, serviceCallback);
         call.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         return new ServiceCall() {
@@ -240,7 +240,7 @@ public class IngestionHttp implements Ingestion {
 
         private final LogSerializer mLogSerializer;
 
-        private final UUID mAppSecret;
+        private final String mAppSecret;
 
         private final UUID mInstallId;
 
@@ -248,7 +248,7 @@ public class IngestionHttp implements Ingestion {
 
         private final ServiceCallback mServiceCallback;
 
-        Call(String baseUrl, LogSerializer logSerializer, UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
+        Call(String baseUrl, LogSerializer logSerializer, String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
             mBaseUrl = baseUrl;
             mLogSerializer = logSerializer;
             mAppSecret = appSecret;
