@@ -159,7 +159,7 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Check whether Crashes module is enabled or not.
+     * Check whether Crashes service is enabled or not.
      *
      * @return <code>true</code> if enabled, <code>false</code> otherwise.
      */
@@ -168,7 +168,7 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Enable or disable Crashes module.
+     * Enable or disable Crashes service.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */

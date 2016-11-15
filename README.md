@@ -72,14 +72,14 @@ Now that you've integrated the SDK in your application, it's time to start the S
 
 To start the Mobile Center SDK in your app, follow these steps:
 
-1. **Start the SDK:**  Mobile Center provides developers with two modules to get started – Analytics and Crashes. In order to use these modules, you need to opt in for the module(s) that you'd like, meaning by default no modules are started and you will have to explicitly call each of them when starting the SDK. Insert the following line inside your app's main activity class' `onCreate` callback.
+1. **Start the SDK:**  Mobile Center provides developers with two services to get started – Analytics and Crashes. In order to use these services, you need to opt in for the service(s) that you'd like, meaning by default no services are started and you will have to explicitly call each of them when starting the SDK. Insert the following line inside your app's main activity class' `onCreate` callback.
 
     ```Java
     MobileCenter.start(getApplication(), "{Your App Secret}", Analytics.class, Crashes.class);
     ```
     You can also copy paste the `start` method call from the Overview page on Mobile Center portal once your app is selected. It already includes the App Secret so that all the data collected by the SDK corresponds to your application. Make sure to replace {Your App Secret} text with the actual value for your application.
     
-    The example above shows how to use the `start()` method and include both the Analytics and Crashes module. If you wish not to use Analytics, remove the parameter from the method call above. Note that, unless you explicitly specify each module as parameters in the start method, you can't use that Mobile Center service. Also, the `start()` API can be used only once in the lifecycle of your app – all other calls will log a warning to the console and only the modules included in the first call will be available.
+    The example above shows how to use the `start()` method and include both the Analytics and Crashes services. If you wish not to use Analytics, remove the parameter from the method call above. Note that, unless you explicitly specify each service as parameters in the start method, you can't use that Mobile Center service. Also, the `start()` API can be used only once in the lifecycle of your app – all other calls will log a warning to the console and only the services included in the first call will be available.
 
     Android Studio will automatically suggest the required import statements once you insert the `start()` method-call, but if you see an error that the class names are not recognized, add the following lines to the import statements in your activity class:
     
@@ -91,7 +91,7 @@ To start the Mobile Center SDK in your app, follow these steps:
 
 ## 4. Analytics APIs
 
-* **Track Session, Device Properties:**  Once the Analytics module is included in your app and the SDK is started, it will automatically track sessions, device properties like OS Version, model, manufacturer etc. and you don’t need to add any additional code.
+* **Track Session, Device Properties:**  Once the Analytics service is included in your app and the SDK is started, it will automatically track sessions, device properties like OS Version, model, manufacturer etc. and you don’t need to add any additional code.
     Look at the section above on how to [Start the SDK](#3-start-the-sdk) if you haven't started it yet.
 
 * **Custom Events:** You can track your own custom events with specific properties to know what's happening in your app, understand user actions, and see the aggregates in the Mobile Center portal. Once you have started the SDK, use the `trackEvent()` method to track your events with properties.
@@ -110,13 +110,13 @@ To start the Mobile Center SDK in your app, follow these steps:
     Analytics.trackEvent("Video clicked");
     ```
 
-* **Enable or disable Analytics:**  You can change the enabled state of the Analytics module at runtime by calling the `Analytics.setEnabled()` method. If you disable it, the SDK will not collect any more analytics information for the app. To re-enable it, pass `true` as a parameter in the same method.
+* **Enable or disable the Analytics service:**  You can change the enabled state of the Analytics service at runtime by calling the `Analytics.setEnabled()` method. If you disable it, the SDK will not collect any more analytics information for the app. To re-enable it, pass `true` as a parameter in the same method.
 
     ```Java
     Analytics.setEnabled(false);
     ```
 
-    You can also check, if the module is enabled or not using the `isEnabled()` method:
+    You can also check if the service is enabled or not using the `isEnabled()` method:
 
     ```Java
     Analytics.isEnabled();
@@ -124,7 +124,7 @@ To start the Mobile Center SDK in your app, follow these steps:
 
 ## 5. Crashes APIs
 
-Once you set up and start the Mobile Center SDK to use the Crashes module in your application, the SDK will automatically start logging any crashes in the device's local storage. When the user opens the application again, all pending crash logs will automatically be forwarded to Mobile Center and you can analyze the crash along with the stack trace on the Mobile Center portal. Refer to the section to [Start the SDK](#3-start-the-sdk) if you haven't done so already.
+Once you set up and start the Mobile Center SDK to use the Crashes service in your application, the SDK will automatically start logging any crashes in the device's local storage. When the user opens the application again, all pending crash logs will automatically be forwarded to Mobile Center and you can analyze the crash along with the stack trace on the Mobile Center portal. Refer to the section to [Start the SDK](#3-start-the-sdk) if you haven't done so already.
 
 * **Generate a test crash:** The SDK provides you with a static API to generate a test crash for easy testing of the SDK:
 
@@ -146,19 +146,19 @@ Once you set up and start the Mobile Center SDK to use the Crashes module in you
     ErrorReport crashReport = Crashes.getLastSessionCrashReport();
     ```
 
-* **Enable or disable the Crashes module:**  You can disable and opt out of using the Crashes module by calling the `setEnabled()` API and the SDK will collect no crashes for your app. Use the same API to re-enable it by passing `true` as a parameter.
+* **Enable or disable the Crashes service:**  You can disable and opt out of using Crashes by calling the `setEnabled()` API and the SDK will collect no crashes for your app. Use the same API to re-enable it by passing `true` as a parameter.
 
     ```Java
     Crashes.setEnabled(false);
     ```
 
-    You can also check if the module is enabled or not using the `isEnabled()` method:
+    You can also check if the service is enabled or not using the `isEnabled()` method:
 
     ```Java
     Crashes.isEnabled();
     ```
 
-* **Advanced Scenarios:**  The Crashes module provides callbacks for developers to perform additional actions before and when sending crash reports to Mobile Center. This gives you added flexibility on the crash reports that will be sent.
+* **Advanced Scenarios:**  The Crashes service provides callbacks for developers to perform additional actions before and when sending crash reports to Mobile Center. This gives you added flexibility on the crash reports that will be sent.
 To handle the callbacks, you must either implement all methods in the `CrashesListener` interface, or override the `AbstractCrashesListener` class and pick only the ones you're interested in.
 You create your own Crashes listener and assign it like this:
 
@@ -181,7 +181,7 @@ You create your own Crashes listener and assign it like this:
         ```
 
     * **User Confirmation:** If user privacy is important to you as a developer, you might want to get user confirmation before sending a crash report to Mobile Center. The SDK exposes a callback where you can tell it to await user confirmation before sending any crash reports.
-    Your app is then responsible for obtaining confirmation, e.g. through a dialog prompt with one of these options - "Always Send", "Send", and "Don't send". Based on the user input, you will tell the SDK and the crash will then respectively be forwarded to Mobile Center or not.
+    Your app is then responsible for obtaining confirmation, e.g. through a dialog prompt with one of these options - "Always Send", "Send", and "Don't Send". Based on the user input, you will tell the SDK and the crash will then respectively be forwarded to Mobile Center or not.
 
         ```Java
         boolean CrashesListener.shouldAwaitUserConfirmation() {
@@ -259,7 +259,7 @@ You create your own Crashes listener and assign it like this:
     You only include the modules for the services you want to use. They all have a dependency on the Mobile Center module, so this will be included once you pull down the dependencies.
 
 * **Debugging steps, when you can't see crash reports on the portal:**
-    1. Make sure the SDK `start()` API is used correctly and the Crashes module is configured. Also, you need to restart the app after a crash – our SDK will forward the crash log only after it's restarted.
+    1. Make sure the SDK `start()` API is used correctly and the Crashes service is configured. Also, you need to restart the app after a crash – our SDK will forward the crash log only after it's restarted.
     2. Make sure your device is connected to the internet.
     3. Check if the App Secret used to start the SDK matches the App Secret in the Mobile Center portal.
     4. Disable any other SDK that provides Crash Reporting functionality, as those might interfere with the Mobile Center SDK.
