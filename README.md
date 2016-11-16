@@ -40,21 +40,7 @@ The Mobile Center SDK is designed with a modular approach – a developer only n
 
 Below are the steps on how to integrate our compiled libraries in your application using Android Studio and Gradle.
 
-1. Open your app level build.gradle file (app/build.gradle) and add the following lines after `apply plugin`. During the private beta, you need to include these credentials in order to get the libraries.
-
-    ```groovy
-    repositories {
-        maven {
-            url  'http://mobilecenter.bintray.com/mobilecenter'
-            credentials {
-                username 'mobile-center'
-                password '9263658ba66b541c798b704723cc020cb40c6f78'
-            }
-        }
-    }
-    ```
-
-2. In the same file, include the dependencies that you want in your project. Each SDK module needs to be added as a separate dependency in this section. If you would want to use both Analytics and Crashes, add the following lines:
+1. Open your app level build.gradle file (app/build.gradle) and include the dependencies that you want in your project. Each SDK module needs to be added as a separate dependency in this section. If you would want to use both Analytics and Crashes, add the following lines:
 
     ```groovy
     dependencies {
@@ -64,7 +50,7 @@ Below are the steps on how to integrate our compiled libraries in your applicati
     }
     ```
 
-3. Save your build.gradle file and make sure to trigger a Gradle sync in Android Studio.
+2. Save your build.gradle file and make sure to trigger a Gradle sync in Android Studio.
 
 Now that you've integrated the SDK in your application, it's time to start the SDK and make use of Mobile Center services.
 
