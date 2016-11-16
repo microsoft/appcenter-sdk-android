@@ -740,7 +740,7 @@ public class CrashesTest {
 
         /*
          * Last session error is only fetched upon initialization: enabled and channel ready.
-         * Here the module is enabled by default but we are waiting channel to be ready, simulate that.
+         * Here the service is enabled by default but we are waiting channel to be ready, simulate that.
          */
         assertTrue(Crashes.isEnabled());
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
@@ -792,7 +792,7 @@ public class CrashesTest {
 
         /*
          * Last session error is only fetched upon initialization: enabled and channel ready.
-         * Here the module is enabled by default but we are waiting channel to be ready, simulate that.
+         * Here the service is enabled by default but we are waiting channel to be ready, simulate that.
          */
         assertTrue(Crashes.isEnabled());
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
