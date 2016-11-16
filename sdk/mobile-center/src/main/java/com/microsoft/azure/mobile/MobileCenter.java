@@ -313,7 +313,11 @@ public final class MobileCenter {
             return;
         }
         if (mApplication == null) {
-            MobileCenterLog.error(LOG_TAG, "Cannot start services, Mobile Center has not been configured. Failed to start services.");
+            String serviceNames = "";
+            for (Class<? extends MobileCenterService> service : services) {
+                serviceNames += "\t" + service.getName() + "\n";
+            }
+            MobileCenterLog.error(LOG_TAG, "Cannot start services, Mobile Center has not been configured. Failed to start the following services:\n" + serviceNames);
             return;
         }
 
@@ -349,7 +353,7 @@ public final class MobileCenter {
         service.onChannelReady(mApplication, mChannel);
         if (isInstanceEnabled())
             mApplication.registerActivityLifecycleCallbacks(service);
-        MobileCenterLog.debug(LOG_TAG, service.getClass().getSimpleName() + " service started.");
+        MobileCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
     }
 
     @SafeVarargs
