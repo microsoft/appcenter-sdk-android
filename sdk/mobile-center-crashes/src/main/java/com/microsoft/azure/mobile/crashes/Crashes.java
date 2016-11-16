@@ -458,6 +458,7 @@ public class Crashes extends AbstractMobileCenterService {
     private void removeStoredThrowable(UUID id) {
         mErrorReportCache.remove(id);
         ErrorLogHelper.removeStoredThrowableFile(id);
+        WrapperSdkExceptionManager.deleteManagedExceptionData(id);
     }
 
     @VisibleForTesting
@@ -577,6 +578,11 @@ public class Crashes extends AbstractMobileCenterService {
             saveErrorLog(errorLog, errorStorageDirectory, filename);
             File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
             StorageHelper.InternalStorage.writeObject(throwableFile, exception);
+
+            if (WrapperSdkExceptionManager.hasManagedExceptionData()) {
+                WrapperSdkExceptionManager.saveManagedExceptionData(errorLog.getId());
+            }
+
             MobileCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile);
             if (mWrapperSdkListener != null) {
                 mWrapperSdkListener.onCrashCaptured(errorLog);
