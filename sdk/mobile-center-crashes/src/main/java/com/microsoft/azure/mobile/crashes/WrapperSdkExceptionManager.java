@@ -36,16 +36,6 @@ public class WrapperSdkExceptionManager {
     }
 
     /**
-     * Get wrapper-specific data associated with a particular crash
-     *
-     * @param reportIdString    String representation of the associated error UUID
-     * @return byte array containing the exception data
-     */
-    public static byte[] getManagedExceptionData(String reportIdString) {
-        return loadManagedExceptionData(reportIdString);
-    }
-
-    /**
      * Store wrapper exception data in memory. This should only be used by a wrapper SDK.
      *
      * @param data  byte array containing the data a wrapper SDK needs to save
@@ -99,10 +89,16 @@ public class WrapperSdkExceptionManager {
      * @param reportIdString   String representation of the associated error UUID
      * @return The data loaded into memory
      */
-    private static byte[] loadManagedExceptionData(String reportIdString) {
+    public static byte[] loadManagedExceptionData(String reportIdString) {
+        byte[] dataBytes = mManagedExceptionDataContainer.get(reportIdString);
+        if (dataBytes != null) {
+            return dataBytes;
+        }
+
         File dataFile = getFile(reportIdString);
+
         try {
-            byte[] dataBytes = StorageHelper.InternalStorage.readObject(dataFile);
+            dataBytes = StorageHelper.InternalStorage.readObject(dataFile);
             if (dataBytes != null) {
                 mManagedExceptionDataContainer.put(reportIdString, dataBytes);
             }
