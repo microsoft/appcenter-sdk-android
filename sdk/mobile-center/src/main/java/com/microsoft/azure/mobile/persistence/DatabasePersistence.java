@@ -135,7 +135,7 @@ public class DatabasePersistence extends Persistence {
     @Override
     public void deleteLogs(@NonNull String group, @NonNull String id) {
         /* Log. */
-        MobileCenterLog.info(LOG_TAG, "Deleting logs from the Persistence database for " + group + " with " + id);
+        MobileCenterLog.debug(LOG_TAG, "Deleting logs from the Persistence database for " + group + " with " + id);
         MobileCenterLog.debug(LOG_TAG, "The IDs for deleting log(s) is/are:");
 
         List<Long> dbIdentifiers = mPendingDbIdentifiersGroups.remove(group + id);
@@ -151,7 +151,7 @@ public class DatabasePersistence extends Persistence {
     @Override
     public void deleteLogs(String group) {
         /* Log. */
-        MobileCenterLog.info(LOG_TAG, "Deleting all logs from the Persistence database for " + group);
+        MobileCenterLog.debug(LOG_TAG, "Deleting all logs from the Persistence database for " + group);
 
         /* Delete from database. */
         mDatabaseStorage.delete(COLUMN_GROUP, group);
@@ -178,7 +178,7 @@ public class DatabasePersistence extends Persistence {
     @Nullable
     public String getLogs(@NonNull String group, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
         /* Log. */
-        MobileCenterLog.info(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
+        MobileCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
 
         /* Query database and get scanner. */
         DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group);
@@ -211,12 +211,12 @@ public class DatabasePersistence extends Persistence {
         /* Delete any logs that cannot be deserialized. */
         if (failedDbIdentifiers.size() > 0) {
             mDatabaseStorage.delete(failedDbIdentifiers);
-            MobileCenterLog.info(LOG_TAG, "Deleted logs that cannot be deserialized");
+            MobileCenterLog.warn(LOG_TAG, "Deleted logs that cannot be deserialized");
         }
 
         /* No logs found. */
         if (candidates.size() <= 0) {
-            MobileCenterLog.info(LOG_TAG, "No logs found in the Persistence database at the moment");
+            MobileCenterLog.debug(LOG_TAG, "No logs found in the Persistence database at the moment");
             return null;
         }
 
@@ -224,7 +224,7 @@ public class DatabasePersistence extends Persistence {
         String id = UUIDUtils.randomUUID().toString();
 
         /* Log. */
-        MobileCenterLog.info(LOG_TAG, "Returning " + candidates.size() + " log(s) with an ID, " + id);
+        MobileCenterLog.debug(LOG_TAG, "Returning " + candidates.size() + " log(s) with an ID, " + id);
         MobileCenterLog.debug(LOG_TAG, "The SID/ID pairs for returning log(s) is/are:");
 
         List<Long> pendingDbIdentifiersGroup = new ArrayList<>();
@@ -254,14 +254,14 @@ public class DatabasePersistence extends Persistence {
     public void clearPendingLogState() {
         mPendingDbIdentifiers.clear();
         mPendingDbIdentifiersGroups.clear();
-        MobileCenterLog.info(LOG_TAG, "Cleared pending log states");
+        MobileCenterLog.debug(LOG_TAG, "Cleared pending log states");
     }
 
     @Override
     public void clear() {
         clearPendingLogState();
         mDatabaseStorage.clear();
-        MobileCenterLog.info(LOG_TAG, "Deleted logs from the Persistence database");
+        MobileCenterLog.debug(LOG_TAG, "Deleted logs from the Persistence database");
     }
 
     @Override

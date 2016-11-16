@@ -84,8 +84,10 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
         }
 
         /* Nothing to do if state does not change. */
-        else if (enabled == isInstanceEnabled())
+        else if (enabled == isInstanceEnabled()) {
+            MobileCenterLog.info(getLoggerTag(), String.format("%s service has already been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
             return;
+        }
 
         /* If channel initialized. */
         if (mChannel != null) {
@@ -104,6 +106,8 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
 
         /* Save new state. */
         StorageHelper.PreferencesStorage.putBoolean(getEnabledPreferenceKey(), enabled);
+
+        MobileCenterLog.info(getLoggerTag(), String.format("%s service has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
     }
 
     @Override
@@ -139,6 +143,13 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * @return The name of the service.
      */
     protected abstract String getServiceName();
+
+    /**
+     * Gets a tag of the logger.
+     *
+     * @return The tag of the logger.
+     */
+    protected abstract String getLoggerTag();
 
     @SuppressWarnings("WeakerAccess")
     @NonNull

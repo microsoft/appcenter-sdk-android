@@ -306,6 +306,9 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     @Override
+    protected String getLoggerTag() { return LOG_TAG; }
+
+    @Override
     protected int getTriggerCount() {
         return 1;
     }

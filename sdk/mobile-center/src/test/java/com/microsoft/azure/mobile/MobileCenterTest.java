@@ -655,6 +655,11 @@ public class MobileCenterTest {
         protected String getServiceName() {
             return "Dummy";
         }
+
+        @Override
+        protected String getLoggerTag() {
+            return "DummyLog";
+        }
     }
 
     private static class AnotherDummyService extends AbstractMobileCenterService {
@@ -685,6 +690,11 @@ public class MobileCenterTest {
         protected String getServiceName() {
             return "AnotherDummy";
         }
+
+        @Override
+        protected String getLoggerTag() {
+            return "AnotherDummyLog";
+        }
     }
 
     private static class InvalidService extends AbstractMobileCenterService {
@@ -697,6 +707,11 @@ public class MobileCenterTest {
         @Override
         protected String getServiceName() {
             return "Invalid";
+        }
+
+        @Override
+        protected String getLoggerTag() {
+            return "InvalidLog";
         }
     }
 }

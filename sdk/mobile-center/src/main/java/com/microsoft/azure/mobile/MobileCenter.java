@@ -384,11 +384,6 @@ public final class MobileCenter {
         boolean previouslyEnabled = isInstanceEnabled();
         boolean switchToDisabled = previouslyEnabled && !enabled;
         boolean switchToEnabled = !previouslyEnabled && enabled;
-        if (switchToDisabled) {
-            MobileCenterLog.info(LOG_TAG, "Mobile Center disabled");
-        } else if (switchToEnabled) {
-            MobileCenterLog.info(LOG_TAG, "Mobile Center enabled");
-        }
 
         /* Update state. */
         StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, enabled);
@@ -405,6 +400,15 @@ public final class MobileCenter {
             /* Forward status change. */
             if (service.isInstanceEnabled() != enabled)
                 service.setInstanceEnabled(enabled);
+        }
+
+        /* Log current state. */
+        if (switchToDisabled) {
+            MobileCenterLog.info(LOG_TAG, "Mobile Center has been disabled.");
+        } else if (switchToEnabled) {
+            MobileCenterLog.info(LOG_TAG, "Mobile Center has been enabled.");
+        } else {
+            MobileCenterLog.info(LOG_TAG, "Mobile Center has already been %s." + (enabled ? "enabled" : "disabled"));
         }
     }
 
