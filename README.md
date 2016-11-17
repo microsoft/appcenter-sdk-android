@@ -260,13 +260,4 @@ You create your own Crashes listener and assign it like this:
     Depending on the services you use, the following permissions are required:
     - Analytics, Crashes: `INTERNET`, `ACCESS_NETWORK_STATE`
 
-    Required permissions will automatically be merged into your app's manifest by the SDK. Where possible, the SDK will use [Run Time permissions](https://developer.android.com/training/permissions/requesting.html).
-
-* **Any privacy information tracked by SDK?**
-
-## 8. List of available libraries
-
- Gradle Dependency                                            | Service          
- ------------------------------------------------------------ | ---------------
- com.microsoft.azure.mobile:mobile-center-analytics:0.3.1     | Analytics    
- com.microsoft.azure.mobile:mobile-center-crashes:0.3.1       | Crashes
+    Required permissions are automatically merged into your app's manifest by the SDK.
