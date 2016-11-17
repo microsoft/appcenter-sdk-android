@@ -1,3 +1,7 @@
+/*
+ * Copyright © Microsoft Corporation. All rights reserved.
+ */
+
 package com.microsoft.azure.mobile.crashes.model;
 
 import android.support.annotation.VisibleForTesting;

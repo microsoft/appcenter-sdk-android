@@ -1,3 +1,7 @@
+/*
+ * Copyright © Microsoft Corporation. All rights reserved.
+ */
+
 package com.microsoft.azure.mobile.analytics.ingestion.models.json;
 
 import com.microsoft.azure.mobile.analytics.ingestion.models.EventLog;
