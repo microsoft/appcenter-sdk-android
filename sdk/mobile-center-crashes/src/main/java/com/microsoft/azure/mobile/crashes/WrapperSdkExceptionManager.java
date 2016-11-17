@@ -50,6 +50,10 @@ public class WrapperSdkExceptionManager {
      * @param reportId  The associated error UUID
      */
     public static void saveManagedExceptionData(UUID reportId) {
+        if (reportId == null) {
+            MobileCenterLog.error(Crashes.LOG_TAG, "Trying to save managed exception data with null UUID");
+            return;
+        }
         mManagedExceptionDataContainer.put(reportId.toString(), mManagedExceptionData);
         File dataFile = getFile(reportId);
         try {
@@ -68,6 +72,10 @@ public class WrapperSdkExceptionManager {
      * @param reportId    The associated error UUID
      */
     public static void deleteManagedExceptionData(UUID reportId) {
+        if (reportId == null) {
+            MobileCenterLog.error(Crashes.LOG_TAG, "Trying to delete managed exception data with null UUID");
+            return;
+        }
         File dataFile = getFile(reportId);
         loadManagedExceptionData(reportId); //save the exception data in memory before deleting
         StorageHelper.InternalStorage.delete(dataFile);
@@ -80,6 +88,10 @@ public class WrapperSdkExceptionManager {
      * @return The data loaded into memory
      */
     private static byte[] loadManagedExceptionData(UUID reportId) {
+        if (reportId == null) {
+            MobileCenterLog.error(Crashes.LOG_TAG, "Trying to load managed exception data with null UUID");
+            return null;
+        }
         return loadManagedExceptionData(reportId.toString());
     }
 
@@ -104,11 +116,11 @@ public class WrapperSdkExceptionManager {
             }
             return dataBytes;
         }
-        catch (ClassNotFoundException ignored) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Cannot read managed exception file " + dataFile.getName(), ignored);
+        catch (ClassNotFoundException e) {
+            MobileCenterLog.error(Crashes.LOG_TAG, "Cannot read managed exception data file " + dataFile.getName(), e);
         }
-        catch (IOException ignored) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Cannot access serialized managed exception file " + dataFile.getName(), ignored);
+        catch (IOException e) {
+            MobileCenterLog.error(Crashes.LOG_TAG, "Cannot access managed exception data file " + dataFile.getName(), e);
         }
         return null;
     }
@@ -120,6 +132,9 @@ public class WrapperSdkExceptionManager {
      * @return The corresponding file object
      */
     private static File getFile(UUID reportId) {
+        if (reportId == null) {
+            return null;
+        }
         return getFile(reportId.toString());
     }
 
@@ -130,6 +145,9 @@ public class WrapperSdkExceptionManager {
      * @return The corresponding file object
      */
     private static File getFile(String reportIdString) {
+        if (reportIdString == null) {
+            return null;
+        }
         File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
         String filename = reportIdString + dataFileExtension;
         return new File(errorStorageDirectory, filename);
