@@ -40,17 +40,17 @@ public class WrapperSdkExceptionManagerTest {
 
         PowerMockito.doThrow(new IOException()).when(StorageHelper.InternalStorage.class);
         StorageHelper.InternalStorage.readObject(any(File.class));
-        WrapperSdkExceptionManager.loadWrapperExceptionData(UUID.randomUUID().toString());
+        WrapperSdkExceptionManager.loadWrapperExceptionData(UUID.randomUUID());
         PowerMockito.doThrow(new ClassNotFoundException()).when(StorageHelper.InternalStorage.class);
         StorageHelper.InternalStorage.readObject(any(File.class));
-        WrapperSdkExceptionManager.loadWrapperExceptionData(UUID.randomUUID().toString());
+        WrapperSdkExceptionManager.loadWrapperExceptionData(UUID.randomUUID());
     }
 
     @Test
     public void saveWrapperExceptionData() throws IOException {
         PowerMockito.doThrow(new IOException()).when(StorageHelper.InternalStorage.class);
         StorageHelper.InternalStorage.writeObject(any(File.class), anyString());
-        WrapperSdkExceptionManager.saveWrapperExceptionData(null, UUIDUtils.randomUUID().toString());
+        WrapperSdkExceptionManager.saveWrapperExceptionData(null, UUIDUtils.randomUUID());
         verifyStatic();
         MobileCenterLog.error(eq(Crashes.LOG_TAG), anyString(), any(IOException.class));
     }

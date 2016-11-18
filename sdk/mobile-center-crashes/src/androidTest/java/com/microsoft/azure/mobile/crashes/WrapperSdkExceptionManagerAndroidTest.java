@@ -64,9 +64,9 @@ public class WrapperSdkExceptionManagerAndroidTest {
         ErrorData[] errors = new ErrorData[]{errorA, errorB, errorC};
 
         for (ErrorData error : errors) {
-            WrapperSdkExceptionManager.saveWrapperExceptionData(error.data, error.id.toString());
+            WrapperSdkExceptionManager.saveWrapperExceptionData(error.data, error.id);
 
-            byte[] loadedData = WrapperSdkExceptionManager.loadWrapperExceptionData(error.id.toString());
+            byte[] loadedData = WrapperSdkExceptionManager.loadWrapperExceptionData(error.id);
 
             if (error.data == null) {
                 assertNull(loadedData);
@@ -80,21 +80,21 @@ public class WrapperSdkExceptionManagerAndroidTest {
             }
         }
 
-        WrapperSdkExceptionManager.saveWrapperExceptionData(null, UUID.randomUUID().toString());
+        WrapperSdkExceptionManager.saveWrapperExceptionData(null, UUID.randomUUID());
 
         WrapperSdkExceptionManager.deleteWrapperExceptionData(UUID.randomUUID());
         WrapperSdkExceptionManager.deleteWrapperExceptionData(UUID.randomUUID());
         WrapperSdkExceptionManager.deleteWrapperExceptionData(errorA.id);
 
         // even after deleting errorA, it should exist in memory - so, we can still load it
-        byte[] loadedDataA = WrapperSdkExceptionManager.loadWrapperExceptionData(errorA.id.toString());
+        byte[] loadedDataA = WrapperSdkExceptionManager.loadWrapperExceptionData(errorA.id);
         assertNotNull(loadedDataA);
 
         for (int i = 0; i < errorA.data.length; ++i) {
             assertEquals(errorA.data[i], loadedDataA[i]);
         }
 
-        WrapperSdkExceptionManager.loadWrapperExceptionData(UUID.randomUUID().toString());
+        WrapperSdkExceptionManager.loadWrapperExceptionData(UUID.randomUUID());
     }
 
 }
