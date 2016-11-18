@@ -111,12 +111,12 @@ public class WrapperSdkExceptionManager {
     /**
      * Get a file object for wrapper exception data
      *
-     * @param reportId   The associated error UUID
+     * @param errorId   The associated error UUID
      * @return The corresponding file object
      */
-    private static File getFile(@NonNull UUID reportId) {
+    private static File getFile(@NonNull UUID errorId) {
         File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
-        String filename = reportId.toString() + DATA_FILE_EXTENSION;
+        String filename = errorId.toString() + DATA_FILE_EXTENSION;
         return new File(errorStorageDirectory, filename);
     }
 

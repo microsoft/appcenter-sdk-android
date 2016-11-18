@@ -24,6 +24,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({MobileCenterLog.class, StorageHelper.InternalStorage.class, Crashes.class})
 public class WrapperSdkExceptionManagerTest {
+
     @Before
     public void setUp() {
         mockStatic(StorageHelper.InternalStorage.class);
