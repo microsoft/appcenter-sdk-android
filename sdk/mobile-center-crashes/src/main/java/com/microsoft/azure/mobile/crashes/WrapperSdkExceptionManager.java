@@ -41,6 +41,11 @@ public class WrapperSdkExceptionManager {
      * @param errorId The associated error UUID
      */
     public static void saveWrapperExceptionData(byte[] data, @NonNull UUID errorId) {
+        if (errorId == null) {
+            MobileCenterLog.error(Crashes.LOG_TAG, "Failed to save wrapper exception data: null errorId");
+            return;
+        }
+
         sWrapperExceptionDataContainer.put(errorId.toString(), data);
         File dataFile = getFile(errorId);
         try {
@@ -57,6 +62,11 @@ public class WrapperSdkExceptionManager {
      * @param errorId    The associated error UUID
      */
     public static void deleteWrapperExceptionData(@NonNull UUID errorId) {
+        if (errorId == null) {
+            MobileCenterLog.error(Crashes.LOG_TAG, "Failed to delete wrapper exception data: null errorId");
+            return;
+        }
+
         File dataFile = getFile(errorId);
         byte[] loadResult = loadWrapperExceptionData(errorId);
         if (loadResult == null) {
@@ -73,6 +83,11 @@ public class WrapperSdkExceptionManager {
      * @return The data loaded into memory
      */
     public static byte[] loadWrapperExceptionData(@NonNull UUID errorId) {
+        if (errorId == null) {
+            MobileCenterLog.error(Crashes.LOG_TAG, "Failed to load wrapper exception data: null errorId");
+            return null;
+        }
+
         byte[] dataBytes = sWrapperExceptionDataContainer.get(errorId.toString());
         if (dataBytes != null) {
             return dataBytes;
