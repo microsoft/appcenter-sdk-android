@@ -26,15 +26,14 @@ public class WrapperSdkExceptionManagerAndroidTest {
     @BeforeClass
     public static void setUpClass() {
         MobileCenterLog.setLogLevel(android.util.Log.VERBOSE);
-        Context sContext = InstrumentationRegistry.getContext();
-        Constants.loadFromContext(sContext);
-        StorageHelper.initialize(sContext);
+        Context context = InstrumentationRegistry.getContext();
+        Constants.loadFromContext(context);
+        StorageHelper.initialize(context);
     }
 
     @Before
     public void cleanup() {
         android.util.Log.i(TAG, "Cleanup");
-        Crashes.unsetInstance();
         StorageHelper.PreferencesStorage.clear();
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
             assertTrue(logFile.delete());
