@@ -457,8 +457,8 @@ public class Crashes extends AbstractMobileCenterService {
 
     private void removeStoredThrowable(UUID id) {
         mErrorReportCache.remove(id);
-        ErrorLogHelper.removeStoredThrowableFile(id);
         WrapperSdkExceptionManager.deleteWrapperExceptionData(id);
+        ErrorLogHelper.removeStoredThrowableFile(id);
     }
 
     @VisibleForTesting
