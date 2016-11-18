@@ -64,7 +64,6 @@ public class WrapperSdkExceptionManagerAndroidTest {
 
         for (ErrorData error : errors) {
             WrapperSdkExceptionManager.saveWrapperExceptionData(error.data, error.id);
-
             byte[] loadedData = WrapperSdkExceptionManager.loadWrapperExceptionData(error.id);
 
             if (error.data == null) {
@@ -73,27 +72,19 @@ public class WrapperSdkExceptionManagerAndroidTest {
             }
 
             assertNotNull(loadedData);
-
             for (int i = 0; i < error.data.length; ++i) {
                 assertEquals(error.data[i], loadedData[i]);
             }
         }
 
-        WrapperSdkExceptionManager.saveWrapperExceptionData(null, UUID.randomUUID());
-
-        WrapperSdkExceptionManager.deleteWrapperExceptionData(UUID.randomUUID());
-        WrapperSdkExceptionManager.deleteWrapperExceptionData(UUID.randomUUID());
-        WrapperSdkExceptionManager.deleteWrapperExceptionData(errorA.id);
-
         // even after deleting errorA, it should exist in memory - so, we can still load it
+        WrapperSdkExceptionManager.deleteWrapperExceptionData(errorA.id);
         byte[] loadedDataA = WrapperSdkExceptionManager.loadWrapperExceptionData(errorA.id);
         assertNotNull(loadedDataA);
 
         for (int i = 0; i < errorA.data.length; ++i) {
             assertEquals(errorA.data[i], loadedDataA[i]);
         }
-
-        WrapperSdkExceptionManager.loadWrapperExceptionData(UUID.randomUUID());
     }
 
 }
