@@ -23,11 +23,15 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({MobileCenterLog.class, StorageHelper.InternalStorage.class, Crashes.class})
-
 public class WrapperSdkExceptionManagerTest {
     @Before
     public void setUp() {
         mockStatic(StorageHelper.InternalStorage.class);
+    }
+
+    @Test
+    public void constructWrapperSdkExceptionManager() {
+        new WrapperSdkExceptionManager();
     }
 
     @Test
@@ -44,8 +48,6 @@ public class WrapperSdkExceptionManagerTest {
 
     @Test
     public void saveWrapperExceptionData() throws IOException {
-        mockStatic(MobileCenterLog.class);
-        mockStatic(StorageHelper.InternalStorage.class);
         PowerMockito.doThrow(new IOException()).when(StorageHelper.InternalStorage.class);
         StorageHelper.InternalStorage.writeObject(any(File.class), anyString());
         WrapperSdkExceptionManager.saveWrapperExceptionData(null, UUIDUtils.randomUUID().toString());

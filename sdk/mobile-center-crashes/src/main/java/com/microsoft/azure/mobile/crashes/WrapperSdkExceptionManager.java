@@ -1,5 +1,7 @@
 package com.microsoft.azure.mobile.crashes;
 
+import android.support.annotation.VisibleForTesting;
+
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
@@ -14,7 +16,9 @@ import java.util.HashMap;
 import java.io.IOException;
 
 
+@SuppressWarnings("WeakerAccess")
 public class WrapperSdkExceptionManager {
+
     /**
      * File extension for data files created by this class.
      */
@@ -23,22 +27,26 @@ public class WrapperSdkExceptionManager {
     /**
      * Contains wrapper SDK data that has been loaded into memory
      */
-    private static Map<String, byte[]> sWrapperExceptionDataContainer = new HashMap<>();
+    private static final Map<String, byte[]> sWrapperExceptionDataContainer = new HashMap<>();
+
+    @VisibleForTesting
+    WrapperSdkExceptionManager() {
+    }
 
     /**
      * Store the in-memory wrapper exception data to disk. This should only be used by a wrapper SDK.
      *
      * @param data  The data to be saved
-     * @param reportIdString  The associated error UUID string
+     * @param errorId The associated error UUID string
      */
-    public static void saveWrapperExceptionData(byte[] data, String reportIdString) {
-        if (reportIdString == null) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Trying to save wrapper exception data with null UUID");
+    public static void saveWrapperExceptionData(byte[] data, String errorId) {
+        if (errorId == null) {
+            MobileCenterLog.error(Crashes.LOG_TAG, "Trying to save wrapper exception data with null error ID");
             return;
         }
 
-        sWrapperExceptionDataContainer.put(reportIdString.toString(), data);
-        File dataFile = getFile(reportIdString.toString());
+        sWrapperExceptionDataContainer.put(errorId, data);
+        File dataFile = getFile(errorId);
         try {
             StorageHelper.InternalStorage.writeObject(dataFile, data);
         }
@@ -50,18 +58,18 @@ public class WrapperSdkExceptionManager {
     /**
      * Delete wrapper exception data from disk and store it in memory
      *
-     * @param reportId    The associated error UUID
+     * @param errorId    The associated error UUID
      */
-    public static void deleteWrapperExceptionData(UUID reportId) {
-        if (reportId == null) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Trying to delete wrapper exception data with null UUID");
+    public static void deleteWrapperExceptionData(UUID errorId) {
+        if (errorId == null) {
+            MobileCenterLog.error(Crashes.LOG_TAG, "Trying to delete wrapper exception data with null error ID");
             return;
         }
 
-        File dataFile = getFile(reportId.toString());
-        byte[] loadResult = loadWrapperExceptionData(reportId.toString());
+        File dataFile = getFile(errorId.toString());
+        byte[] loadResult = loadWrapperExceptionData(errorId.toString());
         if (loadResult == null) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Trying to delete wrapper exception data with null UUID");
+            MobileCenterLog.error(Crashes.LOG_TAG, "Trying to delete wrapper exception data with null error ID");
             return;
         }
         StorageHelper.InternalStorage.delete(dataFile);
@@ -70,33 +78,30 @@ public class WrapperSdkExceptionManager {
     /**
      * Load wrapper exception data into memory
      *
-     * @param reportIdString   String representation of the associated error UUID
+     * @param errorId   String representation of the associated error UUID
      * @return The data loaded into memory
      */
-    public static byte[] loadWrapperExceptionData(String reportIdString) {
-        if (reportIdString == null) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Trying to load wrapper exception data with null UUID");
+    public static byte[] loadWrapperExceptionData(String errorId) {
+        if (errorId == null) {
+            MobileCenterLog.error(Crashes.LOG_TAG, "Trying to load wrapper exception data with null error ID");
             return null;
         }
 
-        byte[] dataBytes = sWrapperExceptionDataContainer.get(reportIdString);
+        byte[] dataBytes = sWrapperExceptionDataContainer.get(errorId);
         if (dataBytes != null) {
             return dataBytes;
         }
 
-        File dataFile = getFile(reportIdString);
+        File dataFile = getFile(errorId);
 
         try {
             dataBytes = StorageHelper.InternalStorage.readObject(dataFile);
             if (dataBytes != null) {
-                sWrapperExceptionDataContainer.put(reportIdString, dataBytes);
+                sWrapperExceptionDataContainer.put(errorId, dataBytes);
             }
             return dataBytes;
         }
-        catch (ClassNotFoundException e) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Cannot read wrapper exception data file " + dataFile.getName(), e);
-        }
-        catch (IOException e) {
+        catch (ClassNotFoundException | IOException e) {
             MobileCenterLog.error(Crashes.LOG_TAG, "Cannot access wrapper exception data file " + dataFile.getName(), e);
         }
         return null;
@@ -105,12 +110,12 @@ public class WrapperSdkExceptionManager {
     /**
      * Get a file object for wrapper exception data
      *
-     * @param reportIdString   String representation of the associated error UUID
+     * @param reportId   String representation of the associated error UUID
      * @return The corresponding file object
      */
-    private static File getFile(String reportIdString) {
+    private static File getFile(String reportId) {
         File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
-        String filename = reportIdString + DATA_FILE_EXTENSION;
+        String filename = reportId + DATA_FILE_EXTENSION;
         return new File(errorStorageDirectory, filename);
     }
 
