@@ -38,10 +38,10 @@ public class WrapperSdkExceptionManager {
      * Store the in-memory wrapper exception data to disk. This should only be used by a wrapper SDK.
      *
      * @param data  The data to be saved
-     * @param errorId The associated error UUID string
+     * @param errorId The associated error UUID
      */
-    public static void saveWrapperExceptionData(byte[] data, @NonNull String errorId) {
-        sWrapperExceptionDataContainer.put(errorId, data);
+    public static void saveWrapperExceptionData(byte[] data, @NonNull UUID errorId) {
+        sWrapperExceptionDataContainer.put(errorId.toString(), data);
         File dataFile = getFile(errorId);
         try {
             StorageHelper.InternalStorage.writeObject(dataFile, data);
@@ -57,8 +57,8 @@ public class WrapperSdkExceptionManager {
      * @param errorId    The associated error UUID
      */
     public static void deleteWrapperExceptionData(@NonNull UUID errorId) {
-        File dataFile = getFile(errorId.toString());
-        byte[] loadResult = loadWrapperExceptionData(errorId.toString());
+        File dataFile = getFile(errorId);
+        byte[] loadResult = loadWrapperExceptionData(errorId);
         if (loadResult == null) {
             MobileCenterLog.error(Crashes.LOG_TAG, "Failed to delete wrapper exception data: data not found");
             return;
@@ -69,11 +69,11 @@ public class WrapperSdkExceptionManager {
     /**
      * Load wrapper exception data into memory
      *
-     * @param errorId   String representation of the associated error UUID
+     * @param errorId   The associated error UUID
      * @return The data loaded into memory
      */
-    public static byte[] loadWrapperExceptionData(@NonNull String errorId) {
-        byte[] dataBytes = sWrapperExceptionDataContainer.get(errorId);
+    public static byte[] loadWrapperExceptionData(@NonNull UUID errorId) {
+        byte[] dataBytes = sWrapperExceptionDataContainer.get(errorId.toString());
         if (dataBytes != null) {
             return dataBytes;
         }
@@ -83,7 +83,7 @@ public class WrapperSdkExceptionManager {
         try {
             dataBytes = StorageHelper.InternalStorage.readObject(dataFile);
             if (dataBytes != null) {
-                sWrapperExceptionDataContainer.put(errorId, dataBytes);
+                sWrapperExceptionDataContainer.put(errorId.toString(), dataBytes);
             }
             return dataBytes;
         }
@@ -96,12 +96,12 @@ public class WrapperSdkExceptionManager {
     /**
      * Get a file object for wrapper exception data
      *
-     * @param reportId   String representation of the associated error UUID
+     * @param reportId   The associated error UUID
      * @return The corresponding file object
      */
-    private static File getFile(@NonNull String reportId) {
+    private static File getFile(@NonNull UUID reportId) {
         File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
-        String filename = reportId + DATA_FILE_EXTENSION;
+        String filename = reportId.toString() + DATA_FILE_EXTENSION;
         return new File(errorStorageDirectory, filename);
     }
 
