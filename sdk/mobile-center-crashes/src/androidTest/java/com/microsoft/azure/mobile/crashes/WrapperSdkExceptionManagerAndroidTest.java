@@ -1,6 +1,5 @@
 package com.microsoft.azure.mobile.crashes;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
@@ -17,17 +16,17 @@ import java.io.File;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.test.TestUtils.TAG;
-import static org.junit.Assert.assertTrue;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
 
 public class WrapperSdkExceptionManagerAndroidTest {
-
-    @SuppressLint("StaticFieldLeak")
-    private static Context sContext;
 
     @BeforeClass
     public static void setUpClass() {
         MobileCenterLog.setLogLevel(android.util.Log.VERBOSE);
-        sContext = InstrumentationRegistry.getContext();
+        Context sContext = InstrumentationRegistry.getContext();
         Constants.loadFromContext(sContext);
         StorageHelper.initialize(sContext);
     }
@@ -46,8 +45,8 @@ public class WrapperSdkExceptionManagerAndroidTest {
     public void managedExceptionData() {
 
         class ErrorData {
-            byte[] data;
-            UUID id;
+            private byte[] data;
+            private UUID id;
         }
 
         ErrorData errorA = new ErrorData();
@@ -70,12 +69,14 @@ public class WrapperSdkExceptionManagerAndroidTest {
             byte[] loadedData = WrapperSdkExceptionManager.loadWrapperExceptionData(error.id.toString());
 
             if (error.data == null) {
-                assert(loadedData == null);
+                assertNull(loadedData);
                 continue;
             }
 
+            assertNotNull(loadedData);
+
             for (int i = 0; i < error.data.length; ++i) {
-                assert(error.data[i] == loadedData[i]);
+                assertEquals(error.data[i], loadedData[i]);
             }
         }
 
@@ -87,8 +88,10 @@ public class WrapperSdkExceptionManagerAndroidTest {
 
         // even after deleting errorA, it should exist in memory - so, we can still load it
         byte[] loadedDataA = WrapperSdkExceptionManager.loadWrapperExceptionData(errorA.id.toString());
+        assertNotNull(loadedDataA);
+
         for (int i = 0; i < errorA.data.length; ++i) {
-            assert(errorA.data[i] == loadedDataA[i]);
+            assertEquals(errorA.data[i], loadedDataA[i]);
         }
 
         WrapperSdkExceptionManager.loadWrapperExceptionData(null);
