@@ -80,9 +80,9 @@ public class WrapperSdkExceptionManagerAndroidTest {
             }
         }
 
-        WrapperSdkExceptionManager.saveWrapperExceptionData(null, null);
+        WrapperSdkExceptionManager.saveWrapperExceptionData(null, UUID.randomUUID().toString());
 
-        WrapperSdkExceptionManager.deleteWrapperExceptionData(null);
+        WrapperSdkExceptionManager.deleteWrapperExceptionData(UUID.randomUUID());
         WrapperSdkExceptionManager.deleteWrapperExceptionData(UUID.randomUUID());
         WrapperSdkExceptionManager.deleteWrapperExceptionData(errorA.id);
 
@@ -94,7 +94,7 @@ public class WrapperSdkExceptionManagerAndroidTest {
             assertEquals(errorA.data[i], loadedDataA[i]);
         }
 
-        WrapperSdkExceptionManager.loadWrapperExceptionData(null);
+        WrapperSdkExceptionManager.loadWrapperExceptionData(UUID.randomUUID().toString());
     }
 
 }
