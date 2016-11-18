@@ -37,8 +37,6 @@ public class WrapperSdkExceptionManagerTest {
 
     @Test
     public void loadWrapperExceptionData() throws Exception {
-        mockStatic(StorageHelper.InternalStorage.class);
-
         PowerMockito.doThrow(new IOException()).when(StorageHelper.InternalStorage.class);
         StorageHelper.InternalStorage.readObject(any(File.class));
         WrapperSdkExceptionManager.loadWrapperExceptionData(UUID.randomUUID());
