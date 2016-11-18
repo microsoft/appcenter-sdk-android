@@ -44,6 +44,14 @@ public class WrapperSdkExceptionManagerTest {
         PowerMockito.doThrow(new ClassNotFoundException()).when(StorageHelper.InternalStorage.class);
         StorageHelper.InternalStorage.readObject(any(File.class));
         WrapperSdkExceptionManager.loadWrapperExceptionData(UUID.randomUUID());
+
+        WrapperSdkExceptionManager.loadWrapperExceptionData(null);
+
+    }
+
+    @Test
+    public void deleteWrapperExceptionDataWithNullId() throws Exception {
+        WrapperSdkExceptionManager.deleteWrapperExceptionData(null);
     }
 
     @Test
@@ -53,5 +61,8 @@ public class WrapperSdkExceptionManagerTest {
         WrapperSdkExceptionManager.saveWrapperExceptionData(null, UUIDUtils.randomUUID());
         verifyStatic();
         MobileCenterLog.error(eq(Crashes.LOG_TAG), anyString(), any(IOException.class));
+
+        WrapperSdkExceptionManager.saveWrapperExceptionData(null, null);
+
     }
 }
