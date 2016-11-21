@@ -191,7 +191,7 @@ public class CrashesAndroidTest {
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 ManagedErrorLog errorLog = (ManagedErrorLog) invocationOnMock.getArguments()[0];
                 errorLog.setErrorThreadName("ReplacedErrorThreadName");
-                Crashes.getInstance().saveWrapperSdkErrorLog(errorLog);
+                WrapperSdkExceptionManager.saveWrapperSdkErrorLog(errorLog);
                 return null;
             }
         }).when(wrapperSdkListener).onCrashCaptured(notNull(ManagedErrorLog.class));

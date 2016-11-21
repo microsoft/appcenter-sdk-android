@@ -20,7 +20,7 @@ abstract class IngestionCallDecorator implements Runnable, ServiceCall, ServiceC
     /**
      * Application secret.
      */
-    final UUID mAppSecret;
+    final String mAppSecret;
 
     /**
      * Installation identifier.
@@ -42,7 +42,7 @@ abstract class IngestionCallDecorator implements Runnable, ServiceCall, ServiceC
      */
     ServiceCall mServiceCall;
 
-    IngestionCallDecorator(Ingestion decoratedApi, UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
+    IngestionCallDecorator(Ingestion decoratedApi, String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
         mDecoratedApi = decoratedApi;
         mAppSecret = appSecret;
         mInstallId = installId;

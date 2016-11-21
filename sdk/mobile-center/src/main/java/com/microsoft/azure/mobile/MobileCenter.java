@@ -281,49 +281,46 @@ public final class MobileCenter {
         if (mApplication != null) {
             MobileCenterLog.warn(LOG_TAG, "Mobile Center may only be configured once");
             return false;
-        }
-        if (application == null) {
+        } else if (application == null) {
             MobileCenterLog.error(LOG_TAG, "application may not be null");
-            return false;
-        }
-        if (appSecret == null) {
-            MobileCenterLog.error(LOG_TAG, "appSecret may not be null");
-            return false;
-        }
-        UUID appSecretUUID;
-        try {
-            appSecretUUID = UUID.fromString(appSecret);
-        } catch (IllegalArgumentException e) {
-            MobileCenterLog.error(LOG_TAG, "appSecret is invalid", e);
-            return false;
-        }
-        mApplication = application;
+        } else if (appSecret == null || appSecret.isEmpty()) {
+            MobileCenterLog.error(LOG_TAG, "appSecret may not be null or empty");
+        } else {
+            mApplication = application;
 
-        /* If parameters are valid, init context related resources. */
-        StorageHelper.initialize(application);
-        mServices = new HashSet<>();
+            /* If parameters are valid, init context related resources. */
+            StorageHelper.initialize(application);
+            mServices = new HashSet<>();
 
-        /* Init channel. */
-        mLogSerializer = new DefaultLogSerializer();
-        mChannel = new DefaultChannel(application, appSecretUUID, mLogSerializer);
-        mChannel.setEnabled(isInstanceEnabled());
-        if (mServerUrl != null)
-            mChannel.setServerUrl(mServerUrl);
-        return true;
+            /* Init channel. */
+            mLogSerializer = new DefaultLogSerializer();
+            mChannel = new DefaultChannel(application, appSecret, mLogSerializer);
+            mChannel.setEnabled(isInstanceEnabled());
+            if (mServerUrl != null)
+                mChannel.setServerUrl(mServerUrl);
+            MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK configured successfully.");
+            return true;
+        }
+
+        MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK configuration failed.");
+        return false;
     }
 
     @SafeVarargs
     private final synchronized void startServices(Class<? extends MobileCenterService>... services) {
         if (services == null) {
-            MobileCenterLog.logAssert(LOG_TAG, "Cannot start services, services array is null. Failed to start Mobile Center SDK");
+            MobileCenterLog.error(LOG_TAG, "Cannot start services, services array is null. Failed to start services.");
             return;
         }
         if (mApplication == null) {
-            MobileCenterLog.logAssert(LOG_TAG, "Cannot start services, Mobile Center has not been configured. Failed to start Mobile Center SDK");
+            String serviceNames = "";
+            for (Class<? extends MobileCenterService> service : services) {
+                serviceNames += "\t" + service.getName() + "\n";
+            }
+            MobileCenterLog.error(LOG_TAG, "Cannot start services, Mobile Center has not been configured. Failed to start the following services:\n" + serviceNames);
             return;
         }
 
-        boolean succeed = true;
         for (Class<? extends MobileCenterService> service : services) {
             if (service == null) {
                 MobileCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
@@ -332,14 +329,9 @@ public final class MobileCenter {
                     startService((MobileCenterService) service.getMethod("getInstance").invoke(null));
                 } catch (Exception e) {
                     MobileCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
-                    succeed = false;
                 }
             }
         }
-        if (succeed)
-            MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK started successfully");
-        else
-            MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK started with error(s)");
     }
 
     /**
@@ -361,6 +353,7 @@ public final class MobileCenter {
         service.onChannelReady(mApplication, mChannel);
         if (isInstanceEnabled())
             mApplication.registerActivityLifecycleCallbacks(service);
+        MobileCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
     }
 
     @SafeVarargs
@@ -368,8 +361,6 @@ public final class MobileCenter {
         boolean configuredSuccessfully = instanceConfigure(application, appSecret);
         if (configuredSuccessfully)
             startServices(services);
-        else
-            MobileCenterLog.logAssert(LOG_TAG, "Failed to configure Mobile Center SDK");
     }
 
     /**
@@ -391,11 +382,6 @@ public final class MobileCenter {
         boolean previouslyEnabled = isInstanceEnabled();
         boolean switchToDisabled = previouslyEnabled && !enabled;
         boolean switchToEnabled = !previouslyEnabled && enabled;
-        if (switchToDisabled) {
-            MobileCenterLog.info(LOG_TAG, "Mobile Center disabled");
-        } else if (switchToEnabled) {
-            MobileCenterLog.info(LOG_TAG, "Mobile Center enabled");
-        }
 
         /* Update state. */
         StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, enabled);
@@ -412,6 +398,15 @@ public final class MobileCenter {
             /* Forward status change. */
             if (service.isInstanceEnabled() != enabled)
                 service.setInstanceEnabled(enabled);
+        }
+
+        /* Log current state. */
+        if (switchToDisabled) {
+            MobileCenterLog.info(LOG_TAG, "Mobile Center has been disabled.");
+        } else if (switchToEnabled) {
+            MobileCenterLog.info(LOG_TAG, "Mobile Center has been enabled.");
+        } else {
+            MobileCenterLog.info(LOG_TAG, "Mobile Center has already been %s." + (enabled ? "enabled" : "disabled"));
         }
     }
 

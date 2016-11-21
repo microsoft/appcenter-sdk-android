@@ -148,6 +148,7 @@ subprojects {
         }
     }
 
+    //noinspection GroovyMissingReturnStatement
     install {
         afterEvaluate {
             repositories.mavenInstaller {
