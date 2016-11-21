@@ -281,7 +281,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report);
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException()).thenReturn(new byte[]{});
 
         CrashesListener mockListener = mock(CrashesListener.class);
         when(mockListener.shouldProcess(report)).thenReturn(false);
@@ -489,7 +489,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenCallRealMethod();
 
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(exception);
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(exception).thenReturn(new byte[]{}).thenReturn(exception);
 
         Crashes.setListener(new AbstractCrashesListener() {
             @Override
@@ -832,6 +832,7 @@ public class CrashesTest {
         verify(wrapperSdkListener).onCrashCaptured(errorLog);
     }
 
+
     @Test
     public void saveWrapperSdkErrorLogJSONException() throws JSONException {
         mockStatic(MobileCenterLog.class);
@@ -840,7 +841,7 @@ public class CrashesTest {
         LogSerializer logSerializer = mock(LogSerializer.class);
         when(logSerializer.serializeLog(errorLog)).thenThrow(new JSONException("mock"));
         Crashes.getInstance().setLogSerializer(logSerializer);
-        Crashes.getInstance().saveWrapperSdkErrorLog(errorLog);
+        WrapperSdkExceptionManager.saveWrapperSdkErrorLog(errorLog);
         verifyStatic();
         MobileCenterLog.error(anyString(), anyString(), any(JSONException.class));
     }
@@ -856,7 +857,7 @@ public class CrashesTest {
         LogSerializer logSerializer = mock(LogSerializer.class);
         when(logSerializer.serializeLog(errorLog)).thenReturn("mock");
         Crashes.getInstance().setLogSerializer(logSerializer);
-        Crashes.getInstance().saveWrapperSdkErrorLog(errorLog);
+        WrapperSdkExceptionManager.saveWrapperSdkErrorLog(errorLog);
         verifyStatic();
         MobileCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
