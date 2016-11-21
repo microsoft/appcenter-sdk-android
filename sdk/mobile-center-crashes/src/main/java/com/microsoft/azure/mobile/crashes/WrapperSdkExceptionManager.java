@@ -25,6 +25,7 @@ public class WrapperSdkExceptionManager {
      */
     @VisibleForTesting
     static final Map<String, byte[]> sWrapperExceptionDataContainer = new HashMap<>();
+
     /**
      * File extension for data files created by this class.
      */

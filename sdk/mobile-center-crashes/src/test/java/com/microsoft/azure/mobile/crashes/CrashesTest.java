@@ -801,7 +801,7 @@ public class CrashesTest {
         assertNull(Crashes.getLastSessionCrashReport());
 
         /*
-         * Deserializing fails twice: processing the log from last time as part of the bulk processing.
+         * De-serializing fails twice: processing the log from last time as part of the bulk processing.
          * And loading that same file for exposing it in getLastErrorReport.
          */
         verifyStatic(times(2));
