@@ -17,6 +17,7 @@ import java.net.UnknownHostException;
 import java.util.UUID;
 
 import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.longThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
@@ -63,7 +64,7 @@ public class IngestionRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
                 return call;
             }
-        }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         Ingestion retryer = new IngestionRetryer(ingestion);
         retryer.sendAsync(null, null, null, callback);
         verify(callback).onCallSucceeded();
@@ -89,7 +90,7 @@ public class IngestionRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
                 return mock(ServiceCall.class);
             }
-        }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         Handler handler = mock(Handler.class);
         Ingestion retryer = new IngestionRetryer(ingestion, handler);
         simulateRetryAfterDelay(handler);
@@ -119,7 +120,7 @@ public class IngestionRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallFailed(expectedException);
                 return mock(ServiceCall.class);
             }
-        }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         Handler handler = mock(Handler.class);
         Ingestion retryer = new IngestionRetryer(ingestion, handler);
         simulateRetryAfterDelay(handler);
@@ -143,7 +144,7 @@ public class IngestionRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallFailed(new HttpException(429));
                 return call;
             }
-        }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         Handler handler = mock(Handler.class);
         Ingestion retryer = new IngestionRetryer(ingestion, handler);
         simulateRetryAfterDelay(handler);
@@ -169,7 +170,7 @@ public class IngestionRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallFailed(new HttpException(503));
                 return call;
             }
-        }).when(ingestion).sendAsync(any(UUID.class), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         Handler handler = mock(Handler.class);
         Ingestion retryer = new IngestionRetryer(ingestion, handler);
         retryer.sendAsync(null, null, null, callback).cancel();

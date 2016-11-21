@@ -128,7 +128,7 @@ public class MobileCenterTest {
     public void nullVarargClass() {
         MobileCenter.start(application, DUMMY_APP_SECRET, (Class<? extends MobileCenterService>) null);
 
-        /* Verify that no modules have been auto-loaded since none are configured for this */
+        /* Verify that no services have been auto-loaded since none are configured for this */
         assertTrue(MobileCenter.isConfigured());
         assertEquals(0, MobileCenter.getInstance().getServices().size());
         assertEquals(application, MobileCenter.getInstance().getApplication());
@@ -142,7 +142,7 @@ public class MobileCenterTest {
         //noinspection ConfusingArgumentToVarargsMethod
         MobileCenter.start((Class<? extends MobileCenterService>[]) null);
 
-        /* Verify that no modules have been auto-loaded since none are configured for this */
+        /* Verify that no services have been auto-loaded since none are configured for this */
         assertTrue(MobileCenter.isConfigured());
         assertEquals(0, MobileCenter.getInstance().getServices().size());
         assertEquals(application, MobileCenter.getInstance().getApplication());
@@ -159,7 +159,7 @@ public class MobileCenterTest {
     public void useDummyServiceTest() {
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class);
 
-        /* Verify that single module has been loaded and configured */
+        /* Verify that single service has been loaded and configured */
         assertEquals(1, MobileCenter.getInstance().getServices().size());
         DummyService service = DummyService.getInstance();
         assertTrue(MobileCenter.getInstance().getServices().contains(service));
@@ -175,7 +175,7 @@ public class MobileCenterTest {
         assertTrue(MobileCenter.isConfigured());
         MobileCenter.start(DummyService.class);
 
-        /* Verify that single module has been loaded and configured */
+        /* Verify that single service has been loaded and configured */
         assertEquals(1, MobileCenter.getInstance().getServices().size());
         DummyService service = DummyService.getInstance();
         assertTrue(MobileCenter.getInstance().getServices().contains(service));
@@ -189,7 +189,7 @@ public class MobileCenterTest {
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class);
         MobileCenter.start(application, DUMMY_APP_SECRET, AnotherDummyService.class); //ignored
 
-        /* Verify that single module has been loaded and configured */
+        /* Verify that single service has been loaded and configured */
         assertEquals(1, MobileCenter.getInstance().getServices().size());
         DummyService service = DummyService.getInstance();
         assertTrue(MobileCenter.getInstance().getServices().contains(service));
@@ -204,7 +204,7 @@ public class MobileCenterTest {
         MobileCenter.configure(application, DUMMY_APP_SECRET); //ignored
         MobileCenter.start(DummyService.class);
 
-        /* Verify that single module has been loaded and configured */
+        /* Verify that single service has been loaded and configured */
         assertEquals(1, MobileCenter.getInstance().getServices().size());
         DummyService service = DummyService.getInstance();
         assertTrue(MobileCenter.getInstance().getServices().contains(service));
@@ -218,7 +218,7 @@ public class MobileCenterTest {
     public void startTwoServicesTest() {
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class, AnotherDummyService.class);
 
-        /* Verify that the right amount of modules have been loaded and configured */
+        /* Verify that the right amount of services have been loaded and configured */
         assertEquals(2, MobileCenter.getInstance().getServices().size());
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
@@ -239,7 +239,7 @@ public class MobileCenterTest {
         MobileCenter.configure(application, DUMMY_APP_SECRET);
         MobileCenter.start(DummyService.class, AnotherDummyService.class);
 
-        /* Verify that the right amount of modules have been loaded and configured */
+        /* Verify that the right amount of services have been loaded and configured */
         assertEquals(2, MobileCenter.getInstance().getServices().size());
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
@@ -261,7 +261,7 @@ public class MobileCenterTest {
         MobileCenter.start(DummyService.class);
         MobileCenter.start(AnotherDummyService.class);
 
-        /* Verify that the right amount of modules have been loaded and configured */
+        /* Verify that the right amount of services have been loaded and configured */
         assertEquals(2, MobileCenter.getInstance().getServices().size());
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
@@ -281,7 +281,7 @@ public class MobileCenterTest {
     public void startTwoServicesWithSomeInvalidReferences() {
         MobileCenter.start(application, DUMMY_APP_SECRET, null, DummyService.class, null, InvalidService.class, AnotherDummyService.class, null);
 
-        /* Verify that the right amount of modules have been loaded and configured */
+        /* Verify that the right amount of services have been loaded and configured */
         assertEquals(2, MobileCenter.getInstance().getServices().size());
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
@@ -303,7 +303,7 @@ public class MobileCenterTest {
         MobileCenter.start(null, DummyService.class, null);
         MobileCenter.start(InvalidService.class, AnotherDummyService.class, null);
 
-        /* Verify that the right amount of modules have been loaded and configured */
+        /* Verify that the right amount of services have been loaded and configured */
         assertEquals(2, MobileCenter.getInstance().getServices().size());
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
@@ -337,7 +337,7 @@ public class MobileCenterTest {
         /* Start twice, this call is ignored. */
         MobileCenter.start(DummyService.class);
 
-        /* Verify that single module has been loaded and configured (only once interaction). */
+        /* Verify that single service has been loaded and configured (only once interaction). */
         assertEquals(1, MobileCenter.getInstance().getServices().size());
         verify(service).getLogFactories();
         verify(service).onChannelReady(any(Context.class), notNull(Channel.class));
@@ -369,7 +369,7 @@ public class MobileCenterTest {
         MobileCenter mobileCenter = MobileCenter.getInstance();
         mobileCenter.setChannel(channel);
 
-        /* Verify modules are enabled by default */
+        /* Verify services are enabled by default */
         Set<MobileCenterService> services = mobileCenter.getServices();
         assertTrue(MobileCenter.isEnabled());
         DummyService dummyService = DummyService.getInstance();
@@ -388,7 +388,7 @@ public class MobileCenterTest {
         verify(anotherDummyService, never()).setInstanceEnabled(anyBoolean());
         verify(channel).setEnabled(true);
 
-        /* Verify disabling base disables all modules */
+        /* Verify disabling base disables all services */
         MobileCenter.setEnabled(false);
         assertFalse(MobileCenter.isEnabled());
         for (MobileCenterService service : services) {
@@ -400,7 +400,7 @@ public class MobileCenterTest {
         verify(application).unregisterActivityLifecycleCallbacks(anotherDummyService);
         verify(channel).setEnabled(false);
 
-        /* Verify re-enabling base re-enables all modules */
+        /* Verify re-enabling base re-enables all services */
         MobileCenter.setEnabled(true);
         assertTrue(MobileCenter.isEnabled());
         for (MobileCenterService service : services) {
@@ -412,7 +412,7 @@ public class MobileCenterTest {
         verify(application, times(2)).registerActivityLifecycleCallbacks(anotherDummyService);
         verify(channel, times(2)).setEnabled(true);
 
-        /* Verify that disabling one module leaves base and other modules enabled */
+        /* Verify that disabling one service leaves base and other services enabled */
         dummyService.setInstanceEnabled(false);
         assertFalse(dummyService.isInstanceEnabled());
         assertTrue(MobileCenter.isEnabled());
@@ -474,7 +474,7 @@ public class MobileCenterTest {
         MobileCenter mobileCenter = MobileCenter.getInstance();
         mobileCenter.setChannel(channel);
 
-        /* Verify modules are enabled by default but MobileCenter is disabled. */
+        /* Verify services are enabled by default but MobileCenter is disabled. */
         assertFalse(MobileCenter.isEnabled());
         for (MobileCenterService service : mobileCenter.getServices()) {
             assertTrue(service.isInstanceEnabled());
@@ -543,28 +543,14 @@ public class MobileCenterTest {
     public void emptyAppIdentifierTest() {
         MobileCenter.start(application, "", DummyService.class);
         PowerMockito.verifyStatic();
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString(), any(IllegalArgumentException.class));
-    }
-
-    @Test
-    public void tooShortAppIdentifierTest() {
-        MobileCenter.start(application, "too-short", DummyService.class);
-        PowerMockito.verifyStatic();
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString(), any(IllegalArgumentException.class));
-    }
-
-    @Test
-    public void invalidAppIdentifierTest() {
-        MobileCenter.start(application, "123xyz12-3xyz-123x-yz12-3xyz123xyz12", DummyService.class);
-        PowerMockito.verifyStatic();
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString(), any(NumberFormatException.class));
+        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
     }
 
     @Test
     public void duplicateServiceTest() {
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class, DummyService.class);
 
-        /* Verify that only one module has been loaded and configured */
+        /* Verify that only one service has been loaded and configured */
         assertEquals(1, MobileCenter.getInstance().getServices().size());
     }
 
@@ -669,6 +655,11 @@ public class MobileCenterTest {
         protected String getServiceName() {
             return "Dummy";
         }
+
+        @Override
+        protected String getLoggerTag() {
+            return "DummyLog";
+        }
     }
 
     private static class AnotherDummyService extends AbstractMobileCenterService {
@@ -699,6 +690,11 @@ public class MobileCenterTest {
         protected String getServiceName() {
             return "AnotherDummy";
         }
+
+        @Override
+        protected String getLoggerTag() {
+            return "AnotherDummyLog";
+        }
     }
 
     private static class InvalidService extends AbstractMobileCenterService {
@@ -711,6 +707,11 @@ public class MobileCenterTest {
         @Override
         protected String getServiceName() {
             return "Invalid";
+        }
+
+        @Override
+        protected String getLoggerTag() {
+            return "InvalidLog";
         }
     }
 }

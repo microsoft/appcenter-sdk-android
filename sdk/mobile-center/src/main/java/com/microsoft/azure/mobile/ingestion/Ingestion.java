@@ -20,7 +20,7 @@ public interface Ingestion extends Closeable {
      * @return the {@link ServiceCall} object
      * @throws IllegalArgumentException thrown if callback is null
      */
-    ServiceCall sendAsync(UUID appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException;
+    ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException;
 
     /**
      * Update server url.

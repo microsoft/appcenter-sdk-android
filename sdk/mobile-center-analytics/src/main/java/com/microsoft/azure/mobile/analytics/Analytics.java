@@ -54,7 +54,7 @@ public class Analytics extends AbstractMobileCenterService {
     private static Analytics sInstance = null;
 
     /**
-     * Log factories managed by this module.
+     * Log factories managed by this service.
      */
     private final Map<String, LogFactory> mFactories;
 
@@ -103,7 +103,7 @@ public class Analytics extends AbstractMobileCenterService {
     }
 
     /**
-     * Check whether Analytics module is enabled or not.
+     * Check whether Analytics service is enabled or not.
      *
      * @return <code>true</code> if enabled, <code>false</code> otherwise.
      */
@@ -112,7 +112,7 @@ public class Analytics extends AbstractMobileCenterService {
     }
 
     /**
-     * Enable or disable Analytics module.
+     * Enable or disable Analytics service.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
@@ -139,7 +139,7 @@ public class Analytics extends AbstractMobileCenterService {
      *
      * TODO the backend does not support that service yet, will be public method later.
      *
-     * @param autoPageTrackingEnabled true to let the module track pages automatically, false otherwise (default state is true).
+     * @param autoPageTrackingEnabled true to let the service track pages automatically, false otherwise (default state is true).
      */
     static void setAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
         getInstance().setInstanceAutoPageTrackingEnabled(autoPageTrackingEnabled);
@@ -212,6 +212,11 @@ public class Analytics extends AbstractMobileCenterService {
     @Override
     protected String getServiceName() {
         return SERVICE_NAME;
+    }
+
+    @Override
+    protected String getLoggerTag() {
+        return LOG_TAG;
     }
 
     @Override

@@ -4,20 +4,6 @@
 
 evaluationDependsOn(':apps')
 
-/*
- * Not a secret, will be shared with private beta customers, git repo itself is private.
- * This account is read only, we use different secret credentials to publish.
- */
-repositories {
-    maven {
-        url 'http://mobilecenter.bintray.com/mobilecenter'
-        credentials {
-            username 'mobile-center'
-            password '9263658ba66b541c798b704723cc020cb40c6f78'
-        }
-    }
-}
-
 android {
     productFlavors {
         projectDependency {
@@ -30,7 +16,7 @@ android {
 }
 
 dependencies {
-    def version = "0.2.0"
+    def version = "0.3.0"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     projectDependencyCompile project(':sdk:mobile-center-analytics')
     projectDependencyCompile project(':sdk:mobile-center-crashes')

@@ -159,7 +159,7 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Check whether Crashes module is enabled or not.
+     * Check whether Crashes service is enabled or not.
      *
      * @return <code>true</code> if enabled, <code>false</code> otherwise.
      */
@@ -168,7 +168,7 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Enable or disable Crashes module.
+     * Enable or disable Crashes service.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
@@ -304,6 +304,9 @@ public class Crashes extends AbstractMobileCenterService {
     protected String getServiceName() {
         return SERVICE_NAME;
     }
+
+    @Override
+    protected String getLoggerTag() { return LOG_TAG; }
 
     @Override
     protected int getTriggerCount() {
@@ -457,6 +460,7 @@ public class Crashes extends AbstractMobileCenterService {
 
     private void removeStoredThrowable(UUID id) {
         mErrorReportCache.remove(id);
+        WrapperSdkExceptionManager.deleteWrapperExceptionData(id);
         ErrorLogHelper.removeStoredThrowableFile(id);
     }
 
@@ -577,6 +581,7 @@ public class Crashes extends AbstractMobileCenterService {
             saveErrorLog(errorLog, errorStorageDirectory, filename);
             File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
             StorageHelper.InternalStorage.writeObject(throwableFile, exception);
+
             MobileCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile);
             if (mWrapperSdkListener != null) {
                 mWrapperSdkListener.onCrashCaptured(errorLog);
@@ -591,27 +596,11 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Serialize error log to a file.
      */
-    private void saveErrorLog(ManagedErrorLog errorLog, File errorStorageDirectory, String filename) throws JSONException, IOException {
+    void saveErrorLog(ManagedErrorLog errorLog, File errorStorageDirectory, String filename) throws JSONException, IOException {
         File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
         String errorLogString = mLogSerializer.serializeLog(errorLog);
         StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
         MobileCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
-    }
-
-    /**
-     * Save error log modified by a wrapper SDK.
-     *
-     * @param errorLog error log to  save or overwrite.
-     */
-    @SuppressWarnings("WeakerAccess")
-    public void saveWrapperSdkErrorLog(ManagedErrorLog errorLog) {
-        try {
-            saveErrorLog(errorLog, ErrorLogHelper.getErrorStorageDirectory(), errorLog.getId().toString());
-        } catch (JSONException e) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Error serializing error log to JSON", e);
-        } catch (IOException e) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Error writing error log to file", e);
-        }
     }
 
     /**
