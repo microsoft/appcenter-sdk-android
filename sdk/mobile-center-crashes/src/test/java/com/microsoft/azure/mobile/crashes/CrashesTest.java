@@ -489,7 +489,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenCallRealMethod();
 
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(exception).thenReturn(new byte[]{}).thenReturn(exception);
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(exception);
 
         Crashes.setListener(new AbstractCrashesListener() {
             @Override
