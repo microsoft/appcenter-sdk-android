@@ -56,7 +56,7 @@ public class WrapperSdkExceptionManagerTest {
     }
 
     @Test
-    public void deleteWrapperExceptionDataWithNullId() throws Exception {
+    public void deleteWrapperExceptionDataWithNullId() {
 
         /* Delete null does nothing. */
         WrapperSdkExceptionManager.deleteWrapperExceptionData(null);
@@ -67,7 +67,7 @@ public class WrapperSdkExceptionManagerTest {
     }
 
     @Test
-    public void deleteWrapperExceptionDataWithMissingId() throws Exception {
+    public void deleteWrapperExceptionDataWithMissingId() {
 
         /* Delete with file not found does nothing. */
         WrapperSdkExceptionManager.deleteWrapperExceptionData(UUID.randomUUID());
