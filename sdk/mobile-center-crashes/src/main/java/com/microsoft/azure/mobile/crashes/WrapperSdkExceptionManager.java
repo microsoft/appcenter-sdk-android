@@ -21,14 +21,15 @@ import java.util.UUID;
 public class WrapperSdkExceptionManager {
 
     /**
+     * Contains wrapper SDK data that has been loaded into memory
+     */
+    @VisibleForTesting
+    static final Map<String, byte[]> sWrapperExceptionDataContainer = new HashMap<>();
+
+    /**
      * File extension for data files created by this class.
      */
     private static final String DATA_FILE_EXTENSION = ".dat";
-
-    /**
-     * Contains wrapper SDK data that has been loaded into memory
-     */
-    private static final Map<String, byte[]> sWrapperExceptionDataContainer = new HashMap<>();
 
     @VisibleForTesting
     WrapperSdkExceptionManager() {
@@ -37,7 +38,7 @@ public class WrapperSdkExceptionManager {
     /**
      * Store the in-memory wrapper exception data to disk. This should only be used by a wrapper SDK.
      *
-     * @param data  The data to be saved
+     * @param data    The data to be saved
      * @param errorId The associated error UUID
      */
     public static void saveWrapperExceptionData(byte[] data, UUID errorId) {
@@ -50,8 +51,7 @@ public class WrapperSdkExceptionManager {
         File dataFile = getFile(errorId);
         try {
             StorageHelper.InternalStorage.writeObject(dataFile, data);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             MobileCenterLog.error(Crashes.LOG_TAG, "Failed to save wrapper exception data to file", e);
         }
     }
@@ -59,27 +59,27 @@ public class WrapperSdkExceptionManager {
     /**
      * Delete wrapper exception data from disk and store it in memory
      *
-     * @param errorId    The associated error UUID
+     * @param errorId The associated error UUID
      */
     public static void deleteWrapperExceptionData(UUID errorId) {
         if (errorId == null) {
             MobileCenterLog.error(Crashes.LOG_TAG, "Failed to delete wrapper exception data: null errorId");
             return;
         }
-
         File dataFile = getFile(errorId);
-        byte[] loadResult = loadWrapperExceptionData(errorId);
-        if (loadResult == null) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Failed to delete wrapper exception data: data not found");
-            return;
+        if (dataFile.exists()) {
+            byte[] loadResult = loadWrapperExceptionData(errorId);
+            if (loadResult == null) {
+                MobileCenterLog.error(Crashes.LOG_TAG, "Failed to delete wrapper exception data: data not found");
+            }
+            StorageHelper.InternalStorage.delete(dataFile);
         }
-        StorageHelper.InternalStorage.delete(dataFile);
     }
 
     /**
      * Load wrapper exception data into memory
      *
-     * @param errorId   The associated error UUID
+     * @param errorId The associated error UUID
      * @return The data loaded into memory
      */
     public static byte[] loadWrapperExceptionData(UUID errorId) {
@@ -101,8 +101,7 @@ public class WrapperSdkExceptionManager {
                 sWrapperExceptionDataContainer.put(errorId.toString(), dataBytes);
             }
             return dataBytes;
-        }
-        catch (ClassNotFoundException | IOException e) {
+        } catch (ClassNotFoundException | IOException e) {
             MobileCenterLog.error(Crashes.LOG_TAG, "Cannot access wrapper exception data file " + dataFile.getName(), e);
         }
         return null;
@@ -111,7 +110,7 @@ public class WrapperSdkExceptionManager {
     /**
      * Get a file object for wrapper exception data
      *
-     * @param errorId   The associated error UUID
+     * @param errorId The associated error UUID
      * @return The corresponding file object
      */
     private static File getFile(@NonNull UUID errorId) {
