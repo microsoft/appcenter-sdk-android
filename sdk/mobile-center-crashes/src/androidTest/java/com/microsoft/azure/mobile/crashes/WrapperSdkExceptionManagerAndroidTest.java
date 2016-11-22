@@ -77,14 +77,20 @@ public class WrapperSdkExceptionManagerAndroidTest {
             }
         }
 
-        // even after deleting errorA, it should exist in memory - so, we can still load it
+        /* Even after deleting errorA, it should exist in memory - so, we can still load it. */
         WrapperSdkExceptionManager.deleteWrapperExceptionData(errorA.id);
         byte[] loadedDataA = WrapperSdkExceptionManager.loadWrapperExceptionData(errorA.id);
         assertNotNull(loadedDataA);
-
         for (int i = 0; i < errorA.data.length; ++i) {
             assertEquals(errorA.data[i], loadedDataA[i]);
         }
-    }
 
+        /* Try to load data bypassing the cache. */
+        WrapperSdkExceptionManager.sWrapperExceptionDataContainer.clear();
+        byte[] loadedDataC = WrapperSdkExceptionManager.loadWrapperExceptionData(errorC.id);
+        assertNotNull(loadedDataC);
+        for (int i = 0; i < errorC.data.length; ++i) {
+            assertEquals(errorC.data[i], loadedDataC[i]);
+        }
+    }
 }
