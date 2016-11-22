@@ -489,7 +489,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(new File("."));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenCallRealMethod();
 
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(exception).thenReturn(new byte[]{}).thenReturn(exception);
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(exception);
 
         Crashes.setListener(new AbstractCrashesListener() {
             @Override
@@ -801,7 +801,7 @@ public class CrashesTest {
         assertNull(Crashes.getLastSessionCrashReport());
 
         /*
-         * Deserializing fails twice: processing the log from last time as part of the bulk processing.
+         * De-serializing fails twice: processing the log from last time as part of the bulk processing.
          * And loading that same file for exposing it in getLastErrorReport.
          */
         verifyStatic(times(2));
