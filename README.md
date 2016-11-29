@@ -1,6 +1,7 @@
 [![Build Status](https://www.bitrise.io/app/78891228f9c6e6dc.svg?token=KQ6kVAci490XBjulCcQuGQ&branch=develop)](https://www.bitrise.io/app/78891228f9c6e6dc)
 [![codecov](https://codecov.io/gh/Microsoft/mobile-center-sdk-android/branch/develop/graph/badge.svg?token=YwMZRPnYK3)](https://codecov.io/gh/Microsoft/mobile-center-sdk-android)
 [![GitHub Release](https://img.shields.io/github/release/Microsoft/mobile-center-sdk-android.svg)](https://github.com/Microsoft/mobile-center-sdk-android/releases/latest)
+[![Bintray](https://api.bintray.com/packages/mobilecenter/mobilecenter/mobile-center/images/download.svg)](https://bintray.com/mobilecenter/mobilecenter)
 [![license](https://img.shields.io/badge/license-MIT%20License-yellow.svg)](https://github.com/Microsoft/mobile-center-sdk-android/blob/develop/license.txt)
 
 # Mobile Center SDK for Android
