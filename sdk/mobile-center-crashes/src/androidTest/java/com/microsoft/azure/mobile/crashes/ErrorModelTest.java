@@ -51,6 +51,7 @@ public class ErrorModelTest {
             Exception exception3 = new Exception();
             exception3.setType(exception1.getType());
             exception3.setMessage(exception1.getMessage());
+            exception3.setStackTrace(exception1.getStackTrace());
             exception3.setFrames(exception1.getFrames());
             exception3.setWrapperSdkName(exception1.getWrapperSdkName());
             errorLog2.setException(exception3);
@@ -284,6 +285,17 @@ public class ErrorModelTest {
                 checkNotEquals(exception1, exception2);
 
                 exception2.setMessage(exception1.getMessage());
+                checkEquals(exception1, exception2);
+            }
+            {
+                exception1.setStackTrace("1");
+                checkNotEquals(exception1, exception2);
+                checkExceptions(serializer, errorLog1, errorLog2, exception1, exception2);
+
+                exception2.setStackTrace("2");
+                checkNotEquals(exception1, exception2);
+
+                exception2.setStackTrace(exception1.getStackTrace());
                 checkEquals(exception1, exception2);
             }
             {
