@@ -25,9 +25,8 @@ This document contains the following sections:
 5. [Crashes APIs](#5-crashes-apis)
 6. [Advanced APIs](#6-advanced-apis)
 7. [Troubleshooting](#7-troubleshooting)
-8. [List of available libraries](#8-list-of-available-libraries) 
-9. [Contributing](#9-contributing)
-10. [Contact](#10-contact)
+8. [Contributing](#8-contributing)
+9. [Contact](#9-contact)
 
 Let's get started with setting up Mobile Center Android SDK in your app to use these services:
 
@@ -264,17 +263,17 @@ You create your own Crashes listener and assign it like this:
     Required permissions are automatically merged into your app's manifest by the SDK.
     
     
-## 9. Contributing
+## 8. Contributing
 
 We're looking forward to your contributions via pull requests.
 
-### 9.1 Code of Conduct
+### 8.1 Code of Conduct
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact opencode@microsoft.com with any additional questions or comments.
 
-### 9.2 Contributor License
+### 8.2 Contributor License
 
 You must sign a [Contributor License Agreement](https://cla.microsoft.com/) before submitting your pull request. To complete the Contributor License Agreement (CLA), you will need to submit a request via the [form](https://cla.microsoft.com/) and then electronically sign the CLA when you receive the email containing the link to the document. You need to sign the CLA only once to cover submission to any Microsoft OSS project. 
 
-## 10. Contact
+## 9. Contact
 If you have further questions or are running into trouble that cannot be resolved by any of the steps here, feel free to open a Github issue here or contact us at mobilecentersdk@microsoft.com.
