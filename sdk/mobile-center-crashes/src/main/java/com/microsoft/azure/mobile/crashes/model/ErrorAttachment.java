@@ -80,7 +80,7 @@ public class ErrorAttachment implements Model {
 
     @Override
     public void read(JSONObject object) throws JSONException {
-        setTextAttachment(object.optString(TEXT_ATTACHMENT));
+        setTextAttachment(object.optString(TEXT_ATTACHMENT, null));
         if (object.has(BINARY_ATTACHMENT)) {
             ErrorBinaryAttachment binaryAttachment = new ErrorBinaryAttachment();
             binaryAttachment.read(object.getJSONObject(BINARY_ATTACHMENT));
