@@ -34,6 +34,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class DatabasePersistenceAsyncTest {
 
     private static final String GROUP = "test";
+
     @Mock
     private final DatabasePersistenceAsync.DatabasePersistenceAsyncCallback mCallback = spy(new DatabasePersistenceAsync.AbstractDatabasePersistenceAsyncCallback() {
 
@@ -41,12 +42,16 @@ public class DatabasePersistenceAsyncTest {
         public void onSuccess(Object result) {
         }
     });
+
     @Rule
     public PowerMockRule rule = new PowerMockRule();
+
     @Mock
     private Handler mHandler;
+
     @Mock
     private Persistence mPersistence;
+
     private DatabasePersistenceAsync mDatabase;
 
     @Before
