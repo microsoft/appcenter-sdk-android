@@ -34,25 +34,20 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class DatabasePersistenceAsyncTest {
 
     private static final String GROUP = "test";
-
-    @Rule
-    public PowerMockRule rule = new PowerMockRule();
-
     @Mock
-    private Handler mHandler;
-
-    @Mock
-    private Persistence mPersistence;
-
-    private DatabasePersistenceAsync mDatabase;
-
-    @Mock
-    private DatabasePersistenceAsync.DatabasePersistenceAsyncCallback mCallback = spy(new DatabasePersistenceAsync.AbstractDatabasePersistenceAsyncCallback() {
+    private final DatabasePersistenceAsync.DatabasePersistenceAsyncCallback mCallback = spy(new DatabasePersistenceAsync.AbstractDatabasePersistenceAsyncCallback() {
 
         @Override
         public void onSuccess(Object result) {
         }
     });
+    @Rule
+    public PowerMockRule rule = new PowerMockRule();
+    @Mock
+    private Handler mHandler;
+    @Mock
+    private Persistence mPersistence;
+    private DatabasePersistenceAsync mDatabase;
 
     @Before
     public void setUp() throws Exception {

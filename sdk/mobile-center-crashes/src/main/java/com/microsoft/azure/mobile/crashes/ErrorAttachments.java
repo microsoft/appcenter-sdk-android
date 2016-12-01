@@ -12,6 +12,7 @@ import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 /**
  * Error attachment utilities.
  */
+@SuppressWarnings("WeakerAccess")
 public final class ErrorAttachments {
 
     @VisibleForTesting
