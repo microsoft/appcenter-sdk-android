@@ -1,3 +1,7 @@
+/*
+ * Copyright © Microsoft Corporation. All rights reserved.
+ */
+
 package com.microsoft.azure.mobile.ingestion.http;
 
 import android.support.annotation.NonNull;
