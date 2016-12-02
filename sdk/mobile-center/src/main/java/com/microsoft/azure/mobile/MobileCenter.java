@@ -145,7 +145,7 @@ public final class MobileCenter {
      * @param application Your application object.
      * @param appSecret   A unique and secret key used to identify the application.
      */
-    @SuppressWarnings("SameParameterValue")
+    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void configure(Application application, String appSecret) {
         getInstance().instanceConfigure(application, appSecret);
     }
@@ -406,7 +406,7 @@ public final class MobileCenter {
         } else if (switchToEnabled) {
             MobileCenterLog.info(LOG_TAG, "Mobile Center has been enabled.");
         } else {
-            MobileCenterLog.info(LOG_TAG, "Mobile Center has already been %s." + (enabled ? "enabled" : "disabled"));
+            MobileCenterLog.info(LOG_TAG, "Mobile Center has already been " + (enabled ? "enabled" : "disabled") + ".");
         }
     }
 

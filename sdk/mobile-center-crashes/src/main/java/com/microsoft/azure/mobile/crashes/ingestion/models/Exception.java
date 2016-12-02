@@ -21,6 +21,8 @@ public class Exception implements Model {
 
     private static final String MESSAGE = "message";
 
+    private static final String STACK_TRACE = "stack_trace";
+
     private static final String INNER_EXCEPTIONS = "inner_exceptions";
 
     private static final String WRAPPER_SDK_NAME = "wrapper_sdk_name";
@@ -34,6 +36,11 @@ public class Exception implements Model {
      * Exception message.
      */
     private String message;
+
+    /**
+     * Raw stack trace. Sent when the frames property is either missing or unreliable.
+     */
+    private String stackTrace;
 
     /**
      * Exception stack trace elements.
@@ -86,6 +93,24 @@ public class Exception implements Model {
      */
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    /***
+     * Get the stack trace value.
+     *
+     * @return the stack trace value
+     */
+    public String getStackTrace() {
+        return stackTrace;
+    }
+
+    /**
+     * Set stack trace value.
+     *
+     * @param stackTrace the stack trace value to set.
+     */
+    public void setStackTrace(String stackTrace) {
+        this.stackTrace = stackTrace;
     }
 
     /**
@@ -146,6 +171,7 @@ public class Exception implements Model {
     public void read(JSONObject object) throws JSONException {
         setType(object.optString(TYPE, null));
         setMessage(object.optString(MESSAGE, null));
+        setStackTrace(object.optString(STACK_TRACE, null));
         setFrames(JSONUtils.readArray(object, FRAMES, StackFrameFactory.getInstance()));
         setInnerExceptions(JSONUtils.readArray(object, INNER_EXCEPTIONS, ExceptionFactory.getInstance()));
         setWrapperSdkName(object.optString(WRAPPER_SDK_NAME, null));
@@ -155,6 +181,7 @@ public class Exception implements Model {
     public void write(JSONStringer writer) throws JSONException {
         JSONUtils.write(writer, TYPE, getType());
         JSONUtils.write(writer, MESSAGE, getMessage());
+        JSONUtils.write(writer, STACK_TRACE, getStackTrace());
         JSONUtils.writeArray(writer, FRAMES, getFrames());
         JSONUtils.writeArray(writer, INNER_EXCEPTIONS, getInnerExceptions());
         JSONUtils.write(writer, WRAPPER_SDK_NAME, getWrapperSdkName());
@@ -171,6 +198,8 @@ public class Exception implements Model {
         if (type != null ? !type.equals(exception.type) : exception.type != null) return false;
         if (message != null ? !message.equals(exception.message) : exception.message != null)
             return false;
+        if (stackTrace != null ? !stackTrace.equals(exception.stackTrace) : exception.stackTrace != null)
+            return false;
         if (frames != null ? !frames.equals(exception.frames) : exception.frames != null)
             return false;
         if (innerExceptions != null ? !innerExceptions.equals(exception.innerExceptions) : exception.innerExceptions != null)
@@ -182,6 +211,7 @@ public class Exception implements Model {
     public int hashCode() {
         int result = type != null ? type.hashCode() : 0;
         result = 31 * result + (message != null ? message.hashCode() : 0);
+        result = 31 * result + (stackTrace != null ? stackTrace.hashCode() : 0);
         result = 31 * result + (frames != null ? frames.hashCode() : 0);
         result = 31 * result + (innerExceptions != null ? innerExceptions.hashCode() : 0);
         result = 31 * result + (wrapperSdkName != null ? wrapperSdkName.hashCode() : 0);
