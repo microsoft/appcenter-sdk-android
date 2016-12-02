@@ -35,6 +35,14 @@ public class DatabasePersistenceAsyncTest {
 
     private static final String GROUP = "test";
 
+    @Mock
+    private final DatabasePersistenceAsync.DatabasePersistenceAsyncCallback mCallback = spy(new DatabasePersistenceAsync.AbstractDatabasePersistenceAsyncCallback() {
+
+        @Override
+        public void onSuccess(Object result) {
+        }
+    });
+
     @Rule
     public PowerMockRule rule = new PowerMockRule();
 
@@ -45,14 +53,6 @@ public class DatabasePersistenceAsyncTest {
     private Persistence mPersistence;
 
     private DatabasePersistenceAsync mDatabase;
-
-    @Mock
-    private DatabasePersistenceAsync.DatabasePersistenceAsyncCallback mCallback = spy(new DatabasePersistenceAsync.AbstractDatabasePersistenceAsyncCallback() {
-
-        @Override
-        public void onSuccess(Object result) {
-        }
-    });
 
     @Before
     public void setUp() throws Exception {

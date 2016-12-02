@@ -28,10 +28,13 @@ import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
 
 
 public class MainActivity extends AppCompatActivity {
-    private static final String LOG_TAG = "MobileCenterSasquatch";
+
     static final String APP_SECRET = "45d1d9f6-2492-4e68-bd44-7190351eb5f3";
     static final String APP_SECRET_KEY = "appSecret";
     static final String SERVER_URL_KEY = "serverUrl";
+
+    private static final String LOG_TAG = "MobileCenterSasquatch";
+
     static SharedPreferences sSharedPreferences;
 
     @Override
@@ -133,6 +136,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onSendingSucceeded(ErrorReport report) {
+
+                @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
                 String message = String.format("%s\nCrash ID: %s\nThrowable: %s", R.string.crash_sent_succeeded, report.getId(), report.getThrowable().toString());
                 Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
             }
