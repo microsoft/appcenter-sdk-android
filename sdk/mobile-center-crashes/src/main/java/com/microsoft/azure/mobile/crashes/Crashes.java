@@ -445,7 +445,7 @@ public class Crashes extends AbstractMobileCenterService {
         if (mUnprocessedErrorReports.size() > 0 &&
                 (StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false)
                         || !(shouldAwaitUserConfirmation = mCrashesListener.shouldAwaitUserConfirmation()))) {
-            if (shouldAwaitUserConfirmation)
+            if (!shouldAwaitUserConfirmation)
                 MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldAwaitUserConfirmation returned false, continue sending logs");
             else
                 MobileCenterLog.debug(LOG_TAG, "The flag for user confirmation is set to ALWAYS_SEND, continue sending logs");
