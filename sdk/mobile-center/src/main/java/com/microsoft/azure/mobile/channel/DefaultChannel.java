@@ -399,8 +399,10 @@ public class DefaultChannel implements Channel {
         /* Check if disabled with discarding logs. */
         if (mDiscardLogs) {
             MobileCenterLog.warn(LOG_TAG, "Channel is disabled, log are discarded.");
-            if (groupState.mListener != null)
+            if (groupState.mListener != null) {
+                groupState.mListener.onBeforeSending(log);
                 groupState.mListener.onFailure(log, new CancellationException("Request cancelled because Channel is disabled."));
+            }
             return;
         }
 
