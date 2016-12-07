@@ -7,6 +7,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 
+import com.microsoft.azure.mobile.CancellationException;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.ingestion.Ingestion;
 import com.microsoft.azure.mobile.ingestion.ServiceCallback;
@@ -619,6 +620,83 @@ public class DefaultChannelTest {
         /* Verify timer. */
         verify(mHandler, never()).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
         verify(mHandler, never()).removeCallbacks(any(Runnable.class));
+    }
+
+    @Test
+    public void errorLogDiscarded() {
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(Ingestion.class));
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
+
+        channel.setEnabled(false);
+        channel.enqueue(mock(Log.class), TEST_GROUP);
+        verify(mockListener).onFailure(any(Log.class), any(CancellationException.class));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void suspendWithFailureCallback() {
+        Ingestion mockIngestion = mock(Ingestion.class);
+        Persistence mockPersistence = mock(Persistence.class);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+
+        when(mockPersistence.countLogs(anyString())).thenReturn(30);
+        when(mockPersistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(10));
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class)))
+                /* Simulate waiting for response for the first batch. */
+                .then(new Answer<Object>() {
+                    @Override
+                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                        return null;
+                    }
+                })
+                /* Simulate waiting for response for the second batch. */
+                .then(new Answer<Object>() {
+                    @Override
+                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                        return null;
+                    }
+                })
+                /* Simulate mockIngestion failure for the third batch. */
+                .then(getSendAsyncAnswer(new SocketException()));
+
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
+
+        verify(mockListener, times(30)).onFailure(any(Log.class), any(SocketException.class));
+        assertFalse(channel.isEnabled());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void suspendWithoutFailureCallback() {
+        Ingestion mockIngestion = mock(Ingestion.class);
+        Persistence mockPersistence = mock(Persistence.class);
+
+        when(mockPersistence.countLogs(anyString())).thenReturn(3);
+        when(mockPersistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(1));
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class)))
+                /* Simulate waiting for response for the first batch. */
+                .then(new Answer<Object>() {
+                    @Override
+                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                        return null;
+                    }
+                })
+                /* Simulate waiting for response for the second batch. */
+                .then(new Answer<Object>() {
+                    @Override
+                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                        return null;
+                    }
+                })
+                /* Simulate mockIngestion failure for the third batch. */
+                .then(getSendAsyncAnswer(new SocketException()));
+
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+
+        assertFalse(channel.isEnabled());
     }
 
     @Test
