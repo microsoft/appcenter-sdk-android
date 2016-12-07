@@ -663,6 +663,7 @@ public class DefaultChannelTest {
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
+        verify(mockListener, times(30)).onBeforeSending(any(Log.class));
         verify(mockListener, times(30)).onFailure(any(Log.class), any(SocketException.class));
         assertFalse(channel.isEnabled());
     }
