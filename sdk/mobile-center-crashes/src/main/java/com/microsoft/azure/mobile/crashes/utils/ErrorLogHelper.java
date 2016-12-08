@@ -9,7 +9,6 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
-import android.util.Log;
 
 import com.microsoft.azure.mobile.Constants;
 import com.microsoft.azure.mobile.crashes.Crashes;
@@ -40,16 +39,13 @@ public class ErrorLogHelper {
     public static final String ERROR_LOG_FILE_EXTENSION = ".json";
 
     public static final String THROWABLE_FILE_EXTENSION = ".throwable";
-
-    @VisibleForTesting
-    static final String ERROR_DIRECTORY = "error";
-
     /**
      * For huge stack traces such as giant StackOverflowError, we keep only beginning and end of frames according to this limit.
      */
     @VisibleForTesting
     public static final int FRAME_LIMIT = 256;
-
+    @VisibleForTesting
+    static final String ERROR_DIRECTORY = "error";
     /**
      * We keep the first half of the limit of frames from the beginning and the second half from end.
      */
@@ -248,7 +244,7 @@ public class ErrorLogHelper {
             for (int i = stackTrace.length - FRAME_LIMIT_HALF; i < stackTrace.length; i++) {
                 stackFrames.add(getModelStackFrame(stackTrace[i]));
             }
-            Log.w(Crashes.LOG_TAG, "Crash frames truncated from " + stackTrace.length + " to " + stackFrames.size() + " frames.");
+            MobileCenterLog.warn(Crashes.LOG_TAG, "Crash frames truncated from " + stackTrace.length + " to " + stackFrames.size() + " frames.");
         } else {
             for (StackTraceElement stackTraceElement : stackTrace) {
                 stackFrames.add(getModelStackFrame(stackTraceElement));
