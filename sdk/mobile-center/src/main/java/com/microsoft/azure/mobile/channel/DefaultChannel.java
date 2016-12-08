@@ -6,6 +6,7 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.azure.mobile.CancellationException;
 import com.microsoft.azure.mobile.ingestion.Ingestion;
 import com.microsoft.azure.mobile.ingestion.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.http.HttpUtils;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -195,7 +197,7 @@ public class DefaultChannel implements Channel {
             for (String groupName : mGroupStates.keySet())
                 checkPendingLogs(groupName);
         } else
-            suspend(true);
+            suspend(true, new CancellationException("Request cancelled because Channel is being disabled."));
     }
 
     @Override
@@ -222,13 +224,25 @@ public class DefaultChannel implements Channel {
      * Stop sending logs until app is restarted or the channel is enabled again.
      *
      * @param deleteLogs in addition to suspending, if this is true, delete all logs from Persistence.
+     * @param exception  the exception that caused suspension.
      */
-    private void suspend(boolean deleteLogs) {
+    private void suspend(boolean deleteLogs, Exception exception) {
         mEnabled = false;
         mDiscardLogs = deleteLogs;
         for (GroupState groupState : mGroupStates.values()) {
             cancelTimer(groupState);
-            groupState.mSendingBatches.clear();
+
+            /* Delete all other batches and call callback method that are currently in progress. */
+            for (Iterator<Map.Entry<String, List<Log>>> iterator = groupState.mSendingBatches.entrySet().iterator(); iterator.hasNext(); ) {
+                Map.Entry<String, List<Log>> entry = iterator.next();
+                List<Log> removedLogsForBatchId = groupState.mSendingBatches.get(entry.getKey());
+                iterator.remove();
+                GroupListener groupListener = groupState.mListener;
+                if (groupListener != null) {
+                    for (Log log : removedLogsForBatchId)
+                        groupListener.onFailure(log, exception);
+                }
+            }
         }
         try {
             mIngestion.close();
@@ -363,7 +377,7 @@ public class DefaultChannel implements Channel {
             for (Log log : removedLogsForBatchId)
                 groupListener.onFailure(log, e);
         }
-        suspend(!recoverableError);
+        suspend(!recoverableError, e);
     }
 
     /**
@@ -375,16 +389,20 @@ public class DefaultChannel implements Channel {
     @Override
     public synchronized void enqueue(@NonNull Log log, @NonNull final String groupName) {
 
-        /* Check if disabled with discarding logs. */
-        if (mDiscardLogs) {
-            MobileCenterLog.warn(LOG_TAG, "Channel is disabled, log are discarded.");
-            return;
-        }
-
         /* Check group name is registered. */
         final GroupState groupState = mGroupStates.get(groupName);
         if (groupState == null) {
             MobileCenterLog.error(LOG_TAG, "Invalid group name:" + groupName);
+            return;
+        }
+
+        /* Check if disabled with discarding logs. */
+        if (mDiscardLogs) {
+            MobileCenterLog.warn(LOG_TAG, "Channel is disabled, log are discarded.");
+            if (groupState.mListener != null) {
+                groupState.mListener.onBeforeSending(log);
+                groupState.mListener.onFailure(log, new CancellationException("Request cancelled because Channel is disabled."));
+            }
             return;
         }
 
