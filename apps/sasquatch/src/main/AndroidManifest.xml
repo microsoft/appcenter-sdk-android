@@ -18,6 +18,9 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".activities.CrashActivity"
+            android:label="@string/title_crashes" />
+        <activity
             android:name=".activities.DeviceInfoActivity"
             android:label="@string/title_device_info" />
         <activity

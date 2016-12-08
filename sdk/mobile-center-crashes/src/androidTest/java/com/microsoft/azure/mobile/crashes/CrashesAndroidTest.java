@@ -79,7 +79,7 @@ public class CrashesAndroidTest {
         when(crashesListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
         when(crashesListener.shouldAwaitUserConfirmation()).thenReturn(true);
         Crashes.setListener(crashesListener);
-        final RuntimeException exception = new RuntimeException();
+        final Error exception = generateStackOverflowError();
         final Thread thread = new Thread() {
 
             @Override
@@ -147,6 +147,21 @@ public class CrashesAndroidTest {
         verify(crashesListener).onBeforeSending(any(ErrorReport.class));
         verify(crashesListener).onSendingSucceeded(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);
+
+        /* Verify log was truncated to 256 frames. */
+        assertTrue(log.get() instanceof ManagedErrorLog);
+        ManagedErrorLog errorLog = (ManagedErrorLog) log.get();
+        assertNotNull(errorLog.getException());
+        assertNotNull(errorLog.getException().getFrames());
+        assertEquals(ErrorLogHelper.FRAME_LIMIT, errorLog.getException().getFrames().size());
+    }
+
+    private Error generateStackOverflowError() {
+        try {
+            return generateStackOverflowError();
+        } catch (StackOverflowError error) {
+            return error;
+        }
     }
 
     @Test
