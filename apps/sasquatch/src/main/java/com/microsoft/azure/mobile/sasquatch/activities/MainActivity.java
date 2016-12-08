@@ -130,6 +130,11 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
+            public void onBeforeSending(ErrorReport report) {
+                Toast.makeText(MainActivity.this, R.string.crash_before_sending, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
             public void onSendingFailed(ErrorReport report, Exception e) {
                 Toast.makeText(MainActivity.this, R.string.crash_sent_failed, Toast.LENGTH_SHORT).show();
             }
