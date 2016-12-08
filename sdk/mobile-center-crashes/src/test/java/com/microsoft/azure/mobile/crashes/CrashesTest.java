@@ -431,6 +431,7 @@ public class CrashesTest {
 
     @Test
     public void trackException() {
+        /* Track exception test. */
         Crashes crashes = Crashes.getInstance();
         Channel mockChannel = mock(Channel.class);
         crashes.onChannelReady(mock(Context.class), mockChannel);
@@ -443,6 +444,19 @@ public class CrashesTest {
                 return item instanceof ManagedErrorLog && exception.getMessage().equals(((ManagedErrorLog) item).getException().getMessage());
             }
         }), eq(crashes.getGroupName()));
+
+        ManagedErrorLog mockLog = mock(ManagedErrorLog.class);
+        when(mockLog.getFatal()).thenReturn(false);
+        CrashesListener mockListener = mock(CrashesListener.class);
+        crashes.setInstanceListener(mockListener);
+
+        /* Crashes callback test for trackException. */
+        crashes.getChannelListener().onBeforeSending(mockLog);
+        verify(mockListener, never()).onBeforeSending(any(ErrorReport.class));
+        crashes.getChannelListener().onSuccess(mockLog);
+        verify(mockListener, never()).onSendingSucceeded(any(ErrorReport.class));
+        crashes.getChannelListener().onFailure(mockLog, exception);
+        verify(mockListener, never()).onSendingFailed(any(ErrorReport.class), eq(exception));
     }
 
     @Test
