@@ -36,16 +36,28 @@ import java.util.UUID;
  */
 public class ErrorLogHelper {
 
+    /**
+     * Error log file extension for the JSON schema.
+     */
     public static final String ERROR_LOG_FILE_EXTENSION = ".json";
 
+    /**
+     * Error log file extension for the serialized throwable for client side inspection.
+     */
     public static final String THROWABLE_FILE_EXTENSION = ".throwable";
+
     /**
      * For huge stack traces such as giant StackOverflowError, we keep only beginning and end of frames according to this limit.
      */
     @VisibleForTesting
     public static final int FRAME_LIMIT = 256;
+
+    /**
+     * Error log directory within application files.
+     */
     @VisibleForTesting
     static final String ERROR_DIRECTORY = "error";
+
     /**
      * We keep the first half of the limit of frames from the beginning and the second half from end.
      */
