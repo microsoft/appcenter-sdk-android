@@ -7,6 +7,8 @@
     <string name="description_test_ui_crash">A UI coding mistake, has inner exception</string>
     <string name="title_stack_overflow_crash">Stack overflow crash</string>
     <string name="description_stack_overflow_crash">Caused by infinite recursion</string>
+    <string name="title_memory_crash">Out of memory crash</string>
+    <string name="description_memory_crash">Allocating a huge array</string>
     <string name="crash_confirmation_dialog_title">Unexpected crash found</string>
     <string name="crash_confirmation_dialog_message">Would you like to send an anonymous report so we can fix the problem?</string>
     <string name="crash_confirmation_dialog_not_send_button">Don\'t Send</string>

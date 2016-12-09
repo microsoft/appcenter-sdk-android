@@ -53,6 +53,13 @@ public class CrashActivity extends AppCompatActivity {
                 public void run() {
                     run();
                 }
+            }),
+            new Crash(R.string.title_memory_crash, R.string.description_memory_crash, new Runnable() {
+
+                @Override
+                public void run() {
+                    new int[Integer.MAX_VALUE].clone();
+                }
             })
     );
 
