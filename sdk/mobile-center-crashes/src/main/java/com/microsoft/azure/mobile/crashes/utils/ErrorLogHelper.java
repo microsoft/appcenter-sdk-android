@@ -36,12 +36,32 @@ import java.util.UUID;
  */
 public class ErrorLogHelper {
 
+    /**
+     * Error log file extension for the JSON schema.
+     */
     public static final String ERROR_LOG_FILE_EXTENSION = ".json";
 
+    /**
+     * Error log file extension for the serialized throwable for client side inspection.
+     */
     public static final String THROWABLE_FILE_EXTENSION = ".throwable";
 
+    /**
+     * For huge stack traces such as giant StackOverflowError, we keep only beginning and end of frames according to this limit.
+     */
+    @VisibleForTesting
+    public static final int FRAME_LIMIT = 256;
+
+    /**
+     * Error log directory within application files.
+     */
     @VisibleForTesting
     static final String ERROR_DIRECTORY = "error";
+
+    /**
+     * We keep the first half of the limit of frames from the beginning and the second half from end.
+     */
+    private static final int FRAME_LIMIT_HALF = FRAME_LIMIT / 2;
 
     /**
      * Root directory for error log and throwable files.
@@ -229,14 +249,29 @@ public class ErrorLogHelper {
     @NonNull
     private static List<StackFrame> getModelFramesFromStackTrace(@NonNull StackTraceElement[] stackTrace) {
         List<StackFrame> stackFrames = new ArrayList<>();
-        for (StackTraceElement stackTraceElement : stackTrace) {
-            StackFrame stackFrame = new StackFrame();
-            stackFrame.setClassName(stackTraceElement.getClassName());
-            stackFrame.setMethodName(stackTraceElement.getMethodName());
-            stackFrame.setLineNumber(stackTraceElement.getLineNumber());
-            stackFrame.setFileName(stackTraceElement.getFileName());
-            stackFrames.add(stackFrame);
+        if (stackTrace.length > FRAME_LIMIT) {
+            for (int i = 0; i < FRAME_LIMIT_HALF; i++) {
+                stackFrames.add(getModelStackFrame(stackTrace[i]));
+            }
+            for (int i = stackTrace.length - FRAME_LIMIT_HALF; i < stackTrace.length; i++) {
+                stackFrames.add(getModelStackFrame(stackTrace[i]));
+            }
+            MobileCenterLog.warn(Crashes.LOG_TAG, "Crash frames truncated from " + stackTrace.length + " to " + stackFrames.size() + " frames.");
+        } else {
+            for (StackTraceElement stackTraceElement : stackTrace) {
+                stackFrames.add(getModelStackFrame(stackTraceElement));
+            }
         }
         return stackFrames;
+    }
+
+    @NonNull
+    private static StackFrame getModelStackFrame(StackTraceElement stackTraceElement) {
+        StackFrame stackFrame = new StackFrame();
+        stackFrame.setClassName(stackTraceElement.getClassName());
+        stackFrame.setMethodName(stackTraceElement.getMethodName());
+        stackFrame.setLineNumber(stackTraceElement.getLineNumber());
+        stackFrame.setFileName(stackTraceElement.getFileName());
+        return stackFrame;
     }
 }

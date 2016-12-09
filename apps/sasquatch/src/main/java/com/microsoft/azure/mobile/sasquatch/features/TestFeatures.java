@@ -5,8 +5,8 @@ import android.content.Intent;
 import android.view.View;
 import android.widget.AdapterView;
 
-import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.sasquatch.R;
+import com.microsoft.azure.mobile.sasquatch.activities.CrashActivity;
 import com.microsoft.azure.mobile.sasquatch.activities.DeviceInfoActivity;
 import com.microsoft.azure.mobile.sasquatch.activities.DummyActivity;
 import com.microsoft.azure.mobile.sasquatch.activities.EventActivity;
@@ -24,29 +24,12 @@ public final class TestFeatures {
     public static void initialize(Activity parentActivity) {
         sTestFeatureModel = new ArrayList<>();
         sParentActivity = new WeakReference<>(parentActivity);
-        sTestFeatureModel.add(new TestFeatureModel(R.string.title_crash, R.string.description_crash, new View.OnClickListener() {
-
-            @Override
-            @SuppressWarnings({"ConstantConditions", "ResultOfMethodCallIgnored"})
-            public void onClick(View v) {
-
-                /* Make the app crash on purpose for testing report. */
-                Crashes.generateTestCrash();
-            }
-        }));
-        sTestFeatureModel.add(new TestFeatureModel(R.string.title_crash_2, R.string.description_crash_2, new View.OnClickListener() {
-
-            @Override
-            @SuppressWarnings({"ConstantConditions", "ResultOfMethodCallIgnored"})
-            public void onClick(View v) {
-                ("" + (42 / Integer.valueOf("0"))).toCharArray();
-            }
-        }));
+        sTestFeatureModel.add(new TestFeatureModel(R.string.title_crashes, R.string.description_crashes, CrashActivity.class));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
-        sTestFeatureModel.add(new TestFeatureModel(R.string.title_error, R.string.description_error, ManagedErrorActivity.class));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_event, R.string.description_event, EventActivity.class));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_page, R.string.description_page, PageActivity.class));
         sTestFeatureModel.add(new TestFeatureModel(R.string.title_generate_page_log, R.string.description_generate_page_log, DummyActivity.class));
+        sTestFeatureModel.add(new TestFeatureModel(R.string.title_error, R.string.description_error, ManagedErrorActivity.class));
     }
 
     public static List<TestFeatureModel> getAvailableControls() {
