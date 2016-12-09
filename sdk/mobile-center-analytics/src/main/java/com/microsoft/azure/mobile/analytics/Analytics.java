@@ -132,6 +132,7 @@ public class Analytics extends AbstractMobileCenterService {
      *
      * @param listener The custom crashes listener.
      */
+    @SuppressWarnings("WeakerAccess")
     @VisibleForTesting
     protected static void setListener(AnalyticsListener listener) {
         getInstance().mAnalyticsListener = listener;
@@ -285,36 +286,19 @@ public class Analytics extends AbstractMobileCenterService {
     @Override
     protected Channel.GroupListener getChannelListener() {
         return new Channel.GroupListener() {
-            private static final int BEFORE_SENDING = 0;
-            private static final int SENDING_SUCCEEDED = 1;
-            private static final int SENDING_FAILED = 2;
-
-            private void callback(int type, Log log, Exception e) {
-                if (log instanceof EventLog) {
-                    EventLog eventLog = (EventLog) log;
-                    if (type == BEFORE_SENDING) {
-                        mAnalyticsListener.onBeforeSending(eventLog);
-                    } else if (type == SENDING_SUCCEEDED) {
-                        mAnalyticsListener.onSendingSucceeded(eventLog);
-                    } else {
-                        mAnalyticsListener.onSendingFailed(eventLog, e);
-                    }
-                }
-            }
-
             @Override
             public void onBeforeSending(Log log) {
-                callback(BEFORE_SENDING, log, null);
+                mAnalyticsListener.onBeforeSending(log);
             }
 
             @Override
             public void onSuccess(Log log) {
-                callback(SENDING_SUCCEEDED, log, null);
+                mAnalyticsListener.onSendingSucceeded(log);
             }
 
             @Override
             public void onFailure(Log log, Exception e) {
-                callback(SENDING_FAILED, log, e);
+                mAnalyticsListener.onSendingFailed(log, e);
             }
         };
     }

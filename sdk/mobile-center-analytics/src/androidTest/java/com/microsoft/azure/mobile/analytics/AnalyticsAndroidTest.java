@@ -62,7 +62,6 @@ public class AnalyticsAndroidTest {
         Analytics.trackEvent("event");
 
         /* First process: enqueue log but network is down... */
-        android.util.Log.i(TAG, "Process 1");
         final EventLog log = new EventLog();
         log.setId(randomUUID());
         log.setName("name");
@@ -72,7 +71,6 @@ public class AnalyticsAndroidTest {
         verifyNoMoreInteractions(analyticsListener);
 
         /* Second process: sending succeeds. */
-        android.util.Log.i(TAG, "Process 2");
         final AtomicReference<Channel.GroupListener> groupListener = new AtomicReference<>();
         channel = mock(Channel.class);
         doAnswer(new Answer() {
