@@ -262,7 +262,7 @@ public class DefaultChannel implements Channel {
 
     private void handleFailureCallback(final GroupState groupState, final boolean deleteLogs) {
         final List<Log> logs = new ArrayList<>();
-        mPersistence.getLogs(groupState.mName, CLEAR_BATCH_SIZE, logs, new DatabasePersistenceAsyncCallback() {
+        mPersistence.getLogs(groupState.mName, CLEAR_BATCH_SIZE, logs, new AbstractDatabasePersistenceAsyncCallback() {
             @Override
             public void onSuccess(Object result) {
                 if (logs.size() > 0 && groupState.mListener != null) {
@@ -273,20 +273,11 @@ public class DefaultChannel implements Channel {
                 }
                 if (logs.size() >= CLEAR_BATCH_SIZE && groupState.mListener != null)
                     handleFailureCallback(groupState, deleteLogs);
-                else
-                    clear();
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                MobileCenterLog.error(LOG_TAG, "Failed to process callbacks for group: " + groupState.mName + ". Skip callbacks.", e);
-                clear();
-            }
-
-            private void clear() {
-                mPersistence.clearPendingLogState(groupState.mName);
-                if (deleteLogs) {
-                    mPersistence.deleteLogs(groupState.mName);
+                else {
+                    mPersistence.clearPendingLogState(groupState.mName);
+                    if (deleteLogs) {
+                        mPersistence.deleteLogs(groupState.mName);
+                    }
                 }
             }
         });
