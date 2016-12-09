@@ -21,6 +21,8 @@ import java.util.Random;
 
 public class CrashActivity extends AppCompatActivity {
 
+    boolean mCrashSuperNotCalled;
+
     private final List<Crash> sCrashes = Arrays.asList(
             new Crash(R.string.title_test_crash, R.string.description_test_crash, new Runnable() {
 
@@ -68,6 +70,14 @@ public class CrashActivity extends AppCompatActivity {
                 public void run() {
                     getResources().openRawResource(~new Random().nextInt(10));
                 }
+            }),
+            new Crash(R.string.title_super_not_called_exception, R.string.description_super_not_called_exception, new Runnable() {
+
+                @Override
+                public void run() {
+                    mCrashSuperNotCalled = true;
+                    finish();
+                }
             })
     );
 
@@ -96,6 +106,13 @@ public class CrashActivity extends AppCompatActivity {
                 ((Crash) parent.getItemAtPosition(position)).crashTask.run();
             }
         });
+    }
+
+    @Override
+    protected void onPause() {
+        if (!mCrashSuperNotCalled) {
+            super.onPause();
+        }
     }
 
     private static class Crash {
