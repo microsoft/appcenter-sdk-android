@@ -1,5 +1,6 @@
 package com.microsoft.azure.mobile.sasquatch.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -18,6 +19,8 @@ import com.microsoft.azure.mobile.sasquatch.R;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+
+import static com.microsoft.azure.mobile.sasquatch.activities.CrashSubActivity.INTENT_EXTRA_CRASH_TYPE;
 
 public class CrashActivity extends AppCompatActivity {
 
@@ -66,11 +69,25 @@ public class CrashActivity extends AppCompatActivity {
                     new int[Integer.MAX_VALUE].clone();
                 }
             }),
+            new Crash(R.string.title_memory_crash2, R.string.description_memory_crash2, new Runnable() {
+
+                @Override
+                public void run() {
+                    startActivity(new Intent(CrashActivity.this, CrashSubActivity.class).putExtra(INTENT_EXTRA_CRASH_TYPE, 1));
+                }
+            }),
             new Crash(R.string.title_variable_message, R.string.description_variable_message, new Runnable() {
 
                 @Override
                 public void run() {
                     getResources().openRawResource(~new Random().nextInt(10));
+                }
+            }),
+            new Crash(R.string.title_variable_message2, R.string.description_variable_message2, new Runnable() {
+
+                @Override
+                public void run() {
+                    startActivity(new Intent(CrashActivity.this, CrashSubActivity.class).putExtra(INTENT_EXTRA_CRASH_TYPE, 2));
                 }
             }),
             new Crash(R.string.title_super_not_called_exception, R.string.description_super_not_called_exception, new Runnable() {
@@ -87,6 +104,13 @@ public class CrashActivity extends AppCompatActivity {
                 public void run() {
                     mCrashSuperDestroyNotCalled = true;
                     finish();
+                }
+            }),
+            new Crash(R.string.title_super_not_called_exception3, R.string.description_super_not_called_exception3, new Runnable() {
+
+                @Override
+                public void run() {
+                    startActivity(new Intent(CrashActivity.this, CrashSubActivity.class).putExtra(INTENT_EXTRA_CRASH_TYPE, 0));
                 }
             })
     );
