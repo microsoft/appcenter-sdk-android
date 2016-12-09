@@ -94,8 +94,7 @@ public class DefaultChannelTest {
                         logs.add(mock(Log.class));
                     }
                 }
-                String uuidString = UUIDUtils.randomUUID().toString();
-                return uuidString;
+                return UUIDUtils.randomUUID().toString();
             }
         };
     }
