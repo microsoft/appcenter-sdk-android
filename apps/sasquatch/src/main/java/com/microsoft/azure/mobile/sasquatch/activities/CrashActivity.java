@@ -53,8 +53,8 @@ public class CrashActivity extends AppCompatActivity {
             }),
             new Crash(R.string.title_stack_overflow_crash, R.string.description_stack_overflow_crash, new Runnable() {
 
-                @SuppressWarnings("InfiniteRecursion")
                 @Override
+                @SuppressWarnings("InfiniteRecursion")
                 public void run() {
                     run();
                 }
@@ -128,7 +128,7 @@ public class CrashActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         if (!mCrashSuperDestroyNotCalled) {
-            super.onPause();
+            super.onDestroy();
         }
     }
 
