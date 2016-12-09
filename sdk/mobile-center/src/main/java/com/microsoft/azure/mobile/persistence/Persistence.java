@@ -37,7 +37,7 @@ public abstract class Persistence implements Closeable {
     /**
      * Deletes a log with the give ID from the {@code group}.
      *
-     * @param group The group of the storage for the log.
+     * @param group The group of the storage for logs.
      * @param id    The ID for a set of logs.
      */
     public abstract void deleteLogs(@NonNull String group, @NonNull String id);
@@ -45,14 +45,14 @@ public abstract class Persistence implements Closeable {
     /**
      * Deletes all logs for the given {@code group}.
      *
-     * @param group The group of the storage for the log.
+     * @param group The group of the storage for logs.
      */
     public abstract void deleteLogs(String group);
 
     /**
      * Gets the number of logs for the given {@code group}.
      *
-     * @param group The group of the storage for the log.
+     * @param group The group of the storage for logs.
      * @return The number of logs for the given {@code group}.
      */
     public abstract int countLogs(@NonNull String group);
@@ -60,7 +60,7 @@ public abstract class Persistence implements Closeable {
     /**
      * Gets an array of logs for the given {@code group}.
      *
-     * @param group   The group of the storage for the log.
+     * @param group   The group of the storage for logs.
      * @param limit   The max number of logs to be returned.
      * @param outLogs A list to receive {@link Log} objects.
      * @return An ID for {@code outLogs}. {@code null} if no logs exist.
@@ -69,14 +69,11 @@ public abstract class Persistence implements Closeable {
     public abstract String getLogs(@NonNull String group, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs);
 
     /**
-     * Clears all associations between logs and ids returned by {@link #getLogs(String, int, List)}}.
+     * Clears all associations between logs of the {@code group} and ids returned by {@link #getLogs(String, int, List)}}.
+     *
+     * @param group The group of the storage for logs. {@code null} for all groups.
      */
-    public abstract void clearPendingLogState();
-
-    /**
-     * Clears all logs.
-     */
-    public abstract void clear();
+    public abstract void clearPendingLogState(@Nullable String group);
 
     /**
      * Gets a {@link LogSerializer}.

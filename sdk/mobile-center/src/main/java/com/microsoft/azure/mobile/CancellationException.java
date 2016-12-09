@@ -5,6 +5,10 @@ package com.microsoft.azure.mobile;
  */
 public class CancellationException extends Exception {
 
+    public CancellationException() {
+        this("Request cancelled because Channel is disabled.");
+    }
+
     @SuppressWarnings("SameParameterValue")
     public CancellationException(String detailMessage) {
         super(detailMessage);
