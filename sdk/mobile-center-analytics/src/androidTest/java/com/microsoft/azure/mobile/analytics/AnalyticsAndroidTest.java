@@ -5,6 +5,7 @@ import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.azure.mobile.Constants;
+import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
 import com.microsoft.azure.mobile.analytics.ingestion.models.EventLog;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.Log;
@@ -93,46 +94,4 @@ public class AnalyticsAndroidTest {
         verify(analyticsListener).onSendingSucceeded(any(EventLog.class));
         verifyNoMoreInteractions(analyticsListener);
     }
-
-    @Test
-    public void testAnalyticsListenerSendingFailed() {
-
-        AnalyticsListener analyticsListener = mock(AnalyticsListener.class);
-        Analytics.setListener(analyticsListener);
-        Channel channel = mock(Channel.class);
-        Analytics.getInstance().onChannelReady(sContext, channel);
-        Analytics.trackEvent("event");
-
-        final EventLog log = new EventLog();
-        log.setId(randomUUID());
-        log.setName("name");
-        Analytics.unsetInstance();
-        Analytics.setListener(analyticsListener);
-        verify(channel).enqueue(any(Log.class), anyString());
-        verifyNoMoreInteractions(analyticsListener);
-
-        android.util.Log.i(TAG, "Process 2");
-        final AtomicReference<Channel.GroupListener> groupListener = new AtomicReference<>();
-        channel = mock(Channel.class);
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                Channel.GroupListener listener = (Channel.GroupListener) invocationOnMock.getArguments()[4];
-                groupListener.set(listener);
-                listener.onBeforeSending(log);
-                return null;
-            }
-        }).when(channel).addGroup(anyString(), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
-        Analytics.unsetInstance();
-        Analytics.setListener(analyticsListener);
-        Analytics.getInstance().onChannelReady(sContext, channel);
-        assertNotNull(groupListener.get());
-        groupListener.get().onSuccess(log);
-        verify(channel, never()).enqueue(any(Log.class), anyString());
-        verify(analyticsListener).onBeforeSending(any(EventLog.class));
-        verify(analyticsListener).onSendingFailed(any(EventLog.class), any(Exception.class));
-        verifyNoMoreInteractions(analyticsListener);
-    }
-
-
 }

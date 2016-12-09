@@ -1,4 +1,4 @@
-package com.microsoft.azure.mobile.analytics;
+package com.microsoft.azure.mobile.analytics.channel;
 
 import com.microsoft.azure.mobile.analytics.ingestion.models.EventLog;
 
