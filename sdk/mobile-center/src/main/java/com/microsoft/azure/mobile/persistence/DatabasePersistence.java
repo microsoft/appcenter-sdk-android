@@ -251,17 +251,23 @@ public class DatabasePersistence extends Persistence {
     }
 
     @Override
-    public void clearPendingLogState() {
-        mPendingDbIdentifiers.clear();
-        mPendingDbIdentifiersGroups.clear();
-        MobileCenterLog.debug(LOG_TAG, "Cleared pending log states");
-    }
-
-    @Override
-    public void clear() {
-        clearPendingLogState();
-        mDatabaseStorage.clear();
-        MobileCenterLog.debug(LOG_TAG, "Deleted logs from the Persistence database");
+    public void clearPendingLogState(@Nullable String group) {
+        if (group == null) {
+            mPendingDbIdentifiers.clear();
+            mPendingDbIdentifiersGroups.clear();
+            MobileCenterLog.debug(LOG_TAG, "Cleared pending log states");
+        } else {
+            for (Iterator<Map.Entry<String, List<Long>>> iterator = mPendingDbIdentifiersGroups.entrySet().iterator(); iterator.hasNext(); ) {
+                Map.Entry<String, List<Long>> entry = iterator.next();
+                if (entry.getKey().startsWith(group)) {
+                    List<Long> pendingDbIdentifiers = mPendingDbIdentifiersGroups.get(entry.getKey());
+                    if (pendingDbIdentifiers != null)
+                        mPendingDbIdentifiers.removeAll(pendingDbIdentifiers);
+                    iterator.remove();
+                }
+            }
+            MobileCenterLog.debug(LOG_TAG, "Cleared pending log states for group: " + group);
+        }
     }
 
     @Override

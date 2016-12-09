@@ -301,7 +301,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(1, persistence.mDatabaseStorage.size());
 
             /* Verify one log still persists in the database. */
-            persistence.clearPendingLogState();
+            persistence.clearPendingLogState(null);
             outputLogs.clear();
             persistence.getLogs("test-p2", 5, outputLogs);
             assertEquals(1, outputLogs.size());
@@ -347,14 +347,14 @@ public class DatabasePersistenceAndroidTest {
             getAllLogs(persistence, "test", numberOfLogs, sizeForGetLogs);
 
             /* Clear ids, we should be able to get the logs again in the same sequence. */
-            persistence.clearPendingLogState();
+            persistence.clearPendingLogState(null);
             getAllLogs(persistence, "test", numberOfLogs, sizeForGetLogs);
 
             /* Count. */
             assertEquals(10, persistence.countLogs("test"));
 
             /* Clear. Nothing to get after. */
-            persistence.clear();
+            persistence.mDatabaseStorage.clear();
             List<Log> outputLogs = new ArrayList<>();
             assertNull(persistence.getLogs("test", sizeForGetLogs, outputLogs));
             assertTrue(outputLogs.isEmpty());

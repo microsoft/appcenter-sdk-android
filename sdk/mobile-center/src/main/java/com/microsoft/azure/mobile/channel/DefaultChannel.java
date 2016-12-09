@@ -42,6 +42,12 @@ import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 public class DefaultChannel implements Channel {
 
     /**
+     * Persistence batch size for {@link Persistence#getLogs(String, int, List)} when clearing.
+     */
+    @VisibleForTesting
+    static final int CLEAR_BATCH_SIZE = 100;
+
+    /**
      * Application context.
      */
     private final Context mContext;
@@ -197,7 +203,7 @@ public class DefaultChannel implements Channel {
             for (String groupName : mGroupStates.keySet())
                 checkPendingLogs(groupName);
         } else
-            suspend(true, new CancellationException("Request cancelled because Channel is being disabled."));
+            suspend(true, new CancellationException());
     }
 
     @Override
@@ -249,10 +255,41 @@ public class DefaultChannel implements Channel {
         } catch (IOException e) {
             MobileCenterLog.error(LOG_TAG, "Failed to close ingestion", e);
         }
-        if (deleteLogs)
-            mPersistence.clear();
-        else
-            mPersistence.clearPendingLogState();
+        for (GroupState groupState : mGroupStates.values()) {
+            handleFailureCallback(groupState, deleteLogs);
+        }
+    }
+
+    private void handleFailureCallback(final GroupState groupState, final boolean deleteLogs) {
+        final List<Log> logs = new ArrayList<>();
+        mPersistence.getLogs(groupState.mName, CLEAR_BATCH_SIZE, logs, new DatabasePersistenceAsyncCallback() {
+            @Override
+            public void onSuccess(Object result) {
+                if (logs.size() > 0 && groupState.mListener != null) {
+                    for (Log log : logs) {
+                        groupState.mListener.onBeforeSending(log);
+                        groupState.mListener.onFailure(log, new CancellationException());
+                    }
+                }
+                if (logs.size() >= CLEAR_BATCH_SIZE && groupState.mListener != null)
+                    handleFailureCallback(groupState, deleteLogs);
+                else
+                    clear();
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                MobileCenterLog.error(LOG_TAG, "Failed to process callbacks for group: " + groupState.mName + ". Skip callbacks.", e);
+                clear();
+            }
+
+            private void clear() {
+                mPersistence.clearPendingLogState(groupState.mName);
+                if (deleteLogs) {
+                    mPersistence.deleteLogs(groupState.mName);
+                }
+            }
+        });
     }
 
     private void cancelTimer(GroupState groupState) {
@@ -401,7 +438,7 @@ public class DefaultChannel implements Channel {
             MobileCenterLog.warn(LOG_TAG, "Channel is disabled, log are discarded.");
             if (groupState.mListener != null) {
                 groupState.mListener.onBeforeSending(log);
-                groupState.mListener.onFailure(log, new CancellationException("Request cancelled because Channel is disabled."));
+                groupState.mListener.onFailure(log, new CancellationException());
             }
             return;
         }
