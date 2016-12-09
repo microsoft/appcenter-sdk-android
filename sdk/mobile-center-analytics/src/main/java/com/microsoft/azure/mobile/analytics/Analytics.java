@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
+import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
 import com.microsoft.azure.mobile.analytics.channel.SessionTracker;
 import com.microsoft.azure.mobile.analytics.ingestion.models.EventLog;
 import com.microsoft.azure.mobile.analytics.ingestion.models.PageLog;
