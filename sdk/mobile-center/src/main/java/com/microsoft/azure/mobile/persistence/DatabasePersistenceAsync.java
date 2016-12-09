@@ -62,7 +62,7 @@ public class DatabasePersistenceAsync {
      * Deletes a log asynchronously with the give ID from the {@code group}.
      * Use {@link #deleteLogs(String, String, DatabasePersistenceAsyncCallback)} if callback needs to be used.
      *
-     * @param group The group of the storage for the log.
+     * @param group The group of the storage for logs.
      * @param id    The ID for a set of logs.
      */
     public void deleteLogs(@NonNull String group, @NonNull String id) {
@@ -72,7 +72,7 @@ public class DatabasePersistenceAsync {
     /**
      * Deletes a log asynchronously with the give ID from the {@code group}.
      *
-     * @param group    The group of the storage for the log.
+     * @param group    The group of the storage for logs.
      * @param id       The ID for a set of logs.
      * @param callback The callback to be called after the operation is completed.
      */
@@ -91,7 +91,7 @@ public class DatabasePersistenceAsync {
      * Deletes all logs asynchronously for the given {@code group}
      * Use {@link #deleteLogs(String, DatabasePersistenceAsyncCallback)} if callback needs to be used.
      *
-     * @param group The group of the storage for the log.
+     * @param group The group of the storage for logs.
      */
     public void deleteLogs(String group) {
         deleteLogs(group, (DatabasePersistenceAsyncCallback) null);
@@ -100,7 +100,7 @@ public class DatabasePersistenceAsync {
     /**
      * Deletes all logs asynchronously for the given {@code group}
      *
-     * @param group    The group of the storage for the log.
+     * @param group    The group of the storage for logs.
      * @param callback The callback to be called after the operation is completed.
      */
     @SuppressWarnings("WeakerAccess")
@@ -117,7 +117,7 @@ public class DatabasePersistenceAsync {
     /**
      * Gets the number of logs asynchronously for the given {@code group}.
      *
-     * @param group    The group of the storage for the log.
+     * @param group    The group of the storage for logs.
      * @param callback The callback to be called with the number of logs for the given {@code group} after the operation is completed.
      */
     public void countLogs(@NonNull final String group, @Nullable final DatabasePersistenceAsyncCallback callback) {
@@ -133,7 +133,7 @@ public class DatabasePersistenceAsync {
     /**
      * Gets an array of logs asynchronously for the given {@code group}.
      *
-     * @param group    The group of the storage for the log.
+     * @param group    The group of the storage for logs.
      * @param limit    The max number of logs to be returned.
      * @param outLogs  A list to receive {@link Log} objects.
      * @param callback The callback to be called with an ID for {@code outLogs} after the operation is completed.
@@ -150,48 +150,27 @@ public class DatabasePersistenceAsync {
     }
 
     /**
-     * Clears all associations between logs and ids returned by {@link #getLogs(String, int, List, DatabasePersistenceAsyncCallback)} asynchronously.
-     * Use {@link #clearPendingLogState(DatabasePersistenceAsyncCallback)} if callback needs to be used.
+     * Clears all associations between logs and IDs returned by {@link #getLogs(String, int, List, DatabasePersistenceAsyncCallback)} asynchronously.
+     * Use {@link #clearPendingLogState(String, DatabasePersistenceAsyncCallback)} if callback needs to be used.
+     *
+     * @param group The group of the storage for logs. {@code null} for all groups.
      */
-    public void clearPendingLogState() {
-        clearPendingLogState(null);
+    public void clearPendingLogState(@Nullable String group) {
+        clearPendingLogState(group, null);
     }
 
     /**
-     * Clears all associations between logs and ids returned by {@link #getLogs(String, int, List, DatabasePersistenceAsyncCallback)} asynchronously.
+     * Clears all associations between logs and IDs returned by {@link #getLogs(String, int, List, DatabasePersistenceAsyncCallback)} asynchronously.
      *
+     * @param group    The group of the storage for logs. {@code null} for all groups.
      * @param callback The callback to be called after the operation is completed.
      */
     @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
-    public void clearPendingLogState(@Nullable final DatabasePersistenceAsyncCallback callback) {
+    public void clearPendingLogState(@Nullable final String group, @Nullable final DatabasePersistenceAsyncCallback callback) {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                mPersistence.clearPendingLogState();
-                onSuccess(callback, null);
-            }
-        });
-    }
-
-    /**
-     * Clears all logs.
-     * Use {@link #clear(DatabasePersistenceAsyncCallback)} if callback needs to be used.
-     */
-    public void clear() {
-        clear(null);
-    }
-
-    /**
-     * Clears all logs.
-     *
-     * @param callback The callback to be called after the operation is completed.
-     */
-    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
-    public void clear(@Nullable final DatabasePersistenceAsyncCallback callback) {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                mPersistence.clear();
+                mPersistence.clearPendingLogState(group);
                 onSuccess(callback, null);
             }
         });
