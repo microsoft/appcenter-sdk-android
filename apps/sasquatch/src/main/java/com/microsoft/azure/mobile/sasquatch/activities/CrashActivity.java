@@ -17,6 +17,7 @@ import com.microsoft.azure.mobile.sasquatch.R;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 public class CrashActivity extends AppCompatActivity {
 
@@ -59,6 +60,13 @@ public class CrashActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     new int[Integer.MAX_VALUE].clone();
+                }
+            }),
+            new Crash(R.string.title_variable_message, R.string.description_variable_message, new Runnable() {
+
+                @Override
+                public void run() {
+                    getResources().openRawResource(~new Random().nextInt(10));
                 }
             })
     );
