@@ -37,7 +37,8 @@ public class DatabasePersistence extends Persistence {
     /**
      * Name of log column in the table.
      */
-    private static final String COLUMN_LOG = "log";
+    @VisibleForTesting
+    static final String COLUMN_LOG = "log";
 
     /**
      * Database name.
@@ -62,12 +63,14 @@ public class DatabasePersistence extends Persistence {
     /**
      * Pending log groups. Key is a UUID and value is a list of database identifiers.
      */
-    private final Map<String, List<Long>> mPendingDbIdentifiersGroups;
+    @VisibleForTesting
+    final Map<String, List<Long>> mPendingDbIdentifiersGroups;
 
     /**
      * Pending logs across all groups.
      */
-    private final Set<Long> mPendingDbIdentifiers;
+    @VisibleForTesting
+    final Set<Long> mPendingDbIdentifiers;
 
     /**
      * Initializes variables.
@@ -260,9 +263,7 @@ public class DatabasePersistence extends Persistence {
             for (Iterator<Map.Entry<String, List<Long>>> iterator = mPendingDbIdentifiersGroups.entrySet().iterator(); iterator.hasNext(); ) {
                 Map.Entry<String, List<Long>> entry = iterator.next();
                 if (entry.getKey().startsWith(group)) {
-                    List<Long> pendingDbIdentifiers = mPendingDbIdentifiersGroups.get(entry.getKey());
-                    if (pendingDbIdentifiers != null)
-                        mPendingDbIdentifiers.removeAll(pendingDbIdentifiers);
+                    mPendingDbIdentifiers.removeAll(mPendingDbIdentifiersGroups.get(entry.getKey()));
                     iterator.remove();
                 }
             }
@@ -273,10 +274,5 @@ public class DatabasePersistence extends Persistence {
     @Override
     public void close() throws IOException {
         mDatabaseStorage.close();
-    }
-
-    @VisibleForTesting
-    Map<String, List<Long>> getPendingDbIdentifiersGroups() {
-        return mPendingDbIdentifiersGroups;
     }
 }
