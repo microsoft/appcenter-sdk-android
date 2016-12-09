@@ -323,7 +323,7 @@ public class AnalyticsTest {
         Analytics.setEnabled(true);
         verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
     }
-
+    
     /**
      * Activity with page name automatically resolving to "My" (no "Activity" suffix).
      */
