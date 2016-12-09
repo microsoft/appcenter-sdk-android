@@ -21,7 +21,9 @@ import java.util.Random;
 
 public class CrashActivity extends AppCompatActivity {
 
-    boolean mCrashSuperNotCalled;
+    private boolean mCrashSuperPauseNotCalled;
+
+    private boolean mCrashSuperDestroyNotCalled;
 
     private final List<Crash> sCrashes = Arrays.asList(
             new Crash(R.string.title_test_crash, R.string.description_test_crash, new Runnable() {
@@ -75,7 +77,15 @@ public class CrashActivity extends AppCompatActivity {
 
                 @Override
                 public void run() {
-                    mCrashSuperNotCalled = true;
+                    mCrashSuperPauseNotCalled = true;
+                    finish();
+                }
+            }),
+            new Crash(R.string.title_super_not_called_exception2, R.string.description_super_not_called_exception2, new Runnable() {
+
+                @Override
+                public void run() {
+                    mCrashSuperDestroyNotCalled = true;
                     finish();
                 }
             })
@@ -110,7 +120,14 @@ public class CrashActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        if (!mCrashSuperNotCalled) {
+        if (!mCrashSuperPauseNotCalled) {
+            super.onPause();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (!mCrashSuperDestroyNotCalled) {
             super.onPause();
         }
     }
