@@ -361,6 +361,35 @@ public class AnalyticsTest {
         listener.onFailure(testEventLog, testException);
     }
 
+    @Test
+    public void testGetChannelListenerWrongLogType() throws IOException, ClassNotFoundException {
+
+        final PageLog testPageLog = new PageLog();
+        final Exception testException = new Exception("test exception message");
+
+        Analytics.setListener(new AnalyticsListener() {
+            @Override
+            public void onBeforeSending(EventLog eventLog) {
+                assertTrue(false);
+            }
+
+            @Override
+            public void onSendingSucceeded(EventLog eventLog) {
+                assertTrue(false);
+            }
+
+            @Override
+            public void onSendingFailed(EventLog eventLog, Exception e) {
+                assertTrue(false);
+            }
+        });
+
+        Channel.GroupListener listener = Analytics.getInstance().getChannelListener();
+        listener.onBeforeSending(testPageLog);
+        listener.onSuccess(testPageLog);
+        listener.onFailure(testPageLog, testException);
+    }
+
     /**
      * Activity with page name automatically resolving to "My" (no "Activity" suffix).
      */
