@@ -339,18 +339,18 @@ public class AnalyticsTest {
 
         Analytics.setListener(new AnalyticsListener() {
             @Override
-            public void onBeforeSending(EventLog eventLog) {
-                assertEquals(eventLog, testEventLog);
+            public void onBeforeSending(Log log) {
+                assertEquals(log, testEventLog);
             }
 
             @Override
-            public void onSendingSucceeded(EventLog eventLog) {
-                assertEquals(eventLog, testEventLog);
+            public void onSendingSucceeded(Log log) {
+                assertEquals(log, testEventLog);
             }
 
             @Override
-            public void onSendingFailed(EventLog eventLog, Exception e) {
-                assertEquals(eventLog, testEventLog);
+            public void onSendingFailed(Log log, Exception e) {
+                assertEquals(log, testEventLog);
                 assertEquals(e, testException);
             }
         });
@@ -359,35 +359,6 @@ public class AnalyticsTest {
         listener.onBeforeSending(testEventLog);
         listener.onSuccess(testEventLog);
         listener.onFailure(testEventLog, testException);
-    }
-
-    @Test
-    public void testGetChannelListenerWrongLogType() throws IOException, ClassNotFoundException {
-
-        final PageLog testPageLog = new PageLog();
-        final Exception testException = new Exception("test exception message");
-
-        Analytics.setListener(new AnalyticsListener() {
-            @Override
-            public void onBeforeSending(EventLog eventLog) {
-                assertTrue(false);
-            }
-
-            @Override
-            public void onSendingSucceeded(EventLog eventLog) {
-                assertTrue(false);
-            }
-
-            @Override
-            public void onSendingFailed(EventLog eventLog, Exception e) {
-                assertTrue(false);
-            }
-        });
-
-        Channel.GroupListener listener = Analytics.getInstance().getChannelListener();
-        listener.onBeforeSending(testPageLog);
-        listener.onSuccess(testPageLog);
-        listener.onFailure(testPageLog, testException);
     }
 
     /**
