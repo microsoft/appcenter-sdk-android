@@ -55,6 +55,11 @@ public final class HttpUtils {
                 return true;
 
         /* Check corner cases. */
-        return t instanceof SSLException && CONNECTION_ISSUE_PATTERN.matcher(t.getMessage().toLowerCase()).find();
+        if (t instanceof SSLException) {
+            String message = t.getMessage();
+            if (message != null && CONNECTION_ISSUE_PATTERN.matcher(message.toLowerCase()).find())
+                return true;
+        }
+        return false;
     }
 }
