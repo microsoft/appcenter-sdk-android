@@ -4,10 +4,8 @@
     <string name="app_name_jcenter">Sasquatch</string>
     <string name="sdk_source_format">SDK source: %s</string>
     <string name="settings">Settings</string>
-    <string name="title_crash">Crash me</string>
-    <string name="description_crash">generateTestCrashes</string>
-    <string name="title_crash_2">Crash me</string>
-    <string name="description_crash_2">Divide 42 by 0</string>
+    <string name="title_crashes">Crashes</string>
+    <string name="description_crashes">Test crashes</string>
     <string name="title_device_info">Device info</string>
     <string name="description_device_info">Display device information</string>
     <string name="title_generate_page_log">Generate page logs</string>
@@ -25,12 +23,4 @@
     <string name="key">Key</string>
     <string name="value">Value</string>
     <string name="app_secret_toast">App Secret: %s</string>
-    <string name="crash_confirmation_dialog_title">Unexpected crash found</string>
-    <string name="crash_confirmation_dialog_message">Would you like to send an anonymous report so we can fix the problem?</string>
-    <string name="crash_confirmation_dialog_not_send_button">Don\'t Send</string>
-    <string name="crash_confirmation_dialog_always_send_button">Always Send</string>
-    <string name="crash_confirmation_dialog_send_button">Send</string>
-    <string name="crash_before_sending">Sending Crash reports.</string>
-    <string name="crash_sent_succeeded">Crash reports delivered successfully.</string>
-    <string name="crash_sent_failed">Failed to deliver Crash reports.</string>
 </resources>
