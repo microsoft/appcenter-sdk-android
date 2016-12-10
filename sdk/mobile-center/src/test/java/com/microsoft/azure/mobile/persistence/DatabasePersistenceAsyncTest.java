@@ -133,30 +133,16 @@ public class DatabasePersistenceAsyncTest {
 
     @Test
     public void clearPendingLogState() {
-        mDatabase.clearPendingLogState();
-        verify(mPersistence).clearPendingLogState();
+        mDatabase.clearPendingLogState("test");
+        verify(mPersistence).clearPendingLogState("test");
     }
 
     @Test
     public void clearPendingLogStateWithCallback() {
-        mDatabase.clearPendingLogState(mCallback);
-        verify(mPersistence).clearPendingLogState();
+        mDatabase.clearPendingLogState("test", mCallback);
+        verify(mPersistence).clearPendingLogState("test");
         verify(mCallback).onSuccess(null);
     }
-
-    @Test
-    public void clear() {
-        mDatabase.clear();
-        verify(mPersistence).clear();
-    }
-
-    @Test
-    public void clearWithCallback() {
-        mDatabase.clear(mCallback);
-        verify(mPersistence).clear();
-        verify(mCallback).onSuccess(null);
-    }
-
 
     @Test
     public void close() throws IOException {
