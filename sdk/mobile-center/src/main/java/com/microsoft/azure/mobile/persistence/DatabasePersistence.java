@@ -37,7 +37,8 @@ public class DatabasePersistence extends Persistence {
     /**
      * Name of log column in the table.
      */
-    private static final String COLUMN_LOG = "log";
+    @VisibleForTesting
+    static final String COLUMN_LOG = "log";
 
     /**
      * Database name.
@@ -62,12 +63,14 @@ public class DatabasePersistence extends Persistence {
     /**
      * Pending log groups. Key is a UUID and value is a list of database identifiers.
      */
-    private final Map<String, List<Long>> mPendingDbIdentifiersGroups;
+    @VisibleForTesting
+    final Map<String, List<Long>> mPendingDbIdentifiersGroups;
 
     /**
      * Pending logs across all groups.
      */
-    private final Set<Long> mPendingDbIdentifiers;
+    @VisibleForTesting
+    final Set<Long> mPendingDbIdentifiers;
 
     /**
      * Initializes variables.
@@ -251,26 +254,25 @@ public class DatabasePersistence extends Persistence {
     }
 
     @Override
-    public void clearPendingLogState() {
-        mPendingDbIdentifiers.clear();
-        mPendingDbIdentifiersGroups.clear();
-        MobileCenterLog.debug(LOG_TAG, "Cleared pending log states");
-    }
-
-    @Override
-    public void clear() {
-        clearPendingLogState();
-        mDatabaseStorage.clear();
-        MobileCenterLog.debug(LOG_TAG, "Deleted logs from the Persistence database");
+    public void clearPendingLogState(@Nullable String group) {
+        if (group == null) {
+            mPendingDbIdentifiers.clear();
+            mPendingDbIdentifiersGroups.clear();
+            MobileCenterLog.debug(LOG_TAG, "Cleared pending log states");
+        } else {
+            for (Iterator<Map.Entry<String, List<Long>>> iterator = mPendingDbIdentifiersGroups.entrySet().iterator(); iterator.hasNext(); ) {
+                Map.Entry<String, List<Long>> entry = iterator.next();
+                if (entry.getKey().startsWith(group)) {
+                    mPendingDbIdentifiers.removeAll(mPendingDbIdentifiersGroups.get(entry.getKey()));
+                    iterator.remove();
+                }
+            }
+            MobileCenterLog.debug(LOG_TAG, "Cleared pending log states for group: " + group);
+        }
     }
 
     @Override
     public void close() throws IOException {
         mDatabaseStorage.close();
-    }
-
-    @VisibleForTesting
-    Map<String, List<Long>> getPendingDbIdentifiersGroups() {
-        return mPendingDbIdentifiersGroups;
     }
 }
