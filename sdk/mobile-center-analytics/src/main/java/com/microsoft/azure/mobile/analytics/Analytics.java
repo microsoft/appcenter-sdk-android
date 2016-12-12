@@ -15,6 +15,7 @@ import com.microsoft.azure.mobile.analytics.ingestion.models.json.EventLogFactor
 import com.microsoft.azure.mobile.analytics.ingestion.models.json.PageLogFactory;
 import com.microsoft.azure.mobile.analytics.ingestion.models.json.StartSessionLogFactory;
 import com.microsoft.azure.mobile.channel.Channel;
+import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
@@ -69,6 +70,11 @@ public class Analytics extends AbstractMobileCenterService {
     private SessionTracker mSessionTracker;
 
     /**
+     * Custom analytics listener.
+     */
+    private AnalyticsListener mAnalyticsListener;
+
+    /**
      * Automatic page tracking flag.
      * TODO the backend does not support pages yet so the default value would be true after the service becomes public.
      */
@@ -118,6 +124,15 @@ public class Analytics extends AbstractMobileCenterService {
      */
     public static void setEnabled(boolean enabled) {
         getInstance().setInstanceEnabled(enabled);
+    }
+
+    /**
+     * Sets an analytics listener.
+     *
+     * @param listener The custom crashes listener.
+     */
+    public static void setListener(AnalyticsListener listener) {
+        getInstance().mAnalyticsListener = listener;
     }
 
     /**
@@ -263,6 +278,43 @@ public class Analytics extends AbstractMobileCenterService {
     public synchronized void setInstanceEnabled(boolean enabled) {
         super.setInstanceEnabled(enabled);
         applyEnabledState(enabled);
+    }
+
+    @Override
+    protected Channel.GroupListener getChannelListener() {
+        return new Channel.GroupListener() {
+            private static final int BEFORE_SENDING = 0;
+            private static final int SENDING_SUCCEEDED = 1;
+            private static final int SENDING_FAILED = 2;
+
+            private void callback(int type, Log log, Exception e) {
+                if (log instanceof EventLog) {
+                    EventLog eventLog = (EventLog) log;
+                    if (type == BEFORE_SENDING) {
+                        mAnalyticsListener.onBeforeSending(eventLog);
+                    } else if (type == SENDING_SUCCEEDED) {
+                        mAnalyticsListener.onSendingSucceeded(eventLog);
+                    } else {
+                        mAnalyticsListener.onSendingFailed(eventLog, e);
+                    }
+                }
+            }
+
+            @Override
+            public void onBeforeSending(Log log) {
+                callback(BEFORE_SENDING, log, null);
+            }
+
+            @Override
+            public void onSuccess(Log log) {
+                callback(SENDING_SUCCEEDED, log, null);
+            }
+
+            @Override
+            public void onFailure(Log log, Exception e) {
+                callback(SENDING_FAILED, log, e);
+            }
+        };
     }
 
     /**
