@@ -28,7 +28,7 @@ public final class HttpUtils {
     /**
      * Some transient exceptions can only be detected by interpreting the message...
      */
-    private static Pattern CONNECTION_ISSUE_PATTERN = Pattern.compile("connection (time|reset)");
+    private static Pattern CONNECTION_ISSUE_PATTERN = Pattern.compile("connection (time|reset)|failure in ssl library, usually a protocol error");
 
     @VisibleForTesting
     HttpUtils() {
