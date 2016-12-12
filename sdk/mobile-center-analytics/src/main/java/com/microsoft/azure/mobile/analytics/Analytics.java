@@ -114,6 +114,7 @@ public class Analytics extends AbstractMobileCenterService {
      *
      * @return <code>true</code> if enabled, <code>false</code> otherwise.
      */
+    @SuppressWarnings("WeakerAccess")
     public static boolean isEnabled() {
         return getInstance().isInstanceEnabled();
     }
@@ -123,6 +124,7 @@ public class Analytics extends AbstractMobileCenterService {
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
+    @SuppressWarnings("WeakerAccess")
     public static void setEnabled(boolean enabled) {
         getInstance().setInstanceEnabled(enabled);
     }
@@ -203,6 +205,7 @@ public class Analytics extends AbstractMobileCenterService {
      * @param name       An event name.
      * @param properties Optional properties.
      */
+    @SuppressWarnings("WeakerAccess")
     public static void trackEvent(@NonNull String name, @Nullable Map<String, String> properties) {
         getInstance().queueEvent(name, properties);
     }
