@@ -33,7 +33,6 @@ public final class UUIDUtils {
     UUIDUtils() {
     }
 
-
     /**
      * Get a version 4 variant 2 random UUID.
      *
