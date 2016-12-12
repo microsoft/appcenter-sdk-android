@@ -291,17 +291,23 @@ public class Analytics extends AbstractMobileCenterService {
         return new Channel.GroupListener() {
             @Override
             public void onBeforeSending(Log log) {
-                mAnalyticsListener.onBeforeSending(log);
+                if (mAnalyticsListener != null) {
+                    mAnalyticsListener.onBeforeSending(log);
+                }
             }
 
             @Override
             public void onSuccess(Log log) {
-                mAnalyticsListener.onSendingSucceeded(log);
+                if (mAnalyticsListener != null) {
+                    mAnalyticsListener.onSendingSucceeded(log);
+                }
             }
 
             @Override
             public void onFailure(Log log, Exception e) {
-                mAnalyticsListener.onSendingFailed(log, e);
+                if (mAnalyticsListener != null) {
+                    mAnalyticsListener.onSendingFailed(log, e);
+                }
             }
         };
     }
