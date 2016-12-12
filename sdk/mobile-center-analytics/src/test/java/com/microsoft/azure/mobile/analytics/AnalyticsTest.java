@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.SystemClock;
 
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
 import com.microsoft.azure.mobile.analytics.channel.SessionTracker;
 import com.microsoft.azure.mobile.analytics.ingestion.models.EventLog;
 import com.microsoft.azure.mobile.analytics.ingestion.models.PageLog;
@@ -29,10 +30,13 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -322,6 +326,39 @@ public class AnalyticsTest {
         /* Enable: start session not sent retroactively, weak reference lost. */
         Analytics.setEnabled(true);
         verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
+    }
+
+    @Test
+    public void testGetChannelListener() throws IOException, ClassNotFoundException {
+
+        final EventLog testEventLog = new EventLog();
+        testEventLog.setId(UUID.randomUUID());
+        testEventLog.setName("name");
+
+        final Exception testException = new Exception("test exception message");
+
+        Analytics.setListener(new AnalyticsListener() {
+            @Override
+            public void onBeforeSending(Log log) {
+                assertEquals(log, testEventLog);
+            }
+
+            @Override
+            public void onSendingSucceeded(Log log) {
+                assertEquals(log, testEventLog);
+            }
+
+            @Override
+            public void onSendingFailed(Log log, Exception e) {
+                assertEquals(log, testEventLog);
+                assertEquals(e, testException);
+            }
+        });
+
+        Channel.GroupListener listener = Analytics.getInstance().getChannelListener();
+        listener.onBeforeSending(testEventLog);
+        listener.onSuccess(testEventLog);
+        listener.onFailure(testEventLog, testException);
     }
 
     /**
