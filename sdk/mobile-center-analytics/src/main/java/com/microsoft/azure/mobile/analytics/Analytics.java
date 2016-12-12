@@ -135,7 +135,7 @@ public class Analytics extends AbstractMobileCenterService {
     @SuppressWarnings("WeakerAccess")
     @VisibleForTesting
     protected static void setListener(AnalyticsListener listener) {
-        getInstance().mAnalyticsListener = listener;
+        getInstance().setInstanceListener(listener);
     }
 
     /**
@@ -374,4 +374,13 @@ public class Analytics extends AbstractMobileCenterService {
     private synchronized void setInstanceAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
         mAutoPageTrackingEnabled = autoPageTrackingEnabled;
     }
+
+    /**
+     * Implements {@link #setListener(AnalyticsListener)}.
+     */
+    private synchronized void setInstanceListener(AnalyticsListener listener)
+    {
+        mAnalyticsListener = listener;
+    }
+
 }
