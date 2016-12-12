@@ -334,7 +334,6 @@ public class AnalyticsTest {
         final EventLog testEventLog = new EventLog();
         testEventLog.setId(UUID.randomUUID());
         testEventLog.setName("name");
-
         final Exception testException = new Exception("test exception message");
 
         Analytics.setListener(new AnalyticsListener() {
@@ -359,6 +358,24 @@ public class AnalyticsTest {
         listener.onBeforeSending(testEventLog);
         listener.onSuccess(testEventLog);
         listener.onFailure(testEventLog, testException);
+    }
+
+    @Test
+    public void testAnalyticsListenerNull() {
+        AnalyticsListener analyticsListener = mock(AnalyticsListener.class);
+        Analytics.setListener(analyticsListener);
+        Analytics.setListener(null);
+        final EventLog testEventLog = new EventLog();
+        testEventLog.setId(UUID.randomUUID());
+        testEventLog.setName("name");
+        final Exception testException = new Exception("test exception message");
+        Channel.GroupListener listener = Analytics.getInstance().getChannelListener();
+        listener.onBeforeSending(testEventLog);
+        listener.onSuccess(testEventLog);
+        listener.onFailure(testEventLog, testException);
+        verify(analyticsListener, never()).onBeforeSending(any(EventLog.class));
+        verify(analyticsListener, never()).onSendingSucceeded(any(EventLog.class));
+        verify(analyticsListener, never()).onSendingFailed(any(EventLog.class), any(Exception.class));
     }
 
     /**
