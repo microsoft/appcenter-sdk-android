@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
+import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
 import com.microsoft.azure.mobile.analytics.channel.SessionTracker;
 import com.microsoft.azure.mobile.analytics.ingestion.models.EventLog;
 import com.microsoft.azure.mobile.analytics.ingestion.models.PageLog;
@@ -15,6 +16,7 @@ import com.microsoft.azure.mobile.analytics.ingestion.models.json.EventLogFactor
 import com.microsoft.azure.mobile.analytics.ingestion.models.json.PageLogFactory;
 import com.microsoft.azure.mobile.analytics.ingestion.models.json.StartSessionLogFactory;
 import com.microsoft.azure.mobile.channel.Channel;
+import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
@@ -69,6 +71,11 @@ public class Analytics extends AbstractMobileCenterService {
     private SessionTracker mSessionTracker;
 
     /**
+     * Custom analytics listener.
+     */
+    private AnalyticsListener mAnalyticsListener;
+
+    /**
      * Automatic page tracking flag.
      * TODO the backend does not support pages yet so the default value would be true after the service becomes public.
      */
@@ -107,6 +114,7 @@ public class Analytics extends AbstractMobileCenterService {
      *
      * @return <code>true</code> if enabled, <code>false</code> otherwise.
      */
+    @SuppressWarnings("WeakerAccess")
     public static boolean isEnabled() {
         return getInstance().isInstanceEnabled();
     }
@@ -116,8 +124,20 @@ public class Analytics extends AbstractMobileCenterService {
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
+    @SuppressWarnings("WeakerAccess")
     public static void setEnabled(boolean enabled) {
         getInstance().setInstanceEnabled(enabled);
+    }
+
+    /**
+     * Sets an analytics listener.
+     *
+     * @param listener The custom crashes listener.
+     */
+    @SuppressWarnings("WeakerAccess")
+    @VisibleForTesting
+    protected static void setListener(AnalyticsListener listener) {
+        getInstance().setInstanceListener(listener);
     }
 
     /**
@@ -185,6 +205,7 @@ public class Analytics extends AbstractMobileCenterService {
      * @param name       An event name.
      * @param properties Optional properties.
      */
+    @SuppressWarnings("WeakerAccess")
     public static void trackEvent(@NonNull String name, @Nullable Map<String, String> properties) {
         getInstance().queueEvent(name, properties);
     }
@@ -265,6 +286,26 @@ public class Analytics extends AbstractMobileCenterService {
         applyEnabledState(enabled);
     }
 
+    @Override
+    protected Channel.GroupListener getChannelListener() {
+        return new Channel.GroupListener() {
+            @Override
+            public void onBeforeSending(Log log) {
+                mAnalyticsListener.onBeforeSending(log);
+            }
+
+            @Override
+            public void onSuccess(Log log) {
+                mAnalyticsListener.onSendingSucceeded(log);
+            }
+
+            @Override
+            public void onFailure(Log log, Exception e) {
+                mAnalyticsListener.onSendingFailed(log, e);
+            }
+        };
+    }
+
     /**
      * React to enable state change.
      *
@@ -336,4 +377,13 @@ public class Analytics extends AbstractMobileCenterService {
     private synchronized void setInstanceAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
         mAutoPageTrackingEnabled = autoPageTrackingEnabled;
     }
+
+    /**
+     * Implements {@link #setListener(AnalyticsListener)}.
+     */
+    private synchronized void setInstanceListener(AnalyticsListener listener)
+    {
+        mAnalyticsListener = listener;
+    }
+
 }
