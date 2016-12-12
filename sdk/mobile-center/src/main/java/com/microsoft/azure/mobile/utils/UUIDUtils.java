@@ -33,6 +33,7 @@ public final class UUIDUtils {
     UUIDUtils() {
     }
 
+
     /**
      * Get a version 4 variant 2 random UUID.
      *
@@ -44,15 +45,20 @@ public final class UUIDUtils {
         } catch (SecurityException e) {
 
             /* Some devices can crash while allocating a SecureRandom, used by UUID, fall back... */
-            synchronized (UUIDUtils.class) {
-                if (sRandom == null) {
-                    sRandom = new Random();
-                    MobileCenterLog.error(MobileCenter.LOG_TAG, "UUID.randomUUID failed, using Random as fallback", e);
-                }
-            }
+            initFailOver(e);
             long highest = (sRandom.nextLong() & -61441L) | 16384L;
             long lowest = (sRandom.nextLong() & 4611686018427387903L) | -9223372036854775808L;
             return new UUID(highest, lowest);
+        }
+    }
+
+    /**
+     * Init the fail over random the first time we hit the error.
+     */
+    private static synchronized void initFailOver(SecurityException e) {
+        if (sRandom == null) {
+            sRandom = new Random();
+            MobileCenterLog.error(MobileCenter.LOG_TAG, "UUID.randomUUID failed, using Random as fallback", e);
         }
     }
 
