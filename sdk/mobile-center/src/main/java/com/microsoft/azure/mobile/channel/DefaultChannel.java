@@ -48,6 +48,11 @@ public class DefaultChannel implements Channel {
     static final int CLEAR_BATCH_SIZE = 100;
 
     /**
+     * Shutdown timeout in millis.
+     */
+    private static final int SHUTDOWN_TIMEOUT = 5000;
+
+    /**
      * Application context.
      */
     private final Context mContext;
@@ -253,7 +258,7 @@ public class DefaultChannel implements Channel {
         try {
             mIngestion.close();
         } catch (IOException e) {
-            MobileCenterLog.error(LOG_TAG, "Failed to close ingestion", e);
+            MobileCenterLog.error(LOG_TAG, "Failed to shutdown ingestion", e);
         }
         for (GroupState groupState : mGroupStates.values()) {
             handleFailureCallback(groupState, deleteLogs);
@@ -513,6 +518,17 @@ public class DefaultChannel implements Channel {
     @Override
     public synchronized void removeListener(Listener listener) {
         mListeners.remove(listener);
+    }
+
+    @Override
+    public void shutdown() {
+        suspend(false, new CancellationException());
+        try {
+            MobileCenterLog.debug(LOG_TAG, "Wait for persistence to process queue.");
+            mPersistence.waitCurrentTasksToComplete(SHUTDOWN_TIMEOUT);
+        } catch (InterruptedException e) {
+            MobileCenterLog.warn(LOG_TAG, "Interrupted in Channel.shutdown()", e);
+        }
     }
 
     /**

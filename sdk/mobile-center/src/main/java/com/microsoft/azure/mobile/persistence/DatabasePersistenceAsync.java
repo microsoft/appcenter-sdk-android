@@ -11,6 +11,8 @@ import com.microsoft.azure.mobile.ingestion.models.Log;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 public class DatabasePersistenceAsync {
 
@@ -191,6 +193,7 @@ public class DatabasePersistenceAsync {
      */
     public void close(@Nullable final DatabasePersistenceAsyncCallback callback) {
         mHandler.post(new Runnable() {
+
             @Override
             public void run() {
                 try {
@@ -202,6 +205,24 @@ public class DatabasePersistenceAsync {
                 mHandler.removeCallbacks(this);
             }
         });
+    }
+
+    /**
+     * Wait for all current tasks to complete. It does not wait for future tasks.
+     *
+     * @param timeout the maximum time to wait in millis.
+     * @throws InterruptedException if the current thread is interrupted.
+     */
+    public void waitCurrentTasksToComplete(long timeout) throws InterruptedException {
+        final Semaphore semaphore = new Semaphore(0);
+        mHandler.post(new Runnable() {
+
+            @Override
+            public void run() {
+                semaphore.release();
+            }
+        });
+        semaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS);
     }
 
     /**
