@@ -50,7 +50,8 @@ public class DefaultChannel implements Channel {
     /**
      * Shutdown timeout in millis.
      */
-    private static final int SHUTDOWN_TIMEOUT = 5000;
+    @VisibleForTesting
+    static final int SHUTDOWN_TIMEOUT = 5000;
 
     /**
      * Application context.
@@ -248,10 +249,12 @@ public class DefaultChannel implements Channel {
                 Map.Entry<String, List<Log>> entry = iterator.next();
                 List<Log> removedLogsForBatchId = groupState.mSendingBatches.get(entry.getKey());
                 iterator.remove();
-                GroupListener groupListener = groupState.mListener;
-                if (groupListener != null) {
-                    for (Log log : removedLogsForBatchId)
-                        groupListener.onFailure(log, exception);
+                if (deleteLogs) {
+                    GroupListener groupListener = groupState.mListener;
+                    if (groupListener != null) {
+                        for (Log log : removedLogsForBatchId)
+                            groupListener.onFailure(log, exception);
+                    }
                 }
             }
         }
@@ -529,7 +532,7 @@ public class DefaultChannel implements Channel {
             MobileCenterLog.debug(LOG_TAG, "Wait for persistence to process queue.");
             mPersistence.waitForCurrentTasksToComplete(SHUTDOWN_TIMEOUT);
         } catch (InterruptedException e) {
-            MobileCenterLog.warn(LOG_TAG, "Interrupted in Channel.shutdown()", e);
+            MobileCenterLog.warn(LOG_TAG, "Interrupted while waiting persistence to flush.", e);
         }
     }
 

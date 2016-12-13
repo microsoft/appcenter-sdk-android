@@ -221,6 +221,7 @@ public class DatabasePersistenceAsync {
             @Override
             public void run() {
                 semaphore.release();
+                MobileCenterLog.debug(LOG_TAG, "Persistence tasks completed.");
             }
         });
         if (!semaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS)) {
