@@ -260,12 +260,16 @@ public class DefaultChannel implements Channel {
         } catch (IOException e) {
             MobileCenterLog.error(LOG_TAG, "Failed to close ingestion", e);
         }
-        for (GroupState groupState : mGroupStates.values()) {
-            handleFailureCallback(groupState, deleteLogs);
+        if (deleteLogs) {
+            for (GroupState groupState : mGroupStates.values()) {
+                handleFailureCallback(groupState);
+            }
+        } else {
+            mPersistence.clearPendingLogState();
         }
     }
 
-    private void handleFailureCallback(final GroupState groupState, final boolean deleteLogs) {
+    private void handleFailureCallback(final GroupState groupState) {
         final List<Log> logs = new ArrayList<>();
         mPersistence.getLogs(groupState.mName, CLEAR_BATCH_SIZE, logs, new AbstractDatabasePersistenceAsyncCallback() {
             @Override
@@ -276,13 +280,10 @@ public class DefaultChannel implements Channel {
                         groupState.mListener.onFailure(log, new CancellationException());
                     }
                 }
-                if (logs.size() >= CLEAR_BATCH_SIZE && groupState.mListener != null)
-                    handleFailureCallback(groupState, deleteLogs);
-                else {
-                    mPersistence.clearPendingLogState(groupState.mName);
-                    if (deleteLogs) {
-                        mPersistence.deleteLogs(groupState.mName);
-                    }
+                if (logs.size() >= CLEAR_BATCH_SIZE && groupState.mListener != null) {
+                    handleFailureCallback(groupState);
+                } else {
+                    mPersistence.deleteLogs(groupState.mName);
                 }
             }
         });
@@ -404,11 +405,12 @@ public class DefaultChannel implements Channel {
         boolean recoverableError = HttpUtils.isRecoverableError(e);
         if (recoverableError) {
             groupState.mPendingLogCount += removedLogsForBatchId.size();
-        }
-        GroupListener groupListener = groupState.mListener;
-        if (groupListener != null) {
-            for (Log log : removedLogsForBatchId)
-                groupListener.onFailure(log, e);
+        } else {
+            GroupListener groupListener = groupState.mListener;
+            if (groupListener != null) {
+                for (Log log : removedLogsForBatchId)
+                    groupListener.onFailure(log, e);
+            }
         }
         suspend(!recoverableError, e);
     }
