@@ -133,14 +133,14 @@ public class DatabasePersistenceAsyncTest {
 
     @Test
     public void clearPendingLogState() {
-        mDatabase.clearPendingLogState("test");
-        verify(mPersistence).clearPendingLogState("test");
+        mDatabase.clearPendingLogState();
+        verify(mPersistence).clearPendingLogState();
     }
 
     @Test
     public void clearPendingLogStateWithCallback() {
-        mDatabase.clearPendingLogState("test", mCallback);
-        verify(mPersistence).clearPendingLogState("test");
+        mDatabase.clearPendingLogState(mCallback);
+        verify(mPersistence).clearPendingLogState();
         verify(mCallback).onSuccess(null);
     }
 

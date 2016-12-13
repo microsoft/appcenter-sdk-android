@@ -249,26 +249,14 @@ public class DatabasePersistence extends Persistence {
 
         /* Update pending IDs. */
         mPendingDbIdentifiersGroups.put(group + id, pendingDbIdentifiersGroup);
-
         return id;
     }
 
     @Override
-    public void clearPendingLogState(@Nullable String group) {
-        if (group == null) {
-            mPendingDbIdentifiers.clear();
-            mPendingDbIdentifiersGroups.clear();
-            MobileCenterLog.debug(LOG_TAG, "Cleared pending log states");
-        } else {
-            for (Iterator<Map.Entry<String, List<Long>>> iterator = mPendingDbIdentifiersGroups.entrySet().iterator(); iterator.hasNext(); ) {
-                Map.Entry<String, List<Long>> entry = iterator.next();
-                if (entry.getKey().startsWith(group)) {
-                    mPendingDbIdentifiers.removeAll(mPendingDbIdentifiersGroups.get(entry.getKey()));
-                    iterator.remove();
-                }
-            }
-            MobileCenterLog.debug(LOG_TAG, "Cleared pending log states for group: " + group);
-        }
+    public void clearPendingLogState() {
+        mPendingDbIdentifiers.clear();
+        mPendingDbIdentifiersGroups.clear();
+        MobileCenterLog.debug(LOG_TAG, "Cleared pending log states");
     }
 
     @Override

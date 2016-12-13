@@ -164,13 +164,8 @@ public class DatabasePersistenceTest {
         assertEquals(groupCount, persistence.mPendingDbIdentifiersGroups.size());
         assertEquals(groupCount * logCount, persistence.mPendingDbIdentifiers.size());
 
-        /* Clear one pending group and verify. */
-        persistence.clearPendingLogState("0");
-        assertEquals(groupCount - 1, persistence.mPendingDbIdentifiersGroups.size());
-        assertEquals((groupCount - 1) * logCount, persistence.mPendingDbIdentifiers.size());
-
         /* Clear all pending groups and verify. */
-        persistence.clearPendingLogState(null);
+        persistence.clearPendingLogState();
         assertEquals(0, persistence.mPendingDbIdentifiersGroups.size());
         assertEquals(0, persistence.mPendingDbIdentifiers.size());
     }
