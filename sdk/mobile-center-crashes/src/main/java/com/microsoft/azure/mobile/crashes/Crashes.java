@@ -306,7 +306,9 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     @Override
-    protected String getLoggerTag() { return LOG_TAG; }
+    protected String getLoggerTag() {
+        return LOG_TAG;
+    }
 
     @Override
     protected int getTriggerCount() {
@@ -597,7 +599,8 @@ public class Crashes extends AbstractMobileCenterService {
         }
 
         /* Wait channel to finish saving other logs in background. */
-        mChannel.shutdown();
+        if (mChannel != null)
+            mChannel.shutdown();
     }
 
     /**

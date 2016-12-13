@@ -258,7 +258,7 @@ public class DefaultChannel implements Channel {
         try {
             mIngestion.close();
         } catch (IOException e) {
-            MobileCenterLog.error(LOG_TAG, "Failed to shutdown ingestion", e);
+            MobileCenterLog.error(LOG_TAG, "Failed to close ingestion", e);
         }
         for (GroupState groupState : mGroupStates.values()) {
             handleFailureCallback(groupState, deleteLogs);
@@ -525,7 +525,7 @@ public class DefaultChannel implements Channel {
         suspend(false, new CancellationException());
         try {
             MobileCenterLog.debug(LOG_TAG, "Wait for persistence to process queue.");
-            mPersistence.waitCurrentTasksToComplete(SHUTDOWN_TIMEOUT);
+            mPersistence.waitForCurrentTasksToComplete(SHUTDOWN_TIMEOUT);
         } catch (InterruptedException e) {
             MobileCenterLog.warn(LOG_TAG, "Interrupted in Channel.shutdown()", e);
         }
