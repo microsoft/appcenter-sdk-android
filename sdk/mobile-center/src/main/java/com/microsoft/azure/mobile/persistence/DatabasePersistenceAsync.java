@@ -151,26 +151,24 @@ public class DatabasePersistenceAsync {
 
     /**
      * Clears all associations between logs and IDs returned by {@link #getLogs(String, int, List, DatabasePersistenceAsyncCallback)} asynchronously.
-     * Use {@link #clearPendingLogState(String, DatabasePersistenceAsyncCallback)} if callback needs to be used.
+     * Use {@link #clearPendingLogState(DatabasePersistenceAsyncCallback)} if callback needs to be used.
      *
-     * @param group The group of the storage for logs. {@code null} for all groups.
      */
-    public void clearPendingLogState(@Nullable String group) {
-        clearPendingLogState(group, null);
+    public void clearPendingLogState() {
+        clearPendingLogState(null);
     }
 
     /**
      * Clears all associations between logs and IDs returned by {@link #getLogs(String, int, List, DatabasePersistenceAsyncCallback)} asynchronously.
      *
-     * @param group    The group of the storage for logs. {@code null} for all groups.
      * @param callback The callback to be called after the operation is completed.
      */
     @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
-    public void clearPendingLogState(@Nullable final String group, @Nullable final DatabasePersistenceAsyncCallback callback) {
+    public void clearPendingLogState(@Nullable final DatabasePersistenceAsyncCallback callback) {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                mPersistence.clearPendingLogState(group);
+                mPersistence.clearPendingLogState();
                 onSuccess(callback, null);
             }
         });
