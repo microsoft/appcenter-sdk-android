@@ -8,11 +8,14 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.azure.mobile.ingestion.models.Log;
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+
+import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 
 public class DatabasePersistenceAsync {
 
@@ -213,7 +216,7 @@ public class DatabasePersistenceAsync {
      * @param timeout the maximum time to wait in millis.
      * @throws InterruptedException if the current thread is interrupted.
      */
-    public void waitCurrentTasksToComplete(long timeout) throws InterruptedException {
+    public void waitForCurrentTasksToComplete(long timeout) throws InterruptedException {
         final Semaphore semaphore = new Semaphore(0);
         mHandler.post(new Runnable() {
 
@@ -222,7 +225,9 @@ public class DatabasePersistenceAsync {
                 semaphore.release();
             }
         });
-        semaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS);
+        if (!semaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS)) {
+            MobileCenterLog.error(LOG_TAG, "Timeout waiting for database tasks to complete.");
+        }
     }
 
     /**
