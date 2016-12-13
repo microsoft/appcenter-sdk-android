@@ -26,11 +26,13 @@ import com.microsoft.azure.mobile.utils.UUIDUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.io.IOException;
@@ -375,8 +377,6 @@ public class DefaultChannelTest {
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class)))
                 .then(getGetLogsAnswer(50))
-                /* Second 50 logs will be used for clearing pending states. */
-                .then(getGetLogsAnswer(50))
                 .then(getGetLogsAnswer(50))
                 .then(getGetLogsAnswer(20));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException())).then(getSendAsyncAnswer());
@@ -402,7 +402,7 @@ public class DefaultChannelTest {
 
         /* Verify that the Channel is disabled. */
         assertFalse(channel.isEnabled());
-        verify(mockPersistence).clearPendingLogState(eq(TEST_GROUP));
+        verify(mockPersistence).clearPendingLogState();
         verify(mockPersistence, never()).deleteLogs(TEST_GROUP);
 
         /* Enqueuing 20 more events. */
@@ -435,11 +435,12 @@ public class DefaultChannelTest {
         /* Verify that we have called deleteLogs on the Persistence (2 successful batches, the first call was a recoverable failure). */
         verify(mockPersistence, times(2)).deleteLogs(any(String.class), any(String.class));
 
-        /* Verify that we have called onBeforeSending in the listener. getLogs will return 50, 50, 50 and 20. */
-        verify(mockListener, times(170)).onBeforeSending(any(Log.class));
+        /* Verify that we have called onBeforeSending in the listener. getLogs will return 50, 50 and 20. */
+        verify(mockListener, times(120)).onBeforeSending(any(Log.class));
 
-        /* Verify that we have called the listener. */
-        verify(mockListener, times(100)).onFailure(any(Log.class), any(Exception.class));
+        /* Intermediate failures never forwarded to listener, only final success */
+        verify(mockListener, never()).onFailure(any(Log.class), any(Exception.class));
+        verify(mockListener, times(70)).onSuccess(any(Log.class));
 
         /* Verify timer. */
         verify(mHandler, times(2)).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
@@ -577,18 +578,19 @@ public class DefaultChannelTest {
         Ingestion mockIngestion = mock(Ingestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
-        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer(1)).then(getGetLogsAnswer(0)).then(getGetLogsAnswer(1)).then(getGetLogsAnswer(1)).then(getGetLogsAnswer(1)).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer(1));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException())).then(getSendAsyncAnswer());
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
-        /* Enqueuing 5 errors. */
-        for (int i = 0; i < 5; i++)
+        /* Enqueuing n errors. */
+        int logNumber = 5;
+        for (int i = 0; i < logNumber; i++)
             channel.enqueue(mock(Log.class), TEST_GROUP);
 
-        /* Verify that 5 items have been persisted. */
-        verify(mockPersistence, times(5)).putLog(eq(TEST_GROUP), any(Log.class));
+        /* Verify that n items have been persisted. */
+        verify(mockPersistence, times(logNumber)).putLog(eq(TEST_GROUP), any(Log.class));
 
         /* Verify that we have called sendAsync on the ingestion once for the first item, but not more than that. */
         verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -599,12 +601,12 @@ public class DefaultChannelTest {
         /* Verify that we have called onBeforeSending in the listener. */
         verify(mockListener).onBeforeSending(any(Log.class));
 
-        /* Verify that we have called the listener. */
-        verify(mockListener).onFailure(any(Log.class), any(Exception.class));
+        /* Verify that we have not called the failure listener. It's a transient exception that will be retried later when the channel is re-enabled. */
+        verify(mockListener, never()).onFailure(any(Log.class), any(Exception.class));
 
         /* Verify that the Channel is disabled. */
         assertFalse(channel.isEnabled());
-        verify(mockPersistence).clearPendingLogState(eq(TEST_GROUP));
+        verify(mockPersistence).clearPendingLogState();
         verify(mockPersistence, never()).deleteLogs(TEST_GROUP);
 
         /* Verify timer. */
@@ -613,11 +615,11 @@ public class DefaultChannelTest {
 
         channel.setEnabled(true);
 
-        /* Verify that we have called sendAsync on the ingestion 6 times total: 1 failure before re-enabling, 5 success after. */
-        verify(mockIngestion, times(6)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        /* Verify that we have called sendAsync on the ingestion n+1 times total: 1 failure before re-enabling, n success after. */
+        verify(mockIngestion, times(logNumber + 1)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        /* Verify that we have called deleteLogs on the Persistence 5 times. */
-        verify(mockPersistence, times(5)).deleteLogs(any(String.class), any(String.class));
+        /* Verify that we have called deleteLogs on the Persistence n times. */
+        verify(mockPersistence, times(logNumber)).deleteLogs(any(String.class), any(String.class));
 
         /* Verify timer. */
         verify(mHandler, never()).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
@@ -660,7 +662,7 @@ public class DefaultChannelTest {
                     }
                 })
                 /* Simulate mockIngestion failure for the third batch. */
-                .then(getSendAsyncAnswer(new SocketException()));
+                .then(getSendAsyncAnswer(new HttpException(404)));
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
@@ -918,7 +920,7 @@ public class DefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void invokeCallbacksAfterSuspend() throws Exception {
+    public void invokeCallbacksAfterSuspendFatal() throws Exception {
         Persistence mockPersistence = mock(Persistence.class);
         IngestionHttp mockIngestion = mock(IngestionHttp.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
@@ -945,8 +947,40 @@ public class DefaultChannelTest {
         verify(mockListener, times(DefaultChannel.CLEAR_BATCH_SIZE * 2)).onBeforeSending(any(Log.class));
         verify(mockListener, times(DefaultChannel.CLEAR_BATCH_SIZE * 2)).onFailure(any(Log.class), any(CancellationException.class));
 
-        /* Verify clear calls invoked only once. */
-        verify(mockPersistence, times(1)).clearPendingLogState(TEST_GROUP);
-        verify(mockPersistence, times(1)).deleteLogs(TEST_GROUP);
+        /* Verify logs were deleted. */
+        verify(mockPersistence).deleteLogs(TEST_GROUP);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void invokeCallbacksAfterSuspendRecoverable() throws Exception {
+        Persistence mockPersistence = mock(Persistence.class);
+        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+
+        DatabasePersistenceAsync mockPersistenceAsync = spy(new DatabasePersistenceAsync(mockPersistence));
+        whenNew(DatabasePersistenceAsync.class).withArguments(mockPersistence).thenReturn(mockPersistenceAsync);
+        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class)))
+                .then(getGetLogsAnswer(1));
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(503)));
+
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
+        channel.addGroup(TEST_GROUP + "2", 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+
+        /* Enqueuing 1 event. */
+        channel.enqueue(mock(Log.class), TEST_GROUP);
+
+        /* Verify callbacks invoked only for the first log. */
+        verify(mockListener).onBeforeSending(any(Log.class));
+
+        /* Verify no failure forwarded. */
+        verify(mockListener, never()).onFailure(any(Log.class), any(Exception.class));
+
+        /* Verify no log was deleted. */
+        verify(mockPersistence, never()).deleteLogs(TEST_GROUP);
+
+        /* But that we cleared batch state. */
+        verify(mockPersistence).clearPendingLogState();
     }
 }

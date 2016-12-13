@@ -71,9 +71,8 @@ public abstract class Persistence implements Closeable {
     /**
      * Clears all associations between logs of the {@code group} and ids returned by {@link #getLogs(String, int, List)}}.
      *
-     * @param group The group of the storage for logs. {@code null} for all groups.
      */
-    public abstract void clearPendingLogState(@Nullable String group);
+    public abstract void clearPendingLogState();
 
     /**
      * Gets a {@link LogSerializer}.
