@@ -306,7 +306,9 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     @Override
-    protected String getLoggerTag() { return LOG_TAG; }
+    protected String getLoggerTag() {
+        return LOG_TAG;
+    }
 
     @Override
     protected int getTriggerCount() {
@@ -323,25 +325,27 @@ public class Crashes extends AbstractMobileCenterService {
             private void callback(int type, Log log, Exception e) {
                 if (log instanceof ManagedErrorLog) {
                     ManagedErrorLog errorLog = (ManagedErrorLog) log;
-                    ErrorReport report = buildErrorReport(errorLog);
-                    UUID id = errorLog.getId();
-                    if (report != null) {
+                    if (errorLog.getFatal()) {
+                        ErrorReport report = buildErrorReport(errorLog);
+                        UUID id = errorLog.getId();
 
-                        if (type == BEFORE_SENDING) {
-                            mCrashesListener.onBeforeSending(report);
-                        } else {
-
-                            /* Clean up before calling callbacks. */
-                            removeStoredThrowable(id);
-
-                            if (type == SENDING_SUCCEEDED) {
-                                mCrashesListener.onSendingSucceeded(report);
+                        if (report != null) {
+                            if (type == BEFORE_SENDING) {
+                                mCrashesListener.onBeforeSending(report);
                             } else {
-                                mCrashesListener.onSendingFailed(report, e);
+
+                                /* Clean up before calling callbacks. */
+                                removeStoredThrowable(id);
+
+                                if (type == SENDING_SUCCEEDED) {
+                                    mCrashesListener.onSendingSucceeded(report);
+                                } else {
+                                    mCrashesListener.onSendingFailed(report, e);
+                                }
                             }
-                        }
-                    } else
-                        MobileCenterLog.warn(LOG_TAG, "Cannot find crash report for the error log: " + id);
+                        } else
+                            MobileCenterLog.warn(LOG_TAG, "Cannot find crash report for the error log: " + id);
+                    }
                 } else {
                     MobileCenterLog.warn(LOG_TAG, "A different type of log comes to crashes: " + log.getClass().getName());
                 }
@@ -573,6 +577,8 @@ public class Crashes extends AbstractMobileCenterService {
      * @param exception exception.
      */
     void saveUncaughtException(Thread thread, Throwable exception) {
+
+        /* Save crash. */
         ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, exception, Thread.getAllStackTraces(), mInitializeTimestamp, true);
         try {
             File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
@@ -591,6 +597,10 @@ public class Crashes extends AbstractMobileCenterService {
         } catch (IOException e) {
             MobileCenterLog.error(Crashes.LOG_TAG, "Error writing error log to file", e);
         }
+
+        /* Wait channel to finish saving other logs in background. */
+        if (mChannel != null)
+            mChannel.shutdown();
     }
 
     /**

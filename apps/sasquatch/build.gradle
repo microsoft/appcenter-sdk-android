@@ -8,15 +8,23 @@ android {
     productFlavors {
         projectDependency {
             applicationIdSuffix ".project"
+            manifestPlaceholders = [
+                    appIcon: "@mipmap/ic_launcher",
+                    appName: "@string/app_name"
+            ]
         }
         jcenterDependency {
             applicationIdSuffix ".jcenter"
+            manifestPlaceholders = [
+                    appIcon: "@mipmap/ic_launcher_jcenter",
+                    appName: "@string/app_name_jcenter"
+            ]
         }
     }
 }
 
 dependencies {
-    def version = "0.3.1"
+    def version = "0.3.2"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     projectDependencyCompile project(':sdk:mobile-center-analytics')
     projectDependencyCompile project(':sdk:mobile-center-crashes')

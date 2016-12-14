@@ -1,4 +1,4 @@
-package com.microsoft.azure.mobile.analytics.models.json;
+package com.microsoft.azure.mobile.analytics;
 
 import com.microsoft.azure.mobile.analytics.ingestion.models.EventLog;
 import com.microsoft.azure.mobile.analytics.ingestion.models.PageLog;

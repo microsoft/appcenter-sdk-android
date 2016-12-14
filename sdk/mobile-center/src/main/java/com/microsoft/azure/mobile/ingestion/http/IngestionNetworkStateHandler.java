@@ -39,35 +39,63 @@ public class IngestionNetworkStateHandler extends IngestionDecorator implements 
     }
 
     @Override
-    public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public synchronized ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
         Call ingestionCall = new Call(mDecoratedApi, appSecret, installId, logContainer, serviceCallback);
-        synchronized (mCalls) {
-            mCalls.add(ingestionCall);
-            if (mNetworkStateHelper.isNetworkConnected())
-                ingestionCall.run();
-        }
+        mCalls.add(ingestionCall);
+        if (mNetworkStateHelper.isNetworkConnected())
+            ingestionCall.run();
         return ingestionCall;
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         mNetworkStateHelper.removeListener(this);
-        synchronized (mCalls) {
-            for (Call call : mCalls)
-                call.pauseCall();
-            mCalls.clear();
-        }
+        for (Call call : mCalls)
+            pauseCall(call);
+        mCalls.clear();
         super.close();
     }
 
     @Override
-    public void onNetworkStateUpdated(boolean connected) {
-        synchronized (mCalls) {
-            for (Call call : mCalls)
-                if (connected)
-                    call.run();
-                else
-                    call.pauseCall();
+    public synchronized void onNetworkStateUpdated(boolean connected) {
+        for (Call call : mCalls)
+            if (connected)
+                call.run();
+            else
+                pauseCall(call);
+    }
+
+    private synchronized void callRunAsync(Call call) {
+        call.mServiceCall = call.mDecoratedApi.sendAsync(call.mAppSecret, call.mInstallId, call.mLogContainer, call);
+    }
+
+    private synchronized void cancelCall(Call call) {
+        mCalls.remove(call);
+        pauseCall(call);
+    }
+
+    private synchronized void pauseCall(Call call) {
+        if (call.mServiceCall != null)
+            call.mServiceCall.cancel();
+    }
+
+    /**
+     * Guard against multiple calls since this call can be retried on network state change.
+     */
+    private synchronized void onCallSucceeded(Call call) {
+        if (mCalls.contains(call)) {
+            call.mServiceCallback.onCallSucceeded();
+            mCalls.remove(call);
+        }
+    }
+
+    /**
+     * Guard against multiple calls since this call can be retried on network state change.
+     */
+    private synchronized void onCallFailed(Call call, Exception e) {
+        if (mCalls.contains(call)) {
+            call.mServiceCallback.onCallFailed(e);
+            mCalls.remove(call);
         }
     }
 
@@ -82,52 +110,22 @@ public class IngestionNetworkStateHandler extends IngestionDecorator implements 
 
         @Override
         public void run() {
-            synchronized (mCalls) {
-                mServiceCall = mDecoratedApi.sendAsync(mAppSecret, mInstallId, mLogContainer, this);
-            }
+            callRunAsync(this);
         }
 
         @Override
         public void cancel() {
-            synchronized (mCalls) {
-                mCalls.remove(this);
-                pauseCall();
-            }
-        }
-
-        void pauseCall() {
-            synchronized (mCalls) {
-                if (mServiceCall != null)
-                    mServiceCall.cancel();
-            }
+            cancelCall(this);
         }
 
         @Override
         public void onCallSucceeded() {
-
-            /**
-             * Guard against multiple calls since this call can be retried on network state change.
-             */
-            synchronized (mCalls) {
-                if (mCalls.contains(this)) {
-                    super.onCallSucceeded();
-                    mCalls.remove(this);
-                }
-            }
+            IngestionNetworkStateHandler.this.onCallSucceeded(this);
         }
 
         @Override
         public void onCallFailed(Exception e) {
-
-            /**
-             * Guard against multiple calls since this call can be retried on network state change.
-             */
-            synchronized (mCalls) {
-                if (mCalls.contains(this)) {
-                    mServiceCallback.onCallFailed(e);
-                    mCalls.remove(this);
-                }
-            }
+            IngestionNetworkStateHandler.this.onCallFailed(this, e);
         }
     }
 }

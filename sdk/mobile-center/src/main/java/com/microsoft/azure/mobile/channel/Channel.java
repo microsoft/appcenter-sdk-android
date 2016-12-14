@@ -84,6 +84,11 @@ public interface Channel {
     void removeListener(Listener listener);
 
     /**
+     * Suspend channel and wait for a limited period of time for queued logs to be persisted.
+     */
+    void shutdown();
+
+    /**
      * Channel global listener specification.
      */
     interface Listener {
