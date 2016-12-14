@@ -306,7 +306,9 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     @Override
-    protected String getLoggerTag() { return LOG_TAG; }
+    protected String getLoggerTag() {
+        return LOG_TAG;
+    }
 
     @Override
     protected int getTriggerCount() {
@@ -575,6 +577,8 @@ public class Crashes extends AbstractMobileCenterService {
      * @param exception exception.
      */
     void saveUncaughtException(Thread thread, Throwable exception) {
+
+        /* Save crash. */
         ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, exception, Thread.getAllStackTraces(), mInitializeTimestamp, true);
         try {
             File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
@@ -593,6 +597,10 @@ public class Crashes extends AbstractMobileCenterService {
         } catch (IOException e) {
             MobileCenterLog.error(Crashes.LOG_TAG, "Error writing error log to file", e);
         }
+
+        /* Wait channel to finish saving other logs in background. */
+        if (mChannel != null)
+            mChannel.shutdown();
     }
 
     /**
