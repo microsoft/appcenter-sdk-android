@@ -293,7 +293,7 @@ public class DatabasePersistenceAndroidTest {
             persistence.getLogs("test-p3", 5, outputLogs);
 
             /* Verify. */
-            Map<String, List<Long>> pendingGroups = persistence.getPendingDbIdentifiersGroups();
+            Map<String, List<Long>> pendingGroups = persistence.mPendingDbIdentifiersGroups;
             assertNull(pendingGroups.get("test-p1" + id1));
             assertEquals(1, pendingGroups.get("test-p2" + id2).size());
             assertEquals(1, pendingGroups.size());
@@ -354,7 +354,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(10, persistence.countLogs("test"));
 
             /* Clear. Nothing to get after. */
-            persistence.clear();
+            persistence.mDatabaseStorage.clear();
             List<Log> outputLogs = new ArrayList<>();
             assertNull(persistence.getLogs("test", sizeForGetLogs, outputLogs));
             assertTrue(outputLogs.isEmpty());

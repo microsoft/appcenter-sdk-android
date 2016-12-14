@@ -8,9 +8,14 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.azure.mobile.ingestion.models.Log;
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+
+import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 
 public class DatabasePersistenceAsync {
 
@@ -62,7 +67,7 @@ public class DatabasePersistenceAsync {
      * Deletes a log asynchronously with the give ID from the {@code group}.
      * Use {@link #deleteLogs(String, String, DatabasePersistenceAsyncCallback)} if callback needs to be used.
      *
-     * @param group The group of the storage for the log.
+     * @param group The group of the storage for logs.
      * @param id    The ID for a set of logs.
      */
     public void deleteLogs(@NonNull String group, @NonNull String id) {
@@ -72,7 +77,7 @@ public class DatabasePersistenceAsync {
     /**
      * Deletes a log asynchronously with the give ID from the {@code group}.
      *
-     * @param group    The group of the storage for the log.
+     * @param group    The group of the storage for logs.
      * @param id       The ID for a set of logs.
      * @param callback The callback to be called after the operation is completed.
      */
@@ -91,7 +96,7 @@ public class DatabasePersistenceAsync {
      * Deletes all logs asynchronously for the given {@code group}
      * Use {@link #deleteLogs(String, DatabasePersistenceAsyncCallback)} if callback needs to be used.
      *
-     * @param group The group of the storage for the log.
+     * @param group The group of the storage for logs.
      */
     public void deleteLogs(String group) {
         deleteLogs(group, (DatabasePersistenceAsyncCallback) null);
@@ -100,7 +105,7 @@ public class DatabasePersistenceAsync {
     /**
      * Deletes all logs asynchronously for the given {@code group}
      *
-     * @param group    The group of the storage for the log.
+     * @param group    The group of the storage for logs.
      * @param callback The callback to be called after the operation is completed.
      */
     @SuppressWarnings("WeakerAccess")
@@ -117,7 +122,7 @@ public class DatabasePersistenceAsync {
     /**
      * Gets the number of logs asynchronously for the given {@code group}.
      *
-     * @param group    The group of the storage for the log.
+     * @param group    The group of the storage for logs.
      * @param callback The callback to be called with the number of logs for the given {@code group} after the operation is completed.
      */
     public void countLogs(@NonNull final String group, @Nullable final DatabasePersistenceAsyncCallback callback) {
@@ -133,7 +138,7 @@ public class DatabasePersistenceAsync {
     /**
      * Gets an array of logs asynchronously for the given {@code group}.
      *
-     * @param group    The group of the storage for the log.
+     * @param group    The group of the storage for logs.
      * @param limit    The max number of logs to be returned.
      * @param outLogs  A list to receive {@link Log} objects.
      * @param callback The callback to be called with an ID for {@code outLogs} after the operation is completed.
@@ -150,15 +155,16 @@ public class DatabasePersistenceAsync {
     }
 
     /**
-     * Clears all associations between logs and ids returned by {@link #getLogs(String, int, List, DatabasePersistenceAsyncCallback)} asynchronously.
+     * Clears all associations between logs and IDs returned by {@link #getLogs(String, int, List, DatabasePersistenceAsyncCallback)} asynchronously.
      * Use {@link #clearPendingLogState(DatabasePersistenceAsyncCallback)} if callback needs to be used.
+     *
      */
     public void clearPendingLogState() {
         clearPendingLogState(null);
     }
 
     /**
-     * Clears all associations between logs and ids returned by {@link #getLogs(String, int, List, DatabasePersistenceAsyncCallback)} asynchronously.
+     * Clears all associations between logs and IDs returned by {@link #getLogs(String, int, List, DatabasePersistenceAsyncCallback)} asynchronously.
      *
      * @param callback The callback to be called after the operation is completed.
      */
@@ -168,30 +174,6 @@ public class DatabasePersistenceAsync {
             @Override
             public void run() {
                 mPersistence.clearPendingLogState();
-                onSuccess(callback, null);
-            }
-        });
-    }
-
-    /**
-     * Clears all logs.
-     * Use {@link #clear(DatabasePersistenceAsyncCallback)} if callback needs to be used.
-     */
-    public void clear() {
-        clear(null);
-    }
-
-    /**
-     * Clears all logs.
-     *
-     * @param callback The callback to be called after the operation is completed.
-     */
-    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
-    public void clear(@Nullable final DatabasePersistenceAsyncCallback callback) {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                mPersistence.clear();
                 onSuccess(callback, null);
             }
         });
@@ -212,6 +194,7 @@ public class DatabasePersistenceAsync {
      */
     public void close(@Nullable final DatabasePersistenceAsyncCallback callback) {
         mHandler.post(new Runnable() {
+
             @Override
             public void run() {
                 try {
@@ -223,6 +206,27 @@ public class DatabasePersistenceAsync {
                 mHandler.removeCallbacks(this);
             }
         });
+    }
+
+    /**
+     * Wait for all current tasks to complete. It does not wait for future tasks.
+     *
+     * @param timeout the maximum time to wait in millis.
+     * @throws InterruptedException if the current thread is interrupted.
+     */
+    public void waitForCurrentTasksToComplete(long timeout) throws InterruptedException {
+        final Semaphore semaphore = new Semaphore(0);
+        mHandler.post(new Runnable() {
+
+            @Override
+            public void run() {
+                semaphore.release();
+                MobileCenterLog.debug(LOG_TAG, "Persistence tasks completed.");
+            }
+        });
+        if (!semaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS)) {
+            MobileCenterLog.error(LOG_TAG, "Timeout waiting for database tasks to complete.");
+        }
     }
 
     /**
