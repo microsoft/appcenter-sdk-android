@@ -26,6 +26,7 @@ import com.microsoft.azure.mobile.utils.UUIDUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.internal.stubbing.answers.Returns;
@@ -50,6 +51,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.atLeastOnce;
@@ -123,6 +125,7 @@ public class DefaultChannelTest {
 
     @Before
     public void setUp() throws Exception {
+        mockStatic(MobileCenterLog.class);
         mockStatic(IdHelper.class, new Returns(UUIDUtils.randomUUID()));
         mockStatic(DeviceInfoHelper.class);
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mock(Device.class));
@@ -760,7 +763,6 @@ public class DefaultChannelTest {
     @Test
     @SuppressWarnings("unchecked")
     public void disableBeforeCheckingPendingLogs() throws IOException {
-        mockStatic(MobileCenterLog.class);
         Ingestion ingestion = mock(Ingestion.class);
         Persistence persistence = mock(Persistence.class);
         final DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion);
@@ -1006,5 +1008,39 @@ public class DefaultChannelTest {
         verify(mockListener, never()).onFailure(any(Log.class), any(Exception.class));
         verify(mockPersistence).clearPendingLogState();
         verify(mockPersistenceAsync).waitForCurrentTasksToComplete(DefaultChannel.SHUTDOWN_TIMEOUT);
+    }
+
+    @Test
+    public void shutdownInterrupted() throws Exception {
+        Persistence mockPersistence = mock(Persistence.class);
+        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+
+        DatabasePersistenceAsync mockPersistenceAsync = spy(new DatabasePersistenceAsync(mockPersistence));
+        whenNew(DatabasePersistenceAsync.class).withArguments(mockPersistence).thenReturn(mockPersistenceAsync);
+        when(mockPersistence.getLogs(any(String.class), anyInt(), Matchers.<List<Log>>any()))
+                .then(getGetLogsAnswer(1));
+        doThrow(new InterruptedException()).when(mockPersistenceAsync).waitForCurrentTasksToComplete(anyLong());
+
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
+
+         /* Enqueuing 1 event. */
+        channel.enqueue(mock(Log.class), TEST_GROUP);
+        verify(mockListener).onBeforeSending(notNull(Log.class));
+
+        channel.shutdown();
+        verify(mockListener, never()).onFailure(any(Log.class), any(Exception.class));
+        verify(mockPersistence).clearPendingLogState();
+        verify(mockPersistenceAsync).waitForCurrentTasksToComplete(DefaultChannel.SHUTDOWN_TIMEOUT);
+
+        verifyStatic();
+        MobileCenterLog.warn(eq(MobileCenterLog.LOG_TAG), anyString(), argThat(new ArgumentMatcher<Throwable>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof InterruptedException;
+            }
+        }));
     }
 }
