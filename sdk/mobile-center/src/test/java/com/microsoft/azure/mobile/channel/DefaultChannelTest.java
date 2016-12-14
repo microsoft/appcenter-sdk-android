@@ -24,8 +24,8 @@ import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Matchers;
 import org.mockito.Mock;
@@ -33,7 +33,7 @@ import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 import java.net.SocketException;
@@ -68,6 +68,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
+@RunWith(PowerMockRunner.class)
 @PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, DatabasePersistenceAsync.class, MobileCenterLog.class})
 public class DefaultChannelTest {
 
@@ -75,8 +76,8 @@ public class DefaultChannelTest {
     private static final long BATCH_TIME_INTERVAL = 500;
     private static final int MAX_PARALLEL_BATCHES = 3;
 
-    @Rule
-    public PowerMockRule mPowerMockRule = new PowerMockRule();
+//    @Rule
+//    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
     private Handler mHandler;
@@ -960,14 +961,12 @@ public class DefaultChannelTest {
         IngestionHttp mockIngestion = mock(IngestionHttp.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
+        /* Simulate a lot of logs already in database. */
         DatabasePersistenceAsync mockPersistenceAsync = spy(new DatabasePersistenceAsync(mockPersistence));
         whenNew(DatabasePersistenceAsync.class).withArguments(mockPersistence).thenReturn(mockPersistenceAsync);
         when(mockPersistence.getLogs(eq(TEST_GROUP), anyInt(), any(ArrayList.class)))
                 .then(getGetLogsAnswer(1))
-                /* Logs from here will be used TEST_GROUP to clear pending states. */
-                .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE))
-                .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE - 1))
-                /* Logs from here will be used another group to skip callbacks. */
+                .then(getGetLogsAnswer(1))
                 .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE));
 
         /* Make first call hang, and the second call return a fatal error. */
