@@ -2,6 +2,9 @@ package com.microsoft.azure.mobile.crashes;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -61,6 +64,12 @@ public class Crashes extends AbstractMobileCenterService {
     public static final String PREF_KEY_ALWAYS_SEND = "com.microsoft.azure.mobile.crashes.always.send";
 
     /**
+     * Thread name for persistence to access database.
+     */
+    @VisibleForTesting
+    static final String THREAD_NAME = "CrashesThread";
+
+    /**
      * Group for sending logs.
      */
     @VisibleForTesting
@@ -86,6 +95,18 @@ public class Crashes extends AbstractMobileCenterService {
      */
     @SuppressLint("StaticFieldLeak")
     private static Crashes sInstance = null;
+
+    /**
+     * Handler for background thread loop.
+     */
+    @VisibleForTesting
+    final Handler mHandler;
+
+    /**
+     * Handler for main thread loop.
+     */
+    @VisibleForTesting
+    final Handler mMainHandler;
 
     /**
      * Log factories managed by this service.
@@ -132,6 +153,9 @@ public class Crashes extends AbstractMobileCenterService {
      */
     private WrapperSdkListener mWrapperSdkListener;
 
+    /**
+     * ErrorReport for the last session.
+     */
     private ErrorReport mLastSessionErrorReport;
 
     private Crashes() {
@@ -142,6 +166,10 @@ public class Crashes extends AbstractMobileCenterService {
         mCrashesListener = DEFAULT_ERROR_REPORTING_LISTENER;
         mUnprocessedErrorReports = new LinkedHashMap<>();
         mErrorReportCache = new LinkedHashMap<>();
+        HandlerThread thread = new HandlerThread(THREAD_NAME);
+        thread.start();
+        mHandler = new Handler(thread.getLooper());
+        mMainHandler = new Handler(Looper.getMainLooper());
     }
 
     @NonNull
@@ -151,7 +179,6 @@ public class Crashes extends AbstractMobileCenterService {
         }
         return sInstance;
     }
-
 
     @VisibleForTesting
     static synchronized void unsetInstance() {
@@ -178,7 +205,6 @@ public class Crashes extends AbstractMobileCenterService {
 
     /**
      * Track an exception.
-     *
      * TODO the backend does not support that service yet, will be public method later.
      *
      * @param throwable An exception.
@@ -276,7 +302,6 @@ public class Crashes extends AbstractMobileCenterService {
 
     /**
      * Track an exception.
-     *
      * TODO the backend does not support that service yet, will be public method later.
      *
      * @param exception An exception.
@@ -408,53 +433,87 @@ public class Crashes extends AbstractMobileCenterService {
         } else if (mContext != null && mUncaughtExceptionHandler == null) {
             mUncaughtExceptionHandler = new UncaughtExceptionHandler();
             mUncaughtExceptionHandler.register();
-            File logFile = ErrorLogHelper.getLastErrorLogFile();
-            if (logFile != null) {
-                String logFileContents = StorageHelper.InternalStorage.read(logFile);
-                if (logFileContents != null)
-                    try {
-                        ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logFileContents);
-                        mLastSessionErrorReport = buildErrorReport(log);
-                    } catch (JSONException e) {
-                        MobileCenterLog.error(LOG_TAG, "Error parsing last session error log", e);
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    File logFile = ErrorLogHelper.getLastErrorLogFile();
+                    if (logFile != null) {
+                        String logFileContents = StorageHelper.InternalStorage.read(logFile);
+                        if (logFileContents != null)
+                            try {
+                                ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logFileContents);
+                                mLastSessionErrorReport = buildErrorReport(log);
+                            } catch (JSONException e) {
+                                MobileCenterLog.error(LOG_TAG, "Error parsing last session error log", e);
+                            }
                     }
-            }
+                }
+            });
         }
     }
 
-    private void processPendingErrors() {
-        for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
-            MobileCenterLog.debug(LOG_TAG, "Process pending error file: " + logFile);
-            String logfileContents = StorageHelper.InternalStorage.read(logFile);
-            if (logfileContents != null)
-                try {
-                    ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logfileContents);
-                    UUID id = log.getId();
-                    ErrorReport report = buildErrorReport(log);
-                    if (report == null) {
-                        removeAllStoredErrorLogFiles(id);
-                    } else if (mCrashesListener.shouldProcess(report)) {
-                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + id.toString());
-                        mUnprocessedErrorReports.put(id, mErrorReportCache.get(id));
-                    } else {
-                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
-                        removeAllStoredErrorLogFiles(id);
-                    }
-                } catch (JSONException e) {
-                    MobileCenterLog.error(LOG_TAG, "Error parsing error log", e);
-                }
+    private boolean shouldStopProcessingPendingErrors() {
+        if (!isInstanceEnabled()) {
+            MobileCenterLog.info(LOG_TAG, "Crashes service is disabled while processing errors. Cancel processing all pending errors.");
+            return true;
         }
+        return false;
+    }
 
-        boolean shouldAwaitUserConfirmation = true;
-        if (mUnprocessedErrorReports.size() > 0 &&
-                (StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false)
-                        || !(shouldAwaitUserConfirmation = mCrashesListener.shouldAwaitUserConfirmation()))) {
-            if (!shouldAwaitUserConfirmation)
-                MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldAwaitUserConfirmation returned false, continue sending logs");
-            else
-                MobileCenterLog.debug(LOG_TAG, "The flag for user confirmation is set to ALWAYS_SEND, continue sending logs");
-            handleUserConfirmation(SEND);
-        }
+    private void processPendingErrors() {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
+                    if (shouldStopProcessingPendingErrors())
+                        return;
+                    MobileCenterLog.debug(LOG_TAG, "Process pending error file: " + logFile);
+                    String logfileContents = StorageHelper.InternalStorage.read(logFile);
+                    if (logfileContents != null)
+                        try {
+                            ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logfileContents);
+                            UUID id = log.getId();
+                            ErrorReport report = buildErrorReport(log);
+                            if (report == null) {
+                                removeAllStoredErrorLogFiles(id);
+                            } else if (mCrashesListener.shouldProcess(report)) {
+                                MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + id.toString());
+                                mUnprocessedErrorReports.put(id, mErrorReportCache.get(id));
+                            } else {
+                                MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
+                                removeAllStoredErrorLogFiles(id);
+                            }
+                        } catch (JSONException e) {
+                            MobileCenterLog.error(LOG_TAG, "Error parsing error log", e);
+                        }
+                }
+
+                if (shouldStopProcessingPendingErrors())
+                    return;
+
+                processUserConfirmation();
+            }
+        });
+    }
+
+    private void processUserConfirmation() {
+
+        /* Handle user confirmation in UI thread. */
+        mMainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                boolean shouldAwaitUserConfirmation = true;
+                if (mUnprocessedErrorReports.size() > 0 &&
+                        (StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false)
+                                || !(shouldAwaitUserConfirmation = mCrashesListener.shouldAwaitUserConfirmation()))) {
+                    if (!shouldAwaitUserConfirmation)
+                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldAwaitUserConfirmation returned false, continue sending logs");
+                    else
+                        MobileCenterLog.debug(LOG_TAG, "The flag for user confirmation is set to ALWAYS_SEND, continue sending logs");
+                    handleUserConfirmation(SEND);
+                }
+            }
+        });
     }
 
     private void removeAllStoredErrorLogFiles(UUID id) {
@@ -526,43 +585,50 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     @VisibleForTesting
-    private synchronized void handleUserConfirmation(@UserConfirmationDef int userConfirmation) {
+    private synchronized void handleUserConfirmation(@UserConfirmationDef final int userConfirmation) {
         if (mChannel == null) {
             MobileCenterLog.error(LOG_TAG, "Crashes service not initialized, discarding calls.");
             return;
         }
 
-        if (userConfirmation == DONT_SEND) {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (userConfirmation == DONT_SEND) {
 
-            /* Clean up all pending error log and throwable files. */
-            for (Iterator<UUID> iterator = mUnprocessedErrorReports.keySet().iterator(); iterator.hasNext(); ) {
-                UUID id = iterator.next();
-                iterator.remove();
-                removeAllStoredErrorLogFiles(id);
+                    /* Clean up all pending error log and throwable files. */
+                    for (Iterator<UUID> iterator = mUnprocessedErrorReports.keySet().iterator(); iterator.hasNext(); ) {
+                        UUID id = iterator.next();
+                        iterator.remove();
+                        removeAllStoredErrorLogFiles(id);
+                    }
+                    return;
+                }
+
+                if (userConfirmation == ALWAYS_SEND) {
+                    StorageHelper.PreferencesStorage.putBoolean(PREF_KEY_ALWAYS_SEND, true);
+                }
+
+                Iterator<Map.Entry<UUID, ErrorLogReport>> unprocessedIterator = mUnprocessedErrorReports.entrySet().iterator();
+                while (unprocessedIterator.hasNext()) {
+                    if (shouldStopProcessingPendingErrors())
+                        return;
+
+                    Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
+                    ErrorLogReport errorLogReport = unprocessedEntry.getValue();
+                    ErrorAttachment attachment = mCrashesListener.getErrorAttachment(errorLogReport.report);
+                    if (attachment == null)
+                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
+                    else
+                        errorLogReport.log.setErrorAttachment(attachment);
+                    mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
+
+                    /* Clean up an error log file and map entry. */
+                    unprocessedIterator.remove();
+                    ErrorLogHelper.removeStoredErrorLogFile(unprocessedEntry.getKey());
+                }
             }
-            return;
-        }
-
-        if (userConfirmation == ALWAYS_SEND) {
-            StorageHelper.PreferencesStorage.putBoolean(PREF_KEY_ALWAYS_SEND, true);
-        }
-
-        Iterator<Map.Entry<UUID, ErrorLogReport>> unprocessedIterator = mUnprocessedErrorReports.entrySet().iterator();
-        while (unprocessedIterator.hasNext()) {
-
-            Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
-            ErrorLogReport errorLogReport = unprocessedEntry.getValue();
-            ErrorAttachment attachment = mCrashesListener.getErrorAttachment(errorLogReport.report);
-            if (attachment == null)
-                MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
-            else
-                errorLogReport.log.setErrorAttachment(attachment);
-            mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
-
-            /* Clean up an error log file and map entry. */
-            unprocessedIterator.remove();
-            ErrorLogHelper.removeStoredErrorLogFile(unprocessedEntry.getKey());
-        }
+        });
     }
 
     @VisibleForTesting
