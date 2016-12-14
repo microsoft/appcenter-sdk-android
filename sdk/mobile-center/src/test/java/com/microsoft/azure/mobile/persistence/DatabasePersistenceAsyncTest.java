@@ -3,6 +3,7 @@ package com.microsoft.azure.mobile.persistence;
 import android.os.Handler;
 
 import com.microsoft.azure.mobile.ingestion.models.Log;
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -17,8 +18,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.doAnswer;
@@ -27,6 +31,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
@@ -145,20 +151,6 @@ public class DatabasePersistenceAsyncTest {
     }
 
     @Test
-    public void clear() {
-        mDatabase.clear();
-        verify(mPersistence).clear();
-    }
-
-    @Test
-    public void clearWithCallback() {
-        mDatabase.clear(mCallback);
-        verify(mPersistence).clear();
-        verify(mCallback).onSuccess(null);
-    }
-
-
-    @Test
     public void close() throws IOException {
         mDatabase.close();
         verify(mPersistence).close();
@@ -179,5 +171,34 @@ public class DatabasePersistenceAsyncTest {
         verify(mHandler).removeCallbacks(notNull(Runnable.class));
         verify(mPersistence).close();
         verify(mCallback).onFailure(notNull(IOException.class));
+    }
+
+    @Test
+    @PrepareForTest(MobileCenterLog.class)
+    public void waitForCurrentTasksToComplete() throws InterruptedException {
+        mockStatic(MobileCenterLog.class);
+        mDatabase.waitForCurrentTasksToComplete(5000);
+        verifyStatic();
+        MobileCenterLog.debug(anyString(), anyString());
+    }
+
+    @Test(expected = InterruptedException.class)
+    public void waitForCurrentInterrupted() throws Exception {
+        Semaphore semaphore = mock(Semaphore.class);
+        whenNew(Semaphore.class).withAnyArguments().thenReturn(semaphore);
+        when(semaphore.tryAcquire(anyLong(), any(TimeUnit.class))).thenThrow(new InterruptedException());
+        mDatabase.waitForCurrentTasksToComplete(5000);
+    }
+
+    @Test
+    @PrepareForTest(MobileCenterLog.class)
+    public void waitForCurrentTimeout() throws Exception {
+        mockStatic(MobileCenterLog.class);
+        Semaphore semaphore = mock(Semaphore.class);
+        whenNew(Semaphore.class).withAnyArguments().thenReturn(semaphore);
+        when(semaphore.tryAcquire(anyLong(), any(TimeUnit.class))).thenReturn(false);
+        mDatabase.waitForCurrentTasksToComplete(5000);
+        verifyStatic();
+        MobileCenterLog.error(anyString(), anyString());
     }
 }

@@ -6,6 +6,7 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.azure.mobile.CancellationException;
 import com.microsoft.azure.mobile.ingestion.Ingestion;
 import com.microsoft.azure.mobile.ingestion.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.http.HttpUtils;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -38,6 +40,18 @@ import java.util.UUID;
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 
 public class DefaultChannel implements Channel {
+
+    /**
+     * Persistence batch size for {@link Persistence#getLogs(String, int, List)} when clearing.
+     */
+    @VisibleForTesting
+    static final int CLEAR_BATCH_SIZE = 100;
+
+    /**
+     * Shutdown timeout in millis.
+     */
+    @VisibleForTesting
+    static final int SHUTDOWN_TIMEOUT = 5000;
 
     /**
      * Application context.
@@ -195,7 +209,7 @@ public class DefaultChannel implements Channel {
             for (String groupName : mGroupStates.keySet())
                 checkPendingLogs(groupName);
         } else
-            suspend(true);
+            suspend(true, new CancellationException());
     }
 
     @Override
@@ -222,23 +236,60 @@ public class DefaultChannel implements Channel {
      * Stop sending logs until app is restarted or the channel is enabled again.
      *
      * @param deleteLogs in addition to suspending, if this is true, delete all logs from Persistence.
+     * @param exception  the exception that caused suspension.
      */
-    private void suspend(boolean deleteLogs) {
+    private void suspend(boolean deleteLogs, Exception exception) {
         mEnabled = false;
         mDiscardLogs = deleteLogs;
         for (GroupState groupState : mGroupStates.values()) {
             cancelTimer(groupState);
-            groupState.mSendingBatches.clear();
+
+            /* Delete all other batches and call callback method that are currently in progress. */
+            for (Iterator<Map.Entry<String, List<Log>>> iterator = groupState.mSendingBatches.entrySet().iterator(); iterator.hasNext(); ) {
+                Map.Entry<String, List<Log>> entry = iterator.next();
+                List<Log> removedLogsForBatchId = groupState.mSendingBatches.get(entry.getKey());
+                iterator.remove();
+                if (deleteLogs) {
+                    GroupListener groupListener = groupState.mListener;
+                    if (groupListener != null) {
+                        for (Log log : removedLogsForBatchId)
+                            groupListener.onFailure(log, exception);
+                    }
+                }
+            }
         }
         try {
             mIngestion.close();
         } catch (IOException e) {
             MobileCenterLog.error(LOG_TAG, "Failed to close ingestion", e);
         }
-        if (deleteLogs)
-            mPersistence.clear();
-        else
+        if (deleteLogs) {
+            for (GroupState groupState : mGroupStates.values()) {
+                handleFailureCallback(groupState);
+            }
+        } else {
             mPersistence.clearPendingLogState();
+        }
+    }
+
+    private void handleFailureCallback(final GroupState groupState) {
+        final List<Log> logs = new ArrayList<>();
+        mPersistence.getLogs(groupState.mName, CLEAR_BATCH_SIZE, logs, new AbstractDatabasePersistenceAsyncCallback() {
+            @Override
+            public void onSuccess(Object result) {
+                if (logs.size() > 0 && groupState.mListener != null) {
+                    for (Log log : logs) {
+                        groupState.mListener.onBeforeSending(log);
+                        groupState.mListener.onFailure(log, new CancellationException());
+                    }
+                }
+                if (logs.size() >= CLEAR_BATCH_SIZE && groupState.mListener != null) {
+                    handleFailureCallback(groupState);
+                } else {
+                    mPersistence.deleteLogs(groupState.mName);
+                }
+            }
+        });
     }
 
     private void cancelTimer(GroupState groupState) {
@@ -357,13 +408,14 @@ public class DefaultChannel implements Channel {
         boolean recoverableError = HttpUtils.isRecoverableError(e);
         if (recoverableError) {
             groupState.mPendingLogCount += removedLogsForBatchId.size();
+        } else {
+            GroupListener groupListener = groupState.mListener;
+            if (groupListener != null) {
+                for (Log log : removedLogsForBatchId)
+                    groupListener.onFailure(log, e);
+            }
         }
-        GroupListener groupListener = groupState.mListener;
-        if (groupListener != null) {
-            for (Log log : removedLogsForBatchId)
-                groupListener.onFailure(log, e);
-        }
-        suspend(!recoverableError);
+        suspend(!recoverableError, e);
     }
 
     /**
@@ -375,16 +427,20 @@ public class DefaultChannel implements Channel {
     @Override
     public synchronized void enqueue(@NonNull Log log, @NonNull final String groupName) {
 
-        /* Check if disabled with discarding logs. */
-        if (mDiscardLogs) {
-            MobileCenterLog.warn(LOG_TAG, "Channel is disabled, log are discarded.");
-            return;
-        }
-
         /* Check group name is registered. */
         final GroupState groupState = mGroupStates.get(groupName);
         if (groupState == null) {
             MobileCenterLog.error(LOG_TAG, "Invalid group name:" + groupName);
+            return;
+        }
+
+        /* Check if disabled with discarding logs. */
+        if (mDiscardLogs) {
+            MobileCenterLog.warn(LOG_TAG, "Channel is disabled, log are discarded.");
+            if (groupState.mListener != null) {
+                groupState.mListener.onBeforeSending(log);
+                groupState.mListener.onFailure(log, new CancellationException());
+            }
             return;
         }
 
@@ -467,6 +523,17 @@ public class DefaultChannel implements Channel {
     @Override
     public synchronized void removeListener(Listener listener) {
         mListeners.remove(listener);
+    }
+
+    @Override
+    public void shutdown() {
+        suspend(false, new CancellationException());
+        try {
+            MobileCenterLog.debug(LOG_TAG, "Wait for persistence to process queue.");
+            mPersistence.waitForCurrentTasksToComplete(SHUTDOWN_TIMEOUT);
+        } catch (InterruptedException e) {
+            MobileCenterLog.warn(LOG_TAG, "Interrupted while waiting persistence to flush.", e);
+        }
     }
 
     /**
