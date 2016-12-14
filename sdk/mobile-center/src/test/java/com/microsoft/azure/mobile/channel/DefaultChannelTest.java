@@ -929,7 +929,7 @@ public class DefaultChannelTest {
 
         DatabasePersistenceAsync mockPersistenceAsync = spy(new DatabasePersistenceAsync(mockPersistence));
         whenNew(DatabasePersistenceAsync.class).withArguments(mockPersistence).thenReturn(mockPersistenceAsync);
-        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class)))
+        when(mockPersistence.getLogs(eq(TEST_GROUP), anyInt(), any(ArrayList.class)))
                 .then(getGetLogsAnswer(1))
                 /* Logs from here will be used TEST_GROUP to clear pending states. */
                 .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE))
@@ -947,7 +947,43 @@ public class DefaultChannelTest {
 
         /* Verify callbacks invoked (1 + DefaultChannel.CLEAR_BATCH_SIZE + DefaultChannel.CLEAR_BATCH_SIZE - 1) times. */
         verify(mockListener, times(DefaultChannel.CLEAR_BATCH_SIZE * 2)).onBeforeSending(any(Log.class));
-        verify(mockListener, times(DefaultChannel.CLEAR_BATCH_SIZE * 2)).onFailure(any(Log.class), any(CancellationException.class));
+        verify(mockListener, times(DefaultChannel.CLEAR_BATCH_SIZE * 2)).onFailure(any(Log.class), any(Exception.class));
+
+        /* Verify logs were deleted. */
+        verify(mockPersistence).deleteLogs(TEST_GROUP);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void invokeCallbacksAfterSuspendFatalNoListener() throws Exception {
+        Persistence mockPersistence = mock(Persistence.class);
+        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+
+        DatabasePersistenceAsync mockPersistenceAsync = spy(new DatabasePersistenceAsync(mockPersistence));
+        whenNew(DatabasePersistenceAsync.class).withArguments(mockPersistence).thenReturn(mockPersistenceAsync);
+        when(mockPersistence.getLogs(eq(TEST_GROUP), anyInt(), any(ArrayList.class)))
+                .then(getGetLogsAnswer(1))
+                /* Logs from here will be used TEST_GROUP to clear pending states. */
+                .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE))
+                .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE - 1))
+                /* Logs from here will be used another group to skip callbacks. */
+                .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE));
+
+        /* Make first call hang, and the second call return a fatal error. */
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).thenReturn(null).then(getSendAsyncAnswer(new HttpException(403)));
+
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        channel.addGroup(TEST_GROUP, 1, 1, MAX_PARALLEL_BATCHES, null);
+        channel.addGroup(TEST_GROUP + "2", 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
+
+        /* Enqueuing 2 events. */
+        channel.enqueue(mock(Log.class), TEST_GROUP);
+        channel.enqueue(mock(Log.class), TEST_GROUP);
+
+        /* Verify callbacks not invoked. */
+        verify(mockListener, never()).onBeforeSending(any(Log.class));
+        verify(mockListener, never()).onFailure(any(Log.class), any(Exception.class));
 
         /* Verify logs were deleted. */
         verify(mockPersistence).deleteLogs(TEST_GROUP);
@@ -962,7 +998,7 @@ public class DefaultChannelTest {
 
         DatabasePersistenceAsync mockPersistenceAsync = spy(new DatabasePersistenceAsync(mockPersistence));
         whenNew(DatabasePersistenceAsync.class).withArguments(mockPersistence).thenReturn(mockPersistenceAsync);
-        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class)))
+        when(mockPersistence.getLogs(eq(TEST_GROUP), anyInt(), any(ArrayList.class)))
                 .then(getGetLogsAnswer(1));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(503)));
 
