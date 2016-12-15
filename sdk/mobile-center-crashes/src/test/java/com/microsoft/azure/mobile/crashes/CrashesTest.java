@@ -904,7 +904,7 @@ public class CrashesTest {
         assertTrue(Crashes.isEnabled());
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
 
-        assertFalse(Crashes.hasCrashedInLastSession());
+        assertTrue(Crashes.hasCrashedInLastSession());
         assertNull(Crashes.getLastSessionCrashReport());
 
         /*
@@ -922,7 +922,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{file});
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(file);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
-        assertFalse(Crashes.hasCrashedInLastSession());
+        assertTrue(Crashes.hasCrashedInLastSession());
         assertNull(Crashes.getLastSessionCrashReport());
     }
 

@@ -64,16 +64,16 @@ public class Crashes extends AbstractMobileCenterService {
     public static final String PREF_KEY_ALWAYS_SEND = "com.microsoft.azure.mobile.crashes.always.send";
 
     /**
-     * Thread name for persistence to access database.
-     */
-    @VisibleForTesting
-    static final String THREAD_NAME = "CrashesThread";
-
-    /**
      * Group for sending logs.
      */
     @VisibleForTesting
     static final String ERROR_GROUP = "group_errors";
+
+    /**
+     * Thread name for persistence to access database.
+     */
+    @VisibleForTesting
+    private static final String THREAD_NAME = "CrashesThread";
 
     /**
      * Name of the service.
@@ -101,12 +101,6 @@ public class Crashes extends AbstractMobileCenterService {
      */
     @VisibleForTesting
     final Handler mHandler;
-
-    /**
-     * Handler for main thread loop.
-     */
-    @VisibleForTesting
-    final Handler mMainHandler;
 
     /**
      * Log factories managed by this service.
@@ -158,6 +152,11 @@ public class Crashes extends AbstractMobileCenterService {
      */
     private ErrorReport mLastSessionErrorReport;
 
+    /**
+     * Flag indicates whether Crashes found ErrorReport for the last session.
+     */
+    private boolean mFoundLastSessionErrorReport;
+
     private Crashes() {
         mFactories = new HashMap<>();
         mFactories.put(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
@@ -169,7 +168,6 @@ public class Crashes extends AbstractMobileCenterService {
         HandlerThread thread = new HandlerThread(THREAD_NAME);
         thread.start();
         mHandler = new Handler(thread.getLooper());
-        mMainHandler = new Handler(Looper.getMainLooper());
     }
 
     @NonNull
@@ -245,22 +243,31 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Provides information whether the app crashed in its last session.
+     * Check whether the app crashed in its last session.
      *
      * @return {@code true} if a crash was recorded in the last session, otherwise {@code false}.
      */
     public static boolean hasCrashedInLastSession() {
-        return getLastSessionCrashReport() != null;
+        return getInstance().hasInstanceCrashedInLastSession();
     }
 
     /**
      * Provides information about any available crash report from the last session, if it crashed.
+     * It also returns {@code null} if Crashes service failed to load the crash information.
      *
      * @return The crash report from the last session if one was set.
+     * @see #hasCrashedInLastSession()
      */
     @Nullable
     public static ErrorReport getLastSessionCrashReport() {
         return getInstance().getInstanceLastSessionCrashReport();
+    }
+
+    /**
+     * Implements {@link #hasCrashedInLastSession()} at instance level.
+     */
+    private synchronized boolean hasInstanceCrashedInLastSession() {
+        return mFoundLastSessionErrorReport;
     }
 
     /**
@@ -433,11 +440,12 @@ public class Crashes extends AbstractMobileCenterService {
         } else if (mContext != null && mUncaughtExceptionHandler == null) {
             mUncaughtExceptionHandler = new UncaughtExceptionHandler();
             mUncaughtExceptionHandler.register();
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    File logFile = ErrorLogHelper.getLastErrorLogFile();
-                    if (logFile != null) {
+            final File logFile = ErrorLogHelper.getLastErrorLogFile();
+            if (logFile != null) {
+                mFoundLastSessionErrorReport = true;
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
                         String logFileContents = StorageHelper.InternalStorage.read(logFile);
                         if (logFileContents != null)
                             try {
@@ -447,8 +455,8 @@ public class Crashes extends AbstractMobileCenterService {
                                 MobileCenterLog.error(LOG_TAG, "Error parsing last session error log", e);
                             }
                     }
-                }
-            });
+                });
+            }
         }
     }
 
@@ -499,7 +507,7 @@ public class Crashes extends AbstractMobileCenterService {
     private void processUserConfirmation() {
 
         /* Handle user confirmation in UI thread. */
-        mMainHandler.post(new Runnable() {
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
                 boolean shouldAwaitUserConfirmation = true;
@@ -591,7 +599,7 @@ public class Crashes extends AbstractMobileCenterService {
             return;
         }
 
-        mHandler.post(new Runnable() {
+        Runnable runnable = new Runnable() {
             @Override
             public void run() {
                 if (userConfirmation == DONT_SEND) {
@@ -628,7 +636,13 @@ public class Crashes extends AbstractMobileCenterService {
                     ErrorLogHelper.removeStoredErrorLogFile(unprocessedEntry.getKey());
                 }
             }
-        });
+        };
+
+        /* Run on background thread if current thread is UI thread. */
+        if (Looper.myLooper() == Looper.getMainLooper())
+            mHandler.post(runnable);
+        else
+            runnable.run();
     }
 
     @VisibleForTesting
