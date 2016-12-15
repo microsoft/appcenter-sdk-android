@@ -118,7 +118,7 @@ subprojects {
 
     task javadocJar(type: Jar, dependsOn: javadoc) {
         classifier = 'javadoc'
-        //noinspection GroovyAssignabilityCheck
+        //noinspection GroovyAccessibility
         from javadoc.destinationDir
     }
 
