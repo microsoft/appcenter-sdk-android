@@ -31,7 +31,6 @@ import static com.microsoft.azure.mobile.test.TestUtils.TAG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -102,7 +101,6 @@ public class CrashesAndroidTest {
 
         /* Crash on 1st process. */
         assertFalse(Crashes.hasCrashedInLastSession());
-        assertNull(Crashes.getLastSessionCrashReport());
         android.util.Log.i(TAG, "Process 1");
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
@@ -147,11 +145,25 @@ public class CrashesAndroidTest {
 
         /* Check last session error report. */
         assertTrue(Crashes.hasCrashedInLastSession());
-        ErrorReport lastSessionCrashReport = Crashes.getLastSessionCrashReport();
-        assertNotNull(lastSessionCrashReport);
-        Throwable lastThrowable = lastSessionCrashReport.getThrowable();
-        assertTrue(lastThrowable instanceof StackOverflowError);
-        assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
+        Crashes.getLastSessionCrashReport(new Crashes.LastCrashErrorReportListener() {
+            @Override
+            public void onSuccess(ErrorReport errorReport) {
+                assertNotNull(errorReport);
+                Throwable lastThrowable = errorReport.getThrowable();
+                assertTrue(lastThrowable instanceof StackOverflowError);
+                assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
+            }
+
+            @Override
+            public void onFailure() {
+                throw new AssertionFailedError();
+            }
+
+            @Override
+            public void onNotFound() {
+                throw new AssertionFailedError();
+            }
+        });
 
         /* Waiting user confirmation so no log sent yet. */
         verify(channel, never()).enqueue(any(Log.class), anyString());
