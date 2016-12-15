@@ -30,9 +30,11 @@ import org.json.JSONException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -155,7 +157,9 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Flag indicates whether Crashes found ErrorReport for the last session.
      */
-    private boolean mFoundLastSessionErrorReport;
+    private LastCrashProcessingStatus mFoundLastSessionErrorReport;
+
+    private List<LastCrashErrorReportListener> mLastCrashErrorReportListeners;
 
     private Crashes() {
         mFactories = new HashMap<>();
@@ -168,6 +172,7 @@ public class Crashes extends AbstractMobileCenterService {
         HandlerThread thread = new HandlerThread(THREAD_NAME);
         thread.start();
         mHandler = new Handler(thread.getLooper());
+        mFoundLastSessionErrorReport = LastCrashProcessingStatus.PREPARE_PROCESSING;
     }
 
     @NonNull
@@ -253,28 +258,44 @@ public class Crashes extends AbstractMobileCenterService {
 
     /**
      * Provides information about any available crash report from the last session, if it crashed.
-     * It also returns {@code null} if Crashes service failed to load the crash information.
      *
-     * @return The crash report from the last session if one was set.
+     * @param listener The listener that will receive crash in the last session.
      * @see #hasCrashedInLastSession()
      */
-    @Nullable
-    public static ErrorReport getLastSessionCrashReport() {
-        return getInstance().getInstanceLastSessionCrashReport();
+    public static void getLastSessionCrashReport(LastCrashErrorReportListener listener) {
+        getInstance().getInstanceLastSessionCrashReport(listener);
     }
 
     /**
      * Implements {@link #hasCrashedInLastSession()} at instance level.
      */
     private synchronized boolean hasInstanceCrashedInLastSession() {
-        return mFoundLastSessionErrorReport;
+        return mFoundLastSessionErrorReport != LastCrashProcessingStatus.NOT_FOUND &&
+                mFoundLastSessionErrorReport != LastCrashProcessingStatus.PREPARE_PROCESSING;
     }
 
     /**
-     * Implements {@link #getLastSessionCrashReport()} at instance level.
+     * Implements {@link #getLastSessionCrashReport(LastCrashErrorReportListener)} at instance level.
      */
-    private synchronized ErrorReport getInstanceLastSessionCrashReport() {
-        return mLastSessionErrorReport;
+    private synchronized void getInstanceLastSessionCrashReport(LastCrashErrorReportListener listener) {
+        switch (mFoundLastSessionErrorReport) {
+            case PREPARE_PROCESSING:
+            case PROCESSING:
+                if (mLastCrashErrorReportListeners == null) {
+                    mLastCrashErrorReportListeners = new ArrayList<>();
+                }
+                mLastCrashErrorReportListeners.add(listener);
+                break;
+            case PROCESSED:
+                listener.onSuccess(mLastSessionErrorReport);
+                break;
+            case PROCESSING_FAILED:
+                listener.onFailure();
+                break;
+            case NOT_FOUND:
+                listener.onNotFound();
+                break;
+        }
     }
 
     @Override
@@ -442,20 +463,50 @@ public class Crashes extends AbstractMobileCenterService {
             mUncaughtExceptionHandler.register();
             final File logFile = ErrorLogHelper.getLastErrorLogFile();
             if (logFile != null) {
-                mFoundLastSessionErrorReport = true;
+                mFoundLastSessionErrorReport = LastCrashProcessingStatus.PROCESSING;
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
                         String logFileContents = StorageHelper.InternalStorage.read(logFile);
-                        if (logFileContents != null)
+                        if (logFileContents == null) {
+                            mFoundLastSessionErrorReport = LastCrashProcessingStatus.PROCESSING_FAILED;
+                        } else {
                             try {
                                 ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logFileContents);
                                 mLastSessionErrorReport = buildErrorReport(log);
+                                mFoundLastSessionErrorReport = LastCrashProcessingStatus.PROCESSED;
                             } catch (JSONException e) {
+                                mFoundLastSessionErrorReport = LastCrashProcessingStatus.PROCESSING_FAILED;
                                 MobileCenterLog.error(LOG_TAG, "Error parsing last session error log", e);
                             }
+                        }
+
+                        /* Call callbacks for getInstanceLastSessionCrashReport(Crashes.LastCrashErrorReportListener) . */
+                        if (mLastCrashErrorReportListeners != null) {
+                            for (Iterator<LastCrashErrorReportListener> iterator = mLastCrashErrorReportListeners.iterator(); iterator.hasNext(); ) {
+                                LastCrashErrorReportListener listener = iterator.next();
+                                iterator.remove();
+                                if (mFoundLastSessionErrorReport == LastCrashProcessingStatus.PROCESSED)
+                                    listener.onSuccess(mLastSessionErrorReport);
+                                else
+                                    listener.onFailure();
+                            }
+                            mLastCrashErrorReportListeners = null;
+                        }
                     }
                 });
+            } else {
+
+                /* Call callbacks for getInstanceLastSessionCrashReport(Crashes.LastCrashErrorReportListener) . */
+                if (mLastCrashErrorReportListeners != null) {
+                    for (Iterator<LastCrashErrorReportListener> iterator = mLastCrashErrorReportListeners.iterator(); iterator.hasNext(); ) {
+                        LastCrashErrorReportListener listener = iterator.next();
+                        iterator.remove();
+                        listener.onNotFound();
+                    }
+                    mLastCrashErrorReportListeners = null;
+                }
+                mFoundLastSessionErrorReport = LastCrashProcessingStatus.NOT_FOUND;
             }
         }
     }
@@ -691,6 +742,37 @@ public class Crashes extends AbstractMobileCenterService {
         String errorLogString = mLogSerializer.serializeLog(errorLog);
         StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
         MobileCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
+    }
+
+    /**
+     * Enum for the processing status of crash in the last session.
+     */
+    private enum LastCrashProcessingStatus {
+        PREPARE_PROCESSING,
+        PROCESSING,
+        PROCESSED,
+        PROCESSING_FAILED,
+        NOT_FOUND
+    }
+
+    public interface LastCrashErrorReportListener {
+
+        /**
+         * Called when Crashes service completed processing crash in the last session.
+         *
+         * @param errorReport The crash report from the last session.
+         */
+        void onSuccess(ErrorReport errorReport);
+
+        /**
+         * Called when Crashes service failed to process crash in the last session.
+         */
+        void onFailure();
+
+        /**
+         * Called when it didn't crash in the last session.
+         */
+        void onNotFound();
     }
 
     /**
