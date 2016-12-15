@@ -6,6 +6,7 @@ import java.io.EOFException;
 import java.io.InterruptedIOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLException;
@@ -57,7 +58,7 @@ public final class HttpUtils {
         /* Check corner cases. */
         if (t instanceof SSLException) {
             String message = t.getMessage();
-            if (message != null && CONNECTION_ISSUE_PATTERN.matcher(message.toLowerCase()).find())
+            if (message != null && CONNECTION_ISSUE_PATTERN.matcher(message.toLowerCase(Locale.US)).find())
                 return true;
         }
         return false;
