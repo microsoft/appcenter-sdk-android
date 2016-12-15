@@ -24,7 +24,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.azure.mobile.test.TestUtils.TAG;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -70,6 +72,8 @@ public class CrashesAndroidTest {
     public void testNoDuplicateCallbacksOrSending() throws InterruptedException {
 
         /* Crash on 1st process. */
+        assertFalse(Crashes.hasCrashedInLastSession());
+        assertNull(Crashes.getLastSessionCrashReport());
         android.util.Log.i(TAG, "Process 1");
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
@@ -108,6 +112,14 @@ public class CrashesAndroidTest {
         Crashes.setListener(crashesListener);
         Crashes.getInstance().onChannelReady(sContext, channel);
 
+        /* Check last session error report. */
+        assertTrue(Crashes.hasCrashedInLastSession());
+        ErrorReport lastSessionCrashReport = Crashes.getLastSessionCrashReport();
+        assertNotNull(lastSessionCrashReport);
+        Throwable lastThrowable = lastSessionCrashReport.getThrowable();
+        assertTrue(lastThrowable instanceof StackOverflowError);
+        assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
+
         /* Waiting user confirmation so no log sent yet. */
         verify(channel, never()).enqueue(any(Log.class), anyString());
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
@@ -140,6 +152,8 @@ public class CrashesAndroidTest {
         Crashes.unsetInstance();
         Crashes.setListener(crashesListener);
         Crashes.getInstance().onChannelReady(sContext, channel);
+        assertFalse(Crashes.hasCrashedInLastSession());
+        assertNull(Crashes.getLastSessionCrashReport());
         assertNotNull(groupListener.get());
         groupListener.get().onSuccess(log.get());
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
