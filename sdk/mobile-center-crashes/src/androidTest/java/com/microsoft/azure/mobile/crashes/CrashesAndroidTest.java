@@ -188,7 +188,23 @@ public class CrashesAndroidTest {
         Crashes.getInstance().onChannelReady(sContext, channel);
         waitForCrashesHandlerTasksToComplete();
         assertFalse(Crashes.hasCrashedInLastSession());
-        assertNull(Crashes.getLastSessionCrashReport());
+        Crashes.getLastSessionCrashReport(new Crashes.LastCrashErrorReportListener() {
+            @Override
+            public void onSuccess(ErrorReport errorReport) {
+                new AssertionFailedError();
+            }
+
+            @Override
+            public void onFailure() {
+                new AssertionFailedError();
+
+            }
+
+            @Override
+            public void onNotFound() {
+            }
+        });
+
         assertNotNull(groupListener.get());
         groupListener.get().onSuccess(log.get());
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
