@@ -53,12 +53,6 @@ public class MainActivity extends AppCompatActivity {
         Crashes.setListener(getCrashesListener());
         MobileCenter.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class);
 
-        Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
-        ErrorReport lastSessionCrashReport = Crashes.getLastSessionCrashReport();
-        if (lastSessionCrashReport != null) {
-            Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", lastSessionCrashReport.getThrowable());
-        }
-
         ((TextView) findViewById(R.id.package_name)).setText(String.format(getString(R.string.sdk_source_format), getPackageName().substring(getPackageName().lastIndexOf(".") + 1)));
         TestFeatures.initialize(this);
         ListView listView = (ListView) findViewById(R.id.list);
@@ -94,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
         return appSecret;
     }
 
-    private AbstractCrashesListener getCrashesListener () {
+    private AbstractCrashesListener getCrashesListener() {
         return new AbstractCrashesListener() {
             @Override
             public boolean shouldAwaitUserConfirmation() {

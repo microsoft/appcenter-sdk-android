@@ -25,6 +25,7 @@ import com.microsoft.azure.mobile.utils.UUIDUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import junit.framework.Assert;
+import junit.framework.AssertionFailedError;
 
 import org.json.JSONException;
 import org.junit.Before;
@@ -813,11 +814,29 @@ public class CrashesTest {
     }
 
     @Test
-    public void crashInLastSession() throws JSONException, IOException, ClassNotFoundException {
-        int tOffset = 10;
-        long appLaunchTOffset = 100L;
+    public void noCrashInLastSession() {
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(null);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
 
-        ManagedErrorLog errorLog = new ManagedErrorLog();
+        Crashes.LastCrashErrorReportListener listener = new DefaultAssertLastCrashErrorReportListener() {
+            @Override
+            public void onNotFound() {
+            }
+        };
+
+        Crashes.getLastSessionCrashReport(listener);
+        Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
+        assertFalse(Crashes.hasCrashedInLastSession());
+        Crashes.getLastSessionCrashReport(listener);
+    }
+
+    @Test
+    public void crashInLastSession() throws JSONException, IOException, ClassNotFoundException {
+        final int tOffset = 10;
+        final long appLaunchTOffset = 100L;
+
+        final ManagedErrorLog errorLog = new ManagedErrorLog();
         errorLog.setId(UUIDUtils.randomUUID());
         errorLog.setErrorThreadName(Thread.currentThread().getName());
         errorLog.setToffset(tOffset);
@@ -828,8 +847,15 @@ public class CrashesTest {
         LogSerializer logSerializer = mock(LogSerializer.class);
         when(logSerializer.deserializeLog(anyString())).thenReturn(errorLog);
 
-        Throwable throwable = mock(Throwable.class);
+        final Throwable throwable = mock(Throwable.class);
         ErrorReport errorReport = ErrorLogHelper.getErrorReportFromErrorLog(errorLog, throwable);
+
+        /* This listener will be called after Crashes service is initialized. */
+        final Crashes.LastCrashErrorReportListener listener = new DefaultAssertLastCrashErrorReportListener() {
+            @Override
+            public void onSuccess(ErrorReport errorReport) {
+            }
+        };
 
         mockStatic(ErrorLogHelper.class);
         File lastErrorLogFile = errorStorageDirectory.newFile("last-error-log.json");
@@ -837,13 +863,20 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(errorStorageDirectory.newFile());
         when(ErrorLogHelper.getErrorReportFromErrorLog(errorLog, throwable)).thenReturn(errorReport);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{lastErrorLogFile});
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenAnswer(new Answer<String>() {
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
+
+                /* Call twice for multiple listeners during initialize. */
+                Crashes.getLastSessionCrashReport(listener);
+                Crashes.getLastSessionCrashReport(listener);
+                return "";
+            }
+        });
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(throwable);
 
         Crashes.getInstance().setLogSerializer(logSerializer);
-
         assertFalse(Crashes.hasCrashedInLastSession());
-        assertNull(Crashes.getLastSessionCrashReport());
 
         /*
          * Last session error is only fetched upon initialization: enabled and channel ready.
@@ -853,14 +886,27 @@ public class CrashesTest {
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
 
         assertTrue(Crashes.hasCrashedInLastSession());
-        ErrorReport report = Crashes.getLastSessionCrashReport();
-        assertNotNull(report);
-        assertEquals(errorLog.getId().toString(), report.getId());
-        assertEquals(errorLog.getErrorThreadName(), report.getThreadName());
-        assertEquals(new Date(tOffset - appLaunchTOffset), report.getAppStartTime());
-        assertEquals(new Date(tOffset), report.getAppErrorTime());
-        assertNotNull(report.getDevice());
-        assertEquals(throwable, report.getThrowable());
+
+        Crashes.getLastSessionCrashReport(new Crashes.LastCrashErrorReportListener() {
+            @Override
+            public void onSuccess(ErrorReport errorReport) {
+                assertNotNull(errorReport);
+                assertEquals(errorLog.getId().toString(), errorReport.getId());
+                assertEquals(errorLog.getErrorThreadName(), errorReport.getThreadName());
+                assertEquals(new Date(tOffset - appLaunchTOffset), errorReport.getAppStartTime());
+                assertEquals(new Date(tOffset), errorReport.getAppErrorTime());
+                assertNotNull(errorReport.getDevice());
+                assertEquals(throwable, errorReport.getThrowable());
+            }
+
+            @Override
+            public void onFailure() {
+            }
+
+            @Override
+            public void onNotFound() {
+            }
+        });
     }
 
     @Test
@@ -872,7 +918,11 @@ public class CrashesTest {
         Crashes.setEnabled(false);
 
         assertFalse(Crashes.hasCrashedInLastSession());
-        assertNull(Crashes.getLastSessionCrashReport());
+        Crashes.getLastSessionCrashReport(new DefaultAssertLastCrashErrorReportListener() {
+            @Override
+            public void onNotFound() {
+            }
+        });
 
         verifyStatic(never());
         ErrorLogHelper.getLastErrorLogFile();
@@ -892,20 +942,26 @@ public class CrashesTest {
         Crashes.getInstance().setLogSerializer(logSerializer);
 
         assertFalse(Crashes.hasCrashedInLastSession());
-        assertNull(Crashes.getLastSessionCrashReport());
 
         JSONException jsonException = new JSONException("Fake JSON exception");
         when(logSerializer.deserializeLog(anyString())).thenThrow(jsonException);
+
+        Crashes.LastCrashErrorReportListener listener = new DefaultAssertLastCrashErrorReportListener() {
+            @Override
+            public void onFailure() {
+            }
+        };
 
         /*
          * Last session error is only fetched upon initialization: enabled and channel ready.
          * Here the service is enabled by default but we are waiting channel to be ready, simulate that.
          */
         assertTrue(Crashes.isEnabled());
+        Crashes.getLastSessionCrashReport(listener);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
 
         assertTrue(Crashes.hasCrashedInLastSession());
-        assertNull(Crashes.getLastSessionCrashReport());
+        Crashes.getLastSessionCrashReport(listener);
 
         /*
          * De-serializing fails twice: processing the log from last time as part of the bulk processing.
@@ -923,7 +979,30 @@ public class CrashesTest {
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(file);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
         assertTrue(Crashes.hasCrashedInLastSession());
-        assertNull(Crashes.getLastSessionCrashReport());
+        Crashes.getLastSessionCrashReport(new DefaultAssertLastCrashErrorReportListener() {
+            @Override
+            public void onFailure() {
+            }
+        });
+    }
+
+    @Test
+    public void getLastSessionCrashReportWithMultipleListeners() {
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(null);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
+
+        Crashes.LastCrashErrorReportListener listener = new DefaultAssertLastCrashErrorReportListener() {
+            @Override
+            public void onNotFound() {
+            }
+        };
+
+        /* Call twice for multiple listeners before initialize. */
+        Crashes.getLastSessionCrashReport(listener);
+        Crashes.getLastSessionCrashReport(listener);
+        Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
+        assertFalse(Crashes.hasCrashedInLastSession());
     }
 
     @Test
@@ -967,5 +1046,22 @@ public class CrashesTest {
         WrapperSdkExceptionManager.saveWrapperSdkErrorLog(errorLog);
         verifyStatic();
         MobileCenterLog.error(anyString(), anyString(), any(IOException.class));
+    }
+
+    private static abstract class DefaultAssertLastCrashErrorReportListener implements Crashes.LastCrashErrorReportListener {
+        @Override
+        public void onSuccess(ErrorReport errorReport) {
+            throw new AssertionFailedError();
+        }
+
+        @Override
+        public void onFailure() {
+            throw new AssertionFailedError();
+        }
+
+        @Override
+        public void onNotFound() {
+            throw new AssertionFailedError();
+        }
     }
 }
