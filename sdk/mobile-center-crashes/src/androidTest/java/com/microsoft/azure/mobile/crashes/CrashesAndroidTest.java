@@ -15,6 +15,8 @@ import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
+import junit.framework.AssertionFailedError;
+
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -257,9 +259,23 @@ public class CrashesAndroidTest {
         Crashes.unsetInstance();
         Crashes.getInstance().onChannelReady(sContext, channel);
         waitForCrashesHandlerTasksToComplete();
-        ErrorReport lastSessionCrashReport = Crashes.getLastSessionCrashReport();
-        assertNotNull(lastSessionCrashReport);
-        assertEquals("ReplacedErrorThreadName", lastSessionCrashReport.getThreadName());
+        Crashes.getLastSessionCrashReport(new Crashes.LastCrashErrorReportListener() {
+            @Override
+            public void onSuccess(ErrorReport errorReport) {
+                assertNotNull(errorReport);
+                assertEquals("ReplacedErrorThreadName", errorReport.getThreadName());
+            }
+
+            @Override
+            public void onFailure() {
+                throw new AssertionFailedError();
+            }
+
+            @Override
+            public void onNotFound() {
+                throw new AssertionFailedError();
+            }
+        });
     }
 
     @Test
