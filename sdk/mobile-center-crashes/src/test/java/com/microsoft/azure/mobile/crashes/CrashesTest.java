@@ -852,6 +852,7 @@ public class CrashesTest {
 
         /* This listener will be called after Crashes service is initialized. */
         final Crashes.LastCrashErrorReportListener listener = new DefaultAssertLastCrashErrorReportListener() {
+
             @Override
             public void onSuccess(ErrorReport errorReport) {
             }
@@ -888,6 +889,7 @@ public class CrashesTest {
         assertTrue(Crashes.hasCrashedInLastSession());
 
         Crashes.getLastSessionCrashReport(new Crashes.LastCrashErrorReportListener() {
+
             @Override
             public void onSuccess(ErrorReport errorReport) {
                 assertNotNull(errorReport);
@@ -947,6 +949,7 @@ public class CrashesTest {
         when(logSerializer.deserializeLog(anyString())).thenThrow(jsonException);
 
         Crashes.LastCrashErrorReportListener listener = new DefaultAssertLastCrashErrorReportListener() {
+
             @Override
             public void onFailure() {
             }
@@ -993,6 +996,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
 
         Crashes.LastCrashErrorReportListener listener = new DefaultAssertLastCrashErrorReportListener() {
+
             @Override
             public void onNotFound() {
             }
@@ -1049,6 +1053,7 @@ public class CrashesTest {
     }
 
     private static abstract class DefaultAssertLastCrashErrorReportListener implements Crashes.LastCrashErrorReportListener {
+
         @Override
         public void onSuccess(ErrorReport errorReport) {
             throw new AssertionFailedError();
