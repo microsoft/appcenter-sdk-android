@@ -235,7 +235,7 @@ public class ErrorLogHelper {
             Exception exception = new Exception();
             exception.setType(cause.getClass().getName());
             exception.setMessage(cause.getMessage());
-            exception.setFrames(getModelFramesFromStackTrace(cause.getStackTrace()));
+            exception.setFrames(getModelFramesFromStackTrace(cause));
             if (topException == null) {
                 topException = exception;
             } else {
@@ -247,20 +247,24 @@ public class ErrorLogHelper {
     }
 
     @NonNull
+    private static List<StackFrame> getModelFramesFromStackTrace(@NonNull Throwable throwable) {
+        StackTraceElement[] stackTrace = throwable.getStackTrace();
+        if (stackTrace.length > FRAME_LIMIT) {
+            StackTraceElement[] stackTraceTruncated = new StackTraceElement[FRAME_LIMIT];
+            System.arraycopy(stackTrace, 0, stackTraceTruncated, 0, FRAME_LIMIT_HALF);
+            System.arraycopy(stackTrace, stackTrace.length - FRAME_LIMIT_HALF, stackTraceTruncated, FRAME_LIMIT_HALF, FRAME_LIMIT_HALF);
+            throwable.setStackTrace(stackTraceTruncated);
+            MobileCenterLog.warn(Crashes.LOG_TAG, "Crash frames truncated from " + stackTrace.length + " to " + stackTraceTruncated.length + " frames.");
+            stackTrace = stackTraceTruncated;
+        }
+        return getModelFramesFromStackTrace(stackTrace);
+    }
+
+    @NonNull
     private static List<StackFrame> getModelFramesFromStackTrace(@NonNull StackTraceElement[] stackTrace) {
         List<StackFrame> stackFrames = new ArrayList<>();
-        if (stackTrace.length > FRAME_LIMIT) {
-            for (int i = 0; i < FRAME_LIMIT_HALF; i++) {
-                stackFrames.add(getModelStackFrame(stackTrace[i]));
-            }
-            for (int i = stackTrace.length - FRAME_LIMIT_HALF; i < stackTrace.length; i++) {
-                stackFrames.add(getModelStackFrame(stackTrace[i]));
-            }
-            MobileCenterLog.warn(Crashes.LOG_TAG, "Crash frames truncated from " + stackTrace.length + " to " + stackFrames.size() + " frames.");
-        } else {
-            for (StackTraceElement stackTraceElement : stackTrace) {
-                stackFrames.add(getModelStackFrame(stackTraceElement));
-            }
+        for (StackTraceElement stackTraceElement : stackTrace) {
+            stackFrames.add(getModelStackFrame(stackTraceElement));
         }
         return stackFrames;
     }
