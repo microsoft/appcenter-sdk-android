@@ -84,6 +84,7 @@ public class CrashesAndroidTest {
         when(crashesListener.shouldAwaitUserConfirmation()).thenReturn(true);
         Crashes.setListener(crashesListener);
         final Error exception = generateStackOverflowError();
+        assertTrue(exception.getStackTrace().length > ErrorLogHelper.FRAME_LIMIT);
         final Thread thread = new Thread() {
 
             @Override
@@ -93,6 +94,7 @@ public class CrashesAndroidTest {
         };
         thread.start();
         thread.join();
+        assertEquals(ErrorLogHelper.FRAME_LIMIT, exception.getStackTrace().length);
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
         verifyZeroInteractions(crashesListener);
