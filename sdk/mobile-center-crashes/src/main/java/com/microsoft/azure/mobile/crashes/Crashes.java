@@ -287,24 +287,19 @@ public class Crashes extends AbstractMobileCenterService {
      * Implements {@link #getLastSessionCrashReport(LastCrashErrorReportListener)} at instance level.
      */
     private synchronized void getInstanceLastSessionCrashReport(LastCrashErrorReportListener listener) {
-        switch (mLastSessionCrashProcessingStatus) {
-            case PREPARE_PROCESSING:
-            case PROCESSING:
-                if (mLastCrashErrorReportListeners == null) {
-                    mLastCrashErrorReportListeners = new ArrayList<>();
-                }
-                mLastCrashErrorReportListeners.add(listener);
-                break;
-            case PROCESSED:
-                listener.onSuccess(mLastSessionErrorReport);
-                break;
-            case PROCESSING_FAILED:
-                listener.onFailure();
-                break;
-            case NOT_FOUND:
-                listener.onNotFound();
-                break;
-        }
+        if (mLastSessionCrashProcessingStatus == PREPARE_PROCESSING ||
+                mLastSessionCrashProcessingStatus == PROCESSING) {
+            if (mLastCrashErrorReportListeners == null) {
+                mLastCrashErrorReportListeners = new ArrayList<>();
+            }
+            mLastCrashErrorReportListeners.add(listener);
+            MobileCenterLog.info(LOG_TAG, "Crashes for the last session have not been processed yet. The SDK will call listener when it completes process.");
+        } else if (mLastSessionCrashProcessingStatus == PROCESSED)
+            listener.onSuccess(mLastSessionErrorReport);
+        else if (mLastSessionCrashProcessingStatus == PROCESSING_FAILED)
+            listener.onFailure();
+        else
+            listener.onNotFound();
     }
 
     @Override
