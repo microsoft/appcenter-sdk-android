@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Crashes service.
@@ -84,7 +85,6 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Thread name for persistence to access database.
      */
-    @VisibleForTesting
     private static final String THREAD_NAME = "CrashesThread";
 
     /**
@@ -101,6 +101,11 @@ public class Crashes extends AbstractMobileCenterService {
      * Default crashes listener.
      */
     private static final CrashesListener DEFAULT_ERROR_REPORTING_LISTENER = new DefaultCrashesListener();
+
+    /**
+     * Timeout for getting crash for the last session.
+     */
+    private static final int GET_LAST_SESSION_CRASH_REPORT_TIMEOUT = 10000;
 
     /**
      * Singleton.
@@ -308,14 +313,18 @@ public class Crashes extends AbstractMobileCenterService {
      * Implements {@link #getLastSessionCrashReport()} at instance level.
      */
     private synchronized ErrorReport getInstanceLastSessionCrashReport() {
-        if (mLastSessionCrashProcessingStatus == PREPARE_PROCESSING ||
-                mLastSessionCrashProcessingStatus == PROCESSING) {
+        if (mLastSessionCrashProcessingStatus == PROCESSING) {
+            MobileCenterLog.debug(LOG_TAG, "Waiting for Crashes service to complete crash report for the last session.");
+            boolean failed = false;
             try {
-                MobileCenterLog.debug(LOG_TAG, "Waiting for Crashes service to complete crash report for the last session.");
-                mSemaphore.acquire();
+                if (!mSemaphore.tryAcquire(GET_LAST_SESSION_CRASH_REPORT_TIMEOUT, TimeUnit.MILLISECONDS))
+                    failed = true;
             } catch (InterruptedException e) {
-                MobileCenterLog.debug(LOG_TAG, "Could not get crash report for the last session.", e);
+                failed = true;
             }
+
+            if (failed)
+                MobileCenterLog.debug(LOG_TAG, "Could not get crash report for the last session.");
         }
         return mLastSessionErrorReport;
     }
@@ -504,11 +513,11 @@ public class Crashes extends AbstractMobileCenterService {
             mUncaughtExceptionHandler.register();
             final File logFile = ErrorLogHelper.getLastErrorLogFile();
             if (logFile != null) {
+                mLastSessionCrashProcessingStatus = PROCESSING;
+                MobileCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mLastSessionCrashProcessingStatus = PROCESSING;
-                        MobileCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
                         String logFileContents = StorageHelper.InternalStorage.read(logFile);
                         if (logFileContents == null) {
                             mLastSessionCrashProcessingStatus = PROCESSING_FAILED;
