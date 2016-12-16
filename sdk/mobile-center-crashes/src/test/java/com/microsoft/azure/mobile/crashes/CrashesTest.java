@@ -825,10 +825,10 @@ public class CrashesTest {
             }
         };
 
-        Crashes.getLastSessionCrashReport(listener);
+        Crashes.getLastSessionCrashReportAsync(listener);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReport(listener);
+        Crashes.getLastSessionCrashReportAsync(listener);
     }
 
     @Test
@@ -869,8 +869,8 @@ public class CrashesTest {
             public String answer(InvocationOnMock invocation) throws Throwable {
 
                 /* Call twice for multiple listeners during initialize. */
-                Crashes.getLastSessionCrashReport(listener);
-                Crashes.getLastSessionCrashReport(listener);
+                Crashes.getLastSessionCrashReportAsync(listener);
+                Crashes.getLastSessionCrashReportAsync(listener);
                 return "";
             }
         });
@@ -888,7 +888,7 @@ public class CrashesTest {
 
         assertTrue(Crashes.hasCrashedInLastSession());
 
-        Crashes.getLastSessionCrashReport(new Crashes.LastCrashErrorReportListener() {
+        Crashes.getLastSessionCrashReportAsync(new Crashes.LastCrashErrorReportListener() {
 
             @Override
             public void onSuccess(ErrorReport errorReport) {
@@ -920,7 +920,7 @@ public class CrashesTest {
         Crashes.setEnabled(false);
 
         assertFalse(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReport(new DefaultAssertLastCrashErrorReportListener() {
+        Crashes.getLastSessionCrashReportAsync(new DefaultAssertLastCrashErrorReportListener() {
             @Override
             public void onNotFound() {
             }
@@ -960,11 +960,11 @@ public class CrashesTest {
          * Here the service is enabled by default but we are waiting channel to be ready, simulate that.
          */
         assertTrue(Crashes.isEnabled());
-        Crashes.getLastSessionCrashReport(listener);
+        Crashes.getLastSessionCrashReportAsync(listener);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
 
         assertTrue(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReport(listener);
+        Crashes.getLastSessionCrashReportAsync(listener);
 
         /*
          * De-serializing fails twice: processing the log from last time as part of the bulk processing.
@@ -982,7 +982,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(file);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
         assertTrue(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReport(new DefaultAssertLastCrashErrorReportListener() {
+        Crashes.getLastSessionCrashReportAsync(new DefaultAssertLastCrashErrorReportListener() {
             @Override
             public void onFailure() {
             }
@@ -1003,8 +1003,8 @@ public class CrashesTest {
         };
 
         /* Call twice for multiple listeners before initialize. */
-        Crashes.getLastSessionCrashReport(listener);
-        Crashes.getLastSessionCrashReport(listener);
+        Crashes.getLastSessionCrashReportAsync(listener);
+        Crashes.getLastSessionCrashReportAsync(listener);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession());
     }
@@ -1021,7 +1021,6 @@ public class CrashesTest {
         Crashes.getInstance().saveUncaughtException(Thread.currentThread(), new TestCrashException());
         verify(wrapperSdkListener).onCrashCaptured(errorLog);
     }
-
 
     @Test
     public void saveWrapperSdkErrorLogJSONException() throws JSONException {
