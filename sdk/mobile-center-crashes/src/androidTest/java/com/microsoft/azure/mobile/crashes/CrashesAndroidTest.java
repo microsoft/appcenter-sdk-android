@@ -145,7 +145,7 @@ public class CrashesAndroidTest {
 
         /* Check last session error report. */
         assertTrue(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReport(new Crashes.LastCrashErrorReportListener() {
+        Crashes.getLastSessionCrashReportAsync(new Crashes.LastCrashErrorReportListener() {
             @Override
             public void onSuccess(ErrorReport errorReport) {
                 assertNotNull(errorReport);
@@ -200,7 +200,7 @@ public class CrashesAndroidTest {
         Crashes.getInstance().onChannelReady(sContext, channel);
         waitForCrashesHandlerTasksToComplete();
         assertFalse(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReport(new Crashes.LastCrashErrorReportListener() {
+        Crashes.getLastSessionCrashReportAsync(new Crashes.LastCrashErrorReportListener() {
             @Override
             public void onSuccess(ErrorReport errorReport) {
                 new AssertionFailedError();
@@ -303,7 +303,7 @@ public class CrashesAndroidTest {
         Crashes.unsetInstance();
         Crashes.getInstance().onChannelReady(sContext, channel);
         waitForCrashesHandlerTasksToComplete();
-        Crashes.getLastSessionCrashReport(new Crashes.LastCrashErrorReportListener() {
+        Crashes.getLastSessionCrashReportAsync(new Crashes.LastCrashErrorReportListener() {
             @Override
             public void onSuccess(ErrorReport errorReport) {
                 assertNotNull(errorReport);

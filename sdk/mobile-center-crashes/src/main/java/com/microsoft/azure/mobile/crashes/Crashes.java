@@ -130,6 +130,11 @@ public class Crashes extends AbstractMobileCenterService {
     private final Map<UUID, ErrorLogReport> mErrorReportCache;
 
     /**
+     * Semaphore for waiting crash report.
+     */
+    private final Semaphore mSemaphore;
+
+    /**
      * Log serializer.
      */
     private LogSerializer mLogSerializer;
@@ -173,11 +178,6 @@ public class Crashes extends AbstractMobileCenterService {
      * List of crash report listeners.
      */
     private List<LastCrashErrorReportListener> mLastCrashErrorReportListeners;
-
-    /**
-     * Semaphore for waiting crash report.
-     */
-    private final Semaphore mSemaphore;
 
     private Crashes() {
         mFactories = new HashMap<>();
@@ -277,9 +277,10 @@ public class Crashes extends AbstractMobileCenterService {
 
     /**
      * Provides information about any available crash report from the last session, if it crashed.
+     * This method is a synchronous call and blocks UI thread.
+     * Use {@link #getLastSessionCrashReportAsync(LastCrashErrorReportListener)} for asynchronous call.
      *
      * @return The crash report from the last session if one was set.
-     * Use {@link #getLastSessionCrashReport(LastCrashErrorReportListener)} instead.
      */
     @Nullable
     public static ErrorReport getLastSessionCrashReport() {
@@ -287,13 +288,12 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Provides information about any available crash report from the last session, if it crashed.
+     * Provides information about any available crash report from the last session asynchronously, if it crashed.
      *
      * @param listener The listener that will receive crash in the last session.
-     * @see #hasCrashedInLastSession()
      */
-    public static void getLastSessionCrashReport(LastCrashErrorReportListener listener) {
-        getInstance().getInstanceLastSessionCrashReport(listener);
+    public static void getLastSessionCrashReportAsync(LastCrashErrorReportListener listener) {
+        getInstance().getInstanceLastSessionCrashReportAsync(listener);
     }
 
     /**
@@ -306,8 +306,6 @@ public class Crashes extends AbstractMobileCenterService {
 
     /**
      * Implements {@link #getLastSessionCrashReport()} at instance level.
-     *
-     * Use {@link #getInstanceLastSessionCrashReport(LastCrashErrorReportListener)} instead.
      */
     private synchronized ErrorReport getInstanceLastSessionCrashReport() {
         if (mLastSessionCrashProcessingStatus == PREPARE_PROCESSING ||
@@ -323,9 +321,9 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Implements {@link #getLastSessionCrashReport(LastCrashErrorReportListener)} at instance level.
+     * Implements {@link #getLastSessionCrashReportAsync(LastCrashErrorReportListener)} at instance level.
      */
-    private synchronized void getInstanceLastSessionCrashReport(LastCrashErrorReportListener listener) {
+    private synchronized void getInstanceLastSessionCrashReportAsync(LastCrashErrorReportListener listener) {
         if (mLastSessionCrashProcessingStatus == PREPARE_PROCESSING ||
                 mLastSessionCrashProcessingStatus == PROCESSING) {
             if (mLastCrashErrorReportListeners == null) {
