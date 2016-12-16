@@ -45,6 +45,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
@@ -1007,6 +1009,22 @@ public class CrashesTest {
         Crashes.getLastSessionCrashReportAsync(listener);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession());
+    }
+
+    @Test
+    public void getLastSessionCrashReportInterrupted() throws Exception {
+        Semaphore semaphore = mock(Semaphore.class);
+        whenNew(Semaphore.class).withAnyArguments().thenReturn(semaphore);
+        when(semaphore.tryAcquire(anyLong(), any(TimeUnit.class))).thenThrow(new InterruptedException()).thenReturn(false);
+
+        /* Reset instance to mock Semaphore. */
+        Crashes.unsetInstance();
+        Crashes.getInstance().mLastSessionCrashProcessingStatus = 1;
+
+        assertNull(Crashes.getLastSessionCrashReport());
+        assertNull(Crashes.getLastSessionCrashReport());
+        verifyStatic(times(4));
+        MobileCenterLog.debug(anyString(), anyString());
     }
 
     @Test
