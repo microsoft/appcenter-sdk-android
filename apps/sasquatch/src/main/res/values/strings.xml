@@ -3,10 +3,6 @@
     <string name="app_name">Sasquatch</string>
     <string name="sdk_source_format">SDK source: %s</string>
     <string name="settings">Settings</string>
-    <string name="title_last_session_crashed">Check crashed</string>
-    <string name="description_last_session_crashed">Check if it was crashed</string>
-    <string name="last_session_crashed">The application was crashed in the last session</string>
-    <string name="last_session_not_crashed">The application was not crashed in the last session</string>
     <string name="title_crashes">Crashes</string>
     <string name="description_crashes">Test crashes</string>
     <string name="title_device_info">Device info</string>
