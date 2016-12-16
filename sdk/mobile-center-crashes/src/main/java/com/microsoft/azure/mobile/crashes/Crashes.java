@@ -140,6 +140,12 @@ public class Crashes extends AbstractMobileCenterService {
     private final Semaphore mSemaphore;
 
     /**
+     * Status of processing crash in the last session.
+     */
+    @VisibleForTesting
+    int mLastSessionCrashProcessingStatus;
+
+    /**
      * Log serializer.
      */
     private LogSerializer mLogSerializer;
@@ -173,11 +179,6 @@ public class Crashes extends AbstractMobileCenterService {
      * ErrorReport for the last session.
      */
     private ErrorReport mLastSessionErrorReport;
-
-    /**
-     * Status of processing crash in the last session.
-     */
-    private int mLastSessionCrashProcessingStatus;
 
     /**
      * List of crash report listeners.
