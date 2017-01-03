@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Crashes service.
@@ -94,11 +93,6 @@ public class Crashes extends AbstractMobileCenterService {
      * Default crashes listener.
      */
     private static final CrashesListener DEFAULT_ERROR_REPORTING_LISTENER = new DefaultCrashesListener();
-
-    /**
-     * Timeout for getting crash for the last session.
-     */
-    private static final int GET_LAST_SESSION_CRASH_REPORT_TIMEOUT = 10000;
 
     /**
      * Singleton.
@@ -308,16 +302,11 @@ public class Crashes extends AbstractMobileCenterService {
     private synchronized ErrorReport getInstanceLastSessionCrashReport() {
         if (!mLastSessionCrashProcessed) {
             MobileCenterLog.debug(LOG_TAG, "Waiting for Crashes service to complete crash report for the last session.");
-            boolean failed = false;
             try {
-                if (!mCountDownLatch.await(GET_LAST_SESSION_CRASH_REPORT_TIMEOUT, TimeUnit.MILLISECONDS))
-                    failed = true;
+                mCountDownLatch.await();
             } catch (InterruptedException e) {
-                failed = true;
-            }
-
-            if (failed)
                 MobileCenterLog.debug(LOG_TAG, "Could not get crash report for the last session.");
+            }
         }
         return mLastSessionErrorReport;
     }
