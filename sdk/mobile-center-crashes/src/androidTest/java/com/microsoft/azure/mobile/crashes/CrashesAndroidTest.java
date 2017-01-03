@@ -7,6 +7,7 @@ import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.azure.mobile.Constants;
+import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
@@ -31,6 +32,7 @@ import static com.microsoft.azure.mobile.test.TestUtils.TAG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -184,23 +186,14 @@ public class CrashesAndroidTest {
 
         /* Check last session error report. */
         assertTrue(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReportAsync(new Crashes.LastCrashErrorReportListener() {
+        Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
+
             @Override
-            public void onSuccess(ErrorReport errorReport) {
+            public void onResult(ErrorReport errorReport) {
                 assertNotNull(errorReport);
                 Throwable lastThrowable = errorReport.getThrowable();
                 assertTrue(lastThrowable instanceof StackOverflowError);
                 assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
-            }
-
-            @Override
-            public void onFailure() {
-                throw new AssertionFailedError();
-            }
-
-            @Override
-            public void onNotFound() {
-                throw new AssertionFailedError();
             }
         });
 
@@ -237,20 +230,11 @@ public class CrashesAndroidTest {
         Crashes.setListener(crashesListener);
         Crashes.getInstance().onChannelReady(sContext, channel);
         assertFalse(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReportAsync(new Crashes.LastCrashErrorReportListener() {
-            @Override
-            public void onSuccess(ErrorReport errorReport) {
-                new AssertionFailedError();
-            }
+        Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
 
             @Override
-            public void onFailure() {
-                new AssertionFailedError();
-
-            }
-
-            @Override
-            public void onNotFound() {
+            public void onResult(ErrorReport errorReport) {
+                assertNull(errorReport);
             }
         });
 
@@ -338,21 +322,12 @@ public class CrashesAndroidTest {
         Crashes.unsetInstance();
         Crashes.getInstance().onChannelReady(sContext, channel);
         waitForCrashesHandlerTasksToComplete();
-        Crashes.getLastSessionCrashReportAsync(new Crashes.LastCrashErrorReportListener() {
+        Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
+
             @Override
-            public void onSuccess(ErrorReport errorReport) {
+            public void onResult(ErrorReport errorReport) {
                 assertNotNull(errorReport);
                 assertEquals("ReplacedErrorThreadName", errorReport.getThreadName());
-            }
-
-            @Override
-            public void onFailure() {
-                throw new AssertionFailedError();
-            }
-
-            @Override
-            public void onNotFound() {
-                throw new AssertionFailedError();
             }
         });
     }
