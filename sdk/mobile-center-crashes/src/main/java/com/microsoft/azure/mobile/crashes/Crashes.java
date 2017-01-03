@@ -9,6 +9,7 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.Constants;
@@ -38,7 +39,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -73,12 +74,6 @@ public class Crashes extends AbstractMobileCenterService {
      */
     @VisibleForTesting
     static final String ERROR_GROUP = "group_errors";
-
-    /**
-     * The processing status of crash in the last session.
-     */
-    private static final int PROCESSING = 0;
-    private static final int PROCESSED = 1;
 
     /**
      * Thread name for persistence to access database.
@@ -133,9 +128,9 @@ public class Crashes extends AbstractMobileCenterService {
     private final Map<UUID, ErrorLogReport> mErrorReportCache;
 
     /**
-     * Semaphore for waiting crash report.
+     * Count down latch for waiting crash report.
      */
-    private final Semaphore mSemaphore;
+    private final CountDownLatch mCountDownLatch;
 
     /**
      * Flag indicates whether crash in the last session has been processed or not.
@@ -180,7 +175,7 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * List of crash report callbacks.
      */
-    private List<ResultCallback> mLastCrashErrorReportCallbacks;
+    private List<ResultCallback<ErrorReport>> mLastCrashErrorReportCallbacks;
 
     private Crashes() {
         mFactories = new HashMap<>();
@@ -194,7 +189,7 @@ public class Crashes extends AbstractMobileCenterService {
         thread.start();
         mHandler = new Handler(thread.getLooper());
         mLastSessionCrashProcessed = false;
-        mSemaphore = new Semaphore(0);
+        mCountDownLatch = new CountDownLatch(1);
     }
 
     @NonNull
@@ -280,12 +275,13 @@ public class Crashes extends AbstractMobileCenterService {
 
     /**
      * Provides information about any available crash report from the last session, if it crashed.
-     * This method is a synchronous call and blocks UI thread.
+     * This method is a synchronous call and blocks caller thread.
      * Use {@link #getLastSessionCrashReportAsync(ResultCallback)} for asynchronous call.
      *
      * @return The crash report from the last session if one was set.
      */
     @Nullable
+    @WorkerThread
     public static ErrorReport getLastSessionCrashReport() {
         return getInstance().getInstanceLastSessionCrashReport();
     }
@@ -314,7 +310,7 @@ public class Crashes extends AbstractMobileCenterService {
             MobileCenterLog.debug(LOG_TAG, "Waiting for Crashes service to complete crash report for the last session.");
             boolean failed = false;
             try {
-                if (!mSemaphore.tryAcquire(GET_LAST_SESSION_CRASH_REPORT_TIMEOUT, TimeUnit.MILLISECONDS))
+                if (!mCountDownLatch.await(GET_LAST_SESSION_CRASH_REPORT_TIMEOUT, TimeUnit.MILLISECONDS))
                     failed = true;
             } catch (InterruptedException e) {
                 failed = true;
@@ -524,11 +520,11 @@ public class Crashes extends AbstractMobileCenterService {
                             }
                         }
 
-                        mSemaphore.release();
+                        mCountDownLatch.countDown();
 
                         /* Call callbacks for getInstanceLastSessionCrashReport(ResultCallback) . */
                         if (mLastCrashErrorReportCallbacks != null) {
-                            for (Iterator<ResultCallback> iterator = mLastCrashErrorReportCallbacks.iterator(); iterator.hasNext(); ) {
+                            for (Iterator<ResultCallback<ErrorReport>> iterator = mLastCrashErrorReportCallbacks.iterator(); iterator.hasNext(); ) {
                                 ResultCallback<ErrorReport> callback = iterator.next();
                                 iterator.remove();
                                 callback.onResult(mLastSessionErrorReport);
