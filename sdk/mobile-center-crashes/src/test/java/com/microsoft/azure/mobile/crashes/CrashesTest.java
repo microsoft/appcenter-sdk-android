@@ -7,6 +7,7 @@ import android.os.SystemClock;
 
 import com.microsoft.azure.mobile.Constants;
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.ingestion.models.StackFrame;
@@ -25,7 +26,6 @@ import com.microsoft.azure.mobile.utils.UUIDUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import junit.framework.Assert;
-import junit.framework.AssertionFailedError;
 
 import org.json.JSONException;
 import org.junit.Before;
@@ -821,16 +821,17 @@ public class CrashesTest {
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(null);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
 
-        Crashes.LastCrashErrorReportListener listener = new DefaultAssertLastCrashErrorReportListener() {
+        ResultCallback<ErrorReport> callback = new ResultCallback<ErrorReport>() {
             @Override
-            public void onNotFound() {
+            public void onResult(ErrorReport data) {
+                assertNull(data);
             }
         };
 
-        Crashes.getLastSessionCrashReportAsync(listener);
+        Crashes.getLastSessionCrashReportAsync(callback);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReportAsync(listener);
+        Crashes.getLastSessionCrashReportAsync(callback);
     }
 
     @Test
@@ -850,13 +851,15 @@ public class CrashesTest {
         when(logSerializer.deserializeLog(anyString())).thenReturn(errorLog);
 
         final Throwable throwable = mock(Throwable.class);
-        ErrorReport errorReport = ErrorLogHelper.getErrorReportFromErrorLog(errorLog, throwable);
+        final ErrorReport errorReport = ErrorLogHelper.getErrorReportFromErrorLog(errorLog, throwable);
 
-        /* This listener will be called after Crashes service is initialized. */
-        final Crashes.LastCrashErrorReportListener listener = new DefaultAssertLastCrashErrorReportListener() {
+        /* This callback will be called after Crashes service is initialized. */
+        final ResultCallback<ErrorReport> callback = new ResultCallback<ErrorReport>() {
 
             @Override
-            public void onSuccess(ErrorReport errorReport) {
+            public void onResult(ErrorReport data) {
+                assertNotNull(data);
+                assertEquals(errorReport, data);
             }
         };
 
@@ -871,8 +874,8 @@ public class CrashesTest {
             public String answer(InvocationOnMock invocation) throws Throwable {
 
                 /* Call twice for multiple listeners during initialize. */
-                Crashes.getLastSessionCrashReportAsync(listener);
-                Crashes.getLastSessionCrashReportAsync(listener);
+                Crashes.getLastSessionCrashReportAsync(callback);
+                Crashes.getLastSessionCrashReportAsync(callback);
                 return "";
             }
         });
@@ -890,10 +893,10 @@ public class CrashesTest {
 
         assertTrue(Crashes.hasCrashedInLastSession());
 
-        Crashes.getLastSessionCrashReportAsync(new Crashes.LastCrashErrorReportListener() {
+        Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
 
             @Override
-            public void onSuccess(ErrorReport errorReport) {
+            public void onResult(ErrorReport errorReport) {
                 assertNotNull(errorReport);
                 assertEquals(errorLog.getId().toString(), errorReport.getId());
                 assertEquals(errorLog.getErrorThreadName(), errorReport.getThreadName());
@@ -901,14 +904,6 @@ public class CrashesTest {
                 assertEquals(new Date(tOffset), errorReport.getAppErrorTime());
                 assertNotNull(errorReport.getDevice());
                 assertEquals(throwable, errorReport.getThrowable());
-            }
-
-            @Override
-            public void onFailure() {
-            }
-
-            @Override
-            public void onNotFound() {
             }
         });
     }
@@ -922,9 +917,11 @@ public class CrashesTest {
         Crashes.setEnabled(false);
 
         assertFalse(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReportAsync(new DefaultAssertLastCrashErrorReportListener() {
+        Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
+
             @Override
-            public void onNotFound() {
+            public void onResult(ErrorReport data) {
+                assertNull(data);
             }
         });
 
@@ -950,10 +947,11 @@ public class CrashesTest {
         JSONException jsonException = new JSONException("Fake JSON exception");
         when(logSerializer.deserializeLog(anyString())).thenThrow(jsonException);
 
-        Crashes.LastCrashErrorReportListener listener = new DefaultAssertLastCrashErrorReportListener() {
+        ResultCallback<ErrorReport> callback = new ResultCallback<ErrorReport>() {
 
             @Override
-            public void onFailure() {
+            public void onResult(ErrorReport data) {
+                assertNull(data);
             }
         };
 
@@ -962,11 +960,11 @@ public class CrashesTest {
          * Here the service is enabled by default but we are waiting channel to be ready, simulate that.
          */
         assertTrue(Crashes.isEnabled());
-        Crashes.getLastSessionCrashReportAsync(listener);
+        Crashes.getLastSessionCrashReportAsync(callback);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
 
-        assertTrue(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReportAsync(listener);
+        assertFalse(Crashes.hasCrashedInLastSession());
+        Crashes.getLastSessionCrashReportAsync(callback);
 
         /*
          * De-serializing fails twice: processing the log from last time as part of the bulk processing.
@@ -983,10 +981,12 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{file});
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(file);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
-        assertTrue(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReportAsync(new DefaultAssertLastCrashErrorReportListener() {
+        assertFalse(Crashes.hasCrashedInLastSession());
+        Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
+
             @Override
-            public void onFailure() {
+            public void onResult(ErrorReport data) {
+                assertNull(data);
             }
         });
     }
@@ -997,16 +997,17 @@ public class CrashesTest {
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(null);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
 
-        Crashes.LastCrashErrorReportListener listener = new DefaultAssertLastCrashErrorReportListener() {
+        ResultCallback<ErrorReport> callback = new ResultCallback<ErrorReport>() {
 
             @Override
-            public void onNotFound() {
+            public void onResult(ErrorReport data) {
+                assertNull(data);
             }
         };
 
-        /* Call twice for multiple listeners before initialize. */
-        Crashes.getLastSessionCrashReportAsync(listener);
-        Crashes.getLastSessionCrashReportAsync(listener);
+        /* Call twice for multiple callbacks before initialize. */
+        Crashes.getLastSessionCrashReportAsync(callback);
+        Crashes.getLastSessionCrashReportAsync(callback);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession());
     }
@@ -1019,7 +1020,6 @@ public class CrashesTest {
 
         /* Reset instance to mock Semaphore. */
         Crashes.unsetInstance();
-        Crashes.getInstance().mLastSessionCrashProcessingStatus = 1;
 
         assertNull(Crashes.getLastSessionCrashReport());
         assertNull(Crashes.getLastSessionCrashReport());
@@ -1067,23 +1067,5 @@ public class CrashesTest {
         WrapperSdkExceptionManager.saveWrapperSdkErrorLog(errorLog);
         verifyStatic();
         MobileCenterLog.error(anyString(), anyString(), any(IOException.class));
-    }
-
-    private static abstract class DefaultAssertLastCrashErrorReportListener implements Crashes.LastCrashErrorReportListener {
-
-        @Override
-        public void onSuccess(ErrorReport errorReport) {
-            throw new AssertionFailedError();
-        }
-
-        @Override
-        public void onFailure() {
-            throw new AssertionFailedError();
-        }
-
-        @Override
-        public void onNotFound() {
-            throw new AssertionFailedError();
-        }
     }
 }

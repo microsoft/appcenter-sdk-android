@@ -12,6 +12,7 @@ import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.Constants;
+import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ManagedErrorLogFactory;
@@ -76,11 +77,8 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * The processing status of crash in the last session.
      */
-    private static final int PREPARE_PROCESSING = 0;
-    private static final int PROCESSING = 1;
-    private static final int PROCESSED = 2;
-    private static final int PROCESSING_FAILED = 3;
-    private static final int NOT_FOUND = 4;
+    private static final int PROCESSING = 0;
+    private static final int PROCESSED = 1;
 
     /**
      * Thread name for persistence to access database.
@@ -140,10 +138,9 @@ public class Crashes extends AbstractMobileCenterService {
     private final Semaphore mSemaphore;
 
     /**
-     * Status of processing crash in the last session.
+     * Flag indicates whether crash in the last session has been processed or not.
      */
-    @VisibleForTesting
-    int mLastSessionCrashProcessingStatus;
+    private boolean mLastSessionCrashProcessed;
 
     /**
      * Log serializer.
@@ -181,9 +178,9 @@ public class Crashes extends AbstractMobileCenterService {
     private ErrorReport mLastSessionErrorReport;
 
     /**
-     * List of crash report listeners.
+     * List of crash report callbacks.
      */
-    private List<LastCrashErrorReportListener> mLastCrashErrorReportListeners;
+    private List<ResultCallback> mLastCrashErrorReportCallbacks;
 
     private Crashes() {
         mFactories = new HashMap<>();
@@ -196,7 +193,7 @@ public class Crashes extends AbstractMobileCenterService {
         HandlerThread thread = new HandlerThread(THREAD_NAME);
         thread.start();
         mHandler = new Handler(thread.getLooper());
-        mLastSessionCrashProcessingStatus = PREPARE_PROCESSING;
+        mLastSessionCrashProcessed = false;
         mSemaphore = new Semaphore(0);
     }
 
@@ -284,7 +281,7 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Provides information about any available crash report from the last session, if it crashed.
      * This method is a synchronous call and blocks UI thread.
-     * Use {@link #getLastSessionCrashReportAsync(LastCrashErrorReportListener)} for asynchronous call.
+     * Use {@link #getLastSessionCrashReportAsync(ResultCallback)} for asynchronous call.
      *
      * @return The crash report from the last session if one was set.
      */
@@ -296,25 +293,24 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Provides information about any available crash report from the last session asynchronously, if it crashed.
      *
-     * @param listener The listener that will receive crash in the last session.
+     * @param callback The callback that will receive crash in the last session.
      */
-    public static void getLastSessionCrashReportAsync(LastCrashErrorReportListener listener) {
-        getInstance().getInstanceLastSessionCrashReportAsync(listener);
+    public static void getLastSessionCrashReportAsync(ResultCallback<ErrorReport> callback) {
+        getInstance().getInstanceLastSessionCrashReportAsync(callback);
     }
 
     /**
      * Implements {@link #hasCrashedInLastSession()} at instance level.
      */
     private synchronized boolean hasInstanceCrashedInLastSession() {
-        return mLastSessionCrashProcessingStatus != NOT_FOUND &&
-                mLastSessionCrashProcessingStatus != PREPARE_PROCESSING;
+        return mLastSessionCrashProcessed && mLastSessionErrorReport != null;
     }
 
     /**
      * Implements {@link #getLastSessionCrashReport()} at instance level.
      */
     private synchronized ErrorReport getInstanceLastSessionCrashReport() {
-        if (mLastSessionCrashProcessingStatus == PROCESSING) {
+        if (!mLastSessionCrashProcessed) {
             MobileCenterLog.debug(LOG_TAG, "Waiting for Crashes service to complete crash report for the last session.");
             boolean failed = false;
             try {
@@ -331,22 +327,18 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Implements {@link #getLastSessionCrashReportAsync(LastCrashErrorReportListener)} at instance level.
+     * Implements {@link #getLastSessionCrashReportAsync(ResultCallback)} at instance level.
      */
-    private synchronized void getInstanceLastSessionCrashReportAsync(LastCrashErrorReportListener listener) {
-        if (mLastSessionCrashProcessingStatus == PREPARE_PROCESSING ||
-                mLastSessionCrashProcessingStatus == PROCESSING) {
-            if (mLastCrashErrorReportListeners == null) {
-                mLastCrashErrorReportListeners = new ArrayList<>();
+    private synchronized void getInstanceLastSessionCrashReportAsync(ResultCallback<ErrorReport> callback) {
+        if (mLastSessionCrashProcessed)
+            callback.onResult(mLastSessionErrorReport);
+        else {
+            if (mLastCrashErrorReportCallbacks == null) {
+                mLastCrashErrorReportCallbacks = new ArrayList<>();
             }
-            mLastCrashErrorReportListeners.add(listener);
+            mLastCrashErrorReportCallbacks.add(callback);
             MobileCenterLog.info(LOG_TAG, "Crashes for the last session have not been processed yet. The SDK will call listener when it completes process.");
-        } else if (mLastSessionCrashProcessingStatus == PROCESSED)
-            listener.onSuccess(mLastSessionErrorReport);
-        else if (mLastSessionCrashProcessingStatus == PROCESSING_FAILED)
-            listener.onFailure();
-        else
-            listener.onNotFound();
+        }
     }
 
     @Override
@@ -514,55 +506,37 @@ public class Crashes extends AbstractMobileCenterService {
             mUncaughtExceptionHandler.register();
             final File logFile = ErrorLogHelper.getLastErrorLogFile();
             if (logFile != null) {
-                mLastSessionCrashProcessingStatus = PROCESSING;
                 MobileCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
                         String logFileContents = StorageHelper.InternalStorage.read(logFile);
-                        if (logFileContents == null) {
-                            mLastSessionCrashProcessingStatus = PROCESSING_FAILED;
+                        if (logFileContents == null)
                             MobileCenterLog.error(LOG_TAG, "Error reading last session error log.");
-                        } else {
+                        else {
+                            mLastSessionCrashProcessed = true;
                             try {
                                 ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logFileContents);
                                 mLastSessionErrorReport = buildErrorReport(log);
-                                mLastSessionCrashProcessingStatus = PROCESSED;
                                 MobileCenterLog.debug(LOG_TAG, "Completed to process crash report for the last session.");
                             } catch (JSONException e) {
-                                mLastSessionCrashProcessingStatus = PROCESSING_FAILED;
                                 MobileCenterLog.error(LOG_TAG, "Error parsing last session error log.", e);
                             }
                         }
 
                         mSemaphore.release();
 
-                        /* Call callbacks for getInstanceLastSessionCrashReport(Crashes.LastCrashErrorReportListener) . */
-                        if (mLastCrashErrorReportListeners != null) {
-                            for (Iterator<LastCrashErrorReportListener> iterator = mLastCrashErrorReportListeners.iterator(); iterator.hasNext(); ) {
-                                LastCrashErrorReportListener listener = iterator.next();
+                        /* Call callbacks for getInstanceLastSessionCrashReport(ResultCallback) . */
+                        if (mLastCrashErrorReportCallbacks != null) {
+                            for (Iterator<ResultCallback> iterator = mLastCrashErrorReportCallbacks.iterator(); iterator.hasNext(); ) {
+                                ResultCallback<ErrorReport> callback = iterator.next();
                                 iterator.remove();
-                                if (mLastSessionCrashProcessingStatus == PROCESSED)
-                                    listener.onSuccess(mLastSessionErrorReport);
-                                else
-                                    listener.onFailure();
+                                callback.onResult(mLastSessionErrorReport);
                             }
-                            mLastCrashErrorReportListeners = null;
+                            mLastCrashErrorReportCallbacks = null;
                         }
                     }
                 });
-            } else {
-
-                /* Call callbacks for getInstanceLastSessionCrashReport(Crashes.LastCrashErrorReportListener) . */
-                if (mLastCrashErrorReportListeners != null) {
-                    for (Iterator<LastCrashErrorReportListener> iterator = mLastCrashErrorReportListeners.iterator(); iterator.hasNext(); ) {
-                        LastCrashErrorReportListener listener = iterator.next();
-                        iterator.remove();
-                        listener.onNotFound();
-                    }
-                    mLastCrashErrorReportListeners = null;
-                }
-                mLastSessionCrashProcessingStatus = NOT_FOUND;
             }
         }
     }
@@ -798,26 +772,6 @@ public class Crashes extends AbstractMobileCenterService {
         String errorLogString = mLogSerializer.serializeLog(errorLog);
         StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
         MobileCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
-    }
-
-    public interface LastCrashErrorReportListener {
-
-        /**
-         * Called when Crashes service completed processing crash in the last session.
-         *
-         * @param errorReport The crash report from the last session.
-         */
-        void onSuccess(ErrorReport errorReport);
-
-        /**
-         * Called when Crashes service failed to process crash in the last session.
-         */
-        void onFailure();
-
-        /**
-         * Called when it didn't crash in the last session.
-         */
-        void onNotFound();
     }
 
     /**
