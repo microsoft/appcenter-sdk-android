@@ -45,8 +45,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
@@ -1014,16 +1013,16 @@ public class CrashesTest {
 
     @Test
     public void getLastSessionCrashReportInterrupted() throws Exception {
-        Semaphore semaphore = mock(Semaphore.class);
-        whenNew(Semaphore.class).withAnyArguments().thenReturn(semaphore);
-        when(semaphore.tryAcquire(anyLong(), any(TimeUnit.class))).thenThrow(new InterruptedException()).thenReturn(false);
+        CountDownLatch latch = mock(CountDownLatch.class);
+        whenNew(CountDownLatch.class).withAnyArguments().thenReturn(latch);
 
-        /* Reset instance to mock Semaphore. */
+        /* Reset instance to mock CountDownLatch. */
         Crashes.unsetInstance();
 
         assertNull(Crashes.getLastSessionCrashReport());
+        doThrow(new InterruptedException()).when(latch).await();
         assertNull(Crashes.getLastSessionCrashReport());
-        verifyStatic(times(4));
+        verifyStatic(times(3));
         MobileCenterLog.debug(anyString(), anyString());
     }
 
