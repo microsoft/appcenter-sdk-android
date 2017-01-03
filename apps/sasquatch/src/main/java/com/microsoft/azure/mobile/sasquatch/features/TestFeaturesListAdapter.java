@@ -71,9 +71,9 @@ public class TestFeaturesListAdapter extends BaseAdapter {
     }
 
     private static class ViewHolder {
-        private Class mClass;
-        private TextView mTextView1;
-        private TextView mTextView2;
+        private final Class mClass;
+        private final TextView mTextView1;
+        private final TextView mTextView2;
 
         private ViewHolder(Class clazz, TextView view) {
             this(clazz, view, null);

@@ -9,7 +9,6 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
-import android.support.annotation.WorkerThread;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.Constants;
@@ -275,7 +274,6 @@ public class Crashes extends AbstractMobileCenterService {
      * @return The crash report from the last session if one was set.
      */
     @Nullable
-    @WorkerThread
     public static ErrorReport getLastSessionCrashReport() {
         return getInstance().getInstanceLastSessionCrashReport();
     }
