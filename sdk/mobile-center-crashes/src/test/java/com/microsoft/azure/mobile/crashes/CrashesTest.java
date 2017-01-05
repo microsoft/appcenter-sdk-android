@@ -159,7 +159,7 @@ public class CrashesTest {
         File file2 = mock(File.class);
         UncaughtExceptionHandler mockHandler = mock(UncaughtExceptionHandler.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(dir);
-        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{});
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
         when(dir.listFiles()).thenReturn(new File[]{file1, file2});
         crashes.setUncaughtExceptionHandler(mockHandler);
         crashes.setInstanceEnabled(false);
@@ -207,7 +207,7 @@ public class CrashesTest {
         File file1 = mock(File.class);
         File file2 = mock(File.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(dir);
-        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{});
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
         when(dir.listFiles()).thenReturn(new File[]{file1, file2});
 
         /* Test. */
@@ -824,6 +824,11 @@ public class CrashesTest {
             @Override
             public void onResult(ErrorReport data) {
                 assertNull(data);
+
+                /* One more test with sync method. */
+                assertNull(Crashes.getLastSessionCrashReport());
+                verifyStatic(never());
+                MobileCenterLog.debug(anyString(), anyString());
             }
         };
 
@@ -1015,15 +1020,40 @@ public class CrashesTest {
     public void getLastSessionCrashReportInterrupted() throws Exception {
         CountDownLatch latch = mock(CountDownLatch.class);
         whenNew(CountDownLatch.class).withAnyArguments().thenReturn(latch);
-
-        /* Reset instance to mock CountDownLatch. */
-        Crashes.unsetInstance();
-
-        assertNull(Crashes.getLastSessionCrashReport());
         doThrow(new InterruptedException()).when(latch).await();
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(mock(File.class));
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
+
+        Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
+        verifyStatic();
+        MobileCenterLog.error(anyString(), anyString());
+
         assertNull(Crashes.getLastSessionCrashReport());
+        verify(latch).await();
         verifyStatic(times(3));
         MobileCenterLog.debug(anyString(), anyString());
+    }
+
+    @Test
+    public void hasLastSessionCrashReportWhileProcessing() throws Exception {
+        CountDownLatch latch = mock(CountDownLatch.class);
+        when(latch.getCount()).thenReturn(1L);
+        whenNew(CountDownLatch.class).withAnyArguments().thenReturn(latch);
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(mock(File.class));
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenAnswer(new Answer<String>() {
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
+                assertTrue(Crashes.hasCrashedInLastSession());
+                return "";
+            }
+        });
+
+        Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
     }
 
     @Test
