@@ -82,6 +82,12 @@ public class IngestionHttp implements Ingestion {
     private static final int READ_TIMEOUT = 20000;
 
     /**
+     * Regex pattern for application secret in header.
+     */
+    private static final String APP_SECRET_PATTERN_IN_HEADER = "(" + APP_SECRET + ".\\[)([^-]{8}-[^-]{4}-[^-]{4}-[^-]{4}-[^-]{4})([^-]{8})(\\])";
+    private static final String APP_SECRET_HIDE_FORMAT_IN_HEADER = "$1********-****-****-****-****$3$4";
+
+    /**
      * Log serializer.
      */
     private final LogSerializer mLogSerializer;
@@ -126,7 +132,11 @@ public class IngestionHttp implements Ingestion {
             urlConnection.setRequestProperty(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
             urlConnection.setRequestProperty(APP_SECRET, appSecret);
             urlConnection.setRequestProperty(INSTALL_ID, installId.toString());
-            MobileCenterLog.verbose(LOG_TAG, "Headers: " + urlConnection.getRequestProperties());
+
+            /* Log headers. */
+            String header = urlConnection.getRequestProperties().toString().replaceAll(
+                    APP_SECRET_PATTERN_IN_HEADER, APP_SECRET_HIDE_FORMAT_IN_HEADER);
+            MobileCenterLog.verbose(LOG_TAG, "Headers: " + header);
 
             /* Timestamps need to be as accurate as possible so we convert absolute time to relative now. Save times. */
             List<Log> logs = logContainer.getLogs();
