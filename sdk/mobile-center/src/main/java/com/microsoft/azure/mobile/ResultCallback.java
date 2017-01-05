@@ -1,5 +1,7 @@
 package com.microsoft.azure.mobile;
 
+import android.support.annotation.Nullable;
+
 /**
  * Callback interface for general purpose.
  */
@@ -10,5 +12,5 @@ public interface ResultCallback<T> {
      *
      * @param data The data for the result.
      */
-    void onResult(T data);
+    void onResult(@Nullable T data);
 }

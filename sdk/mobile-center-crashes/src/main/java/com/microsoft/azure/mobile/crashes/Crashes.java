@@ -123,12 +123,7 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Count down latch for waiting crash report.
      */
-    private final CountDownLatch mCountDownLatch;
-
-    /**
-     * Flag indicates whether crash in the last session has been processed or not.
-     */
-    private boolean mLastSessionCrashProcessed;
+    private CountDownLatch mCountDownLatch;
 
     /**
      * Log serializer.
@@ -181,8 +176,6 @@ public class Crashes extends AbstractMobileCenterService {
         HandlerThread thread = new HandlerThread(THREAD_NAME);
         thread.start();
         mHandler = new Handler(thread.getLooper());
-        mLastSessionCrashProcessed = false;
-        mCountDownLatch = new CountDownLatch(1);
     }
 
     @NonNull
@@ -291,14 +284,14 @@ public class Crashes extends AbstractMobileCenterService {
      * Implements {@link #hasCrashedInLastSession()} at instance level.
      */
     private synchronized boolean hasInstanceCrashedInLastSession() {
-        return mLastSessionCrashProcessed && mLastSessionErrorReport != null;
+        return mLastSessionErrorReport != null || (mCountDownLatch != null && mCountDownLatch.getCount() > 0);
     }
 
     /**
      * Implements {@link #getLastSessionCrashReport()} at instance level.
      */
     private synchronized ErrorReport getInstanceLastSessionCrashReport() {
-        if (!mLastSessionCrashProcessed) {
+        if (mCountDownLatch != null) {
             MobileCenterLog.debug(LOG_TAG, "Waiting for Crashes service to complete crash report for the last session.");
             try {
                 mCountDownLatch.await();
@@ -313,7 +306,7 @@ public class Crashes extends AbstractMobileCenterService {
      * Implements {@link #getLastSessionCrashReportAsync(ResultCallback)} at instance level.
      */
     private synchronized void getInstanceLastSessionCrashReportAsync(ResultCallback<ErrorReport> callback) {
-        if (mLastSessionCrashProcessed)
+        if (mCountDownLatch == null || mCountDownLatch.getCount() <= 0)
             callback.onResult(mLastSessionErrorReport);
         else {
             if (mLastCrashErrorReportCallbacks == null) {
@@ -490,6 +483,7 @@ public class Crashes extends AbstractMobileCenterService {
             final File logFile = ErrorLogHelper.getLastErrorLogFile();
             if (logFile != null) {
                 MobileCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
+                mCountDownLatch = new CountDownLatch(1);
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -497,7 +491,6 @@ public class Crashes extends AbstractMobileCenterService {
                         if (logFileContents == null)
                             MobileCenterLog.error(LOG_TAG, "Error reading last session error log.");
                         else {
-                            mLastSessionCrashProcessed = true;
                             try {
                                 ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logFileContents);
                                 mLastSessionErrorReport = buildErrorReport(log);
