@@ -103,8 +103,8 @@ public class IngestionHttpTest {
         IngestionHttp httpClient = new IngestionHttp(serializer);
         httpClient.setServerUrl("http://mock");
 
-        /* Test calling code. */
-        String appSecret = UUIDUtils.randomUUID().toString();
+        /* Test calling code. Use shorter but valid app secret. */
+        String appSecret = "SHORT";
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
