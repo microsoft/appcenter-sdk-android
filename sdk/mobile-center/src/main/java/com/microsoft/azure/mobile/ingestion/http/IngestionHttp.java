@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -82,10 +83,9 @@ public class IngestionHttp implements Ingestion {
     private static final int READ_TIMEOUT = 20000;
 
     /**
-     * Regex pattern for application secret in header.
+     * Maximum characters to be displayed in a log for application secret.
      */
-    private static final String APP_SECRET_PATTERN_IN_HEADER = "(" + APP_SECRET + ".\\[)([^-]{8}-[^-]{4}-[^-]{4}-[^-]{4}-[^-]{4})([^-]{8})(\\])";
-    private static final String APP_SECRET_HIDE_FORMAT_IN_HEADER = "$1********-****-****-****-****$3$4";
+    private static final int MAX_CHARACTERS_DISPLAY_FOR_APP_SECRET = 8;
 
     /**
      * Log serializer.
@@ -134,9 +134,13 @@ public class IngestionHttp implements Ingestion {
             urlConnection.setRequestProperty(INSTALL_ID, installId.toString());
 
             /* Log headers. */
-            String header = urlConnection.getRequestProperties().toString().replaceAll(
-                    APP_SECRET_PATTERN_IN_HEADER, APP_SECRET_HIDE_FORMAT_IN_HEADER);
-            MobileCenterLog.verbose(LOG_TAG, "Headers: " + header);
+            int hidingEndIndex = appSecret.length() - (appSecret.length() >= MAX_CHARACTERS_DISPLAY_FOR_APP_SECRET ? MAX_CHARACTERS_DISPLAY_FOR_APP_SECRET : 0);
+            char[] fill = new char[hidingEndIndex];
+            Arrays.fill(fill, '*');
+            String header = "Headers: " + CONTENT_TYPE_KEY + '=' + CONTENT_TYPE_VALUE +
+                    ", " + APP_SECRET + '=' + new String(fill) + appSecret.substring(hidingEndIndex) +
+                    ", " + INSTALL_ID + '=' + installId.toString();
+            MobileCenterLog.verbose(LOG_TAG, header);
 
             /* Timestamps need to be as accurate as possible so we convert absolute time to relative now. Save times. */
             List<Log> logs = logContainer.getLogs();
