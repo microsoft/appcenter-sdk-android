@@ -9,6 +9,7 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.Constants;
@@ -163,7 +164,7 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * List of crash report callbacks.
      */
-    private List<ResultCallback<ErrorReport>> mLastCrashErrorReportCallbacks;
+    private List<ResultCallback<ErrorReport>> mLastCrashErrorReportCallbacks = new ArrayList<>();
 
     private Crashes() {
         mFactories = new HashMap<>();
@@ -265,8 +266,10 @@ public class Crashes extends AbstractMobileCenterService {
      * Use {@link #getLastSessionCrashReportAsync(ResultCallback)} for asynchronous call.
      *
      * @return The crash report from the last session if one was set.
+     * @see #getLastSessionCrashReportAsync(ResultCallback)
      */
     @Nullable
+    @WorkerThread
     public static ErrorReport getLastSessionCrashReport() {
         return getInstance().getInstanceLastSessionCrashReport();
     }
@@ -296,7 +299,7 @@ public class Crashes extends AbstractMobileCenterService {
             try {
                 mCountDownLatch.await();
             } catch (InterruptedException e) {
-                MobileCenterLog.debug(LOG_TAG, "Could not get crash report for the last session.");
+                MobileCenterLog.debug(LOG_TAG, "Could not get crash report for the last session.", e);
             }
         }
         return mLastSessionErrorReport;
@@ -309,11 +312,8 @@ public class Crashes extends AbstractMobileCenterService {
         if (mCountDownLatch == null || mCountDownLatch.getCount() <= 0)
             callback.onResult(mLastSessionErrorReport);
         else {
-            if (mLastCrashErrorReportCallbacks == null) {
-                mLastCrashErrorReportCallbacks = new ArrayList<>();
-            }
             mLastCrashErrorReportCallbacks.add(callback);
-            MobileCenterLog.info(LOG_TAG, "Crashes for the last session have not been processed yet. The SDK will call listener when it completes process.");
+            MobileCenterLog.info(LOG_TAG, "Crashes for the last session have not been processed yet. The SDK will call listener when it completes processing.");
         }
     }
 
@@ -494,7 +494,7 @@ public class Crashes extends AbstractMobileCenterService {
                             try {
                                 ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logFileContents);
                                 mLastSessionErrorReport = buildErrorReport(log);
-                                MobileCenterLog.debug(LOG_TAG, "Completed to process crash report for the last session.");
+                                MobileCenterLog.debug(LOG_TAG, "Processed crash report for the last session.");
                             } catch (JSONException e) {
                                 MobileCenterLog.error(LOG_TAG, "Error parsing last session error log.", e);
                             }
@@ -503,13 +503,10 @@ public class Crashes extends AbstractMobileCenterService {
                         mCountDownLatch.countDown();
 
                         /* Call callbacks for getInstanceLastSessionCrashReport(ResultCallback) . */
-                        if (mLastCrashErrorReportCallbacks != null) {
-                            for (Iterator<ResultCallback<ErrorReport>> iterator = mLastCrashErrorReportCallbacks.iterator(); iterator.hasNext(); ) {
-                                ResultCallback<ErrorReport> callback = iterator.next();
-                                iterator.remove();
-                                callback.onResult(mLastSessionErrorReport);
-                            }
-                            mLastCrashErrorReportCallbacks = null;
+                        for (Iterator<ResultCallback<ErrorReport>> iterator = mLastCrashErrorReportCallbacks.iterator(); iterator.hasNext(); ) {
+                            ResultCallback<ErrorReport> callback = iterator.next();
+                            iterator.remove();
+                            callback.onResult(mLastSessionErrorReport);
                         }
                     }
                 });
