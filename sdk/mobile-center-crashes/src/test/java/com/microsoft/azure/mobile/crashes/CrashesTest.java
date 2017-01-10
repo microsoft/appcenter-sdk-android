@@ -1032,8 +1032,10 @@ public class CrashesTest {
 
         assertNull(Crashes.getLastSessionCrashReport());
         verify(latch).await();
-        verifyStatic(times(3));
+        verifyStatic(times(2));
         MobileCenterLog.debug(anyString(), anyString());
+        verifyStatic();
+        MobileCenterLog.debug(anyString(), anyString(), any(InterruptedException.class));
     }
 
     @Test

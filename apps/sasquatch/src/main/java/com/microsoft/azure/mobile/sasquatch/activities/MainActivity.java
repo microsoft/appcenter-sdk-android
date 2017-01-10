@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.v7.app.AlertDialog;
@@ -54,10 +55,16 @@ public class MainActivity extends AppCompatActivity {
         MobileCenter.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class);
 
         Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
-        ErrorReport lastSessionCrashReport = Crashes.getLastSessionCrashReport();
-        if (lastSessionCrashReport != null) {
-            Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", lastSessionCrashReport.getThrowable());
-        }
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void[] params) {
+                ErrorReport lastSessionCrashReport = Crashes.getLastSessionCrashReport();
+                if (lastSessionCrashReport != null) {
+                    Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", lastSessionCrashReport.getThrowable());
+                }
+                return null;
+            }
+        }.execute();
 
         ((TextView) findViewById(R.id.package_name)).setText(String.format(getString(R.string.sdk_source_format), getPackageName().substring(getPackageName().lastIndexOf(".") + 1)));
         TestFeatures.initialize(this);
