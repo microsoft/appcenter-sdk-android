@@ -28,7 +28,7 @@ import static android.util.Log.ASSERT;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.azure.mobile.utils.MobileCenterLog.NONE;
 
-public final class MobileCenter {
+public class MobileCenter {
 
     /**
      * TAG used in logging.
