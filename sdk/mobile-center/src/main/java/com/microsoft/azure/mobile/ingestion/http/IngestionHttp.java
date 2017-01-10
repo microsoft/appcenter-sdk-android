@@ -85,7 +85,7 @@ public class IngestionHttp implements Ingestion {
     /**
      * Maximum characters to be displayed in a log for application secret.
      */
-    private static final int MAX_CHARACTERS_DISPLAY_FOR_APP_SECRET = 8;
+    private static final int MAX_CHARACTERS_DISPLAYED_FOR_APP_SECRET = 8;
 
     /**
      * Log serializer.
@@ -134,7 +134,7 @@ public class IngestionHttp implements Ingestion {
             urlConnection.setRequestProperty(INSTALL_ID, installId.toString());
 
             /* Log headers. */
-            int hidingEndIndex = appSecret.length() - (appSecret.length() >= MAX_CHARACTERS_DISPLAY_FOR_APP_SECRET ? MAX_CHARACTERS_DISPLAY_FOR_APP_SECRET : 0);
+            int hidingEndIndex = appSecret.length() - (appSecret.length() >= MAX_CHARACTERS_DISPLAYED_FOR_APP_SECRET ? MAX_CHARACTERS_DISPLAYED_FOR_APP_SECRET : 0);
             char[] fill = new char[hidingEndIndex];
             Arrays.fill(fill, '*');
             String header = "Headers: " + CONTENT_TYPE_KEY + '=' + CONTENT_TYPE_VALUE +
