@@ -1,5 +1,6 @@
 package com.microsoft.azure.mobile.ingestion.http;
 
+import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.ingestion.ServiceCall;
 import com.microsoft.azure.mobile.ingestion.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.models.Log;
@@ -25,6 +26,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 
+import static android.util.Log.INFO;
+import static android.util.Log.VERBOSE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
@@ -55,7 +58,7 @@ public class IngestionHttpTest {
 
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                final IngestionHttp.Call call = new IngestionHttp.Call(invocation.getArguments()[0].toString(), (LogSerializer) invocation.getArguments()[1],(String) invocation.getArguments()[2], (UUID) invocation.getArguments()[3], (LogContainer) invocation.getArguments()[4], (ServiceCallback) invocation.getArguments()[5]);
+                final IngestionHttp.Call call = new IngestionHttp.Call(invocation.getArguments()[0].toString(), (LogSerializer) invocation.getArguments()[1], (String) invocation.getArguments()[2], (UUID) invocation.getArguments()[3], (LogContainer) invocation.getArguments()[4], (ServiceCallback) invocation.getArguments()[5]);
                 IngestionHttp.Call spyCall = spy(call);
                 when(spyCall.executeOnExecutor(any(Executor.class))).then(new Answer<IngestionHttp.Call>() {
 
@@ -72,6 +75,9 @@ public class IngestionHttpTest {
 
     @Test
     public void success() throws Exception {
+
+        /* Set log level to verbose to test shorter app secret as well. */
+        MobileCenter.setLogLevel(VERBOSE);
 
         /* Build some payload. */
         LogContainer container = new LogContainer();
@@ -126,6 +132,9 @@ public class IngestionHttpTest {
 
     @Test
     public void error503() throws Exception {
+
+        /* Set log level to verbose to test shorter app secret as well. */
+        MobileCenter.setLogLevel(INFO);
 
         /* Build some payload. */
         LogContainer container = new LogContainer();
