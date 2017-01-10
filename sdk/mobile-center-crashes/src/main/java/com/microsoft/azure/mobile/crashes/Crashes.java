@@ -164,7 +164,7 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * List of crash report callbacks.
      */
-    private List<ResultCallback<ErrorReport>> mLastCrashErrorReportCallbacks = new ArrayList<>();
+    private final List<ResultCallback<ErrorReport>> mLastCrashErrorReportCallbacks = new ArrayList<>();
 
     private Crashes() {
         mFactories = new HashMap<>();
