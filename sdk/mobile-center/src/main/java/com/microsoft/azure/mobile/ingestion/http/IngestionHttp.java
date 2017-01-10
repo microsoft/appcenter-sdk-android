@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import static android.util.Log.VERBOSE;
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 import static java.lang.Math.max;
 
@@ -134,13 +135,15 @@ public class IngestionHttp implements Ingestion {
             urlConnection.setRequestProperty(INSTALL_ID, installId.toString());
 
             /* Log headers. */
-            int hidingEndIndex = appSecret.length() - (appSecret.length() >= MAX_CHARACTERS_DISPLAYED_FOR_APP_SECRET ? MAX_CHARACTERS_DISPLAYED_FOR_APP_SECRET : 0);
-            char[] fill = new char[hidingEndIndex];
-            Arrays.fill(fill, '*');
-            String header = "Headers: " + CONTENT_TYPE_KEY + '=' + CONTENT_TYPE_VALUE +
-                    ", " + APP_SECRET + '=' + new String(fill) + appSecret.substring(hidingEndIndex) +
-                    ", " + INSTALL_ID + '=' + installId.toString();
-            MobileCenterLog.verbose(LOG_TAG, header);
+            if (MobileCenterLog.getLogLevel() <= VERBOSE) {
+                int hidingEndIndex = appSecret.length() - (appSecret.length() >= MAX_CHARACTERS_DISPLAYED_FOR_APP_SECRET ? MAX_CHARACTERS_DISPLAYED_FOR_APP_SECRET : 0);
+                char[] fill = new char[hidingEndIndex];
+                Arrays.fill(fill, '*');
+                String header = "Headers: " + CONTENT_TYPE_KEY + '=' + CONTENT_TYPE_VALUE +
+                        ", " + APP_SECRET + '=' + new String(fill) + appSecret.substring(hidingEndIndex) +
+                        ", " + INSTALL_ID + '=' + installId.toString();
+                MobileCenterLog.verbose(LOG_TAG, header);
+            }
 
             /* Timestamps need to be as accurate as possible so we convert absolute time to relative now. Save times. */
             List<Log> logs = logContainer.getLogs();
