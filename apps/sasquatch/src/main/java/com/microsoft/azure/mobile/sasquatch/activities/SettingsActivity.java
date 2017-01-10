@@ -10,6 +10,7 @@ import android.preference.PreferenceFragment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.util.Patterns;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -138,10 +139,10 @@ public class SettingsActivity extends AppCompatActivity {
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    if (input.getText().toString().matches(UUID_FORMAT_REGEX)) {
-                                        UUID uuid = UUID.fromString(input.getText().toString());
-                                        setKeyValue(APP_SECRET_KEY, uuid);
-                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), uuid.toString()), Toast.LENGTH_SHORT).show();
+                                    String appSecret = input.getText().toString();
+                                    if (!TextUtils.isEmpty(appSecret)) {
+                                        setKeyValue(APP_SECRET_KEY, appSecret);
+                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), appSecret), Toast.LENGTH_SHORT).show();
                                     } else {
                                         Toast.makeText(getActivity(), R.string.app_secret_invalid, Toast.LENGTH_SHORT).show();
                                     }
@@ -151,7 +152,7 @@ public class SettingsActivity extends AppCompatActivity {
                             .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    setKeyValue(APP_SECRET_KEY, UUID.fromString(MainActivity.APP_SECRET));
+                                    setKeyValue(APP_SECRET_KEY, MainActivity.APP_SECRET);
                                     Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), MainActivity.APP_SECRET), Toast.LENGTH_SHORT).show();
                                     preference.setSummary(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
                                 }
@@ -255,12 +256,12 @@ public class SettingsActivity extends AppCompatActivity {
                 preference.setSummary(disabledSummary);
         }
 
-        private void setKeyValue(String key, Object value) {
+        private void setKeyValue(String key, String value) {
             SharedPreferences.Editor editor = MainActivity.sSharedPreferences.edit();
             if (value == null)
                 editor.remove(key);
             else
-                editor.putString(key, value.toString());
+                editor.putString(key, value);
             editor.apply();
         }
 
