@@ -45,6 +45,7 @@ public interface CrashesListener {
      *
      * @param report The crash report that will be sent.
      */
+    @UiThread
     void onBeforeSending(ErrorReport report);
 
     /**
@@ -54,6 +55,7 @@ public interface CrashesListener {
      * @param report The crash report that failed to send.
      * @param e      An exception that caused failure.
      */
+    @UiThread
     void onSendingFailed(ErrorReport report, Exception e);
 
     /**
@@ -61,5 +63,6 @@ public interface CrashesListener {
      *
      * @param report The crash report that was sent successfully.
      */
+    @UiThread
     void onSendingSucceeded(ErrorReport report);
 }
