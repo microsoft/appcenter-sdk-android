@@ -118,14 +118,12 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Count down latch for the last session error report.
      */
-    @VisibleForTesting
-    CountDownLatch mCountDownLatchForLastSessionErrorReport;
+    private CountDownLatch mCountDownLatchForLastSessionErrorReport;
 
     /**
      * Count down latches for {@link #processPendingErrors()}.
      */
-    @VisibleForTesting
-    CountDownLatch mCountDownLatchForProcessPendingErrors;
+    private CountDownLatch mCountDownLatchForProcessPendingErrors;
 
     /**
      * Log serializer.
@@ -667,6 +665,15 @@ public class Crashes extends AbstractMobileCenterService {
         mCrashesListener = listener;
     }
 
+    @VisibleForTesting
+    CountDownLatch getCountDownLatchForLastSessionErrorReport() {
+        return mCountDownLatchForLastSessionErrorReport;
+    }
+
+    @VisibleForTesting
+    CountDownLatch getCountDownLatchForProcessPendingErrors() {
+        return mCountDownLatchForProcessPendingErrors;
+    }
     /**
      * Set wrapper SDK listener.
      *

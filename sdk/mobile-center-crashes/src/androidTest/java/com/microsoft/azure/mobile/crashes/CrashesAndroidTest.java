@@ -2,8 +2,6 @@ package com.microsoft.azure.mobile.crashes;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.azure.mobile.Constants;
@@ -76,29 +74,28 @@ public class CrashesAndroidTest {
 
     private void waitForCrashesHandlerTasksToComplete() throws InterruptedException {
         final Semaphore semaphore = new Semaphore(0);
+        final Crashes crashes = Crashes.getInstance();
 
         /* Waiting background thread for initialize. */
-        if (Crashes.getInstance().mCountDownLatchForLastSessionErrorReport != null)
-            Crashes.getInstance().mCountDownLatchForLastSessionErrorReport.await();
+        if (crashes.getCountDownLatchForLastSessionErrorReport() != null)
+            crashes.getCountDownLatchForLastSessionErrorReport().await();
 
         /* Waiting background thread for processPendingErrors. Wait for 2 second to make sure Crashes service starts processing pending errors. */
-        HandlerThread thread = new HandlerThread("TestThread");
-        thread.start();
-        Handler handler = new Handler(thread.getLooper());
-        handler.post(new Runnable() {
+        Thread thread = new Thread(new Runnable() {
 
             @Override
             public void run() {
                 try {
                     TimeUnit.SECONDS.sleep(2);
-                    if (Crashes.getInstance().mCountDownLatchForProcessPendingErrors != null)
-                        Crashes.getInstance().mCountDownLatchForProcessPendingErrors.await();
+                    if (crashes.getCountDownLatchForProcessPendingErrors() != null)
+                        crashes.getCountDownLatchForProcessPendingErrors().await();
                 } catch (InterruptedException ignored) {
                     /* Ignore exception. */
                 }
                 semaphore.release();
             }
         });
+        thread.start();
         semaphore.acquire();
 
         /* Waiting main thread for processUserConfirmation. */
