@@ -1,6 +1,7 @@
 package com.microsoft.azure.mobile.crashes;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -76,7 +77,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, Crashes.class, HandlerUtils.class})
+@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, Crashes.class, HandlerUtils.class, AsyncTask.class})
 public class CrashesTest {
 
     @SuppressWarnings("ThrowableInstanceNeverThrown")
@@ -103,7 +104,7 @@ public class CrashesTest {
     @Before
     public void setUp() throws Exception {
 
-        /* Mock handler for asynchronous Crashes */
+        /* Mock handler for asynchronous Crashes. */
         Handler mockHandler = mock(Handler.class);
         whenNew(Handler.class).withParameterTypes(Looper.class).withArguments(any(Looper.class)).thenReturn(mockHandler);
         when(mockHandler.post(any(Runnable.class))).then(new Answer<Boolean>() {
@@ -114,6 +115,35 @@ public class CrashesTest {
                 return true;
             }
         });
+
+        /* Mock async tasks for crash report. */
+        whenNew(Crashes.CrashReportTask.class).withParameterTypes(Crashes.TaskRunner.class).withArguments(any(Crashes.TaskRunner.class)).thenAnswer(new Answer<Crashes.CrashReportTask>() {
+
+            @Override
+            public Crashes.CrashReportTask answer(InvocationOnMock invocation) throws Throwable {
+                final Crashes.TaskRunner runner = (Crashes.TaskRunner) invocation.getArguments()[0];
+                final Crashes.CrashReportTask task = mock(Crashes.CrashReportTask.class);
+                when(task.execute()).then(new Answer<Crashes.CrashReportTask>() {
+                    @Override
+                    public Crashes.CrashReportTask answer(InvocationOnMock invocation) throws Throwable {
+                        runner.run();
+                        return null;
+                    }
+                });
+                return task;
+            }
+        });
+
+        /* Static mock for async task from main thread. */
+        mockStatic(AsyncTask.class);
+        doAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                ((Runnable) invocation.getArguments()[0]).run();
+                return null;
+            }
+        }).when(AsyncTask.class);
+        AsyncTask.execute(any(Runnable.class));
 
         Thread.setDefaultUncaughtExceptionHandler(null);
         Crashes.unsetInstance();

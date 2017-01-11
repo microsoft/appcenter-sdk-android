@@ -2,6 +2,8 @@ package com.microsoft.azure.mobile.crashes;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.azure.mobile.Constants;
@@ -15,8 +17,6 @@ import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
-import junit.framework.AssertionFailedError;
-
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -25,6 +25,7 @@ import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.azure.mobile.test.TestUtils.TAG;
@@ -76,11 +77,25 @@ public class CrashesAndroidTest {
     private void waitForCrashesHandlerTasksToComplete() throws InterruptedException {
         final Semaphore semaphore = new Semaphore(0);
 
-        /* Waiting background thread for initialize and processPendingErrors. */
-        Crashes.getInstance().mHandler.post(new Runnable() {
+        /* Waiting background thread for initialize. */
+        if (Crashes.getInstance().mCountDownLatchForLastSessionErrorReport != null)
+            Crashes.getInstance().mCountDownLatchForLastSessionErrorReport.await();
+
+        /* Waiting background thread for processPendingErrors. Wait for 2 second to make sure Crashes service starts processing pending errors. */
+        HandlerThread thread = new HandlerThread("TestThread");
+        thread.start();
+        Handler handler = new Handler(thread.getLooper());
+        handler.post(new Runnable() {
 
             @Override
             public void run() {
+                try {
+                    TimeUnit.SECONDS.sleep(2);
+                    if (Crashes.getInstance().mCountDownLatchForProcessPendingErrors != null)
+                        Crashes.getInstance().mCountDownLatchForProcessPendingErrors.await();
+                } catch (InterruptedException ignored) {
+                    /* Ignore exception. */
+                }
                 semaphore.release();
             }
         });
@@ -119,17 +134,8 @@ public class CrashesAndroidTest {
 
         /* Get last session crash on 2nd process. */
         Crashes.unsetInstance();
-        Crashes.getInstance().mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    throw new AssertionFailedError();
-                }
-            }
-        });
         Crashes.getInstance().onChannelReady(sContext, channel);
+        waitForCrashesHandlerTasksToComplete();
         assertNotNull(Crashes.getLastSessionCrashReport());
 
         /* Try to get last session crash after Crashes service completed processing. */

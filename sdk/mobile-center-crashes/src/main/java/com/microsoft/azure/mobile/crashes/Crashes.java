@@ -2,8 +2,7 @@ package com.microsoft.azure.mobile.crashes;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.os.Handler;
-import android.os.HandlerThread;
+import android.os.AsyncTask;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
@@ -76,11 +75,6 @@ public class Crashes extends AbstractMobileCenterService {
     static final String ERROR_GROUP = "group_errors";
 
     /**
-     * Thread name for persistence to access database.
-     */
-    private static final String THREAD_NAME = "CrashesThread";
-
-    /**
      * Name of the service.
      */
     private static final String SERVICE_NAME = "Crashes";
@@ -100,12 +94,6 @@ public class Crashes extends AbstractMobileCenterService {
      */
     @SuppressLint("StaticFieldLeak")
     private static Crashes sInstance = null;
-
-    /**
-     * Handler for background thread loop.
-     */
-    @VisibleForTesting
-    final Handler mHandler;
 
     /**
      * Log factories managed by this service.
@@ -128,9 +116,16 @@ public class Crashes extends AbstractMobileCenterService {
     private final List<ResultCallback<ErrorReport>> mLastCrashErrorReportCallbacks = new ArrayList<>();
 
     /**
-     * Count down latch for waiting crash report.
+     * Count down latch for the last session error report.
      */
-    private CountDownLatch mCountDownLatch;
+    @VisibleForTesting
+    CountDownLatch mCountDownLatchForLastSessionErrorReport;
+
+    /**
+     * Count down latches for {@link #processPendingErrors()}.
+     */
+    @VisibleForTesting
+    CountDownLatch mCountDownLatchForProcessPendingErrors;
 
     /**
      * Log serializer.
@@ -175,9 +170,6 @@ public class Crashes extends AbstractMobileCenterService {
         mCrashesListener = DEFAULT_ERROR_REPORTING_LISTENER;
         mUnprocessedErrorReports = new LinkedHashMap<>();
         mErrorReportCache = new LinkedHashMap<>();
-        HandlerThread thread = new HandlerThread(THREAD_NAME);
-        thread.start();
-        mHandler = new Handler(thread.getLooper());
     }
 
     @NonNull
@@ -288,17 +280,17 @@ public class Crashes extends AbstractMobileCenterService {
      * Implements {@link #hasCrashedInLastSession()} at instance level.
      */
     private synchronized boolean hasInstanceCrashedInLastSession() {
-        return mLastSessionErrorReport != null || (mCountDownLatch != null && mCountDownLatch.getCount() > 0);
+        return mLastSessionErrorReport != null || (mCountDownLatchForLastSessionErrorReport != null && mCountDownLatchForLastSessionErrorReport.getCount() > 0);
     }
 
     /**
      * Implements {@link #getLastSessionCrashReport()} at instance level.
      */
     private synchronized ErrorReport getInstanceLastSessionCrashReport() {
-        if (mCountDownLatch != null) {
+        if (mCountDownLatchForLastSessionErrorReport != null) {
             MobileCenterLog.debug(LOG_TAG, "Waiting for Crashes service to complete crash report for the last session.");
             try {
-                mCountDownLatch.await();
+                mCountDownLatchForLastSessionErrorReport.await();
             } catch (InterruptedException e) {
                 MobileCenterLog.debug(LOG_TAG, "Could not get crash report for the last session.", e);
             }
@@ -310,7 +302,7 @@ public class Crashes extends AbstractMobileCenterService {
      * Implements {@link #getLastSessionCrashReportAsync(ResultCallback)} at instance level.
      */
     private synchronized void getInstanceLastSessionCrashReportAsync(ResultCallback<ErrorReport> callback) {
-        if (mCountDownLatch == null || mCountDownLatch.getCount() <= 0)
+        if (mCountDownLatchForLastSessionErrorReport == null || mCountDownLatchForLastSessionErrorReport.getCount() <= 0)
             callback.onResult(mLastSessionErrorReport);
         else {
             mLastCrashErrorReportCallbacks.add(callback);
@@ -516,8 +508,9 @@ public class Crashes extends AbstractMobileCenterService {
             final File logFile = ErrorLogHelper.getLastErrorLogFile();
             if (logFile != null) {
                 MobileCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
-                mCountDownLatch = new CountDownLatch(1);
-                mHandler.post(new Runnable() {
+                mCountDownLatchForLastSessionErrorReport = new CountDownLatch(1);
+                new CrashReportTask(new TaskRunner() {
+
                     @Override
                     public void run() {
                         String logFileContents = StorageHelper.InternalStorage.read(logFile);
@@ -533,7 +526,7 @@ public class Crashes extends AbstractMobileCenterService {
                             }
                         }
 
-                        mCountDownLatch.countDown();
+                        mCountDownLatchForLastSessionErrorReport.countDown();
 
                         /* Call callbacks for getInstanceLastSessionCrashReport(ResultCallback) . */
                         for (Iterator<ResultCallback<ErrorReport>> iterator = mLastCrashErrorReportCallbacks.iterator(); iterator.hasNext(); ) {
@@ -542,7 +535,7 @@ public class Crashes extends AbstractMobileCenterService {
                             callback.onResult(mLastSessionErrorReport);
                         }
                     }
-                });
+                }).execute();
             }
         }
     }
@@ -556,12 +549,16 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     private void processPendingErrors() {
-        mHandler.post(new Runnable() {
+        mCountDownLatchForProcessPendingErrors = new CountDownLatch(1);
+        new CrashReportTask(new TaskRunner() {
+
             @Override
             public void run() {
                 for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
-                    if (shouldStopProcessingPendingErrors())
+                    if (shouldStopProcessingPendingErrors()) {
+                        mCountDownLatchForProcessPendingErrors.countDown();
                         return;
+                    }
                     MobileCenterLog.debug(LOG_TAG, "Process pending error file: " + logFile);
                     String logfileContents = StorageHelper.InternalStorage.read(logFile);
                     if (logfileContents != null)
@@ -583,12 +580,12 @@ public class Crashes extends AbstractMobileCenterService {
                         }
                 }
 
-                if (shouldStopProcessingPendingErrors())
-                    return;
+                if (!shouldStopProcessingPendingErrors())
+                    processUserConfirmation();
 
-                processUserConfirmation();
+                mCountDownLatchForProcessPendingErrors.countDown();
             }
-        });
+        }).execute();
     }
 
     private void processUserConfirmation() {
@@ -728,7 +725,7 @@ public class Crashes extends AbstractMobileCenterService {
 
         /* Run on background thread if current thread is UI thread. */
         if (Looper.myLooper() == Looper.getMainLooper())
-            mHandler.post(runnable);
+            AsyncTask.execute(runnable);
         else
             runnable.run();
     }
@@ -814,10 +811,35 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
+     * Interface to provide what needs to be run in {@link CrashReportTask}.
+     */
+    @VisibleForTesting
+    interface TaskRunner {
+        void run();
+    }
+
+    /**
+     * Async task to process crash report in the last session.
+     */
+    @VisibleForTesting
+    static class CrashReportTask extends AsyncTask<Void, Void, Void> {
+        private final TaskRunner mRunner;
+
+        CrashReportTask(TaskRunner runner) {
+            mRunner = runner;
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            mRunner.run();
+            return null;
+        }
+    }
+
+    /**
      * Default crashes listener class.
      */
     private static class DefaultCrashesListener extends AbstractCrashesListener {
-
     }
 
     /**
