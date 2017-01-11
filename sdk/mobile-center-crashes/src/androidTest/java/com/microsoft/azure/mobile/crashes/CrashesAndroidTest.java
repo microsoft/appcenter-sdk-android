@@ -2,8 +2,6 @@ package com.microsoft.azure.mobile.crashes;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.azure.mobile.Constants;
@@ -13,6 +11,7 @@ import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
 import com.microsoft.azure.mobile.ingestion.models.Log;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
@@ -88,7 +87,7 @@ public class CrashesAndroidTest {
         semaphore.acquire();
 
         /* Waiting main thread for processUserConfirmation. */
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
+        HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
             public void run() {
@@ -229,6 +228,7 @@ public class CrashesAndroidTest {
         Crashes.unsetInstance();
         Crashes.setListener(crashesListener);
         Crashes.getInstance().onChannelReady(sContext, channel);
+        waitForCrashesHandlerTasksToComplete();
         assertFalse(Crashes.hasCrashedInLastSession());
         Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
 
