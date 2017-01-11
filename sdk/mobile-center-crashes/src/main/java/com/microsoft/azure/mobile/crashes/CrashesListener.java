@@ -1,6 +1,5 @@
 package com.microsoft.azure.mobile.crashes;
 
-import android.support.annotation.MainThread;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 
