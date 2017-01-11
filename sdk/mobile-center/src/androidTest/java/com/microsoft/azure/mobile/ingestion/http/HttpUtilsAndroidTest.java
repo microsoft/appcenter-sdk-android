@@ -10,6 +10,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.security.cert.CertPathValidatorException;
+import java.util.concurrent.RejectedExecutionException;
 
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
@@ -34,6 +35,7 @@ public class HttpUtilsAndroidTest {
         assertTrue(isRecoverableError(new SocketException()));
         assertTrue(isRecoverableError(new PortUnreachableException()));
         assertTrue(isRecoverableError(new UnknownHostException()));
+        assertTrue(isRecoverableError(new RejectedExecutionException()));
         assertFalse(isRecoverableError(new MalformedURLException()));
         for (int i = 0; i <= 4; i++)
             assertTrue(isRecoverableError(new HttpException(500 + i)));
