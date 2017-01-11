@@ -25,6 +25,7 @@ import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
@@ -122,6 +123,11 @@ public class Crashes extends AbstractMobileCenterService {
     private final Map<UUID, ErrorLogReport> mErrorReportCache;
 
     /**
+     * List of crash report callbacks.
+     */
+    private final List<ResultCallback<ErrorReport>> mLastCrashErrorReportCallbacks = new ArrayList<>();
+
+    /**
      * Count down latch for waiting crash report.
      */
     private CountDownLatch mCountDownLatch;
@@ -160,11 +166,6 @@ public class Crashes extends AbstractMobileCenterService {
      * ErrorReport for the last session.
      */
     private ErrorReport mLastSessionErrorReport;
-
-    /**
-     * List of crash report callbacks.
-     */
-    private final List<ResultCallback<ErrorReport>> mLastCrashErrorReportCallbacks = new ArrayList<>();
 
     private Crashes() {
         mFactories = new HashMap<>();
@@ -390,31 +391,30 @@ public class Crashes extends AbstractMobileCenterService {
     @Override
     protected Channel.GroupListener getChannelListener() {
         return new Channel.GroupListener() {
-            private static final int BEFORE_SENDING = 0;
-            private static final int SENDING_SUCCEEDED = 1;
-            private static final int SENDING_FAILED = 2;
 
-            private void callback(int type, Log log, Exception e) {
+            /** Process callback (template method) */
+            private void processCallback(Log log, final CallbackProcessor callbackProcessor) {
                 if (log instanceof ManagedErrorLog) {
                     ManagedErrorLog errorLog = (ManagedErrorLog) log;
                     if (errorLog.getFatal()) {
-                        ErrorReport report = buildErrorReport(errorLog);
+                        final ErrorReport report = buildErrorReport(errorLog);
                         UUID id = errorLog.getId();
 
                         if (report != null) {
-                            if (type == BEFORE_SENDING) {
-                                mCrashesListener.onBeforeSending(report);
-                            } else {
 
-                                /* Clean up before calling callbacks. */
+                            /* Clean up before calling callbacks if requested. */
+                            if (callbackProcessor.shouldDeleteThrowable()) {
                                 removeStoredThrowable(id);
-
-                                if (type == SENDING_SUCCEEDED) {
-                                    mCrashesListener.onSendingSucceeded(report);
-                                } else {
-                                    mCrashesListener.onSendingFailed(report, e);
-                                }
                             }
+
+                            /* Call back. */
+                            HandlerUtils.runOnUiThread(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    callbackProcessor.onCallBack(report);
+                                }
+                            });
                         } else
                             MobileCenterLog.warn(LOG_TAG, "Cannot find crash report for the error log: " + id);
                     }
@@ -425,17 +425,50 @@ public class Crashes extends AbstractMobileCenterService {
 
             @Override
             public void onBeforeSending(Log log) {
-                callback(BEFORE_SENDING, log, null);
+                processCallback(log, new CallbackProcessor() {
+
+                    @Override
+                    public boolean shouldDeleteThrowable() {
+                        return false;
+                    }
+
+                    @Override
+                    public void onCallBack(ErrorReport report) {
+                        mCrashesListener.onBeforeSending(report);
+                    }
+                });
             }
 
             @Override
             public void onSuccess(Log log) {
-                callback(SENDING_SUCCEEDED, log, null);
+                processCallback(log, new CallbackProcessor() {
+
+                    @Override
+                    public boolean shouldDeleteThrowable() {
+                        return true;
+                    }
+
+                    @Override
+                    public void onCallBack(ErrorReport report) {
+                        mCrashesListener.onSendingSucceeded(report);
+                    }
+                });
             }
 
             @Override
-            public void onFailure(Log log, Exception e) {
-                callback(SENDING_FAILED, log, e);
+            public void onFailure(Log log, final Exception e) {
+                processCallback(log, new CallbackProcessor() {
+
+                    @Override
+                    public boolean shouldDeleteThrowable() {
+                        return true;
+                    }
+
+                    @Override
+                    public void onCallBack(ErrorReport report) {
+                        mCrashesListener.onSendingFailed(report, e);
+                    }
+                });
             }
         };
     }
@@ -561,7 +594,8 @@ public class Crashes extends AbstractMobileCenterService {
     private void processUserConfirmation() {
 
         /* Handle user confirmation in UI thread. */
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
+        HandlerUtils.runOnUiThread(new Runnable() {
+
             @Override
             public void run() {
                 boolean shouldAwaitUserConfirmation = true;
@@ -745,6 +779,24 @@ public class Crashes extends AbstractMobileCenterService {
         String errorLogString = mLogSerializer.serializeLog(errorLog);
         StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
         MobileCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
+    }
+
+    /**
+     * Callback template method.
+     */
+    private interface CallbackProcessor {
+
+        /**
+         * @return true to delete the stored serialized throwable file.
+         */
+        boolean shouldDeleteThrowable();
+
+        /**
+         * Execute call back.
+         *
+         * @param report error report related to the callback.
+         */
+        void onCallBack(ErrorReport report);
     }
 
     /**
