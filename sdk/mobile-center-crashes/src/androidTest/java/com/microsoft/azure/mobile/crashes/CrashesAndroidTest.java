@@ -240,6 +240,7 @@ public class CrashesAndroidTest {
 
         assertNotNull(groupListener.get());
         groupListener.get().onSuccess(log.get());
+        waitForCrashesHandlerTasksToComplete();
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
         verify(channel, never()).enqueue(any(Log.class), anyString());
         verify(crashesListener).onBeforeSending(any(ErrorReport.class));
