@@ -71,30 +71,6 @@ public class CrashesAndroidTest {
         }
     }
 
-    private void waitForCrashesHandlerTasksToComplete() throws InterruptedException {
-        final Semaphore semaphore = new Semaphore(0);
-
-        /* Waiting background thread for initialize and processPendingErrors. */
-        Crashes.getInstance().getHandler().post(new Runnable() {
-
-            @Override
-            public void run() {
-                semaphore.release();
-            }
-        });
-        semaphore.acquire();
-
-        /* Waiting main thread for processUserConfirmation. */
-        HandlerUtils.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                semaphore.release();
-            }
-        });
-        semaphore.acquire();
-    }
-
     @Test
     public void getLastSessionCrashReport() throws InterruptedException {
 
@@ -121,6 +97,7 @@ public class CrashesAndroidTest {
         assertNotNull(Crashes.getLastSessionCrashReport());
 
         /* Try to get last session crash after Crashes service completed processing. */
+//        waitForCrashesHandlerTasksToComplete();
         assertNotNull(Crashes.getLastSessionCrashReport());
     }
 
@@ -242,14 +219,6 @@ public class CrashesAndroidTest {
         assertEquals(ErrorLogHelper.FRAME_LIMIT, errorLog.getException().getFrames().size());
     }
 
-    private Error generateStackOverflowError() {
-        try {
-            return generateStackOverflowError();
-        } catch (StackOverflowError error) {
-            return error;
-        }
-    }
-
     @Test
     public void cleanupFilesOnDisable() throws InterruptedException {
 
@@ -308,6 +277,7 @@ public class CrashesAndroidTest {
         verify(wrapperSdkListener).onCrashCaptured(notNull(ManagedErrorLog.class));
         Crashes.unsetInstance();
         Crashes.getInstance().onChannelReady(sContext, channel);
+        waitForCrashesHandlerTasksToComplete();
         Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
 
             @Override
@@ -342,5 +312,37 @@ public class CrashesAndroidTest {
 
         /* Check there are only 2 files: the throwable and the json one. */
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+    }
+
+    private Error generateStackOverflowError() {
+        try {
+            return generateStackOverflowError();
+        } catch (StackOverflowError error) {
+            return error;
+        }
+    }
+
+    private void waitForCrashesHandlerTasksToComplete() throws InterruptedException {
+        final Semaphore semaphore = new Semaphore(0);
+
+        /* Waiting background thread for initialize and processPendingErrors. */
+        Crashes.getInstance().getHandler().post(new Runnable() {
+
+            @Override
+            public void run() {
+                semaphore.release();
+            }
+        });
+        semaphore.acquire();
+
+        /* Waiting main thread for processUserConfirmation. */
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                semaphore.release();
+            }
+        });
+        semaphore.acquire();
     }
 }

@@ -308,9 +308,15 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Implements {@link #getLastSessionCrashReportAsync(ResultCallback)} at instance level.
      */
-    private synchronized void getInstanceLastSessionCrashReportAsync(ResultCallback<ErrorReport> callback) {
+    private synchronized void getInstanceLastSessionCrashReportAsync(final ResultCallback<ErrorReport> callback) {
         if (mCountDownLatch == null || mCountDownLatch.getCount() <= 0)
-            callback.onResult(mLastSessionErrorReport);
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    callback.onResult(mLastSessionErrorReport);
+                }
+            });
         else {
             mLastCrashErrorReportCallbacks.add(callback);
             MobileCenterLog.info(LOG_TAG, "Crashes for the last session have not been processed yet. The SDK will call listener when it completes processing.");
@@ -545,12 +551,18 @@ public class Crashes extends AbstractMobileCenterService {
 
                         mCountDownLatch.countDown();
 
-                        /* Call callbacks for getInstanceLastSessionCrashReport(ResultCallback) . */
-                        for (Iterator<ResultCallback<ErrorReport>> iterator = mLastCrashErrorReportCallbacks.iterator(); iterator.hasNext(); ) {
-                            ResultCallback<ErrorReport> callback = iterator.next();
-                            iterator.remove();
-                            callback.onResult(mLastSessionErrorReport);
-                        }
+                        HandlerUtils.runOnUiThread(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                /* Call callbacks for getInstanceLastSessionCrashReport(ResultCallback) . */
+                                for (Iterator<ResultCallback<ErrorReport>> iterator = mLastCrashErrorReportCallbacks.iterator(); iterator.hasNext(); ) {
+                                    ResultCallback<ErrorReport> callback = iterator.next();
+                                    iterator.remove();
+                                    callback.onResult(mLastSessionErrorReport);
+                                }
+                            }
+                        });
                     }
                 });
             }
