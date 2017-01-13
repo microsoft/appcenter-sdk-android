@@ -76,7 +76,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, Crashes.class, HandlerUtils.class})
+@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, Crashes.class, HandlerUtils.class, Looper.class})
 public class CrashesTest {
 
     @SuppressWarnings("ThrowableInstanceNeverThrown")
@@ -89,6 +89,8 @@ public class CrashesTest {
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     private ManagedErrorLog mErrorLog;
+
+    private Looper mMockLooper;
 
     private static void assertErrorEquals(ManagedErrorLog errorLog, Throwable throwable, ErrorReport report) {
         assertNotNull(report);
@@ -104,8 +106,15 @@ public class CrashesTest {
     public void setUp() throws Exception {
 
         /* Mock handler for asynchronous Crashes */
-        Handler mockHandler = mock(Handler.class);
-        whenNew(Handler.class).withParameterTypes(Looper.class).withArguments(any(Looper.class)).thenReturn(mockHandler);
+        final Handler mockHandler = mock(Handler.class);
+        whenNew(Handler.class).withParameterTypes(Looper.class).withArguments(any(Looper.class)).thenAnswer(new Answer<Handler>() {
+            @Override
+            public Handler answer(InvocationOnMock invocation) throws Throwable {
+                mMockLooper = mock(Looper.class);
+                when(mockHandler.getLooper()).thenReturn(mMockLooper);
+                return mockHandler;
+            }
+        });
         when(mockHandler.post(any(Runnable.class))).then(new Answer<Boolean>() {
 
             @Override
@@ -227,9 +236,11 @@ public class CrashesTest {
         assertTrue(Crashes.isEnabled());
         Crashes.setEnabled(true);
         assertTrue(Crashes.isEnabled());
+        verify(mMockLooper, never()).quit();
         assertTrue(crashes.getInitializeTimestamp() > 0);
         Crashes.setEnabled(false);
         assertFalse(Crashes.isEnabled());
+        verify(mMockLooper).quit();
         crashes.onChannelReady(mock(Context.class), mockChannel);
         verify(mockChannel).clear(crashes.getGroupName());
         verify(mockChannel).removeGroup(eq(crashes.getGroupName()));
@@ -482,6 +493,7 @@ public class CrashesTest {
         crashes.setInstanceListener(listener);
         crashes.onChannelReady(mock(Context.class), channel);
 
+        verify(mMockLooper).quit();
         verify(listener, times(2)).shouldProcess(any(ErrorReport.class));
         verify(listener).shouldAwaitUserConfirmation();
         verify(channel).enqueue(any(Log.class), anyString());
@@ -701,6 +713,7 @@ public class CrashesTest {
         Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
 
         verify(mockListener, never()).getErrorAttachment(any(ErrorReport.class));
+        verify(mMockLooper).quit();
 
         verifyStatic();
         ErrorLogHelper.removeStoredErrorLogFile(mErrorLog.getId());
@@ -710,6 +723,12 @@ public class CrashesTest {
 
     @Test
     public void handleUserConfirmationAlwaysSend() throws IOException, ClassNotFoundException, JSONException {
+
+        /* Simulate the method is called from Worker Thread. */
+        mockStatic(Looper.class);
+        when(Looper.myLooper()).thenReturn(mock(Looper.class));
+        when(Looper.getMainLooper()).thenReturn(null);
+
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
@@ -730,6 +749,7 @@ public class CrashesTest {
 
         Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
 
+        verify(mMockLooper).quit();
         verifyStatic();
         StorageHelper.PreferencesStorage.putBoolean(Crashes.PREF_KEY_ALWAYS_SEND, true);
     }
