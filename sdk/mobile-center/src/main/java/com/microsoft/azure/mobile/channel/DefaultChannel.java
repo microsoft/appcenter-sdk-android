@@ -164,19 +164,29 @@ public class DefaultChannel implements Channel {
 
         /* Init group. */
         MobileCenterLog.debug(LOG_TAG, "addGroup(" + groupName + ")");
-        mGroupStates.put(groupName, new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener));
+        final GroupState groupState = new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener);
+        mGroupStates.put(groupName, groupState);
 
         /* Count pending logs. */
         mPersistence.countLogs(groupName, new AbstractDatabasePersistenceAsyncCallback() {
 
             @Override
             public void onSuccess(Object result) {
-                mGroupStates.get(groupName).mPendingLogCount = (Integer) result;
-
-                /* Schedule sending any pending log. */
-                checkPendingLogs(groupName);
+                checkPendingLogsAfterCounting(groupState, (Integer) result);
             }
         });
+    }
+
+    private synchronized void checkPendingLogsAfterCounting(GroupState groupState, int logCount) {
+
+        /* Check group was not replaced in the mean time. */
+        String groupName = groupState.mName;
+        if (groupState == mGroupStates.get(groupName)) {
+            groupState.mPendingLogCount = logCount;
+
+            /* Schedule sending any pending log. */
+            checkPendingLogs(groupName);
+        }
     }
 
     @Override

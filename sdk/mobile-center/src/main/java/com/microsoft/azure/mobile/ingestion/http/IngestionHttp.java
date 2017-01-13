@@ -10,6 +10,7 @@ import com.microsoft.azure.mobile.ingestion.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import java.io.IOException;
@@ -21,6 +22,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.RejectedExecutionException;
 
 import static android.util.Log.VERBOSE;
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
@@ -231,9 +233,26 @@ public class IngestionHttp implements Ingestion {
     }
 
     @Override
-    public ServiceCall sendAsync(final String appSecret, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         final Call call = new Call(mBaseUrl, mLogSerializer, appSecret, installId, logContainer, serviceCallback);
-        call.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        try {
+            call.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        } catch (final RejectedExecutionException e) {
+
+            /*
+             * When executor saturated (shared with app), we should use the retry mechanism
+             * rather than creating more threads to avoid putting too much pressure on the hosting app.
+             * Also we need to return the method before calling the listener,
+             * so we post the callback on handler to make sure of that.
+             */
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    serviceCallback.onCallFailed(e);
+                }
+            });
+        }
         return new ServiceCall() {
 
             @Override
