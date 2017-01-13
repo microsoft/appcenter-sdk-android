@@ -159,7 +159,6 @@ public class DatabasePersistenceAsyncTest {
     @Test
     public void closeWithCallback() throws IOException {
         mDatabase.close(mCallback);
-        verify(mHandler).removeCallbacks(notNull(Runnable.class));
         verify(mPersistence).close();
         verify(mCallback).onSuccess(null);
     }
@@ -168,7 +167,6 @@ public class DatabasePersistenceAsyncTest {
     public void closeWithCallbackFailed() throws IOException {
         doThrow(new IOException()).when(mPersistence).close();
         mDatabase.close(mCallback);
-        verify(mHandler).removeCallbacks(notNull(Runnable.class));
         verify(mPersistence).close();
         verify(mCallback).onFailure(notNull(IOException.class));
     }
