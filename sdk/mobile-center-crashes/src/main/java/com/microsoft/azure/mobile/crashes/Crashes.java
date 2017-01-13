@@ -555,6 +555,7 @@ public class Crashes extends AbstractMobileCenterService {
 
                             @Override
                             public void run() {
+
                                 /* Call callbacks for getInstanceLastSessionCrashReport(ResultCallback) . */
                                 for (Iterator<ResultCallback<ErrorReport>> iterator = mLastCrashErrorReportCallbacks.iterator(); iterator.hasNext(); ) {
                                     ResultCallback<ErrorReport> callback = iterator.next();
@@ -741,7 +742,7 @@ public class Crashes extends AbstractMobileCenterService {
                             errorLogReport.log.setErrorAttachment(attachment);
                         mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
 
-						/* Clean up an error log file and map entry. */
+                        /* Clean up an error log file and map entry. */
                         unprocessedIterator.remove();
                         ErrorLogHelper.removeStoredErrorLogFile(unprocessedEntry.getKey());
                     }

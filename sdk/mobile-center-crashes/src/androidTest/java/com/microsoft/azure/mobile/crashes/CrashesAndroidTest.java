@@ -97,7 +97,6 @@ public class CrashesAndroidTest {
         assertNotNull(Crashes.getLastSessionCrashReport());
 
         /* Try to get last session crash after Crashes service completed processing. */
-//        waitForCrashesHandlerTasksToComplete();
         assertNotNull(Crashes.getLastSessionCrashReport());
     }
 
