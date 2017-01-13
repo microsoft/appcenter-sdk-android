@@ -110,6 +110,12 @@ public class DefaultChannel implements Channel {
     private Device mDevice;
 
     /**
+     * State checker. If this counter changes during a call to persistence, we have to ignore the result in the callback.
+     * Cancelling a database call would be unreliable, and if it's too fast you could still have the callback being called.
+     */
+    private int mStateChangeCounter;
+
+    /**
      * Creates and initializes a new instance.
      *
      * @param context       The context.
@@ -159,6 +165,20 @@ public class DefaultChannel implements Channel {
         return persistence;
     }
 
+    /**
+     * Call this after every database callback and stop processing if it returns false.
+     * That means either the groupState was removed (or removed/added again),
+     * or the channel was disabled (or disabled then re-enabled again).
+     * If state changed, what we were trying to achieve before the database call is no longer valid.
+     *
+     * @param groupState   group state as before the async call.
+     * @param currentState state counter as before the async call.
+     * @return true if state did not change and code should proceed, false if state changed.
+     */
+    private synchronized boolean checkStateDidNotChange(GroupState groupState, int currentState) {
+        return currentState == mStateChangeCounter && groupState == mGroupStates.get(groupState.mName);
+    }
+
     @Override
     public synchronized void addGroup(final String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
 
@@ -168,24 +188,24 @@ public class DefaultChannel implements Channel {
         mGroupStates.put(groupName, groupState);
 
         /* Count pending logs. */
+        final int currentState = mStateChangeCounter;
         mPersistence.countLogs(groupName, new AbstractDatabasePersistenceAsyncCallback() {
 
             @Override
             public void onSuccess(Object result) {
-                checkPendingLogsAfterCounting(groupState, (Integer) result);
+                checkPendingLogsAfterCounting(groupState, currentState, (Integer) result);
             }
         });
     }
 
-    private synchronized void checkPendingLogsAfterCounting(GroupState groupState, int logCount) {
+    private synchronized void checkPendingLogsAfterCounting(GroupState groupState, int currentState, int logCount) {
 
-        /* Check group was not replaced in the mean time. */
-        String groupName = groupState.mName;
-        if (groupState == mGroupStates.get(groupName)) {
+        /* Check state did not change in the mean time. */
+        if (checkStateDidNotChange(groupState, currentState)) {
             groupState.mPendingLogCount = logCount;
 
             /* Schedule sending any pending log. */
-            checkPendingLogs(groupName);
+            checkPendingLogs(groupState.mName);
         }
     }
 
@@ -216,6 +236,7 @@ public class DefaultChannel implements Channel {
         if (enabled) {
             mEnabled = true;
             mDiscardLogs = false;
+            mStateChangeCounter++;
             for (String groupName : mGroupStates.keySet())
                 checkPendingLogs(groupName);
         } else
@@ -251,6 +272,7 @@ public class DefaultChannel implements Channel {
     private void suspend(boolean deleteLogs, Exception exception) {
         mEnabled = false;
         mDiscardLogs = deleteLogs;
+        mStateChangeCounter++;
         for (GroupState groupState : mGroupStates.values()) {
             cancelTimer(groupState);
 
@@ -275,31 +297,39 @@ public class DefaultChannel implements Channel {
         }
         if (deleteLogs) {
             for (GroupState groupState : mGroupStates.values()) {
-                handleFailureCallback(groupState);
+                deleteLogsOnSuspended(groupState);
             }
         } else {
             mPersistence.clearPendingLogState();
         }
     }
 
-    private void handleFailureCallback(final GroupState groupState) {
+    private void deleteLogsOnSuspended(final GroupState groupState) {
         final List<Log> logs = new ArrayList<>();
+        final int currentState = mStateChangeCounter;
         mPersistence.getLogs(groupState.mName, CLEAR_BATCH_SIZE, logs, new AbstractDatabasePersistenceAsyncCallback() {
+
             @Override
             public void onSuccess(Object result) {
-                if (logs.size() > 0 && groupState.mListener != null) {
-                    for (Log log : logs) {
-                        groupState.mListener.onBeforeSending(log);
-                        groupState.mListener.onFailure(log, new CancellationException());
-                    }
-                }
-                if (logs.size() >= CLEAR_BATCH_SIZE && groupState.mListener != null) {
-                    handleFailureCallback(groupState);
-                } else {
-                    mPersistence.deleteLogs(groupState.mName);
-                }
+                deleteLogsOnSuspended(groupState, currentState, logs);
             }
         });
+    }
+
+    private synchronized void deleteLogsOnSuspended(GroupState groupState, int currentState, List<Log> logs) {
+        if (checkStateDidNotChange(groupState, currentState)) {
+            if (logs.size() > 0 && groupState.mListener != null) {
+                for (Log log : logs) {
+                    groupState.mListener.onBeforeSending(log);
+                    groupState.mListener.onFailure(log, new CancellationException());
+                }
+            }
+            if (logs.size() >= CLEAR_BATCH_SIZE && groupState.mListener != null) {
+                deleteLogsOnSuspended(groupState);
+            } else {
+                mPersistence.deleteLogs(groupState.mName);
+            }
+        }
     }
 
     private void cancelTimer(GroupState groupState) {
@@ -339,67 +369,74 @@ public class DefaultChannel implements Channel {
 
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(groupState.mMaxLogsPerBatch);
+        final int currentState = mStateChangeCounter;
         mPersistence.getLogs(groupName, groupState.mMaxLogsPerBatch, batch, new AbstractDatabasePersistenceAsyncCallback() {
 
             @Override
             public void onSuccess(Object result) {
-                final String batchId = (String) result;
-                if (batchId != null) {
-
-                    /* Call group listener before sending logs to ingestion service. */
-                    if (groupState.mListener != null) {
-                        for (Log log : batch) {
-                            groupState.mListener.onBeforeSending(log);
-                        }
-                    }
-
-                    /* Decrement counter. */
-                    groupState.mPendingLogCount -= batch.size();
-                    MobileCenterLog.debug(LOG_TAG, "ingestLogs(" + groupName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
-
-                    /* Remember this batch. */
-                    groupState.mSendingBatches.put(batchId, batch);
-
-                    /* Send logs. */
-                    LogContainer logContainer = new LogContainer();
-                    logContainer.setLogs(batch);
-                    mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
-
-                                @Override
-                                public void onCallSucceeded() {
-                                    handleSendingSuccess(groupState, batchId);
-                                }
-
-                                @Override
-                                public void onCallFailed(Exception e) {
-                                    handleSendingFailure(groupState, batchId, e);
-                                }
-                            }
-                    );
-
-                    /* Check for more pending logs. */
-                    checkPendingLogs(groupName);
-                }
+                triggerIngestion((String) result, groupState, currentState, batch);
             }
         });
+    }
+
+    private synchronized void triggerIngestion(final String batchId, final GroupState groupState, final int currentState, List<Log> batch) {
+        if (batchId != null && checkStateDidNotChange(groupState, currentState)) {
+
+            /* Call group listener before sending logs to ingestion service. */
+            if (groupState.mListener != null) {
+                for (Log log : batch) {
+                    groupState.mListener.onBeforeSending(log);
+                }
+            }
+
+            /* Decrement counter. */
+            groupState.mPendingLogCount -= batch.size();
+            MobileCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
+
+            /* Remember this batch. */
+            groupState.mSendingBatches.put(batchId, batch);
+
+            /* Send logs. */
+            LogContainer logContainer = new LogContainer();
+            logContainer.setLogs(batch);
+            mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
+
+                        @Override
+                        public void onCallSucceeded() {
+                            handleSendingSuccess(groupState, currentState, batchId);
+                        }
+
+                        @Override
+                        public void onCallFailed(Exception e) {
+                            handleSendingFailure(groupState, currentState, batchId, e);
+                        }
+                    }
+            );
+
+            /* Check for more pending logs. */
+            checkPendingLogs(groupState.mName);
+        }
     }
 
     /**
      * The actual implementation to react to sending a batch to the server successfully.
      *
-     * @param groupState The group state.
-     * @param batchId    The batch ID.
+     * @param groupState   The group state.
+     * @param currentState The current state.
+     * @param batchId      The batch ID.
      */
-    private synchronized void handleSendingSuccess(@NonNull final GroupState groupState, @NonNull final String batchId) {
-        String groupName = groupState.mName;
-        mPersistence.deleteLogs(groupName, batchId);
-        List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
-        GroupListener groupListener = groupState.mListener;
-        if (groupListener != null) {
-            for (Log log : removedLogsForBatchId)
-                groupListener.onSuccess(log);
+    private synchronized void handleSendingSuccess(@NonNull final GroupState groupState, int currentState, @NonNull final String batchId) {
+        if (checkStateDidNotChange(groupState, currentState)) {
+            String groupName = groupState.mName;
+            mPersistence.deleteLogs(groupName, batchId);
+            List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
+            GroupListener groupListener = groupState.mListener;
+            if (groupListener != null) {
+                for (Log log : removedLogsForBatchId)
+                    groupListener.onSuccess(log);
+            }
+            checkPendingLogs(groupName);
         }
-        checkPendingLogs(groupName);
     }
 
     /**
@@ -407,25 +444,28 @@ public class DefaultChannel implements Channel {
      * Will disable the sender in case of a recoverable error.
      * Will delete batch of data in case of a non-recoverable error.
      *
-     * @param groupState the group state
-     * @param batchId    the batch ID
-     * @param e          the exception
+     * @param groupState   the group state
+     * @param currentState the current state
+     * @param batchId      the batch ID
+     * @param e            the exception
      */
-    private synchronized void handleSendingFailure(@NonNull final GroupState groupState, @NonNull final String batchId, @NonNull final Exception e) {
-        String groupName = groupState.mName;
-        MobileCenterLog.error(LOG_TAG, "Sending logs groupName=" + groupName + " id=" + batchId + " failed", e);
-        List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
-        boolean recoverableError = HttpUtils.isRecoverableError(e);
-        if (recoverableError) {
-            groupState.mPendingLogCount += removedLogsForBatchId.size();
-        } else {
-            GroupListener groupListener = groupState.mListener;
-            if (groupListener != null) {
-                for (Log log : removedLogsForBatchId)
-                    groupListener.onFailure(log, e);
+    private synchronized void handleSendingFailure(@NonNull final GroupState groupState, int currentState, @NonNull final String batchId, @NonNull final Exception e) {
+        if (checkStateDidNotChange(groupState, currentState)) {
+            String groupName = groupState.mName;
+            MobileCenterLog.error(LOG_TAG, "Sending logs groupName=" + groupName + " id=" + batchId + " failed", e);
+            List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
+            boolean recoverableError = HttpUtils.isRecoverableError(e);
+            if (recoverableError) {
+                groupState.mPendingLogCount += removedLogsForBatchId.size();
+            } else {
+                GroupListener groupListener = groupState.mListener;
+                if (groupListener != null) {
+                    for (Log log : removedLogsForBatchId)
+                        groupListener.onFailure(log, e);
+                }
             }
+            suspend(!recoverableError, e);
         }
-        suspend(!recoverableError, e);
     }
 
     /**
@@ -480,19 +520,12 @@ public class DefaultChannel implements Channel {
             log.setToffset(System.currentTimeMillis());
 
         /* Persist log. */
+        final int currentState = mStateChangeCounter;
         mPersistence.putLog(groupName, log, new DatabasePersistenceAsyncCallback() {
 
             @Override
             public void onSuccess(Object result) {
-                groupState.mPendingLogCount++;
-                MobileCenterLog.debug(LOG_TAG, "enqueue(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
-
-                /* Increment counters and schedule ingestion if we are not disabled. */
-                if (!mEnabled) {
-                    MobileCenterLog.warn(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
-                } else {
-                    checkPendingLogs(groupName);
-                }
+                checkLogsAfterPut(groupState, currentState);
             }
 
             @Override
@@ -500,6 +533,20 @@ public class DefaultChannel implements Channel {
                 MobileCenterLog.error(LOG_TAG, "Error persisting log with exception: " + e.toString());
             }
         });
+    }
+
+    private synchronized void checkLogsAfterPut(GroupState groupState, int currentState) {
+        if (checkStateDidNotChange(groupState, currentState)) {
+            groupState.mPendingLogCount++;
+            MobileCenterLog.debug(LOG_TAG, "enqueue(" + groupState.mName + ") pendingLogCount=" + groupState.mPendingLogCount);
+
+            /* Increment counters and schedule ingestion if we are not disabled. */
+            if (!mEnabled) {
+                MobileCenterLog.warn(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
+            } else {
+                checkPendingLogs(groupState.mName);
+            }
+        }
     }
 
     /**
@@ -536,7 +583,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public void shutdown() {
+    public synchronized void shutdown() {
         suspend(false, new CancellationException());
         try {
             MobileCenterLog.debug(LOG_TAG, "Wait for persistence to process queue.");
