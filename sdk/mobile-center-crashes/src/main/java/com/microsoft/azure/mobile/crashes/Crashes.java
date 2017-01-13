@@ -104,8 +104,7 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Handler for background thread loop.
      */
-    @VisibleForTesting
-    final Handler mHandler;
+    private final Handler mHandler;
 
     /**
      * Log factories managed by this service.
@@ -323,6 +322,7 @@ public class Crashes extends AbstractMobileCenterService {
         super.setInstanceEnabled(enabled);
         initialize();
         if (!enabled) {
+            mHandler.getLooper().quit();
             for (File file : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
                 MobileCenterLog.debug(LOG_TAG, "Deleting file " + file);
                 if (!file.delete()) {
@@ -484,6 +484,16 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
+     * Get Crashes handler for last session error report.
+     *
+     * @return Crashes handler.
+     */
+    @VisibleForTesting
+    Handler getHandler() {
+        return mHandler;
+    }
+
+    /**
      * Send an exception.
      *
      * @param throwable An exception.
@@ -557,6 +567,7 @@ public class Crashes extends AbstractMobileCenterService {
 
     private void processPendingErrors() {
         mHandler.post(new Runnable() {
+
             @Override
             public void run() {
                 for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
@@ -698,31 +709,35 @@ public class Crashes extends AbstractMobileCenterService {
                         iterator.remove();
                         removeAllStoredErrorLogFiles(id);
                     }
-                    return;
+                } else {
+
+                    if (userConfirmation == ALWAYS_SEND) {
+                        StorageHelper.PreferencesStorage.putBoolean(PREF_KEY_ALWAYS_SEND, true);
+                    }
+
+                    Iterator<Map.Entry<UUID, ErrorLogReport>> unprocessedIterator = mUnprocessedErrorReports.entrySet().iterator();
+                    while (unprocessedIterator.hasNext()) {
+                        if (shouldStopProcessingPendingErrors())
+                            break;
+
+                        Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
+                        ErrorLogReport errorLogReport = unprocessedEntry.getValue();
+                        ErrorAttachment attachment = mCrashesListener.getErrorAttachment(errorLogReport.report);
+                        if (attachment == null)
+                            MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
+                        else
+                            errorLogReport.log.setErrorAttachment(attachment);
+                        mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
+
+						/* Clean up an error log file and map entry. */
+                        unprocessedIterator.remove();
+                        ErrorLogHelper.removeStoredErrorLogFile(unprocessedEntry.getKey());
+                    }
                 }
 
-                if (userConfirmation == ALWAYS_SEND) {
-                    StorageHelper.PreferencesStorage.putBoolean(PREF_KEY_ALWAYS_SEND, true);
-                }
-
-                Iterator<Map.Entry<UUID, ErrorLogReport>> unprocessedIterator = mUnprocessedErrorReports.entrySet().iterator();
-                while (unprocessedIterator.hasNext()) {
-                    if (shouldStopProcessingPendingErrors())
-                        return;
-
-                    Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
-                    ErrorLogReport errorLogReport = unprocessedEntry.getValue();
-                    ErrorAttachment attachment = mCrashesListener.getErrorAttachment(errorLogReport.report);
-                    if (attachment == null)
-                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
-                    else
-                        errorLogReport.log.setErrorAttachment(attachment);
-                    mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
-
-                    /* Clean up an error log file and map entry. */
-                    unprocessedIterator.remove();
-                    ErrorLogHelper.removeStoredErrorLogFile(unprocessedEntry.getKey());
-                }
+                /* Processed crash report for the last session. */
+                if (isInstanceEnabled())
+                    mHandler.getLooper().quit();
             }
         };
 
