@@ -15,8 +15,6 @@ import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
-import junit.framework.AssertionFailedError;
-
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -77,7 +75,7 @@ public class CrashesAndroidTest {
         final Semaphore semaphore = new Semaphore(0);
 
         /* Waiting background thread for initialize and processPendingErrors. */
-        Crashes.getInstance().mHandler.post(new Runnable() {
+        Crashes.getInstance().getHandler().post(new Runnable() {
 
             @Override
             public void run() {
@@ -119,21 +117,10 @@ public class CrashesAndroidTest {
 
         /* Get last session crash on 2nd process. */
         Crashes.unsetInstance();
-        Crashes.getInstance().mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    throw new AssertionFailedError();
-                }
-            }
-        });
         Crashes.getInstance().onChannelReady(sContext, channel);
         assertNotNull(Crashes.getLastSessionCrashReport());
 
         /* Try to get last session crash after Crashes service completed processing. */
-        waitForCrashesHandlerTasksToComplete();
         assertNotNull(Crashes.getLastSessionCrashReport());
     }
 
@@ -291,7 +278,6 @@ public class CrashesAndroidTest {
 
     @Test
     public void wrapperSdkOverrideLog() throws InterruptedException {
-
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
         Channel channel = mock(Channel.class);
@@ -321,7 +307,6 @@ public class CrashesAndroidTest {
         verify(wrapperSdkListener).onCrashCaptured(notNull(ManagedErrorLog.class));
         Crashes.unsetInstance();
         Crashes.getInstance().onChannelReady(sContext, channel);
-        waitForCrashesHandlerTasksToComplete();
         Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
 
             @Override
