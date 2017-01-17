@@ -110,10 +110,10 @@ public class DefaultChannel implements Channel {
     private Device mDevice;
 
     /**
-     * State checker. If this counter changes during a call to persistence, we have to ignore the result in the callback.
+     * State checker. If this counter changes during an async call, we have to ignore the result in the callback.
      * Cancelling a database call would be unreliable, and if it's too fast you could still have the callback being called.
      */
-    private int mStateChangeCounter;
+    private int mCurrentState;
 
     /**
      * Creates and initializes a new instance.
@@ -166,17 +166,17 @@ public class DefaultChannel implements Channel {
     }
 
     /**
-     * Call this after every database callback and stop processing if it returns false.
+     * Call this after every async (such as database/ingestion) callback and stop processing if it returns false.
      * That means either the groupState was removed (or removed/added again),
      * or the channel was disabled (or disabled then re-enabled again).
-     * If state changed, what we were trying to achieve before the database call is no longer valid.
+     * If state changed, what we were trying to achieve before the async call is no longer valid.
      *
-     * @param groupState   group state as before the async call.
-     * @param currentState state counter as before the async call.
+     * @param groupState    group state as before the async call.
+     * @param stateSnapshot state as before the async call.
      * @return true if state did not change and code should proceed, false if state changed.
      */
-    private synchronized boolean checkStateDidNotChange(GroupState groupState, int currentState) {
-        return currentState == mStateChangeCounter && groupState == mGroupStates.get(groupState.mName);
+    private synchronized boolean checkStateDidNotChange(GroupState groupState, int stateSnapshot) {
+        return stateSnapshot == mCurrentState && groupState == mGroupStates.get(groupState.mName);
     }
 
     @Override
@@ -188,12 +188,12 @@ public class DefaultChannel implements Channel {
         mGroupStates.put(groupName, groupState);
 
         /* Count pending logs. */
-        final int currentState = mStateChangeCounter;
+        final int stateSnapshot = mCurrentState;
         mPersistence.countLogs(groupName, new AbstractDatabasePersistenceAsyncCallback() {
 
             @Override
             public void onSuccess(Object result) {
-                checkPendingLogsAfterCounting(groupState, currentState, (Integer) result);
+                checkPendingLogsAfterCounting(groupState, stateSnapshot, (Integer) result);
             }
         });
     }
@@ -236,7 +236,7 @@ public class DefaultChannel implements Channel {
         if (enabled) {
             mEnabled = true;
             mDiscardLogs = false;
-            mStateChangeCounter++;
+            mCurrentState++;
             for (String groupName : mGroupStates.keySet())
                 checkPendingLogs(groupName);
         } else
@@ -272,7 +272,7 @@ public class DefaultChannel implements Channel {
     private void suspend(boolean deleteLogs, Exception exception) {
         mEnabled = false;
         mDiscardLogs = deleteLogs;
-        mStateChangeCounter++;
+        mCurrentState++;
         for (GroupState groupState : mGroupStates.values()) {
             cancelTimer(groupState);
 
@@ -306,12 +306,12 @@ public class DefaultChannel implements Channel {
 
     private void deleteLogsOnSuspended(final GroupState groupState) {
         final List<Log> logs = new ArrayList<>();
-        final int currentState = mStateChangeCounter;
+        final int stateSnapshot = mCurrentState;
         mPersistence.getLogs(groupState.mName, CLEAR_BATCH_SIZE, logs, new AbstractDatabasePersistenceAsyncCallback() {
 
             @Override
             public void onSuccess(Object result) {
-                deleteLogsOnSuspended(groupState, currentState, logs);
+                deleteLogsOnSuspended(groupState, stateSnapshot, logs);
             }
         });
     }
@@ -369,18 +369,18 @@ public class DefaultChannel implements Channel {
 
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(groupState.mMaxLogsPerBatch);
-        final int currentState = mStateChangeCounter;
+        final int stateSnapshot = mCurrentState;
         mPersistence.getLogs(groupName, groupState.mMaxLogsPerBatch, batch, new AbstractDatabasePersistenceAsyncCallback() {
 
             @Override
             public void onSuccess(Object result) {
-                triggerIngestion((String) result, groupState, currentState, batch);
+                triggerIngestion((String) result, groupState, stateSnapshot, batch);
             }
         });
     }
 
-    private synchronized void triggerIngestion(final String batchId, final GroupState groupState, final int currentState, List<Log> batch) {
-        if (batchId != null && checkStateDidNotChange(groupState, currentState)) {
+    private synchronized void triggerIngestion(final String batchId, final GroupState groupState, final int stateSnapshot, List<Log> batch) {
+        if (batchId != null && checkStateDidNotChange(groupState, stateSnapshot)) {
 
             /* Call group listener before sending logs to ingestion service. */
             if (groupState.mListener != null) {
@@ -403,12 +403,12 @@ public class DefaultChannel implements Channel {
 
                         @Override
                         public void onCallSucceeded() {
-                            handleSendingSuccess(groupState, currentState, batchId);
+                            handleSendingSuccess(groupState, stateSnapshot, batchId);
                         }
 
                         @Override
                         public void onCallFailed(Exception e) {
-                            handleSendingFailure(groupState, currentState, batchId, e);
+                            handleSendingFailure(groupState, stateSnapshot, batchId, e);
                         }
                     }
             );
@@ -520,12 +520,12 @@ public class DefaultChannel implements Channel {
             log.setToffset(System.currentTimeMillis());
 
         /* Persist log. */
-        final int currentState = mStateChangeCounter;
+        final int stateSnapshot = mCurrentState;
         mPersistence.putLog(groupName, log, new DatabasePersistenceAsyncCallback() {
 
             @Override
             public void onSuccess(Object result) {
-                checkLogsAfterPut(groupState, currentState);
+                checkLogsAfterPut(groupState, stateSnapshot);
             }
 
             @Override
@@ -535,16 +535,16 @@ public class DefaultChannel implements Channel {
         });
     }
 
-    private synchronized void checkLogsAfterPut(GroupState groupState, int currentState) {
-        if (checkStateDidNotChange(groupState, currentState)) {
+    private synchronized void checkLogsAfterPut(GroupState groupState, int stateSnapshot) {
+        if (checkStateDidNotChange(groupState, stateSnapshot)) {
             groupState.mPendingLogCount++;
             MobileCenterLog.debug(LOG_TAG, "enqueue(" + groupState.mName + ") pendingLogCount=" + groupState.mPendingLogCount);
 
-            /* Increment counters and schedule ingestion if we are not disabled. */
-            if (!mEnabled) {
-                MobileCenterLog.warn(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
-            } else {
+            /* Increment counters and schedule ingestion if we are enabled. */
+            if (mEnabled) {
                 checkPendingLogs(groupState.mName);
+            } else {
+                MobileCenterLog.warn(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
             }
         }
     }
