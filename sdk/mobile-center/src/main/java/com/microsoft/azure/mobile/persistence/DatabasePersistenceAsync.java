@@ -203,7 +203,6 @@ public class DatabasePersistenceAsync {
                 } catch (IOException e) {
                     onFailure(callback, e);
                 }
-                mHandler.removeCallbacks(this);
             }
         });
     }
