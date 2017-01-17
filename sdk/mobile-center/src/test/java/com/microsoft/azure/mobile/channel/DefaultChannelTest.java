@@ -2,9 +2,6 @@ package com.microsoft.azure.mobile.channel;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 
 import com.microsoft.azure.mobile.CancellationException;
@@ -19,39 +16,28 @@ import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 import com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync;
 import com.microsoft.azure.mobile.persistence.Persistence;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
-import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Matchers;
-import org.mockito.Mock;
-import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.io.IOException;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync.THREAD_NAME;
 import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyList;
-import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
@@ -66,92 +52,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, DatabasePersistenceAsync.class, MobileCenterLog.class})
-public class DefaultChannelTest {
-
-    private static final String TEST_GROUP = "group_test";
-    private static final long BATCH_TIME_INTERVAL = 500;
-    private static final int MAX_PARALLEL_BATCHES = 3;
-
-    @Rule
-    public PowerMockRule mPowerMockRule = new PowerMockRule();
-
-    @Mock
-    private Handler mHandler;
-
-    private static Answer<String> getGetLogsAnswer() {
-        return getGetLogsAnswer(-1);
-    }
-
-    private static Answer<String> getGetLogsAnswer(final int size) {
-        return new Answer<String>() {
-            @Override
-            @SuppressWarnings("unchecked")
-            public String answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                if (args[2] instanceof ArrayList) {
-                    ArrayList logs = (ArrayList) args[2];
-                    int length = size >= 0 ? size : (int) args[1];
-                    for (int i = 0; i < length; i++) {
-                        logs.add(mock(Log.class));
-                    }
-                }
-                return UUIDUtils.randomUUID().toString();
-            }
-        };
-    }
-
-    private static Answer<Object> getSendAsyncAnswer() {
-        return getSendAsyncAnswer(null);
-    }
-
-    private static Answer<Object> getSendAsyncAnswer(final Exception e) {
-        return new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                if (args[3] instanceof ServiceCallback) {
-                    if (e == null)
-                        ((ServiceCallback) invocation.getArguments()[3]).onCallSucceeded();
-                    else
-                        ((ServiceCallback) invocation.getArguments()[3]).onCallFailed(e);
-                }
-                return null;
-            }
-        };
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        mockStatic(MobileCenterLog.class);
-        mockStatic(IdHelper.class, new Returns(UUIDUtils.randomUUID()));
-        mockStatic(DeviceInfoHelper.class);
-        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mock(Device.class));
-        mHandler = mock(Handler.class);
-        whenNew(Handler.class).withParameterTypes(Looper.class).withArguments(Looper.getMainLooper()).thenReturn(mHandler);
-
-        /* Mock handler for asynchronous Persistence */
-        HandlerThread mockHandlerThread = mock(HandlerThread.class);
-        Looper mockLooper = mock(Looper.class);
-        whenNew(HandlerThread.class).withArguments(THREAD_NAME).thenReturn(mockHandlerThread);
-        when(mockHandlerThread.getLooper()).thenReturn(mockLooper);
-        Handler mockPersistenceHandler = mock(Handler.class);
-        whenNew(Handler.class).withArguments(mockLooper).thenReturn(mockPersistenceHandler);
-        when(mockPersistenceHandler.post(any(Runnable.class))).then(new Answer<Boolean>() {
-
-            @Override
-            public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                ((Runnable) invocation.getArguments()[0]).run();
-                return true;
-            }
-        });
-    }
+public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     public void invalidGroup() throws Persistence.PersistenceException {
@@ -1080,115 +985,5 @@ public class DefaultChannelTest {
                 return argument instanceof InterruptedException;
             }
         }));
-    }
-
-    @Test
-    public void removeGroupWhileCounting() throws Exception {
-
-        /* Set up mocking. */
-        final CountDownLatch latch = new CountDownLatch(1);
-        final Semaphore semaphore = new Semaphore(0);
-        Persistence mockPersistence = mock(Persistence.class);
-        DatabasePersistenceAsync mockPersistenceAsync = mock(DatabasePersistenceAsync.class);
-        whenNew(DatabasePersistenceAsync.class).withArguments(mockPersistence).thenReturn(mockPersistenceAsync);
-        doAnswer(new Answer<Object>() {
-
-            @Override
-            public Object answer(final InvocationOnMock invocation) throws Throwable {
-                new Thread() {
-
-                    @Override
-                    public void run() {
-
-                        /* Wait for add/remove calls to be done. */
-                        try {
-                            latch.await();
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-
-                        /* Return the count. */
-                        DatabasePersistenceAsync.DatabasePersistenceAsyncCallback callback = (DatabasePersistenceAsync.DatabasePersistenceAsyncCallback) invocation.getArguments()[1];
-                        callback.onSuccess(1);
-
-                        /* Mark call as done. */
-                        semaphore.release();
-                    }
-                }.start();
-                return null;
-            }
-        }).when(mockPersistenceAsync).countLogs(anyString(), any(DatabasePersistenceAsync.DatabasePersistenceAsyncCallback.class));
-
-        /* Simulate enable module then disable before persistence can return results. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mock(Ingestion.class));
-        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mock(Channel.GroupListener.class));
-        channel.removeGroup(TEST_GROUP);
-
-        /* We wait on this object to make persistence return results after the groups add/remove calls. */
-        latch.countDown();
-
-        /* We wait on database call to return to verify behavior. */
-        semaphore.acquireUninterruptibly();
-
-        /* Verify we didn't get logs after counting since group was removed. */
-        verify(mockPersistenceAsync, never()).getLogs(eq(TEST_GROUP), eq(1), anyListOf(Log.class), any(DatabasePersistenceAsync.DatabasePersistenceAsyncCallback.class));
-    }
-
-    @Test
-    public void replaceGroupWhileCounting() throws Exception {
-
-        /* Set up mocking. */
-        final CountDownLatch latch = new CountDownLatch(1);
-        final Semaphore semaphore = new Semaphore(0);
-        Persistence mockPersistence = mock(Persistence.class);
-        DatabasePersistenceAsync mockPersistenceAsync = mock(DatabasePersistenceAsync.class);
-        whenNew(DatabasePersistenceAsync.class).withArguments(mockPersistence).thenReturn(mockPersistenceAsync);
-        doAnswer(new Answer<Object>() {
-
-            private int count;
-
-            @Override
-            public Object answer(final InvocationOnMock invocation) throws Throwable {
-                new Thread() {
-
-                    @Override
-                    public void run() {
-
-                        /* Wait for add/remove calls to be done. */
-                        try {
-                            latch.await();
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-
-                        /* First call returns 1 then 2. */
-                        DatabasePersistenceAsync.DatabasePersistenceAsyncCallback callback = (DatabasePersistenceAsync.DatabasePersistenceAsyncCallback) invocation.getArguments()[1];
-                        callback.onSuccess(++count);
-
-                        /* Mark call as done. */
-                        semaphore.release();
-                    }
-                }.start();
-                return null;
-            }
-        }).when(mockPersistenceAsync).countLogs(anyString(), any(DatabasePersistenceAsync.DatabasePersistenceAsyncCallback.class));
-
-        /* Simulate enable module, disable, then re-enable before persistence can return results. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mock(Ingestion.class));
-        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mock(Channel.GroupListener.class));
-        channel.removeGroup(TEST_GROUP);
-
-        /* We enable again with a different batching count to be able to check behavior on getLogs with different count values. */
-        channel.addGroup(TEST_GROUP, 2, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mock(Channel.GroupListener.class));
-
-        /* We wait on this object to make persistence return results after the groups add/remove calls. */
-        latch.countDown();
-
-        /* We wait on both database calls to return to verify behavior. */
-        semaphore.acquireUninterruptibly(2);
-
-        /* Verify only the second call has an effect, when the group was added a second time. */
-        verify(mockPersistenceAsync, never()).getLogs(eq(TEST_GROUP), eq(1), anyListOf(Log.class), any(DatabasePersistenceAsync.DatabasePersistenceAsyncCallback.class));
-        verify(mockPersistenceAsync).getLogs(eq(TEST_GROUP), eq(2), anyListOf(Log.class), any(DatabasePersistenceAsync.DatabasePersistenceAsyncCallback.class));
     }
 }
