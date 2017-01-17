@@ -335,8 +335,8 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, listener);
-        channel.setEnabled(false);
-        channel.setEnabled(true);
+        channel.removeGroup(TEST_GROUP);
+        channel.addGroup(TEST_GROUP, 2, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, listener);
 
         /* Release call to mock ingestion. */
         beforeCallSemaphore.release();
