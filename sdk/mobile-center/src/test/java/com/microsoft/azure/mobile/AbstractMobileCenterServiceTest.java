@@ -33,6 +33,8 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @PrepareForTest({StorageHelper.PreferencesStorage.class, MobileCenter.class})
 public class AbstractMobileCenterServiceTest {
 
+    private static final String SERVICE_ENABLED_KEY = KEY_ENABLED + "_group_test";
+
     private AbstractMobileCenterService service;
 
     @Before
@@ -59,8 +61,7 @@ public class AbstractMobileCenterServiceTest {
 
         /* First call to com.microsoft.azure.mobile.MobileCenter.isEnabled shall return true, initial state. */
         mockStatic(StorageHelper.PreferencesStorage.class);
-        final String key = KEY_ENABLED + "_group_test";
-        when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(true);
+        when(StorageHelper.PreferencesStorage.getBoolean(SERVICE_ENABLED_KEY, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
         PowerMockito.doAnswer(new Answer<Object>() {
@@ -69,11 +70,11 @@ public class AbstractMobileCenterServiceTest {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
-                when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(enabled);
+                when(StorageHelper.PreferencesStorage.getBoolean(SERVICE_ENABLED_KEY, true)).thenReturn(enabled);
                 return null;
             }
         }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putBoolean(eq(key), anyBoolean());
+        StorageHelper.PreferencesStorage.putBoolean(eq(SERVICE_ENABLED_KEY), anyBoolean());
     }
 
     @Test

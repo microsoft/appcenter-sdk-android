@@ -82,6 +82,8 @@ public class CrashesTest {
     @SuppressWarnings("ThrowableInstanceNeverThrown")
     private static final Exception EXCEPTION = new Exception("This is a test exception.");
 
+    private static final String CRASHES_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getGroupName();
+
     @Rule
     public final TemporaryFolder errorStorageDirectory = new TemporaryFolder();
 
@@ -134,9 +136,7 @@ public class CrashesTest {
         mockStatic(MobileCenter.class);
         Mockito.when(MobileCenter.isEnabled()).thenReturn(true);
 
-
-        final String key = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getGroupName();
-        when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(true);
+        when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
         doAnswer(new Answer<Object>() {
@@ -145,11 +145,11 @@ public class CrashesTest {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
-                when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(enabled);
+                when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(enabled);
                 return null;
             }
         }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putBoolean(eq(key), anyBoolean());
+        StorageHelper.PreferencesStorage.putBoolean(eq(CRASHES_ENABLED_KEY), anyBoolean());
 
         mockStatic(HandlerUtils.class);
         doAnswer(new Answer<Object>() {
