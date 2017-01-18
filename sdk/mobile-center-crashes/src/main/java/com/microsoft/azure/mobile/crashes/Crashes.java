@@ -263,14 +263,14 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Provides information about any available crash report from the last session, if it crashed.
      * This method is a synchronous call and blocks caller thread.
-     * Use {@link #getLastSessionCrashReportAsync(ResultCallback)} for asynchronous call.
+     * Use {@link #getLastSessionCrashReport(ResultCallback)} for asynchronous call.
      *
      * @return The crash report from the last session if one was set.
-     * @see #getLastSessionCrashReportAsync(ResultCallback)
+     * @see #getLastSessionCrashReport(ResultCallback)
      */
     @Nullable
     @WorkerThread
-    public static ErrorReport getLastSessionCrashReport() {
+    static ErrorReport getLastSessionCrashReport() {
         return getInstance().getInstanceLastSessionCrashReport();
     }
 
@@ -279,8 +279,8 @@ public class Crashes extends AbstractMobileCenterService {
      *
      * @param callback The callback that will receive crash in the last session.
      */
-    public static void getLastSessionCrashReportAsync(ResultCallback<ErrorReport> callback) {
-        getInstance().getInstanceLastSessionCrashReportAsync(callback);
+    public static void getLastSessionCrashReport(ResultCallback<ErrorReport> callback) {
+        getInstance().getInstanceLastSessionCrashReport(callback);
     }
 
     /**
@@ -306,9 +306,9 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Implements {@link #getLastSessionCrashReportAsync(ResultCallback)} at instance level.
+     * Implements {@link #getLastSessionCrashReport(ResultCallback)} at instance level.
      */
-    private synchronized void getInstanceLastSessionCrashReportAsync(final ResultCallback<ErrorReport> callback) {
+    private synchronized void getInstanceLastSessionCrashReport(final ResultCallback<ErrorReport> callback) {
         if (mCountDownLatch == null || mCountDownLatch.getCount() <= 0)
             HandlerUtils.runOnUiThread(new Runnable() {
 
