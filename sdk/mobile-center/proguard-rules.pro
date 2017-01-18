@@ -4,5 +4,5 @@
 -verbose
 
 -keepclasseswithmembers class * implements com.microsoft.azure.mobile.MobileCenterService {
-      *** getInstance();
+    public static ** getInstance();
 }
