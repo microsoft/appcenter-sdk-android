@@ -865,10 +865,10 @@ public class CrashesTest {
             }
         };
 
-        Crashes.getLastSessionCrashReportAsync(callback);
+        Crashes.getLastSessionCrashReport(callback);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReportAsync(callback);
+        Crashes.getLastSessionCrashReport(callback);
     }
 
     @Test
@@ -911,8 +911,8 @@ public class CrashesTest {
             public String answer(InvocationOnMock invocation) throws Throwable {
 
                 /* Call twice for multiple listeners during initialize. */
-                Crashes.getLastSessionCrashReportAsync(callback);
-                Crashes.getLastSessionCrashReportAsync(callback);
+                Crashes.getLastSessionCrashReport(callback);
+                Crashes.getLastSessionCrashReport(callback);
                 return "";
             }
         });
@@ -930,7 +930,7 @@ public class CrashesTest {
 
         assertTrue(Crashes.hasCrashedInLastSession());
 
-        Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
+        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
 
             @Override
             public void onResult(ErrorReport errorReport) {
@@ -954,7 +954,7 @@ public class CrashesTest {
         Crashes.setEnabled(false);
 
         assertFalse(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
+        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
 
             @Override
             public void onResult(ErrorReport data) {
@@ -997,11 +997,11 @@ public class CrashesTest {
          * Here the service is enabled by default but we are waiting channel to be ready, simulate that.
          */
         assertTrue(Crashes.isEnabled());
-        Crashes.getLastSessionCrashReportAsync(callback);
+        Crashes.getLastSessionCrashReport(callback);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
 
         assertFalse(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReportAsync(callback);
+        Crashes.getLastSessionCrashReport(callback);
 
         /*
          * De-serializing fails twice: processing the log from last time as part of the bulk processing.
@@ -1019,7 +1019,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(file);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
+        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
 
             @Override
             public void onResult(ErrorReport data) {
@@ -1043,8 +1043,8 @@ public class CrashesTest {
         };
 
         /* Call twice for multiple callbacks before initialize. */
-        Crashes.getLastSessionCrashReportAsync(callback);
-        Crashes.getLastSessionCrashReportAsync(callback);
+        Crashes.getLastSessionCrashReport(callback);
+        Crashes.getLastSessionCrashReport(callback);
         Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession());
     }
