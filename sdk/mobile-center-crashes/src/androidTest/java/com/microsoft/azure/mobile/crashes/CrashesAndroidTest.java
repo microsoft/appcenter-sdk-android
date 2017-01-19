@@ -5,11 +5,13 @@ import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.azure.mobile.Constants;
+import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
 import com.microsoft.azure.mobile.ingestion.models.Log;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
@@ -20,11 +22,14 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.File;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.azure.mobile.test.TestUtils.TAG;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -67,9 +72,39 @@ public class CrashesAndroidTest {
     }
 
     @Test
+    public void getLastSessionCrashReport() throws InterruptedException {
+
+        /* Crash on 1st process. */
+        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
+        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+        Channel channel = mock(Channel.class);
+        Crashes.getInstance().onChannelReady(sContext, channel);
+        final Error exception = generateStackOverflowError();
+        assertTrue(exception.getStackTrace().length > ErrorLogHelper.FRAME_LIMIT);
+        final Thread thread = new Thread() {
+
+            @Override
+            public void run() {
+                throw exception;
+            }
+        };
+        thread.start();
+        thread.join();
+
+        /* Get last session crash on 2nd process. */
+        Crashes.unsetInstance();
+        Crashes.getInstance().onChannelReady(sContext, channel);
+        assertNotNull(Crashes.getLastSessionCrashReport());
+
+        /* Try to get last session crash after Crashes service completed processing. */
+        assertNotNull(Crashes.getLastSessionCrashReport());
+    }
+
+    @Test
     public void testNoDuplicateCallbacksOrSending() throws InterruptedException {
 
         /* Crash on 1st process. */
+        assertFalse(Crashes.hasCrashedInLastSession());
         android.util.Log.i(TAG, "Process 1");
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
@@ -80,6 +115,7 @@ public class CrashesAndroidTest {
         when(crashesListener.shouldAwaitUserConfirmation()).thenReturn(true);
         Crashes.setListener(crashesListener);
         final Error exception = generateStackOverflowError();
+        assertTrue(exception.getStackTrace().length > ErrorLogHelper.FRAME_LIMIT);
         final Thread thread = new Thread() {
 
             @Override
@@ -89,6 +125,7 @@ public class CrashesAndroidTest {
         };
         thread.start();
         thread.join();
+        assertEquals(ErrorLogHelper.FRAME_LIMIT, exception.getStackTrace().length);
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
         verifyZeroInteractions(crashesListener);
@@ -107,6 +144,20 @@ public class CrashesAndroidTest {
         Crashes.unsetInstance();
         Crashes.setListener(crashesListener);
         Crashes.getInstance().onChannelReady(sContext, channel);
+        waitForCrashesHandlerTasksToComplete();
+
+        /* Check last session error report. */
+        assertTrue(Crashes.hasCrashedInLastSession());
+        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
+
+            @Override
+            public void onResult(ErrorReport errorReport) {
+                assertNotNull(errorReport);
+                Throwable lastThrowable = errorReport.getThrowable();
+                assertTrue(lastThrowable instanceof StackOverflowError);
+                assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
+            }
+        });
 
         /* Waiting user confirmation so no log sent yet. */
         verify(channel, never()).enqueue(any(Log.class), anyString());
@@ -140,8 +191,19 @@ public class CrashesAndroidTest {
         Crashes.unsetInstance();
         Crashes.setListener(crashesListener);
         Crashes.getInstance().onChannelReady(sContext, channel);
+        waitForCrashesHandlerTasksToComplete();
+        assertFalse(Crashes.hasCrashedInLastSession());
+        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
+
+            @Override
+            public void onResult(ErrorReport errorReport) {
+                assertNull(errorReport);
+            }
+        });
+
         assertNotNull(groupListener.get());
         groupListener.get().onSuccess(log.get());
+        waitForCrashesHandlerTasksToComplete();
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
         verify(channel, never()).enqueue(any(Log.class), anyString());
         verify(crashesListener).onBeforeSending(any(ErrorReport.class));
@@ -154,14 +216,6 @@ public class CrashesAndroidTest {
         assertNotNull(errorLog.getException());
         assertNotNull(errorLog.getException().getFrames());
         assertEquals(ErrorLogHelper.FRAME_LIMIT, errorLog.getException().getFrames().size());
-    }
-
-    private Error generateStackOverflowError() {
-        try {
-            return generateStackOverflowError();
-        } catch (StackOverflowError error) {
-            return error;
-        }
     }
 
     @Test
@@ -193,7 +247,6 @@ public class CrashesAndroidTest {
 
     @Test
     public void wrapperSdkOverrideLog() throws InterruptedException {
-
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
         Channel channel = mock(Channel.class);
@@ -223,9 +276,15 @@ public class CrashesAndroidTest {
         verify(wrapperSdkListener).onCrashCaptured(notNull(ManagedErrorLog.class));
         Crashes.unsetInstance();
         Crashes.getInstance().onChannelReady(sContext, channel);
-        ErrorReport lastSessionCrashReport = Crashes.getLastSessionCrashReport();
-        assertNotNull(lastSessionCrashReport);
-        assertEquals("ReplacedErrorThreadName", lastSessionCrashReport.getThreadName());
+        waitForCrashesHandlerTasksToComplete();
+        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
+
+            @Override
+            public void onResult(ErrorReport errorReport) {
+                assertNotNull(errorReport);
+                assertEquals("ReplacedErrorThreadName", errorReport.getThreadName());
+            }
+        });
     }
 
     @Test
@@ -252,5 +311,37 @@ public class CrashesAndroidTest {
 
         /* Check there are only 2 files: the throwable and the json one. */
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+    }
+
+    private Error generateStackOverflowError() {
+        try {
+            return generateStackOverflowError();
+        } catch (StackOverflowError error) {
+            return error;
+        }
+    }
+
+    private void waitForCrashesHandlerTasksToComplete() throws InterruptedException {
+        final Semaphore semaphore = new Semaphore(0);
+
+        /* Waiting background thread for initialize and processPendingErrors. */
+        Crashes.getInstance().getHandler().post(new Runnable() {
+
+            @Override
+            public void run() {
+                semaphore.release();
+            }
+        });
+        semaphore.acquire();
+
+        /* Waiting main thread for processUserConfirmation. */
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                semaphore.release();
+            }
+        });
+        semaphore.acquire();
     }
 }

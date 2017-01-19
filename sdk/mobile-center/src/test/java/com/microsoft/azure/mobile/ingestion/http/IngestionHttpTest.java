@@ -1,10 +1,12 @@
 package com.microsoft.azure.mobile.ingestion.http;
 
+import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.ingestion.ServiceCall;
 import com.microsoft.azure.mobile.ingestion.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 
 import org.json.JSONException;
@@ -24,8 +26,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.Semaphore;
 
+import static android.util.Log.INFO;
+import static android.util.Log.VERBOSE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -34,6 +41,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -55,7 +63,7 @@ public class IngestionHttpTest {
 
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                final IngestionHttp.Call call = new IngestionHttp.Call(invocation.getArguments()[0].toString(), (LogSerializer) invocation.getArguments()[1],(String) invocation.getArguments()[2], (UUID) invocation.getArguments()[3], (LogContainer) invocation.getArguments()[4], (ServiceCallback) invocation.getArguments()[5]);
+                final IngestionHttp.Call call = new IngestionHttp.Call(invocation.getArguments()[0].toString(), (LogSerializer) invocation.getArguments()[1], (String) invocation.getArguments()[2], (UUID) invocation.getArguments()[3], (LogContainer) invocation.getArguments()[4], (ServiceCallback) invocation.getArguments()[5]);
                 IngestionHttp.Call spyCall = spy(call);
                 when(spyCall.executeOnExecutor(any(Executor.class))).then(new Answer<IngestionHttp.Call>() {
 
@@ -72,6 +80,9 @@ public class IngestionHttpTest {
 
     @Test
     public void success() throws Exception {
+
+        /* Set log level to verbose to test shorter app secret as well. */
+        MobileCenter.setLogLevel(VERBOSE);
 
         /* Build some payload. */
         LogContainer container = new LogContainer();
@@ -103,8 +114,8 @@ public class IngestionHttpTest {
         IngestionHttp httpClient = new IngestionHttp(serializer);
         httpClient.setServerUrl("http://mock");
 
-        /* Test calling code. */
-        String appSecret = UUIDUtils.randomUUID().toString();
+        /* Test calling code. Use shorter but valid app secret. */
+        String appSecret = "SHORT";
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
@@ -126,6 +137,9 @@ public class IngestionHttpTest {
 
     @Test
     public void error503() throws Exception {
+
+        /* Set log level to verbose to test shorter app secret as well. */
+        MobileCenter.setLogLevel(INFO);
 
         /* Build some payload. */
         LogContainer container = new LogContainer();
@@ -244,5 +258,46 @@ public class IngestionHttpTest {
         verify(urlConnection).disconnect();
         verify(log).setToffset(now - logAbsoluteTime);
         verify(log).setToffset(logAbsoluteTime);
+    }
+
+    @Test
+    @PrepareForTest(HandlerUtils.class)
+    public void rejectedAsyncTask() throws Exception {
+
+        /* Mock HandlerUtils to simulate call from background (this unit test) to main (mock) thread. */
+        final Semaphore semaphore = new Semaphore(0);
+        mockStatic(HandlerUtils.class);
+        doAnswer(new Answer<Object>() {
+
+            @Override
+            public Object answer(final InvocationOnMock invocation) throws Throwable {
+                new Thread("rejectedAsyncTask.handler") {
+
+                    @Override
+                    public void run() {
+                        ((Runnable) invocation.getArguments()[0]).run();
+                        semaphore.release();
+                    }
+                }.start();
+                return null;
+            }
+        }).when(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
+
+        /* Mock ingestion to fail on saturated executor in AsyncTask. */
+        IngestionHttp.Call call = mock(IngestionHttp.Call.class);
+        whenNew(IngestionHttp.Call.class).withAnyArguments().thenReturn(call);
+        RejectedExecutionException exception = new RejectedExecutionException();
+        when(call.executeOnExecutor(any(Executor.class))).thenThrow(exception);
+        IngestionHttp httpClient = new IngestionHttp(mock(LogSerializer.class));
+
+        /* Test. */
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        assertNotNull(httpClient.sendAsync("", UUID.randomUUID(), mock(LogContainer.class), serviceCallback));
+
+        /* Verify the callback call from "main" thread. */
+        semaphore.acquireUninterruptibly();
+        verify(serviceCallback).onCallFailed(exception);
+        verify(serviceCallback, never()).onCallSucceeded();
     }
 }
