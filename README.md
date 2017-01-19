@@ -132,7 +132,15 @@ Once you set up and start the Mobile Center SDK to use the Crashes service in yo
 * **Details about the last crash:** If your app crashed previously, you can get details about the last crash:
 
     ```Java
-    ErrorReport crashReport = Crashes.getLastSessionCrashReport();
+    Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
+
+        @Override
+        public void onResult(ErrorReport data) {
+            if (data != null) {
+                Log.i("MyApp", "Last session crash details=", data.getThrowable());
+            }
+        }
+    });
     ```
 
 * **Enable or disable Crashes:**  You can disable and opt out of using Crashes by calling the `setEnabled()` API and the SDK will collect no crashes for your app. Use the same API to re-enable it by passing `true` as a parameter.
@@ -185,7 +193,7 @@ You create your own Crashes listener and assign it like this:
         ```
         Pass one option of `SEND`, `DONT_SEND` or `ALWAYS_SEND`.
 
-    * **Binary attachment:**  If you'd like to attach text/binary data to a crash report, implement this callback. Before sending the crash, our SDK will add the attachment to the crash report and you can view it on the Mobile Center portal.   
+    * **Binary attachment:**  If you'd like to attach text/binary data to a crash report, implement this callback. Before sending the crash, our SDK will add the attachment to the crash report and you can view it on the Mobile Center portal. Note that attachment will show in the portal in the future as the UI is still not ready.
 
         ```Java
         ErrorAttachment CrashesListener.getErrorAttachment(ErrorReport report) {

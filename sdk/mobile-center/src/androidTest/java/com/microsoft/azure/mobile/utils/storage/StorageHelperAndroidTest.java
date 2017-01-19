@@ -85,7 +85,7 @@ public class StorageHelperAndroidTest {
     public static void setUpClass() {
         sContext = InstrumentationRegistry.getTargetContext();
         StorageHelper.initialize(sContext);
-        sAndroidFilesPath = sContext.getFilesDir().getAbsolutePath() + "/test";
+        sAndroidFilesPath = sContext.getFilesDir().getAbsolutePath() + "/test/";
 
         /* Create a test directory. */
         InternalStorage.mkdir(sAndroidFilesPath);
@@ -114,11 +114,11 @@ public class StorageHelperAndroidTest {
             }
         };
 
-        String[] filenames = InternalStorage.getFilenames(sAndroidFilesPath + "/", filter);
+        String[] filenames = InternalStorage.getFilenames(sAndroidFilesPath, filter);
 
         /* Delete the files to clean up. */
         for (String filename : filenames) {
-            InternalStorage.delete(sAndroidFilesPath + "/" + filename);
+            InternalStorage.delete(sAndroidFilesPath + filename);
         }
 
         InternalStorage.delete(sAndroidFilesPath);
@@ -391,16 +391,16 @@ public class StorageHelperAndroidTest {
 
         /* Write contents to test files after 2 sec delay. */
         Log.i(TAG, "Writing " + filename1);
-        InternalStorage.write(sAndroidFilesPath + "/" + filename1, contents1);
+        InternalStorage.write(sAndroidFilesPath + filename1, contents1);
         TimeUnit.SECONDS.sleep(2);
         Log.i(TAG, "Writing " + filename2);
-        InternalStorage.write(sAndroidFilesPath + "/" + filename2, contents2);
+        InternalStorage.write(sAndroidFilesPath + filename2, contents2);
         /* Also write empty content to a test file. */
-        InternalStorage.write(sAndroidFilesPath + "/" + filename3, "");
-        InternalStorage.write(sAndroidFilesPath + "/" + filename4, "  ");
+        InternalStorage.write(sAndroidFilesPath + filename3, "");
+        InternalStorage.write(sAndroidFilesPath + filename4, "  ");
 
         /* Get file names in the root path. */
-        String[] filenames = InternalStorage.getFilenames(sAndroidFilesPath + "/", filter);
+        String[] filenames = InternalStorage.getFilenames(sAndroidFilesPath, filter);
 
         /* Verify the files are created. */
         assertNotNull(filenames);
@@ -428,7 +428,7 @@ public class StorageHelperAndroidTest {
         /* Delete the files to clean up. */
         for (String filename : filenames) {
             Log.i(TAG, "Deleting " + filename);
-            assertTrue(InternalStorage.delete(sAndroidFilesPath + "/" + filename));
+            assertTrue(InternalStorage.delete(sAndroidFilesPath + filename));
         }
 
         /* Verify all the files are properly deleted. */
@@ -444,7 +444,7 @@ public class StorageHelperAndroidTest {
     public void internalStorageForObject() throws IOException, ClassNotFoundException {
         Log.i(TAG, "Testing Internal Storage object serialization");
 
-        File file = new File(sAndroidFilesPath + "/" + UUIDUtils.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION);
+        File file = new File(sAndroidFilesPath + UUIDUtils.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION);
 
         /* Create a mock object. */
         DataModel model = new DataModel(10, "Model", true);

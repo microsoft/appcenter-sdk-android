@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Sasquatch Test</string>
-    <string name="app_name_jcenter">Sasquatch</string>
+    <string name="app_name">Sasquatch</string>
     <string name="sdk_source_format">SDK source: %s</string>
     <string name="settings">Settings</string>
     <string name="title_crashes">Crashes</string>
