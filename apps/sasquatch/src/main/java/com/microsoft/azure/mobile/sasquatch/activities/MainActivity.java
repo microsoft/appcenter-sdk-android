@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -16,8 +17,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.analytics.Analytics;
-import com.microsoft.azure.mobile.analytics.mobile.sasquatch.features.GetLastSessionErrorReportFeatureTest;
 import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.ErrorAttachments;
@@ -53,7 +54,15 @@ public class MainActivity extends AppCompatActivity {
         MobileCenter.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class);
 
         Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
-        GetLastSessionErrorReportFeatureTest.run();
+        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
+
+            @Override
+            public void onResult(@Nullable ErrorReport data) {
+                if (data != null) {
+                    Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", data.getThrowable());
+                }
+            }
+        });
 
         ((TextView) findViewById(R.id.package_name)).setText(String.format(getString(R.string.sdk_source_format), getPackageName().substring(getPackageName().lastIndexOf(".") + 1)));
         TestFeatures.initialize(this);
