@@ -132,7 +132,15 @@ Once you set up and start the Mobile Center SDK to use the Crashes service in yo
 * **Details about the last crash:** If your app crashed previously, you can get details about the last crash:
 
     ```Java
-    ErrorReport crashReport = Crashes.getLastSessionCrashReport();
+    Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
+
+        @Override
+        public void onResult(ErrorReport data) {
+            if (data != null) {
+                Log.i("MyApp", "Last session crash details=", data.getThrowable());
+            }
+        }
+    });
     ```
 
 * **Enable or disable Crashes:**  You can disable and opt out of using Crashes by calling the `setEnabled()` API and the SDK will collect no crashes for your app. Use the same API to re-enable it by passing `true` as a parameter.
