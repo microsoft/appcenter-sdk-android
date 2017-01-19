@@ -10,6 +10,7 @@ import com.microsoft.azure.mobile.ingestion.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import java.io.IOException;
@@ -18,9 +19,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.RejectedExecutionException;
 
+import static android.util.Log.VERBOSE;
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 import static java.lang.Math.max;
 
@@ -82,6 +86,11 @@ public class IngestionHttp implements Ingestion {
     private static final int READ_TIMEOUT = 20000;
 
     /**
+     * Maximum characters to be displayed in a log for application secret.
+     */
+    private static final int MAX_CHARACTERS_DISPLAYED_FOR_APP_SECRET = 8;
+
+    /**
      * Log serializer.
      */
     private final LogSerializer mLogSerializer;
@@ -126,7 +135,17 @@ public class IngestionHttp implements Ingestion {
             urlConnection.setRequestProperty(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
             urlConnection.setRequestProperty(APP_SECRET, appSecret);
             urlConnection.setRequestProperty(INSTALL_ID, installId.toString());
-            MobileCenterLog.verbose(LOG_TAG, "Headers: " + urlConnection.getRequestProperties());
+
+            /* Log headers. */
+            if (MobileCenterLog.getLogLevel() <= VERBOSE) {
+                int hidingEndIndex = appSecret.length() - (appSecret.length() >= MAX_CHARACTERS_DISPLAYED_FOR_APP_SECRET ? MAX_CHARACTERS_DISPLAYED_FOR_APP_SECRET : 0);
+                char[] fill = new char[hidingEndIndex];
+                Arrays.fill(fill, '*');
+                String header = "Headers: " + CONTENT_TYPE_KEY + '=' + CONTENT_TYPE_VALUE +
+                        ", " + APP_SECRET + '=' + new String(fill) + appSecret.substring(hidingEndIndex) +
+                        ", " + INSTALL_ID + '=' + installId.toString();
+                MobileCenterLog.verbose(LOG_TAG, header);
+            }
 
             /* Timestamps need to be as accurate as possible so we convert absolute time to relative now. Save times. */
             List<Log> logs = logContainer.getLogs();
@@ -214,9 +233,26 @@ public class IngestionHttp implements Ingestion {
     }
 
     @Override
-    public ServiceCall sendAsync(final String appSecret, final UUID installId, final LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         final Call call = new Call(mBaseUrl, mLogSerializer, appSecret, installId, logContainer, serviceCallback);
-        call.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        try {
+            call.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        } catch (final RejectedExecutionException e) {
+
+            /*
+             * When executor saturated (shared with app), we should use the retry mechanism
+             * rather than creating more threads to avoid putting too much pressure on the hosting app.
+             * Also we need to return the method before calling the listener,
+             * so we post the callback on handler to make sure of that.
+             */
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    serviceCallback.onCallFailed(e);
+                }
+            });
+        }
         return new ServiceCall() {
 
             @Override

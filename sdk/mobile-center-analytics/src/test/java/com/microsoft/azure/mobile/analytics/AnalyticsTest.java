@@ -60,6 +60,8 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class})
 public class AnalyticsTest {
 
+    private static final String ANALYTICS_ENABLED_KEY = KEY_ENABLED + "_group_analytics";
+
     @Before
     public void setUp() {
         Analytics.unsetInstance();
@@ -70,8 +72,7 @@ public class AnalyticsTest {
 
         /* First call to com.microsoft.azure.mobile.MobileCenter.isEnabled shall return true, initial state. */
         mockStatic(StorageHelper.PreferencesStorage.class);
-        final String key = KEY_ENABLED + "_group_analytics";
-        when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(true);
+        when(StorageHelper.PreferencesStorage.getBoolean(ANALYTICS_ENABLED_KEY, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
         PowerMockito.doAnswer(new Answer<Object>() {
@@ -80,11 +81,11 @@ public class AnalyticsTest {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
-                when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(enabled);
+                when(StorageHelper.PreferencesStorage.getBoolean(ANALYTICS_ENABLED_KEY, true)).thenReturn(enabled);
                 return null;
             }
         }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putBoolean(eq(key), anyBoolean());
+        StorageHelper.PreferencesStorage.putBoolean(eq(ANALYTICS_ENABLED_KEY), anyBoolean());
 
         /* Pretend automatic page tracking is enabled by default, this will be the case if service becomes public. */
         // TODO remove that after service is public

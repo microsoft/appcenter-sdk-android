@@ -1,5 +1,8 @@
 package com.microsoft.azure.mobile.crashes;
 
+import android.support.annotation.UiThread;
+import android.support.annotation.WorkerThread;
+
 import com.microsoft.azure.mobile.crashes.model.ErrorAttachment;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 
@@ -15,14 +18,16 @@ public interface CrashesListener {
      * @param report A crash report that will be sent.
      * @return <code>true</code> if it should be processed and sent, otherwise <code>false</code>.
      */
+    @WorkerThread
     boolean shouldProcess(ErrorReport report);
 
     /**
      * Called to determine whether it should wait for user confirmation before sending crash reports.
      *
      * @return <code>true</code> if it requires to be confirmed by a user, otherwise <code>false</code>.
-     *         If this method returns <code>true</code>, {@link Crashes#notifyUserConfirmation(int)} must be called by yourself.
+     * If this method returns <code>true</code>, {@link Crashes#notifyUserConfirmation(int)} must be called by yourself.
      */
+    @UiThread
     boolean shouldAwaitUserConfirmation();
 
     /**
@@ -32,6 +37,7 @@ public interface CrashesListener {
      * @param report The crash report for additional information.
      * @return {@link ErrorAttachment} instance to be attached to the crash report.
      */
+    @WorkerThread
     ErrorAttachment getErrorAttachment(ErrorReport report);
 
     /**
@@ -39,6 +45,7 @@ public interface CrashesListener {
      *
      * @param report The crash report that will be sent.
      */
+    @UiThread
     void onBeforeSending(ErrorReport report);
 
     /**
@@ -46,8 +53,9 @@ public interface CrashesListener {
      * The report failed to send after the maximum retries so it will be discarded and won't be retried.
      *
      * @param report The crash report that failed to send.
-     * @param e           An exception that caused failure.
+     * @param e      An exception that caused failure.
      */
+    @UiThread
     void onSendingFailed(ErrorReport report, Exception e);
 
     /**
@@ -55,5 +63,6 @@ public interface CrashesListener {
      *
      * @param report The crash report that was sent successfully.
      */
+    @UiThread
     void onSendingSucceeded(ErrorReport report);
 }
