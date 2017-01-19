@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.v7.app.AlertDialog;
@@ -18,6 +17,7 @@ import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.analytics.Analytics;
+import com.microsoft.azure.mobile.analytics.mobile.sasquatch.features.GetLastSessionErrorReportFeatureTest;
 import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.ErrorAttachments;
@@ -30,12 +30,10 @@ import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static final String LOG_TAG = "MobileCenterSasquatch";
     static final String APP_SECRET = "45d1d9f6-2492-4e68-bd44-7190351eb5f3";
     static final String APP_SECRET_KEY = "appSecret";
     static final String SERVER_URL_KEY = "serverUrl";
-
-    private static final String LOG_TAG = "MobileCenterSasquatch";
-
     static SharedPreferences sSharedPreferences;
 
     @Override
@@ -55,16 +53,7 @@ public class MainActivity extends AppCompatActivity {
         MobileCenter.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class);
 
         Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void[] params) {
-                ErrorReport lastSessionCrashReport = Crashes.getLastSessionCrashReport();
-                if (lastSessionCrashReport != null) {
-                    Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", lastSessionCrashReport.getThrowable());
-                }
-                return null;
-            }
-        }.execute();
+        GetLastSessionErrorReportFeatureTest.run();
 
         ((TextView) findViewById(R.id.package_name)).setText(String.format(getString(R.string.sdk_source_format), getPackageName().substring(getPackageName().lastIndexOf(".") + 1)));
         TestFeatures.initialize(this);

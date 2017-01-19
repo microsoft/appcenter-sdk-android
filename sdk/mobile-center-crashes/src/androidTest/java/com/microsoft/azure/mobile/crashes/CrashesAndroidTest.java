@@ -148,7 +148,7 @@ public class CrashesAndroidTest {
 
         /* Check last session error report. */
         assertTrue(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
+        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
 
             @Override
             public void onResult(ErrorReport errorReport) {
@@ -193,7 +193,7 @@ public class CrashesAndroidTest {
         Crashes.getInstance().onChannelReady(sContext, channel);
         waitForCrashesHandlerTasksToComplete();
         assertFalse(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
+        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
 
             @Override
             public void onResult(ErrorReport errorReport) {
@@ -277,7 +277,7 @@ public class CrashesAndroidTest {
         Crashes.unsetInstance();
         Crashes.getInstance().onChannelReady(sContext, channel);
         waitForCrashesHandlerTasksToComplete();
-        Crashes.getLastSessionCrashReportAsync(new ResultCallback<ErrorReport>() {
+        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
 
             @Override
             public void onResult(ErrorReport errorReport) {
