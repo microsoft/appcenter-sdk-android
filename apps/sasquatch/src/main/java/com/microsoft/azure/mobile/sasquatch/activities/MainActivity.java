@@ -21,8 +21,6 @@ import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
 import com.microsoft.azure.mobile.crashes.Crashes;
-import com.microsoft.azure.mobile.crashes.ErrorAttachments;
-import com.microsoft.azure.mobile.crashes.model.ErrorAttachment;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
@@ -31,7 +29,7 @@ import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String LOG_TAG = "MobileCenterSasquatch";
+    private static final String LOG_TAG = "MobileCenterSasquatch";
     static final String APP_SECRET = "45d1d9f6-2492-4e68-bd44-7190351eb5f3";
     static final String APP_SECRET_KEY = "appSecret";
     static final String SERVER_URL_KEY = "serverUrl";
@@ -129,10 +127,11 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
 
-            @Override
-            public ErrorAttachment getErrorAttachment(ErrorReport report) {
-                return ErrorAttachments.attachment("This is a text attachment.", "This is a binary attachment.".getBytes(), "binary.txt", "text/plain");
-            }
+            /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
+//            @Override
+//            public ErrorAttachment getErrorAttachment(ErrorReport report) {
+//                return ErrorAttachments.attachment("This is a text attachment.", "This is a binary attachment.".getBytes(), "binary.txt", "text/plain");
+//            }
 
             @Override
             public void onBeforeSending(ErrorReport report) {

@@ -12,7 +12,6 @@ import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.ingestion.models.StackFrame;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ManagedErrorLogFactory;
-import com.microsoft.azure.mobile.crashes.model.ErrorAttachment;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.model.TestCrashException;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
@@ -292,11 +291,14 @@ public class CrashesTest {
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
 
-        ErrorAttachment mockAttachment = mock(ErrorAttachment.class);
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
+//        ErrorAttachment mockAttachment = mock(ErrorAttachment.class);
         CrashesListener mockListener = mock(CrashesListener.class);
         when(mockListener.shouldProcess(report)).thenReturn(true);
         when(mockListener.shouldAwaitUserConfirmation()).thenReturn(false);
-        when(mockListener.getErrorAttachment(report)).thenReturn(mockAttachment);
+
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
+//        when(mockListener.getErrorAttachment(report)).thenReturn(mockAttachment);
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -308,7 +310,9 @@ public class CrashesTest {
 
         verify(mockListener).shouldProcess(report);
         verify(mockListener).shouldAwaitUserConfirmation();
-        verify(mockListener).getErrorAttachment(report);
+
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
+//        verify(mockListener).getErrorAttachment(report);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
             @Override
             public boolean matches(Object log) {
@@ -344,7 +348,9 @@ public class CrashesTest {
 
         verify(mockListener).shouldProcess(report);
         verify(mockListener, never()).shouldAwaitUserConfirmation();
-        verify(mockListener, never()).getErrorAttachment(report);
+
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
+//        verify(mockListener, never()).getErrorAttachment(report);
         verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
     }
 
@@ -376,7 +382,9 @@ public class CrashesTest {
 
         verify(mockListener).shouldProcess(report);
         verify(mockListener, never()).shouldAwaitUserConfirmation();
-        verify(mockListener).getErrorAttachment(report);
+
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
+//        verify(mockListener).getErrorAttachment(report);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
             @Override
             public boolean matches(Object log) {
@@ -469,6 +477,13 @@ public class CrashesTest {
         LogSerializer logSerializer = mock(LogSerializer.class);
         when(logSerializer.deserializeLog(anyString())).thenReturn(mErrorLog).thenReturn(errorLog);
         Channel channel = mock(Channel.class);
+        doAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                Crashes.setEnabled(false);
+                return null;
+            }
+        }).when(channel).enqueue(any(Log.class), anyString());
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class), mock(File.class)});
@@ -480,14 +495,6 @@ public class CrashesTest {
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(EXCEPTION);
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
 
-        when(listener.getErrorAttachment(errorReport1)).thenAnswer(new Answer<ErrorAttachment>() {
-            @Override
-            public ErrorAttachment answer(InvocationOnMock invocation) throws Throwable {
-                Crashes.setEnabled(false);
-                return null;
-            }
-        });
-
         Crashes crashes = Crashes.getInstance();
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(listener);
@@ -497,7 +504,9 @@ public class CrashesTest {
         verify(listener, times(2)).shouldProcess(any(ErrorReport.class));
         verify(listener).shouldAwaitUserConfirmation();
         verify(channel).enqueue(any(Log.class), anyString());
-        verify(listener).getErrorAttachment(any(ErrorReport.class));
+
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
+//        verify(listener).getErrorAttachment(any(ErrorReport.class));
         verifyNoMoreInteractions(listener);
     }
 
@@ -712,7 +721,8 @@ public class CrashesTest {
 
         Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
 
-        verify(mockListener, never()).getErrorAttachment(any(ErrorReport.class));
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
+//        verify(mockListener, never()).getErrorAttachment(any(ErrorReport.class));
         verify(mMockLooper).quit();
 
         verifyStatic();
@@ -813,10 +823,11 @@ public class CrashesTest {
                 return false;
             }
 
-            @Override
-            public ErrorAttachment getErrorAttachment(ErrorReport report) {
-                return null;
-            }
+            /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
+//            @Override
+//            public ErrorAttachment getErrorAttachment(ErrorReport report) {
+//                return null;
+//            }
 
             @Override
             public void onBeforeSending(ErrorReport report) {
@@ -841,7 +852,8 @@ public class CrashesTest {
         assertFalse(defaultListener.shouldAwaitUserConfirmation());
 
         /* Nothing to verify. */
-        defaultListener.getErrorAttachment(null);
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
+//        defaultListener.getErrorAttachment(null);
         defaultListener.onBeforeSending(null);
         defaultListener.onSendingSucceeded(null);
         defaultListener.onSendingFailed(null, null);
