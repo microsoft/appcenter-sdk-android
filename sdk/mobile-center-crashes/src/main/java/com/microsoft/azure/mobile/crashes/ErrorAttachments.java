@@ -13,7 +13,7 @@ import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
  */
 @SuppressWarnings("WeakerAccess")
 /* TODO (getErrorAttachment): Re-enable error attachment in javadoc when the feature becomes available. Add @ before link. */
-public final class ErrorAttachments {
+final class ErrorAttachments {
 
     @VisibleForTesting
     ErrorAttachments() {
