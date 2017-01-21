@@ -171,7 +171,9 @@ public class CrashesAndroidTest {
         verify(channel).enqueue(any(Log.class), anyString());
         assertNotNull(log.get());
         assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
-        verify(crashesListener).getErrorAttachment(any(ErrorReport.class));
+
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
+//        verify(crashesListener).getErrorAttachment(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);
 
         /* Third process: sending succeeds. */

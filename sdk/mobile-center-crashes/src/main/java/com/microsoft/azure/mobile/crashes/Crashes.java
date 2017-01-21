@@ -17,7 +17,6 @@ import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ManagedErrorLogFactory;
-import com.microsoft.azure.mobile.crashes.model.ErrorAttachment;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.model.TestCrashException;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
@@ -735,11 +734,13 @@ public class Crashes extends AbstractMobileCenterService {
 
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
-                        ErrorAttachment attachment = mCrashesListener.getErrorAttachment(errorLogReport.report);
-                        if (attachment == null)
-                            MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
-                        else
-                            errorLogReport.log.setErrorAttachment(attachment);
+
+                        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
+//                        ErrorAttachment attachment = mCrashesListener.getErrorAttachment(errorLogReport.report);
+//                        if (attachment == null)
+//                            MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
+//                        else
+//                            errorLogReport.log.setErrorAttachment(attachment);
                         mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
 
                         /* Clean up an error log file and map entry. */
