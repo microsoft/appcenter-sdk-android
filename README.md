@@ -193,14 +193,6 @@ You create your own Crashes listener and assign it like this:
         ```
         Pass one option of `SEND`, `DONT_SEND` or `ALWAYS_SEND`.
 
-    * **Binary attachment:**  If you'd like to attach text/binary data to a crash report, implement this callback. Before sending the crash, our SDK will add the attachment to the crash report and you can view it on the Mobile Center portal. Note that attachment will show in the portal in the future as the UI is still not ready.
-
-        ```Java
-        ErrorAttachment CrashesListener.getErrorAttachment(ErrorReport report) {
-            // return your own created ErrorAttachment object
-        }
-        ```
-
     * **Before sending a crash report:** This callback will be invoked just before the crash is sent to Mobile Center:
 
         ```Java
