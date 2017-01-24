@@ -47,7 +47,7 @@ Below are the steps on how to integrate our compiled libraries in your applicati
 
     ```groovy
     dependencies {
-        def mobileCenterSdkVersion = '0.4.0'
+        def mobileCenterSdkVersion = '0.5.0'
         compile "com.microsoft.azure.mobile:mobile-center-analytics:${mobileCenterSdkVersion}"
         compile "com.microsoft.azure.mobile:mobile-center-crashes:${mobileCenterSdkVersion}"
     }
