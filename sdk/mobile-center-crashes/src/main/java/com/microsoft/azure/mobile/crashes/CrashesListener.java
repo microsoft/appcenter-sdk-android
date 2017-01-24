@@ -37,8 +37,9 @@ public interface CrashesListener {
      * @param report The crash report for additional information.
      * @return {@link ErrorAttachment} instance to be attached to the crash report.
      */
-    @WorkerThread
-    ErrorAttachment getErrorAttachment(ErrorReport report);
+    /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
+//    @WorkerThread
+//    ErrorAttachment getErrorAttachment(ErrorReport report);
 
     /**
      * Called right before sending a crash report. The callback can be invoked multiple times based on the number of crash reports.
