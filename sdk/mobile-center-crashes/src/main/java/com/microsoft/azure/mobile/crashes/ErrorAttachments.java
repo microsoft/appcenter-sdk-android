@@ -4,7 +4,6 @@ import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.azure.mobile.crashes.model.ErrorAttachment;
 import com.microsoft.azure.mobile.crashes.model.ErrorBinaryAttachment;
-import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
@@ -13,7 +12,8 @@ import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
  * Error attachment utilities.
  */
 @SuppressWarnings("WeakerAccess")
-public final class ErrorAttachments {
+/* TODO (getErrorAttachment): Re-enable error attachment in javadoc when the feature becomes available. Add @ before link. */
+final class ErrorAttachments {
 
     @VisibleForTesting
     ErrorAttachments() {
@@ -22,7 +22,7 @@ public final class ErrorAttachments {
     }
 
     /**
-     * Build an attachment with text suitable for using in {@link CrashesListener#getErrorAttachment(ErrorReport)}.
+     * Build an attachment with text suitable for using in {link CrashesListener#getErrorAttachment(ErrorReport)}.
      *
      * @param text Text to attach to the error report.
      * @return error Attachment or null if null text is passed.
@@ -32,7 +32,7 @@ public final class ErrorAttachments {
     }
 
     /**
-     * Build an attachment with binary suitable for using in {@link CrashesListener#getErrorAttachment(ErrorReport)}.
+     * Build an attachment with binary suitable for using in {link CrashesListener#getErrorAttachment(ErrorReport)}.
      *
      * @param data        binary data.
      * @param fileName    file name to use on reports.
@@ -44,7 +44,7 @@ public final class ErrorAttachments {
     }
 
     /**
-     * Build an attachment with text and binary suitable for using in {@link CrashesListener#getErrorAttachment(ErrorReport)}.
+     * Build an attachment with text and binary suitable for using in {link CrashesListener#getErrorAttachment(ErrorReport)}.
      *
      * @param text        text data.
      * @param data        binary data.
