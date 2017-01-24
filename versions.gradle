@@ -1,8 +1,8 @@
 // Version constants
 
 ext {
-    versionCode = 13
-    versionName = '0.5.0'
+    versionCode = 14
+    versionName = '0.5.1'
     minSdkVersion = 15
     targetSdkVersion = 25
     compileSdkVersion = 25
