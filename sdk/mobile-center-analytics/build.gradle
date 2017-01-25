@@ -1,6 +1,3 @@
-//
-// :sdk:analytics
-//
 description = 'This package contains functionalities to collect session, device properties, events etc... for your application.'
 evaluationDependsOn(':sdk')
 

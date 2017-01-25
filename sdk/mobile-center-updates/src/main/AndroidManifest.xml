@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.microsoft.azure.mobile.updates">
+
+    <application>
+        <activity
+            android:name=".LoginCallbackActivity"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+
+                <data
+                    android:host="AppUpdate"
+                    android:path="/"
+                    android:scheme="app.update.scheme"/>
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
