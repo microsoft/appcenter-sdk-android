@@ -22,8 +22,8 @@ public class LoginCallbackActivity extends Activity {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
         String updateToken = intent.getStringExtra(EXTRA_UPDATE_TOKEN);
-        MobileCenterLog.logAssert(LOG_TAG, getLocalClassName() + ".getIntent()=" + intent);
-        MobileCenterLog.logAssert(LOG_TAG, getLocalClassName() + ".getIntent()#S.update_token=" + updateToken);
+        MobileCenterLog.debug(LOG_TAG, getLocalClassName() + ".getIntent()=" + intent);
+        MobileCenterLog.verbose(LOG_TAG, getLocalClassName() + ".getIntent()#S.update_token=" + updateToken);
 
         /* Store update token. */
         if (updateToken != null) {
