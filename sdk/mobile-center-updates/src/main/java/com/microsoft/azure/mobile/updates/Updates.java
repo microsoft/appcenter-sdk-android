@@ -16,18 +16,20 @@ import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import java.util.List;
 
 public class Updates extends AbstractMobileCenterService {
 
-    static final String LOG_TAG = MobileCenter.LOG_TAG + "Updates";
-
+    static final String EXTRA_UPDATE_TOKEN = "update_token";
+    private static final String SERVICE_NAME = "Updates";
+    static final String LOG_TAG = MobileCenter.LOG_TAG + SERVICE_NAME;
     private static final String GOOGLE_CHROME_URL_SCHEME = "googlechrome://navigate?url=";
-
     private static final String GENERIC_BROWSER_URL_SCHEME = "http://";
-
     private static final String DEFAULT_LOGIN_PAGE_URL = "10.123.212.163:8080/default.htm";
+    private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
+    private static final String PREFERENCE_KEY_UPDATE_TOKEN = PREFERENCE_PREFIX + EXTRA_UPDATE_TOKEN;
 
     /**
      * Shared instance.
@@ -39,11 +41,14 @@ public class Updates extends AbstractMobileCenterService {
 
     private boolean mLoginChecked;
 
+    private boolean mUpdateChecked;
+
     /**
      * Get shared instance.
      *
      * @return shared instance.
      */
+    @SuppressWarnings("WeakerAccess")
     public static synchronized Updates getInstance() {
         if (sInstance == null) {
             sInstance = new Updates();
@@ -63,7 +68,7 @@ public class Updates extends AbstractMobileCenterService {
 
     @Override
     protected String getServiceName() {
-        return "Updates";
+        return SERVICE_NAME;
     }
 
     @Override
@@ -74,13 +79,13 @@ public class Updates extends AbstractMobileCenterService {
     @Override
     public synchronized void onChannelReady(@NonNull Context context, @NonNull Channel channel) {
         super.onChannelReady(context, channel);
-        checkLogin();
+        checkAndFetchUpdateToken();
     }
 
     @Override
     public void onActivityResumed(Activity activity) {
         mForegroundActivity = activity;
-        checkLogin();
+        checkAndFetchUpdateToken();
     }
 
     @Override
@@ -88,8 +93,15 @@ public class Updates extends AbstractMobileCenterService {
         mForegroundActivity = null;
     }
 
-    private void checkLogin() {
-        if (mForegroundActivity != null && !mLoginChecked) {
+    private void checkAndFetchUpdateToken() {
+        if (mForegroundActivity != null && !mLoginChecked && !mUpdateChecked) {
+
+            String updateToken = StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN);
+            if (updateToken != null && !mUpdateChecked) {
+                checkUpdate(updateToken);
+                return;
+            }
+
             String baseUrl = DEFAULT_LOGIN_PAGE_URL + "?package=" + mForegroundActivity.getPackageName();
             Intent intent = new Intent(Intent.ACTION_VIEW);
 
@@ -153,5 +165,27 @@ public class Updates extends AbstractMobileCenterService {
             }
             mLoginChecked = true;
         }
+    }
+
+    /*
+     * Store update token and possibly trigger application update check.
+     * TODO encrypt token, but where to store encryption key? If it's retrieved from server,
+     * how do we protect server call to get the key in the first place?
+     * Even having the encryption key temporarily in memory is risky as that can be heap dumped.
+     */
+    void storeUpdateToken(@NonNull Context context, @NonNull String updateToken) {
+        if (mChannel == null) {
+            StorageHelper.initialize(context);
+        }
+        StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, updateToken);
+        if (!mUpdateChecked) {
+            checkUpdate(updateToken);
+        }
+    }
+
+    private void checkUpdate(@NonNull String updateToken) {
+
+        /* TODO API call. */
+        MobileCenterLog.error(LOG_TAG, "Update check not yet implemented.");
     }
 }
