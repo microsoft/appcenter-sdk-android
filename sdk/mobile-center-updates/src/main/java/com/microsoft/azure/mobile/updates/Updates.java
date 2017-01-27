@@ -26,9 +26,13 @@ public class Updates extends AbstractMobileCenterService {
     private static final String SERVICE_NAME = "Updates";
     static final String LOG_TAG = MobileCenter.LOG_TAG + SERVICE_NAME;
     private static final String GOOGLE_CHROME_URL_SCHEME = "googlechrome://navigate?url=";
+    /**
+     * TODO change to https once we have a real server.
+     */
     private static final String GENERIC_BROWSER_URL_SCHEME = "http://";
     private static final String DEFAULT_LOGIN_PAGE_URL = "10.123.212.163:8080/default.htm";
     private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
+
     private static final String PREFERENCE_KEY_UPDATE_TOKEN = PREFERENCE_PREFIX + EXTRA_UPDATE_TOKEN;
 
     /**
