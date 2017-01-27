@@ -22,18 +22,35 @@ public class LoginCallbackActivity extends Activity {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
         String updateToken = intent.getStringExtra(EXTRA_UPDATE_TOKEN);
-        MobileCenterLog.debug(LOG_TAG, getLocalClassName() + ".getIntent()=" + intent);
-        MobileCenterLog.verbose(LOG_TAG, getLocalClassName() + ".getIntent()#S.update_token=" + updateToken);
+        MobileCenterLog.logAssert(LOG_TAG, getLocalClassName() + ".getIntent()=" + intent);
+        MobileCenterLog.logAssert(LOG_TAG, getLocalClassName() + ".getIntent()#S.update_token=" + updateToken);
 
         /* Store update token. */
         if (updateToken != null) {
             Updates.getInstance().storeUpdateToken(this, updateToken);
         }
 
-        /* Resume app to avoid staying on browser if no application task. */
-        if (isTaskRoot()) {
+        /*
+         * Resume app exactly where it was before with no activity duplicate, or starting the
+         * launcher if application task finished or killed (equivalent to clicking from launcher
+         * or activity history).
+         *
+         * The browser used in emulator don't set the NEW_TASK flag and when we receive the intent,
+         * isTaskRoot returns false even after API level 19 while application task was empty,
+         * none of the intent flags combination seems to do what we want in that case.
+         *
+         * So we restart the activity with the correct flag this time as Chrome would do
+         * and retry the isTaskRoot code and it will work correctly the second time...
+         *
+         * Also tried various finish() moveTaskToBack(true or false) combinations with no luck,
+         * only the following code seems to work.
+         */
+        finish();
+        if (!((getIntent().getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK) == Intent.FLAG_ACTIVITY_NEW_TASK)) {
+            MobileCenterLog.debug(LOG_TAG, "Using restart work around to correctly resume app.");
+            startActivity(intent.cloneFilter().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        } else if (isTaskRoot()) {
             startActivity(getPackageManager().getLaunchIntentForPackage(getPackageName()));
         }
-        finish();
     }
 }
