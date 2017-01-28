@@ -8,12 +8,12 @@ import java.io.Closeable;
 import java.util.UUID;
 
 /**
- * The interface for HttpClient class.
+ * Interface to send logs to the Ingestion service.
  */
 public interface Ingestion extends Closeable {
 
     /**
-     * Send logs to the HttpClient service.
+     * Send logs to the Ingestion service.
      *
      * @param appSecret       a unique and secret key used to identify the application.
      * @param installId       install identifier.
