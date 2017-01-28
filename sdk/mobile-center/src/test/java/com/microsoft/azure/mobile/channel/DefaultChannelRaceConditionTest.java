@@ -3,10 +3,10 @@ package com.microsoft.azure.mobile.channel;
 import android.content.Context;
 
 import com.microsoft.azure.mobile.CancellationException;
+import com.microsoft.azure.mobile.http.ServiceCall;
+import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.Ingestion;
-import com.microsoft.azure.mobile.ingestion.ServiceCall;
-import com.microsoft.azure.mobile.ingestion.ServiceCallback;
-import com.microsoft.azure.mobile.ingestion.http.IngestionHttp;
+import com.microsoft.azure.mobile.ingestion.IngestionHttp;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 import com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync;
@@ -30,6 +30,7 @@ import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -370,7 +371,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
                     @Override
                     public void run() {
                         beforeCallSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[3]).onCallSucceeded();
+                        ((ServiceCallback) invocation.getArguments()[3]).onCallSucceeded(notNull(String.class));
                         afterCallSemaphore.release();
                     }
                 }.start();

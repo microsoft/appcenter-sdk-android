@@ -1,25 +1,21 @@
-package com.microsoft.azure.mobile.ingestion.http;
+package com.microsoft.azure.mobile.http;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.azure.mobile.MobileCenter;
-import com.microsoft.azure.mobile.ingestion.Ingestion;
-import com.microsoft.azure.mobile.ingestion.ServiceCall;
-import com.microsoft.azure.mobile.ingestion.ServiceCallback;
-import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import java.net.UnknownHostException;
+import java.util.Map;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Decorator managing retries.
  */
-public class IngestionRetryer extends IngestionDecorator {
+public class HttpClientRetryer extends HttpClientDecorator {
 
     /**
      * Retry intervals to use, array index is to use the value for each retry. When we used all the array values, we give up and forward the last error.
@@ -46,7 +42,7 @@ public class IngestionRetryer extends IngestionDecorator {
      *
      * @param decoratedApi API to decorate.
      */
-    public IngestionRetryer(Ingestion decoratedApi) {
+    public HttpClientRetryer(HttpClient decoratedApi) {
         this(decoratedApi, new Handler(Looper.getMainLooper()));
     }
 
@@ -57,16 +53,17 @@ public class IngestionRetryer extends IngestionDecorator {
      * @param handler      handler for timed retries.
      */
     @VisibleForTesting
-    IngestionRetryer(Ingestion decoratedApi, Handler handler) {
+    HttpClientRetryer(HttpClient decoratedApi, Handler handler) {
         super(decoratedApi);
         mHandler = handler;
     }
 
+
     @Override
-    public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
 
         /* Wrap the call with the retry logic and call delegate. */
-        RetryableCall retryableCall = new RetryableCall(mDecoratedApi, appSecret, installId, logContainer, serviceCallback);
+        RetryableCall retryableCall = new RetryableCall(mDecoratedApi, url, method, headers, callTemplate, serviceCallback);
         retryableCall.run();
         return retryableCall;
     }
@@ -74,15 +71,15 @@ public class IngestionRetryer extends IngestionDecorator {
     /**
      * Retry wrapper logic.
      */
-    private class RetryableCall extends IngestionCallDecorator {
+    private class RetryableCall extends HttpClientCallDecorator {
 
         /**
          * Current retry counter. 0 means its the first try.
          */
         private int mRetryCount;
 
-        RetryableCall(Ingestion decoratedApi, String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) {
-            super(decoratedApi, appSecret, installId, logContainer, serviceCallback);
+        RetryableCall(HttpClient decoratedApi, String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
+            super(decoratedApi, url, method, headers, callTemplate, serviceCallback);
         }
 
         @Override

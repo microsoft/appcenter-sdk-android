@@ -81,7 +81,7 @@ public class CrashesTest {
     @SuppressWarnings("ThrowableInstanceNeverThrown")
     private static final Exception EXCEPTION = new Exception("This is a test exception.");
 
-    private static final String CRASHES_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getGroupName();
+    private static final String CRASHES_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
 
     @Rule
     public final TemporaryFolder errorStorageDirectory = new TemporaryFolder();

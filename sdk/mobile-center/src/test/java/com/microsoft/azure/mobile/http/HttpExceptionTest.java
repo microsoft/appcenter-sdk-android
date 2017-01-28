@@ -1,4 +1,4 @@
-package com.microsoft.azure.mobile.ingestion.http;
+package com.microsoft.azure.mobile.http;
 
 import org.junit.Test;
 

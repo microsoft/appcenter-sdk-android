@@ -1,4 +1,4 @@
-package com.microsoft.azure.mobile.ingestion;
+package com.microsoft.azure.mobile.http;
 
 /**
  * The callback used for client side asynchronous operations.
@@ -8,7 +8,7 @@ public interface ServiceCallback {
     /**
      * Implement this method to handle successful REST call results.
      */
-    void onCallSucceeded();
+    void onCallSucceeded(String payload);
 
     /**
      * Implement this method to handle REST call failures.
