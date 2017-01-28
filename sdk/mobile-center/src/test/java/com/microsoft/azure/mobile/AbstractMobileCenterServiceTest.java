@@ -33,7 +33,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @PrepareForTest({StorageHelper.PreferencesStorage.class, MobileCenter.class})
 public class AbstractMobileCenterServiceTest {
 
-    private static final String SERVICE_ENABLED_KEY = KEY_ENABLED + "_group_test";
+    private static final String SERVICE_ENABLED_KEY = KEY_ENABLED + "_Test";
 
     private AbstractMobileCenterService service;
 

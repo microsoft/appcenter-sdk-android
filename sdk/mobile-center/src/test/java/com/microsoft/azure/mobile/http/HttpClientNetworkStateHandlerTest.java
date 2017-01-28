@@ -1,11 +1,6 @@
-package com.microsoft.azure.mobile.ingestion.http;
+package com.microsoft.azure.mobile.http;
 
-import com.microsoft.azure.mobile.ingestion.Ingestion;
-import com.microsoft.azure.mobile.ingestion.ServiceCall;
-import com.microsoft.azure.mobile.ingestion.ServiceCallback;
-import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
-import com.microsoft.azure.mobile.utils.UUIDUtils;
 
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -13,9 +8,11 @@ import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.net.SocketException;
-import java.util.UUID;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -26,171 +23,171 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("unused")
-public class IngestionNetworkStateHandlerTest {
+public class HttpClientNetworkStateHandlerTest {
 
     @Test
     public void success() throws IOException {
 
         /* Configure mock wrapped API. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
-        LogContainer container = mock(LogContainer.class);
+        String url = "http://mock/call";
+        Map<String, String> headers = new HashMap<>();
+        final HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
-        Ingestion ingestion = mock(Ingestion.class);
+        HttpClient httpClient = mock(HttpClient.class);
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[3];
-                serviceCallback.onCallSucceeded();
-                serviceCallback.onCallSucceeded();
+                ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[4];
+                serviceCallback.onCallSucceeded("");
+                serviceCallback.onCallSucceeded("");
                 return call;
             }
-        }).when(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
 
         /* Simulate network is initially up. */
         NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
         when(networkStateHelper.isNetworkConnected()).thenReturn(true);
 
         /* Test call. */
-        Ingestion decorator = new IngestionNetworkStateHandler(ingestion, networkStateHelper);
-        decorator.sendAsync(appSecret, installId, container, callback);
-        verify(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
-        verify(callback).onCallSucceeded();
+        HttpClient decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
+        decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
+        verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
+        verify(callback).onCallSucceeded("");
         verifyNoMoreInteractions(callback);
 
         /* Close. */
         decorator.close();
-        verify(ingestion).close();
+        verify(httpClient).close();
     }
 
     @Test
     public void failure() throws IOException {
 
         /* Configure mock wrapped API. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
-        LogContainer container = mock(LogContainer.class);
+        String url = "http://mock/call";
+        Map<String, String> headers = new HashMap<>();
+        final HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
-        Ingestion ingestion = mock(Ingestion.class);
+        HttpClient httpClient = mock(HttpClient.class);
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[3];
+                ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[4];
                 serviceCallback.onCallFailed(new HttpException(503));
                 serviceCallback.onCallFailed(new SocketException());
                 return call;
             }
-        }).when(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
 
         /* Simulate network is initially up. */
         NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
         when(networkStateHelper.isNetworkConnected()).thenReturn(true);
 
         /* Test call. */
-        Ingestion decorator = new IngestionNetworkStateHandler(ingestion, networkStateHelper);
-        decorator.sendAsync(appSecret, installId, container, callback);
-        verify(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
+        HttpClient decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
+        decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
+        verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
         verify(callback).onCallFailed(new HttpException(503));
         verifyNoMoreInteractions(callback);
 
         /* Close. */
         decorator.close();
-        verify(ingestion).close();
+        verify(httpClient).close();
     }
 
     @Test
     public void networkDownBecomesUp() throws IOException {
 
         /* Configure mock wrapped API. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
-        LogContainer container = mock(LogContainer.class);
+        String url = "http://mock/call";
+        Map<String, String> headers = new HashMap<>();
+        final HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
-        Ingestion ingestion = mock(Ingestion.class);
+        HttpClient httpClient = mock(HttpClient.class);
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
                 return call;
             }
-        }).when(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
 
         /* Simulate network down then becomes up. */
         NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
         when(networkStateHelper.isNetworkConnected()).thenReturn(false).thenReturn(true);
 
         /* Test call. */
-        IngestionNetworkStateHandler decorator = new IngestionNetworkStateHandler(ingestion, networkStateHelper);
-        decorator.sendAsync(appSecret, installId, container, callback);
+        HttpClientNetworkStateHandler decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
+        decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
 
         /* Network is down: no call to target API must be done. */
-        verify(ingestion, times(0)).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
-        verify(callback, times(0)).onCallSucceeded();
+        verify(httpClient, times(0)).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
+        verify(callback, times(0)).onCallSucceeded("");
 
         /* Network now up: call must be done and succeed. */
         decorator.onNetworkStateUpdated(true);
-        verify(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
-        verify(callback).onCallSucceeded();
+        verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
+        verify(callback).onCallSucceeded("");
 
         /* Close. */
         decorator.close();
-        verify(ingestion).close();
+        verify(httpClient).close();
     }
 
     @Test
     public void networkDownCancelBeforeUp() throws IOException {
 
         /* Configure mock wrapped API. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
-        LogContainer container = mock(LogContainer.class);
+        String url = "http://mock/call";
+        Map<String, String> headers = new HashMap<>();
+        final HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
-        Ingestion ingestion = mock(Ingestion.class);
+        HttpClient httpClient = mock(HttpClient.class);
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
                 return call;
             }
-        }).when(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
 
         /* Simulate network down then becomes up. */
         NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
         when(networkStateHelper.isNetworkConnected()).thenReturn(false).thenReturn(true);
 
         /* Test call and cancel right away. */
-        IngestionNetworkStateHandler decorator = new IngestionNetworkStateHandler(ingestion, networkStateHelper);
-        decorator.sendAsync(appSecret, installId, container, callback).cancel();
+        HttpClientNetworkStateHandler decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
+        decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback).cancel();
 
         /* Network now up, verify no interaction with anything. */
         decorator.onNetworkStateUpdated(true);
-        verifyNoMoreInteractions(ingestion);
+        verifyNoMoreInteractions(httpClient);
         verifyNoMoreInteractions(call);
         verifyNoMoreInteractions(callback);
 
         /* Close. */
         decorator.close();
-        verify(ingestion).close();
+        verify(httpClient).close();
     }
 
     @Test
     public void cancelRunningCall() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
-        LogContainer container = mock(LogContainer.class);
+        String url = "http://mock/call";
+        Map<String, String> headers = new HashMap<>();
+        final HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
-        Ingestion ingestion = mock(Ingestion.class);
+        HttpClient httpClient = mock(HttpClient.class);
         final AtomicReference<Thread> threadRef = new AtomicReference<>();
         doAnswer(new Answer<ServiceCall>() {
 
@@ -202,7 +199,7 @@ public class IngestionNetworkStateHandlerTest {
                     public void run() {
                         try {
                             sleep(200);
-                            ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
+                            ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -212,7 +209,7 @@ public class IngestionNetworkStateHandlerTest {
                 threadRef.set(thread);
                 return call;
             }
-        }).when(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
         doAnswer(new Answer() {
 
             @Override
@@ -227,8 +224,8 @@ public class IngestionNetworkStateHandlerTest {
         when(networkStateHelper.isNetworkConnected()).thenReturn(true);
 
         /* Test call. */
-        IngestionNetworkStateHandler decorator = new IngestionNetworkStateHandler(ingestion, networkStateHelper);
-        ServiceCall decoratorCall = decorator.sendAsync(appSecret, installId, container, callback);
+        HttpClientNetworkStateHandler decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
+        ServiceCall decoratorCall = decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
 
         /* Wait some time. */
         Thread.sleep(100);
@@ -237,25 +234,25 @@ public class IngestionNetworkStateHandlerTest {
         decoratorCall.cancel();
 
         /* Verify that the call was attempted then canceled. */
-        verify(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
+        verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
         verify(call).cancel();
         verifyNoMoreInteractions(callback);
 
         /* Close. */
         decorator.close();
-        verify(ingestion).close();
+        verify(httpClient).close();
     }
 
     @Test
     public void cancelRunningCallByClosing() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
-        LogContainer container = mock(LogContainer.class);
+        String url = "http://mock/call";
+        Map<String, String> headers = new HashMap<>();
+        final HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
-        Ingestion ingestion = mock(Ingestion.class);
+        HttpClient httpClient = mock(HttpClient.class);
         final AtomicReference<Thread> threadRef = new AtomicReference<>();
         doAnswer(new Answer<ServiceCall>() {
 
@@ -267,7 +264,7 @@ public class IngestionNetworkStateHandlerTest {
                     public void run() {
                         try {
                             sleep(200);
-                            ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
+                            ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -277,7 +274,7 @@ public class IngestionNetworkStateHandlerTest {
                 threadRef.set(thread);
                 return call;
             }
-        }).when(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
         doAnswer(new Answer() {
 
             @Override
@@ -285,15 +282,15 @@ public class IngestionNetworkStateHandlerTest {
                 threadRef.get().interrupt();
                 return null;
             }
-        }).when(ingestion).close();
+        }).when(httpClient).close();
 
         /* Simulate network down then becomes up. */
         NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
         when(networkStateHelper.isNetworkConnected()).thenReturn(true);
 
         /* Test call. */
-        IngestionNetworkStateHandler decorator = new IngestionNetworkStateHandler(ingestion, networkStateHelper);
-        decorator.sendAsync(appSecret, installId, container, callback);
+        HttpClientNetworkStateHandler decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
+        decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
 
         /* Wait some time. */
         Thread.sleep(100);
@@ -302,8 +299,8 @@ public class IngestionNetworkStateHandlerTest {
         decorator.close();
 
         /* Verify that the call was attempted then canceled. */
-        verify(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
-        verify(ingestion).close();
+        verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
+        verify(httpClient).close();
         verify(call).cancel();
         verifyNoMoreInteractions(callback);
     }
@@ -312,12 +309,12 @@ public class IngestionNetworkStateHandlerTest {
     public void networkLossDuringCall() throws InterruptedException, IOException {
 
         /* Configure mock wrapped API. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
-        LogContainer container = mock(LogContainer.class);
+        String url = "http://mock/call";
+        Map<String, String> headers = new HashMap<>();
+        final HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
-        Ingestion ingestion = mock(Ingestion.class);
+        HttpClient httpClient = mock(HttpClient.class);
         final AtomicReference<Thread> threadRef = new AtomicReference<>();
         doAnswer(new Answer<ServiceCall>() {
 
@@ -329,7 +326,7 @@ public class IngestionNetworkStateHandlerTest {
                     public void run() {
                         try {
                             sleep(200);
-                            ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
+                            ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -339,7 +336,7 @@ public class IngestionNetworkStateHandlerTest {
                 threadRef.set(thread);
                 return call;
             }
-        }).when(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
         doAnswer(new Answer() {
 
             @Override
@@ -354,8 +351,8 @@ public class IngestionNetworkStateHandlerTest {
         when(networkStateHelper.isNetworkConnected()).thenReturn(true).thenReturn(false).thenReturn(true);
 
         /* Test call. */
-        IngestionNetworkStateHandler decorator = new IngestionNetworkStateHandler(ingestion, networkStateHelper);
-        decorator.sendAsync(appSecret, installId, container, callback);
+        HttpClientNetworkStateHandler decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
+        decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
 
         /* Wait some time. */
         Thread.sleep(100);
@@ -364,28 +361,19 @@ public class IngestionNetworkStateHandlerTest {
         decorator.onNetworkStateUpdated(false);
 
         /* Verify that the call was attempted then canceled. */
-        verify(ingestion).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
+        verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
         verify(call).cancel();
         verifyNoMoreInteractions(callback);
 
         /* Then up again. */
         decorator.onNetworkStateUpdated(true);
-        verify(ingestion, times(2)).sendAsync(eq(appSecret), eq(installId), eq(container), any(ServiceCallback.class));
+        verify(httpClient, times(2)).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
         Thread.sleep(300);
-        verify(callback).onCallSucceeded();
+        verify(callback).onCallSucceeded("");
         verifyNoMoreInteractions(callback);
 
         /* Close. */
         decorator.close();
-        verify(ingestion).close();
-    }
-
-    @Test
-    public void setServerUrl() {
-        Ingestion ingestion = mock(Ingestion.class);
-        Ingestion retryer = new IngestionNetworkStateHandler(ingestion, mock(NetworkStateHelper.class));
-        String serverUrl = "http://someServerUrl";
-        retryer.setServerUrl(serverUrl);
-        verify(ingestion).setServerUrl(serverUrl);
+        verify(httpClient).close();
     }
 }

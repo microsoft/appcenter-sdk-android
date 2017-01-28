@@ -1,0 +1,15 @@
+package com.microsoft.azure.mobile.http;
+
+import org.json.JSONException;
+
+import java.io.Closeable;
+import java.util.Map;
+
+public interface HttpClient extends Closeable {
+
+    ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback);
+
+    interface CallTemplate {
+        String buildRequestBody() throws JSONException;
+    }
+}

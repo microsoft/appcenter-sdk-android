@@ -60,7 +60,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class})
 public class AnalyticsTest {
 
-    private static final String ANALYTICS_ENABLED_KEY = KEY_ENABLED + "_group_analytics";
+    private static final String ANALYTICS_ENABLED_KEY = KEY_ENABLED + "_Analytics";
 
     @Before
     public void setUp() {

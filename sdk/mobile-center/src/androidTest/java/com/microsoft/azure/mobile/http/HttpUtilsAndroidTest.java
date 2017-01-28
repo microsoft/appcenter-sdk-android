@@ -1,4 +1,4 @@
-package com.microsoft.azure.mobile.ingestion.http;
+package com.microsoft.azure.mobile.http;
 
 import org.junit.Test;
 
@@ -15,7 +15,7 @@ import java.util.concurrent.RejectedExecutionException;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 
-import static com.microsoft.azure.mobile.ingestion.http.HttpUtils.isRecoverableError;
+import static com.microsoft.azure.mobile.http.HttpUtils.isRecoverableError;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 

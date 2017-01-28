@@ -1,11 +1,6 @@
-package com.microsoft.azure.mobile.ingestion.http;
+package com.microsoft.azure.mobile.http;
 
 import android.os.Handler;
-
-import com.microsoft.azure.mobile.ingestion.Ingestion;
-import com.microsoft.azure.mobile.ingestion.ServiceCall;
-import com.microsoft.azure.mobile.ingestion.ServiceCallback;
-import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -14,9 +9,9 @@ import org.mockito.stubbing.Answer;
 
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.UUID;
 
 import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.longThat;
 import static org.mockito.Mockito.any;
@@ -26,7 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @SuppressWarnings("unused")
-public class IngestionRetryerTest {
+public class HttpClientRetryerTest {
 
     private static void simulateRetryAfterDelay(Handler handler) {
         doAnswer(new Answer() {
@@ -46,7 +41,7 @@ public class IngestionRetryerTest {
             @Override
             public boolean matches(Object argument) {
                 long interval = (Long) argument;
-                long retryInterval = IngestionRetryer.RETRY_INTERVALS[retryIndex];
+                long retryInterval = HttpClientRetryer.RETRY_INTERVALS[retryIndex];
                 return interval >= retryInterval / 2 && interval <= retryInterval;
             }
         }));
@@ -56,18 +51,18 @@ public class IngestionRetryerTest {
     public void success() {
         final ServiceCall call = mock(ServiceCall.class);
         final ServiceCallback callback = mock(ServiceCallback.class);
-        Ingestion ingestion = mock(Ingestion.class);
+        HttpClient httpClient = mock(HttpClient.class);
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
                 return call;
             }
-        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        Ingestion retryer = new IngestionRetryer(ingestion);
-        retryer.sendAsync(null, null, null, callback);
-        verify(callback).onCallSucceeded();
+        }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        HttpClientRetryer retryer = new HttpClientRetryer(httpClient);
+        retryer.callAsync(null, null, null, null, callback);
+        verify(callback).onCallSucceeded("");
         verifyNoMoreInteractions(callback);
         verifyNoMoreInteractions(call);
     }
@@ -75,29 +70,29 @@ public class IngestionRetryerTest {
     @Test
     public void successAfterOneRetry() {
         final ServiceCallback callback = mock(ServiceCallback.class);
-        Ingestion ingestion = mock(Ingestion.class);
+        HttpClient httpClient = mock(HttpClient.class);
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallFailed(new SocketException());
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(new SocketException());
                 return mock(ServiceCall.class);
             }
         }).doAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallSucceeded();
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
                 return mock(ServiceCall.class);
             }
-        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         Handler handler = mock(Handler.class);
-        Ingestion retryer = new IngestionRetryer(ingestion, handler);
+        HttpClient retryer = new HttpClientRetryer(httpClient, handler);
         simulateRetryAfterDelay(handler);
-        retryer.sendAsync(null, null, null, callback);
+        retryer.callAsync(null, null, null, null, callback);
         verifyDelay(handler, 0);
         verifyNoMoreInteractions(handler);
-        verify(callback).onCallSucceeded();
+        verify(callback).onCallSucceeded("");
         verifyNoMoreInteractions(callback);
     }
 
@@ -105,26 +100,26 @@ public class IngestionRetryerTest {
     public void retryOnceThenFail() {
         final HttpException expectedException = new HttpException(403);
         final ServiceCallback callback = mock(ServiceCallback.class);
-        Ingestion ingestion = mock(Ingestion.class);
+        HttpClient httpClient = mock(HttpClient.class);
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallFailed(new UnknownHostException());
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(new UnknownHostException());
                 return mock(ServiceCall.class);
             }
         }).doAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallFailed(expectedException);
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(expectedException);
                 return mock(ServiceCall.class);
             }
-        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         Handler handler = mock(Handler.class);
-        Ingestion retryer = new IngestionRetryer(ingestion, handler);
+        HttpClient retryer = new HttpClientRetryer(httpClient, handler);
         simulateRetryAfterDelay(handler);
-        retryer.sendAsync(null, null, null, callback);
+        retryer.callAsync(null, null, null, null, callback);
         verifyDelay(handler, 0);
         verifyNoMoreInteractions(handler);
         verify(callback).onCallFailed(any(Exception.class));
@@ -136,19 +131,19 @@ public class IngestionRetryerTest {
     public void exhaustRetries() {
         final ServiceCall call = mock(ServiceCall.class);
         ServiceCallback callback = mock(ServiceCallback.class);
-        Ingestion ingestion = mock(Ingestion.class);
+        HttpClient httpClient = mock(HttpClient.class);
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallFailed(new HttpException(429));
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(new HttpException(429));
                 return call;
             }
-        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         Handler handler = mock(Handler.class);
-        Ingestion retryer = new IngestionRetryer(ingestion, handler);
+        HttpClient retryer = new HttpClientRetryer(httpClient, handler);
         simulateRetryAfterDelay(handler);
-        retryer.sendAsync(null, null, null, callback);
+        retryer.callAsync(null, null, null, null, callback);
         verifyDelay(handler, 0);
         verifyDelay(handler, 1);
         verifyDelay(handler, 2);
@@ -162,29 +157,20 @@ public class IngestionRetryerTest {
     public void cancel() throws InterruptedException {
         final ServiceCall call = mock(ServiceCall.class);
         ServiceCallback callback = mock(ServiceCallback.class);
-        Ingestion ingestion = mock(Ingestion.class);
+        HttpClient httpClient = mock(HttpClient.class);
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[3]).onCallFailed(new HttpException(503));
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(new HttpException(503));
                 return call;
             }
-        }).when(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         Handler handler = mock(Handler.class);
-        Ingestion retryer = new IngestionRetryer(ingestion, handler);
-        retryer.sendAsync(null, null, null, callback).cancel();
+        HttpClient retryer = new HttpClientRetryer(httpClient, handler);
+        retryer.callAsync(null, null, null, null, callback).cancel();
         Thread.sleep(500);
         verifyNoMoreInteractions(callback);
         verify(call).cancel();
-    }
-
-    @Test
-    public void setServerUrl() {
-        Ingestion ingestion = mock(Ingestion.class);
-        Ingestion retryer = new IngestionRetryer(ingestion, mock(Handler.class));
-        String serverUrl = "http://someServerUrl";
-        retryer.setServerUrl(serverUrl);
-        verify(ingestion).setServerUrl(serverUrl);
     }
 }

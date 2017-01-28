@@ -1,11 +1,6 @@
-package com.microsoft.azure.mobile.ingestion.http;
+package com.microsoft.azure.mobile.http;
 
 import com.microsoft.azure.mobile.MobileCenter;
-import com.microsoft.azure.mobile.ingestion.ServiceCall;
-import com.microsoft.azure.mobile.ingestion.ServiceCallback;
-import com.microsoft.azure.mobile.ingestion.models.Log;
-import com.microsoft.azure.mobile.ingestion.models.LogContainer;
-import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 
@@ -22,17 +17,19 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 
-import static android.util.Log.INFO;
 import static android.util.Log.VERBOSE;
+import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
+import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_POST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -47,8 +44,8 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest(IngestionHttp.class)
-public class IngestionHttpTest {
+@PrepareForTest(DefaultHttpClient.class)
+public class DefaultHttpClientTest {
 
     @Rule
     public PowerMockRule rule = new PowerMockRule();
@@ -59,16 +56,18 @@ public class IngestionHttpTest {
     private static void mockCall() throws Exception {
 
         /* Mock AsyncTask... */
-        whenNew(IngestionHttp.Call.class).withAnyArguments().thenAnswer(new Answer<Object>() {
+        whenNew(DefaultHttpClient.Call.class).withAnyArguments().thenAnswer(new Answer<Object>() {
 
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                final IngestionHttp.Call call = new IngestionHttp.Call(invocation.getArguments()[0].toString(), (LogSerializer) invocation.getArguments()[1], (String) invocation.getArguments()[2], (UUID) invocation.getArguments()[3], (LogContainer) invocation.getArguments()[4], (ServiceCallback) invocation.getArguments()[5]);
-                IngestionHttp.Call spyCall = spy(call);
-                when(spyCall.executeOnExecutor(any(Executor.class))).then(new Answer<IngestionHttp.Call>() {
+
+                @SuppressWarnings("unchecked")
+                final DefaultHttpClient.Call call = new DefaultHttpClient.Call(invocation.getArguments()[0].toString(), invocation.getArguments()[1].toString(), (Map<String, String>) invocation.getArguments()[2], (HttpClient.CallTemplate) invocation.getArguments()[3], (ServiceCallback) invocation.getArguments()[4]);
+                DefaultHttpClient.Call spyCall = spy(call);
+                when(spyCall.executeOnExecutor(any(Executor.class))).then(new Answer<DefaultHttpClient.Call>() {
 
                     @Override
-                    public IngestionHttp.Call answer(InvocationOnMock invocation) throws Throwable {
+                    public DefaultHttpClient.Call answer(InvocationOnMock invocation) throws Throwable {
                         call.onPostExecute(call.doInBackground());
                         return call;
                     }
@@ -79,28 +78,15 @@ public class IngestionHttpTest {
     }
 
     @Test
-    public void success() throws Exception {
+    public void post200() throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
         MobileCenter.setLogLevel(VERBOSE);
 
-        /* Build some payload. */
-        LogContainer container = new LogContainer();
-        Log log = mock(Log.class);
-        long logAbsoluteTime = 123L;
-        when(log.getToffset()).thenReturn(logAbsoluteTime);
-        List<Log> logs = new ArrayList<>();
-        logs.add(log);
-        container.setLogs(logs);
-
-        /* Stable time. */
-        mockStatic(System.class);
-        long now = 456L;
-        when(System.currentTimeMillis()).thenReturn(now);
-
         /* Configure mock HTTP. */
+        String urlString = "http://mock/logs?api_version=1.0.0-preview20160914";
         URL url = mock(URL.class);
-        whenNew(URL.class).withArguments("http://mock/logs?api_version=1.0.0-preview20160914").thenReturn(url);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
         HttpURLConnection urlConnection = mock(HttpURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(200);
@@ -109,18 +95,20 @@ public class IngestionHttpTest {
         when(urlConnection.getInputStream()).thenReturn(new ByteArrayInputStream("OK".getBytes()));
 
         /* Configure API client. */
-        LogSerializer serializer = mock(LogSerializer.class);
-        when(serializer.serializeContainer(any(LogContainer.class))).thenReturn("mockPayload");
-        IngestionHttp httpClient = new IngestionHttp(serializer);
-        httpClient.setServerUrl("http://mock");
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        when(callTemplate.buildRequestBody()).thenReturn("mockPayload");
+        DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test calling code. Use shorter but valid app secret. */
         String appSecret = "SHORT";
         UUID installId = UUIDUtils.randomUUID();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("App-Secret", appSecret);
+        headers.put("Install-ID", installId.toString());
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
-        httpClient.sendAsync(appSecret, installId, container, serviceCallback);
-        verify(serviceCallback).onCallSucceeded();
+        httpClient.callAsync(urlString, METHOD_POST, headers, callTemplate, serviceCallback);
+        verify(serviceCallback).onCallSucceeded("OK");
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
@@ -128,32 +116,56 @@ public class IngestionHttpTest {
         verify(urlConnection).disconnect();
         httpClient.close();
 
-        /* Verify payload and toffset manipulation. */
+        /* Verify payload. */
         String sentPayload = buffer.toString("UTF-8");
         assertEquals("mockPayload", sentPayload);
-        verify(log).setToffset(now - logAbsoluteTime);
-        verify(log).setToffset(logAbsoluteTime);
+    }
+
+    @Test
+    public void get200() throws Exception {
+
+        /* Set log level to verbose to test shorter app secret as well. */
+        MobileCenter.setLogLevel(VERBOSE);
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock/get";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(200);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(buffer);
+        when(urlConnection.getInputStream()).thenReturn(new ByteArrayInputStream("OK".getBytes()));
+
+        /* Configure API client. */
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+
+        /* Test calling code. */
+        String appSecret = UUIDUtils.randomUUID().toString();
+        UUID installId = UUIDUtils.randomUUID();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("App-Secret", appSecret);
+        headers.put("Install-ID", installId.toString());
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        mockCall();
+        httpClient.callAsync(urlString, METHOD_GET, headers, callTemplate, serviceCallback);
+        verify(serviceCallback).onCallSucceeded("OK");
+        verifyNoMoreInteractions(serviceCallback);
+        verify(urlConnection).setRequestProperty("Content-Type", "application/json");
+        verify(urlConnection).setRequestProperty("App-Secret", appSecret);
+        verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
+        verify(urlConnection).disconnect();
+        verify(callTemplate, never()).buildRequestBody();
+        httpClient.close();
     }
 
     @Test
     public void error503() throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
-        MobileCenter.setLogLevel(INFO);
-
-        /* Build some payload. */
-        LogContainer container = new LogContainer();
-        Log log = mock(Log.class);
-        long logAbsoluteTime = 123L;
-        when(log.getToffset()).thenReturn(logAbsoluteTime);
-        List<Log> logs = new ArrayList<>();
-        logs.add(log);
-        container.setLogs(logs);
-
-        /* Stable time. */
-        mockStatic(System.class);
-        long now = 456L;
-        when(System.currentTimeMillis()).thenReturn(now);
+        MobileCenter.setLogLevel(android.util.Log.INFO);
 
         /* Configure mock HTTP. */
         URL url = mock(URL.class);
@@ -166,33 +178,34 @@ public class IngestionHttpTest {
         when(urlConnection.getErrorStream()).thenReturn(new ByteArrayInputStream("Busy".getBytes()));
 
         /* Configure API client. */
-        LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.serializeContainer(container)).thenReturn("");
-        IngestionHttp httpClient = new IngestionHttp(logSerializer);
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        when(callTemplate.buildRequestBody()).thenReturn("mockPayload");
+        DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test calling code. */
         String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("App-Secret", appSecret);
+        headers.put("Install-ID", installId.toString());
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
-        httpClient.sendAsync(appSecret, installId, container, serviceCallback);
+        httpClient.callAsync("", METHOD_POST, headers, callTemplate, serviceCallback);
         verify(serviceCallback).onCallFailed(new HttpException(503, "Busy"));
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
-        verify(log).setToffset(now - logAbsoluteTime);
-        verify(log).setToffset(logAbsoluteTime);
     }
 
     @Test
     public void cancel() throws Exception {
 
         /* Mock AsyncTask... */
-        IngestionHttp.Call mockCall = mock(IngestionHttp.Call.class);
-        whenNew(IngestionHttp.Call.class).withAnyArguments().thenReturn(mockCall);
+        DefaultHttpClient.Call mockCall = mock(DefaultHttpClient.Call.class);
+        whenNew(DefaultHttpClient.Call.class).withAnyArguments().thenReturn(mockCall);
         when(mockCall.isCancelled()).thenReturn(false).thenReturn(true);
-        IngestionHttp httpClient = new IngestionHttp(mock(LogSerializer.class));
+        DefaultHttpClient httpClient = new DefaultHttpClient();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        ServiceCall call = httpClient.sendAsync(UUIDUtils.randomUUID().toString(), UUIDUtils.randomUUID(), new LogContainer(), serviceCallback);
+        ServiceCall call = httpClient.callAsync("", "", new HashMap<String, String>(), mock(HttpClient.CallTemplate.class), serviceCallback);
 
         /* Cancel and verify. */
         call.cancel();
@@ -210,30 +223,18 @@ public class IngestionHttpTest {
         whenNew(URL.class).withAnyArguments().thenReturn(url);
         IOException exception = new IOException("mock");
         when(url.openConnection()).thenThrow(exception);
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        IngestionHttp httpClient = new IngestionHttp(mock(LogSerializer.class));
+        DefaultHttpClient httpClient = new DefaultHttpClient();
         mockCall();
-        httpClient.sendAsync(UUIDUtils.randomUUID().toString(), UUIDUtils.randomUUID(), new LogContainer(), serviceCallback);
+        httpClient.callAsync("", "", new HashMap<String, String>(), callTemplate, serviceCallback);
         verify(serviceCallback).onCallFailed(exception);
+        verifyZeroInteractions(callTemplate);
         verifyZeroInteractions(serviceCallback);
     }
 
     @Test
     public void failedSerialization() throws Exception {
-
-        /* Build some payload. */
-        LogContainer container = new LogContainer();
-        Log log = mock(Log.class);
-        long logAbsoluteTime = 123L;
-        when(log.getToffset()).thenReturn(logAbsoluteTime);
-        List<Log> logs = new ArrayList<>();
-        logs.add(log);
-        container.setLogs(logs);
-
-        /* Stable time. */
-        mockStatic(System.class);
-        long now = 456L;
-        when(System.currentTimeMillis()).thenReturn(now);
 
         /* Configure mock HTTP. */
         URL url = mock(URL.class);
@@ -242,22 +243,18 @@ public class IngestionHttpTest {
         when(url.openConnection()).thenReturn(urlConnection);
 
         /* Configure API client. */
-        LogSerializer serializer = mock(LogSerializer.class);
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
         JSONException exception = new JSONException("mock");
-        when(serializer.serializeContainer(any(LogContainer.class))).thenThrow(exception);
-        IngestionHttp httpClient = new IngestionHttp(serializer);
+        when(callTemplate.buildRequestBody()).thenThrow(exception);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test calling code. */
-        String appSecret = UUID.randomUUID().toString();
-        UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
-        httpClient.sendAsync(appSecret, installId, container, serviceCallback);
+        httpClient.callAsync("", METHOD_POST, new HashMap<String, String>(), callTemplate, serviceCallback);
         verify(serviceCallback).onCallFailed(exception);
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
-        verify(log).setToffset(now - logAbsoluteTime);
-        verify(log).setToffset(logAbsoluteTime);
     }
 
     @Test
@@ -285,19 +282,19 @@ public class IngestionHttpTest {
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Mock ingestion to fail on saturated executor in AsyncTask. */
-        IngestionHttp.Call call = mock(IngestionHttp.Call.class);
-        whenNew(IngestionHttp.Call.class).withAnyArguments().thenReturn(call);
+        DefaultHttpClient.Call call = mock(DefaultHttpClient.Call.class);
+        whenNew(DefaultHttpClient.Call.class).withAnyArguments().thenReturn(call);
         RejectedExecutionException exception = new RejectedExecutionException();
         when(call.executeOnExecutor(any(Executor.class))).thenThrow(exception);
-        IngestionHttp httpClient = new IngestionHttp(mock(LogSerializer.class));
+        DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test. */
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertNotNull(httpClient.sendAsync("", UUID.randomUUID(), mock(LogContainer.class), serviceCallback));
+        assertNotNull(httpClient.callAsync("", "", new HashMap<String, String>(), mock(HttpClient.CallTemplate.class), serviceCallback));
 
         /* Verify the callback call from "main" thread. */
         semaphore.acquireUninterruptibly();
         verify(serviceCallback).onCallFailed(exception);
-        verify(serviceCallback, never()).onCallSucceeded();
+        verify(serviceCallback, never()).onCallSucceeded(notNull(String.class));
     }
 }

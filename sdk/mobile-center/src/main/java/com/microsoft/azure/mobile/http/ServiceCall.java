@@ -1,4 +1,4 @@
-package com.microsoft.azure.mobile.ingestion;
+package com.microsoft.azure.mobile.http;
 
 public interface ServiceCall {
 
