@@ -24,6 +24,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
@@ -166,5 +167,30 @@ public class AbstractMobileCenterServiceTest {
     @Test
     public void getGroupName() {
         Assert.assertEquals("group_test", service.getGroupName());
+    }
+
+    @Test
+    public void optionalGroup() {
+        service = new AbstractMobileCenterService() {
+            @Override
+            protected String getGroupName() {
+                return null;
+            }
+
+            @Override
+            protected String getServiceName() {
+                return "Test";
+            }
+
+            @Override
+            protected String getLoggerTag() {
+                return "TestLog";
+            }
+        };
+        Channel channel = mock(Channel.class);
+        service.onChannelReady(mock(Context.class), channel);
+        service.setInstanceEnabled(false);
+        service.setInstanceEnabled(true);
+        verifyZeroInteractions(channel);
     }
 }
