@@ -111,7 +111,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     }
 
     @Override
-    public synchronized void onChannelReady(@NonNull Context context, @NonNull Channel channel) {
+    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         String groupName = getGroupName();
         if (groupName != null) {
             channel.removeGroup(groupName);

@@ -137,7 +137,7 @@ public class AbstractMobileCenterServiceTest {
     @Test
     public void onChannelReadyEnabledThenDisable() {
         Channel channel = mock(Channel.class);
-        service.onChannelReady(mock(Context.class), channel);
+        service.onStarted(mock(Context.class), "", channel);
         verify(channel).removeGroup(service.getGroupName());
         verify(channel).addGroup(service.getGroupName(), service.getTriggerCount(), service.getTriggerInterval(), service.getTriggerMaxParallelRequests(), service.getChannelListener());
         verifyNoMoreInteractions(channel);
@@ -153,7 +153,7 @@ public class AbstractMobileCenterServiceTest {
     public void onChannelReadyDisabledThenEnable() {
         Channel channel = mock(Channel.class);
         service.setInstanceEnabled(false);
-        service.onChannelReady(mock(Context.class), channel);
+        service.onStarted(mock(Context.class), "", channel);
         verify(channel).removeGroup(service.getGroupName());
         verify(channel).clear(service.getGroupName());
         verifyNoMoreInteractions(channel);
@@ -188,7 +188,7 @@ public class AbstractMobileCenterServiceTest {
             }
         };
         Channel channel = mock(Channel.class);
-        service.onChannelReady(mock(Context.class), channel);
+        service.onStarted(mock(Context.class), "", channel);
         service.setInstanceEnabled(false);
         service.setInstanceEnabled(true);
         verifyZeroInteractions(channel);

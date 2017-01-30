@@ -81,8 +81,8 @@ public class Updates extends AbstractMobileCenterService {
     }
 
     @Override
-    public synchronized void onChannelReady(@NonNull Context context, @NonNull Channel channel) {
-        super.onChannelReady(context, channel);
+    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
+        super.onStarted(context, appSecret, channel);
         checkAndFetchUpdateToken();
     }
 
