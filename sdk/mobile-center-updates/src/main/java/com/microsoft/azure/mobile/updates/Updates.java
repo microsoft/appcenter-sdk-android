@@ -390,7 +390,7 @@ public class Updates extends AbstractMobileCenterService {
         }
 
         /* Check if download successful. */
-        DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
+        DownloadManager downloadManager = (DownloadManager) context.getSystemService(DOWNLOAD_SERVICE);
         Uri uriForDownloadedFile = downloadManager.getUriForDownloadedFile(downloadId);
         if (uriForDownloadedFile != null) {
 
@@ -414,7 +414,7 @@ public class Updates extends AbstractMobileCenterService {
                     MobileCenterLog.error(LOG_TAG, "Could not get application icon", e);
                     return;
                 }
-                Notification.Builder builder = new Notification.Builder(mContext)
+                Notification.Builder builder = new Notification.Builder(context)
                         .setContentTitle(context.getString(R.string.mobile_center_updates_download_successful_notification_title))
                         .setContentText(context.getString(R.string.mobile_center_updates_download_successful_notification_message))
                         .setSmallIcon(icon)
