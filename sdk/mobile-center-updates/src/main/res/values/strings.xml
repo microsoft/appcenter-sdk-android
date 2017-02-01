@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mobile_center_updates_download_successful_notification_title">Application update downloaded.</string>
+    <string name="mobile_center_updates_download_successful_notification_message">Tap to install it now.</string>
+</resources>
