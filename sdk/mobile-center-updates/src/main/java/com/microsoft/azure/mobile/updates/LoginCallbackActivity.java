@@ -27,7 +27,7 @@ public class LoginCallbackActivity extends Activity {
 
         /* Store update token. */
         if (updateToken != null) {
-            Updates.getInstance().storeUpdateToken(this, updateToken);
+            Updates.getInstance().storeUpdateToken(updateToken);
         }
 
         /*
@@ -50,7 +50,10 @@ public class LoginCallbackActivity extends Activity {
             MobileCenterLog.debug(LOG_TAG, "Using restart work around to correctly resume app.");
             startActivity(intent.cloneFilter().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         } else if (isTaskRoot()) {
-            startActivity(getPackageManager().getLaunchIntentForPackage(getPackageName()));
+            Intent launchIntentForPackage = getPackageManager().getLaunchIntentForPackage(getPackageName());
+            if (launchIntentForPackage != null) {
+                startActivity(launchIntentForPackage);
+            }
         }
     }
 }

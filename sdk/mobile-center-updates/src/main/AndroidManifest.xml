@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.microsoft.azure.mobile.updates">
 
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+
     <application>
         <activity
             android:name=".LoginCallbackActivity"
@@ -13,10 +15,17 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
 
                 <data
-                    android:host="AppUpdate"
+                    android:host="updates"
                     android:path="/"
-                    android:scheme="app.update.scheme"/>
+                    android:scheme="mobile.center"/>
             </intent-filter>
         </activity>
+
+        <receiver android:name=".DownloadCompletionReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.DOWNLOAD_COMPLETE"/>
+                <action android:name="android.intent.action.DOWNLOAD_NOTIFICATION_CLICKED"/>
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
