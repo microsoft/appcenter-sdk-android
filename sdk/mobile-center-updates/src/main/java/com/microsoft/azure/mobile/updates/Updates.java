@@ -21,6 +21,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
+import com.microsoft.azure.mobile.AsyncTaskUtils;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.http.DefaultHttpClient;
@@ -467,7 +468,7 @@ public class Updates extends AbstractMobileCenterService {
         /* Check if state did not change. */
         if (mCheckReleaseCallId == releaseCallId) {
             MobileCenterLog.debug(LOG_TAG, "Schedule background version check...");
-            mInspectReleaseTask = new CheckReleaseDetails(releaseDetails).execute();
+            mInspectReleaseTask = AsyncTaskUtils.execute(LOG_TAG, new CheckReleaseDetails(releaseDetails));
         }
     }
 
@@ -531,7 +532,7 @@ public class Updates extends AbstractMobileCenterService {
     synchronized void processCompletedDownload(@NonNull Context context, long downloadId) {
 
         /* Querying download manager and even the start intent violate strict mode so do that in background. */
-        mProcessDownloadCompletionTask = new ProcessDownloadCompletion(context, downloadId).execute();
+        mProcessDownloadCompletionTask = AsyncTaskUtils.execute(LOG_TAG, new ProcessDownloadCompletion(context, downloadId));
     }
 
     /**
