@@ -1,15 +1,20 @@
-package com.microsoft.azure.mobile;
+package com.microsoft.azure.mobile.utils;
 
 import android.os.AsyncTask;
-
-import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import android.support.annotation.VisibleForTesting;
 
 import java.util.concurrent.RejectedExecutionException;
 
 /**
  * AsyncTask utilities.
  */
-public class AsyncTaskUtils {
+public final class AsyncTaskUtils {
+
+    @VisibleForTesting
+    AsyncTaskUtils() {
+
+        /* Hide constructor in utils. */
+    }
 
     /**
      * Execute a task using {@link AsyncTask#THREAD_POOL_EXECUTOR} and fall back
