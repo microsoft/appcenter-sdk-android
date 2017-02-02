@@ -6,7 +6,7 @@
 
     <application>
         <activity
-            android:name=".LoginCallbackActivity"
+            android:name=".DeepLinkActivity"
             android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
