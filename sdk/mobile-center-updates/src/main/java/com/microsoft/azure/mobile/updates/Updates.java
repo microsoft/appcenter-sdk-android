@@ -32,6 +32,7 @@ import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
+import com.microsoft.azure.mobile.utils.UUIDUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.json.JSONException;
@@ -52,6 +53,11 @@ public class Updates extends AbstractMobileCenterService {
      * Used for deep link intent from browser, string field for update token.
      */
     static final String EXTRA_UPDATE_TOKEN = "update_token";
+
+    /**
+     * Used for deep link intent from browser, string field for request identifier.
+     */
+    static final String EXTRA_REQUEST_ID = "request_id";
 
     /**
      * Update service name.
@@ -99,6 +105,11 @@ public class Updates extends AbstractMobileCenterService {
     private static final String PREFERENCE_KEY_UPDATE_TOKEN = PREFERENCE_PREFIX + EXTRA_UPDATE_TOKEN;
 
     /**
+     * Preference key for request identifier to validate deep link intent.
+     */
+    private static final String PREFERENCE_KEY_REQUEST_ID = PREFERENCE_PREFIX + EXTRA_REQUEST_ID;
+
+    /**
      * Preference key to store the last download identifier.
      */
     private static final String PREFERENCE_KEY_DOWNLOAD_ID = PREFERENCE_PREFIX + "download_id";
@@ -138,6 +149,11 @@ public class Updates extends AbstractMobileCenterService {
      * In memory token if we receive deep link intent before onStart.
      */
     private String mBeforeStartUpdateToken;
+
+    /**
+     * In memory request identifier if we receive deep link intent before onStart.
+     */
+    private String mBeforeStartRequestId;
 
     /**
      * Current API call identifier to check latest release from server, used for state check.
@@ -218,7 +234,7 @@ public class Updates extends AbstractMobileCenterService {
      * @return notification identifier for downloads.
      */
     private static int getNotificationId() {
-        return (Updates.class.getName()).hashCode();
+        return Updates.class.getName().hashCode();
     }
 
     @Override
@@ -305,10 +321,11 @@ public class Updates extends AbstractMobileCenterService {
         if (mForegroundActivity != null) {
 
             /* If we received the update token before Mobile Center was started/enabled, process it now. */
-            if (mBeforeStartUpdateToken != null) {
+            if (mBeforeStartUpdateToken != null && mBeforeStartRequestId != null) {
                 MobileCenterLog.debug(LOG_TAG, "Processing update token we kept in memory before onStarted");
-                storeUpdateToken(mBeforeStartUpdateToken);
+                storeUpdateToken(mBeforeStartUpdateToken, mBeforeStartRequestId);
                 mBeforeStartUpdateToken = null;
+                mBeforeStartRequestId = null;
                 return;
             }
 
@@ -343,18 +360,21 @@ public class Updates extends AbstractMobileCenterService {
                 return;
             }
             MobileCenterLog.debug(LOG_TAG, "No token, need to open browser to login.");
-            String baseUrl = DEFAULT_LOGIN_PAGE_URL + "?package=" + mForegroundActivity.getPackageName();
+            String url = DEFAULT_LOGIN_PAGE_URL + "?package=" + mForegroundActivity.getPackageName();
+            String requestId = UUIDUtils.randomUUID().toString();
+            url += "&request_id=" + requestId;
+            StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
             Intent intent = new Intent(Intent.ACTION_VIEW);
 
             /* Try to force using Chrome first, we want fall back url support for intent. */
             try {
-                intent.setData(Uri.parse(GOOGLE_CHROME_URL_SCHEME + baseUrl));
+                intent.setData(Uri.parse(GOOGLE_CHROME_URL_SCHEME + url));
                 mForegroundActivity.startActivity(intent);
             } catch (ActivityNotFoundException e) {
 
                 /* Fall back using a browser but we don't want a chooser U.I. to pop. */
                 MobileCenterLog.debug(LOG_TAG, "Google Chrome not found, pick another one.");
-                intent.setData(Uri.parse(GENERIC_BROWSER_URL_SCHEME + baseUrl));
+                intent.setData(Uri.parse(GENERIC_BROWSER_URL_SCHEME + url));
                 List<ResolveInfo> browsers = mForegroundActivity.getPackageManager().queryIntentActivities(intent, 0);
                 if (browsers.isEmpty()) {
                     MobileCenterLog.error(LOG_TAG, "No browser found on device, abort login.");
@@ -414,17 +434,23 @@ public class Updates extends AbstractMobileCenterService {
      * how do we protect server call to get the key in the first place?
      * Even having the encryption key temporarily in memory is risky as that can be heap dumped.
      */
-    synchronized void storeUpdateToken(@NonNull String updateToken) {
+    synchronized void storeUpdateToken(@NonNull String updateToken, @NonNull String requestId) {
 
         /* Keep token for later if we are not started and enabled yet. */
         if (mContext == null) {
             MobileCenterLog.debug(LOG_TAG, "Update token received before onStart, keep it in memory.");
             mBeforeStartUpdateToken = updateToken;
-        } else if (isInstanceEnabled()) {
+            mBeforeStartRequestId = requestId;
+        } else if (!isInstanceEnabled()) {
+            MobileCenterLog.warn(LOG_TAG, "Ignoring update token as Updates are disabled.");
+        } else if (requestId.equals(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
             StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, updateToken);
+            StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
             MobileCenterLog.debug(LOG_TAG, "Stored update token.");
             cancelPreviousTasks();
             getLatestReleaseDetails(updateToken);
+        } else {
+            MobileCenterLog.warn(LOG_TAG, "Ignoring update token as requestId is invalid.");
         }
     }
 

@@ -6,6 +6,7 @@ import android.os.Bundle;
 
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
+import static com.microsoft.azure.mobile.updates.Updates.EXTRA_REQUEST_ID;
 import static com.microsoft.azure.mobile.updates.Updates.EXTRA_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.updates.Updates.LOG_TAG;
 
@@ -17,19 +18,16 @@ public class DeepLinkActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
 
-        /*
-         * Get update token from intent.
-         * TODO protect intent: verifying signature with server public key in another field seems like a good way.
-         * But it would not protect against spamming intents to cause app to use CPU to verify fake signatures.
-         */
+        /* Check intent. */
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
         String updateToken = intent.getStringExtra(EXTRA_UPDATE_TOKEN);
+        String requestId = intent.getStringExtra(EXTRA_REQUEST_ID);
         MobileCenterLog.debug(LOG_TAG, getLocalClassName() + ".getIntent()=" + intent);
 
-        /* Store update token. */
-        if (updateToken != null) {
-            Updates.getInstance().storeUpdateToken(updateToken);
+        /* Store update token if the parameters are correct. */
+        if (updateToken != null && requestId != null) {
+            Updates.getInstance().storeUpdateToken(updateToken, requestId);
         }
 
         /*
