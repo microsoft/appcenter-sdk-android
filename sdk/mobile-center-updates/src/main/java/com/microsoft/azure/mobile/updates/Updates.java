@@ -551,12 +551,13 @@ public class Updates extends AbstractMobileCenterService {
     /**
      * Post notification about a completed download if state did not change.
      *
+     * @param context      context.
      * @param task         task that prepared the notification to check state.
      * @param notification notification to post.
      */
-    private synchronized void notifyDownload(ProcessDownloadCompletion task, Notification notification) {
+    private synchronized void notifyDownload(Context context, ProcessDownloadCompletion task, Notification notification) {
         if (task == mProcessDownloadCompletionTask) {
-            NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.notify(getNotificationId(), notification);
         }
     }
@@ -717,7 +718,7 @@ public class Updates extends AbstractMobileCenterService {
                         notification = builder.getNotification();
                     }
                     notification.flags |= Notification.FLAG_AUTO_CANCEL;
-                    notifyDownload(this, notification);
+                    notifyDownload(mContext, this, notification);
                 }
             } else {
                 MobileCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId);
