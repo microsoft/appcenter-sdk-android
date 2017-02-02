@@ -140,6 +140,7 @@ public class Updates extends AbstractMobileCenterService {
 
     /**
      * Current API call identifier to check latest release from server, used for state check.
+     * We can't use the ServiceCall object for that purpose because of a chicken and egg problem.
      */
     private Object mCheckReleaseCallId;
 
@@ -264,8 +265,6 @@ public class Updates extends AbstractMobileCenterService {
             mBrowserOpened = false;
             cancelPreviousTasks();
             StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
-            StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
-            StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
         }
     }
 
@@ -294,6 +293,8 @@ public class Updates extends AbstractMobileCenterService {
             NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.cancel(getNotificationId());
         }
+        StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
     }
 
     /**
@@ -511,13 +512,13 @@ public class Updates extends AbstractMobileCenterService {
         /* Nothing to do if already in foreground. */
         if (mForegroundActivity == null) {
 
-            /* Start launcher activity. */
-            PackageManager packageManager = context.getPackageManager();
-            Intent resumeIntent = packageManager.getLaunchIntentForPackage(context.getPackageName());
-            if (resumeIntent != null) {
-                resumeIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(resumeIntent);
-            }
+            /*
+             * Use our deep link activity with no parameter just to resume app correctly
+             * without duplicating activities or clearing task.
+             */
+            Intent intent = new Intent(context, DeepLinkActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
         }
     }
 
@@ -703,10 +704,10 @@ public class Updates extends AbstractMobileCenterService {
                         return null;
                     }
                     Notification.Builder builder = new Notification.Builder(mContext)
+                            .setTicker(mContext.getString(R.string.mobile_center_updates_download_successful_notification_title))
                             .setContentTitle(mContext.getString(R.string.mobile_center_updates_download_successful_notification_title))
                             .setContentText(mContext.getString(R.string.mobile_center_updates_download_successful_notification_message))
                             .setSmallIcon(icon)
-                            .setWhen(System.currentTimeMillis())
                             .setContentIntent(PendingIntent.getActivities(mContext, 0, new Intent[]{intent}, 0));
                     Notification notification;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
