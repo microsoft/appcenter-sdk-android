@@ -7,6 +7,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -17,6 +18,7 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
@@ -115,7 +117,12 @@ public class Updates extends AbstractMobileCenterService {
     private static final String PREFERENCE_KEY_DOWNLOAD_ID = PREFERENCE_PREFIX + "download_id";
 
     /**
-     * Preference key to store the last download file location on download manager.
+     * Preference key to store the last download file location on download manager if completed,
+     * empty string while download is in progress, null if we launched install U.I.
+     * If this is null and {@link #PREFERENCE_KEY_DOWNLOAD_ID} is not null, it's to remember we
+     * downloaded a file for later removal (when we disable SDK or prepare a new download).
+     * <p>
+     * Rationale is that we keep the file in case the user chooses to install it from downloads U.I.
      */
     private static final String PREFERENCE_KEY_DOWNLOAD_URI = PREFERENCE_PREFIX + "download_uri";
 
@@ -175,6 +182,17 @@ public class Updates extends AbstractMobileCenterService {
      * Current task to process download completion.
      */
     private AsyncTask<?, ?, ?> mProcessDownloadCompletionTask;
+
+    /**
+     * True when update workflow reached final state.
+     * This can be reset to check update again when app restarts.
+     */
+    private boolean mWorkflowCompleted;
+
+    /**
+     * Cache launch intent not to resolve it every time from package manager in every onCreate call.
+     */
+    private String mLauncherActivityClassName;
 
     /**
      * Get shared instance.
@@ -261,6 +279,31 @@ public class Updates extends AbstractMobileCenterService {
     }
 
     @Override
+    public synchronized void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+
+        /* Resolve launcher class name only once, use empty string to cache a failed resolution. */
+        if (mLauncherActivityClassName == null) {
+            mLauncherActivityClassName = "";
+            PackageManager packageManager = activity.getPackageManager();
+            Intent intent = packageManager.getLaunchIntentForPackage(activity.getPackageName());
+            if (intent != null) {
+                ComponentName component = intent.resolveActivity(packageManager);
+                if (component != null) {
+                    mLauncherActivityClassName = component.getClassName();
+                }
+            }
+        }
+
+        /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
+        if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
+            MobileCenterLog.info(LOG_TAG, "Launcher activity restarted.");
+            if (mWorkflowCompleted && StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI) == null) {
+                mWorkflowCompleted = false;
+            }
+        }
+    }
+
+    @Override
     public synchronized void onActivityResumed(Activity activity) {
         mForegroundActivity = activity;
         resumeUpdateWorkflow();
@@ -318,7 +361,7 @@ public class Updates extends AbstractMobileCenterService {
      * Method that triggers the update workflow or proceed to the next step.
      */
     private synchronized void resumeUpdateWorkflow() {
-        if (mForegroundActivity != null) {
+        if (mForegroundActivity != null && !mWorkflowCompleted) {
 
             /* If we received the update token before Mobile Center was started/enabled, process it now. */
             if (mBeforeStartUpdateToken != null && mBeforeStartRequestId != null) {
@@ -330,17 +373,25 @@ public class Updates extends AbstractMobileCenterService {
             }
 
             /* If we have a download ready but we were in background, pop install UI now. */
-            try {
-                Uri apkUri = Uri.parse(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI));
-                StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
-                MobileCenterLog.debug(LOG_TAG, "Now in foreground, remove notification and start install for APK uri=" + apkUri);
-                NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-                notificationManager.cancel(getNotificationId());
-                mForegroundActivity.startActivity(getInstallIntent(apkUri));
+            String downloadUri = StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI);
+            if ("".equals(downloadUri)) {
+                MobileCenterLog.verbose(LOG_TAG, "Download is still in progress...");
                 return;
-            } catch (RuntimeException e) {
-                MobileCenterLog.verbose(LOG_TAG, "No APK downloaded or user ignored it, proceed state check.");
-            }
+            } else if (downloadUri != null)
+                try {
+                    Uri apkUri = Uri.parse(downloadUri);
+                    MobileCenterLog.debug(LOG_TAG, "Now in foreground, remove notification and start install for APK uri=" + apkUri);
+                    NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+                    notificationManager.cancel(getNotificationId());
+                    mForegroundActivity.startActivity(getInstallIntent(apkUri));
+                    completeWorkflow();
+                    return;
+                } catch (RuntimeException e) {
+
+                    /* Cleanup on exception and resume update workflow. */
+                    MobileCenterLog.warn(LOG_TAG, "Download uri was invalid", e);
+                    cancelPreviousTasks();
+                }
 
             /* Nothing more to do for now if we are already calling API to check release. */
             if (mCheckReleaseCallId != null) {
@@ -428,6 +479,16 @@ public class Updates extends AbstractMobileCenterService {
         }
     }
 
+    /**
+     * Reset all variables that matter to restart checking a new release on launcher activity restart.
+     */
+    private synchronized void completeWorkflow() {
+        StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        mWorkflowCompleted = true;
+        mCheckReleaseApiCall = null;
+        mCheckReleaseCallId = null;
+    }
+
     /*
      * Store update token and possibly trigger application update check.
      * TODO encrypt token, but where to store encryption key? If it's retrieved from server,
@@ -473,7 +534,7 @@ public class Updates extends AbstractMobileCenterService {
             @Override
             public void onCallSucceeded(String payload) {
                 try {
-                    compareVersions(releaseCallId, ReleaseDetails.parse(payload));
+                    handleApiCallSuccess(releaseCallId, ReleaseDetails.parse(payload));
                 } catch (JSONException e) {
                     onCallFailed(e);
                 }
@@ -481,20 +542,28 @@ public class Updates extends AbstractMobileCenterService {
 
             @Override
             public void onCallFailed(Exception e) {
-                MobileCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
+                handleApiCallFailure(releaseCallId, e);
             }
         });
+    }
+
+    private synchronized void handleApiCallFailure(Object releaseCallId, Exception e) {
+
+        /* Check if state did not change. */
+        if (mCheckReleaseCallId == releaseCallId) {
+            MobileCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
+        }
     }
 
     /**
      * Query package manager and compute hash in background.
      */
-    private synchronized void compareVersions(Object releaseCallId, final ReleaseDetails releaseDetails) {
+    private synchronized void handleApiCallSuccess(Object releaseCallId, final ReleaseDetails releaseDetails) {
 
         /* Check if state did not change. */
         if (mCheckReleaseCallId == releaseCallId) {
-            MobileCenterLog.debug(LOG_TAG, "Schedule background version check...");
-            mInspectReleaseTask = AsyncTaskUtils.execute(LOG_TAG, new CheckReleaseDetails(releaseDetails));
+            MobileCenterLog.debug(LOG_TAG, "Schedule background version/hash check...");
+            mInspectReleaseTask = AsyncTaskUtils.execute(LOG_TAG, new InspectReleaseTask(releaseDetails));
         }
     }
 
@@ -505,7 +574,7 @@ public class Updates extends AbstractMobileCenterService {
      * @param task              current task to check race conditions.
      * @param downloadRequestId download identifier.
      */
-    private synchronized void storeDownloadRequestId(DownloadManager downloadManager, CheckReleaseDetails task, long downloadRequestId) {
+    private synchronized void storeDownloadRequestId(DownloadManager downloadManager, InspectReleaseTask task, long downloadRequestId) {
 
         /* Check for if state changed and task not canceled in time. */
         if (mInspectReleaseTask == task) {
@@ -521,6 +590,7 @@ public class Updates extends AbstractMobileCenterService {
 
             /* Store new download identifier. */
             StorageHelper.PreferencesStorage.putLong(PREFERENCE_KEY_DOWNLOAD_ID, downloadRequestId);
+            StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOAD_URI, "");
         } else {
 
             /* State changed quickly, cancel download. */
@@ -558,7 +628,7 @@ public class Updates extends AbstractMobileCenterService {
     synchronized void processCompletedDownload(@NonNull Context context, long downloadId) {
 
         /* Querying download manager and even the start intent violate strict mode so do that in background. */
-        mProcessDownloadCompletionTask = AsyncTaskUtils.execute(LOG_TAG, new ProcessDownloadCompletion(context, downloadId));
+        mProcessDownloadCompletionTask = AsyncTaskUtils.execute(LOG_TAG, new ProcessDownloadCompletionTask(context, downloadId));
     }
 
     /**
@@ -568,7 +638,7 @@ public class Updates extends AbstractMobileCenterService {
      * @return foreground activity if any, if state is valid.
      * @throws IllegalStateException if state changed.
      */
-    private synchronized Activity checkStateIsValidFor(ProcessDownloadCompletion task) throws IllegalStateException {
+    private synchronized Activity checkStateIsValidFor(ProcessDownloadCompletionTask task) throws IllegalStateException {
         if (task == mProcessDownloadCompletionTask) {
             return mForegroundActivity;
         }
@@ -582,7 +652,7 @@ public class Updates extends AbstractMobileCenterService {
      * @param task         task that prepared the notification to check state.
      * @param notification notification to post.
      */
-    private synchronized void notifyDownload(Context context, ProcessDownloadCompletion task, Notification notification) {
+    private synchronized void notifyDownload(Context context, ProcessDownloadCompletionTask task, Notification notification) {
         if (task == mProcessDownloadCompletionTask) {
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.notify(getNotificationId(), notification);
@@ -592,7 +662,7 @@ public class Updates extends AbstractMobileCenterService {
     /**
      * Inspecting release details can take some time, especially if we have to compute a hash.
      */
-    private class CheckReleaseDetails extends AsyncTask<Void, Void, Void> {
+    private class InspectReleaseTask extends AsyncTask<Void, Void, Void> {
 
         /**
          * Release details to check.
@@ -604,7 +674,7 @@ public class Updates extends AbstractMobileCenterService {
          *
          * @param releaseDetails release details associated to this check.
          */
-        CheckReleaseDetails(ReleaseDetails releaseDetails) {
+        InspectReleaseTask(ReleaseDetails releaseDetails) {
             mReleaseDetails = releaseDetails;
         }
 
@@ -651,7 +721,7 @@ public class Updates extends AbstractMobileCenterService {
     /**
      * Inspect a completed download, this uses APIs that would trigger strict mode violation if used in U.I. thread.
      */
-    private class ProcessDownloadCompletion extends AsyncTask<Void, Void, Notification> {
+    private class ProcessDownloadCompletionTask extends AsyncTask<Void, Void, Notification> {
 
         /**
          * Context.
@@ -669,7 +739,7 @@ public class Updates extends AbstractMobileCenterService {
          * @param context    context.
          * @param downloadId download identifier.
          */
-        ProcessDownloadCompletion(Context context, long downloadId) {
+        ProcessDownloadCompletionTask(Context context, long downloadId) {
             mContext = context;
             mDownloadId = downloadId;
         }
@@ -716,6 +786,7 @@ public class Updates extends AbstractMobileCenterService {
                     /* This start call triggers strict mode violation in U.I. thread so it needs to be done here, and we can't synchronize anymore... */
                     MobileCenterLog.debug(LOG_TAG, "Application is in foreground, launch install UI now.");
                     activity.startActivity(intent);
+                    completeWorkflow();
                 } else {
 
                     /* Remember we have a download ready. */
