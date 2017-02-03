@@ -380,10 +380,7 @@ public class Updates extends AbstractMobileCenterService {
         long downloadId = StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID);
         if (downloadId > 0) {
             MobileCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
-            DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
-            downloadManager.remove(downloadId);
-            NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-            notificationManager.cancel(getNotificationId());
+            removeDownload(downloadId);
         }
         StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
@@ -714,6 +711,33 @@ public class Updates extends AbstractMobileCenterService {
         if (task == mProcessDownloadCompletionTask) {
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.notify(getNotificationId(), notification);
+        }
+    }
+
+    /**
+     * Remove a previously downloaded file and any notification.
+     */
+    private void removeDownload(long downloadId) {
+        MobileCenterLog.debug(LOG_TAG, "Delete previous notification downloadId=" + downloadId);
+        NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(getNotificationId());
+        AsyncTaskUtils.execute(LOG_TAG, new RemoveDownloadTask(), downloadId);
+    }
+
+    /**
+     * Removing a download violates strict mode in U.I. thread.
+     */
+    private class RemoveDownloadTask extends AsyncTask<Long, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Long... params) {
+
+            /* This special cleanup task does not require any cancellation on state change as a previous download will never be reused. */
+            Long downloadId = params[0];
+            MobileCenterLog.debug(LOG_TAG, "Delete previous download downloadId=" + downloadId);
+            DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
+            downloadManager.remove(downloadId);
+            return null;
         }
     }
 
