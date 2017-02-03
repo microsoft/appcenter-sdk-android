@@ -32,6 +32,7 @@ import com.microsoft.azure.mobile.http.HttpClientRetryer;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
+import com.microsoft.azure.mobile.utils.HashUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
@@ -77,19 +78,49 @@ public class Updates extends AbstractMobileCenterService {
     private static final String GOOGLE_CHROME_URL_SCHEME = "googlechrome://navigate?url=";
 
     /**
-     * Scheme used to open URLs in any browser. TODO change to https once we have a real server.
+     * Host (and possibly port), to open browser.
      */
-    private static final String GENERIC_BROWSER_URL_SCHEME = "http://";
+    private static final String DEFAULT_LOGIN_HOST = "http://10.123.212.163:8080";
 
     /**
-     * URL without scheme to open browser to login.
+     * Base URL to call server to check latest release.
      */
-    private static final String DEFAULT_LOGIN_PAGE_URL = "10.123.212.163:8080";
+    private static final String DEFAULT_CHECK_UPDATE_SERVER_URL = "http://10.123.212.163:8080";
 
     /**
-     * Full URL to call server to check latest release.
+     * Login URL path. Trailing slash matters to avoid redirection that loses query string.
      */
-    private static final String CHECK_UPDATE_SERVER_URL = "http://10.123.212.163:8080/apps/%s/releases/latest";
+    private static final String LOGIN_PAGE_URL_PATH = "/apps/%s/update-setup/";
+
+    /**
+     * Check latest release API URL path.
+     */
+    private static final String CHECK_UPDATE_URL_PATH = "/apps/%s/releases/latest";
+
+    /**
+     * API parameter for release hash.
+     */
+    private static final String PARAMETER_RELEASE_HASH = "release_hash";
+
+    /**
+     * API parameter for redirect URL.
+     */
+    private static final String PARAMETER_REDIRECT_ID = "redirect_id";
+
+    /**
+     * API parameter for request identifier.
+     */
+    private static final String PARAMETER_REQUEST_ID = "request_id";
+
+    /**
+     * API parameter for platform.
+     */
+    private static final String PARAMETER_PLATFORM = "platform";
+
+    /**
+     * API parameter value for this platform.
+     */
+    private static final String PARAMETER_PLATFORM_VALUE = "Android";
 
     /**
      * Header used to pass token when checking latest release.
@@ -323,6 +354,7 @@ public class Updates extends AbstractMobileCenterService {
 
             /* Clean all state on disabling, cancel everything. */
             mBrowserOpened = false;
+            mWorkflowCompleted = false;
             cancelPreviousTasks();
             StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
         }
@@ -410,22 +442,36 @@ public class Updates extends AbstractMobileCenterService {
             if (mBrowserOpened) {
                 return;
             }
-            MobileCenterLog.debug(LOG_TAG, "No token, need to open browser to login.");
-            String url = DEFAULT_LOGIN_PAGE_URL + "?package=" + mForegroundActivity.getPackageName();
+
+            /* Generate request identifier and store it. */
             String requestId = UUIDUtils.randomUUID().toString();
-            url += "&request_id=" + requestId;
             StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
-            Intent intent = new Intent(Intent.ACTION_VIEW);
+
+            /* Compute hash. */
+            String releaseHash;
+            try {
+                releaseHash = computeHash(mContext);
+            } catch (PackageManager.NameNotFoundException e) {
+                MobileCenterLog.error(LOG_TAG, "Could not get package info", e);
+                return;
+            }
+            String url = DEFAULT_LOGIN_HOST;
+            url += String.format(LOGIN_PAGE_URL_PATH, mAppSecret);
+            url += "?" + PARAMETER_RELEASE_HASH + "=" + releaseHash;
+            url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
+            url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
+            url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+            MobileCenterLog.debug(LOG_TAG, "No token, need to open browser to login url=" + url);
 
             /* Try to force using Chrome first, we want fall back url support for intent. */
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(GOOGLE_CHROME_URL_SCHEME + url));
             try {
-                intent.setData(Uri.parse(GOOGLE_CHROME_URL_SCHEME + url));
                 mForegroundActivity.startActivity(intent);
             } catch (ActivityNotFoundException e) {
 
                 /* Fall back using a browser but we don't want a chooser U.I. to pop. */
                 MobileCenterLog.debug(LOG_TAG, "Google Chrome not found, pick another one.");
-                intent.setData(Uri.parse(GENERIC_BROWSER_URL_SCHEME + url));
+                intent.setData(Uri.parse(url));
                 List<ResolveInfo> browsers = mForegroundActivity.getPackageManager().queryIntentActivities(intent, 0);
                 if (browsers.isEmpty()) {
                     MobileCenterLog.error(LOG_TAG, "No browser found on device, abort login.");
@@ -479,6 +525,18 @@ public class Updates extends AbstractMobileCenterService {
         }
     }
 
+    @NonNull
+    private String computeHash(@NonNull Context context) throws PackageManager.NameNotFoundException {
+        PackageManager packageManager = context.getPackageManager();
+        PackageInfo packageInfo = packageManager.getPackageInfo(context.getPackageName(), 0);
+        return computeHash(context, packageInfo);
+    }
+
+    @NonNull
+    private String computeHash(@NonNull Context context, @NonNull PackageInfo packageInfo) {
+        return HashUtils.sha256(context.getPackageName() + ":" + packageInfo.versionName + ":" + packageInfo.versionCode);
+    }
+
     /**
      * Reset all variables that matter to restart checking a new release on launcher activity restart.
      */
@@ -525,7 +583,7 @@ public class Updates extends AbstractMobileCenterService {
         HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
         HttpClient httpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
-        String url = String.format(CHECK_UPDATE_SERVER_URL, mAppSecret);
+        String url = DEFAULT_CHECK_UPDATE_SERVER_URL + String.format(CHECK_UPDATE_URL_PATH, mAppSecret);
         Map<String, String> headers = new HashMap<>();
         headers.put(HEADER_API_TOKEN, updateToken);
         final Object releaseCallId = mCheckReleaseCallId = new Object();
@@ -683,38 +741,38 @@ public class Updates extends AbstractMobileCenterService {
 
             /* Check minimum API level TODO not yet available from JSON. */
 
-            /* Check version code. */
-            MobileCenterLog.debug(LOG_TAG, "Check version code.");
-            boolean isMoreRecent = false;
+            /* Check version code is equals or higher and hash is different. */
+            MobileCenterLog.debug(LOG_TAG, "Check version code and hash.");
             PackageManager packageManager = mContext.getPackageManager();
             try {
                 PackageInfo packageInfo = packageManager.getPackageInfo(mContext.getPackageName(), 0);
-                if (mReleaseDetails.getVersion() > packageInfo.versionCode) {
-                    MobileCenterLog.debug(LOG_TAG, "Latest release version code is higher.");
-                    isMoreRecent = true;
-                } else if (mReleaseDetails.getVersion() == packageInfo.versionCode) {
+                if (isMoreRecent(packageInfo)) {
 
-                    /* Check hash code to see if it's a different build. TODO */
-                    MobileCenterLog.debug(LOG_TAG, "Same version code, need to check hash.");
-                    isMoreRecent = false;
+                    /* Download file. */
+                    Uri downloadUrl = mReleaseDetails.getDownloadUrl();
+                    MobileCenterLog.debug(LOG_TAG, "Start downloading new release, url=" + downloadUrl);
+                    DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
+                    DownloadManager.Request request = new DownloadManager.Request(downloadUrl);
+                    long downloadRequestId = downloadManager.enqueue(request);
+                    storeDownloadRequestId(downloadManager, this, downloadRequestId);
+                    return null;
+                } else {
+                    MobileCenterLog.debug(LOG_TAG, "Latest server version is not more recent.");
                 }
             } catch (PackageManager.NameNotFoundException e) {
                 MobileCenterLog.error(LOG_TAG, "Could not compare versions.", e);
-                return null;
             }
 
-            /* Start download if build compatible with device and more recent. */
-            if (isMoreRecent) {
-
-                /* Download file. */
-                Uri downloadUrl = mReleaseDetails.getDownloadUrl();
-                MobileCenterLog.debug(LOG_TAG, "Start downloading new release, url=" + downloadUrl);
-                DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
-                DownloadManager.Request request = new DownloadManager.Request(downloadUrl);
-                long downloadRequestId = downloadManager.enqueue(request);
-                storeDownloadRequestId(downloadManager, this, downloadRequestId);
-            }
+            /* If download was not started, complete workflow. */
+            completeWorkflow();
             return null;
+        }
+
+        private boolean isMoreRecent(PackageInfo packageInfo) throws PackageManager.NameNotFoundException {
+            if (mReleaseDetails.getVersion() == packageInfo.versionCode) {
+                return !mReleaseDetails.getFingerprint().equals(computeHash(mContext));
+            }
+            return mReleaseDetails.getVersion() > packageInfo.versionCode;
         }
     }
 
