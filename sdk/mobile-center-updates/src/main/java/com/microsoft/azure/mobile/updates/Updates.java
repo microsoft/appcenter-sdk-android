@@ -718,7 +718,7 @@ public class Updates extends AbstractMobileCenterService {
     }
 
     /**
-     * Inspecting release details can take some time, especially if we have to compute a hash.
+     * Inspecting release details, the download manager API violates strict mode in U.I. thread.
      */
     private class InspectReleaseTask extends AsyncTask<Void, Void, Void> {
 
