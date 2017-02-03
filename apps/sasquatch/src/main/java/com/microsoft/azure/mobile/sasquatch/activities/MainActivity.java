@@ -94,7 +94,6 @@ public class MainActivity extends AppCompatActivity {
             editor.apply();
             appSecret = sSharedPreferences.getString(APP_SECRET_KEY, null);
         }
-        Toast.makeText(this, String.format(getString(R.string.app_secret_toast), appSecret), Toast.LENGTH_SHORT).show();
         return appSecret;
     }
 
