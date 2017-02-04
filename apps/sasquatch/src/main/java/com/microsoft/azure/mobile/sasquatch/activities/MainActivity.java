@@ -50,6 +50,8 @@ public class MainActivity extends AppCompatActivity {
         }
         MobileCenter.setLogLevel(Log.VERBOSE);
         Crashes.setListener(getCrashesListener());
+        Updates.setLoginUrl("http://10.123.212.163:8080");
+        Updates.setApiUrl("http://10.123.212.163:8080");
         MobileCenter.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class, Updates.class);
 
         Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());

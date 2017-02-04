@@ -82,14 +82,14 @@ public class Updates extends AbstractMobileCenterService {
     private static final String GOOGLE_CHROME_URL_SCHEME = "googlechrome://navigate?url=";
 
     /**
-     * Host (and possibly port), to open browser.
+     * Base URL used to open browser to login.
      */
-    private static final String DEFAULT_LOGIN_HOST = "http://10.123.212.163:8080";
+    private static final String DEFAULT_LOGIN_URL = "https://install.mobile.azure.com";
 
     /**
      * Base URL to call server to check latest release.
      */
-    private static final String DEFAULT_CHECK_UPDATE_SERVER_URL = "http://10.123.212.163:8080";
+    private static final String DEFAULT_API_URL = "https://api.mobile.azure.com";
 
     /**
      * Login URL path. Trailing slash matters to avoid redirection that loses query string.
@@ -99,7 +99,7 @@ public class Updates extends AbstractMobileCenterService {
     /**
      * Check latest release API URL path.
      */
-    private static final String CHECK_UPDATE_URL_PATH = "/apps/%s/releases/latest";
+    private static final String CHECK_UPDATE_URL_PATH = "/sdk/apps/%s/releases/latest";
 
     /**
      * API parameter for release hash.
@@ -168,6 +168,16 @@ public class Updates extends AbstractMobileCenterService {
     private static Updates sInstance = null;
 
     /**
+     * Current login base URL.
+     */
+    private String mLoginUrl = DEFAULT_LOGIN_URL;
+
+    /**
+     * Current API base URL.
+     */
+    private String mApiUrl = DEFAULT_API_URL;
+
+    /**
      * Application context, if not null it means onStart was called.
      */
     private Context mContext;
@@ -233,6 +243,7 @@ public class Updates extends AbstractMobileCenterService {
      * This can be reset to check update again when app restarts.
      */
     private boolean mWorkflowCompleted;
+
     /**
      * Cache launch intent not to resolve it every time from package manager in every onCreate call.
      */
@@ -272,6 +283,24 @@ public class Updates extends AbstractMobileCenterService {
      */
     public static void setEnabled(boolean enabled) {
         getInstance().setInstanceEnabled(enabled);
+    }
+
+    /**
+     * Change the base URL opened in the browser to get update token from user login information.
+     *
+     * @param loginUrl login base URL.
+     */
+    public static void setLoginUrl(String loginUrl) {
+        getInstance().setInstanceLoginUrl(loginUrl);
+    }
+
+    /**
+     * Change the base URL used to make API calls.
+     *
+     * @param apiUrl API base URL.
+     */
+    public static void setApiUrl(String apiUrl) {
+        getInstance().setInstanceApiUrl(apiUrl);
     }
 
     /**
@@ -341,8 +370,9 @@ public class Updates extends AbstractMobileCenterService {
         /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
         if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
             MobileCenterLog.info(LOG_TAG, "Launcher activity restarted.");
-            if (mWorkflowCompleted && StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI) == null) {
+            if (StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI) == null) {
                 mWorkflowCompleted = false;
+                mBrowserOpened = false;
             }
         }
     }
@@ -371,6 +401,20 @@ public class Updates extends AbstractMobileCenterService {
             cancelPreviousTasks();
             StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
         }
+    }
+
+    /**
+     * Implements {@link #setLoginUrl(String)}.
+     */
+    private synchronized void setInstanceLoginUrl(String loginUrl) {
+        mLoginUrl = loginUrl;
+    }
+
+    /**
+     * Implements {@link #setApiUrl(String)}}.
+     */
+    private synchronized void setInstanceApiUrl(String apiUrl) {
+        mApiUrl = apiUrl;
     }
 
     /**
@@ -473,7 +517,7 @@ public class Updates extends AbstractMobileCenterService {
                 MobileCenterLog.error(LOG_TAG, "Could not get package info", e);
                 return;
             }
-            String url = DEFAULT_LOGIN_HOST;
+            String url = mLoginUrl;
             url += String.format(LOGIN_PAGE_URL_PATH, mAppSecret);
             url += "?" + PARAMETER_RELEASE_HASH + "=" + releaseHash;
             url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
@@ -614,7 +658,7 @@ public class Updates extends AbstractMobileCenterService {
         HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
         HttpClient httpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
-        String url = DEFAULT_CHECK_UPDATE_SERVER_URL + String.format(CHECK_UPDATE_URL_PATH, mAppSecret);
+        String url = mApiUrl + String.format(CHECK_UPDATE_URL_PATH, mAppSecret);
         Map<String, String> headers = new HashMap<>();
         headers.put(HEADER_API_TOKEN, updateToken);
         final Object releaseCallId = mCheckReleaseCallId = new Object();
@@ -641,6 +685,7 @@ public class Updates extends AbstractMobileCenterService {
         /* Check if state did not change. */
         if (mCheckReleaseCallId == releaseCallId) {
             MobileCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
+            completeWorkflow();
         }
     }
 
