@@ -17,6 +17,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -1000,6 +1001,23 @@ public class Updates extends AbstractMobileCenterService {
                 /* Build install intent. */
                 MobileCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId + " uri=" + uriForDownloadedFile);
                 Intent intent = getInstallIntent(uriForDownloadedFile);
+                if (intent.resolveActivity(mContext.getPackageManager()) == null) {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                        Cursor cursor = downloadManager.query(new DownloadManager.Query().setFilterById(mDownloadId));
+                        if (cursor != null && cursor.moveToNext()) {
+                            //noinspection deprecation
+                            uriForDownloadedFile = Uri.parse("file://" + cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME)));
+                            intent = getInstallIntent(uriForDownloadedFile);
+                            if (intent.resolveActivity(mContext.getPackageManager()) == null) {
+                                MobileCenterLog.error(LOG_TAG, "Installer not found");
+                                return null;
+                            }
+                        }
+                    } else {
+                        MobileCenterLog.error(LOG_TAG, "Installer not found");
+                        return null;
+                    }
+                }
 
                 /* Exit check point. */
                 Activity activity;
