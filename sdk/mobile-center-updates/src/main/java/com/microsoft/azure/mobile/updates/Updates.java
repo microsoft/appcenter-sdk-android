@@ -680,6 +680,9 @@ public class Updates extends AbstractMobileCenterService {
         });
     }
 
+    /**
+     * Handle API call failure.
+     */
     private synchronized void handleApiCallFailure(Object releaseCallId, Exception e) {
 
         /* Check if state did not change. */
@@ -690,9 +693,9 @@ public class Updates extends AbstractMobileCenterService {
     }
 
     /**
-     * Query package manager and compute hash in background.
+     * Handle API call success.
      */
-    private synchronized void handleApiCallSuccess(final Object releaseCallId, final ReleaseDetails releaseDetails) {
+    private synchronized void handleApiCallSuccess(Object releaseCallId, ReleaseDetails releaseDetails) {
 
         /* Check if state did not change. */
         if (mCheckReleaseCallId == releaseCallId) {
@@ -717,7 +720,7 @@ public class Updates extends AbstractMobileCenterService {
                 MobileCenterLog.error(LOG_TAG, "Could not compare versions.", e);
             }
 
-            /* If update dialog was not started, complete workflow. */
+            /* If update dialog was not shown or scheduled, complete workflow. */
             completeWorkflow();
         }
     }
@@ -787,7 +790,7 @@ public class Updates extends AbstractMobileCenterService {
      */
     private synchronized void scheduleDownload(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
-            MobileCenterLog.debug(LOG_TAG, "Schedule background version/hash check...");
+            MobileCenterLog.debug(LOG_TAG, "Schedule download...");
             mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(releaseDetails));
         }
     }
@@ -808,7 +811,7 @@ public class Updates extends AbstractMobileCenterService {
             /* Delete previous download. */
             long previousDownloadId = StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID);
             if (previousDownloadId > 0) {
-                MobileCenterLog.debug(LOG_TAG, "Delete previous download an notification id=" + previousDownloadId);
+                MobileCenterLog.debug(LOG_TAG, "Delete previous download and notification id=" + previousDownloadId);
                 downloadManager.remove(previousDownloadId);
                 NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
                 notificationManager.cancel(getNotificationId());
@@ -949,7 +952,7 @@ public class Updates extends AbstractMobileCenterService {
     /**
      * Inspect a completed download, this uses APIs that would trigger strict mode violation if used in U.I. thread.
      */
-    private class ProcessDownloadCompletionTask extends AsyncTask<Void, Void, Notification> {
+    private class ProcessDownloadCompletionTask extends AsyncTask<Void, Void, Void> {
 
         /**
          * Context.
@@ -973,7 +976,7 @@ public class Updates extends AbstractMobileCenterService {
         }
 
         @Override
-        protected Notification doInBackground(Void... params) {
+        protected Void doInBackground(Void... params) {
 
             /* Completion might be triggered before MobileCenter.start. */
             MobileCenterLog.debug(LOG_TAG, "Process download completion id=" + mDownloadId);
