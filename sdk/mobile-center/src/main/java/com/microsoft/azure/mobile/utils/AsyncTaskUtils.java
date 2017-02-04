@@ -33,7 +33,7 @@ public final class AsyncTaskUtils {
         try {
             return asyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, params);
         } catch (RejectedExecutionException e) {
-            MobileCenterLog.warn(logTag, "THREAD_POOL_EXECUTOR saturated, fall back on SERIAL_EXECUTOR", e);
+            MobileCenterLog.warn(logTag, "THREAD_POOL_EXECUTOR saturated, fall back on SERIAL_EXECUTOR which has an unbounded queue", e);
             return asyncTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, params);
         }
     }
