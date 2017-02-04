@@ -2,6 +2,7 @@ package com.microsoft.azure.mobile.updates;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -9,6 +10,7 @@ import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
@@ -21,6 +23,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
+import android.text.TextUtils;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.MobileCenter;
@@ -205,9 +209,19 @@ public class Updates extends AbstractMobileCenterService {
     private ServiceCall mCheckReleaseApiCall;
 
     /**
+     * Latest release details waiting to be shown to user.
+     */
+    private ReleaseDetails mReleaseDetails;
+
+    /**
+     * Last update dialog that was shown.
+     */
+    private AlertDialog mUpdateDialog;
+
+    /**
      * Current task inspecting the latest release details that we fetched from server.
      */
-    private AsyncTask<?, ?, ?> mInspectReleaseTask;
+    private AsyncTask<?, ?, ?> mDownloadTask;
 
     /**
      * Current task to process download completion.
@@ -219,7 +233,6 @@ public class Updates extends AbstractMobileCenterService {
      * This can be reset to check update again when app restarts.
      */
     private boolean mWorkflowCompleted;
-
     /**
      * Cache launch intent not to resolve it every time from package manager in every onCreate call.
      */
@@ -369,9 +382,11 @@ public class Updates extends AbstractMobileCenterService {
             mCheckReleaseApiCall = null;
             mCheckReleaseCallId = null;
         }
-        if (mInspectReleaseTask != null) {
-            mInspectReleaseTask.cancel(true);
-            mInspectReleaseTask = null;
+        mUpdateDialog = null;
+        mReleaseDetails = null;
+        if (mDownloadTask != null) {
+            mDownloadTask.cancel(true);
+            mDownloadTask = null;
         }
         if (mProcessDownloadCompletionTask != null) {
             mProcessDownloadCompletionTask.cancel(true);
@@ -421,6 +436,12 @@ public class Updates extends AbstractMobileCenterService {
                     MobileCenterLog.warn(LOG_TAG, "Download uri was invalid", e);
                     cancelPreviousTasks();
                 }
+
+            /* If we were waiting after API call to resume app to show the dialog do it now. */
+            if (mReleaseDetails != null) {
+                showUpdateDialog();
+                return;
+            }
 
             /* Nothing more to do for now if we are already calling API to check release. */
             if (mCheckReleaseCallId != null) {
@@ -536,12 +557,25 @@ public class Updates extends AbstractMobileCenterService {
 
     /**
      * Reset all variables that matter to restart checking a new release on launcher activity restart.
+     *
+     * @param releaseDetails to check if state changed and that the call should be ignored.
      */
-    private synchronized void completeWorkflow() {
+    private synchronized void completeWorkflow(ReleaseDetails releaseDetails) {
+        if (releaseDetails == mReleaseDetails) {
+            completeWorkflow();
+        }
+    }
+
+    /**
+     * Reset all variables that matter to restart checking a new release on launcher activity restart.
+     */
+    private void completeWorkflow() {
         StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
-        mWorkflowCompleted = true;
         mCheckReleaseApiCall = null;
         mCheckReleaseCallId = null;
+        mUpdateDialog = null;
+        mReleaseDetails = null;
+        mWorkflowCompleted = true;
     }
 
     /*
@@ -613,12 +647,103 @@ public class Updates extends AbstractMobileCenterService {
     /**
      * Query package manager and compute hash in background.
      */
-    private synchronized void handleApiCallSuccess(Object releaseCallId, final ReleaseDetails releaseDetails) {
+    private synchronized void handleApiCallSuccess(final Object releaseCallId, final ReleaseDetails releaseDetails) {
 
         /* Check if state did not change. */
         if (mCheckReleaseCallId == releaseCallId) {
+
+            /* Check version code is equals or higher and hash is different. */
+            MobileCenterLog.debug(LOG_TAG, "Check version code and hash.");
+            PackageManager packageManager = mContext.getPackageManager();
+            try {
+                PackageInfo packageInfo = packageManager.getPackageInfo(mContext.getPackageName(), 0);
+                if (isMoreRecent(packageInfo, releaseDetails)) {
+
+                    /* Show update dialog. */
+                    mReleaseDetails = releaseDetails;
+                    if (mForegroundActivity != null) {
+                        showUpdateDialog();
+                    }
+                    return;
+                } else {
+                    MobileCenterLog.debug(LOG_TAG, "Latest server version is not more recent.");
+                }
+            } catch (PackageManager.NameNotFoundException e) {
+                MobileCenterLog.error(LOG_TAG, "Could not compare versions.", e);
+            }
+
+            /* If update dialog was not started, complete workflow. */
+            completeWorkflow();
+        }
+    }
+
+    /**
+     * Check if the fetched release information should be installed.
+     *
+     * @param packageInfo    current app version.
+     * @param releaseDetails latest release on server.
+     * @return true if latest release on server should be used.
+     */
+    private boolean isMoreRecent(PackageInfo packageInfo, ReleaseDetails releaseDetails) {
+        if (releaseDetails.getVersion() == packageInfo.versionCode) {
+            return !releaseDetails.getFingerprint().equals(computeHash(mContext, packageInfo));
+        }
+        return releaseDetails.getVersion() > packageInfo.versionCode;
+    }
+
+    /**
+     * Show update dialog. This can be called multiple times if clicking on HOME and app resumed
+     * (it could be resumed in another activity covering the previous one).
+     */
+    private synchronized void showUpdateDialog() {
+
+        /* We could be in another activity now, refresh dialog. */
+        MobileCenterLog.debug(LOG_TAG, "Show update dialog.");
+        if (mUpdateDialog != null) {
+            mUpdateDialog.hide();
+        }
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
+        dialogBuilder.setTitle(R.string.mobile_center_updates_update_dialog_title);
+        final ReleaseDetails releaseDetails = mReleaseDetails;
+        String releaseNotes = releaseDetails.getReleaseNotes();
+        if (TextUtils.isEmpty(releaseNotes))
+            dialogBuilder.setMessage(R.string.mobile_center_updates_update_dialog_message);
+        else
+            dialogBuilder.setMessage(releaseNotes);
+        dialogBuilder.setPositiveButton(R.string.mobile_center_updates_update_dialog_download, new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                scheduleDownload(releaseDetails);
+            }
+        });
+        dialogBuilder.setNegativeButton(R.string.mobile_center_updates_update_dialog_ignore, new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                completeWorkflow(releaseDetails);
+            }
+        });
+        dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                completeWorkflow(releaseDetails);
+            }
+        });
+        mUpdateDialog = dialogBuilder.create();
+        mUpdateDialog.show();
+    }
+
+    /**
+     * Check state did not change and schedule download of the release.
+     *
+     * @param releaseDetails release details.
+     */
+    private synchronized void scheduleDownload(ReleaseDetails releaseDetails) {
+        if (releaseDetails == mReleaseDetails) {
             MobileCenterLog.debug(LOG_TAG, "Schedule background version/hash check...");
-            mInspectReleaseTask = AsyncTaskUtils.execute(LOG_TAG, new InspectReleaseTask(releaseDetails));
+            mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(releaseDetails));
         }
     }
 
@@ -629,10 +754,11 @@ public class Updates extends AbstractMobileCenterService {
      * @param task              current task to check race conditions.
      * @param downloadRequestId download identifier.
      */
-    private synchronized void storeDownloadRequestId(DownloadManager downloadManager, InspectReleaseTask task, long downloadRequestId) {
+    @WorkerThread
+    private synchronized void storeDownloadRequestId(DownloadManager downloadManager, DownloadTask task, long downloadRequestId) {
 
         /* Check for if state changed and task not canceled in time. */
-        if (mInspectReleaseTask == task) {
+        if (mDownloadTask == task) {
 
             /* Delete previous download. */
             long previousDownloadId = StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID);
@@ -742,9 +868,9 @@ public class Updates extends AbstractMobileCenterService {
     }
 
     /**
-     * Inspecting release details, the download manager API violates strict mode in U.I. thread.
+     * The download manager API violates strict mode in U.I. thread.
      */
-    private class InspectReleaseTask extends AsyncTask<Void, Void, Void> {
+    private class DownloadTask extends AsyncTask<Void, Void, Void> {
 
         /**
          * Release details to check.
@@ -756,48 +882,23 @@ public class Updates extends AbstractMobileCenterService {
          *
          * @param releaseDetails release details associated to this check.
          */
-        InspectReleaseTask(ReleaseDetails releaseDetails) {
+        DownloadTask(ReleaseDetails releaseDetails) {
             mReleaseDetails = releaseDetails;
         }
 
         @Override
         protected Void doInBackground(Void[] params) {
 
-            /* Check minimum API level TODO not yet available from JSON. */
-
-            /* Check version code is equals or higher and hash is different. */
-            MobileCenterLog.debug(LOG_TAG, "Check version code and hash.");
-            PackageManager packageManager = mContext.getPackageManager();
-            try {
-                PackageInfo packageInfo = packageManager.getPackageInfo(mContext.getPackageName(), 0);
-                if (isMoreRecent(packageInfo)) {
-
-                    /* Download file. */
-                    Uri downloadUrl = mReleaseDetails.getDownloadUrl();
-                    MobileCenterLog.debug(LOG_TAG, "Start downloading new release, url=" + downloadUrl);
-                    DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
-                    DownloadManager.Request request = new DownloadManager.Request(downloadUrl);
-                    long downloadRequestId = downloadManager.enqueue(request);
-                    storeDownloadRequestId(downloadManager, this, downloadRequestId);
-                    return null;
-                } else {
-                    MobileCenterLog.debug(LOG_TAG, "Latest server version is not more recent.");
-                }
-            } catch (PackageManager.NameNotFoundException e) {
-                MobileCenterLog.error(LOG_TAG, "Could not compare versions.", e);
-            }
-
-            /* If download was not started, complete workflow. */
-            completeWorkflow();
+            /* Download file. */
+            Uri downloadUrl = mReleaseDetails.getDownloadUrl();
+            MobileCenterLog.debug(LOG_TAG, "Start downloading new release, url=" + downloadUrl);
+            DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
+            DownloadManager.Request request = new DownloadManager.Request(downloadUrl);
+            long downloadRequestId = downloadManager.enqueue(request);
+            storeDownloadRequestId(downloadManager, this, downloadRequestId);
             return null;
         }
 
-        private boolean isMoreRecent(PackageInfo packageInfo) throws PackageManager.NameNotFoundException {
-            if (mReleaseDetails.getVersion() == packageInfo.versionCode) {
-                return !mReleaseDetails.getFingerprint().equals(computeHash(mContext));
-            }
-            return mReleaseDetails.getVersion() > packageInfo.versionCode;
-        }
     }
 
     /**
