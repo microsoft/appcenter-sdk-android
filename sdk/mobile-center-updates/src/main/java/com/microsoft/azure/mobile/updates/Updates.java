@@ -611,10 +611,20 @@ public class Updates extends AbstractMobileCenterService {
         }
     }
 
+    @WorkerThread
+    private synchronized void completeWorkflow(long downloadId) {
+        if (!"".equals(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI))) {
+            return;
+        }
+        if (StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID) == downloadId) {
+            completeWorkflow();
+        }
+    }
+
     /**
      * Reset all variables that matter to restart checking a new release on launcher activity restart.
      */
-    private void completeWorkflow() {
+    private synchronized void completeWorkflow() {
         StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
         mCheckReleaseApiCall = null;
         mCheckReleaseCallId = null;
@@ -881,9 +891,11 @@ public class Updates extends AbstractMobileCenterService {
      * @param context      context.
      * @param task         task that prepared the notification to check state.
      * @param notification notification to post.
+     * @param uri          uri to persist to remember download completed state.
      */
-    private synchronized void notifyDownload(Context context, ProcessDownloadCompletionTask task, Notification notification) {
+    private synchronized void notifyDownload(Context context, ProcessDownloadCompletionTask task, Notification notification, String uri) {
         if (task == mProcessDownloadCompletionTask) {
+            StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOAD_URI, uri);
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.notify(getNotificationId(), notification);
         }
@@ -1030,17 +1042,17 @@ public class Updates extends AbstractMobileCenterService {
                 }
 
                 /* If foreground, execute now, otherwise post notification. */
+                String uri = uriForDownloadedFile.toString();
                 if (activity != null) {
 
                     /* This start call triggers strict mode violation in U.I. thread so it needs to be done here, and we can't synchronize anymore... */
                     MobileCenterLog.debug(LOG_TAG, "Application is in foreground, launch install UI now.");
                     activity.startActivity(intent);
-                    completeWorkflow();
+                    completeWorkflow(mDownloadId);
                 } else {
 
                     /* Remember we have a download ready. */
                     MobileCenterLog.debug(LOG_TAG, "Application is in background, post a notification.");
-                    StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOAD_URI, uriForDownloadedFile.toString());
 
                     /* And notify. */
                     int icon;
@@ -1065,10 +1077,11 @@ public class Updates extends AbstractMobileCenterService {
                         notification = builder.getNotification();
                     }
                     notification.flags |= Notification.FLAG_AUTO_CANCEL;
-                    notifyDownload(mContext, this, notification);
+                    notifyDownload(mContext, this, notification, uri);
                 }
             } else {
                 MobileCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId);
+                completeWorkflow(mDownloadId);
             }
             return null;
         }
