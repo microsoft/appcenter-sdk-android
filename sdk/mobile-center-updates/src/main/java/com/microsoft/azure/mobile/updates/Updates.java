@@ -611,16 +611,6 @@ public class Updates extends AbstractMobileCenterService {
         }
     }
 
-    @WorkerThread
-    private synchronized void completeWorkflow(long downloadId) {
-        if (!"".equals(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI))) {
-            return;
-        }
-        if (StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID) == downloadId) {
-            completeWorkflow();
-        }
-    }
-
     /**
      * Reset all variables that matter to restart checking a new release on launcher activity restart.
      */
@@ -1048,7 +1038,7 @@ public class Updates extends AbstractMobileCenterService {
                     /* This start call triggers strict mode violation in U.I. thread so it needs to be done here, and we can't synchronize anymore... */
                     MobileCenterLog.debug(LOG_TAG, "Application is in foreground, launch install UI now.");
                     activity.startActivity(intent);
-                    completeWorkflow(mDownloadId);
+                    completeWorkflow(mReleaseDetails);
                 } else {
 
                     /* Remember we have a download ready. */
@@ -1081,7 +1071,7 @@ public class Updates extends AbstractMobileCenterService {
                 }
             } else {
                 MobileCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId);
-                completeWorkflow(mDownloadId);
+                completeWorkflow(mReleaseDetails);
             }
             return null;
         }
