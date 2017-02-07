@@ -465,10 +465,14 @@ public class Updates extends AbstractMobileCenterService {
             /* If we have a download ready but we were in background, pop install UI now. */
             String downloadUri = StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI);
             if ("".equals(downloadUri)) {
+
+                /* TODO double check that with download manager. */
                 MobileCenterLog.verbose(LOG_TAG, "Download is still in progress...");
                 return;
             } else if (downloadUri != null)
                 try {
+
+                    /* FIXME this can cause strict mode violation. */
                     Uri apkUri = Uri.parse(downloadUri);
                     MobileCenterLog.debug(LOG_TAG, "Now in foreground, remove notification and start install for APK uri=" + apkUri);
                     NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);

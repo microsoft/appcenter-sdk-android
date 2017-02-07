@@ -14,12 +14,9 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-/**
- * Missing tests for this class not already covered in Updates.
- */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(Updates.class)
-public class DownloadCompletionReceiverTest {
+public class DownloadCompletionReceiverIgnoreIntentTest {
 
     @Test
     public void invalidIntent() {

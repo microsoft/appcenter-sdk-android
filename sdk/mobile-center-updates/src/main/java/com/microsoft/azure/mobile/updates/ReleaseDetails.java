@@ -5,6 +5,9 @@ import android.net.Uri;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * Release details JSON schema.
+ */
 class ReleaseDetails {
 
     private static final String VERSION = "version";
@@ -73,6 +76,10 @@ class ReleaseDetails {
         releaseDetails.minOs = object.getString(MIN_OS);
         releaseDetails.fingerprint = object.getString(FINGERPRINT);
         releaseDetails.downloadUrl = Uri.parse(object.getString(DOWNLOAD_URL));
+        String scheme = releaseDetails.downloadUrl.getScheme();
+        if (scheme == null || !scheme.startsWith("http")) {
+            throw new JSONException("Invalid download_url scheme.");
+        }
         return releaseDetails;
     }
 
@@ -128,35 +135,5 @@ class ReleaseDetails {
      */
     Uri getDownloadUrl() {
         return this.downloadUrl;
-    }
-
-    @Override
-    @SuppressWarnings("SimplifiableIfStatement")
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        ReleaseDetails that = (ReleaseDetails) o;
-
-        if (version != that.version) return false;
-        if (shortVersion != null ? !shortVersion.equals(that.shortVersion) : that.shortVersion != null)
-            return false;
-        if (releaseNotes != null ? !releaseNotes.equals(that.releaseNotes) : that.releaseNotes != null)
-            return false;
-        if (minOs != null ? !minOs.equals(that.minOs) : that.minOs != null) return false;
-        if (fingerprint != null ? !fingerprint.equals(that.fingerprint) : that.fingerprint != null)
-            return false;
-        return downloadUrl != null ? downloadUrl.equals(that.downloadUrl) : that.downloadUrl == null;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = version;
-        result = 31 * result + (shortVersion != null ? shortVersion.hashCode() : 0);
-        result = 31 * result + (releaseNotes != null ? releaseNotes.hashCode() : 0);
-        result = 31 * result + (minOs != null ? minOs.hashCode() : 0);
-        result = 31 * result + (fingerprint != null ? fingerprint.hashCode() : 0);
-        result = 31 * result + (downloadUrl != null ? downloadUrl.hashCode() : 0);
-        return result;
     }
 }
