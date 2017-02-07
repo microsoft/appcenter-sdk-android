@@ -140,7 +140,8 @@ public class Updates extends AbstractMobileCenterService {
     /**
      * Preference key to store token.
      */
-    private static final String PREFERENCE_KEY_UPDATE_TOKEN = PREFERENCE_PREFIX + EXTRA_UPDATE_TOKEN;
+    @VisibleForTesting
+    static final String PREFERENCE_KEY_UPDATE_TOKEN = PREFERENCE_PREFIX + EXTRA_UPDATE_TOKEN;
 
     /**
      * Preference key for request identifier to validate deep link intent.

@@ -14,24 +14,26 @@ public class DownloadCompletionReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
 
         /* Check intent action. */
-        switch (intent.getAction()) {
+        if (intent.getAction() != null) {
+            switch (intent.getAction()) {
 
-            /*
-             * Just resume app if clicking on pending download notification as
-             * it's always weird to click on a notification and nothing happening.
-             * Another option would be to open download list.
-             */
-            case DownloadManager.ACTION_NOTIFICATION_CLICKED:
-                Updates.getInstance().resumeApp(context);
-                break;
+                /*
+                 * Just resume app if clicking on pending download notification as
+                 * it's always weird to click on a notification and nothing happening.
+                 * Another option would be to open download list.
+                 */
+                case DownloadManager.ACTION_NOTIFICATION_CLICKED:
+                    Updates.getInstance().resumeApp(context);
+                    break;
 
-            /*
-             * Forward the download identifier to Updates for inspection.
-             */
-            case DownloadManager.ACTION_DOWNLOAD_COMPLETE:
-                long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
-                Updates.getInstance().processCompletedDownload(context, downloadId);
-                break;
+                /*
+                 * Forward the download identifier to Updates for inspection.
+                 */
+                case DownloadManager.ACTION_DOWNLOAD_COMPLETE:
+                    long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
+                    Updates.getInstance().processCompletedDownload(context, downloadId);
+                    break;
+            }
         }
     }
 }
