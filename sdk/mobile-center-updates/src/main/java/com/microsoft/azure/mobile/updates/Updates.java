@@ -7,16 +7,13 @@ import android.app.DownloadManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -28,7 +25,6 @@ import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
-import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.http.DefaultHttpClient;
 import com.microsoft.azure.mobile.http.HttpClient;
@@ -46,41 +42,19 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 import org.json.JSONException;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.EXTRA_REQUEST_ID;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.EXTRA_UPDATE_TOKEN;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.LOG_TAG;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.SERVICE_NAME;
 
 /**
  * Updates service.
  */
 public class Updates extends AbstractMobileCenterService {
-
-    /**
-     * Used for deep link intent from browser, string field for update token.
-     */
-    static final String EXTRA_UPDATE_TOKEN = "update_token";
-
-    /**
-     * Used for deep link intent from browser, string field for request identifier.
-     */
-    static final String EXTRA_REQUEST_ID = "request_id";
-
-    /**
-     * Update service name.
-     */
-    private static final String SERVICE_NAME = "Updates";
-
-    /**
-     * Log tag for this service.
-     */
-    static final String LOG_TAG = MobileCenter.LOG_TAG + SERVICE_NAME;
-
-    /**
-     * Scheme used to open URLs in Google Chrome instead of any browser.
-     */
-    private static final String GOOGLE_CHROME_URL_SCHEME = "googlechrome://navigate?url=";
 
     /**
      * Base URL used to open browser to login.
@@ -523,6 +497,8 @@ public class Updates extends AbstractMobileCenterService {
                 MobileCenterLog.error(LOG_TAG, "Could not get package info", e);
                 return;
             }
+
+            /* Build URL. */
             String url = mLoginUrl;
             url += String.format(LOGIN_PAGE_URL_PATH, mAppSecret);
             url += "?" + PARAMETER_RELEASE_HASH + "=" + releaseHash;
@@ -531,64 +507,8 @@ public class Updates extends AbstractMobileCenterService {
             url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
             MobileCenterLog.debug(LOG_TAG, "No token, need to open browser to login url=" + url);
 
-            /* Try to force using Chrome first, we want fall back url support for intent. */
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(GOOGLE_CHROME_URL_SCHEME + url));
-            try {
-                mForegroundActivity.startActivity(intent);
-            } catch (ActivityNotFoundException e) {
-
-                /* Fall back using a browser but we don't want a chooser U.I. to pop. */
-                MobileCenterLog.debug(LOG_TAG, "Google Chrome not found, pick another one.");
-                intent.setData(Uri.parse(url));
-                List<ResolveInfo> browsers = mForegroundActivity.getPackageManager().queryIntentActivities(intent, 0);
-                if (browsers.isEmpty()) {
-                    MobileCenterLog.error(LOG_TAG, "No browser found on device, abort login.");
-                } else {
-
-                    /*
-                     * Check the default browser is not the picker,
-                     * last thing we want is app to start and suddenly asks user to pick
-                     * between 2 browsers without explaining why.
-                     */
-                    String defaultBrowserPackageName = null;
-                    String defaultBrowserClassName = null;
-                    ResolveInfo defaultBrowser = mForegroundActivity.getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-                    if (defaultBrowser != null) {
-                        ActivityInfo activityInfo = defaultBrowser.activityInfo;
-                        defaultBrowserPackageName = activityInfo.packageName;
-                        defaultBrowserClassName = activityInfo.name;
-                        MobileCenterLog.debug(LOG_TAG, "Default browser seems to be " + defaultBrowserPackageName + "/" + defaultBrowserClassName);
-                    }
-                    String selectedPackageName = null;
-                    String selectedClassName = null;
-                    for (ResolveInfo browser : browsers) {
-                        ActivityInfo activityInfo = browser.activityInfo;
-                        if (activityInfo.packageName.equals(defaultBrowserPackageName) && activityInfo.name.equals(defaultBrowserClassName)) {
-                            selectedPackageName = defaultBrowserPackageName;
-                            selectedClassName = defaultBrowserClassName;
-                            MobileCenterLog.debug(LOG_TAG, "And its not the picker.");
-                            break;
-                        }
-                    }
-                    if (defaultBrowser != null && selectedPackageName == null) {
-                        MobileCenterLog.debug(LOG_TAG, "Default browser is actually a picker...");
-                    }
-
-                    /* If no default browser found, pick first one we can find. */
-                    if (selectedPackageName == null) {
-                        MobileCenterLog.debug(LOG_TAG, "Picking first browser in list.");
-                        ResolveInfo browser = browsers.iterator().next();
-                        ActivityInfo activityInfo = browser.activityInfo;
-                        selectedPackageName = activityInfo.packageName;
-                        selectedClassName = activityInfo.name;
-                    }
-
-                    /* Launch generic browser. */
-                    MobileCenterLog.debug(LOG_TAG, "Launch browser=" + selectedPackageName + "/" + selectedClassName);
-                    intent.setClassName(selectedPackageName, selectedClassName);
-                    mForegroundActivity.startActivity(intent);
-                }
-            }
+            /* Open browser, remember that whatever the outcome to avoid opening it twice. */
+            BrowserUtils.openBrowser(url, mForegroundActivity);
             mBrowserOpened = true;
         }
     }
