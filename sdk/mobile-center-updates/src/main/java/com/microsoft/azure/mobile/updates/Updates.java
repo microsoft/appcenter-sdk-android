@@ -46,7 +46,17 @@ import java.util.Map;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.CHECK_UPDATE_URL_PATH;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_API_URL;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_LOGIN_URL;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.HEADER_API_TOKEN;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.LOGIN_PAGE_URL_PATH;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.LOG_TAG;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM_VALUE;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_REDIRECT_ID;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_RELEASE_HASH;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_REQUEST_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_URI;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_REQUEST_ID;
@@ -57,56 +67,6 @@ import static com.microsoft.azure.mobile.updates.UpdateConstants.SERVICE_NAME;
  * Updates service.
  */
 public class Updates extends AbstractMobileCenterService {
-
-    /**
-     * Base URL used to open browser to login.
-     */
-    private static final String DEFAULT_LOGIN_URL = "https://install.mobile.azure.com";
-
-    /**
-     * Base URL to call server to check latest release.
-     */
-    private static final String DEFAULT_API_URL = "https://api.mobile.azure.com";
-
-    /**
-     * Login URL path. Trailing slash matters to avoid redirection that loses query string.
-     */
-    private static final String LOGIN_PAGE_URL_PATH = "/apps/%s/update-setup/";
-
-    /**
-     * Check latest release API URL path.
-     */
-    private static final String CHECK_UPDATE_URL_PATH = "/sdk/apps/%s/releases/latest";
-
-    /**
-     * API parameter for release hash.
-     */
-    private static final String PARAMETER_RELEASE_HASH = "release_hash";
-
-    /**
-     * API parameter for redirect URL.
-     */
-    private static final String PARAMETER_REDIRECT_ID = "redirect_id";
-
-    /**
-     * API parameter for request identifier.
-     */
-    private static final String PARAMETER_REQUEST_ID = "request_id";
-
-    /**
-     * API parameter for platform.
-     */
-    private static final String PARAMETER_PLATFORM = "platform";
-
-    /**
-     * API parameter value for this platform.
-     */
-    private static final String PARAMETER_PLATFORM_VALUE = "Android";
-
-    /**
-     * Header used to pass token when checking latest release.
-     */
-    private static final String HEADER_API_TOKEN = "x-api-token";
 
     /**
      * Shared instance.
