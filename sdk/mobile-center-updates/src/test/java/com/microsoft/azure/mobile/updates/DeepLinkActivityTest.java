@@ -60,7 +60,7 @@ public class DeepLinkActivityTest {
     @Test
     public void missingRequestId() {
         Intent intent = mock(Intent.class);
-        when(intent.getStringExtra(Updates.EXTRA_UPDATE_TOKEN)).thenReturn("mock");
+        when(intent.getStringExtra(UpdateConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock");
         invalidIntent(intent);
     }
 
@@ -69,8 +69,8 @@ public class DeepLinkActivityTest {
 
         /* Build valid intent. */
         Intent intent = mock(Intent.class);
-        when(intent.getStringExtra(Updates.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
-        when(intent.getStringExtra(Updates.EXTRA_REQUEST_ID)).thenReturn("mock2");
+        when(intent.getStringExtra(UpdateConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
+        when(intent.getStringExtra(UpdateConstants.EXTRA_REQUEST_ID)).thenReturn("mock2");
         when(intent.getFlags()).thenReturn(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
 
         /* Start activity. */
@@ -89,8 +89,8 @@ public class DeepLinkActivityTest {
 
         /* Build valid intent. */
         Intent intent = mock(Intent.class);
-        when(intent.getStringExtra(Updates.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
-        when(intent.getStringExtra(Updates.EXTRA_REQUEST_ID)).thenReturn("mock2");
+        when(intent.getStringExtra(UpdateConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
+        when(intent.getStringExtra(UpdateConstants.EXTRA_REQUEST_ID)).thenReturn("mock2");
         when(intent.getFlags()).thenReturn(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
 
         /* Start activity. */
@@ -111,8 +111,8 @@ public class DeepLinkActivityTest {
 
         /* Build valid intent. */
         Intent intent = mock(Intent.class);
-        when(intent.getStringExtra(Updates.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
-        when(intent.getStringExtra(Updates.EXTRA_REQUEST_ID)).thenReturn("mock2");
+        when(intent.getStringExtra(UpdateConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
+        when(intent.getStringExtra(UpdateConstants.EXTRA_REQUEST_ID)).thenReturn("mock2");
         when(intent.getFlags()).thenReturn(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
 
         /* Start activity. */
