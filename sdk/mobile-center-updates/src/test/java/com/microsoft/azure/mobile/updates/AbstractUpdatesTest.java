@@ -1,25 +1,33 @@
 package com.microsoft.azure.mobile.updates;
 
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.UUIDUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.junit.Before;
 import org.junit.Rule;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.powermock.reflect.Whitebox;
 
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @SuppressWarnings("WeakerAccess")
-@PrepareForTest({Updates.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class})
+@PrepareForTest({Updates.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, BrowserUtils.class, UUIDUtils.class})
 public class AbstractUpdatesTest {
 
     private static final String UPDATES_ENABLED_KEY = KEY_ENABLED + "_Updates";
@@ -27,8 +35,11 @@ public class AbstractUpdatesTest {
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
+    @Mock
+    Context mContext;
+
     @Before
-    public void setUp() {
+    public void setUp() throws PackageManager.NameNotFoundException {
         Updates.unsetInstance();
         mockStatic(MobileCenterLog.class);
         mockStatic(MobileCenter.class);
@@ -51,5 +62,18 @@ public class AbstractUpdatesTest {
             }
         }).when(StorageHelper.PreferencesStorage.class);
         StorageHelper.PreferencesStorage.putBoolean(eq(UPDATES_ENABLED_KEY), anyBoolean());
+
+        /* Mock package manager. */
+        PackageManager packageManager = mock(PackageManager.class);
+        when(mContext.getPackageName()).thenReturn("com.contoso");
+        when(mContext.getPackageManager()).thenReturn(packageManager);
+        PackageInfo packageInfo = mock(PackageInfo.class);
+        when(packageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);
+        Whitebox.setInternalState(packageInfo, "versionName", "1.2.3");
+        Whitebox.setInternalState(packageInfo, "versionCode", 6);
+
+        /* Mock others. */
+        mockStatic(BrowserUtils.class);
+        mockStatic(UUIDUtils.class);
     }
 }

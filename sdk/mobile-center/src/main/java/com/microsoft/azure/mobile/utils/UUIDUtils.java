@@ -10,7 +10,7 @@ import java.util.UUID;
 /**
  * UUID utils.
  */
-public final class UUIDUtils {
+public class UUIDUtils {
 
     @VisibleForTesting
     static Implementation sImplementation = new Implementation() {
