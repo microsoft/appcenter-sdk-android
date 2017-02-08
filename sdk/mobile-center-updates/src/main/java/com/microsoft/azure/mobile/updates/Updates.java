@@ -46,9 +46,11 @@ import java.util.Map;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.EXTRA_REQUEST_ID;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.EXTRA_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.LOG_TAG;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_URI;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_REQUEST_ID;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.SERVICE_NAME;
 
 /**
@@ -105,37 +107,6 @@ public class Updates extends AbstractMobileCenterService {
      * Header used to pass token when checking latest release.
      */
     private static final String HEADER_API_TOKEN = "x-api-token";
-
-    /**
-     * Base key for stored preferences.
-     */
-    private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
-
-    /**
-     * Preference key to store token.
-     */
-    @VisibleForTesting
-    static final String PREFERENCE_KEY_UPDATE_TOKEN = PREFERENCE_PREFIX + EXTRA_UPDATE_TOKEN;
-
-    /**
-     * Preference key for request identifier to validate deep link intent.
-     */
-    private static final String PREFERENCE_KEY_REQUEST_ID = PREFERENCE_PREFIX + EXTRA_REQUEST_ID;
-
-    /**
-     * Preference key to store the last download identifier.
-     */
-    private static final String PREFERENCE_KEY_DOWNLOAD_ID = PREFERENCE_PREFIX + "download_id";
-
-    /**
-     * Preference key to store the last download file location on download manager if completed,
-     * empty string while download is in progress, null if we launched install U.I.
-     * If this is null and {@link #PREFERENCE_KEY_DOWNLOAD_ID} is not null, it's to remember we
-     * downloaded a file for later removal (when we disable SDK or prepare a new download).
-     * <p>
-     * Rationale is that we keep the file in case the user chooses to install it from downloads U.I.
-     */
-    private static final String PREFERENCE_KEY_DOWNLOAD_URI = PREFERENCE_PREFIX + "download_uri";
 
     /**
      * Shared instance.
