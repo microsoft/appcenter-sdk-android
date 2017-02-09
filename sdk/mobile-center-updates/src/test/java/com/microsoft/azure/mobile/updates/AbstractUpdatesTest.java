@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @SuppressWarnings("WeakerAccess")
-@PrepareForTest({Updates.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, BrowserUtils.class, UUIDUtils.class})
+@PrepareForTest({Updates.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class})
 public class AbstractUpdatesTest {
 
     private static final String UPDATES_ENABLED_KEY = KEY_ENABLED + "_Updates";
@@ -37,6 +37,9 @@ public class AbstractUpdatesTest {
 
     @Mock
     Context mContext;
+
+    @Mock
+    PackageManager mPackageManager;
 
     @Before
     public void setUp() throws PackageManager.NameNotFoundException {
@@ -64,16 +67,17 @@ public class AbstractUpdatesTest {
         StorageHelper.PreferencesStorage.putBoolean(eq(UPDATES_ENABLED_KEY), anyBoolean());
 
         /* Mock package manager. */
-        PackageManager packageManager = mock(PackageManager.class);
+        mPackageManager = mock(PackageManager.class);
         when(mContext.getPackageName()).thenReturn("com.contoso");
-        when(mContext.getPackageManager()).thenReturn(packageManager);
+        when(mContext.getPackageManager()).thenReturn(mPackageManager);
         PackageInfo packageInfo = mock(PackageInfo.class);
-        when(packageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);
+        when(mPackageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);
         Whitebox.setInternalState(packageInfo, "versionName", "1.2.3");
         Whitebox.setInternalState(packageInfo, "versionCode", 6);
 
         /* Mock others. */
         mockStatic(BrowserUtils.class);
         mockStatic(UUIDUtils.class);
+        mockStatic(ReleaseDetails.class);
     }
 }
