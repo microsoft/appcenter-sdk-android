@@ -179,6 +179,7 @@ public class Updates extends AbstractMobileCenterService {
      *
      * @return <code>true</code> if enabled, <code>false</code> otherwise.
      */
+    @SuppressWarnings("WeakerAccess")
     public static boolean isEnabled() {
         return getInstance().isInstanceEnabled();
     }
@@ -188,6 +189,7 @@ public class Updates extends AbstractMobileCenterService {
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
+    @SuppressWarnings("WeakerAccess")
     public static void setEnabled(boolean enabled) {
         getInstance().setInstanceEnabled(enabled);
     }
@@ -197,6 +199,7 @@ public class Updates extends AbstractMobileCenterService {
      *
      * @param loginUrl login base URL.
      */
+    @SuppressWarnings("WeakerAccess")
     public static void setLoginUrl(String loginUrl) {
         getInstance().setInstanceLoginUrl(loginUrl);
     }
@@ -206,6 +209,7 @@ public class Updates extends AbstractMobileCenterService {
      *
      * @param apiUrl API base URL.
      */
+    @SuppressWarnings("WeakerAccess")
     public static void setApiUrl(String apiUrl) {
         getInstance().setInstanceApiUrl(apiUrl);
     }
