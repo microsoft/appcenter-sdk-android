@@ -1,8 +1,10 @@
 package com.microsoft.azure.mobile.updates;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.text.TextUtils;
 
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
@@ -20,14 +22,16 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("WeakerAccess")
-@PrepareForTest({Updates.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class})
+@PrepareForTest({Updates.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class})
 public class AbstractUpdatesTest {
 
     private static final String UPDATES_ENABLED_KEY = KEY_ENABLED + "_Updates";
@@ -39,10 +43,13 @@ public class AbstractUpdatesTest {
     Context mContext;
 
     @Mock
-    PackageManager mPackageManager;
+    AlertDialog.Builder mDialogBuilder;
+
+    @Mock
+    AlertDialog mDialog;
 
     @Before
-    public void setUp() throws PackageManager.NameNotFoundException {
+    public void setUp() throws Exception {
         Updates.unsetInstance();
         mockStatic(MobileCenterLog.class);
         mockStatic(MobileCenter.class);
@@ -67,17 +74,30 @@ public class AbstractUpdatesTest {
         StorageHelper.PreferencesStorage.putBoolean(eq(UPDATES_ENABLED_KEY), anyBoolean());
 
         /* Mock package manager. */
-        mPackageManager = mock(PackageManager.class);
+        PackageManager packageManager = mock(PackageManager.class);
         when(mContext.getPackageName()).thenReturn("com.contoso");
-        when(mContext.getPackageManager()).thenReturn(mPackageManager);
+        when(mContext.getPackageManager()).thenReturn(packageManager);
         PackageInfo packageInfo = mock(PackageInfo.class);
-        when(mPackageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);
+        when(packageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);
         Whitebox.setInternalState(packageInfo, "versionName", "1.2.3");
         Whitebox.setInternalState(packageInfo, "versionCode", 6);
 
-        /* Mock others. */
+        /* Mock some statics. */
         mockStatic(BrowserUtils.class);
         mockStatic(UUIDUtils.class);
         mockStatic(ReleaseDetails.class);
+        mockStatic(TextUtils.class);
+        when(TextUtils.isEmpty(any(CharSequence.class))).thenAnswer(new Answer<Boolean>() {
+
+            @Override
+            public Boolean answer(InvocationOnMock invocation) throws Throwable {
+                CharSequence str = (CharSequence) invocation.getArguments()[0];
+                return str == null || str.length() == 0;
+            }
+        });
+
+        /* Dialog. */
+        whenNew(AlertDialog.Builder.class).withAnyArguments().thenReturn(mDialogBuilder);
+        when(mDialogBuilder.create()).thenReturn(mDialog);
     }
 }

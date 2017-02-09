@@ -165,10 +165,11 @@ public class UpdatesBeforeApiSuccessTests extends AbstractUpdatesTest {
 
         /* Call is still in progress. If we restart app, nothing happens we still wait. */
         Intent intent = mock(Intent.class);
-        when(activity.getPackageManager()).thenReturn(mPackageManager);
-        when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
+        PackageManager packageManager = mock(PackageManager.class);
+        when(activity.getPackageManager()).thenReturn(packageManager);
+        when(packageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
         ComponentName componentName = mock(ComponentName.class);
-        when(intent.resolveActivity(mPackageManager)).thenReturn(componentName);
+        when(intent.resolveActivity(packageManager)).thenReturn(componentName);
         when(componentName.getClassName()).thenReturn(activity.getClass().getName());
         Updates.getInstance().onActivityPaused(activity);
         Updates.getInstance().onActivityStopped(activity);
@@ -508,5 +509,6 @@ public class UpdatesBeforeApiSuccessTests extends AbstractUpdatesTest {
         Updates.getInstance().onActivityPaused(mock(Activity.class));
         Updates.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mDialog, never()).show();
     }
 }
