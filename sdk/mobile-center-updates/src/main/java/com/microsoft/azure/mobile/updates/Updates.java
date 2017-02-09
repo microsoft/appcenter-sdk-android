@@ -307,6 +307,7 @@ public class Updates extends AbstractMobileCenterService {
             mWorkflowCompleted = false;
             cancelPreviousTasks();
             StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+            StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
         }
     }
 
@@ -356,10 +357,10 @@ public class Updates extends AbstractMobileCenterService {
      * Method that triggers the update workflow or proceed to the next step.
      */
     private synchronized void resumeUpdateWorkflow() {
-        if (mForegroundActivity != null && !mWorkflowCompleted) {
+        if (mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
             /* If we received the update token before Mobile Center was started/enabled, process it now. */
-            if (mBeforeStartUpdateToken != null && mBeforeStartRequestId != null) {
+            if (mBeforeStartUpdateToken != null) {
                 MobileCenterLog.debug(LOG_TAG, "Processing update token we kept in memory before onStarted");
                 storeUpdateToken(mBeforeStartUpdateToken, mBeforeStartRequestId);
                 mBeforeStartUpdateToken = null;
@@ -416,18 +417,18 @@ public class Updates extends AbstractMobileCenterService {
                 return;
             }
 
-            /* Generate request identifier and store it. */
-            String requestId = UUIDUtils.randomUUID().toString();
-            StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
-
             /* Compute hash. */
             String releaseHash;
             try {
                 releaseHash = computeHash(mContext);
             } catch (PackageManager.NameNotFoundException e) {
                 MobileCenterLog.error(LOG_TAG, "Could not get package info", e);
+                mBrowserOpened = true;
                 return;
             }
+
+            /* Generate request identifier. */
+            String requestId = UUIDUtils.randomUUID().toString();
 
             /* Build URL. */
             String url = mLoginUrl;
@@ -437,6 +438,9 @@ public class Updates extends AbstractMobileCenterService {
             url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
             url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
             MobileCenterLog.debug(LOG_TAG, "No token, need to open browser to login url=" + url);
+
+            /* Store request id. */
+            StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
 
             /* Open browser, remember that whatever the outcome to avoid opening it twice. */
             BrowserUtils.openBrowser(url, mForegroundActivity);
@@ -492,8 +496,6 @@ public class Updates extends AbstractMobileCenterService {
             MobileCenterLog.debug(LOG_TAG, "Update token received before onStart, keep it in memory.");
             mBeforeStartUpdateToken = updateToken;
             mBeforeStartRequestId = requestId;
-        } else if (!isInstanceEnabled()) {
-            MobileCenterLog.warn(LOG_TAG, "Ignoring update token as Updates are disabled.");
         } else if (requestId.equals(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
             StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, updateToken);
             StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
