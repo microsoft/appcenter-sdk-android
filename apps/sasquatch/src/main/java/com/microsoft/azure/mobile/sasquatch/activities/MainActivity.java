@@ -17,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.MobileCenterService;
 import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
@@ -25,8 +26,7 @@ import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
-import com.microsoft.azure.mobile.updates.Updates;
-
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -50,9 +50,17 @@ public class MainActivity extends AppCompatActivity {
         }
         MobileCenter.setLogLevel(Log.VERBOSE);
         Crashes.setListener(getCrashesListener());
-        Updates.setLoginUrl("http://mockilecenterupdate.azurewebsites.net");
-        Updates.setApiUrl("http://mockilecenterupdate.azurewebsites.net");
-        MobileCenter.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class, Updates.class);
+        MobileCenter.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class);
+        try {
+
+            @SuppressWarnings("unchecked")
+            Class<? extends MobileCenterService> updates = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.updates.Updates");
+            updates.getMethod("setLoginUrl", String.class).invoke(null, "http://mockilecenterupdate.azurewebsites.net");
+            updates.getMethod("setApiUrl", String.class).invoke(null, "http://mockilecenterupdate.azurewebsites.net");
+            MobileCenter.start(updates);
+        } catch (Exception e) {
+            MobileCenterLog.info(LOG_TAG, "Updates class not yet available in this flavor.");
+        }
 
         Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
         Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {

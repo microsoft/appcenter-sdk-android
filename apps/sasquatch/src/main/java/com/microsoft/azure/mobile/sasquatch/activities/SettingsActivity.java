@@ -16,14 +16,15 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.MobileCenterService;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.sasquatch.R;
-import com.microsoft.azure.mobile.updates.Updates;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.APP_SECRET_KEY;
@@ -90,19 +91,36 @@ public class SettingsActivity extends AppCompatActivity {
                     return Crashes.isEnabled();
                 }
             });
-            initCheckBoxSetting(R.string.mobile_center_updates_state_key, Updates.isEnabled(), R.string.mobile_center_updates_state_summary_enabled, R.string.mobile_center_updates_state_summary_disabled, new HasEnabled() {
+            try {
 
-                @Override
-                public void setEnabled(boolean enabled) {
-                    Updates.setEnabled(enabled);
-                    updatesEnabledPreference.setChecked(Updates.isEnabled());
-                }
+                @SuppressWarnings("unchecked")
+                Class<? extends MobileCenterService> updates = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.updates.Updates");
+                final Method isEnabled = updates.getMethod("isEnabled");
+                final Method setEnabled = updates.getMethod("setEnabled", boolean.class);
+                initCheckBoxSetting(R.string.mobile_center_updates_state_key, (boolean) isEnabled.invoke(null), R.string.mobile_center_updates_state_summary_enabled, R.string.mobile_center_updates_state_summary_disabled, new HasEnabled() {
 
-                @Override
-                public boolean isEnabled() {
-                    return Updates.isEnabled();
-                }
-            });
+                    @Override
+                    public void setEnabled(boolean enabled) {
+                        try {
+                            setEnabled.invoke(null, enabled);
+                            updatesEnabledPreference.setChecked((boolean) isEnabled.invoke(null));
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    @Override
+                    public boolean isEnabled() {
+                        try {
+                            return (boolean) isEnabled.invoke(null);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                getPreferenceScreen().removePreference(findPreference(getString(R.string.updates_key)));
+            }
             initCheckBoxSetting(R.string.mobile_center_auto_page_tracking_key, AnalyticsPrivateHelper.isAutoPageTrackingEnabled(), R.string.mobile_center_auto_page_tracking_enabled, R.string.mobile_center_auto_page_tracking_disabled, new HasEnabled() {
 
                 @Override
