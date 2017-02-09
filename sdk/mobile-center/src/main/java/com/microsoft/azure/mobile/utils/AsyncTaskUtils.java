@@ -8,7 +8,7 @@ import java.util.concurrent.RejectedExecutionException;
 /**
  * AsyncTask utilities.
  */
-public final class AsyncTaskUtils {
+public class AsyncTaskUtils {
 
     @VisibleForTesting
     AsyncTaskUtils() {
