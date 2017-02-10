@@ -39,7 +39,7 @@ public interface MobileCenterService extends Application.ActivityLifecycleCallba
     Map<String, LogFactory> getLogFactories();
 
     /**
-     * Called when the service has been started (disregarding if enabled or disabled).
+     * Called when the service is started (disregarding if enabled or disabled).
      *
      * @param context   application context.
      * @param appSecret application secret.
