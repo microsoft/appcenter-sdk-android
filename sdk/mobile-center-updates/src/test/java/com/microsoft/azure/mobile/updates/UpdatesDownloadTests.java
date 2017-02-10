@@ -104,6 +104,15 @@ public class UpdatesDownloadTests extends AbstractUpdatesTest {
             }
         }).when(StorageHelper.PreferencesStorage.class);
         StorageHelper.PreferencesStorage.putLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), anyLong());
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                when(StorageHelper.PreferencesStorage.getLong(invocation.getArguments()[0].toString())).thenReturn(0L);
+                return null;
+            }
+        }).when(StorageHelper.PreferencesStorage.class);
+        StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
 
         /* Mock everything that triggers a download. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -245,20 +254,15 @@ public class UpdatesDownloadTests extends AbstractUpdatesTest {
     public void disableWhileStartingDownload() throws Exception {
 
         /* Cancel download before async task completes. */
-        ArgumentCaptor<Updates.RemoveDownloadTask> removeTask = ArgumentCaptor.forClass(Updates.RemoveDownloadTask.class);
-        verifyStatic();
-        AsyncTaskUtils.execute(anyString(), removeTask.capture(), Mockito.<Long>anyVararg());
         Updates.setEnabled(false);
+        waitDownloadTask();
+
+        /* Verify. */
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
         verify(mDownloadTask.get()).cancel(true);
-
-        /* Simulate async task. */
-        waitDownloadTask();
-
-        /* Verify mDownloadRequest enqueued then removed. */
         verify(mDownloadManager).enqueue(mDownloadRequest);
         verifyNew(DownloadManager.Request.class).withArguments(mDownloadUrl);
         verify(mDownloadManager).remove(DOWNLOAD_ID);
@@ -269,6 +273,34 @@ public class UpdatesDownloadTests extends AbstractUpdatesTest {
         verifyStatic(never());
         PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOAD_URI, "");
         verifyZeroInteractions(mNotificationManager);
+    }
+
+    @Test
+    public void disableWhileProcessingCompletion() throws Exception {
+
+        /* Simulate async task. */
+        waitDownloadTask();
+
+        /* Process download completion. */
+        Intent intent = mock(Intent.class);
+        when(intent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        when(intent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
+        new DownloadCompletionReceiver().onReceive(mContext, intent);
+
+        /* Disable before completion. */
+        Updates.setEnabled(false);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        waitCompletionTask();
+
+        /* Verify cancellation. */
+        verify(mCompletionTask.get()).cancel(true);
+        verify(mDownloadManager).remove(DOWNLOAD_ID);
+        verify(mNotificationManager).cancel(Updates.getNotificationId());
+
+        /* Check cleaned state only once, the completeWorkflow on failed download has to be ignored. */
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
     }
 
     @Test

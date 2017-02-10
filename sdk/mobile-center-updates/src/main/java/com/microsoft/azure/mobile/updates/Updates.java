@@ -474,6 +474,17 @@ public class Updates extends AbstractMobileCenterService {
 
     /**
      * Reset all variables that matter to restart checking a new release on launcher activity restart.
+     *
+     * @param task to check if state changed and that the call should be ignored.
+     */
+    private synchronized void completeWorkflow(ProcessDownloadCompletionTask task) {
+        if (task == mProcessDownloadCompletionTask) {
+            completeWorkflow();
+        }
+    }
+
+    /**
+     * Reset all variables that matter to restart checking a new release on launcher activity restart.
      */
     private synchronized void completeWorkflow() {
         StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
@@ -727,7 +738,7 @@ public class Updates extends AbstractMobileCenterService {
      * @return foreground activity if any, if state is valid.
      * @throws IllegalStateException if state changed.
      */
-    private synchronized Activity checkStateIsValidFor(ProcessDownloadCompletionTask task) throws IllegalStateException {
+    private synchronized Activity getForegroundActivityWithStateCheck(ProcessDownloadCompletionTask task) throws IllegalStateException {
         if (task == mProcessDownloadCompletionTask) {
             return mForegroundActivity;
         }
@@ -885,7 +896,7 @@ public class Updates extends AbstractMobileCenterService {
                 /* Exit check point. */
                 Activity activity;
                 try {
-                    activity = checkStateIsValidFor(this);
+                    activity = getForegroundActivityWithStateCheck(this);
                 } catch (IllegalStateException e) {
 
                     /* If we were canceled, exit now. */
@@ -899,7 +910,7 @@ public class Updates extends AbstractMobileCenterService {
                     /* This start call triggers strict mode violation in U.I. thread so it needs to be done here, and we can't synchronize anymore... */
                     MobileCenterLog.debug(LOG_TAG, "Application is in foreground, launch install UI now.");
                     activity.startActivity(intent);
-                    completeWorkflow(mReleaseDetails);
+                    completeWorkflow(this);
                 } else {
 
                     /* Remember we have a download ready. */
@@ -932,7 +943,7 @@ public class Updates extends AbstractMobileCenterService {
                 }
             } else {
                 MobileCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId);
-                completeWorkflow(mReleaseDetails);
+                completeWorkflow(this);
             }
             return null;
         }
