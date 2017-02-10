@@ -29,6 +29,8 @@ class BrowserUtils {
 
     @VisibleForTesting
     BrowserUtils() {
+
+        /* Hide constructor in utils pattern. */
     }
 
 

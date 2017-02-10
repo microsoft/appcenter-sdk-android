@@ -45,11 +45,11 @@ import java.util.Map;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.CHECK_UPDATE_URL_PATH;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.CHECK_UPDATE_URL_PATH_FORMAT;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_API_URL;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_LOGIN_URL;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.HEADER_API_TOKEN;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.LOGIN_PAGE_URL_PATH;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.LOGIN_PAGE_URL_PATH_FORMAT;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.LOG_TAG;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM_VALUE;
@@ -433,7 +433,7 @@ public class Updates extends AbstractMobileCenterService {
 
             /* Build URL. */
             String url = mLoginUrl;
-            url += String.format(LOGIN_PAGE_URL_PATH, mAppSecret);
+            url += String.format(LOGIN_PAGE_URL_PATH_FORMAT, mAppSecret);
             url += "?" + PARAMETER_RELEASE_HASH + "=" + releaseHash;
             url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
             url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
@@ -518,7 +518,7 @@ public class Updates extends AbstractMobileCenterService {
         HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
         HttpClient httpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
-        String url = mApiUrl + String.format(CHECK_UPDATE_URL_PATH, mAppSecret);
+        String url = mApiUrl + String.format(CHECK_UPDATE_URL_PATH_FORMAT, mAppSecret);
         Map<String, String> headers = new HashMap<>();
         headers.put(HEADER_API_TOKEN, updateToken);
         final Object releaseCallId = mCheckReleaseCallId = new Object();
