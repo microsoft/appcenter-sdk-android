@@ -7,7 +7,6 @@ import android.app.DownloadManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -138,12 +137,12 @@ public class Updates extends AbstractMobileCenterService {
     /**
      * Current task inspecting the latest release details that we fetched from server.
      */
-    private AsyncTask<?, ?, ?> mDownloadTask;
+    private DownloadTask mDownloadTask;
 
     /**
      * Current task to process download completion.
      */
-    private AsyncTask<?, ?, ?> mProcessDownloadCompletionTask;
+    private ProcessDownloadCompletionTask mProcessDownloadCompletionTask;
 
     /**
      * True when update workflow reached final state.
@@ -235,7 +234,8 @@ public class Updates extends AbstractMobileCenterService {
      *
      * @return notification identifier for downloads.
      */
-    private static int getNotificationId() {
+    @VisibleForTesting
+    static int getNotificationId() {
         return Updates.class.getName().hashCode();
     }
 
@@ -271,10 +271,7 @@ public class Updates extends AbstractMobileCenterService {
             PackageManager packageManager = activity.getPackageManager();
             Intent intent = packageManager.getLaunchIntentForPackage(activity.getPackageName());
             if (intent != null) {
-                ComponentName component = intent.resolveActivity(packageManager);
-                if (component != null) {
-                    mLauncherActivityClassName = component.getClassName();
-                }
+                mLauncherActivityClassName = intent.resolveActivity(packageManager).getClassName();
             }
         }
 
@@ -766,7 +763,8 @@ public class Updates extends AbstractMobileCenterService {
     /**
      * Removing a download violates strict mode in U.I. thread.
      */
-    private class RemoveDownloadTask extends AsyncTask<Long, Void, Void> {
+    @VisibleForTesting
+    class RemoveDownloadTask extends AsyncTask<Long, Void, Void> {
 
         @Override
         protected Void doInBackground(Long... params) {
@@ -783,7 +781,8 @@ public class Updates extends AbstractMobileCenterService {
     /**
      * The download manager API violates strict mode in U.I. thread.
      */
-    private class DownloadTask extends AsyncTask<Void, Void, Void> {
+    @VisibleForTesting
+    class DownloadTask extends AsyncTask<Void, Void, Void> {
 
         /**
          * Release details to check.
@@ -811,13 +810,13 @@ public class Updates extends AbstractMobileCenterService {
             storeDownloadRequestId(downloadManager, this, downloadRequestId);
             return null;
         }
-
     }
 
     /**
      * Inspect a completed download, this uses APIs that would trigger strict mode violation if used in U.I. thread.
      */
-    private class ProcessDownloadCompletionTask extends AsyncTask<Void, Void, Void> {
+    @VisibleForTesting
+    class ProcessDownloadCompletionTask extends AsyncTask<Void, Void, Void> {
 
         /**
          * Context.
@@ -851,8 +850,8 @@ public class Updates extends AbstractMobileCenterService {
             }
 
             /* Check intent data is what we expected. */
-            long expectedDownloadId = StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, -1);
-            if (expectedDownloadId != mDownloadId) {
+            long expectedDownloadId = StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID);
+            if (expectedDownloadId > 0 && expectedDownloadId != mDownloadId) {
                 MobileCenterLog.warn(LOG_TAG, "Ignoring completion for a download we didn't expect, id=" + mDownloadId);
                 return null;
             }
