@@ -4,10 +4,10 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertNotNull;
 
-public class UpdatesConstantsTest {
+public class UpdateConstantsTest {
 
     @Test
-    public void coverage() {
+    public void init() {
         assertNotNull(new UpdateConstants());
     }
 }

@@ -4,6 +4,9 @@ import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.azure.mobile.MobileCenter;
 
+/**
+ * Updates constants.
+ */
 final class UpdateConstants {
 
     /**
@@ -37,14 +40,15 @@ final class UpdateConstants {
     static final String DEFAULT_API_URL = "https://api.mobile.azure.com";
 
     /**
-     * Login URL path. Trailing slash matters to avoid redirection that loses query string.
+     * Login URL path. Contains the app secret variable to replace.
+     * Trailing slash needed to avoid redirection that can lose the query string on some servers.
      */
-    static final String LOGIN_PAGE_URL_PATH = "/apps/%s/update-setup/";
+    static final String LOGIN_PAGE_URL_PATH_FORMAT = "/apps/%s/update-setup/";
 
     /**
-     * Check latest release API URL path.
+     * Check latest release API URL path. Contains the app secret variable to replace.
      */
-    static final String CHECK_UPDATE_URL_PATH = "/sdk/apps/%s/releases/latest";
+    static final String CHECK_UPDATE_URL_PATH_FORMAT = "/sdk/apps/%s/releases/latest";
 
     /**
      * API parameter for release hash.
@@ -108,5 +112,7 @@ final class UpdateConstants {
 
     @VisibleForTesting
     UpdateConstants() {
+
+        /* Hide constructor as it's just a constant class. */
     }
 }

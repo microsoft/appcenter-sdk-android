@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 public class BrowserUtilsTest {
 
     @Test
-    public void coverage() {
+    public void init() {
         assertNotNull(new BrowserUtils());
     }
 
@@ -53,7 +53,7 @@ public class BrowserUtilsTest {
     }
 
     @Test
-    public void noBrowser() throws Exception {
+    public void noBrowserFound() throws Exception {
 
         /* Mock no browser. */
         Activity activity = mock(Activity.class);

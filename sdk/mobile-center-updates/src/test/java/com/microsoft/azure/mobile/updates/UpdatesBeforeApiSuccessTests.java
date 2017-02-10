@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
-import static com.microsoft.azure.mobile.updates.UpdateConstants.LOGIN_PAGE_URL_PATH;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.LOGIN_PAGE_URL_PATH_FORMAT;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM_VALUE;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_REDIRECT_ID;
@@ -103,7 +103,7 @@ public class UpdatesBeforeApiSuccessTests extends AbstractUpdatesTest {
         Updates.getInstance().onActivityResumed(activity);
         verifyStatic();
         String url = UpdateConstants.DEFAULT_LOGIN_URL;
-        url += String.format(LOGIN_PAGE_URL_PATH, "a");
+        url += String.format(LOGIN_PAGE_URL_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + HashUtils.sha256("com.contoso:1.2.3:6");
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
@@ -220,7 +220,7 @@ public class UpdatesBeforeApiSuccessTests extends AbstractUpdatesTest {
         Updates.getInstance().onActivityResumed(activity);
         verifyStatic();
         String url = "http://mock";
-        url += String.format(LOGIN_PAGE_URL_PATH, "a");
+        url += String.format(LOGIN_PAGE_URL_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + HashUtils.sha256("com.contoso:1.2.3:6");
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
@@ -277,7 +277,7 @@ public class UpdatesBeforeApiSuccessTests extends AbstractUpdatesTest {
         Updates.getInstance().onActivityResumed(activity);
         verifyStatic();
         String url = UpdateConstants.DEFAULT_LOGIN_URL;
-        url += String.format(LOGIN_PAGE_URL_PATH, "a");
+        url += String.format(LOGIN_PAGE_URL_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + HashUtils.sha256("com.contoso:1.2.3:6");
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
