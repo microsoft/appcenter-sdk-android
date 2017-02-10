@@ -70,6 +70,7 @@ public class MobileCenter {
      * Log serializer.
      */
     private LogSerializer mLogSerializer;
+
     /**
      * Channel.
      */
