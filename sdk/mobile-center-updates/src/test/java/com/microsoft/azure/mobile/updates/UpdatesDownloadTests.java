@@ -622,6 +622,64 @@ public class UpdatesDownloadTests extends AbstractUpdatesTest {
     }
 
     @Test
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    public void disableRightBeforeNotifying() throws Exception {
+
+        /* Simulate async task. */
+        waitDownloadTask();
+
+        /* Process download completion. */
+        Intent completionIntent = mock(Intent.class);
+        when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
+        new DownloadCompletionReceiver().onReceive(mContext, completionIntent);
+        Uri uri = mock(Uri.class);
+        when(uri.toString()).thenReturn("original");
+        when(mDownloadManager.getUriForDownloadedFile(DOWNLOAD_ID)).thenReturn(uri);
+        Intent installIntent = mock(Intent.class);
+        whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(installIntent);
+        when(installIntent.resolveActivity(any(PackageManager.class))).thenReturn(mock(ComponentName.class));
+
+        /* In background. */
+        Updates.getInstance().onActivityPaused(mFirstActivity);
+
+        /* Mock notification. */
+        when(mPackageManager.getApplicationInfo(mContext.getPackageName(), 0)).thenReturn(mock(ApplicationInfo.class));
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.JELLY_BEAN);
+        Notification.Builder notificationBuilder = mock(Notification.Builder.class);
+        whenNew(Notification.Builder.class).withAnyArguments().thenReturn(notificationBuilder);
+        when(notificationBuilder.setTicker(anyString())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setContentTitle(anyString())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setContentText(anyString())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setSmallIcon(anyInt())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setContentIntent(any(PendingIntent.class))).thenReturn(notificationBuilder);
+        final Semaphore beforeNotifying = new Semaphore(0);
+        final Semaphore disabledLock = new Semaphore(0);
+        when(notificationBuilder.build()).thenAnswer(new Answer<Notification>() {
+
+            @Override
+            public Notification answer(InvocationOnMock invocation) throws Throwable {
+                beforeNotifying.release();
+                disabledLock.acquireUninterruptibly();
+                return mock(Notification.class);
+            }
+        });
+
+        /* Disable while preparing notification... */
+        mCompletionBeforeSemaphore.release();
+        beforeNotifying.acquireUninterruptibly();
+        Updates.setEnabled(false);
+        disabledLock.release();
+        mCompletionAfterSemaphore.acquireUninterruptibly();
+
+        /* Verify no notification and complete workflow skipped, e.g. clean behavior happened only once. */
+        verify(mFirstActivity, never()).startActivity(installIntent);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        verify(mNotificationManager, never()).notify(anyInt(), any(Notification.class));
+    }
+
+    @Test
     @PrepareForTest(Uri.class)
     @SuppressWarnings("deprecation")
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
@@ -630,7 +688,17 @@ public class UpdatesDownloadTests extends AbstractUpdatesTest {
         /* Simulate async task. */
         waitDownloadTask();
 
-        /* Process download completion. */
+        /* Process fake download completion, should not interfere and will be ignored. */
+        {
+            Intent completionIntent = mock(Intent.class);
+            when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+            when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(404L);
+            new DownloadCompletionReceiver().onReceive(mContext, completionIntent);
+            waitCompletionTask();
+            verify(mDownloadManager, never()).getUriForDownloadedFile(anyLong());
+        }
+
+        /* Process download completion with the real download identifier. */
         Intent completionIntent = mock(Intent.class);
         when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
         when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
