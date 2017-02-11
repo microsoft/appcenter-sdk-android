@@ -3,21 +3,26 @@ package com.microsoft.azure.mobile.updates;
 import android.app.Activity;
 import android.app.DownloadManager;
 import android.app.NotificationManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.http.HttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
+import com.microsoft.azure.mobile.test.TestUtils;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -46,6 +51,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
@@ -70,6 +76,9 @@ public class UpdatesDownloadTests extends AbstractUpdatesTest {
 
     @Mock
     private DownloadManager.Request mDownloadRequest;
+
+    @Mock
+    private Activity mFirstActivity;
 
     private Semaphore mDownloadBeforeSemaphore;
 
@@ -132,7 +141,7 @@ public class UpdatesDownloadTests extends AbstractUpdatesTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         mockStatic(AsyncTaskUtils.class);
         Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Updates.getInstance().onActivityResumed(mFirstActivity);
 
         /* Mock download asyncTask. */
         mDownloadBeforeSemaphore = new Semaphore(0);
@@ -341,5 +350,213 @@ public class UpdatesDownloadTests extends AbstractUpdatesTest {
 
         /* So nothing happens since no launcher restart detected. */
         verify(mDownloadManager).enqueue(mDownloadRequest);
+    }
+
+    @Test
+    public void successDownloadInstallerNotFoundCursorIsNull() {
+
+        /* Simulate async task. */
+        waitDownloadTask();
+
+        /* Process download completion. */
+        Intent intent = mock(Intent.class);
+        when(intent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        when(intent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
+        new DownloadCompletionReceiver().onReceive(mContext, intent);
+        when(mDownloadManager.getUriForDownloadedFile(DOWNLOAD_ID)).thenReturn(mock(Uri.class));
+        when(mDownloadManager.query(any(DownloadManager.Query.class))).thenReturn(null);
+
+        /* Simulate task. */
+        waitCompletionTask();
+
+        /* Check we completed workflow without starting activity because installer not found. */
+        verify(mFirstActivity, never()).startActivity(any(Intent.class));
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+    }
+
+    @Test
+    public void successDownloadInstallerNotFoundCursorEmpty() {
+
+        /* Simulate async task. */
+        waitDownloadTask();
+
+        /* Process download completion. */
+        Intent intent = mock(Intent.class);
+        when(intent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        when(intent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
+        new DownloadCompletionReceiver().onReceive(mContext, intent);
+        when(mDownloadManager.getUriForDownloadedFile(DOWNLOAD_ID)).thenReturn(mock(Uri.class));
+        Cursor cursor = mock(Cursor.class);
+        when(mDownloadManager.query(any(DownloadManager.Query.class))).thenReturn(cursor);
+
+        /* Simulate task. */
+        waitCompletionTask();
+
+        /* Check we completed workflow without starting activity because installer not found. */
+        verify(cursor).close();
+        verify(mFirstActivity, never()).startActivity(any(Intent.class));
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+    }
+
+    @Test
+    public void successDownloadInstallerNotFoundEvenWithLocalFile() throws Exception {
+
+        /* Simulate async task. */
+        waitDownloadTask();
+
+        /* Process download completion. */
+        Intent completionIntent = mock(Intent.class);
+        when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
+        new DownloadCompletionReceiver().onReceive(mContext, completionIntent);
+        when(mDownloadManager.getUriForDownloadedFile(DOWNLOAD_ID)).thenReturn(mock(Uri.class));
+        Cursor cursor = mock(Cursor.class);
+        when(mDownloadManager.query(any(DownloadManager.Query.class))).thenReturn(cursor);
+        when(cursor.moveToNext()).thenReturn(true).thenReturn(false);
+
+        /* Simulate task. */
+        waitCompletionTask();
+
+        /* Check we completed workflow without starting activity because installer not found. */
+        verify(cursor).close();
+        verify(mFirstActivity, never()).startActivity(any(Intent.class));
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+    }
+
+    @Test
+    public void successDownloadInstallerNotFoundAfterNougat() throws Exception {
+
+        /* Simulate async task. */
+        waitDownloadTask();
+
+        /* Process download completion. */
+        Intent completionIntent = mock(Intent.class);
+        when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
+        new DownloadCompletionReceiver().onReceive(mContext, completionIntent);
+        when(mDownloadManager.getUriForDownloadedFile(DOWNLOAD_ID)).thenReturn(mock(Uri.class));
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.N);
+
+        /* Simulate task. */
+        waitCompletionTask();
+
+        /* Check we completed workflow without starting activity because installer not found. */
+        verify(mFirstActivity, never()).startActivity(any(Intent.class));
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+    }
+
+    @Test
+    public void disableWhileCompletingBeforeNougat() throws Exception {
+
+        /* Simulate async task. */
+        waitDownloadTask();
+
+        /* Process download completion. */
+        Intent completionIntent = mock(Intent.class);
+        when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
+        new DownloadCompletionReceiver().onReceive(mContext, completionIntent);
+        when(mDownloadManager.getUriForDownloadedFile(DOWNLOAD_ID)).thenReturn(mock(Uri.class));
+        Cursor cursor = mock(Cursor.class);
+        when(mDownloadManager.query(any(DownloadManager.Query.class))).thenReturn(cursor);
+        when(cursor.moveToNext()).thenReturn(true).thenReturn(false);
+        Intent installIntent = mock(Intent.class);
+        whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(installIntent);
+        when(installIntent.resolveActivity(any(PackageManager.class))).thenReturn(null).thenReturn(mock(ComponentName.class));
+
+        /* Disable before task run. */
+        Updates.setEnabled(false);
+
+        /* Simulate task. */
+        waitCompletionTask();
+
+        /* Check we completed workflow without starting activity because disabled. */
+        verify(cursor).close();
+        verify(mFirstActivity, never()).startActivity(any(Intent.class));
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        verify(mNotificationManager).cancel(Updates.getNotificationId());
+        verifyNoMoreInteractions(mNotificationManager);
+    }
+
+    @Test
+    public void successInForeground() throws Exception {
+
+        /* Simulate async task. */
+        waitDownloadTask();
+
+        /* Process download completion. */
+        Intent completionIntent = mock(Intent.class);
+        when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
+        new DownloadCompletionReceiver().onReceive(mContext, completionIntent);
+        Uri uri = mock(Uri.class);
+        when(uri.toString()).thenReturn("original");
+        when(mDownloadManager.getUriForDownloadedFile(DOWNLOAD_ID)).thenReturn(uri);
+        Intent installIntent = mock(Intent.class);
+        whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(installIntent);
+        when(installIntent.resolveActivity(any(PackageManager.class))).thenReturn(mock(ComponentName.class));
+
+        /* Simulate task. */
+        waitCompletionTask();
+
+        /* Verify start activity and complete workflow. */
+        verify(mFirstActivity).startActivity(installIntent);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        verifyNoMoreInteractions(mNotificationManager);
+    }
+
+    @Test
+    public void startActivityButDisabledAfterCheckpoint() throws Exception {
+
+        /* Simulate async task. */
+        waitDownloadTask();
+
+        /* Process download completion. */
+        Intent completionIntent = mock(Intent.class);
+        when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
+        new DownloadCompletionReceiver().onReceive(mContext, completionIntent);
+        Uri uri = mock(Uri.class);
+        when(uri.toString()).thenReturn("original");
+        when(mDownloadManager.getUriForDownloadedFile(DOWNLOAD_ID)).thenReturn(uri);
+        final Intent installIntent = mock(Intent.class);
+        whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(installIntent);
+        when(installIntent.resolveActivity(any(PackageManager.class))).thenReturn(mock(ComponentName.class));
+        final Semaphore beforeStartingActivityLock = new Semaphore(0);
+        final Semaphore disabledLock = new Semaphore(0);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                beforeStartingActivityLock.release();
+                disabledLock.acquireUninterruptibly();
+                return null;
+            }
+        }).when(mFirstActivity).startActivity(installIntent);
+
+        /* Disable while calling startActivity... */
+        mCompletionBeforeSemaphore.release();
+        beforeStartingActivityLock.acquireUninterruptibly();
+        Updates.setEnabled(false);
+        disabledLock.release();
+        mCompletionAfterSemaphore.acquireUninterruptibly();
+
+        /* Verify start activity and complete workflow skipped, e.g. clean behavior happened only once. */
+        verify(mFirstActivity).startActivity(installIntent);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        verify(mNotificationManager).cancel(Updates.getNotificationId());
+        verifyNoMoreInteractions(mNotificationManager);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
     }
 }

@@ -853,7 +853,13 @@ public class Updates extends AbstractMobileCenterService {
         @Override
         protected Void doInBackground(Void... params) {
 
-            /* Completion might be triggered before MobileCenter.start. */
+            /*
+             * Completion might be triggered in background before MobileCenter.start
+             * if application was killed after starting download.
+             *
+             * We still want to generate the notification: if we can find the data in preferences
+             * that means they were not deleted, and thus that the sdk was not disabled.
+             */
             MobileCenterLog.debug(LOG_TAG, "Process download completion id=" + mDownloadId);
             if (Updates.this.mContext == null) {
                 MobileCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
@@ -875,22 +881,27 @@ public class Updates extends AbstractMobileCenterService {
                 /* Build install intent. */
                 MobileCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId + " uri=" + uriForDownloadedFile);
                 Intent intent = getInstallIntent(uriForDownloadedFile);
+                boolean installerFound = false;
                 if (intent.resolveActivity(mContext.getPackageManager()) == null) {
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
                         Cursor cursor = downloadManager.query(new DownloadManager.Query().setFilterById(mDownloadId));
-                        if (cursor != null && cursor.moveToNext()) {
-                            //noinspection deprecation
-                            uriForDownloadedFile = Uri.parse("file://" + cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME)));
-                            intent = getInstallIntent(uriForDownloadedFile);
-                            if (intent.resolveActivity(mContext.getPackageManager()) == null) {
-                                MobileCenterLog.error(LOG_TAG, "Installer not found");
-                                return null;
+                        if (cursor != null) {
+                            if (cursor.moveToNext()) {
+                                //noinspection deprecation
+                                uriForDownloadedFile = Uri.parse("file://" + cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME)));
+                                intent = getInstallIntent(uriForDownloadedFile);
+                                installerFound = intent.resolveActivity(mContext.getPackageManager()) != null;
                             }
+                            cursor.close();
                         }
-                    } else {
-                        MobileCenterLog.error(LOG_TAG, "Installer not found");
-                        return null;
                     }
+                } else {
+                    installerFound = true;
+                }
+                if (!installerFound) {
+                    MobileCenterLog.error(LOG_TAG, "Installer not found");
+                    completeWorkflow(this);
+                    return null;
                 }
 
                 /* Exit check point. */
@@ -923,6 +934,7 @@ public class Updates extends AbstractMobileCenterService {
                         icon = applicationInfo.icon;
                     } catch (PackageManager.NameNotFoundException e) {
                         MobileCenterLog.error(LOG_TAG, "Could not get application icon", e);
+                        completeWorkflow(this);
                         return null;
                     }
                     Notification.Builder builder = new Notification.Builder(mContext)
