@@ -1,12 +1,17 @@
 package com.microsoft.azure.mobile.updates;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.DownloadManager;
+import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
@@ -42,14 +47,17 @@ import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_URI;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -122,6 +130,24 @@ public class UpdatesDownloadTests extends AbstractUpdatesTest {
             }
         }).when(StorageHelper.PreferencesStorage.class);
         StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                when(StorageHelper.PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn((String) invocation.getArguments()[1]);
+                return null;
+            }
+        }).when(StorageHelper.PreferencesStorage.class);
+        StorageHelper.PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOAD_URI), anyString());
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                when(StorageHelper.PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(null);
+                return null;
+            }
+        }).when(StorageHelper.PreferencesStorage.class);
+        StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
 
         /* Mock everything that triggers a download. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -247,6 +273,12 @@ public class UpdatesDownloadTests extends AbstractUpdatesTest {
         PreferencesStorage.putLong(PREFERENCE_KEY_DOWNLOAD_ID, DOWNLOAD_ID);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOAD_URI, "");
+
+        /* Pause/resume should do nothing excepting mentioning progress. */
+        verify(mDialog).show();
+        Updates.getInstance().onActivityPaused(mFirstActivity);
+        Updates.getInstance().onActivityResumed(mFirstActivity);
+        verify(mDialog).show();
 
         /* Cancel download by disabling. */
         Updates.setEnabled(false);
@@ -553,6 +585,219 @@ public class UpdatesDownloadTests extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
         verify(mNotificationManager).cancel(Updates.getNotificationId());
         verifyNoMoreInteractions(mNotificationManager);
+    }
+
+    @Test
+    public void failsToGetNotificationIcon() throws Exception {
+
+        /* Simulate async task. */
+        waitDownloadTask();
+
+        /* Process download completion. */
+        Intent completionIntent = mock(Intent.class);
+        when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
+        new DownloadCompletionReceiver().onReceive(mContext, completionIntent);
+        Uri uri = mock(Uri.class);
+        when(uri.toString()).thenReturn("original");
+        when(mDownloadManager.getUriForDownloadedFile(DOWNLOAD_ID)).thenReturn(uri);
+        Intent installIntent = mock(Intent.class);
+        whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(installIntent);
+        when(installIntent.resolveActivity(any(PackageManager.class))).thenReturn(mock(ComponentName.class));
+
+        /* In background. */
+        Updates.getInstance().onActivityPaused(mFirstActivity);
+
+        /* And the icon will fail. */
+        when(mPackageManager.getApplicationInfo(mContext.getPackageName(), 0)).thenThrow(new PackageManager.NameNotFoundException());
+
+        /* Simulate task. */
+        waitCompletionTask();
+
+        /* Verify complete workflow with no notification. */
+        verify(mFirstActivity, never()).startActivity(installIntent);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        verifyNoMoreInteractions(mNotificationManager);
+    }
+
+    @Test
+    @PrepareForTest(Uri.class)
+    @SuppressWarnings("deprecation")
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    public void notifyThenRestartApp() throws Exception {
+
+        /* Simulate async task. */
+        waitDownloadTask();
+
+        /* Process download completion. */
+        Intent completionIntent = mock(Intent.class);
+        when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
+        new DownloadCompletionReceiver().onReceive(mContext, completionIntent);
+        Uri uri = mock(Uri.class);
+        when(uri.toString()).thenReturn("original");
+        when(mDownloadManager.getUriForDownloadedFile(DOWNLOAD_ID)).thenReturn(uri);
+        Intent installIntent = mock(Intent.class);
+        whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(installIntent);
+        when(installIntent.resolveActivity(any(PackageManager.class))).thenReturn(mock(ComponentName.class));
+
+        /* In background. */
+        Updates.getInstance().onActivityPaused(mFirstActivity);
+
+        /* Mock notification. */
+        when(mPackageManager.getApplicationInfo(mContext.getPackageName(), 0)).thenReturn(mock(ApplicationInfo.class));
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.JELLY_BEAN);
+        Notification.Builder notificationBuilder = mock(Notification.Builder.class);
+        whenNew(Notification.Builder.class).withAnyArguments().thenReturn(notificationBuilder);
+        when(notificationBuilder.build()).thenReturn(mock(Notification.class));
+        when(notificationBuilder.setTicker(anyString())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setContentTitle(anyString())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setContentText(anyString())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setSmallIcon(anyInt())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setContentIntent(any(PendingIntent.class))).thenReturn(notificationBuilder);
+
+        /* Simulate task. */
+        waitCompletionTask();
+
+        /* Verify notification. */
+        verify(mFirstActivity, never()).startActivity(installIntent);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOAD_URI, "original");
+        verify(notificationBuilder).build();
+        verify(notificationBuilder, never()).getNotification();
+        verify(mNotificationManager).notify(eq(Updates.getNotificationId()), any(Notification.class));
+        verifyNoMoreInteractions(mNotificationManager);
+
+        /* Launch app should pop install U.I. and cancel notification. */
+        when(mFirstActivity.getPackageManager()).thenReturn(mPackageManager);
+        Intent launcherIntent = mock(Intent.class);
+        when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(launcherIntent);
+        ComponentName launcher = mock(ComponentName.class);
+        when(launcherIntent.resolveActivity(mPackageManager)).thenReturn(launcher);
+        when(launcher.getClassName()).thenReturn(mFirstActivity.getClass().getName());
+        mockStatic(Uri.class);
+        when(Uri.parse("original")).thenReturn(uri);
+        Updates.getInstance().onActivityStopped(mFirstActivity);
+        Updates.getInstance().onActivityDestroyed(mFirstActivity);
+        Updates.getInstance().onActivityCreated(mFirstActivity, null);
+        Updates.getInstance().onActivityResumed(mFirstActivity);
+
+        /* Verify. */
+        verify(mFirstActivity).startActivity(installIntent);
+        verify(mNotificationManager).cancel(Updates.getNotificationId());
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+
+        /* Keep download. */
+        verifyStatic(never());
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        verify(mDownloadManager, never()).remove(DOWNLOAD_ID);
+
+        /* Verify second download (restart app) cleans first one. */
+        when(mDownloadManager.enqueue(mDownloadRequest)).thenReturn(DOWNLOAD_ID + 1);
+        Updates.getInstance().onActivityStopped(mFirstActivity);
+        Updates.getInstance().onActivityDestroyed(mFirstActivity);
+        Updates.getInstance().onActivityCreated(mFirstActivity, null);
+        Updates.getInstance().onActivityResumed(mFirstActivity);
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.mobile_center_updates_update_dialog_download), clickListener.capture());
+        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
+        waitDownloadTask();
+
+        /* Verify new download id in storage. */
+        verifyStatic();
+        PreferencesStorage.putLong(PREFERENCE_KEY_DOWNLOAD_ID, DOWNLOAD_ID + 1);
+
+        /* Verify previous download removed. */
+        verify(mDownloadManager).remove(DOWNLOAD_ID);
+
+        /* Notification already canceled so no more call, i.e. only once. */
+        verify(mNotificationManager).cancel(Updates.getNotificationId());
+    }
+
+    @Test
+    @PrepareForTest(Uri.class)
+    @SuppressWarnings("deprecation")
+    public void notifyThenRestartThenInstallerFails() throws Exception {
+
+        /* Simulate async task. */
+        waitDownloadTask();
+
+        /* Kill app, this has nothing to do with failure, but we need to test that too. */
+        Updates.unsetInstance();
+
+        /* Process download completion. */
+        Intent completionIntent = mock(Intent.class);
+        when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
+        new DownloadCompletionReceiver().onReceive(mContext, completionIntent);
+        Uri originalUri = mock(Uri.class);
+        when(originalUri.toString()).thenReturn("original");
+        when(mDownloadManager.getUriForDownloadedFile(DOWNLOAD_ID)).thenReturn(originalUri);
+        Cursor cursor = mock(Cursor.class);
+        when(mDownloadManager.query(any(DownloadManager.Query.class))).thenReturn(cursor);
+        when(cursor.moveToNext()).thenReturn(true).thenReturn(false);
+        when(cursor.getString(anyInt())).thenReturn("localFile");
+        mockStatic(Uri.class);
+        Uri localFileUri = mock(Uri.class);
+        when(Uri.parse("file://localFile")).thenReturn(localFileUri);
+        when(localFileUri.toString()).thenReturn("file://localFile");
+        Intent installIntent = mock(Intent.class);
+        whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(installIntent);
+        when(installIntent.resolveActivity(any(PackageManager.class))).thenReturn(null).thenReturn(mock(ComponentName.class));
+
+        /* Mock notification. */
+        when(mPackageManager.getApplicationInfo(mContext.getPackageName(), 0)).thenReturn(mock(ApplicationInfo.class));
+        Notification.Builder notificationBuilder = mock(Notification.Builder.class);
+        whenNew(Notification.Builder.class).withAnyArguments().thenReturn(notificationBuilder);
+        when(notificationBuilder.getNotification()).thenReturn(mock(Notification.class));
+        when(notificationBuilder.setTicker(anyString())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setContentTitle(anyString())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setContentText(anyString())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setSmallIcon(anyInt())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setContentIntent(any(PendingIntent.class))).thenReturn(notificationBuilder);
+
+        /* Simulate task. */
+        waitCompletionTask();
+
+        /* Verify notification. */
+        verify(mFirstActivity, never()).startActivity(installIntent);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOAD_URI, "file://localFile");
+        verify(mNotificationManager).notify(eq(Updates.getNotificationId()), any(Notification.class));
+        verifyNoMoreInteractions(mNotificationManager);
+
+        /* Restart app should pop install U.I. and cancel notification and pop a new dialog then a new download. */
+        doThrow(new ActivityNotFoundException()).when(mFirstActivity).startActivity(installIntent);
+        when(mDownloadManager.enqueue(mDownloadRequest)).thenReturn(DOWNLOAD_ID + 1);
+        Updates.getInstance().onStarted(mContext, "", mock(Channel.class));
+        Updates.getInstance().onActivityResumed(mFirstActivity);
+
+        /* Verify. */
+        verify(mFirstActivity).startActivity(installIntent);
+        verify(mNotificationManager).cancel(Updates.getNotificationId());
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        verify(mDownloadManager).remove(DOWNLOAD_ID);
+
+        /* Verify workflow restarted right after failure. */
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.mobile_center_updates_update_dialog_download), clickListener.capture());
+        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
+        waitDownloadTask();
+        verifyStatic();
+        PreferencesStorage.putLong(PREFERENCE_KEY_DOWNLOAD_ID, DOWNLOAD_ID + 1);
+
+        /* Check no duplicate cleaning tasks, i.e. happened only once. */
+        verify(mNotificationManager).cancel(Updates.getNotificationId());
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        verify(mDownloadManager).remove(DOWNLOAD_ID);
     }
 
     @After
