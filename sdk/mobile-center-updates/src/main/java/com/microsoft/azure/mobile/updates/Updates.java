@@ -7,6 +7,7 @@ import android.app.DownloadManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -382,12 +383,12 @@ public class Updates extends AbstractMobileCenterService {
                     /* FIXME this can cause strict mode violation. */
                     Uri apkUri = Uri.parse(downloadUri);
                     MobileCenterLog.debug(LOG_TAG, "Now in foreground, remove notification and start install for APK uri=" + apkUri);
+                    mForegroundActivity.startActivity(getInstallIntent(apkUri));
                     NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
                     notificationManager.cancel(getNotificationId());
-                    mForegroundActivity.startActivity(getInstallIntent(apkUri));
                     completeWorkflow();
                     return;
-                } catch (RuntimeException e) {
+                } catch (ActivityNotFoundException e) {
 
                     /* Cleanup on exception and resume update workflow. */
                     MobileCenterLog.warn(LOG_TAG, "Download uri was invalid", e);
@@ -682,10 +683,8 @@ public class Updates extends AbstractMobileCenterService {
             /* Delete previous download. */
             long previousDownloadId = StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID);
             if (previousDownloadId > 0) {
-                MobileCenterLog.debug(LOG_TAG, "Delete previous download and notification id=" + previousDownloadId);
+                MobileCenterLog.debug(LOG_TAG, "Delete previous download id=" + previousDownloadId);
                 downloadManager.remove(previousDownloadId);
-                NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-                notificationManager.cancel(getNotificationId());
             }
 
             /* Store new download identifier. */

@@ -43,6 +43,9 @@ public class AbstractUpdatesTest {
     Context mContext;
 
     @Mock
+    PackageManager mPackageManager;
+
+    @Mock
     AlertDialog.Builder mDialogBuilder;
 
     @Mock
@@ -74,11 +77,10 @@ public class AbstractUpdatesTest {
         StorageHelper.PreferencesStorage.putBoolean(eq(UPDATES_ENABLED_KEY), anyBoolean());
 
         /* Mock package manager. */
-        PackageManager packageManager = mock(PackageManager.class);
         when(mContext.getPackageName()).thenReturn("com.contoso");
-        when(mContext.getPackageManager()).thenReturn(packageManager);
+        when(mContext.getPackageManager()).thenReturn(mPackageManager);
         PackageInfo packageInfo = mock(PackageInfo.class);
-        when(packageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);
+        when(mPackageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);
         Whitebox.setInternalState(packageInfo, "versionName", "1.2.3");
         Whitebox.setInternalState(packageInfo, "versionCode", 6);
 
