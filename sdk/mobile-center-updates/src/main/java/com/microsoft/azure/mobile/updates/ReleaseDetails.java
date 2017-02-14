@@ -1,6 +1,8 @@
 package com.microsoft.azure.mobile.updates;
 
 import android.net.Uri;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,6 +12,8 @@ import org.json.JSONObject;
  */
 class ReleaseDetails {
 
+    private static final String ID = "id";
+
     private static final String VERSION = "version";
 
     private static final String SHORT_VERSION = "short_version";
@@ -17,6 +21,11 @@ class ReleaseDetails {
     private static final String RELEASE_NOTES = "release_notes";
 
     private static final String DOWNLOAD_URL = "download_url";
+
+    /**
+     * ID identifying this unique release.
+     */
+    private String id;
 
     /**
      * The release's version.<br>
@@ -52,6 +61,7 @@ class ReleaseDetails {
     static ReleaseDetails parse(String json) throws JSONException {
         JSONObject object = new JSONObject(json);
         ReleaseDetails releaseDetails = new ReleaseDetails();
+        releaseDetails.id = object.getString(ID);
         try {
             releaseDetails.version = Integer.parseInt(object.getString(VERSION));
         } catch (NumberFormatException e) {
@@ -68,12 +78,22 @@ class ReleaseDetails {
     }
 
     /**
+     * Get the id value.
+     *
+     * @return the id value.
+     */
+    @NonNull
+    String getId() {
+        return id;
+    }
+
+    /**
      * Get the version value.
      *
      * @return the version value
      */
     int getVersion() {
-        return this.version;
+        return version;
     }
 
     /**
@@ -81,6 +101,7 @@ class ReleaseDetails {
      *
      * @return the shortVersion value
      */
+    @NonNull
     String getShortVersion() {
         return shortVersion;
     }
@@ -90,8 +111,9 @@ class ReleaseDetails {
      *
      * @return the releaseNotes value
      */
+    @Nullable
     String getReleaseNotes() {
-        return this.releaseNotes;
+        return releaseNotes;
     }
 
     /**
@@ -99,7 +121,8 @@ class ReleaseDetails {
      *
      * @return the downloadUrl value
      */
+    @NonNull
     Uri getDownloadUrl() {
-        return this.downloadUrl;
+        return downloadUrl;
     }
 }

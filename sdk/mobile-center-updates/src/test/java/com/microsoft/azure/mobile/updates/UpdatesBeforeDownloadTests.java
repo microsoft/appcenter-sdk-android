@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.concurrent.Semaphore;
 
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_URI;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_IGNORED_RELEASE_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 import static org.mockito.Matchers.any;
@@ -37,6 +38,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -60,7 +62,9 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
         });
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
-        when(ReleaseDetails.parse(anyString())).thenReturn(mock(ReleaseDetails.class));
+        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn("someId");
+        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         Context context = mock(Context.class);
         when(context.getPackageName()).thenReturn("com.contoso");
         PackageManager packageManager = mock(PackageManager.class);
@@ -101,7 +105,10 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
         });
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
-        when(ReleaseDetails.parse(anyString())).thenReturn(mock(ReleaseDetails.class)); // 0 vs 6
+        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getVersion()).thenReturn(5);
+        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
         Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
@@ -138,6 +145,7 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn("someId");
         when(releaseDetails.getVersion()).thenReturn(6);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
@@ -176,6 +184,7 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn("someId");
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
@@ -229,6 +238,7 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn("someId");
         when(releaseDetails.getVersion()).thenReturn(7);
         when(releaseDetails.getReleaseNotes()).thenReturn("mock");
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
@@ -273,6 +283,7 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn("someId");
         when(releaseDetails.getVersion()).thenReturn(7);
         when(releaseDetails.getReleaseNotes()).thenReturn("mock");
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
@@ -315,6 +326,7 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
             }
         });
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn("someId");
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
@@ -342,7 +354,7 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
     }
 
     @Test
-    public void ignoreDialog() throws Exception {
+    public void postponeDialog() throws Exception {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -357,6 +369,70 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
             }
         });
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getVersion()).thenReturn(7);
+        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+
+        /* Trigger call. */
+        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Updates.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Verify dialog. */
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        verify(mDialogBuilder).setNeutralButton(eq(R.string.mobile_center_updates_update_dialog_postpone), clickListener.capture());
+        verify(mDialog).show();
+
+        /* Postpone it. */
+        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEUTRAL);
+
+        /* Verify. */
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+
+        /* Verify no more calls, e.g. happened only once. */
+        Updates.getInstance().onActivityPaused(mock(Activity.class));
+        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        verify(mDialog).show();
+        verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void ignoreDialog() throws Exception {
+
+        /* Mock ignore storage calls. */
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn((String) invocation.getArguments()[1]);
+                return null;
+            }
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_IGNORED_RELEASE_ID), anyString());
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(null);
+                return null;
+            }
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.remove(PREFERENCE_KEY_IGNORED_RELEASE_ID);
+
+        /* Mock we already have token. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                return mock(ServiceCall.class);
+            }
+        });
+        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn("someId");
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
@@ -381,6 +457,23 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
         Updates.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Restart app to check ignore. */
+        Updates.unsetInstance();
+        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Updates.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Verify second http call was made but dialog was skipped (e.g. shown only once). */
+        verify(httpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mDialog).show();
+        verifyStatic(times(2));
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+
+        /* Disable: it will prompt again as we clear storage. */
+        Updates.setEnabled(false);
+        Updates.setEnabled(true);
+        verify(httpClient, times(3)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mDialog, times(2)).show();
     }
 
     @Test
@@ -399,6 +492,7 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
             }
         });
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn("someId");
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
@@ -431,6 +525,26 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
     @Test
     public void disableBeforeIgnoreDialog() throws Exception {
 
+        /* Mock ignore storage calls. */
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn((String) invocation.getArguments()[1]);
+                return null;
+            }
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_IGNORED_RELEASE_ID), anyString());
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(null);
+                return null;
+            }
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.remove(PREFERENCE_KEY_IGNORED_RELEASE_ID);
+
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
@@ -444,6 +558,7 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
             }
         });
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn("someId");
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
@@ -471,6 +586,10 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_IGNORED_RELEASE_ID);
+        verifyStatic(never());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_IGNORED_RELEASE_ID), anyString());
     }
 
     @Test
@@ -490,6 +609,7 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
             }
         });
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn("someId");
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         mockStatic(AsyncTaskUtils.class);

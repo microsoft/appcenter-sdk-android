@@ -10,7 +10,7 @@ import android.text.TextUtils;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
-import com.microsoft.azure.mobile.utils.storage.StorageHelper;
+import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -32,7 +32,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("WeakerAccess")
-@PrepareForTest({Updates.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class})
+@PrepareForTest({Updates.class, PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class})
 public class AbstractUpdatesTest {
 
     static final String TEST_HASH = "testapp";  // TODO HashUtils.sha256("com.contoso:1.2.3:6");
@@ -60,8 +60,8 @@ public class AbstractUpdatesTest {
         when(MobileCenter.isEnabled()).thenReturn(true);
 
         /* First call to com.microsoft.azure.mobile.MobileCenter.isEnabled shall return true, initial state. */
-        mockStatic(StorageHelper.PreferencesStorage.class);
-        when(StorageHelper.PreferencesStorage.getBoolean(UPDATES_ENABLED_KEY, true)).thenReturn(true);
+        mockStatic(PreferencesStorage.class);
+        when(PreferencesStorage.getBoolean(UPDATES_ENABLED_KEY, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
         doAnswer(new Answer<Void>() {
@@ -71,11 +71,11 @@ public class AbstractUpdatesTest {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
-                when(StorageHelper.PreferencesStorage.getBoolean(UPDATES_ENABLED_KEY, true)).thenReturn(enabled);
+                when(PreferencesStorage.getBoolean(UPDATES_ENABLED_KEY, true)).thenReturn(enabled);
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putBoolean(eq(UPDATES_ENABLED_KEY), anyBoolean());
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.putBoolean(eq(UPDATES_ENABLED_KEY), anyBoolean());
 
         /* Mock package manager. */
         when(mContext.getPackageName()).thenReturn("com.contoso");
