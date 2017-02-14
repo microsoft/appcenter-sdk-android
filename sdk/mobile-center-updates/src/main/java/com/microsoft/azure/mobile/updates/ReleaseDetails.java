@@ -72,7 +72,7 @@ class ReleaseDetails {
             throw new JSONException(e.getMessage());
         }
         releaseDetails.shortVersion = object.getString(SHORT_VERSION);
-        releaseDetails.releaseNotes = object.optString(RELEASE_NOTES, null);
+        releaseDetails.releaseNotes = object.isNull(RELEASE_NOTES) ? null : object.getString(RELEASE_NOTES);
         releaseDetails.minOs = object.getString(MIN_OS);
         releaseDetails.fingerprint = object.getString(FINGERPRINT);
         releaseDetails.downloadUrl = Uri.parse(object.getString(DOWNLOAD_URL));

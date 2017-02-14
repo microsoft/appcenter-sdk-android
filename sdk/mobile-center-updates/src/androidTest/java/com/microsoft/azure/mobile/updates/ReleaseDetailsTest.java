@@ -87,6 +87,26 @@ public class ReleaseDetailsTest {
         assertEquals(Uri.parse("https://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
     }
 
+    @Test
+    public void nullReleaseNotes() throws JSONException {
+        String json = "{" +
+                "version: '14'," +
+                "release_notes: null," +
+                "short_version: '2.1.5'," +
+                "min_os: ''," +
+                "fingerprint: 'b407a9acbbdf509de2af3676de8d8fa26a21e4293a393dcef7d902deaa9caa1c'," +
+                "download_url: 'https://download.thinkbroadband.com/1GB.zip'" +
+                "}";
+        ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
+        assertNotNull(releaseDetails);
+        assertEquals(14, releaseDetails.getVersion());
+        assertEquals("2.1.5", releaseDetails.getShortVersion());
+        assertNull(releaseDetails.getReleaseNotes());
+        assertEquals("", releaseDetails.getMinOs());
+        assertEquals("b407a9acbbdf509de2af3676de8d8fa26a21e4293a393dcef7d902deaa9caa1c", releaseDetails.getFingerprint());
+        assertEquals(Uri.parse("https://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
+    }
+
     @Test(expected = JSONException.class)
     public void missingMinOs() throws JSONException {
         String json = "{" +
