@@ -110,6 +110,11 @@ final class UpdateConstants {
      */
     static final String PREFERENCE_KEY_UPDATE_TOKEN = PREFERENCE_PREFIX + EXTRA_UPDATE_TOKEN;
 
+    /**
+     * Preference key to store ignored release id.
+     */
+    static final String PREFERENCE_KEY_IGNORED_RELEASE_ID = PREFERENCE_PREFIX + "ignored_release_id";
+
     @VisibleForTesting
     UpdateConstants() {
 
