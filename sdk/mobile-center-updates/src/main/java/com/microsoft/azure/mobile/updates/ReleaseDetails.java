@@ -48,6 +48,7 @@ class ReleaseDetails {
 
     /**
      * Checksum of the release binary.
+     * FIXME need to use android_release_hash instead but it's not yet available. fingerprint is APK hash, not release_hash.
      */
     private String fingerprint;
 
