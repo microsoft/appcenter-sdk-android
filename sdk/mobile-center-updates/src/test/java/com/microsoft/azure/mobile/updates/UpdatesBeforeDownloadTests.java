@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.os.AsyncTask;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.http.HttpClient;
@@ -12,11 +11,11 @@ import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
-import com.microsoft.azure.mobile.utils.HashUtils;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -30,7 +29,6 @@ import static com.microsoft.azure.mobile.utils.storage.StorageHelper.Preferences
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -123,7 +121,7 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
     }
 
     @Test
-    public void sameVersionCodeAndSameHash() throws Exception {
+    public void sameVersionCode() throws Exception {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -141,7 +139,6 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getVersion()).thenReturn(6);
-        when(releaseDetails.getFingerprint()).thenReturn(HashUtils.sha256("com.contoso:1.2.3:6"));
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
@@ -162,7 +159,7 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
     }
 
     @Test
-    public void moreRecentHashNoReleaseNotesDialog() throws Exception {
+    public void moreRecentVersionWithoutReleaseNotesDialog() throws Exception {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -179,8 +176,7 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getVersion()).thenReturn(6);
-        when(releaseDetails.getFingerprint()).thenReturn("mock");
+        when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
@@ -525,6 +521,6 @@ public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
 
         /* Verify no download scheduled. */
         verifyStatic(never());
-        AsyncTaskUtils.execute(anyString(), any(AsyncTask.class), anyVararg());
+        AsyncTaskUtils.execute(anyString(), any(Updates.DownloadTask.class), Mockito.<Void>anyVararg());
     }
 }

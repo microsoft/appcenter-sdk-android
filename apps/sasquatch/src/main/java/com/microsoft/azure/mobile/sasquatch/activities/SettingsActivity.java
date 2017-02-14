@@ -160,13 +160,13 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            initClickableSetting(R.string.app_secret_key, MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null), new Preference.OnPreferenceClickListener() {
+            initClickableSetting(R.string.app_secret_key, MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
                     final EditText input = new EditText(getActivity());
                     input.setInputType(InputType.TYPE_CLASS_TEXT);
-                    input.setText(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
+                    input.setText(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)));
 
                     new AlertDialog.Builder(getActivity()).setTitle(R.string.app_secret_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
@@ -185,8 +185,9 @@ public class SettingsActivity extends AppCompatActivity {
                             .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    setKeyValue(APP_SECRET_KEY, MainActivity.APP_SECRET);
-                                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), MainActivity.APP_SECRET), Toast.LENGTH_SHORT).show();
+                                    String defaultAppSecret = getString(R.string.app_secret);
+                                    setKeyValue(APP_SECRET_KEY, defaultAppSecret);
+                                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), defaultAppSecret), Toast.LENGTH_SHORT).show();
                                     preference.setSummary(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
                                 }
                             })
@@ -204,7 +205,9 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            initClickableSetting(R.string.server_url_key, MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, getString(R.string.server_url_production)), new Preference.OnPreferenceClickListener() {
+            String defaultServerUrl = getString(R.string.server_url);
+            final String defaultServerUrlDisplay = TextUtils.isEmpty(defaultServerUrl) ? getString(R.string.server_url_production) : defaultServerUrl;
+            initClickableSetting(R.string.server_url_key, MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, defaultServerUrlDisplay), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
@@ -226,14 +229,14 @@ public class SettingsActivity extends AppCompatActivity {
                                     } else {
                                         Toast.makeText(getActivity(), R.string.server_url_invalid, Toast.LENGTH_SHORT).show();
                                     }
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, getString(R.string.server_url_production)));
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, defaultServerUrlDisplay));
                                 }
                             })
                             .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     setProductionUrl();
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, getString(R.string.server_url_production)));
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, defaultServerUrlDisplay));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)

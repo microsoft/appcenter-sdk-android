@@ -33,7 +33,6 @@ import com.microsoft.azure.mobile.http.HttpClientRetryer;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
-import com.microsoft.azure.mobile.utils.HashUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
@@ -459,7 +458,8 @@ public class Updates extends AbstractMobileCenterService {
 
     @NonNull
     private String computeHash(@NonNull Context context, @NonNull PackageInfo packageInfo) {
-        return HashUtils.sha256(context.getPackageName() + ":" + packageInfo.versionName + ":" + packageInfo.versionCode);
+        // TODO switch to the following hash when backend supports it: HashUtils.sha256(context.getPackageName() + ":" + packageInfo.versionName + ":" + packageInfo.versionCode);
+        return context.getString(packageInfo.applicationInfo.labelRes);
     }
 
     /**
@@ -605,9 +605,10 @@ public class Updates extends AbstractMobileCenterService {
      * @return true if latest release on server should be used.
      */
     private boolean isMoreRecent(PackageInfo packageInfo, ReleaseDetails releaseDetails) {
-        if (releaseDetails.getVersion() == packageInfo.versionCode) {
-            return !releaseDetails.getFingerprint().equals(computeHash(mContext, packageInfo));
-        }
+//        TODO when releaseHash is exposed in JSON.
+//        if (releaseDetails.getVersion() == packageInfo.versionCode) {
+//            return !releaseDetails.getReleaseHash().equals(computeHash(mContext, packageInfo));
+//        }
         return releaseDetails.getVersion() > packageInfo.versionCode;
     }
 

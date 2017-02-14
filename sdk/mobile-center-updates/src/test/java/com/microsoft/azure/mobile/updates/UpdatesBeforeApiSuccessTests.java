@@ -13,7 +13,6 @@ import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.HttpException;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
-import com.microsoft.azure.mobile.utils.HashUtils;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 
 import org.json.JSONException;
@@ -104,7 +103,7 @@ public class UpdatesBeforeApiSuccessTests extends AbstractUpdatesTest {
         verifyStatic();
         String url = UpdateConstants.DEFAULT_LOGIN_URL;
         url += String.format(LOGIN_PAGE_URL_PATH_FORMAT, "a");
-        url += "?" + PARAMETER_RELEASE_HASH + "=" + HashUtils.sha256("com.contoso:1.2.3:6");
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
@@ -221,7 +220,7 @@ public class UpdatesBeforeApiSuccessTests extends AbstractUpdatesTest {
         verifyStatic();
         String url = "http://mock";
         url += String.format(LOGIN_PAGE_URL_PATH_FORMAT, "a");
-        url += "?" + PARAMETER_RELEASE_HASH + "=" + HashUtils.sha256("com.contoso:1.2.3:6");
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
@@ -278,7 +277,7 @@ public class UpdatesBeforeApiSuccessTests extends AbstractUpdatesTest {
         verifyStatic();
         String url = UpdateConstants.DEFAULT_LOGIN_URL;
         url += String.format(LOGIN_PAGE_URL_PATH_FORMAT, "a");
-        url += "?" + PARAMETER_RELEASE_HASH + "=" + HashUtils.sha256("com.contoso:1.2.3:6");
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;

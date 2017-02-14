@@ -2,6 +2,7 @@ package com.microsoft.azure.mobile.updates;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.text.TextUtils;
@@ -34,8 +35,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest({Updates.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class})
 public class AbstractUpdatesTest {
 
+    static final String TEST_HASH = "testapp";  // TODO HashUtils.sha256("com.contoso:1.2.3:6");
     private static final String UPDATES_ENABLED_KEY = KEY_ENABLED + "_Updates";
-
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
@@ -83,6 +84,13 @@ public class AbstractUpdatesTest {
         when(mPackageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);
         Whitebox.setInternalState(packageInfo, "versionName", "1.2.3");
         Whitebox.setInternalState(packageInfo, "versionCode", 6);
+
+        /* TODO temporary fake hash based on app name */
+        ApplicationInfo applicationInfo = mock(ApplicationInfo.class);
+        Whitebox.setInternalState(applicationInfo, "labelRes", 1337);
+        Whitebox.setInternalState(packageInfo, "applicationInfo", applicationInfo);
+        //noinspection ResourceType
+        when(mContext.getString(1337)).thenReturn(TEST_HASH);
 
         /* Mock some statics. */
         mockStatic(BrowserUtils.class);
