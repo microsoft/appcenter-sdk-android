@@ -16,10 +16,6 @@ class ReleaseDetails {
 
     private static final String RELEASE_NOTES = "release_notes";
 
-    private static final String MIN_OS = "min_os";
-
-    private static final String FINGERPRINT = "fingerprint";
-
     private static final String DOWNLOAD_URL = "download_url";
 
     /**
@@ -40,17 +36,6 @@ class ReleaseDetails {
      * The release's release notes.
      */
     private String releaseNotes;
-
-    /**
-     * The release's minimum required operating system.
-     */
-    private String minOs;
-
-    /**
-     * Checksum of the release binary.
-     * FIXME need to use android_release_hash instead but it's not yet available. fingerprint is APK hash, not release_hash.
-     */
-    private String fingerprint;
 
     /**
      * The URL that hosts the binary for this release.
@@ -74,8 +59,6 @@ class ReleaseDetails {
         }
         releaseDetails.shortVersion = object.getString(SHORT_VERSION);
         releaseDetails.releaseNotes = object.isNull(RELEASE_NOTES) ? null : object.getString(RELEASE_NOTES);
-        releaseDetails.minOs = object.getString(MIN_OS);
-        releaseDetails.fingerprint = object.getString(FINGERPRINT);
         releaseDetails.downloadUrl = Uri.parse(object.getString(DOWNLOAD_URL));
         String scheme = releaseDetails.downloadUrl.getScheme();
         if (scheme == null || !scheme.startsWith("http")) {
@@ -109,24 +92,6 @@ class ReleaseDetails {
      */
     String getReleaseNotes() {
         return this.releaseNotes;
-    }
-
-    /**
-     * Get the minOs value.
-     *
-     * @return the minOs value
-     */
-    String getMinOs() {
-        return this.minOs;
-    }
-
-    /**
-     * Get the fingerprint value.
-     *
-     * @return the fingerprint value
-     */
-    String getFingerprint() {
-        return this.fingerprint;
     }
 
     /**
