@@ -45,11 +45,10 @@ import java.util.Map;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.CHECK_UPDATE_URL_PATH_FORMAT;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_API_URL;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_LOGIN_URL;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_INSTALL_URL;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.GET_LATEST_RELEASE_PATH_FORMAT;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.HEADER_API_TOKEN;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.LOGIN_PAGE_URL_PATH_FORMAT;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.LOG_TAG;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM_VALUE;
@@ -61,6 +60,7 @@ import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.SERVICE_NAME;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.UPDATE_SETUP_PATH_FORMAT;
 
 /**
  * Updates service.
@@ -74,9 +74,9 @@ public class Updates extends AbstractMobileCenterService {
     private static Updates sInstance = null;
 
     /**
-     * Current login base URL.
+     * Current install base URL.
      */
-    private String mLoginUrl = DEFAULT_LOGIN_URL;
+    private String mInstallUrl = DEFAULT_INSTALL_URL;
 
     /**
      * Current API base URL.
@@ -99,7 +99,7 @@ public class Updates extends AbstractMobileCenterService {
     private Activity mForegroundActivity;
 
     /**
-     * Remember if we already opened browser to login.
+     * Remember if we already opened browser to check install setup.
      */
     private boolean mBrowserOpened;
 
@@ -196,11 +196,11 @@ public class Updates extends AbstractMobileCenterService {
     /**
      * Change the base URL opened in the browser to get update token from user login information.
      *
-     * @param loginUrl login base URL.
+     * @param installUrl install base URL.
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
-    public static void setLoginUrl(String loginUrl) {
-        getInstance().setInstanceLoginUrl(loginUrl);
+    public static void setInstallUrl(String installUrl) {
+        getInstance().setInstanceInstallUrl(installUrl);
     }
 
     /**
@@ -327,10 +327,10 @@ public class Updates extends AbstractMobileCenterService {
     }
 
     /**
-     * Implements {@link #setLoginUrl(String)}.
+     * Implements {@link #setInstallUrl(String)}.
      */
-    private synchronized void setInstanceLoginUrl(String loginUrl) {
-        mLoginUrl = loginUrl;
+    private synchronized void setInstanceInstallUrl(String installUrl) {
+        mInstallUrl = installUrl;
     }
 
     /**
@@ -427,7 +427,7 @@ public class Updates extends AbstractMobileCenterService {
                 return;
             }
 
-            /* If not, open browser to login. */
+            /* If not, open browser to update setup. */
             if (mBrowserOpened) {
                 return;
             }
@@ -446,13 +446,13 @@ public class Updates extends AbstractMobileCenterService {
             String requestId = UUIDUtils.randomUUID().toString();
 
             /* Build URL. */
-            String url = mLoginUrl;
-            url += String.format(LOGIN_PAGE_URL_PATH_FORMAT, mAppSecret);
+            String url = mInstallUrl;
+            url += String.format(UPDATE_SETUP_PATH_FORMAT, mAppSecret);
             url += "?" + PARAMETER_RELEASE_HASH + "=" + releaseHash;
             url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
             url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
             url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
-            MobileCenterLog.debug(LOG_TAG, "No token, need to open browser to login url=" + url);
+            MobileCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
 
             /* Store request id. */
             StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
@@ -544,7 +544,7 @@ public class Updates extends AbstractMobileCenterService {
         HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
         HttpClient httpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
-        String url = mApiUrl + String.format(CHECK_UPDATE_URL_PATH_FORMAT, mAppSecret);
+        String url = mApiUrl + String.format(GET_LATEST_RELEASE_PATH_FORMAT, mAppSecret);
         Map<String, String> headers = new HashMap<>();
         headers.put(HEADER_API_TOKEN, updateToken);
         final Object releaseCallId = mCheckReleaseCallId = new Object();
