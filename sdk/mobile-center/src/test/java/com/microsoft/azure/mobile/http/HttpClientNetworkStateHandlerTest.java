@@ -200,8 +200,7 @@ public class HttpClientNetworkStateHandlerTest {
                         try {
                             sleep(200);
                             ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
+                        } catch (InterruptedException ignored) {
                         }
                     }
                 };

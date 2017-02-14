@@ -198,7 +198,7 @@ public class Updates extends AbstractMobileCenterService {
      *
      * @param loginUrl login base URL.
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public static void setLoginUrl(String loginUrl) {
         getInstance().setInstanceLoginUrl(loginUrl);
     }
@@ -208,7 +208,7 @@ public class Updates extends AbstractMobileCenterService {
      *
      * @param apiUrl API base URL.
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public static void setApiUrl(String apiUrl) {
         getInstance().setInstanceApiUrl(apiUrl);
     }
@@ -237,6 +237,20 @@ public class Updates extends AbstractMobileCenterService {
     @VisibleForTesting
     static int getNotificationId() {
         return Updates.class.getName().hashCode();
+    }
+
+    @SuppressWarnings("deprecation")
+    private static Uri getFileUriOnOldDevices(Cursor cursor) {
+        return Uri.parse("file://" + cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME)));
+    }
+
+    @SuppressWarnings("deprecation")
+    private static Notification buildNotification(Notification.Builder builder) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            return builder.build();
+        } else {
+            return builder.getNotification();
+        }
     }
 
     @Override
@@ -887,8 +901,7 @@ public class Updates extends AbstractMobileCenterService {
                         Cursor cursor = downloadManager.query(new DownloadManager.Query().setFilterById(mDownloadId));
                         if (cursor != null) {
                             if (cursor.moveToNext()) {
-                                //noinspection deprecation
-                                uriForDownloadedFile = Uri.parse("file://" + cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME)));
+                                uriForDownloadedFile = getFileUriOnOldDevices(cursor);
                                 intent = getInstallIntent(uriForDownloadedFile);
                                 installerFound = intent.resolveActivity(mContext.getPackageManager()) != null;
                             }
@@ -944,12 +957,7 @@ public class Updates extends AbstractMobileCenterService {
                             .setSmallIcon(icon)
                             .setContentIntent(PendingIntent.getActivities(mContext, 0, new Intent[]{intent}, 0));
                     Notification notification;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                        notification = builder.build();
-                    } else {
-                        //noinspection deprecation
-                        notification = builder.getNotification();
-                    }
+                    notification = buildNotification(builder);
                     notification.flags |= Notification.FLAG_AUTO_CANCEL;
                     notifyDownload(mContext, this, notification, uri);
                 }
