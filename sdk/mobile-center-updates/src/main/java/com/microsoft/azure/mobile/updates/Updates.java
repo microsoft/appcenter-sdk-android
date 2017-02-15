@@ -374,6 +374,13 @@ public class Updates extends AbstractMobileCenterService {
     private synchronized void resumeUpdateWorkflow() {
         if (mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
+            /* Don't go any further if the app was installed from an app store. */
+            if (InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext)) {
+                MobileCenterLog.info(LOG_TAG, "Not checking in app updates as installed from a store.");
+                mWorkflowCompleted = true;
+                return;
+            }
+
             /* If we received the update token before Mobile Center was started/enabled, process it now. */
             if (mBeforeStartUpdateToken != null) {
                 MobileCenterLog.debug(LOG_TAG, "Processing update token we kept in memory before onStarted");
