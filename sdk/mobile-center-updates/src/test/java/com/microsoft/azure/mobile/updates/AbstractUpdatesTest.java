@@ -10,7 +10,7 @@ import android.text.TextUtils;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
-import com.microsoft.azure.mobile.utils.storage.StorageHelper;
+import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -21,6 +21,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
+import static com.microsoft.azure.mobile.updates.UpdateConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -32,11 +34,13 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("WeakerAccess")
-@PrepareForTest({Updates.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class})
+@PrepareForTest({Updates.class, PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class})
 public class AbstractUpdatesTest {
 
     static final String TEST_HASH = "testapp";  // TODO HashUtils.sha256("com.contoso:1.2.3:6");
+
     private static final String UPDATES_ENABLED_KEY = KEY_ENABLED + "_Updates";
+
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
@@ -53,6 +57,7 @@ public class AbstractUpdatesTest {
     AlertDialog mDialog;
 
     @Before
+    @SuppressWarnings("ResourceType")
     public void setUp() throws Exception {
         Updates.unsetInstance();
         mockStatic(MobileCenterLog.class);
@@ -60,8 +65,8 @@ public class AbstractUpdatesTest {
         when(MobileCenter.isEnabled()).thenReturn(true);
 
         /* First call to com.microsoft.azure.mobile.MobileCenter.isEnabled shall return true, initial state. */
-        mockStatic(StorageHelper.PreferencesStorage.class);
-        when(StorageHelper.PreferencesStorage.getBoolean(UPDATES_ENABLED_KEY, true)).thenReturn(true);
+        mockStatic(PreferencesStorage.class);
+        when(PreferencesStorage.getBoolean(UPDATES_ENABLED_KEY, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
         doAnswer(new Answer<Void>() {
@@ -71,11 +76,14 @@ public class AbstractUpdatesTest {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
-                when(StorageHelper.PreferencesStorage.getBoolean(UPDATES_ENABLED_KEY, true)).thenReturn(enabled);
+                when(PreferencesStorage.getBoolean(UPDATES_ENABLED_KEY, true)).thenReturn(enabled);
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putBoolean(eq(UPDATES_ENABLED_KEY), anyBoolean());
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.putBoolean(eq(UPDATES_ENABLED_KEY), anyBoolean());
+
+        /* Default download id when not found. */
+        when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
 
         /* Mock package manager. */
         when(mContext.getPackageName()).thenReturn("com.contoso");
@@ -89,7 +97,6 @@ public class AbstractUpdatesTest {
         ApplicationInfo applicationInfo = mock(ApplicationInfo.class);
         Whitebox.setInternalState(applicationInfo, "labelRes", 1337);
         Whitebox.setInternalState(packageInfo, "applicationInfo", applicationInfo);
-        //noinspection ResourceType
         when(mContext.getString(1337)).thenReturn(TEST_HASH);
 
         /* Mock some statics. */
