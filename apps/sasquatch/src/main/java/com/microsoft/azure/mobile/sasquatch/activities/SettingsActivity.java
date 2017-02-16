@@ -16,6 +16,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.MobileCenterService;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
 import com.microsoft.azure.mobile.crashes.Crashes;
@@ -23,6 +24,7 @@ import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.APP_SECRET_KEY;
@@ -48,6 +50,7 @@ public class SettingsActivity extends AppCompatActivity {
             addPreferencesFromResource(R.xml.settings);
             final CheckBoxPreference analyticsEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_analytics_state_key));
             final CheckBoxPreference crashesEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_crashes_state_key));
+            final CheckBoxPreference updatesEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_updates_state_key));
             initCheckBoxSetting(R.string.mobile_center_state_key, MobileCenter.isEnabled(), R.string.mobile_center_state_summary_enabled, R.string.mobile_center_state_summary_disabled, new HasEnabled() {
 
                 @Override
@@ -88,6 +91,36 @@ public class SettingsActivity extends AppCompatActivity {
                     return Crashes.isEnabled();
                 }
             });
+            try {
+
+                @SuppressWarnings("unchecked")
+                Class<? extends MobileCenterService> updates = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.updates.Updates");
+                final Method isEnabled = updates.getMethod("isEnabled");
+                final Method setEnabled = updates.getMethod("setEnabled", boolean.class);
+                initCheckBoxSetting(R.string.mobile_center_updates_state_key, (boolean) isEnabled.invoke(null), R.string.mobile_center_updates_state_summary_enabled, R.string.mobile_center_updates_state_summary_disabled, new HasEnabled() {
+
+                    @Override
+                    public void setEnabled(boolean enabled) {
+                        try {
+                            setEnabled.invoke(null, enabled);
+                            updatesEnabledPreference.setChecked((boolean) isEnabled.invoke(null));
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    @Override
+                    public boolean isEnabled() {
+                        try {
+                            return (boolean) isEnabled.invoke(null);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                getPreferenceScreen().removePreference(findPreference(getString(R.string.updates_key)));
+            }
             initCheckBoxSetting(R.string.mobile_center_auto_page_tracking_key, AnalyticsPrivateHelper.isAutoPageTrackingEnabled(), R.string.mobile_center_auto_page_tracking_enabled, R.string.mobile_center_auto_page_tracking_disabled, new HasEnabled() {
 
                 @Override
@@ -127,13 +160,13 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            initClickableSetting(R.string.app_secret_key, MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null), new Preference.OnPreferenceClickListener() {
+            initClickableSetting(R.string.app_secret_key, MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
                     final EditText input = new EditText(getActivity());
                     input.setInputType(InputType.TYPE_CLASS_TEXT);
-                    input.setText(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
+                    input.setText(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)));
 
                     new AlertDialog.Builder(getActivity()).setTitle(R.string.app_secret_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
@@ -152,8 +185,9 @@ public class SettingsActivity extends AppCompatActivity {
                             .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    setKeyValue(APP_SECRET_KEY, MainActivity.APP_SECRET);
-                                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), MainActivity.APP_SECRET), Toast.LENGTH_SHORT).show();
+                                    String defaultAppSecret = getString(R.string.app_secret);
+                                    setKeyValue(APP_SECRET_KEY, defaultAppSecret);
+                                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), defaultAppSecret), Toast.LENGTH_SHORT).show();
                                     preference.setSummary(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
                                 }
                             })
@@ -171,7 +205,9 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            initClickableSetting(R.string.server_url_key, MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, getString(R.string.server_url_production)), new Preference.OnPreferenceClickListener() {
+            String defaultServerUrl = getString(R.string.server_url);
+            final String defaultServerUrlDisplay = TextUtils.isEmpty(defaultServerUrl) ? getString(R.string.server_url_production) : defaultServerUrl;
+            initClickableSetting(R.string.server_url_key, MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, defaultServerUrlDisplay), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
@@ -193,14 +229,14 @@ public class SettingsActivity extends AppCompatActivity {
                                     } else {
                                         Toast.makeText(getActivity(), R.string.server_url_invalid, Toast.LENGTH_SHORT).show();
                                     }
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, getString(R.string.server_url_production)));
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, defaultServerUrlDisplay));
                                 }
                             })
                             .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     setProductionUrl();
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, getString(R.string.server_url_production)));
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, defaultServerUrlDisplay));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)
