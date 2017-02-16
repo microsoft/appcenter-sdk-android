@@ -93,7 +93,7 @@ public class IngestionHttpTest {
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(DefaultHttpClient.APP_SECRET, appSecret);
         expectedHeaders.put(IngestionHttp.INSTALL_ID, installId.toString());
-        verify(httpClient).callAsync(eq("http://mock/" + IngestionHttp.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
+        verify(httpClient).callAsync(eq("http://mock" + IngestionHttp.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
         assertEquals("mockPayload", callTemplate.get().buildRequestBody());
 
