@@ -81,7 +81,7 @@ public class DeepLinkActivityTest {
         /* Verify interactions. */
         verify(activity, never()).startActivity(any(Intent.class));
         verify(activity).finish();
-        verify(mUpdates).storeUpdateToken("mock1", "mock2");
+        verify(mUpdates).storeUpdateToken(activity, "mock1", "mock2");
     }
 
     @Test
@@ -103,7 +103,7 @@ public class DeepLinkActivityTest {
         /* Verify interactions. */
         verify(activity, never()).startActivity(any(Intent.class));
         verify(activity).finish();
-        verify(mUpdates).storeUpdateToken("mock1", "mock2");
+        verify(mUpdates).storeUpdateToken(activity, "mock1", "mock2");
     }
 
     @Test
@@ -129,6 +129,6 @@ public class DeepLinkActivityTest {
         /* Verify interactions. */
         verify(activity).startActivity(launcherIntent);
         verify(activity).finish();
-        verify(mUpdates).storeUpdateToken("mock1", "mock2");
+        verify(mUpdates).storeUpdateToken(activity, "mock1", "mock2");
     }
 }

@@ -47,6 +47,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
@@ -86,23 +87,29 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
 
         /* Setup mock. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
+        doAnswer(new Answer() {
+
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(invocation.getArguments()[1].toString());
+                return null;
+            }
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.putString(anyString(), anyString());
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
 
-        /* Store token before start, start in background, no storage access. */
-        Updates.getInstance().storeUpdateToken("some token", "r");
+        /* Store token before start, but wait start/resume to check release. */
+        Updates.getInstance().storeUpdateToken(mContext, "some token", "r");
         Updates.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
-        verifyStatic(never());
-        PreferencesStorage.putString(anyString(), anyString());
-        verifyStatic(never());
-        PreferencesStorage.remove(anyString());
-
-        /* Unlock the processing by going into foreground. */
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+        verify(httpClient, never()).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Unlock the processing by going into foreground. */
+        Updates.getInstance().onActivityResumed(mock(Activity.class));
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
@@ -146,7 +153,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
         /* Store token. */
-        Updates.getInstance().storeUpdateToken("some token", requestId.toString());
+        Updates.getInstance().storeUpdateToken(mContext, "some token", requestId.toString());
 
         /* Verify behavior. */
         verifyStatic();
@@ -255,7 +262,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
         /* Store token. */
-        Updates.getInstance().storeUpdateToken("some token", requestId.toString());
+        Updates.getInstance().storeUpdateToken(mContext, "some token", requestId.toString());
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
@@ -316,7 +323,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         assertFalse(Updates.isEnabled());
 
         /* Store token. */
-        Updates.getInstance().storeUpdateToken("some token", requestId.toString());
+        Updates.getInstance().storeUpdateToken(mContext, "some token", requestId.toString());
 
         /* Verify behavior. */
         verifyStatic(never());
@@ -333,7 +340,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         assertTrue(Updates.isEnabled());
 
         /* Store token. */
-        Updates.getInstance().storeUpdateToken("some token", requestId.toString());
+        Updates.getInstance().storeUpdateToken(mContext, "some token", requestId.toString());
 
         /* Verify behavior. */
         verifyStatic(never());

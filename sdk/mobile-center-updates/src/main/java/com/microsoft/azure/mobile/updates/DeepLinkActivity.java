@@ -27,7 +27,7 @@ public class DeepLinkActivity extends Activity {
 
         /* Store update token if the parameters are correct. */
         if (updateToken != null && requestId != null) {
-            Updates.getInstance().storeUpdateToken(updateToken, requestId);
+            Updates.getInstance().storeUpdateToken(this, updateToken, requestId);
         }
 
         /*
