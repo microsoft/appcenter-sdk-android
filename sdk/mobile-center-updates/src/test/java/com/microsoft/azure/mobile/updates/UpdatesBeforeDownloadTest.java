@@ -351,6 +351,13 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         Updates.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Restart should check release and show dialog again. */
+        Updates.unsetInstance();
+        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        verify(mDialog, times(2)).show();
+        verify(httpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -394,6 +401,13 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         Updates.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Restart should check release and show dialog again. */
+        Updates.unsetInstance();
+        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        verify(mDialog, times(2)).show();
+        verify(httpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
