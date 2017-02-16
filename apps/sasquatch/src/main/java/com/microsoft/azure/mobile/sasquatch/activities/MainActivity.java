@@ -9,6 +9,7 @@ import android.os.StrictMode;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.MobileCenterService;
 import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
@@ -25,14 +27,13 @@ import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
-
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String LOG_TAG = "MobileCenterSasquatch";
-    static final String APP_SECRET = "45d1d9f6-2492-4e68-bd44-7190351eb5f3";
     static final String APP_SECRET_KEY = "appSecret";
     static final String SERVER_URL_KEY = "serverUrl";
+    private static final String LOG_TAG = "MobileCenterSasquatch";
     static SharedPreferences sSharedPreferences;
 
     @Override
@@ -43,13 +44,23 @@ public class MainActivity extends AppCompatActivity {
         sSharedPreferences = getSharedPreferences("Sasquatch", Context.MODE_PRIVATE);
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().build());
 
-        String serverUrl = sSharedPreferences.getString(SERVER_URL_KEY, null);
-        if (serverUrl != null) {
+        String serverUrl = sSharedPreferences.getString(SERVER_URL_KEY, getString(R.string.server_url));
+        if (!TextUtils.isEmpty(serverUrl)) {
             MobileCenter.setServerUrl(serverUrl);
         }
         MobileCenter.setLogLevel(Log.VERBOSE);
         Crashes.setListener(getCrashesListener());
-        MobileCenter.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class);
+        MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class);
+        try {
+
+            @SuppressWarnings("unchecked")
+            Class<? extends MobileCenterService> updates = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.updates.Updates");
+            updates.getMethod("setInstallUrl", String.class).invoke(null, "http://install.asgard-int.trafficmanager.net");
+            updates.getMethod("setApiUrl", String.class).invoke(null, "https://asgard-int.trafficmanager.net/api/v0.1");
+            MobileCenter.start(updates);
+        } catch (Exception e) {
+            MobileCenterLog.info(LOG_TAG, "Updates class not yet available in this flavor.");
+        }
 
         Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
         Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
@@ -83,18 +94,6 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
         return true;
-    }
-
-    private String getAppSecret() {
-        String appSecret = sSharedPreferences.getString(APP_SECRET_KEY, null);
-        if (appSecret == null) {
-            SharedPreferences.Editor editor = sSharedPreferences.edit();
-            editor.putString(APP_SECRET_KEY, APP_SECRET);
-            editor.apply();
-            appSecret = sSharedPreferences.getString(APP_SECRET_KEY, null);
-        }
-        Toast.makeText(this, String.format(getString(R.string.app_secret_toast), appSecret), Toast.LENGTH_SHORT).show();
-        return appSecret;
     }
 
     private AbstractCrashesListener getCrashesListener() {

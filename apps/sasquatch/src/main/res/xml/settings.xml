@@ -24,6 +24,14 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        android:key="@string/updates_key"
+        android:title="@string/updates_title">
+        <CheckBoxPreference
+            android:key="@string/mobile_center_updates_state_key"
+            android:title="@string/mobile_center_updates_state_title"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:key="@string/application_info_key"
         android:title="@string/application_info_title">
         <Preference
