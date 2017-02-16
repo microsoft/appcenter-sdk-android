@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
             @SuppressWarnings("unchecked")
             Class<? extends MobileCenterService> updates = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.updates.Updates");
-            updates.getMethod("setLoginUrl", String.class).invoke(null, "http://install.asgard-int.trafficmanager.net");
+            updates.getMethod("setInstallUrl", String.class).invoke(null, "http://install.asgard-int.trafficmanager.net");
             updates.getMethod("setApiUrl", String.class).invoke(null, "https://asgard-int.trafficmanager.net/api/v0.1");
             MobileCenter.start(updates);
         } catch (Exception e) {

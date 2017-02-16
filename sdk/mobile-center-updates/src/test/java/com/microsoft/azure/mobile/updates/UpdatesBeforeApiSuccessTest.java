@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
-import static com.microsoft.azure.mobile.updates.UpdateConstants.LOGIN_PAGE_URL_PATH_FORMAT;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM_VALUE;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_REDIRECT_ID;
@@ -35,6 +34,7 @@ import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_URI;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.UPDATE_SETUP_PATH_FORMAT;
 import static com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -101,8 +101,8 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         Activity activity = mock(Activity.class);
         Updates.getInstance().onActivityResumed(activity);
         verifyStatic();
-        String url = UpdateConstants.DEFAULT_LOGIN_URL;
-        url += String.format(LOGIN_PAGE_URL_PATH_FORMAT, "a");
+        String url = UpdateConstants.DEFAULT_INSTALL_URL;
+        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
@@ -205,7 +205,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
     public void setUrls() throws Exception {
 
         /* Setup mock. */
-        Updates.setLoginUrl("http://mock");
+        Updates.setInstallUrl("http://mock");
         Updates.setApiUrl("https://mock2");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
@@ -219,7 +219,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         Updates.getInstance().onActivityResumed(activity);
         verifyStatic();
         String url = "http://mock";
-        url += String.format(LOGIN_PAGE_URL_PATH_FORMAT, "a");
+        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
@@ -275,8 +275,8 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         Activity activity = mock(Activity.class);
         Updates.getInstance().onActivityResumed(activity);
         verifyStatic();
-        String url = UpdateConstants.DEFAULT_LOGIN_URL;
-        url += String.format(LOGIN_PAGE_URL_PATH_FORMAT, "a");
+        String url = UpdateConstants.DEFAULT_INSTALL_URL;
+        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
