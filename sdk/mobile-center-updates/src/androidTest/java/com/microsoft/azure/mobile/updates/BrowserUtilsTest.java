@@ -31,6 +31,17 @@ import static org.mockito.Mockito.when;
 @SuppressWarnings("WrongConstant")
 public class BrowserUtilsTest {
 
+    private static final String TEST_URL = "https://www.contoso.com?a=b";
+
+    private static final ArgumentMatcher<Intent> CHROME_MATCHER = new ArgumentMatcher<Intent>() {
+
+        @Override
+        public boolean matches(Object o) {
+            Intent intent = (Intent) o;
+            return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(GOOGLE_CHROME_URL_SCHEME + TEST_URL).equals(intent.getData());
+        }
+    };
+
     @Test
     public void init() {
         assertNotNull(new BrowserUtils());
@@ -39,16 +50,8 @@ public class BrowserUtilsTest {
     @Test
     public void chrome() throws Exception {
         Activity activity = mock(Activity.class);
-        final String url = "https://www.contoso.com?a=b";
-        BrowserUtils.openBrowser(url, activity);
-        verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
-
-            @Override
-            public boolean matches(Object o) {
-                Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(GOOGLE_CHROME_URL_SCHEME + url).equals(intent.getData());
-            }
-        }));
+        BrowserUtils.openBrowser(TEST_URL, activity);
+        verify(activity).startActivity(argThat(CHROME_MATCHER));
         verifyNoMoreInteractions(activity);
     }
 
@@ -63,16 +66,8 @@ public class BrowserUtilsTest {
         when(packageManager.queryIntentActivities(any(Intent.class), anyInt())).thenReturn(Collections.<ResolveInfo>emptyList());
 
         /* Open Chrome then abort. */
-        final String url = "https://www.contoso.com?a=b";
-        BrowserUtils.openBrowser(url, activity);
-        verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
-
-            @Override
-            public boolean matches(Object o) {
-                Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(GOOGLE_CHROME_URL_SCHEME + url).equals(intent.getData());
-            }
-        }));
+        BrowserUtils.openBrowser(TEST_URL, activity);
+        verify(activity).startActivity(argThat(CHROME_MATCHER));
 
         /* Verify no more call to startActivity. */
         verify(activity).startActivity(any(Intent.class));
@@ -82,17 +77,8 @@ public class BrowserUtilsTest {
     public void onlySystemBrowserNoDefaultAsNull() throws Exception {
 
         /* Mock no browser. */
-        final String url = "https://www.contoso.com?a=b";
         Activity activity = mock(Activity.class);
-        ArgumentMatcher<Intent> chromeMatcher = new ArgumentMatcher<Intent>() {
-
-            @Override
-            public boolean matches(Object o) {
-                Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(GOOGLE_CHROME_URL_SCHEME + url).equals(intent.getData());
-            }
-        };
-        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(chromeMatcher));
+        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(CHROME_MATCHER));
         PackageManager packageManager = mock(PackageManager.class);
         when(activity.getPackageManager()).thenReturn(packageManager);
         when(packageManager.resolveActivity(any(Intent.class), eq(PackageManager.MATCH_DEFAULT_ONLY))).thenReturn(null);
@@ -106,15 +92,15 @@ public class BrowserUtilsTest {
         }
 
         /* Open Chrome then abort. */
-        BrowserUtils.openBrowser(url, activity);
+        BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        order.verify(activity).startActivity(argThat(chromeMatcher));
+        order.verify(activity).startActivity(argThat(CHROME_MATCHER));
         order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
 
             @Override
             public boolean matches(Object o) {
                 Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(url).equals(intent.getData()) && intent.getComponent().getClassName().equals("browser");
+                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent().getClassName().equals("browser");
             }
         }));
         order.verifyNoMoreInteractions();
@@ -124,17 +110,8 @@ public class BrowserUtilsTest {
     public void onlySystemBrowserNoDefaultAsPicker() throws Exception {
 
         /* Mock no browser. */
-        final String url = "https://www.contoso.com?a=b";
         Activity activity = mock(Activity.class);
-        ArgumentMatcher<Intent> chromeMatcher = new ArgumentMatcher<Intent>() {
-
-            @Override
-            public boolean matches(Object o) {
-                Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(GOOGLE_CHROME_URL_SCHEME + url).equals(intent.getData());
-            }
-        };
-        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(chromeMatcher));
+        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(CHROME_MATCHER));
         PackageManager packageManager = mock(PackageManager.class);
         when(activity.getPackageManager()).thenReturn(packageManager);
         {
@@ -155,15 +132,15 @@ public class BrowserUtilsTest {
         }
 
         /* Open Chrome then abort. */
-        BrowserUtils.openBrowser(url, activity);
+        BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        order.verify(activity).startActivity(argThat(chromeMatcher));
+        order.verify(activity).startActivity(argThat(CHROME_MATCHER));
         order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
 
             @Override
             public boolean matches(Object o) {
                 Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(url).equals(intent.getData()) && intent.getComponent().getClassName().equals("browser");
+                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent().getClassName().equals("browser");
             }
         }));
         order.verifyNoMoreInteractions();
@@ -173,17 +150,8 @@ public class BrowserUtilsTest {
     public void onlySystemBrowserAndIsDefault() throws Exception {
 
         /* Mock no browser. */
-        final String url = "https://www.contoso.com?a=b";
         Activity activity = mock(Activity.class);
-        ArgumentMatcher<Intent> chromeMatcher = new ArgumentMatcher<Intent>() {
-
-            @Override
-            public boolean matches(Object o) {
-                Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(GOOGLE_CHROME_URL_SCHEME + url).equals(intent.getData());
-            }
-        };
-        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(chromeMatcher));
+        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(BrowserUtilsTest.CHROME_MATCHER));
         PackageManager packageManager = mock(PackageManager.class);
         when(activity.getPackageManager()).thenReturn(packageManager);
         {
@@ -204,15 +172,15 @@ public class BrowserUtilsTest {
         }
 
         /* Open Chrome then abort. */
-        BrowserUtils.openBrowser(url, activity);
+        BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        order.verify(activity).startActivity(argThat(chromeMatcher));
+        order.verify(activity).startActivity(argThat(CHROME_MATCHER));
         order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
 
             @Override
             public boolean matches(Object o) {
                 Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(url).equals(intent.getData()) && intent.getComponent().getClassName().equals("browser");
+                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent().getClassName().equals("browser");
             }
         }));
         order.verifyNoMoreInteractions();
@@ -222,17 +190,8 @@ public class BrowserUtilsTest {
     public void twoBrowsersAndNoDefault() throws Exception {
 
         /* Mock no browser. */
-        final String url = "https://www.contoso.com?a=b";
         Activity activity = mock(Activity.class);
-        ArgumentMatcher<Intent> chromeMatcher = new ArgumentMatcher<Intent>() {
-
-            @Override
-            public boolean matches(Object o) {
-                Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(GOOGLE_CHROME_URL_SCHEME + url).equals(intent.getData());
-            }
-        };
-        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(chromeMatcher));
+        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(CHROME_MATCHER));
         PackageManager packageManager = mock(PackageManager.class);
         when(activity.getPackageManager()).thenReturn(packageManager);
         {
@@ -258,15 +217,15 @@ public class BrowserUtilsTest {
         }
 
         /* Open Chrome then abort. */
-        BrowserUtils.openBrowser(url, activity);
+        BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        order.verify(activity).startActivity(argThat(chromeMatcher));
+        order.verify(activity).startActivity(argThat(CHROME_MATCHER));
         order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
 
             @Override
             public boolean matches(Object o) {
                 Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(url).equals(intent.getData()) && intent.getComponent().getClassName().equals("browser");
+                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent().getClassName().equals("browser");
             }
         }));
         order.verifyNoMoreInteractions();
@@ -276,17 +235,8 @@ public class BrowserUtilsTest {
     public void secondBrowserIsDefault() throws Exception {
 
         /* Mock no browser. */
-        final String url = "https://www.contoso.com?a=b";
         Activity activity = mock(Activity.class);
-        ArgumentMatcher<Intent> chromeMatcher = new ArgumentMatcher<Intent>() {
-
-            @Override
-            public boolean matches(Object o) {
-                Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(GOOGLE_CHROME_URL_SCHEME + url).equals(intent.getData());
-            }
-        };
-        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(chromeMatcher));
+        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(CHROME_MATCHER));
         PackageManager packageManager = mock(PackageManager.class);
         when(activity.getPackageManager()).thenReturn(packageManager);
         {
@@ -312,15 +262,15 @@ public class BrowserUtilsTest {
         }
 
         /* Open Chrome then abort. */
-        BrowserUtils.openBrowser(url, activity);
+        BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        order.verify(activity).startActivity(argThat(chromeMatcher));
+        order.verify(activity).startActivity(argThat(CHROME_MATCHER));
         order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
 
             @Override
             public boolean matches(Object o) {
                 Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(url).equals(intent.getData()) && intent.getComponent().getClassName().equals("firefox");
+                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent().getClassName().equals("firefox");
             }
         }));
         order.verifyNoMoreInteractions();

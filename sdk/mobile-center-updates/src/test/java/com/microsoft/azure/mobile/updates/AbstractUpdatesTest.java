@@ -21,6 +21,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
+import static com.microsoft.azure.mobile.updates.UpdateConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -36,7 +38,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class AbstractUpdatesTest {
 
     static final String TEST_HASH = "testapp";  // TODO HashUtils.sha256("com.contoso:1.2.3:6");
+
     private static final String UPDATES_ENABLED_KEY = KEY_ENABLED + "_Updates";
+
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
@@ -53,6 +57,7 @@ public class AbstractUpdatesTest {
     AlertDialog mDialog;
 
     @Before
+    @SuppressWarnings("ResourceType")
     public void setUp() throws Exception {
         Updates.unsetInstance();
         mockStatic(MobileCenterLog.class);
@@ -77,6 +82,9 @@ public class AbstractUpdatesTest {
         }).when(PreferencesStorage.class);
         PreferencesStorage.putBoolean(eq(UPDATES_ENABLED_KEY), anyBoolean());
 
+        /* Default download id when not found. */
+        when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
+
         /* Mock package manager. */
         when(mContext.getPackageName()).thenReturn("com.contoso");
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
@@ -89,7 +97,6 @@ public class AbstractUpdatesTest {
         ApplicationInfo applicationInfo = mock(ApplicationInfo.class);
         Whitebox.setInternalState(applicationInfo, "labelRes", 1337);
         Whitebox.setInternalState(packageInfo, "applicationInfo", applicationInfo);
-        //noinspection ResourceType
         when(mContext.getString(1337)).thenReturn(TEST_HASH);
 
         /* Mock some statics. */
