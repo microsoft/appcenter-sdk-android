@@ -49,6 +49,7 @@ import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_API_URL
 import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_INSTALL_URL;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.GET_LATEST_RELEASE_PATH_FORMAT;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.HEADER_API_TOKEN;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.LOG_TAG;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM_VALUE;
@@ -99,9 +100,9 @@ public class Updates extends AbstractMobileCenterService {
     private Activity mForegroundActivity;
 
     /**
-     * Remember if we already opened browser to check install setup.
+     * Remember if we already tried to open the browser to update setup.
      */
-    private boolean mBrowserOpened;
+    private boolean mBrowserOpenedOrAborted;
 
     /**
      * In memory token if we receive deep link intent before onStart.
@@ -253,6 +254,15 @@ public class Updates extends AbstractMobileCenterService {
         }
     }
 
+    /**
+     * Get download identifier from storage.
+     *
+     * @return download identifier or negative value if not found.
+     */
+    private static long getStoredDownloadId() {
+        return StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
+    }
+
     @Override
     protected String getGroupName() {
         return null;
@@ -294,7 +304,7 @@ public class Updates extends AbstractMobileCenterService {
             MobileCenterLog.info(LOG_TAG, "Launcher activity restarted.");
             if (StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI) == null) {
                 mWorkflowCompleted = false;
-                mBrowserOpened = false;
+                mBrowserOpenedOrAborted = false;
             }
         }
     }
@@ -318,7 +328,7 @@ public class Updates extends AbstractMobileCenterService {
         } else {
 
             /* Clean all state on disabling, cancel everything. */
-            mBrowserOpened = false;
+            mBrowserOpenedOrAborted = false;
             mWorkflowCompleted = false;
             cancelPreviousTasks();
             StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
@@ -359,8 +369,8 @@ public class Updates extends AbstractMobileCenterService {
             mProcessDownloadCompletionTask.cancel(true);
             mProcessDownloadCompletionTask = null;
         }
-        long downloadId = StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID);
-        if (downloadId > 0) {
+        long downloadId = getStoredDownloadId();
+        if (downloadId >= 0) {
             MobileCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
             removeDownload(downloadId);
         }
@@ -390,7 +400,7 @@ public class Updates extends AbstractMobileCenterService {
                 /* TODO double check that with download manager. */
                 MobileCenterLog.verbose(LOG_TAG, "Download is still in progress...");
                 return;
-            } else if (downloadUri != null)
+            } else if (downloadUri != null) {
                 try {
 
                     /* FIXME this can cause strict mode violation. */
@@ -407,6 +417,7 @@ public class Updates extends AbstractMobileCenterService {
                     MobileCenterLog.warn(LOG_TAG, "Download uri was invalid", e);
                     cancelPreviousTasks();
                 }
+            }
 
             /* If we were waiting after API call to resume app to show the dialog do it now. */
             if (mReleaseDetails != null) {
@@ -427,8 +438,8 @@ public class Updates extends AbstractMobileCenterService {
                 return;
             }
 
-            /* If not, open browser to update setup. */
-            if (mBrowserOpened) {
+             /* If not, open browser to update setup. */
+            if (mBrowserOpenedOrAborted) {
                 return;
             }
 
@@ -438,7 +449,7 @@ public class Updates extends AbstractMobileCenterService {
                 releaseHash = computeHash(mContext);
             } catch (PackageManager.NameNotFoundException e) {
                 MobileCenterLog.error(LOG_TAG, "Could not get package info", e);
-                mBrowserOpened = true;
+                mBrowserOpenedOrAborted = true;
                 return;
             }
 
@@ -459,7 +470,7 @@ public class Updates extends AbstractMobileCenterService {
 
             /* Open browser, remember that whatever the outcome to avoid opening it twice. */
             BrowserUtils.openBrowser(url, mForegroundActivity);
-            mBrowserOpened = true;
+            mBrowserOpenedOrAborted = true;
         }
     }
 
@@ -696,8 +707,8 @@ public class Updates extends AbstractMobileCenterService {
         if (mDownloadTask == task) {
 
             /* Delete previous download. */
-            long previousDownloadId = StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID);
-            if (previousDownloadId > 0) {
+            long previousDownloadId = getStoredDownloadId();
+            if (previousDownloadId >= 0) {
                 MobileCenterLog.debug(LOG_TAG, "Delete previous download id=" + previousDownloadId);
                 downloadManager.remove(previousDownloadId);
             }
@@ -881,8 +892,8 @@ public class Updates extends AbstractMobileCenterService {
             }
 
             /* Check intent data is what we expected. */
-            long expectedDownloadId = StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID);
-            if (expectedDownloadId > 0 && expectedDownloadId != mDownloadId) {
+            long expectedDownloadId = getStoredDownloadId();
+            if (expectedDownloadId >= 0 && expectedDownloadId != mDownloadId) {
                 MobileCenterLog.warn(LOG_TAG, "Ignoring completion for a download we didn't expect, id=" + mDownloadId);
                 return null;
             }
