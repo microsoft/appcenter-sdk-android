@@ -164,7 +164,7 @@ public class MobileCenterTest {
         DummyService service = DummyService.getInstance();
         assertTrue(MobileCenter.getInstance().getServices().contains(service));
         verify(service).getLogFactories();
-        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
         verify(application).registerActivityLifecycleCallbacks(service);
     }
 
@@ -180,7 +180,7 @@ public class MobileCenterTest {
         DummyService service = DummyService.getInstance();
         assertTrue(MobileCenter.getInstance().getServices().contains(service));
         verify(service).getLogFactories();
-        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
         verify(application).registerActivityLifecycleCallbacks(service);
     }
 
@@ -194,7 +194,8 @@ public class MobileCenterTest {
         DummyService service = DummyService.getInstance();
         assertTrue(MobileCenter.getInstance().getServices().contains(service));
         verify(service).getLogFactories();
-        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
+        verify(service, never()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET + "a"), any(Channel.class));
         verify(application).registerActivityLifecycleCallbacks(service);
     }
 
@@ -209,7 +210,8 @@ public class MobileCenterTest {
         DummyService service = DummyService.getInstance();
         assertTrue(MobileCenter.getInstance().getServices().contains(service));
         verify(service).getLogFactories();
-        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
+        verify(service, never()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET + "a"), any(Channel.class));
         verify(application).registerActivityLifecycleCallbacks(service);
     }
 
@@ -223,13 +225,13 @@ public class MobileCenterTest {
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
             verify(DummyService.getInstance()).getLogFactories();
-            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(DummyService.getInstance());
         }
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
             verify(AnotherDummyService.getInstance()).getLogFactories();
-            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
         }
     }
@@ -244,13 +246,13 @@ public class MobileCenterTest {
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
             verify(DummyService.getInstance()).getLogFactories();
-            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(DummyService.getInstance());
         }
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
             verify(AnotherDummyService.getInstance()).getLogFactories();
-            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
         }
     }
@@ -266,13 +268,13 @@ public class MobileCenterTest {
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
             verify(DummyService.getInstance()).getLogFactories();
-            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(DummyService.getInstance());
         }
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
             verify(AnotherDummyService.getInstance()).getLogFactories();
-            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
         }
     }
@@ -286,13 +288,13 @@ public class MobileCenterTest {
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
             verify(DummyService.getInstance()).getLogFactories();
-            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(DummyService.getInstance());
         }
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
             verify(AnotherDummyService.getInstance()).getLogFactories();
-            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
         }
     }
@@ -308,13 +310,13 @@ public class MobileCenterTest {
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
             verify(DummyService.getInstance()).getLogFactories();
-            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(DummyService.getInstance());
         }
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
             verify(AnotherDummyService.getInstance()).getLogFactories();
-            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
         }
     }
@@ -331,7 +333,7 @@ public class MobileCenterTest {
         DummyService service = DummyService.getInstance();
         assertTrue(MobileCenter.getInstance().getServices().contains(service));
         verify(service).getLogFactories();
-        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
         verify(application).registerActivityLifecycleCallbacks(service);
 
         /* Start twice, this call is ignored. */
@@ -340,7 +342,7 @@ public class MobileCenterTest {
         /* Verify that single service has been loaded and configured (only once interaction). */
         assertEquals(1, MobileCenter.getInstance().getServices().size());
         verify(service).getLogFactories();
-        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
         verify(application).registerActivityLifecycleCallbacks(service);
     }
 
@@ -554,7 +556,7 @@ public class MobileCenterTest {
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class, DummyService.class);
 
         /* Verify that only one service has been loaded and configured */
-        verify(DummyService.getInstance()).onStarted(notNull(Context.class), eq(DUMMY_APP_SECRET), notNull(Channel.class));
+        verify(DummyService.getInstance()).onStarted(notNull(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
         assertEquals(1, MobileCenter.getInstance().getServices().size());
     }
 

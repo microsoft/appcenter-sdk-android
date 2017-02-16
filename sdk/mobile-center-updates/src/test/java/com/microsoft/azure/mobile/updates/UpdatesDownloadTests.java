@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static android.app.DownloadManager.EXTRA_DOWNLOAD_ID;
 import static android.content.Context.NOTIFICATION_SERVICE;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_URI;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
@@ -116,7 +117,7 @@ public class UpdatesDownloadTests extends AbstractUpdatesTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(StorageHelper.PreferencesStorage.getLong(invocation.getArguments()[0].toString())).thenReturn((Long) invocation.getArguments()[1]);
+                when(StorageHelper.PreferencesStorage.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn((Long) invocation.getArguments()[1]);
                 return null;
             }
         }).when(StorageHelper.PreferencesStorage.class);
@@ -125,7 +126,7 @@ public class UpdatesDownloadTests extends AbstractUpdatesTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(StorageHelper.PreferencesStorage.getLong(invocation.getArguments()[0].toString())).thenReturn(0L);
+                when(StorageHelper.PreferencesStorage.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
                 return null;
             }
         }).when(StorageHelper.PreferencesStorage.class);

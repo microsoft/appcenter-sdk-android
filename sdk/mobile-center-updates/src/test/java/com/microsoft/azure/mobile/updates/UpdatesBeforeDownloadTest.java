@@ -43,7 +43,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-public class UpdatesBeforeDownloadTests extends AbstractUpdatesTest {
+public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
     @Test
     public void failsToCompareVersion() throws Exception {
