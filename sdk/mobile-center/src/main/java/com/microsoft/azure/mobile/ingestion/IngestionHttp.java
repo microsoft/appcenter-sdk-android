@@ -33,15 +33,18 @@ public class IngestionHttp implements Ingestion {
      */
     @VisibleForTesting
     static final String API_PATH = "/logs?api_version=1.0.0-preview20160914";
+
     /**
      * Installation identifier HTTP Header.
      */
     @VisibleForTesting
     static final String INSTALL_ID = "Install-ID";
+
     /**
      * Default base URL.
      */
     private static final String DEFAULT_BASE_URL = "https://in.mobile.azure.com";
+
     /**
      * Log serializer.
      */

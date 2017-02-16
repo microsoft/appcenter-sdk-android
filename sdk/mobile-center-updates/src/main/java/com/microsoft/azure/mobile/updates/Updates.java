@@ -49,6 +49,7 @@ import static com.microsoft.azure.mobile.updates.UpdateConstants.CHECK_UPDATE_UR
 import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_API_URL;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_LOGIN_URL;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.HEADER_API_TOKEN;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.LOGIN_PAGE_URL_PATH_FORMAT;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.LOG_TAG;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM;
@@ -253,6 +254,15 @@ public class Updates extends AbstractMobileCenterService {
         }
     }
 
+    /**
+     * Get download identifier from storage.
+     *
+     * @return download identifier or negative value if not found.
+     */
+    private static long getStoredDownloadId() {
+        return StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
+    }
+
     @Override
     protected String getGroupName() {
         return null;
@@ -359,8 +369,8 @@ public class Updates extends AbstractMobileCenterService {
             mProcessDownloadCompletionTask.cancel(true);
             mProcessDownloadCompletionTask = null;
         }
-        long downloadId = StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID);
-        if (downloadId > 0) {
+        long downloadId = getStoredDownloadId();
+        if (downloadId >= 0) {
             MobileCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
             removeDownload(downloadId);
         }
@@ -697,8 +707,8 @@ public class Updates extends AbstractMobileCenterService {
         if (mDownloadTask == task) {
 
             /* Delete previous download. */
-            long previousDownloadId = StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID);
-            if (previousDownloadId > 0) {
+            long previousDownloadId = getStoredDownloadId();
+            if (previousDownloadId >= 0) {
                 MobileCenterLog.debug(LOG_TAG, "Delete previous download id=" + previousDownloadId);
                 downloadManager.remove(previousDownloadId);
             }
@@ -882,8 +892,8 @@ public class Updates extends AbstractMobileCenterService {
             }
 
             /* Check intent data is what we expected. */
-            long expectedDownloadId = StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID);
-            if (expectedDownloadId > 0 && expectedDownloadId != mDownloadId) {
+            long expectedDownloadId = getStoredDownloadId();
+            if (expectedDownloadId >= 0 && expectedDownloadId != mDownloadId) {
                 MobileCenterLog.warn(LOG_TAG, "Ignoring completion for a download we didn't expect, id=" + mDownloadId);
                 return null;
             }
