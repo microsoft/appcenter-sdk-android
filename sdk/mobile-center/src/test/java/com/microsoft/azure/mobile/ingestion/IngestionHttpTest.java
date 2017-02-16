@@ -92,8 +92,8 @@ public class IngestionHttpTest {
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(DefaultHttpClient.APP_SECRET, appSecret);
-        expectedHeaders.put("Install-ID", installId.toString());
-        verify(httpClient).callAsync(eq("http://mock/logs?api_version=1.0.0-preview20160914"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
+        expectedHeaders.put(IngestionHttp.INSTALL_ID, installId.toString());
+        verify(httpClient).callAsync(eq("http://mock/" + IngestionHttp.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
         assertEquals("mockPayload", callTemplate.get().buildRequestBody());
 
@@ -151,15 +151,14 @@ public class IngestionHttpTest {
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(DefaultHttpClient.APP_SECRET, appSecret);
-        expectedHeaders.put("Install-ID", installId.toString());
+        expectedHeaders.put(IngestionHttp.INSTALL_ID, installId.toString());
         verify(httpClient).callAsync(eq("http://mock/logs?api_version=1.0.0-preview20160914"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
 
         try {
             callTemplate.get().buildRequestBody();
             Assert.fail("Expected json exception");
-        } catch (JSONException e) {
-            e.printStackTrace();
+        } catch (JSONException ignored) {
         }
 
         /* Verify toffset manipulation. */

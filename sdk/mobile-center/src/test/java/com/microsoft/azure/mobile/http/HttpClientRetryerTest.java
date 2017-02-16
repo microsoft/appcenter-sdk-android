@@ -56,7 +56,7 @@ public class HttpClientRetryerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockSuccessPayload");
                 return call;
             }
         }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -82,7 +82,7 @@ public class HttpClientRetryerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockSuccessPayload");
                 return mock(ServiceCall.class);
             }
         }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
