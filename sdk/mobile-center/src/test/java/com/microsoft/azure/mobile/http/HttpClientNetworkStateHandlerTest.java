@@ -263,7 +263,7 @@ public class HttpClientNetworkStateHandlerTest {
                     public void run() {
                         try {
                             sleep(200);
-                            ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
+                            ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockPayload");
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
