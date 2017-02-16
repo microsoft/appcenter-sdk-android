@@ -24,7 +24,7 @@ class InstallerUtils {
      */
     private static Boolean sInstalledFromAppStore;
 
-    /** Populate local stores. */
+    /* Populate local stores. */
     static {
         LOCAL_STORES.add("adb");
         LOCAL_STORES.add("com.google.android.packageinstaller");
