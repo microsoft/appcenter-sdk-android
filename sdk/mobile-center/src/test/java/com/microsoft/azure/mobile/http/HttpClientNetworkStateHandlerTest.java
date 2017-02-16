@@ -17,6 +17,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -40,8 +41,8 @@ public class HttpClientNetworkStateHandlerTest {
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
                 ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[4];
-                serviceCallback.onCallSucceeded("");
-                serviceCallback.onCallSucceeded("");
+                serviceCallback.onCallSucceeded("mockPayload");
+                serviceCallback.onCallSucceeded("duplicateCallbackPayloadToIgnore");
                 return call;
             }
         }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
@@ -54,7 +55,8 @@ public class HttpClientNetworkStateHandlerTest {
         HttpClient decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
         decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
         verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
-        verify(callback).onCallSucceeded("");
+        verify(callback).onCallSucceeded("mockPayload");
+        verify(callback, never()).onCallSucceeded("duplicateCallbackPayloadToIgnore");
         verifyNoMoreInteractions(callback);
 
         /* Close. */
@@ -264,8 +266,7 @@ public class HttpClientNetworkStateHandlerTest {
                         try {
                             sleep(200);
                             ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockPayload");
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
+                        } catch (InterruptedException ignore) {
                         }
                     }
                 };
@@ -325,9 +326,8 @@ public class HttpClientNetworkStateHandlerTest {
                     public void run() {
                         try {
                             sleep(200);
-                            ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockPayload");
+                        } catch (InterruptedException ignore) {
                         }
                     }
                 };
@@ -368,7 +368,7 @@ public class HttpClientNetworkStateHandlerTest {
         decorator.onNetworkStateUpdated(true);
         verify(httpClient, times(2)).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
         Thread.sleep(300);
-        verify(callback).onCallSucceeded("");
+        verify(callback).onCallSucceeded("mockPayload");
         verifyNoMoreInteractions(callback);
 
         /* Close. */
