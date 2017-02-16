@@ -70,7 +70,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest(AsyncTaskUtils.class)
-public class UpdatesDownloadTests extends AbstractUpdatesTest {
+public class UpdatesDownloadTest extends AbstractUpdatesTest {
 
     private static final long DOWNLOAD_ID = 42;
 
