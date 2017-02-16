@@ -99,9 +99,9 @@ public class Updates extends AbstractMobileCenterService {
     private Activity mForegroundActivity;
 
     /**
-     * Remember if we already opened browser to login.
+     * Remember if we already tried to open the browser to update setup.
      */
-    private boolean mBrowserOpened;
+    private boolean mBrowserOpenedOrAborted;
 
     /**
      * In memory token if we receive deep link intent before onStart.
@@ -294,7 +294,7 @@ public class Updates extends AbstractMobileCenterService {
             MobileCenterLog.info(LOG_TAG, "Launcher activity restarted.");
             if (StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI) == null) {
                 mWorkflowCompleted = false;
-                mBrowserOpened = false;
+                mBrowserOpenedOrAborted = false;
             }
         }
     }
@@ -318,7 +318,7 @@ public class Updates extends AbstractMobileCenterService {
         } else {
 
             /* Clean all state on disabling, cancel everything. */
-            mBrowserOpened = false;
+            mBrowserOpenedOrAborted = false;
             mWorkflowCompleted = false;
             cancelPreviousTasks();
             StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
@@ -390,7 +390,7 @@ public class Updates extends AbstractMobileCenterService {
                 /* TODO double check that with download manager. */
                 MobileCenterLog.verbose(LOG_TAG, "Download is still in progress...");
                 return;
-            } else if (downloadUri != null)
+            } else if (downloadUri != null) {
                 try {
 
                     /* FIXME this can cause strict mode violation. */
@@ -407,6 +407,7 @@ public class Updates extends AbstractMobileCenterService {
                     MobileCenterLog.warn(LOG_TAG, "Download uri was invalid", e);
                     cancelPreviousTasks();
                 }
+            }
 
             /* If we were waiting after API call to resume app to show the dialog do it now. */
             if (mReleaseDetails != null) {
@@ -428,7 +429,7 @@ public class Updates extends AbstractMobileCenterService {
             }
 
             /* If not, open browser to login. */
-            if (mBrowserOpened) {
+            if (mBrowserOpenedOrAborted) {
                 return;
             }
 
@@ -438,7 +439,7 @@ public class Updates extends AbstractMobileCenterService {
                 releaseHash = computeHash(mContext);
             } catch (PackageManager.NameNotFoundException e) {
                 MobileCenterLog.error(LOG_TAG, "Could not get package info", e);
-                mBrowserOpened = true;
+                mBrowserOpenedOrAborted = true;
                 return;
             }
 
@@ -459,7 +460,7 @@ public class Updates extends AbstractMobileCenterService {
 
             /* Open browser, remember that whatever the outcome to avoid opening it twice. */
             BrowserUtils.openBrowser(url, mForegroundActivity);
-            mBrowserOpened = true;
+            mBrowserOpenedOrAborted = true;
         }
     }
 

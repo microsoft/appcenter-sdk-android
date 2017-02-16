@@ -36,7 +36,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class AbstractUpdatesTest {
 
     static final String TEST_HASH = "testapp";  // TODO HashUtils.sha256("com.contoso:1.2.3:6");
+
     private static final String UPDATES_ENABLED_KEY = KEY_ENABLED + "_Updates";
+
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
@@ -53,6 +55,7 @@ public class AbstractUpdatesTest {
     AlertDialog mDialog;
 
     @Before
+    @SuppressWarnings("ResourceType")
     public void setUp() throws Exception {
         Updates.unsetInstance();
         mockStatic(MobileCenterLog.class);
@@ -89,7 +92,6 @@ public class AbstractUpdatesTest {
         ApplicationInfo applicationInfo = mock(ApplicationInfo.class);
         Whitebox.setInternalState(applicationInfo, "labelRes", 1337);
         Whitebox.setInternalState(packageInfo, "applicationInfo", applicationInfo);
-        //noinspection ResourceType
         when(mContext.getString(1337)).thenReturn(TEST_HASH);
 
         /* Mock some statics. */

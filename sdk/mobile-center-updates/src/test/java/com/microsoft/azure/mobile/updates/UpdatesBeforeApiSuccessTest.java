@@ -53,7 +53,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 /**
  * Cover scenarios that are happening before we see an API call success for latest release.
  */
-public class UpdatesBeforeApiSuccessTests extends AbstractUpdatesTest {
+public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
 
     @Test
     public void storeTokenBeforeStart() throws Exception {
