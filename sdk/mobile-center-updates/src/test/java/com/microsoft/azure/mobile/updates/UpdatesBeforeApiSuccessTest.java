@@ -56,6 +56,32 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
 
     @Test
+    public void doNothingIfInstallComesFromStore() throws Exception {
+
+        /* Mock from store. */
+        when(InstallerUtils.isInstalledFromAppStore(anyString(), any(Context.class))).thenReturn(true);
+
+        /* Check browser not opened. */
+        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        verifyStatic(never());
+        BrowserUtils.openBrowser(anyString(), any(Activity.class));
+
+        /*
+         * Even if we had a token on a previous install that was not from store
+         * (if package name and signature matches an APK on Google Play you can upgrade to
+         * Google Play version without losing data.
+         */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        Updates.unsetInstance();
+        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        verify(httpClient, never()).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
     public void storeTokenBeforeStart() throws Exception {
 
         /* Setup mock. */
