@@ -6,4 +6,5 @@
     <string name="mobile_center_updates_update_dialog_message">No release notes were provided for this build.</string>
     <string name="mobile_center_updates_update_dialog_ignore">Ignore</string>
     <string name="mobile_center_updates_update_dialog_download">Download</string>
+    <string name="mobile_center_updates_update_dialog_postpone">Postpone</string>
 </resources>

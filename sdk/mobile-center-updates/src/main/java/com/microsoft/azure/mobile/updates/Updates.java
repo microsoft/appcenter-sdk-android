@@ -37,6 +37,7 @@ import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
+import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
 import org.json.JSONException;
 
@@ -58,6 +59,7 @@ import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_RELEA
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_REQUEST_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_URI;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_IGNORED_RELEASE_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.SERVICE_NAME;
@@ -302,7 +304,7 @@ public class Updates extends AbstractMobileCenterService {
         /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
         if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
             MobileCenterLog.info(LOG_TAG, "Launcher activity restarted.");
-            if (StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI) == null) {
+            if (PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI) == null) {
                 mWorkflowCompleted = false;
                 mBrowserOpenedOrAborted = false;
             }
@@ -331,8 +333,9 @@ public class Updates extends AbstractMobileCenterService {
             mBrowserOpenedOrAborted = false;
             mWorkflowCompleted = false;
             cancelPreviousTasks();
-            StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
-            StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+            PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+            PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+            PreferencesStorage.remove(PREFERENCE_KEY_IGNORED_RELEASE_ID);
         }
     }
 
@@ -374,8 +377,8 @@ public class Updates extends AbstractMobileCenterService {
             MobileCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
             removeDownload(downloadId);
         }
-        StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
-        StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
     }
 
     /**
@@ -394,7 +397,7 @@ public class Updates extends AbstractMobileCenterService {
             }
 
             /* If we have a download ready but we were in background, pop install UI now. */
-            String downloadUri = StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI);
+            String downloadUri = PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI);
             if ("".equals(downloadUri)) {
 
                 /* TODO double check that with download manager. */
@@ -432,7 +435,7 @@ public class Updates extends AbstractMobileCenterService {
             }
 
             /* Check if we have previous stored the update token. */
-            String updateToken = StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN);
+            String updateToken = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             if (updateToken != null) {
                 getLatestReleaseDetails(updateToken);
                 return;
@@ -466,7 +469,7 @@ public class Updates extends AbstractMobileCenterService {
             MobileCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
 
             /* Store request id. */
-            StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
+            PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
 
             /* Open browser, remember that whatever the outcome to avoid opening it twice. */
             BrowserUtils.openBrowser(url, mForegroundActivity);
@@ -513,7 +516,7 @@ public class Updates extends AbstractMobileCenterService {
      * Reset all variables that matter to restart checking a new release on launcher activity restart.
      */
     private synchronized void completeWorkflow() {
-        StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
         mCheckReleaseApiCall = null;
         mCheckReleaseCallId = null;
         mUpdateDialog = null;
@@ -534,9 +537,9 @@ public class Updates extends AbstractMobileCenterService {
             MobileCenterLog.debug(LOG_TAG, "Update token received before onStart, keep it in memory.");
             mBeforeStartUpdateToken = updateToken;
             mBeforeStartRequestId = requestId;
-        } else if (requestId.equals(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
-            StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, updateToken);
-            StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+        } else if (requestId.equals(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
+            PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, updateToken);
+            PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
             MobileCenterLog.debug(LOG_TAG, "Stored update token.");
             cancelPreviousTasks();
             getLatestReleaseDetails(updateToken);
@@ -597,24 +600,31 @@ public class Updates extends AbstractMobileCenterService {
         /* Check if state did not change. */
         if (mCheckReleaseCallId == releaseCallId) {
 
-            /* Check version code is equals or higher and hash is different. */
-            MobileCenterLog.debug(LOG_TAG, "Check version code and hash.");
-            PackageManager packageManager = mContext.getPackageManager();
-            try {
-                PackageInfo packageInfo = packageManager.getPackageInfo(mContext.getPackageName(), 0);
-                if (isMoreRecent(packageInfo, releaseDetails)) {
+            /* Check ignored. */
+            String releaseId = releaseDetails.getId();
+            if (releaseId.equals(PreferencesStorage.getString(PREFERENCE_KEY_IGNORED_RELEASE_ID))) {
+                MobileCenterLog.debug(LOG_TAG, "This release is ignored id=" + releaseId);
+            } else {
 
-                    /* Show update dialog. */
-                    mReleaseDetails = releaseDetails;
-                    if (mForegroundActivity != null) {
-                        showUpdateDialog();
+                /* Check version code is equals or higher and hash is different. */
+                MobileCenterLog.debug(LOG_TAG, "Check version code.");
+                PackageManager packageManager = mContext.getPackageManager();
+                try {
+                    PackageInfo packageInfo = packageManager.getPackageInfo(mContext.getPackageName(), 0);
+                    if (isMoreRecent(packageInfo, releaseDetails)) {
+
+                        /* Show update dialog. */
+                        mReleaseDetails = releaseDetails;
+                        if (mForegroundActivity != null) {
+                            showUpdateDialog();
+                        }
+                        return;
+                    } else {
+                        MobileCenterLog.debug(LOG_TAG, "Latest server version is not more recent.");
                     }
-                    return;
-                } else {
-                    MobileCenterLog.debug(LOG_TAG, "Latest server version is not more recent.");
+                } catch (PackageManager.NameNotFoundException e) {
+                    MobileCenterLog.error(LOG_TAG, "Could not compare versions.", e);
                 }
-            } catch (PackageManager.NameNotFoundException e) {
-                MobileCenterLog.error(LOG_TAG, "Could not compare versions.", e);
             }
 
             /* If update dialog was not shown or scheduled, complete workflow. */
@@ -667,6 +677,13 @@ public class Updates extends AbstractMobileCenterService {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                ignoreRelease(releaseDetails);
+            }
+        });
+        dialogBuilder.setNeutralButton(R.string.mobile_center_updates_update_dialog_postpone, new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
                 completeWorkflow(releaseDetails);
             }
         });
@@ -679,6 +696,20 @@ public class Updates extends AbstractMobileCenterService {
         });
         mUpdateDialog = dialogBuilder.create();
         mUpdateDialog.show();
+    }
+
+    /**
+     * Ignore the specified release. It won't be prompted anymore until another release is available.
+     *
+     * @param releaseDetails release details.
+     */
+    private synchronized void ignoreRelease(ReleaseDetails releaseDetails) {
+        if (releaseDetails == mReleaseDetails) {
+            String id = releaseDetails.getId();
+            MobileCenterLog.debug(LOG_TAG, "Ignore release id=" + id);
+            PreferencesStorage.putString(PREFERENCE_KEY_IGNORED_RELEASE_ID, id);
+            completeWorkflow();
+        }
     }
 
     /**
@@ -714,8 +745,8 @@ public class Updates extends AbstractMobileCenterService {
             }
 
             /* Store new download identifier. */
-            StorageHelper.PreferencesStorage.putLong(PREFERENCE_KEY_DOWNLOAD_ID, downloadRequestId);
-            StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOAD_URI, "");
+            PreferencesStorage.putLong(PREFERENCE_KEY_DOWNLOAD_ID, downloadRequestId);
+            PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOAD_URI, "");
         } else {
 
             /* State changed quickly, cancel download. */
@@ -780,7 +811,7 @@ public class Updates extends AbstractMobileCenterService {
      */
     private synchronized void notifyDownload(Context context, ProcessDownloadCompletionTask task, Notification notification, String uri) {
         if (task == mProcessDownloadCompletionTask) {
-            StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOAD_URI, uri);
+            PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOAD_URI, uri);
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.notify(getNotificationId(), notification);
         }
