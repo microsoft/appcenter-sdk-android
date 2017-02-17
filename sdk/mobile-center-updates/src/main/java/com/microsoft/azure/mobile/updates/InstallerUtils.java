@@ -1,6 +1,9 @@
 package com.microsoft.azure.mobile.updates;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.os.Build;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
@@ -13,6 +16,12 @@ import java.util.Set;
  * Installer utils.
  */
 class InstallerUtils {
+
+    /**
+     * Value when {@link Settings.Secure#INSTALL_NON_MARKET_APPS} setting is enabled.
+     */
+    @VisibleForTesting
+    static final String INSTALL_NON_MARKET_APPS_ENABLED = "1";
 
     /**
      * Installer package names that are not app stores.
@@ -50,5 +59,21 @@ class InstallerUtils {
             sInstalledFromAppStore = installer != null && !LOCAL_STORES.contains(installer);
         }
         return sInstalledFromAppStore;
+    }
+
+    /**
+     * Check whether user enabled installation via unknown sources.
+     *
+     * @param context any context.
+     * @return true if installation via unknown sources is enabled, false otherwise.
+     */
+    @SuppressWarnings("deprecation")
+    static boolean isUnknownSourcesEnabled(@NonNull Context context) {
+        ContentResolver contentResolver = context.getContentResolver();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return INSTALL_NON_MARKET_APPS_ENABLED.equals(Settings.Global.getString(contentResolver, Settings.Global.INSTALL_NON_MARKET_APPS));
+        } else {
+            return INSTALL_NON_MARKET_APPS_ENABLED.equals(Settings.Secure.getString(contentResolver, Settings.Secure.INSTALL_NON_MARKET_APPS));
+        }
     }
 }
