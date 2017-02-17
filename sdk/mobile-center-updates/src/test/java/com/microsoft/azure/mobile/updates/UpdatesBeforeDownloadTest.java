@@ -35,7 +35,6 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
@@ -187,6 +186,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         when(releaseDetails.getId()).thenReturn("someId");
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+        when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
 
         /* Trigger call. */
         Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
@@ -217,7 +217,12 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
         /* Disable does not hide the dialog. */
         Updates.setEnabled(false);
-        verifyNoMoreInteractions(mDialog);
+
+        /* We already called hide once, make sure its not called a second time. */
+        verify(mDialog).hide();
+
+        /* Also no toast if we don't click on actionable button. */
+        verify(mToast, never()).show();
     }
 
     @Test
@@ -256,7 +261,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
     }
 
     @Test
-    public void dialogWaitWhileInBackground() throws Exception {
+    public void dialogActivityStateChanges() throws Exception {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -290,8 +295,9 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
         /* Trigger call. */
         Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
+        Activity activity = mock(Activity.class);
+        Updates.getInstance().onActivityResumed(activity);
+        Updates.getInstance().onActivityPaused(activity);
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Release call in background. */
@@ -303,11 +309,27 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verify(mDialog, never()).show();
 
         /* Go foreground. */
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Updates.getInstance().onActivityResumed(activity);
 
         /* Verify dialog now shown. */
         verify(mDialogBuilder).create();
         verify(mDialog).show();
+
+        /* Pause/resume should not alter dialog. */
+        Updates.getInstance().onActivityPaused(activity);
+        Updates.getInstance().onActivityResumed(activity);
+
+        /* Only once check, and no hiding. */
+        verify(mDialogBuilder).create();
+        verify(mDialog).show();
+        verify(mDialog, never()).hide();
+
+        /* Cover activity. Dialog must be replaced. */
+        Updates.getInstance().onActivityPaused(activity);
+        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        verify(mDialogBuilder, times(2)).create();
+        verify(mDialog, times(2)).show();
+        verify(mDialog).hide();
     }
 
     @Test
@@ -341,6 +363,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
         /* Cancel it. */
         cancelListener.getValue().onCancel(mDialog);
+        when(mDialog.isShowing()).thenReturn(false);
 
         /* Verify. */
         verifyStatic();
@@ -391,6 +414,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
         /* Postpone it. */
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEUTRAL);
+        when(mDialog.isShowing()).thenReturn(false);
 
         /* Verify. */
         verifyStatic();
@@ -461,6 +485,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
         /* Ignore it. */
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
+        when(mDialog.isShowing()).thenReturn(false);
 
         /* Verify. */
         verifyStatic();
@@ -526,6 +551,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
         /* Cancel it. */
         cancelListener.getValue().onCancel(mDialog);
+        when(mDialog.isShowing()).thenReturn(false);
 
         /* Verify no more calls, e.g. happened only once. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
@@ -575,6 +601,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         when(releaseDetails.getId()).thenReturn("someId");
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+        when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
 
         /* Trigger call. */
         Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
@@ -592,6 +619,10 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
         /* Ignore it. */
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
+        when(mDialog.isShowing()).thenReturn(false);
+
+        /* Since we were disabled, no action but toast to explain what happened. */
+        verify(mToast).show();
 
         /* Verify no more calls, e.g. happened only once. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
@@ -627,6 +658,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         mockStatic(AsyncTaskUtils.class);
+        when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
 
         /* Trigger call. */
         Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
@@ -642,8 +674,12 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
 
-        /* Click on download does nothing for now in the design if we disabled. */
+        /* Click on download. */
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
+        when(mDialog.isShowing()).thenReturn(false);
+
+        /* Since we were disabled, no action but toast to explain what happened. */
+        verify(mToast).show();
 
         /* Verify no more calls, e.g. happened only once. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
