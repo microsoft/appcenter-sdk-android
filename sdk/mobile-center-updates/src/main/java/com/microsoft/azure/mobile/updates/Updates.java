@@ -701,7 +701,7 @@ public class Updates extends AbstractMobileCenterService {
             /* Nothing to if resuming same activity with dialog already displayed. */
             if (alertDialog.isShowing()) {
                 if (mForegroundActivity == mLastActivityWithDialog.get()) {
-                    MobileCenterLog.debug(LOG_TAG, "Previous dialog still shown in same activity.");
+                    MobileCenterLog.debug(LOG_TAG, "Previous dialog is still being shown in the same activity.");
                     return false;
                 }
 
@@ -764,13 +764,7 @@ public class Updates extends AbstractMobileCenterService {
                 completeWorkflow(releaseDetails);
             }
         });
-        dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                completeWorkflow(releaseDetails);
-            }
-        });
+        setOnCancelListener(dialogBuilder, releaseDetails);
         mUpdateDialog = showAndRememberDialogActivity(dialogBuilder);
     }
 
@@ -806,13 +800,7 @@ public class Updates extends AbstractMobileCenterService {
                 completeWorkflow(releaseDetails);
             }
         });
-        dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                completeWorkflow(releaseDetails);
-            }
-        });
+        setOnCancelListener(dialogBuilder, releaseDetails);
 
         /* We use generic OK button as we can't promise we can navigate to settings. */
         dialogBuilder.setPositiveButton(R.string.mobile_center_updates_unknown_sources_dialog_settings, new DialogInterface.OnClickListener() {
@@ -823,6 +811,19 @@ public class Updates extends AbstractMobileCenterService {
             }
         });
         mUnknownSourcesDialog = showAndRememberDialogActivity(dialogBuilder);
+    }
+
+    /**
+     * Common code for dialogs cancel action (using BACK).
+     */
+    private void setOnCancelListener(AlertDialog.Builder dialogBuilder, final ReleaseDetails releaseDetails) {
+        dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                completeWorkflow(releaseDetails);
+            }
+        });
     }
 
     /**
