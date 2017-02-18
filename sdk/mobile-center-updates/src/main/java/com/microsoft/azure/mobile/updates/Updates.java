@@ -33,6 +33,7 @@ import com.microsoft.azure.mobile.http.HttpClientRetryer;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
+import com.microsoft.azure.mobile.utils.HashUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
@@ -493,8 +494,7 @@ public class Updates extends AbstractMobileCenterService {
 
     @NonNull
     private String computeHash(@NonNull Context context, @NonNull PackageInfo packageInfo) {
-        // TODO switch to the following hash when backend supports it: HashUtils.sha256(context.getPackageName() + ":" + packageInfo.versionName + ":" + packageInfo.versionCode);
-        return context.getString(packageInfo.applicationInfo.labelRes);
+        return HashUtils.sha256(context.getPackageName() + ":" + packageInfo.versionName + ":" + packageInfo.versionCode);
     }
 
     /**
