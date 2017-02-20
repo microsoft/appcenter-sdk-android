@@ -1,0 +1,10 @@
+//
+// :sdk:push
+//
+project.description = 'This package contains functionalities to recive push notifications for your application.'
+evaluationDependsOn(':sdk')
+
+dependencies {
+    compile project(':sdk:mobile-center')
+    compile 'com.google.android.gms:play-services-gcm:10.2.0'
+}
