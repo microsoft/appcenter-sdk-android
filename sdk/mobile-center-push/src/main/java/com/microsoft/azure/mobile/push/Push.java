@@ -1,5 +1,6 @@
 package com.microsoft.azure.mobile.push;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
@@ -40,6 +41,17 @@ public class Push extends AbstractMobileCenterService {
     private static final String PUSH_GROUP = "group_push";
 
     /**
+     * Shared instance.
+     */
+    @SuppressLint("StaticFieldLeak")
+    private static Push sInstance = null;
+
+    /**
+     *
+     */
+    private String mSenderId = null;
+
+    /**
      * Log factories managed by this service.
      */
     private final Map<String, LogFactory> mFactories;
@@ -55,6 +67,53 @@ public class Push extends AbstractMobileCenterService {
     private Push() {
         mFactories = new HashMap<>();
         mFactories.put(PushInstallationLog.TYPE, new PushInstallationLogFactory());
+    }
+
+    /**
+     * Get shared instance.
+     *
+     * @return shared instance.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static synchronized Push getInstance() {
+        if (sInstance == null) {
+            sInstance = new Push();
+        }
+        return sInstance;
+    }
+
+    @VisibleForTesting
+    static synchronized void unsetInstance() {
+        sInstance = null;
+    }
+
+    /**
+     * Check whether Push service is enabled or not.
+     *
+     * @return <code>true</code> if enabled, <code>false</code> otherwise.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static boolean isEnabled() {
+        return getInstance().isInstanceEnabled();
+    }
+
+    /**
+     * Enable or disable Push service.
+     *
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static void setEnabled(boolean enabled) {
+        getInstance().setInstanceEnabled(enabled);
+    }
+
+    /**
+     *
+     * @param senderId
+     */
+    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
+    public static void setSenderId(String senderId) {
+        getInstance().setInstanceSenderId(senderId);
     }
 
     /**
@@ -93,21 +152,34 @@ public class Push extends AbstractMobileCenterService {
         super.onStarted(context, appSecret, channel);
         mContext = context;
 
-        // TODO AsyncTaskUtils.execute(LOG_TAG, new PushTokenTask(), senderId);
+        AsyncTaskUtils.execute(LOG_TAG, new PushTokenTask());
+    }
+
+    /**
+     * Implements {@link #setSenderId(String)}.
+     */
+    private synchronized void setInstanceSenderId(String senderId) {
+        mSenderId = senderId;
     }
 
     @VisibleForTesting
-    class PushTokenTask extends AsyncTask<String, Void, String> {
+    class PushTokenTask extends AsyncTask<Void, Void, String> {
 
         @Override
-        protected String doInBackground(String... params) {
-            String senderId = params[0];
+        protected String doInBackground(Void[] params) {
             InstanceID instanceID = InstanceID.getInstance(mContext);
             try {
-                return instanceID.getToken(senderId,  GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
+                return instanceID.getToken(mSenderId, GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
             } catch (IOException e) {
                 MobileCenterLog.error(LOG_TAG, "Cannot get push token", e);
                 return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String pushToken) {
+            if (pushToken != null) {
+                enqueuePushInstallationLog(pushToken);
             }
         }
     }
