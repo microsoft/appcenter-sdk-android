@@ -1,11 +1,13 @@
 package com.microsoft.azure.mobile.updates;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.text.TextUtils;
+import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
@@ -26,6 +28,7 @@ import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -34,7 +37,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("WeakerAccess")
-@PrepareForTest({Updates.class, PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, InstallerUtils.class})
+@PrepareForTest({Updates.class, PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, InstallerUtils.class, Toast.class})
 public class AbstractUpdatesTest {
 
     static final String TEST_HASH = "testapp";  // TODO HashUtils.sha256("com.contoso:1.2.3:6");
@@ -56,7 +59,11 @@ public class AbstractUpdatesTest {
     @Mock
     AlertDialog mDialog;
 
+    @Mock
+    Toast mToast;
+
     @Before
+    @SuppressLint("ShowToast")
     @SuppressWarnings("ResourceType")
     public void setUp() throws Exception {
         Updates.unsetInstance();
@@ -117,5 +124,25 @@ public class AbstractUpdatesTest {
         /* Dialog. */
         whenNew(AlertDialog.Builder.class).withAnyArguments().thenReturn(mDialogBuilder);
         when(mDialogBuilder.create()).thenReturn(mDialog);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                when(mDialog.isShowing()).thenReturn(true);
+                return null;
+            }
+        }).when(mDialog).show();
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                when(mDialog.isShowing()).thenReturn(false);
+                return null;
+            }
+        }).when(mDialog).hide();
+
+        /* Toast. */
+        mockStatic(Toast.class);
+        when(Toast.makeText(any(Context.class), anyInt(), anyInt())).thenReturn(mToast);
     }
 }

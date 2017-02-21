@@ -19,10 +19,14 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
+import android.widget.Toast;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.channel.Channel;
@@ -41,6 +45,7 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage
 
 import org.json.JSONException;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -136,6 +141,17 @@ public class Updates extends AbstractMobileCenterService {
      * Last update dialog that was shown.
      */
     private AlertDialog mUpdateDialog;
+
+    /**
+     * Last unknown sources dialog that was shown.
+     */
+    private AlertDialog mUnknownSourcesDialog;
+
+    /**
+     * Last activity that did show a dialog.
+     * Used to avoid replacing a dialog in same screen as it causes flickering.
+     */
+    private WeakReference<Activity> mLastActivityWithDialog = new WeakReference<>(null);
 
     /**
      * Current task inspecting the latest release details that we fetched from server.
@@ -363,6 +379,7 @@ public class Updates extends AbstractMobileCenterService {
             mCheckReleaseCallId = null;
         }
         mUpdateDialog = null;
+        mUnknownSourcesDialog = null;
         mReleaseDetails = null;
         if (mDownloadTask != null) {
             mDownloadTask.cancel(true);
@@ -429,9 +446,24 @@ public class Updates extends AbstractMobileCenterService {
                 }
             }
 
-            /* If we were waiting after API call to resume app to show the dialog do it now. */
+            /* If we were waiting after API call to resume app to show/resume the dialog do it now. */
             if (mReleaseDetails != null) {
-                showUpdateDialog();
+
+                /* Restore the U.I. state after a rotation or if activity covered by another one. */
+                if (mUnknownSourcesDialog != null) {
+
+                    /*
+                     * Resume click download step if last time we were showing unknown source dialog.
+                     * Note that we could be executed here after going to enable settings and being back in app.
+                     * We can start download if the setting is now enabled,
+                     * otherwise restore dialog if activity rotated or was covered.
+                     */
+                    enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
+                } else {
+
+                    /* Or restore update dialog if that's the last thing we did before being paused. */
+                    showUpdateDialog();
+                }
                 return;
             }
 
@@ -527,6 +559,7 @@ public class Updates extends AbstractMobileCenterService {
         mCheckReleaseApiCall = null;
         mCheckReleaseCallId = null;
         mUpdateDialog = null;
+        mUnknownSourcesDialog = null;
         mReleaseDetails = null;
         mWorkflowCompleted = true;
     }
@@ -655,16 +688,53 @@ public class Updates extends AbstractMobileCenterService {
     }
 
     /**
+     * Check if dialog should be restored in the new activity. Hiding previous dialog version if any.
+     *
+     * @param alertDialog existing dialog if any, always returning true when null.
+     * @return true if a new dialog should be displayed, false otherwise.
+     */
+    private boolean shouldRefreshDialog(@Nullable AlertDialog alertDialog) {
+
+        /* We could be in another activity now, refresh dialog. */
+        if (alertDialog != null) {
+
+            /* Nothing to if resuming same activity with dialog already displayed. */
+            if (alertDialog.isShowing()) {
+                if (mForegroundActivity == mLastActivityWithDialog.get()) {
+                    MobileCenterLog.debug(LOG_TAG, "Previous dialog is still being shown in the same activity.");
+                    return false;
+                }
+
+                /* Otherwise replace dialog. */
+                alertDialog.hide();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Show dialog and remember which activity displayed it for later U.I. state change.
+     *
+     * @param dialogBuilder dialog builder that prepared the new dialog.
+     * @return the dialog that is shown.
+     */
+    private AlertDialog showAndRememberDialogActivity(AlertDialog.Builder dialogBuilder) {
+        AlertDialog alertDialog = dialogBuilder.create();
+        alertDialog.show();
+        mLastActivityWithDialog = new WeakReference<>(mForegroundActivity);
+        return alertDialog;
+    }
+
+    /**
      * Show update dialog. This can be called multiple times if clicking on HOME and app resumed
      * (it could be resumed in another activity covering the previous one).
      */
+    @UiThread
     private synchronized void showUpdateDialog() {
-
-        /* We could be in another activity now, refresh dialog. */
-        MobileCenterLog.debug(LOG_TAG, "Show update dialog.");
-        if (mUpdateDialog != null) {
-            mUpdateDialog.hide();
+        if (!shouldRefreshDialog(mUpdateDialog)) {
+            return;
         }
+        MobileCenterLog.debug(LOG_TAG, "Show new update dialog.");
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
         dialogBuilder.setTitle(R.string.mobile_center_updates_update_dialog_title);
         final ReleaseDetails releaseDetails = mReleaseDetails;
@@ -677,7 +747,7 @@ public class Updates extends AbstractMobileCenterService {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                scheduleDownload(releaseDetails);
+                enqueueDownloadOrShowUnknownSourcesDialog(releaseDetails);
             }
         });
         dialogBuilder.setNegativeButton(R.string.mobile_center_updates_update_dialog_ignore, new DialogInterface.OnClickListener() {
@@ -694,6 +764,59 @@ public class Updates extends AbstractMobileCenterService {
                 completeWorkflow(releaseDetails);
             }
         });
+        setOnCancelListener(dialogBuilder, releaseDetails);
+        mUpdateDialog = showAndRememberDialogActivity(dialogBuilder);
+    }
+
+    /**
+     * Show unknown sources dialog. This can be called multiple times if clicking on HOME and app resumed
+     * (it could be resumed in another activity covering the previous one).
+     */
+    @UiThread
+    private synchronized void showUnknownSourcesDialog() {
+
+        /* Check if we need to replace dialog. */
+        if (!shouldRefreshDialog(mUnknownSourcesDialog)) {
+            return;
+        }
+        MobileCenterLog.debug(LOG_TAG, "Show new unknown sources dialog.");
+
+        /*
+         * We invite user to go to setting and will navigate to setting upon clicking,
+         * but no monitoring is possible and application will be left.
+         * We want consistent behavior whether application is killed in the mean time or not.
+         * Not changing any state here provide that consistency as a new update dialog
+         * will be shown when coming back to application.
+         *
+         * Also for buttons and texts we try do to the same as the system dialog on standard devices.
+         */
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
+        dialogBuilder.setMessage(R.string.mobile_center_updates_unknown_sources_dialog_message);
+        final ReleaseDetails releaseDetails = mReleaseDetails;
+        dialogBuilder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                completeWorkflow(releaseDetails);
+            }
+        });
+        setOnCancelListener(dialogBuilder, releaseDetails);
+
+        /* We use generic OK button as we can't promise we can navigate to settings. */
+        dialogBuilder.setPositiveButton(R.string.mobile_center_updates_unknown_sources_dialog_settings, new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                goToSettings(releaseDetails);
+            }
+        });
+        mUnknownSourcesDialog = showAndRememberDialogActivity(dialogBuilder);
+    }
+
+    /**
+     * Common code for dialogs cancel action (using BACK).
+     */
+    private void setOnCancelListener(AlertDialog.Builder dialogBuilder, final ReleaseDetails releaseDetails) {
         dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
 
             @Override
@@ -701,8 +824,32 @@ public class Updates extends AbstractMobileCenterService {
                 completeWorkflow(releaseDetails);
             }
         });
-        mUpdateDialog = dialogBuilder.create();
-        mUpdateDialog.show();
+    }
+
+    /**
+     * Navigate to secure settings.
+     *
+     * @param releaseDetails release details to check for state change.
+     */
+    private synchronized void goToSettings(ReleaseDetails releaseDetails) {
+        try {
+
+            /*
+             * We can't use startActivityForResult as we don't subclass activities.
+             * And a no U.I. activity of our own must finish in onCreate,
+             * so it cannot receive a result.
+             */
+            mForegroundActivity.startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS));
+        } catch (ActivityNotFoundException e) {
+
+            /* On some devices, it's not possible, user will do it by himself. */
+            MobileCenterLog.warn(LOG_TAG, "No way to navigate to secure settings on this device automatically");
+
+            /* Don't pop dialog until app restarted in that case. */
+            if (releaseDetails == mReleaseDetails) {
+                completeWorkflow();
+            }
+        }
     }
 
     /**
@@ -716,6 +863,8 @@ public class Updates extends AbstractMobileCenterService {
             MobileCenterLog.debug(LOG_TAG, "Ignore release id=" + id);
             PreferencesStorage.putString(PREFERENCE_KEY_IGNORED_RELEASE_ID, id);
             completeWorkflow();
+        } else {
+            showDisabledToast();
         }
     }
 
@@ -724,11 +873,27 @@ public class Updates extends AbstractMobileCenterService {
      *
      * @param releaseDetails release details.
      */
-    private synchronized void scheduleDownload(ReleaseDetails releaseDetails) {
+    private synchronized void enqueueDownloadOrShowUnknownSourcesDialog(final ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
-            MobileCenterLog.debug(LOG_TAG, "Schedule download...");
-            mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(releaseDetails));
+            if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
+                MobileCenterLog.debug(LOG_TAG, "Schedule download...");
+                mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(releaseDetails));
+            } else {
+                showUnknownSourcesDialog();
+            }
+        } else {
+            showDisabledToast();
         }
+    }
+
+    /**
+     * Show disabled toast so that user is not surprised why the dialog action does not work.
+     * Calling setEnabled(false) before actioning dialog is a corner case
+     * (possible only if developer has code running the disable in background/or in the mean time)
+     * that will likely never happen but we guard for it.
+     */
+    private void showDisabledToast() {
+        Toast.makeText(mContext, R.string.mobile_center_updates_dialog_actioned_on_disabled_toast, Toast.LENGTH_SHORT).show();
     }
 
     /**
