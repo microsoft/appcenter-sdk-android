@@ -15,6 +15,7 @@ import com.microsoft.azure.mobile.push.ingestion.models.PushInstallationLog;
 import com.microsoft.azure.mobile.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -39,6 +40,17 @@ public class Push extends AbstractMobileCenterService {
      * Constant marking event of the push group.
      */
     private static final String PUSH_GROUP = "group_push";
+
+    /**
+     * Base key for stored preferences.
+     */
+    private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
+
+    /**
+     * Preference key to store push token.
+     */
+    static final String PREFERENCE_KEY_PUSH_TOKEN = PREFERENCE_PREFIX + "push_token";
+
 
     /**
      * Shared instance.
@@ -121,10 +133,16 @@ public class Push extends AbstractMobileCenterService {
      *
      * @param pushToken
      */
-    private void enqueuePushInstallationLog(String pushToken) {
+    private void enqueuePushInstallationLog(@NonNull String pushToken) {
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
         mChannel.enqueue(log, PUSH_GROUP);
+    }
+
+    private synchronized void handlePushToken(@NonNull String pushToken) {
+        MobileCenterLog.debug(LOG_TAG, "Push token: " + pushToken);
+        PreferencesStorage.putString(PREFERENCE_KEY_PUSH_TOKEN, pushToken);
+        enqueuePushInstallationLog(pushToken);
     }
 
     @Override
@@ -152,7 +170,11 @@ public class Push extends AbstractMobileCenterService {
         super.onStarted(context, appSecret, channel);
         mContext = context;
 
-        AsyncTaskUtils.execute(LOG_TAG, new PushTokenTask());
+        if (mSenderId != null) {
+            AsyncTaskUtils.execute(LOG_TAG, new PushTokenTask());
+        } else {
+            MobileCenterLog.error(LOG_TAG, "Sender ID is null! Please set it by Push.setSenderId(senderId);");
+        }
     }
 
     /**
@@ -163,7 +185,7 @@ public class Push extends AbstractMobileCenterService {
     }
 
     @VisibleForTesting
-    class PushTokenTask extends AsyncTask<Void, Void, String> {
+    private class PushTokenTask extends AsyncTask<Void, Void, String> {
 
         @Override
         protected String doInBackground(Void[] params) {
@@ -179,7 +201,7 @@ public class Push extends AbstractMobileCenterService {
         @Override
         protected void onPostExecute(String pushToken) {
             if (pushToken != null) {
-                enqueuePushInstallationLog(pushToken);
+                handlePushToken(pushToken);
             }
         }
     }
