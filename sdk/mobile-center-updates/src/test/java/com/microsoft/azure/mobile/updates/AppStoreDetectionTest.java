@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
-public class InstallerUtilsTest {
+public class AppStoreDetectionTest {
 
     @Mock
     private Context mContext;

@@ -104,6 +104,9 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
     @Before
     public void setUpDownload() throws Exception {
 
+        /* Allow unknown sources. */
+        when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
+
         /* Mock download manager. */
         when(mContext.getSystemService(Context.DOWNLOAD_SERVICE)).thenReturn(mDownloadManager);
         whenNew(DownloadManager.Request.class).withAnyArguments().thenReturn(mDownloadRequest);
