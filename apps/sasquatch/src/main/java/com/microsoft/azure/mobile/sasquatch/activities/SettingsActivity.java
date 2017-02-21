@@ -19,6 +19,7 @@ import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
 import com.microsoft.azure.mobile.crashes.Crashes;
+import com.microsoft.azure.mobile.push.Push;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
@@ -48,6 +49,7 @@ public class SettingsActivity extends AppCompatActivity {
             addPreferencesFromResource(R.xml.settings);
             final CheckBoxPreference analyticsEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_analytics_state_key));
             final CheckBoxPreference crashesEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_crashes_state_key));
+            final CheckBoxPreference pushEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_push_state_key));
             initCheckBoxSetting(R.string.mobile_center_state_key, MobileCenter.isEnabled(), R.string.mobile_center_state_summary_enabled, R.string.mobile_center_state_summary_disabled, new HasEnabled() {
 
                 @Override
@@ -80,12 +82,25 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public void setEnabled(boolean enabled) {
                     Crashes.setEnabled(enabled);
-                    crashesEnabledPreference.setChecked(Analytics.isEnabled());
+                    crashesEnabledPreference.setChecked(Crashes.isEnabled());
                 }
 
                 @Override
                 public boolean isEnabled() {
                     return Crashes.isEnabled();
+                }
+            });
+            initCheckBoxSetting(R.string.mobile_center_push_state_key, Push.isEnabled(), R.string.mobile_center_push_state_summary_enabled, R.string.mobile_center_push_state_summary_disabled, new HasEnabled() {
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    Push.setEnabled(enabled);
+                    pushEnabledPreference.setChecked(Push.isEnabled());
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    return Push.isEnabled();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_auto_page_tracking_key, AnalyticsPrivateHelper.isAutoPageTrackingEnabled(), R.string.mobile_center_auto_page_tracking_enabled, R.string.mobile_center_auto_page_tracking_disabled, new HasEnabled() {
