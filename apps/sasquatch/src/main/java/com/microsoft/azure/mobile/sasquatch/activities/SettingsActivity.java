@@ -27,6 +27,7 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.APP_SECRET_KEY;
+import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.PUSH_SENDER_ID_KEY;
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.SERVER_URL_KEY;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -101,6 +102,36 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public boolean isEnabled() {
                     return Push.isEnabled();
+                }
+            });
+            final String defaultPushSenderId = getString(R.string.push_sender_id);
+            initClickableSetting(R.string.mobile_center_push_sender_id_key, MainActivity.sSharedPreferences.getString(PUSH_SENDER_ID_KEY, defaultPushSenderId), new Preference.OnPreferenceClickListener() {
+
+                @Override
+                public boolean onPreferenceClick(final Preference preference) {
+                    final EditText input = new EditText(getActivity());
+                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                    input.setText(MainActivity.sSharedPreferences.getString(PUSH_SENDER_ID_KEY, defaultPushSenderId));
+
+                    new AlertDialog.Builder(getActivity()).setTitle(R.string.mobile_center_push_sender_id_title).setView(input)
+                            .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    String url = input.getText().toString();
+                                    setKeyValue(PUSH_SENDER_ID_KEY, url);
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(PUSH_SENDER_ID_KEY, defaultPushSenderId));
+                                }
+                            })
+                            .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    setKeyValue(APP_SECRET_KEY, defaultPushSenderId);
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(PUSH_SENDER_ID_KEY, defaultPushSenderId));
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .create().show();
+                    return true;
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_auto_page_tracking_key, AnalyticsPrivateHelper.isAutoPageTrackingEnabled(), R.string.mobile_center_auto_page_tracking_enabled, R.string.mobile_center_auto_page_tracking_disabled, new HasEnabled() {

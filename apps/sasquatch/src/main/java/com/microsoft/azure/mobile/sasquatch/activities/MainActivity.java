@@ -22,6 +22,7 @@ import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
+import com.microsoft.azure.mobile.push.Push;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     static final String APP_SECRET = "45d1d9f6-2492-4e68-bd44-7190351eb5f3";
     static final String APP_SECRET_KEY = "appSecret";
     static final String SERVER_URL_KEY = "serverUrl";
+    static final String PUSH_SENDER_ID_KEY = "pushSenderId";
     static SharedPreferences sSharedPreferences;
 
     @Override
@@ -49,7 +51,9 @@ public class MainActivity extends AppCompatActivity {
         }
         MobileCenter.setLogLevel(Log.VERBOSE);
         Crashes.setListener(getCrashesListener());
-        MobileCenter.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class);
+        String pushSenderId = sSharedPreferences.getString(PUSH_SENDER_ID_KEY, getString(R.string.push_sender_id));
+        Push.setSenderId(pushSenderId);
+        MobileCenter.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class, Push.class);
 
         Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
         Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {

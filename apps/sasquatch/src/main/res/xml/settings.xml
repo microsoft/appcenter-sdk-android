@@ -29,6 +29,9 @@
         <CheckBoxPreference
             android:key="@string/mobile_center_push_state_key"
             android:title="@string/mobile_center_push_state_title"/>
+        <Preference
+            android:key="@string/mobile_center_push_sender_id_key"
+            android:title="@string/mobile_center_push_sender_id_title" />
     </PreferenceCategory>
 
     <PreferenceCategory
