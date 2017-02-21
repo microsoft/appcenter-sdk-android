@@ -64,6 +64,16 @@ public class Push extends AbstractMobileCenterService {
     private String mSenderId = null;
 
     /**
+     * The PNS handle for this installation.
+     */
+    private String mPushToken = null;
+
+    /**
+     * Remember if we already sent push installation log
+     */
+    private boolean mPushTokenSent = false;
+
+    /**
      * Log factories managed by this service.
      */
     private final Map<String, LogFactory> mFactories;
@@ -135,9 +145,12 @@ public class Push extends AbstractMobileCenterService {
      * @param pushToken the push token value
      */
     private void enqueuePushInstallationLog(@NonNull String pushToken) {
+        if (isInactive())
+            return;
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
         mChannel.enqueue(log, PUSH_GROUP);
+        mPushTokenSent = true;
     }
 
     /**
@@ -146,9 +159,25 @@ public class Push extends AbstractMobileCenterService {
      * @param pushToken the push token value
      */
     private synchronized void handlePushToken(@NonNull String pushToken) {
-        MobileCenterLog.debug(LOG_TAG, "Push token: " + pushToken);
-        PreferencesStorage.putString(PREFERENCE_KEY_PUSH_TOKEN, pushToken);
-        enqueuePushInstallationLog(pushToken);
+        mPushToken = pushToken;
+        MobileCenterLog.debug(LOG_TAG, "Push token: " + mPushToken);
+        PreferencesStorage.putString(PREFERENCE_KEY_PUSH_TOKEN, mPushToken);
+        enqueuePushInstallationLog(mPushToken);
+    }
+
+    private synchronized void updatePushToken() {
+        if (isInactive())
+            return;
+        if (mPushTokenSent)
+            return;
+
+        if (mPushToken != null) {
+            enqueuePushInstallationLog(mPushToken);
+        } else if (mSenderId != null) {
+            AsyncTaskUtils.execute(LOG_TAG, new PushTokenTask());
+        } else {
+            MobileCenterLog.error(LOG_TAG, "Sender ID is null! Please set it by Push.setSenderId(senderId);");
+        }
     }
 
     @Override
@@ -175,11 +204,14 @@ public class Push extends AbstractMobileCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         super.onStarted(context, appSecret, channel);
         mContext = context;
+        updatePushToken();
+    }
 
-        if (mSenderId != null) {
-            AsyncTaskUtils.execute(LOG_TAG, new PushTokenTask());
-        } else {
-            MobileCenterLog.error(LOG_TAG, "Sender ID is null! Please set it by Push.setSenderId(senderId);");
+    @Override
+    public synchronized void setInstanceEnabled(boolean enabled) {
+        super.setInstanceEnabled(enabled);
+        if (enabled) {
+            updatePushToken();
         }
     }
 
