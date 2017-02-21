@@ -49,7 +49,7 @@ public class Push extends AbstractMobileCenterService {
     /**
      * Preference key to store push token.
      */
-    static final String PREFERENCE_KEY_PUSH_TOKEN = PREFERENCE_PREFIX + "push_token";
+    private static final String PREFERENCE_KEY_PUSH_TOKEN = PREFERENCE_PREFIX + "push_token";
 
 
     /**
@@ -59,7 +59,7 @@ public class Push extends AbstractMobileCenterService {
     private static Push sInstance = null;
 
     /**
-     *
+     * GCM sender ID.
      */
     private String mSenderId = null;
 
@@ -120,8 +120,9 @@ public class Push extends AbstractMobileCenterService {
     }
 
     /**
+     * Change the GSM sender ID.
      *
-     * @param senderId
+     * @param senderId GSM sender ID
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public static void setSenderId(String senderId) {
@@ -129,9 +130,9 @@ public class Push extends AbstractMobileCenterService {
     }
 
     /**
-     * Enqueue a start session log
+     * Enqueue a push installation log.
      *
-     * @param pushToken
+     * @param pushToken the push token value
      */
     private void enqueuePushInstallationLog(@NonNull String pushToken) {
         PushInstallationLog log = new PushInstallationLog();
@@ -139,6 +140,11 @@ public class Push extends AbstractMobileCenterService {
         mChannel.enqueue(log, PUSH_GROUP);
     }
 
+    /**
+     * Handle push token update success.
+     *
+     * @param pushToken the push token value
+     */
     private synchronized void handlePushToken(@NonNull String pushToken) {
         MobileCenterLog.debug(LOG_TAG, "Push token: " + pushToken);
         PreferencesStorage.putString(PREFERENCE_KEY_PUSH_TOKEN, pushToken);
