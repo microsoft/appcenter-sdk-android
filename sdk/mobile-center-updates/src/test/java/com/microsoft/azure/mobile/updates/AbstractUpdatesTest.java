@@ -3,13 +3,13 @@ package com.microsoft.azure.mobile.updates;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.utils.HashUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
@@ -40,7 +40,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest({Updates.class, PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, InstallerUtils.class, Toast.class})
 public class AbstractUpdatesTest {
 
-    static final String TEST_HASH = "testapp";  // TODO HashUtils.sha256("com.contoso:1.2.3:6");
+    static final String TEST_HASH = HashUtils.sha256("com.contoso:1.2.3:6");
 
     private static final String UPDATES_ENABLED_KEY = KEY_ENABLED + "_Updates";
 
@@ -99,12 +99,6 @@ public class AbstractUpdatesTest {
         when(mPackageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);
         Whitebox.setInternalState(packageInfo, "versionName", "1.2.3");
         Whitebox.setInternalState(packageInfo, "versionCode", 6);
-
-        /* TODO temporary fake hash based on app name */
-        ApplicationInfo applicationInfo = mock(ApplicationInfo.class);
-        Whitebox.setInternalState(applicationInfo, "labelRes", 1337);
-        Whitebox.setInternalState(packageInfo, "applicationInfo", applicationInfo);
-        when(mContext.getString(1337)).thenReturn(TEST_HASH);
 
         /* Mock some statics. */
         mockStatic(BrowserUtils.class);
