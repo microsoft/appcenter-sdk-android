@@ -113,16 +113,6 @@ public class Updates extends AbstractMobileCenterService {
     private boolean mBrowserOpenedOrAborted;
 
     /**
-     * In memory token if we receive deep link intent before onStart.
-     */
-    private String mBeforeStartUpdateToken;
-
-    /**
-     * In memory request identifier if we receive deep link intent before onStart.
-     */
-    private String mBeforeStartRequestId;
-
-    /**
      * Current API call identifier to check latest release from server, used for state check.
      * We can't use the ServiceCall object for that purpose because of a chicken and egg problem.
      */
@@ -412,15 +402,6 @@ public class Updates extends AbstractMobileCenterService {
                 return;
             }
 
-            /* If we received the update token before Mobile Center was started/enabled, process it now. */
-            if (mBeforeStartUpdateToken != null) {
-                MobileCenterLog.debug(LOG_TAG, "Processing update token we kept in memory before onStarted");
-                storeUpdateToken(mBeforeStartUpdateToken, mBeforeStartRequestId);
-                mBeforeStartUpdateToken = null;
-                mBeforeStartRequestId = null;
-                return;
-            }
-
             /* If we have a download ready but we were in background, pop install UI now. */
             String downloadUri = PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI);
             if ("".equals(downloadUri)) {
@@ -570,19 +551,23 @@ public class Updates extends AbstractMobileCenterService {
      * how do we protect server call to get the key in the first place?
      * Even having the encryption key temporarily in memory is risky as that can be heap dumped.
      */
-    synchronized void storeUpdateToken(@NonNull String updateToken, @NonNull String requestId) {
+    synchronized void storeUpdateToken(@NonNull Context context, @NonNull String updateToken, @NonNull String requestId) {
 
-        /* Keep token for later if we are not started and enabled yet. */
+        /* Init storage if called before start. */
         if (mContext == null) {
-            MobileCenterLog.debug(LOG_TAG, "Update token received before onStart, keep it in memory.");
-            mBeforeStartUpdateToken = updateToken;
-            mBeforeStartRequestId = requestId;
-        } else if (requestId.equals(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
+            MobileCenterLog.debug(LOG_TAG, "Update token received before onStart, have to init storage.");
+            StorageHelper.initialize(context);
+        }
+
+        /* Check request identifier matches the token we expected. */
+        if (requestId.equals(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
             PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, updateToken);
             PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
             MobileCenterLog.debug(LOG_TAG, "Stored update token.");
             cancelPreviousTasks();
-            getLatestReleaseDetails(updateToken);
+            if (mContext != null) {
+                getLatestReleaseDetails(updateToken);
+            }
         } else {
             MobileCenterLog.warn(LOG_TAG, "Ignoring update token as requestId is invalid.");
         }
