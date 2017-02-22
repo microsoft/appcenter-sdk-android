@@ -82,6 +82,11 @@ final class UpdateConstants {
     static final String HEADER_API_TOKEN = "x-api-token";
 
     /**
+     * Invalid release identifier.
+     */
+    static final int INVALID_RELEASE_IDENTIFIER = -1;
+
+    /**
      * Invalid download identifier.
      */
     static final long INVALID_DOWNLOAD_IDENTIFIER = -1;
