@@ -365,11 +365,10 @@ public class Updates extends AbstractMobileCenterService {
             resumeUpdateWorkflow();
         } else {
 
-            /* Clean all state on disabling, cancel everything. */
+            /* Clean all state on disabling, cancel everything. Keep token though. */
             mBrowserOpenedOrAborted = false;
             mWorkflowCompleted = false;
             cancelPreviousTasks();
-            PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
             PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
             PreferencesStorage.remove(PREFERENCE_KEY_IGNORED_RELEASE_ID);
         }
