@@ -16,6 +16,7 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage
 
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.rules.Timeout;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -46,6 +47,12 @@ public class AbstractUpdatesTest {
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
+
+    /**
+     * Use a timeout to fail test if deadlocks happen due to a code change.
+     */
+    @Rule
+    public Timeout mGlobalTimeout = Timeout.seconds(10);
 
     @Mock
     Context mContext;
