@@ -41,7 +41,6 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -673,7 +672,7 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
         Updates.getInstance().onActivityResumed(mFirstActivity);
 
         /* Change behavior of get download it to block to simulate the concurrency issue. */
-        final CyclicBarrier barrier = new CyclicBarrier(2);
+        final Semaphore waitDisabledSemaphore = new Semaphore(0);
 
         /* Call get to execute last when so that we can override the answer for next calls. */
         final long downloadId = PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
@@ -687,7 +686,7 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
 
                 /* This is called by setEnabled too and we want to block only the async task. */
                 if (testThread != Thread.currentThread()) {
-                    barrier.await();
+                    waitDisabledSemaphore.acquireUninterruptibly();
                 }
                 return downloadId;
             }
@@ -700,7 +699,7 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
         Updates.setEnabled(false);
 
         /* Release task. */
-        barrier.await();
+        waitDisabledSemaphore.release();
 
         /* And wait for it to complete. */
         mCheckDownloadAfterSemaphore.acquireUninterruptibly();
@@ -716,7 +715,7 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
         waitDownloadTask();
 
         /* Change behavior of get download it to block to simulate the concurrency issue. */
-        final CyclicBarrier barrier = new CyclicBarrier(2);
+        final Semaphore waitDisabledSemaphore = new Semaphore(0);
 
         /* Call get to execute last when so that we can override the answer for next calls. */
         final long downloadId = PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
@@ -730,7 +729,7 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
 
                 /* This is called by setEnabled too and we want to block only the async task. */
                 if (testThread != Thread.currentThread()) {
-                    barrier.await();
+                    waitDisabledSemaphore.acquireUninterruptibly();
                 }
                 return downloadId;
             }
@@ -751,7 +750,7 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Release task. */
-        barrier.await();
+        waitDisabledSemaphore.release();
 
         /* And wait for it to complete. */
         mCheckDownloadAfterSemaphore.acquireUninterruptibly();
