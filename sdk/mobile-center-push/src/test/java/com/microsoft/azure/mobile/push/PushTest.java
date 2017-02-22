@@ -22,13 +22,18 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
+import static com.microsoft.azure.mobile.push.Push.PREFERENCE_KEY_PUSH_TOKEN;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
@@ -37,6 +42,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest({
         Push.class,
         Push.PushTokenTask.class,
+        PushInstallationLog.class,
         MobileCenterLog.class,
         MobileCenter.class,
         StorageHelper.PreferencesStorage.class
@@ -81,5 +87,28 @@ public class PushTest {
         Channel channel = mock(Channel.class);
         push.onChannelReady(mock(Context.class), channel);
         verify(mPushTokenTask).executeOnExecutor(any(Executor.class));
+    }
+
+    @Test
+    public void noSenderId() {
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        push.onChannelReady(mock(Context.class), channel);
+        verify(mPushTokenTask, never()).executeOnExecutor(any(Executor.class));
+    }
+
+    @Test
+    public void handlePushToken() {
+        String testToken = "TEST";
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        push.onChannelReady(mock(Context.class), channel);
+        push.handlePushToken(testToken);
+        verifyStatic(times(1));
+        StorageHelper.PreferencesStorage.putString(eq(PREFERENCE_KEY_PUSH_TOKEN), eq(testToken));
+
+        // For check enqueue only once
+        push.handlePushToken(testToken);
+        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
     }
 }

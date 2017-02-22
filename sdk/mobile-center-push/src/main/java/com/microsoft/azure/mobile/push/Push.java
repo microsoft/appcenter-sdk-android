@@ -49,7 +49,8 @@ public class Push extends AbstractMobileCenterService {
     /**
      * Preference key to store push token.
      */
-    private static final String PREFERENCE_KEY_PUSH_TOKEN = PREFERENCE_PREFIX + "push_token";
+    @VisibleForTesting
+    static final String PREFERENCE_KEY_PUSH_TOKEN = PREFERENCE_PREFIX + "push_token";
 
 
     /**
@@ -147,6 +148,9 @@ public class Push extends AbstractMobileCenterService {
     private void enqueuePushInstallationLog(@NonNull String pushToken) {
         if (isInactive())
             return;
+        if (mPushTokenSent)
+            return;
+
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
         mChannel.enqueue(log, PUSH_GROUP);
@@ -158,7 +162,8 @@ public class Push extends AbstractMobileCenterService {
      *
      * @param pushToken the push token value
      */
-    private synchronized void handlePushToken(@NonNull String pushToken) {
+    @VisibleForTesting
+    synchronized void handlePushToken(@NonNull String pushToken) {
         mPushToken = pushToken;
         MobileCenterLog.debug(LOG_TAG, "Push token: " + mPushToken);
         PreferencesStorage.putString(PREFERENCE_KEY_PUSH_TOKEN, mPushToken);
