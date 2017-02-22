@@ -473,6 +473,8 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         Updates.setEnabled(false);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verifyStatic(never());
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
         beforeSemaphore.release();
         afterSemaphore.acquireUninterruptibly();
 
@@ -523,6 +525,8 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         Updates.setEnabled(false);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verifyStatic(never());
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
         beforeSemaphore.release();
         afterSemaphore.acquireUninterruptibly();
 
