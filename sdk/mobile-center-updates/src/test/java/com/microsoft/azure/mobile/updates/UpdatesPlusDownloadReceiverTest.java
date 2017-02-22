@@ -27,7 +27,7 @@ public class UpdatesPlusDownloadReceiverTest extends AbstractUpdatesTest {
         Context context = mock(Context.class);
         Intent startIntent = mock(Intent.class);
         whenNew(Intent.class).withArguments(context, DeepLinkActivity.class).thenReturn(startIntent);
-        new DownloadCompletionReceiver().onReceive(context, clickIntent);
+        new DownloadManagerReceiver().onReceive(context, clickIntent);
         verify(context).startActivity(startIntent);
         verify(startIntent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     }
@@ -40,7 +40,7 @@ public class UpdatesPlusDownloadReceiverTest extends AbstractUpdatesTest {
         Updates.getInstance().onStarted(context, "", mock(Channel.class));
         Intent startIntent = mock(Intent.class);
         whenNew(Intent.class).withArguments(context, DeepLinkActivity.class).thenReturn(startIntent);
-        new DownloadCompletionReceiver().onReceive(context, clickIntent);
+        new DownloadManagerReceiver().onReceive(context, clickIntent);
         verify(context).startActivity(startIntent);
         verify(startIntent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     }
@@ -55,12 +55,12 @@ public class UpdatesPlusDownloadReceiverTest extends AbstractUpdatesTest {
         Intent startIntent = mock(Intent.class);
         whenNew(Intent.class).withArguments(context, DeepLinkActivity.class).thenReturn(startIntent);
         Updates.getInstance().onActivityResumed(mock(Activity.class));
-        new DownloadCompletionReceiver().onReceive(context, clickIntent);
+        new DownloadManagerReceiver().onReceive(context, clickIntent);
         verify(context, never()).startActivity(startIntent);
 
         /* Then pause and test again. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
-        new DownloadCompletionReceiver().onReceive(context, clickIntent);
+        new DownloadManagerReceiver().onReceive(context, clickIntent);
         verify(context).startActivity(startIntent);
         verify(startIntent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     }

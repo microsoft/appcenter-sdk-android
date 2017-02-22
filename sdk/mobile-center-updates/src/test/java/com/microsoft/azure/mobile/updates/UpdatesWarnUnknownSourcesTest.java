@@ -25,7 +25,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_URI;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 import static org.mockito.Matchers.any;
@@ -117,7 +117,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
 
         /* Verify. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
@@ -137,7 +137,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
 
         /* Verify. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
@@ -152,7 +152,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         /* Disable. */
         Updates.setEnabled(false);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Cancel. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
@@ -162,7 +162,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
 
         /* Verify cancel did nothing more. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
@@ -177,7 +177,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         /* Disable. */
         Updates.setEnabled(false);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Cancel. */
         ArgumentCaptor<DialogInterface.OnCancelListener> cancelListener = ArgumentCaptor.forClass(DialogInterface.OnCancelListener.class);
@@ -187,7 +187,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
 
         /* Verify cancel did nothing more. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
@@ -296,7 +296,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
 
         /* Verify failure is treated as a cancel dialog. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
@@ -311,7 +311,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         /* Disable. */
         Updates.setEnabled(false);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Click settings. */
         Intent intent = mock(Intent.class);
@@ -327,7 +327,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
 
         /* Verify cleaning behavior happened only once, e.g. completeWorkflow skipped. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));

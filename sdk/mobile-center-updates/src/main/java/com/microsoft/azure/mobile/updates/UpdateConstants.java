@@ -1,5 +1,6 @@
 package com.microsoft.azure.mobile.updates;
 
+import android.app.DownloadManager;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.azure.mobile.MobileCenter;
@@ -86,24 +87,37 @@ final class UpdateConstants {
     static final long INVALID_DOWNLOAD_IDENTIFIER = -1;
 
     /**
+     * After we show install U.I, the download is mark completed but we keep the file.
+     * No download is also using this value.
+     */
+    static final int DOWNLOAD_STATE_COMPLETED = 0;
+
+    /**
+     * We are waiting to hear back from download manager, we may poll status on process restart.
+     */
+    static final int DOWNLOAD_STATE_ENQUEUED = 1;
+
+    /**
+     * Download is finished, notification was posted but user could ignore it,
+     * we use that state to show install U.I 1 time when application is resumed.
+     */
+    static final int DOWNLOAD_STATE_NOTIFIED = 2;
+
+    /**
      * Base key for stored preferences.
      */
     private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
 
     /**
-     * Preference key to store the last download file location on download manager if completed,
-     * empty string while download is in progress, null if we launched install U.I.
-     * If this is null and {@link #PREFERENCE_KEY_DOWNLOAD_ID} is not null, it's to remember we
-     * downloaded a file for later removal (when we disable SDK or prepare a new download).
-     * <p>
-     * Rationale is that we keep the file in case the user chooses to install it from downloads U.I.
-     */
-    static final String PREFERENCE_KEY_DOWNLOAD_URI = PREFERENCE_PREFIX + "download_uri";
-
-    /**
-     * Preference key to store the last download identifier.
+     * Preference key to store the current/last download identifier (we keep download until a next
+     * one is scheduled as the file can be opened from device downloads U.I.).
      */
     static final String PREFERENCE_KEY_DOWNLOAD_ID = PREFERENCE_PREFIX + "download_id";
+
+    /**
+     * Preference key to store the SDK state related to {@link #PREFERENCE_KEY_DOWNLOAD_ID} when not null.
+     */
+    static final String PREFERENCE_KEY_DOWNLOAD_STATE = PREFERENCE_PREFIX + "download_state";
 
     /**
      * Preference key for request identifier to validate deep link intent.
@@ -119,6 +133,16 @@ final class UpdateConstants {
      * Preference key to store ignored release id.
      */
     static final String PREFERENCE_KEY_IGNORED_RELEASE_ID = PREFERENCE_PREFIX + "ignored_release_id";
+
+    /**
+     * Preference key to store download start time. Used to avoid showing install U.I. of a completed
+     * download if we already updated (the download workflow can work across process restarts).
+     * <p>
+     * We can't use {@link DownloadManager#COLUMN_LAST_MODIFIED_TIMESTAMP} as we could have a corner case
+     * where we install upgrade from email or another mean while waiting download triggered by SDK.
+     * So the time we store as a reference needs to be before download time.
+     */
+    static final String PREFERENCE_KEY_DOWNLOAD_TIME = PREFERENCE_PREFIX + "download_time";
 
     @VisibleForTesting
     UpdateConstants() {
