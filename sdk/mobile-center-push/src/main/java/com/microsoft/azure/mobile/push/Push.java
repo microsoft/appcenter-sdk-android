@@ -13,13 +13,13 @@ import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.push.ingestion.models.PushInstallationLog;
 import com.microsoft.azure.mobile.push.ingestion.models.json.PushInstallationLogFactory;
-import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * Push notifications interface
@@ -174,7 +174,12 @@ public class Push extends AbstractMobileCenterService {
         if (mPushToken != null) {
             enqueuePushInstallationLog(mPushToken);
         } else if (mSenderId != null) {
-            AsyncTaskUtils.execute(LOG_TAG, new PushTokenTask());
+            final PushTokenTask pushTokenTask = new PushTokenTask();
+            try {
+                pushTokenTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            } catch (final RejectedExecutionException e) {
+                MobileCenterLog.error(LOG_TAG, "THREAD_POOL_EXECUTOR saturated", e);
+            }
         } else {
             MobileCenterLog.error(LOG_TAG, "Sender ID is null! Please set it by Push.setSenderId(senderId);");
         }
@@ -201,8 +206,8 @@ public class Push extends AbstractMobileCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
-        super.onStarted(context, appSecret, channel);
+    public synchronized void onChannelReady(@NonNull Context context, @NonNull Channel channel) {
+        super.onChannelReady(context, channel);
         mContext = context;
         updatePushToken();
     }

@@ -104,7 +104,7 @@ public class SettingsActivity extends AppCompatActivity {
                     return Push.isEnabled();
                 }
             });
-            final String defaultPushSenderId = getString(R.string.push_sender_id);
+            final String defaultPushSenderId = MainActivity.PUSH_SENDER_ID;
             initClickableSetting(R.string.mobile_center_push_sender_id_key, MainActivity.sSharedPreferences.getString(PUSH_SENDER_ID_KEY, defaultPushSenderId), new Preference.OnPreferenceClickListener() {
 
                 @Override
