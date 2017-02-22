@@ -26,7 +26,6 @@ import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.test.TestUtils;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
-import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
 import org.junit.After;
@@ -41,6 +40,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -70,11 +71,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNew;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest(AsyncTaskUtils.class)
@@ -128,38 +129,38 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(StorageHelper.PreferencesStorage.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn((Long) invocation.getArguments()[1]);
+                when(PreferencesStorage.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn((Long) invocation.getArguments()[1]);
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), anyLong());
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.putLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), anyLong());
         doAnswer(new Answer<Void>() {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(StorageHelper.PreferencesStorage.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
+                when(PreferencesStorage.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         doAnswer(new Answer<Void>() {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(StorageHelper.PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn((Integer) invocation.getArguments()[1]);
+                when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn((Integer) invocation.getArguments()[1]);
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt());
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt());
         doAnswer(new Answer<Void>() {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(StorageHelper.PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn(DOWNLOAD_STATE_COMPLETED);
+                when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn(DOWNLOAD_STATE_COMPLETED);
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Mock everything that triggers a download. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -525,30 +526,35 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
     }
 
     @Test
-    public void disableWhileCompletingBeforeNougat() throws Exception {
+    public void disableDuringDownload() throws Exception {
 
         /* Simulate async task. */
         waitDownloadTask();
 
-        /* Process download completion. */
-        completeDownload();
-        Cursor cursor = mockSuccessCursor();
-        Intent installIntent = mock(Intent.class);
-        whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(installIntent);
-        when(installIntent.resolveActivity(any(PackageManager.class))).thenReturn(null).thenReturn(mock(ComponentName.class));
-
-        /* Disable before task run. */
+        /* Disable. */
         Updates.setEnabled(false);
+
+        /* We receive intent from download manager when we remove download. */
+        verify(mDownloadManager).remove(DOWNLOAD_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        completeDownload();
 
         /* Simulate task. */
         waitCheckDownloadTask();
 
         /* Check we completed workflow without starting activity because disabled. */
-        verify(cursor).close();
         verify(mContext, never()).startActivity(any(Intent.class));
+        verifyZeroInteractions(mNotificationManager);
+
+        /* Verify state deleted only at disable time. */
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verifyZeroInteractions(mNotificationManager);
+
+        /* Verify enabling triggers update dialog again. */
+        verify(mDialog).show();
+        Updates.setEnabled(true);
+        verify(mDialog, times(2)).show();
     }
 
     @Test
@@ -650,7 +656,7 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
     }
 
     @Test
-    public void disabledWhileCheckingDownloadOnRestart() {
+    public void disabledWhileCheckingDownloadOnRestart() throws BrokenBarrierException, InterruptedException {
 
         /* Simulate async task. */
         waitDownloadTask();
@@ -666,14 +672,95 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
         restartProcessAndSdk();
         Updates.getInstance().onActivityResumed(mFirstActivity);
 
-        /* Disabled before async task runs. */
+        /* Change behavior of get download it to block to simulate the concurrency issue. */
+        final CyclicBarrier barrier = new CyclicBarrier(2);
+
+        /* Call get to execute last when so that we can override the answer for next calls. */
+        final long downloadId = PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
+
+        /* Overwrite next answer. */
+        final Thread testThread = Thread.currentThread();
+        when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).then(new Answer<Long>() {
+
+            @Override
+            public Long answer(InvocationOnMock invocation) throws Throwable {
+
+                /* This is called by setEnabled too and we want to block only the async task. */
+                if (testThread != Thread.currentThread()) {
+                    barrier.await();
+                }
+                return downloadId;
+            }
+        });
+
+        /* Make sure async task is getting storage. */
+        mCheckDownloadBeforeSemaphore.release();
+
+        /* Disable now. */
         Updates.setEnabled(false);
 
-        /* Run async task. */
-        waitCheckDownloadTask();
+        /* Release task. */
+        barrier.await();
+
+        /* And wait for it to complete. */
+        mCheckDownloadAfterSemaphore.acquireUninterruptibly();
 
         /* Verify we don't mark download checked as in progress. */
         assertEquals(false, Whitebox.getInternalState(Updates.getInstance(), "mCheckedDownload"));
+    }
+
+    @Test
+    public void disabledBeforeNotifying() throws Exception {
+
+        /* Simulate async task. */
+        waitDownloadTask();
+
+        /* Change behavior of get download it to block to simulate the concurrency issue. */
+        final CyclicBarrier barrier = new CyclicBarrier(2);
+
+        /* Call get to execute last when so that we can override the answer for next calls. */
+        final long downloadId = PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
+
+        /* Overwrite next answer. */
+        final Thread testThread = Thread.currentThread();
+        when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).then(new Answer<Long>() {
+
+            @Override
+            public Long answer(InvocationOnMock invocation) throws Throwable {
+
+                /* This is called by setEnabled too and we want to block only the async task. */
+                if (testThread != Thread.currentThread()) {
+                    barrier.await();
+                }
+                return downloadId;
+            }
+        });
+
+        /* Mock success in background. */
+        Updates.getInstance().onActivityPaused(mFirstActivity);
+        mockSuccessCursor();
+        mockInstallIntent();
+        completeDownload();
+
+        /* Make sure async task is getting storage. */
+        mCheckDownloadBeforeSemaphore.release();
+
+        /* Disable now. */
+        Updates.setEnabled(false);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+
+        /* Release task. */
+        barrier.await();
+
+        /* And wait for it to complete. */
+        mCheckDownloadAfterSemaphore.acquireUninterruptibly();
+
+        /* Verify we skip notification and clean happens only in disable (only once). */
+        verify(mContext, never()).startActivity(any(Intent.class));
+        verifyZeroInteractions(mNotificationManager);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
     }
 
     @Test
