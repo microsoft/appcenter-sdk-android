@@ -80,7 +80,7 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public void setEnabled(boolean enabled) {
                     Crashes.setEnabled(enabled);
-                    crashesEnabledPreference.setChecked(Analytics.isEnabled());
+                    crashesEnabledPreference.setChecked(Crashes.isEnabled());
                 }
 
                 @Override
