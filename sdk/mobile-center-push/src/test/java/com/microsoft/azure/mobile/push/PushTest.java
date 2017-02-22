@@ -16,6 +16,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -24,9 +28,11 @@ import java.util.concurrent.Executor;
 
 import static com.microsoft.azure.mobile.push.Push.PREFERENCE_KEY_PUSH_TOKEN;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -61,8 +67,22 @@ public class PushTest {
         mockStatic(MobileCenter.class);
         when(MobileCenter.isEnabled()).thenReturn(true);
 
+        /* First call to com.microsoft.azure.mobile.MobileCenter.isEnabled shall return true, initial state. */
         mockStatic(StorageHelper.PreferencesStorage.class);
         when(StorageHelper.PreferencesStorage.getBoolean(PUSH_ENABLED_KEY, true)).thenReturn(true);
+
+        /* Then simulate further changes to state. */
+        PowerMockito.doAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+
+                /* Whenever the new state is persisted, make further calls return the new state. */
+                boolean enabled = (Boolean) invocation.getArguments()[1];
+                Mockito.when(StorageHelper.PreferencesStorage.getBoolean(PUSH_ENABLED_KEY, true)).thenReturn(enabled);
+                return null;
+            }
+        }).when(StorageHelper.PreferencesStorage.class);
+        StorageHelper.PreferencesStorage.putBoolean(eq(PUSH_ENABLED_KEY), anyBoolean());
 
         whenNew(Push.PushTokenTask.class).withNoArguments().thenReturn(mPushTokenTask);
     }
@@ -109,6 +129,33 @@ public class PushTest {
 
         // For check enqueue only once
         push.handlePushToken(testToken);
+        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
+    }
+
+    @Test
+    public void setEnabled() {
+        Push push = Push.getInstance();
+        Push.setSenderId("TEST");
+        Channel channel = mock(Channel.class);
+        assertTrue(Push.isEnabled());
+        Push.setEnabled(true);
+        assertTrue(Push.isEnabled());
+        Push.setEnabled(false);
+        assertFalse(Push.isEnabled());
+        push.onChannelReady(mock(Context.class), channel);
+        verify(channel).clear(push.getGroupName());
+        verify(channel).removeGroup(eq(push.getGroupName()));
+        verify(mPushTokenTask, never()).executeOnExecutor(any(Executor.class));
+
+        Push.setEnabled(true);
+        verify(mPushTokenTask).executeOnExecutor(any(Executor.class));
+
+        // If disabled when PushTokenTask executing
+        Push.setEnabled(false);
+        push.handlePushToken("TEST");
+        verify(channel, never()).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
+
+        Push.setEnabled(true);
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
     }
 }
