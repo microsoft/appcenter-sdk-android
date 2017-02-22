@@ -581,6 +581,7 @@ public class Updates extends AbstractMobileCenterService {
      */
     private synchronized void cancelNotification(Context context) {
         if (getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
+            MobileCenterLog.debug(LOG_TAG, "Delete notification");
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.cancel(getNotificationId());
         }
@@ -1069,7 +1070,6 @@ public class Updates extends AbstractMobileCenterService {
      * Remove a previously downloaded file and any notification.
      */
     private synchronized void removeDownload(long downloadId) {
-        MobileCenterLog.debug(LOG_TAG, "Delete previous notification downloadId=" + downloadId);
         cancelNotification(mContext);
         AsyncTaskUtils.execute(LOG_TAG, new RemoveDownloadTask(), downloadId);
     }
@@ -1084,10 +1084,8 @@ public class Updates extends AbstractMobileCenterService {
         protected Void doInBackground(Long... params) {
 
             /* This special cleanup task does not require any cancellation on state change as a previous download will never be reused. */
-            Long downloadId = params[0];
-            MobileCenterLog.debug(LOG_TAG, "Delete previous download downloadId=" + downloadId);
             DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
-            downloadManager.remove(downloadId);
+            downloadManager.remove(params[0]);
             return null;
         }
     }
@@ -1173,7 +1171,7 @@ public class Updates extends AbstractMobileCenterService {
 
             /* Check intent data is what we expected. */
             long expectedDownloadId = getStoredDownloadId();
-            if (expectedDownloadId >= 0 && expectedDownloadId != mDownloadId) {
+            if (expectedDownloadId == INVALID_DOWNLOAD_IDENTIFIER || expectedDownloadId != mDownloadId) {
                 MobileCenterLog.debug(LOG_TAG, "Ignoring download identifier we didn't expect, id=" + mDownloadId);
                 return null;
             }
