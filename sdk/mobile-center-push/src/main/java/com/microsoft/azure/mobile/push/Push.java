@@ -228,7 +228,7 @@ public class Push extends AbstractMobileCenterService {
     }
 
     @VisibleForTesting
-    private class PushTokenTask extends AsyncTask<Void, Void, String> {
+    class PushTokenTask extends AsyncTask<Void, Void, String> {
 
         @Override
         protected String doInBackground(Void[] params) {
