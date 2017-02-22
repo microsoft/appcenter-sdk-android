@@ -31,7 +31,7 @@ import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_REDIR
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_RELEASE_HASH;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_REQUEST_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_URI;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.UPDATE_SETUP_PATH_FORMAT;
@@ -106,7 +106,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -156,7 +156,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
@@ -179,7 +179,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
@@ -217,7 +217,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
@@ -326,7 +326,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Since after disabling once, the request id was deleted we can enable/disable it will also ignore the request. */
         Updates.setEnabled(true);
@@ -394,7 +394,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
 
         /* Verify on failure we complete workflow. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* After that if we resume app nothing happens. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
@@ -428,7 +428,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
 
         /* Verify on failure we complete workflow. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* After that if we resume app nothing happens. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
@@ -472,13 +472,15 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         /* Disable before it fails. */
         Updates.setEnabled(false);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verifyStatic(never());
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
         beforeSemaphore.release();
         afterSemaphore.acquireUninterruptibly();
 
         /* Verify complete workflow call ignored. i.e. no more call to delete the state. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* After that if we resume app nothing happens. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
@@ -522,13 +524,15 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         /* Disable before it succeeds. */
         Updates.setEnabled(false);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verifyStatic(never());
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
         beforeSemaphore.release();
         afterSemaphore.acquireUninterruptibly();
 
         /* Verify complete workflow call skipped. i.e. no more call to delete the state. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* After that if we resume app nothing happens. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));

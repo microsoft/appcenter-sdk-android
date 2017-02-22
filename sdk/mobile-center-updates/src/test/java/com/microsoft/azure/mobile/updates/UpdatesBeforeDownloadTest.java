@@ -23,7 +23,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import java.util.HashMap;
 import java.util.concurrent.Semaphore;
 
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_URI;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_IGNORED_RELEASE_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
@@ -77,7 +77,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
         /* Verify on failure we complete workflow. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDialogBuilder, never()).create();
         verify(mDialog, never()).show();
 
@@ -116,7 +116,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
         /* Verify on failure we complete workflow. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDialogBuilder, never()).create();
         verify(mDialog, never()).show();
 
@@ -155,7 +155,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
         /* Verify on failure we complete workflow. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDialogBuilder, never()).create();
         verify(mDialog, never()).show();
 
@@ -367,7 +367,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
         /* Verify. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
@@ -418,7 +418,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
         /* Verify. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
@@ -489,7 +489,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
         /* Verify. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
@@ -506,7 +506,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verify(httpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verify(mDialog).show();
         verifyStatic(times(2));
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Disable: it will prompt again as we clear storage. */
         Updates.setEnabled(false);
@@ -547,7 +547,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         /* Disable. */
         Updates.setEnabled(false);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Cancel it. */
         cancelListener.getValue().onCancel(mDialog);
@@ -559,7 +559,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verify(mDialog).show();
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
     }
 
     @Test
@@ -615,7 +615,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         /* Disable. */
         Updates.setEnabled(false);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Ignore it. */
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
@@ -630,7 +630,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verify(mDialog).show();
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_IGNORED_RELEASE_ID);
         verifyStatic(never());
@@ -672,7 +672,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         /* Disable. */
         Updates.setEnabled(false);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Click on download. */
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
@@ -687,7 +687,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verify(mDialog).show();
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no download scheduled. */
         verifyStatic(never());

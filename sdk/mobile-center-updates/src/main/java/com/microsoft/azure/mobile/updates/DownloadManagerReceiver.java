@@ -8,7 +8,7 @@ import android.content.Intent;
 /**
  * Process download manager callbacks.
  */
-public class DownloadCompletionReceiver extends BroadcastReceiver {
+public class DownloadManagerReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -28,7 +28,7 @@ public class DownloadCompletionReceiver extends BroadcastReceiver {
          */
         else if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
             long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
-            Updates.getInstance().processCompletedDownload(context, downloadId);
+            Updates.getInstance().checkDownload(context, downloadId);
         }
     }
 }

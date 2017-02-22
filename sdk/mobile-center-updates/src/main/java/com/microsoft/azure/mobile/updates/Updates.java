@@ -49,11 +49,15 @@ import org.json.JSONException;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_API_URL;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_INSTALL_URL;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.DOWNLOAD_STATE_COMPLETED;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.DOWNLOAD_STATE_ENQUEUED;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.DOWNLOAD_STATE_NOTIFIED;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.GET_LATEST_RELEASE_PATH_FORMAT;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.HEADER_API_TOKEN;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.INVALID_DOWNLOAD_IDENTIFIER;
@@ -64,7 +68,8 @@ import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_REDIR
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_RELEASE_HASH;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_REQUEST_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_URI;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_IGNORED_RELEASE_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
@@ -160,9 +165,14 @@ public class Updates extends AbstractMobileCenterService {
     private DownloadTask mDownloadTask;
 
     /**
-     * Current task to process download completion.
+     * Current task to check download state and act on it.
      */
-    private ProcessDownloadCompletionTask mProcessDownloadCompletionTask;
+    private CheckDownloadTask mCheckDownloadTask;
+
+    /**
+     * Remember if we checked download since our own process restarted.
+     */
+    private boolean mCheckedDownload;
 
     /**
      * True when update workflow reached final state.
@@ -260,8 +270,8 @@ public class Updates extends AbstractMobileCenterService {
     }
 
     @SuppressWarnings("deprecation")
-    private static Uri getFileUriOnOldDevices(Cursor cursor) {
-        return Uri.parse("file://" + cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME)));
+    private static Uri getFileUriOnOldDevices(Cursor cursor) throws IllegalArgumentException {
+        return Uri.parse("file://" + cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_FILENAME)));
     }
 
     @SuppressWarnings("deprecation")
@@ -280,6 +290,15 @@ public class Updates extends AbstractMobileCenterService {
      */
     private static long getStoredDownloadId() {
         return StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
+    }
+
+    /**
+     * Get download state from storage.
+     *
+     * @return download state (completed by default).
+     */
+    private static int getStoredDownloadState() {
+        return PreferencesStorage.getInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_COMPLETED);
     }
 
     @Override
@@ -321,7 +340,7 @@ public class Updates extends AbstractMobileCenterService {
         /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
         if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
             MobileCenterLog.info(LOG_TAG, "Launcher activity restarted.");
-            if (PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI) == null) {
+            if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
                 mWorkflowCompleted = false;
                 mBrowserOpenedOrAborted = false;
             }
@@ -346,11 +365,10 @@ public class Updates extends AbstractMobileCenterService {
             resumeUpdateWorkflow();
         } else {
 
-            /* Clean all state on disabling, cancel everything. */
+            /* Clean all state on disabling, cancel everything. Keep token though. */
             mBrowserOpenedOrAborted = false;
             mWorkflowCompleted = false;
             cancelPreviousTasks();
-            PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
             PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
             PreferencesStorage.remove(PREFERENCE_KEY_IGNORED_RELEASE_ID);
         }
@@ -386,17 +404,19 @@ public class Updates extends AbstractMobileCenterService {
             mDownloadTask.cancel(true);
             mDownloadTask = null;
         }
-        if (mProcessDownloadCompletionTask != null) {
-            mProcessDownloadCompletionTask.cancel(true);
-            mProcessDownloadCompletionTask = null;
+        if (mCheckDownloadTask != null) {
+            mCheckDownloadTask.cancel(true);
+            mCheckDownloadTask = null;
         }
+        mCheckedDownload = false;
         long downloadId = getStoredDownloadId();
         if (downloadId >= 0) {
             MobileCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
             removeDownload(downloadId);
         }
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_TIME);
     }
 
     /**
@@ -421,29 +441,32 @@ public class Updates extends AbstractMobileCenterService {
                 return;
             }
 
-            /* If we have a download ready but we were in background, pop install UI now. */
-            String downloadUri = PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOAD_URI);
-            if ("".equals(downloadUri)) {
-
-                /* TODO double check that with download manager. */
-                MobileCenterLog.verbose(LOG_TAG, "Download is still in progress...");
-                return;
-            } else if (downloadUri != null) {
-                try {
-
-                    /* FIXME this can cause strict mode violation. */
-                    Uri apkUri = Uri.parse(downloadUri);
-                    MobileCenterLog.debug(LOG_TAG, "Now in foreground, remove notification and start install for APK uri=" + apkUri);
-                    mForegroundActivity.startActivity(getInstallIntent(apkUri));
-                    NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-                    notificationManager.cancel(getNotificationId());
-                    completeWorkflow();
+            /* If we have a pending or notified download, check it. */
+            if (getStoredDownloadState() != DOWNLOAD_STATE_COMPLETED) {
+                if (mCheckedDownload) {
                     return;
-                } catch (ActivityNotFoundException e) {
+                } else {
 
-                    /* Cleanup on exception and resume update workflow. */
-                    MobileCenterLog.warn(LOG_TAG, "Download uri was invalid", e);
-                    cancelPreviousTasks();
+                    /* Discard download if application updated. Then immediately check release. */
+                    long lastUpdateTime;
+                    try {
+                        lastUpdateTime = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0).lastUpdateTime;
+                    } catch (PackageManager.NameNotFoundException e) {
+                        MobileCenterLog.debug(LOG_TAG, "Could not check last update time.", e);
+                        completeWorkflow();
+                        return;
+                    }
+                    if (lastUpdateTime > StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_TIME)) {
+                        MobileCenterLog.debug(LOG_TAG, "Discarding previous download as application updated.");
+                        cancelPreviousTasks();
+                    }
+
+                    /* Otherwise check download. */
+                    else {
+                        mCheckedDownload = true;
+                        checkDownload(mContext, getStoredDownloadId());
+                        return;
+                    }
                 }
             }
 
@@ -545,9 +568,21 @@ public class Updates extends AbstractMobileCenterService {
      *
      * @param task to check if state changed and that the call should be ignored.
      */
-    private synchronized void completeWorkflow(ProcessDownloadCompletionTask task) {
-        if (task == mProcessDownloadCompletionTask) {
+    private synchronized void completeWorkflow(CheckDownloadTask task) {
+        if (task == mCheckDownloadTask) {
+            cancelNotification(task.mContext);
             completeWorkflow();
+        }
+    }
+
+    /**
+     * Cancel notification if needed.
+     */
+    private synchronized void cancelNotification(Context context) {
+        if (getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
+            MobileCenterLog.debug(LOG_TAG, "Delete notification");
+            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.cancel(getNotificationId());
         }
     }
 
@@ -555,7 +590,7 @@ public class Updates extends AbstractMobileCenterService {
      * Reset all variables that matter to restart checking a new release on launcher activity restart.
      */
     private synchronized void completeWorkflow() {
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_URI);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         mCheckReleaseApiCall = null;
         mCheckReleaseCallId = null;
         mUpdateDialog = null;
@@ -877,6 +912,7 @@ public class Updates extends AbstractMobileCenterService {
         if (releaseDetails == mReleaseDetails) {
             if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
                 MobileCenterLog.debug(LOG_TAG, "Schedule download...");
+                mCheckedDownload = true;
                 mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(releaseDetails));
             } else {
                 showUnknownSourcesDialog();
@@ -900,11 +936,12 @@ public class Updates extends AbstractMobileCenterService {
      * Persist download state.
      *
      * @param downloadManager   download manager.
-     * @param task              current task to check race conditions.
+     * @param task              current task to check state change.
      * @param downloadRequestId download identifier.
+     * @param enqueueTime       time just before enqueuing download.
      */
     @WorkerThread
-    private synchronized void storeDownloadRequestId(DownloadManager downloadManager, DownloadTask task, long downloadRequestId) {
+    private synchronized void storeDownloadRequestId(DownloadManager downloadManager, DownloadTask task, long downloadRequestId, long enqueueTime) {
 
         /* Check for if state changed and task not canceled in time. */
         if (mDownloadTask == task) {
@@ -918,7 +955,8 @@ public class Updates extends AbstractMobileCenterService {
 
             /* Store new download identifier. */
             PreferencesStorage.putLong(PREFERENCE_KEY_DOWNLOAD_ID, downloadRequestId);
-            PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOAD_URI, "");
+            PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
+            PreferencesStorage.putLong(PREFERENCE_KEY_DOWNLOAD_TIME, enqueueTime);
         } else {
 
             /* State changed quickly, cancel download. */
@@ -948,59 +986,95 @@ public class Updates extends AbstractMobileCenterService {
     }
 
     /**
-     * Check a download that just completed.
+     * Check a download state and take action depending on that state.
      *
      * @param context    any application context.
      * @param downloadId download identifier from DownloadManager.
      */
-    synchronized void processCompletedDownload(@NonNull Context context, long downloadId) {
+    synchronized void checkDownload(@NonNull Context context, long downloadId) {
 
-        /* Querying download manager and even the start intent violate strict mode so do that in background. */
-        mProcessDownloadCompletionTask = AsyncTaskUtils.execute(LOG_TAG, new ProcessDownloadCompletionTask(context, downloadId));
+        /* Querying download manager and even the start intent are detected by strict mode so we do that in background. */
+        mCheckDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new CheckDownloadTask(context, downloadId));
     }
 
     /**
-     * Used by task processing the download completion in background prior to showing install U.I to check if request was canceled.
+     * Post notification about a completed download if we are in background when download completes.
+     * If this method is called on app process restart or if application is in foreground
+     * when download completes, it will not notify and return that the install U.I. should be shown now.
      *
-     * @param task task to check state for.
-     * @return foreground activity if any, if state is valid.
-     * @throws IllegalStateException if state changed.
+     * @param context context.
+     * @param task    task that prepared the notification to check state.
+     * @param intent  prepared install intent.
+     * @return false if install U.I should be shown now, true if a notification was posted or if the task was canceled.
      */
-    private synchronized Activity getForegroundActivityWithStateCheck(ProcessDownloadCompletionTask task) throws IllegalStateException {
-        if (task == mProcessDownloadCompletionTask) {
-            return mForegroundActivity;
+    private synchronized boolean notifyDownload(Context context, CheckDownloadTask task, Intent intent) {
+
+        /* Check state. */
+        if (task != mCheckDownloadTask) {
+            return true;
         }
-        throw new IllegalStateException();
+
+        /*
+         * If we already notified, that means this check was triggered by application being resumed,
+         * thus in foreground at the moment the check download async task was started.
+         *
+         * We should not hold the install any longer now, even if the async task was long enough
+         * for app to be in background again, we should show install U.I. now.
+         */
+        if (mForegroundActivity != null || getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
+            return false;
+        }
+
+        /* Post notification. */
+        MobileCenterLog.debug(LOG_TAG, "Post a notification as the download finished in background.");
+        int icon;
+        try {
+            ApplicationInfo applicationInfo = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0);
+            icon = applicationInfo.icon;
+        } catch (PackageManager.NameNotFoundException e) {
+            MobileCenterLog.error(LOG_TAG, "Could not get application icon", e);
+            completeWorkflow();
+            return true;
+        }
+        Notification.Builder builder = new Notification.Builder(context)
+                .setTicker(context.getString(R.string.mobile_center_updates_download_successful_notification_title))
+                .setContentTitle(context.getString(R.string.mobile_center_updates_download_successful_notification_title))
+                .setContentText(context.getString(R.string.mobile_center_updates_download_successful_notification_message))
+                .setSmallIcon(icon)
+                .setContentIntent(PendingIntent.getActivities(context, 0, new Intent[]{intent}, 0));
+        Notification notification = buildNotification(builder);
+        notification.flags |= Notification.FLAG_AUTO_CANCEL;
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(getNotificationId(), notification);
+        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
+
+        /* Reset check download flag to show install U.I. on resume if notification ignored. */
+        mCheckedDownload = false;
+        return true;
     }
 
     /**
-     * Post notification about a completed download if state did not change.
+     * Used to avoid querying download manager on every activity change.
      *
-     * @param context      context.
-     * @param task         task that prepared the notification to check state.
-     * @param notification notification to post.
-     * @param uri          uri to persist to remember download completed state.
+     * @param task task to check for a state change.
      */
-    private synchronized void notifyDownload(Context context, ProcessDownloadCompletionTask task, Notification notification, String uri) {
-        if (task == mProcessDownloadCompletionTask) {
-            PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOAD_URI, uri);
-            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-            notificationManager.notify(getNotificationId(), notification);
+    private synchronized void markDownloadStillInProgress(CheckDownloadTask task) {
+        if (task == mCheckDownloadTask) {
+            MobileCenterLog.verbose(LOG_TAG, "Download is still in progress...");
+            mCheckedDownload = true;
         }
     }
 
     /**
      * Remove a previously downloaded file and any notification.
      */
-    private void removeDownload(long downloadId) {
-        MobileCenterLog.debug(LOG_TAG, "Delete previous notification downloadId=" + downloadId);
-        NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancel(getNotificationId());
+    private synchronized void removeDownload(long downloadId) {
+        cancelNotification(mContext);
         AsyncTaskUtils.execute(LOG_TAG, new RemoveDownloadTask(), downloadId);
     }
 
     /**
-     * Removing a download violates strict mode in U.I. thread.
+     * Removing a download triggers strict mode exception in U.I. thread.
      */
     @VisibleForTesting
     class RemoveDownloadTask extends AsyncTask<Long, Void, Void> {
@@ -1009,16 +1083,14 @@ public class Updates extends AbstractMobileCenterService {
         protected Void doInBackground(Long... params) {
 
             /* This special cleanup task does not require any cancellation on state change as a previous download will never be reused. */
-            Long downloadId = params[0];
-            MobileCenterLog.debug(LOG_TAG, "Delete previous download downloadId=" + downloadId);
             DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
-            downloadManager.remove(downloadId);
+            downloadManager.remove(params[0]);
             return null;
         }
     }
 
     /**
-     * The download manager API violates strict mode in U.I. thread.
+     * The download manager API triggers strict mode exception in U.I. thread.
      */
     @VisibleForTesting
     class DownloadTask extends AsyncTask<Void, Void, Void> {
@@ -1045,17 +1117,19 @@ public class Updates extends AbstractMobileCenterService {
             MobileCenterLog.debug(LOG_TAG, "Start downloading new release, url=" + downloadUrl);
             DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
             DownloadManager.Request request = new DownloadManager.Request(downloadUrl);
+            long enqueueTime = System.currentTimeMillis();
             long downloadRequestId = downloadManager.enqueue(request);
-            storeDownloadRequestId(downloadManager, this, downloadRequestId);
+            storeDownloadRequestId(downloadManager, this, downloadRequestId, enqueueTime);
             return null;
         }
     }
 
     /**
-     * Inspect a completed download, this uses APIs that would trigger strict mode violation if used in U.I. thread.
+     * Inspect a pending or completed download.
+     * This uses APIs that would trigger strict mode exception if used in U.I. thread.
      */
     @VisibleForTesting
-    class ProcessDownloadCompletionTask extends AsyncTask<Void, Void, Void> {
+    class CheckDownloadTask extends AsyncTask<Void, Void, Void> {
 
         /**
          * Context.
@@ -1073,7 +1147,7 @@ public class Updates extends AbstractMobileCenterService {
          * @param context    context.
          * @param downloadId download identifier.
          */
-        ProcessDownloadCompletionTask(Context context, long downloadId) {
+        CheckDownloadTask(Context context, long downloadId) {
             mContext = context;
             mDownloadId = downloadId;
         }
@@ -1088,94 +1162,78 @@ public class Updates extends AbstractMobileCenterService {
              * We still want to generate the notification: if we can find the data in preferences
              * that means they were not deleted, and thus that the sdk was not disabled.
              */
-            MobileCenterLog.debug(LOG_TAG, "Process download completion id=" + mDownloadId);
-            if (Updates.this.mContext == null) {
+            MobileCenterLog.debug(LOG_TAG, "Check download id=" + mDownloadId);
+            if (mAppSecret == null) {
                 MobileCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
                 StorageHelper.initialize(mContext);
             }
 
             /* Check intent data is what we expected. */
             long expectedDownloadId = getStoredDownloadId();
-            if (expectedDownloadId >= 0 && expectedDownloadId != mDownloadId) {
-                MobileCenterLog.warn(LOG_TAG, "Ignoring completion for a download we didn't expect, id=" + mDownloadId);
+            if (expectedDownloadId == INVALID_DOWNLOAD_IDENTIFIER || expectedDownloadId != mDownloadId) {
+                MobileCenterLog.debug(LOG_TAG, "Ignoring download identifier we didn't expect, id=" + mDownloadId);
                 return null;
             }
 
-            /* Check if download successful. */
+            /* Query download manager. */
             DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
-            Uri uriForDownloadedFile = downloadManager.getUriForDownloadedFile(mDownloadId);
-            if (uriForDownloadedFile != null) {
-
-                /* Build install intent. */
-                MobileCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId + " uri=" + uriForDownloadedFile);
-                Intent intent = getInstallIntent(uriForDownloadedFile);
-                boolean installerFound = false;
-                if (intent.resolveActivity(mContext.getPackageManager()) == null) {
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                        Cursor cursor = downloadManager.query(new DownloadManager.Query().setFilterById(mDownloadId));
-                        if (cursor != null) {
-                            if (cursor.moveToNext()) {
-                                uriForDownloadedFile = getFileUriOnOldDevices(cursor);
-                                intent = getInstallIntent(uriForDownloadedFile);
-                                installerFound = intent.resolveActivity(mContext.getPackageManager()) != null;
-                            }
-                            cursor.close();
-                        }
-                    }
-                } else {
-                    installerFound = true;
+            try {
+                Cursor cursor = downloadManager.query(new DownloadManager.Query().setFilterById(mDownloadId));
+                if (cursor == null) {
+                    throw new NoSuchElementException();
                 }
-                if (!installerFound) {
-                    MobileCenterLog.error(LOG_TAG, "Installer not found");
-                    completeWorkflow(this);
-                    return null;
-                }
-
-                /* Exit check point. */
-                Activity activity;
                 try {
-                    activity = getForegroundActivityWithStateCheck(this);
-                } catch (IllegalStateException e) {
+                    if (!cursor.moveToFirst()) {
+                        throw new NoSuchElementException();
+                    }
+                    int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                    if (status == DownloadManager.STATUS_FAILED) {
+                        throw new IllegalStateException();
+                    }
+                    if (status != DownloadManager.STATUS_SUCCESSFUL) {
+                        markDownloadStillInProgress(this);
+                        return null;
+                    }
 
-                    /* If we were canceled, exit now. */
-                    return null;
-                }
-
-                /* If foreground, execute now, otherwise post notification. */
-                String uri = uriForDownloadedFile.toString();
-                if (activity != null) {
-
-                    /* This start call triggers strict mode violation in U.I. thread so it needs to be done here, and we can't synchronize anymore... */
-                    MobileCenterLog.debug(LOG_TAG, "Application is in foreground, launch install UI now.");
-                    activity.startActivity(intent);
-                    completeWorkflow(this);
-                } else {
-
-                    /* Remember we have a download ready. */
-                    MobileCenterLog.debug(LOG_TAG, "Application is in background, post a notification.");
-
-                    /* And notify. */
-                    int icon;
-                    try {
-                        ApplicationInfo applicationInfo = mContext.getPackageManager().getApplicationInfo(mContext.getPackageName(), 0);
-                        icon = applicationInfo.icon;
-                    } catch (PackageManager.NameNotFoundException e) {
-                        MobileCenterLog.error(LOG_TAG, "Could not get application icon", e);
+                    /* Build install intent. */
+                    String localUri = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
+                    MobileCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId + " uri=" + localUri);
+                    Intent intent = getInstallIntent(Uri.parse(localUri));
+                    boolean installerFound = false;
+                    if (intent.resolveActivity(mContext.getPackageManager()) == null) {
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                            intent = getInstallIntent(getFileUriOnOldDevices(cursor));
+                            installerFound = intent.resolveActivity(mContext.getPackageManager()) != null;
+                        }
+                    } else {
+                        installerFound = true;
+                    }
+                    if (!installerFound) {
+                        MobileCenterLog.error(LOG_TAG, "Installer not found");
                         completeWorkflow(this);
                         return null;
                     }
-                    Notification.Builder builder = new Notification.Builder(mContext)
-                            .setTicker(mContext.getString(R.string.mobile_center_updates_download_successful_notification_title))
-                            .setContentTitle(mContext.getString(R.string.mobile_center_updates_download_successful_notification_title))
-                            .setContentText(mContext.getString(R.string.mobile_center_updates_download_successful_notification_message))
-                            .setSmallIcon(icon)
-                            .setContentIntent(PendingIntent.getActivities(mContext, 0, new Intent[]{intent}, 0));
-                    Notification notification;
-                    notification = buildNotification(builder);
-                    notification.flags |= Notification.FLAG_AUTO_CANCEL;
-                    notifyDownload(mContext, this, notification, uri);
+
+                    /* Check if a should install now. */
+                    if (!notifyDownload(mContext, this, intent)) {
+
+                        /*
+                         * This start call triggers strict mode in U.I. thread so it
+                         * needs to be done here without synchronizing
+                         * (not to block methods waiting on synchronized on U.I. thread)
+                         * so yes we could launch install and SDK being disabled...
+                         *
+                         * This corner case cannot be avoided without triggering
+                         * strict mode exception.
+                         */
+                        MobileCenterLog.info(LOG_TAG, "Show install UI now.");
+                        mContext.startActivity(intent);
+                        completeWorkflow(this);
+                    }
+                } finally {
+                    cursor.close();
                 }
-            } else {
+            } catch (RuntimeException e) {
                 MobileCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId);
                 completeWorkflow(this);
             }
