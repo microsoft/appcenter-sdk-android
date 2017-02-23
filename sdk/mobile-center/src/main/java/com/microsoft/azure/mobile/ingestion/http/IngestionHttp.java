@@ -222,9 +222,9 @@ public class IngestionHttp implements Ingestion {
     }
 
     /**
-     * Set the base url.
+     * Set the base URL.
      *
-     * @param logUrl the base url.
+     * @param logUrl the base URL.
      */
     @Override
     @SuppressWarnings("SameParameterValue")

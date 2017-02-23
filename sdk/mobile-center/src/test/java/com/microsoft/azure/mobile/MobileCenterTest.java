@@ -624,7 +624,7 @@ public class MobileCenterTest {
         /* No effect for now. */
         verify(channel, never()).setLogUrl(logUrl);
 
-        /* Start should propagate the log url. */
+        /* Start should propagate the log URL. */
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class);
         verify(channel).setLogUrl(logUrl);
 

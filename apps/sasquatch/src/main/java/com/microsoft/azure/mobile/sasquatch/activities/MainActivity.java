@@ -45,9 +45,12 @@ public class MainActivity extends AppCompatActivity {
         sSharedPreferences = getSharedPreferences("Sasquatch", Context.MODE_PRIVATE);
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().build());
 
+        /* Set custom log URL if one was configured in settings. */
         String logUrl = sSharedPreferences.getString(LOG_URL_KEY, null);
         if (logUrl != null) {
             try {
+
+                /* Method name changed and jCenter not yet updated so need to use reflection. */
                 Method setLogUrl;
                 try {
                     setLogUrl = MobileCenter.class.getMethod("setLogUrl", String.class);

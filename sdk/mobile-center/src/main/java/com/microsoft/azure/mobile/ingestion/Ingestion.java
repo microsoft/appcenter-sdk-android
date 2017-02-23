@@ -23,9 +23,9 @@ public interface Ingestion extends Closeable {
     ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException;
 
     /**
-     * Update log url.
+     * Update log URL.
      *
-     * @param logUrl log url.
+     * @param logUrl log URL.
      */
     void setLogUrl(String logUrl);
 }
