@@ -672,7 +672,8 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
         Updates.getInstance().onActivityResumed(mFirstActivity);
 
         /* Change behavior of get download it to block to simulate the concurrency issue. */
-        final Semaphore waitDisabledSemaphore = new Semaphore(0);
+        final Semaphore beforeDisabledSemaphore = new Semaphore(0);
+        final Semaphore afterDisabledSemaphore = new Semaphore(0);
 
         /* Call get to execute last when so that we can override the answer for next calls. */
         final long downloadId = PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
@@ -686,7 +687,8 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
 
                 /* This is called by setEnabled too and we want to block only the async task. */
                 if (testThread != Thread.currentThread()) {
-                    waitDisabledSemaphore.acquireUninterruptibly();
+                    beforeDisabledSemaphore.release();
+                    afterDisabledSemaphore.acquireUninterruptibly();
                 }
                 return downloadId;
             }
@@ -694,12 +696,13 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
 
         /* Make sure async task is getting storage. */
         mCheckDownloadBeforeSemaphore.release();
+        beforeDisabledSemaphore.acquireUninterruptibly();
 
         /* Disable now. */
         Updates.setEnabled(false);
 
         /* Release task. */
-        waitDisabledSemaphore.release();
+        afterDisabledSemaphore.release();
 
         /* And wait for it to complete. */
         mCheckDownloadAfterSemaphore.acquireUninterruptibly();
@@ -715,7 +718,8 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
         waitDownloadTask();
 
         /* Change behavior of get download it to block to simulate the concurrency issue. */
-        final Semaphore waitDisabledSemaphore = new Semaphore(0);
+        final Semaphore beforeDisabledSemaphore = new Semaphore(0);
+        final Semaphore afterDisabledSemaphore = new Semaphore(0);
 
         /* Call get to execute last when so that we can override the answer for next calls. */
         final long downloadId = PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
@@ -729,7 +733,8 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
 
                 /* This is called by setEnabled too and we want to block only the async task. */
                 if (testThread != Thread.currentThread()) {
-                    waitDisabledSemaphore.acquireUninterruptibly();
+                    beforeDisabledSemaphore.release();
+                    afterDisabledSemaphore.acquireUninterruptibly();
                 }
                 return downloadId;
             }
@@ -743,6 +748,7 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
 
         /* Make sure async task is getting storage. */
         mCheckDownloadBeforeSemaphore.release();
+        beforeDisabledSemaphore.acquireUninterruptibly();
 
         /* Disable now. */
         Updates.setEnabled(false);
@@ -750,7 +756,7 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Release task. */
-        waitDisabledSemaphore.release();
+        afterDisabledSemaphore.release();
 
         /* And wait for it to complete. */
         mCheckDownloadAfterSemaphore.acquireUninterruptibly();
