@@ -64,14 +64,13 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn("someId");
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
-        Context context = mock(Context.class);
-        when(context.getPackageName()).thenReturn("com.contoso");
-        PackageManager packageManager = mock(PackageManager.class);
-        when(context.getPackageManager()).thenReturn(packageManager);
-        when(packageManager.getPackageInfo("com.contoso", 0)).thenThrow(new PackageManager.NameNotFoundException());
+
+        /* Override mock answer by calling it once then configuring new answer. */
+        mPackageManager.getPackageInfo("com.contoso", 0);
+        when(mPackageManager.getPackageInfo("com.contoso", 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(context, "a", mock(Channel.class));
+        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
         Updates.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 

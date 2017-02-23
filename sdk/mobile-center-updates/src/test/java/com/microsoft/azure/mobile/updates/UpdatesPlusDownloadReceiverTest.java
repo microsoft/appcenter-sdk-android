@@ -24,25 +24,23 @@ public class UpdatesPlusDownloadReceiverTest extends AbstractUpdatesTest {
     public void resumeAppBeforeStart() throws Exception {
         Intent clickIntent = mock(Intent.class);
         when(clickIntent.getAction()).thenReturn(ACTION_NOTIFICATION_CLICKED);
-        Context context = mock(Context.class);
         Intent startIntent = mock(Intent.class);
-        whenNew(Intent.class).withArguments(context, DeepLinkActivity.class).thenReturn(startIntent);
-        new DownloadManagerReceiver().onReceive(context, clickIntent);
-        verify(context).startActivity(startIntent);
+        whenNew(Intent.class).withArguments(mContext, DeepLinkActivity.class).thenReturn(startIntent);
+        new DownloadManagerReceiver().onReceive(mContext, clickIntent);
         verify(startIntent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        verify(mContext).startActivity(startIntent);
     }
 
     @Test
     public void resumeAfterBeforeStartButBackground() throws Exception {
         Intent clickIntent = mock(Intent.class);
         when(clickIntent.getAction()).thenReturn(ACTION_NOTIFICATION_CLICKED);
-        Context context = mock(Context.class);
-        Updates.getInstance().onStarted(context, "", mock(Channel.class));
+        Updates.getInstance().onStarted(mContext, "", mock(Channel.class));
         Intent startIntent = mock(Intent.class);
-        whenNew(Intent.class).withArguments(context, DeepLinkActivity.class).thenReturn(startIntent);
-        new DownloadManagerReceiver().onReceive(context, clickIntent);
-        verify(context).startActivity(startIntent);
+        whenNew(Intent.class).withArguments(mContext, DeepLinkActivity.class).thenReturn(startIntent);
+        new DownloadManagerReceiver().onReceive(mContext, clickIntent);
         verify(startIntent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        verify(mContext).startActivity(startIntent);
     }
 
     @Test
@@ -50,18 +48,17 @@ public class UpdatesPlusDownloadReceiverTest extends AbstractUpdatesTest {
         when(StorageHelper.PreferencesStorage.getString(eq(PREFERENCE_KEY_UPDATE_TOKEN))).thenReturn("mock");
         Intent clickIntent = mock(Intent.class);
         when(clickIntent.getAction()).thenReturn(ACTION_NOTIFICATION_CLICKED);
-        Context context = mock(Context.class);
-        Updates.getInstance().onStarted(context, "", mock(Channel.class));
+        Updates.getInstance().onStarted(mContext, "", mock(Channel.class));
         Intent startIntent = mock(Intent.class);
-        whenNew(Intent.class).withArguments(context, DeepLinkActivity.class).thenReturn(startIntent);
+        whenNew(Intent.class).withArguments(mContext, DeepLinkActivity.class).thenReturn(startIntent);
         Updates.getInstance().onActivityResumed(mock(Activity.class));
-        new DownloadManagerReceiver().onReceive(context, clickIntent);
-        verify(context, never()).startActivity(startIntent);
+        new DownloadManagerReceiver().onReceive(mContext, clickIntent);
+        verify(mContext, never()).startActivity(startIntent);
 
         /* Then pause and test again. */
         Updates.getInstance().onActivityPaused(mock(Activity.class));
-        new DownloadManagerReceiver().onReceive(context, clickIntent);
-        verify(context).startActivity(startIntent);
+        new DownloadManagerReceiver().onReceive(mContext, clickIntent);
         verify(startIntent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        verify(mContext).startActivity(startIntent);
     }
 }
