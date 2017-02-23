@@ -13,8 +13,8 @@ abstract class IngestionDecorator implements Ingestion {
     }
 
     @Override
-    public void setServerUrl(String serverUrl) {
-        mDecoratedApi.setServerUrl(serverUrl);
+    public void setLogUrl(String logUrl) {
+        mDecoratedApi.setLogUrl(logUrl);
     }
 
     @Override
