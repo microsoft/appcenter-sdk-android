@@ -6,6 +6,7 @@ import java.io.EOFException;
 import java.io.InterruptedIOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.regex.Pattern;
@@ -32,6 +33,11 @@ public final class HttpUtils {
      * Some transient exceptions can only be detected by interpreting the message...
      */
     private static final Pattern CONNECTION_ISSUE_PATTERN = Pattern.compile("connection (time|reset)|failure in ssl library, usually a protocol error");
+
+    /**
+     * Maximum characters to be displayed in a log for application secret.
+     */
+    private static final int MAX_CHARACTERS_DISPLAYED_FOR_SECRET = 8;
 
     @VisibleForTesting
     HttpUtils() {
@@ -64,5 +70,12 @@ public final class HttpUtils {
                 return true;
         }
         return false;
+    }
+
+    public static String hideSecret(String secret) {
+        int hidingEndIndex = secret.length() - (secret.length() >= MAX_CHARACTERS_DISPLAYED_FOR_SECRET ? MAX_CHARACTERS_DISPLAYED_FOR_SECRET : 0);
+        char[] fill = new char[hidingEndIndex];
+        Arrays.fill(fill, '*');
+        return new String(fill) + secret.substring(hidingEndIndex);
     }
 }

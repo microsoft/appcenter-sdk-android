@@ -3,6 +3,7 @@ package com.microsoft.azure.mobile.http;
 import org.json.JSONException;
 
 import java.io.Closeable;
+import java.net.URL;
 import java.util.Map;
 
 public interface HttpClient extends Closeable {
@@ -11,5 +12,7 @@ public interface HttpClient extends Closeable {
 
     interface CallTemplate {
         String buildRequestBody() throws JSONException;
+
+        void onBeforeCalling(URL url, Map<String, String> headers);
     }
 }
