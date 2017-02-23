@@ -47,7 +47,7 @@ public class MobileCenter {
     private boolean mLogLevelConfigured;
 
     /**
-     * Custom log url if any.
+     * Custom log URL if any.
      */
     private String mLogUrl;
 

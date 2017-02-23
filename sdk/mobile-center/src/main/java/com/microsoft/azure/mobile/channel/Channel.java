@@ -51,9 +51,9 @@ public interface Channel {
     void setEnabled(boolean enabled);
 
     /**
-     * Update log url.
+     * Update log URL.
      *
-     * @param logUrl log url.
+     * @param logUrl log URL.
      */
     void setLogUrl(String logUrl);
 
