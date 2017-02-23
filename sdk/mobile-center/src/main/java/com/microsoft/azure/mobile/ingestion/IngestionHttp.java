@@ -8,21 +8,26 @@ import com.microsoft.azure.mobile.http.DefaultHttpClient;
 import com.microsoft.azure.mobile.http.HttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.HttpClientRetryer;
+import com.microsoft.azure.mobile.http.HttpUtils;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
 
 import org.json.JSONException;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static android.util.Log.VERBOSE;
+import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.APP_SECRET;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_POST;
 
@@ -138,6 +143,23 @@ public class IngestionHttp implements Ingestion {
                     logs.get(i).setToffset(absoluteTimes[i]);
             }
             return payload;
+        }
+
+        @Override
+        public void onBeforeCalling(URL url, Map<String, String> headers) {
+
+            /* Log url. */
+            MobileCenterLog.verbose(LOG_TAG, "Calling " + url + "...");
+
+            /* Log headers. */
+            if (MobileCenterLog.getLogLevel() <= VERBOSE) {
+                Map<String, String> logHeaders = new HashMap<>(headers);
+                String appSecret = logHeaders.get(APP_SECRET);
+                if (appSecret != null) {
+                    logHeaders.put(APP_SECRET, HttpUtils.hideSecret(appSecret));
+                }
+                MobileCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
+            }
         }
     }
 }
