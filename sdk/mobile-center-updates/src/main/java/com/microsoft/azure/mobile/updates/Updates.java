@@ -596,7 +596,8 @@ public class Updates extends AbstractMobileCenterService {
      *
      * @param updateToken token to secure API call.
      */
-    private synchronized void getLatestReleaseDetails(@NonNull String updateToken) {
+    @VisibleForTesting
+    synchronized void getLatestReleaseDetails(@NonNull String updateToken) {
         MobileCenterLog.debug(LOG_TAG, "Get latest release details...");
         HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
@@ -616,13 +617,13 @@ public class Updates extends AbstractMobileCenterService {
 
             @Override
             public void onBeforeCalling(URL url, Map<String, String> headers) {
-
-                /* Log url. */
-                String urlString = url.toString().replaceAll(mAppSecret, HttpUtils.hideSecret(mAppSecret));
-                MobileCenterLog.verbose(LOG_TAG, "Calling " + urlString + "...");
-
-                /* Log headers. */
                 if (MobileCenterLog.getLogLevel() <= VERBOSE) {
+
+                    /* Log url. */
+                    String urlString = url.toString().replaceAll(mAppSecret, HttpUtils.hideSecret(mAppSecret));
+                    MobileCenterLog.verbose(LOG_TAG, "Calling " + urlString + "...");
+
+                    /* Log headers. */
                     Map<String, String> logHeaders = new HashMap<>(headers);
                     String apiToken = logHeaders.get(HEADER_API_TOKEN);
                     if (apiToken != null) {

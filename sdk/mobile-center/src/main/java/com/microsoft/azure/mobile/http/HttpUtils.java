@@ -16,7 +16,13 @@ import javax.net.ssl.SSLException;
 /**
  * HTTP utilities.
  */
-public final class HttpUtils {
+public class HttpUtils {
+
+    /**
+     * Maximum characters to be displayed in a log for application secret.
+     */
+    @VisibleForTesting
+    static final int MAX_CHARACTERS_DISPLAYED_FOR_SECRET = 8;
 
     /**
      * Types of exception that can be retried, no matter what the details are. Sub-classes are included.
@@ -28,16 +34,10 @@ public final class HttpUtils {
             UnknownHostException.class,
             RejectedExecutionException.class
     };
-
     /**
      * Some transient exceptions can only be detected by interpreting the message...
      */
     private static final Pattern CONNECTION_ISSUE_PATTERN = Pattern.compile("connection (time|reset)|failure in ssl library, usually a protocol error");
-
-    /**
-     * Maximum characters to be displayed in a log for application secret.
-     */
-    private static final int MAX_CHARACTERS_DISPLAYED_FOR_SECRET = 8;
 
     @VisibleForTesting
     HttpUtils() {
@@ -73,6 +73,13 @@ public final class HttpUtils {
     }
 
     public static String hideSecret(String secret) {
+
+        /* Cannot hide null or empty string. */
+        if (secret == null || secret.length() <= 0) {
+            return secret;
+        }
+
+        /* Hide secret if string is neither null nor empty string. */
         int hidingEndIndex = secret.length() - (secret.length() >= MAX_CHARACTERS_DISPLAYED_FOR_SECRET ? MAX_CHARACTERS_DISPLAYED_FOR_SECRET : 0);
         char[] fill = new char[hidingEndIndex];
         Arrays.fill(fill, '*');

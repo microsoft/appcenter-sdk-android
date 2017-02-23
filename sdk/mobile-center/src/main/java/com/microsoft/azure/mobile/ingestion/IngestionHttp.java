@@ -147,12 +147,12 @@ public class IngestionHttp implements Ingestion {
 
         @Override
         public void onBeforeCalling(URL url, Map<String, String> headers) {
-
-            /* Log url. */
-            MobileCenterLog.verbose(LOG_TAG, "Calling " + url + "...");
-
-            /* Log headers. */
             if (MobileCenterLog.getLogLevel() <= VERBOSE) {
+
+                /* Log url. */
+                MobileCenterLog.verbose(LOG_TAG, "Calling " + url + "...");
+
+                /* Log headers. */
                 Map<String, String> logHeaders = new HashMap<>(headers);
                 String appSecret = logHeaders.get(APP_SECRET);
                 if (appSecret != null) {
