@@ -174,7 +174,7 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
             }
         });
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
         when(releaseDetails.getDownloadUrl()).thenReturn(mDownloadUrl);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);

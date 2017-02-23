@@ -25,7 +25,7 @@ class ReleaseDetails {
     /**
      * ID identifying this unique release.
      */
-    private String id;
+    private int id;
 
     /**
      * The release's version.<br>
@@ -61,7 +61,7 @@ class ReleaseDetails {
     static ReleaseDetails parse(String json) throws JSONException {
         JSONObject object = new JSONObject(json);
         ReleaseDetails releaseDetails = new ReleaseDetails();
-        releaseDetails.id = object.getString(ID);
+        releaseDetails.id = object.getInt(ID);
         try {
             releaseDetails.version = Integer.parseInt(object.getString(VERSION));
         } catch (NumberFormatException e) {
@@ -82,8 +82,7 @@ class ReleaseDetails {
      *
      * @return the id value.
      */
-    @NonNull
-    String getId() {
+    int getId() {
         return id;
     }
 
