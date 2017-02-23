@@ -244,8 +244,8 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public void setServerUrl(String serverUrl) {
-        mIngestion.setServerUrl(serverUrl);
+    public void setLogUrl(String logUrl) {
+        mIngestion.setLogUrl(logUrl);
     }
 
     /**

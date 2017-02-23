@@ -224,12 +224,12 @@ public class IngestionHttp implements Ingestion {
     /**
      * Set the base url.
      *
-     * @param baseUrl the base url.
+     * @param logUrl the base url.
      */
     @Override
     @SuppressWarnings("SameParameterValue")
-    public void setServerUrl(@NonNull String baseUrl) {
-        mBaseUrl = baseUrl;
+    public void setLogUrl(@NonNull String logUrl) {
+        mBaseUrl = logUrl;
     }
 
     @Override

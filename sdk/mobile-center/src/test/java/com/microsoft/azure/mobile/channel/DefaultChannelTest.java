@@ -700,12 +700,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void setServerUrl() {
+    public void setLogUrl() {
         Ingestion ingestion = mock(Ingestion.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), ingestion);
-        String serverUrl = "http://mockUrl";
-        channel.setServerUrl(serverUrl);
-        verify(ingestion).setServerUrl(serverUrl);
+        String logUrl = "http://mockUrl";
+        channel.setLogUrl(logUrl);
+        verify(ingestion).setLogUrl(logUrl);
     }
 
     @Test
