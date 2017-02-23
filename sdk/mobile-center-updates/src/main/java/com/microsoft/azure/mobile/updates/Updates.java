@@ -509,6 +509,17 @@ public class Updates extends AbstractMobileCenterService {
                 return;
             }
 
+            /*
+             * If network is disconnected, browser will fail so wait.
+             * Also we can't just wait for network to be up and launch browser at that time
+             * as it's unpredictable and will interrupt the user, so just wait next relaunch.
+             */
+            if (!NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
+                MobileCenterLog.info(LOG_TAG, "Postpone enabling in app updates via browser as network is disconnected.");
+                completeWorkflow();
+                return;
+            }
+
             /* Compute hash. */
             String releaseHash;
             try {
