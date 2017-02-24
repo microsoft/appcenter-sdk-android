@@ -23,11 +23,13 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import java.util.HashMap;
 import java.util.concurrent.Semaphore;
 
+import static com.microsoft.azure.mobile.updates.UpdateConstants.INVALID_RELEASE_IDENTIFIER;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_IGNORED_RELEASE_ID;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -62,7 +64,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getId()).thenReturn(4);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         when(mPackageManager.getPackageInfo("com.contoso", 0)).thenThrow(new PackageManager.NameNotFoundException());
 
@@ -101,7 +103,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(5);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
@@ -140,7 +142,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(6);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
@@ -179,7 +181,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
@@ -239,7 +241,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
         when(releaseDetails.getReleaseNotes()).thenReturn("mock");
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
@@ -284,7 +286,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
         when(releaseDetails.getReleaseNotes()).thenReturn("mock");
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
@@ -344,7 +346,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
             }
         });
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
@@ -395,7 +397,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
             }
         });
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
@@ -438,16 +440,16 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn((String) invocation.getArguments()[1]);
+                when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), INVALID_RELEASE_IDENTIFIER)).thenReturn((int) invocation.getArguments()[1]);
                 return null;
             }
         }).when(PreferencesStorage.class);
-        PreferencesStorage.putString(eq(PREFERENCE_KEY_IGNORED_RELEASE_ID), anyString());
+        PreferencesStorage.putInt(eq(PREFERENCE_KEY_IGNORED_RELEASE_ID), anyInt());
         doAnswer(new Answer<Void>() {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(null);
+                when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), INVALID_RELEASE_IDENTIFIER)).thenReturn(INVALID_RELEASE_IDENTIFIER);
                 return null;
             }
         }).when(PreferencesStorage.class);
@@ -466,7 +468,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
             }
         });
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
@@ -527,7 +529,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
             }
         });
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
@@ -566,16 +568,16 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn((String) invocation.getArguments()[1]);
+                when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), INVALID_RELEASE_IDENTIFIER)).thenReturn((int) invocation.getArguments()[1]);
                 return null;
             }
         }).when(PreferencesStorage.class);
-        PreferencesStorage.putString(eq(PREFERENCE_KEY_IGNORED_RELEASE_ID), anyString());
+        PreferencesStorage.putInt(eq(PREFERENCE_KEY_IGNORED_RELEASE_ID), anyInt());
         doAnswer(new Answer<Void>() {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(null);
+                when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), INVALID_RELEASE_IDENTIFIER)).thenReturn(INVALID_RELEASE_IDENTIFIER);
                 return null;
             }
         }).when(PreferencesStorage.class);
@@ -594,7 +596,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
             }
         });
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
@@ -630,7 +632,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_IGNORED_RELEASE_ID);
         verifyStatic(never());
-        PreferencesStorage.putString(eq(PREFERENCE_KEY_IGNORED_RELEASE_ID), anyString());
+        PreferencesStorage.putInt(eq(PREFERENCE_KEY_IGNORED_RELEASE_ID), anyInt());
     }
 
     @Test
@@ -650,7 +652,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
             }
         });
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn("someId");
+        when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         mockStatic(AsyncTaskUtils.class);

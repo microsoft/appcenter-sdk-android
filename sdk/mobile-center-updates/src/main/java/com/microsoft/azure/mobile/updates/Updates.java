@@ -62,6 +62,7 @@ import static com.microsoft.azure.mobile.updates.UpdateConstants.DOWNLOAD_STATE_
 import static com.microsoft.azure.mobile.updates.UpdateConstants.GET_LATEST_RELEASE_PATH_FORMAT;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.HEADER_API_TOKEN;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.azure.mobile.updates.UpdateConstants.INVALID_RELEASE_IDENTIFIER;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.LOG_TAG;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM_VALUE;
@@ -517,6 +518,17 @@ public class Updates extends AbstractMobileCenterService {
                 return;
             }
 
+            /*
+             * If network is disconnected, browser will fail so wait.
+             * Also we can't just wait for network to be up and launch browser at that time
+             * as it's unpredictable and will interrupt the user, so just wait next relaunch.
+             */
+            if (!NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
+                MobileCenterLog.info(LOG_TAG, "Postpone enabling in app updates via browser as network is disconnected.");
+                completeWorkflow();
+                return;
+            }
+
             /* Compute hash. */
             String releaseHash;
             try {
@@ -684,8 +696,8 @@ public class Updates extends AbstractMobileCenterService {
         if (mCheckReleaseCallId == releaseCallId) {
 
             /* Check ignored. */
-            String releaseId = releaseDetails.getId();
-            if (releaseId.equals(PreferencesStorage.getString(PREFERENCE_KEY_IGNORED_RELEASE_ID))) {
+            int releaseId = releaseDetails.getId();
+            if (releaseId == PreferencesStorage.getInt(PREFERENCE_KEY_IGNORED_RELEASE_ID, INVALID_RELEASE_IDENTIFIER)) {
                 MobileCenterLog.debug(LOG_TAG, "This release is ignored id=" + releaseId);
             } else {
 
@@ -902,9 +914,9 @@ public class Updates extends AbstractMobileCenterService {
      */
     private synchronized void ignoreRelease(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
-            String id = releaseDetails.getId();
+            int id = releaseDetails.getId();
             MobileCenterLog.debug(LOG_TAG, "Ignore release id=" + id);
-            PreferencesStorage.putString(PREFERENCE_KEY_IGNORED_RELEASE_ID, id);
+            PreferencesStorage.putInt(PREFERENCE_KEY_IGNORED_RELEASE_ID, id);
             completeWorkflow();
         } else {
             showDisabledToast();
