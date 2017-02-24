@@ -3,6 +3,7 @@ package com.microsoft.azure.mobile.updates;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.text.TextUtils;
@@ -63,6 +64,9 @@ public class AbstractUpdatesTest {
     PackageManager mPackageManager;
 
     @Mock
+    ApplicationInfo mApplicationInfo;
+
+    @Mock
     AlertDialog.Builder mDialogBuilder;
 
     @Mock
@@ -105,6 +109,7 @@ public class AbstractUpdatesTest {
 
         /* Mock package manager. */
         when(mContext.getPackageName()).thenReturn("com.contoso");
+        when(mContext.getApplicationInfo()).thenReturn(mApplicationInfo);
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
         PackageInfo packageInfo = mock(PackageInfo.class);
         when(mPackageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);

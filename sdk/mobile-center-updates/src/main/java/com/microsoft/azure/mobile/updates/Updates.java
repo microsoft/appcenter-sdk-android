@@ -54,6 +54,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
+import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_API_URL;
@@ -428,6 +429,13 @@ public class Updates extends AbstractMobileCenterService {
      */
     private synchronized void resumeUpdateWorkflow() {
         if (mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
+
+            /* Don't go any further it this is a debug app. */
+            if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {
+                MobileCenterLog.info(LOG_TAG, "Not checking in app updates in debug.");
+                mWorkflowCompleted = true;
+                return;
+            }
 
             /* Don't go any further if the app was installed from an app store. */
             if (InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext)) {
@@ -1069,20 +1077,11 @@ public class Updates extends AbstractMobileCenterService {
 
         /* Post notification. */
         MobileCenterLog.debug(LOG_TAG, "Post a notification as the download finished in background.");
-        int icon;
-        try {
-            ApplicationInfo applicationInfo = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0);
-            icon = applicationInfo.icon;
-        } catch (PackageManager.NameNotFoundException e) {
-            MobileCenterLog.error(LOG_TAG, "Could not get application icon", e);
-            completeWorkflow();
-            return true;
-        }
         Notification.Builder builder = new Notification.Builder(context)
                 .setTicker(context.getString(R.string.mobile_center_updates_download_successful_notification_title))
                 .setContentTitle(context.getString(R.string.mobile_center_updates_download_successful_notification_title))
                 .setContentText(context.getString(R.string.mobile_center_updates_download_successful_notification_message))
-                .setSmallIcon(icon)
+                .setSmallIcon(context.getApplicationInfo().icon)
                 .setContentIntent(PendingIntent.getActivities(context, 0, new Intent[]{intent}, 0));
         Notification notification = buildNotification(builder);
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
