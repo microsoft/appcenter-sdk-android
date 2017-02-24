@@ -48,6 +48,7 @@ public final class TestUtils {
      * @param value     value to set.
      * @throws Exception if an exception occurs.
      */
+    @SuppressWarnings("SameParameterValue")
     public static void setInternalState(Class clazz, String fieldName, Object value) throws Exception {
         Field field = clazz.getDeclaredField(fieldName);
         field.setAccessible(true);
