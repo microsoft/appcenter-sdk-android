@@ -611,7 +611,7 @@ public class Updates extends AbstractMobileCenterService {
             @Override
             public String buildRequestBody() throws JSONException {
 
-                /* This method is getting called. */
+                /* GET is only used for Updates service. This method is never getting called. */
                 return null;
             }
 
