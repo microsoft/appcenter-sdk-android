@@ -613,25 +613,25 @@ public class MobileCenterTest {
     }
 
     @Test
-    public void setServerUrl() throws Exception {
+    public void setLogUrl() throws Exception {
 
-        /* Change server URL before start. */
+        /* Change log URL before start. */
         DefaultChannel channel = mock(DefaultChannel.class);
         whenNew(DefaultChannel.class).withAnyArguments().thenReturn(channel);
-        String serverUrl = "http://mock";
-        MobileCenter.setServerUrl(serverUrl);
+        String logUrl = "http://mock";
+        MobileCenter.setLogUrl(logUrl);
 
         /* No effect for now. */
-        verify(channel, never()).setServerUrl(serverUrl);
+        verify(channel, never()).setLogUrl(logUrl);
 
-        /* Start should propagate the server url. */
+        /* Start should propagate the log URL. */
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class);
-        verify(channel).setServerUrl(serverUrl);
+        verify(channel).setLogUrl(logUrl);
 
         /* Change it after, should work immediately. */
-        serverUrl = "http://mock2";
-        MobileCenter.setServerUrl(serverUrl);
-        verify(channel).setServerUrl(serverUrl);
+        logUrl = "http://mock2";
+        MobileCenter.setLogUrl(logUrl);
+        verify(channel).setLogUrl(logUrl);
     }
 
     private static class DummyService extends AbstractMobileCenterService {

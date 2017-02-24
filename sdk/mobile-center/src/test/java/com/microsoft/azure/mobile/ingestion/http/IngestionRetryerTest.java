@@ -180,11 +180,11 @@ public class IngestionRetryerTest {
     }
 
     @Test
-    public void setServerUrl() {
+    public void setLogUrl() {
         Ingestion ingestion = mock(Ingestion.class);
         Ingestion retryer = new IngestionRetryer(ingestion, mock(Handler.class));
-        String serverUrl = "http://someServerUrl";
-        retryer.setServerUrl(serverUrl);
-        verify(ingestion).setServerUrl(serverUrl);
+        String logUrl = "http://someLogUrl";
+        retryer.setLogUrl(logUrl);
+        verify(ingestion).setLogUrl(logUrl);
     }
 }

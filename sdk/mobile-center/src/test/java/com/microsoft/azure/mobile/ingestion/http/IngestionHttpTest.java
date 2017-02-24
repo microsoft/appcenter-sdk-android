@@ -112,7 +112,7 @@ public class IngestionHttpTest {
         LogSerializer serializer = mock(LogSerializer.class);
         when(serializer.serializeContainer(any(LogContainer.class))).thenReturn("mockPayload");
         IngestionHttp httpClient = new IngestionHttp(serializer);
-        httpClient.setServerUrl("http://mock");
+        httpClient.setLogUrl("http://mock");
 
         /* Test calling code. Use shorter but valid app secret. */
         String appSecret = "SHORT";
