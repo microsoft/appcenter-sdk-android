@@ -47,9 +47,9 @@ public class MobileCenter {
     private boolean mLogLevelConfigured;
 
     /**
-     * Custom server Url if any.
+     * Custom log URL if any.
      */
-    private String mServerUrl;
+    private String mLogUrl;
 
     /**
      * Application context.
@@ -120,12 +120,12 @@ public class MobileCenter {
     }
 
     /**
-     * Change the base URL (scheme + authority + port only) used to communicate with the backend.
+     * Change the base URL (scheme + authority + port only) used to send logs.
      *
-     * @param serverUrl base URL to use for server communication.
+     * @param logUrl base log URL.
      */
-    public static void setServerUrl(String serverUrl) {
-        getInstance().setInstanceServerUrl(serverUrl);
+    public static void setLogUrl(String logUrl) {
+        getInstance().setInstanceLogUrl(logUrl);
     }
 
     /**
@@ -243,14 +243,14 @@ public class MobileCenter {
     }
 
     /**
-     * {@link #setServerUrl(String)} implementation at instance level.
+     * {@link #setLogUrl(String)} implementation at instance level.
      *
-     * @param serverUrl server URL.
+     * @param logUrl log URL.
      */
-    private synchronized void setInstanceServerUrl(String serverUrl) {
-        mServerUrl = serverUrl;
+    private synchronized void setInstanceLogUrl(String logUrl) {
+        mLogUrl = logUrl;
         if (mChannel != null)
-            mChannel.setServerUrl(serverUrl);
+            mChannel.setLogUrl(logUrl);
     }
 
     /**
@@ -296,8 +296,8 @@ public class MobileCenter {
             mLogSerializer = new DefaultLogSerializer();
             mChannel = new DefaultChannel(application, appSecret, mLogSerializer);
             mChannel.setEnabled(isInstanceEnabled());
-            if (mServerUrl != null)
-                mChannel.setServerUrl(mServerUrl);
+            if (mLogUrl != null)
+                mChannel.setLogUrl(mLogUrl);
             MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK configured successfully.");
             return true;
         }
