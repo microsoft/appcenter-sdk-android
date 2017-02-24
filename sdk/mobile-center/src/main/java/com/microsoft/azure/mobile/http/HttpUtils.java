@@ -75,7 +75,7 @@ public class HttpUtils {
     public static String hideSecret(String secret) {
 
         /* Cannot hide null or empty string. */
-        if (secret == null || secret.length() <= 0) {
+        if (secret == null || secret.isEmpty()) {
             return secret;
         }
 
