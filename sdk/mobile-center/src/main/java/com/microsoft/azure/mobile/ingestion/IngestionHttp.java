@@ -34,6 +34,12 @@ import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_POST;
 public class IngestionHttp implements Ingestion {
 
     /**
+     * Default log URL.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static final String DEFAULT_LOG_URL = "https://in.mobile.azure.com";
+
+    /**
      * API Path.
      */
     @VisibleForTesting
@@ -44,11 +50,6 @@ public class IngestionHttp implements Ingestion {
      */
     @VisibleForTesting
     static final String INSTALL_ID = "Install-ID";
-
-    /**
-     * Default base URL.
-     */
-    private static final String DEFAULT_BASE_URL = "https://in.mobile.azure.com";
 
     /**
      * Log serializer.
@@ -76,7 +77,7 @@ public class IngestionHttp implements Ingestion {
         HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(context);
         mHttpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
-        mLogUrl = DEFAULT_BASE_URL;
+        mLogUrl = DEFAULT_LOG_URL;
     }
 
     /**
