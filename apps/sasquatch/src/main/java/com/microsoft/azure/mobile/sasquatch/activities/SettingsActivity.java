@@ -205,9 +205,9 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            String defaultServerUrl = getString(R.string.log_url);
-            final String defaultServerUrlDisplay = TextUtils.isEmpty(defaultServerUrl) ? getString(R.string.log_url_set_to_production) : defaultServerUrl;
-            initClickableSetting(R.string.log_url_key, MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultServerUrlDisplay), new Preference.OnPreferenceClickListener() {
+            String defaultLogUrl = getString(R.string.log_url);
+            final String defaultLogUrlDisplay = TextUtils.isEmpty(defaultLogUrl) ? getString(R.string.log_url_set_to_production) : defaultLogUrl;
+            initClickableSetting(R.string.log_url_key, MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
@@ -230,7 +230,7 @@ public class SettingsActivity extends AppCompatActivity {
                                     } else {
                                         Toast.makeText(getActivity(), R.string.log_url_invalid, Toast.LENGTH_SHORT).show();
                                     }
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultServerUrlDisplay));
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay));
                                 }
                             })
                             .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
@@ -238,7 +238,7 @@ public class SettingsActivity extends AppCompatActivity {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     setDefaultUrl();
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultServerUrlDisplay));
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)
