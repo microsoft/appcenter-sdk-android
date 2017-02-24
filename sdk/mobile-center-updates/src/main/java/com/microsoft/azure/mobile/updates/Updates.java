@@ -34,6 +34,7 @@ import com.microsoft.azure.mobile.http.DefaultHttpClient;
 import com.microsoft.azure.mobile.http.HttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.HttpClientRetryer;
+import com.microsoft.azure.mobile.http.HttpUtils;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
@@ -47,11 +48,13 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage
 import org.json.JSONException;
 
 import java.lang.ref.WeakReference;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
+import static android.util.Log.VERBOSE;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_API_URL;
 import static com.microsoft.azure.mobile.updates.UpdateConstants.DEFAULT_INSTALL_URL;
@@ -640,7 +643,8 @@ public class Updates extends AbstractMobileCenterService {
      *
      * @param updateToken token to secure API call.
      */
-    private synchronized void getLatestReleaseDetails(@NonNull String updateToken) {
+    @VisibleForTesting
+    synchronized void getLatestReleaseDetails(@NonNull String updateToken) {
         MobileCenterLog.debug(LOG_TAG, "Get latest release details...");
         HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
@@ -649,7 +653,33 @@ public class Updates extends AbstractMobileCenterService {
         Map<String, String> headers = new HashMap<>();
         headers.put(HEADER_API_TOKEN, updateToken);
         final Object releaseCallId = mCheckReleaseCallId = new Object();
-        mCheckReleaseApiCall = httpClient.callAsync(url, METHOD_GET, headers, null, new ServiceCallback() {
+        mCheckReleaseApiCall = httpClient.callAsync(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
+
+            @Override
+            public String buildRequestBody() throws JSONException {
+
+                /* Only GET is used by Updates service. This method is never getting called. */
+                return null;
+            }
+
+            @Override
+            public void onBeforeCalling(URL url, Map<String, String> headers) {
+                if (MobileCenterLog.getLogLevel() <= VERBOSE) {
+
+                    /* Log url. */
+                    String urlString = url.toString().replaceAll(mAppSecret, HttpUtils.hideSecret(mAppSecret));
+                    MobileCenterLog.verbose(LOG_TAG, "Calling " + urlString + "...");
+
+                    /* Log headers. */
+                    Map<String, String> logHeaders = new HashMap<>(headers);
+                    String apiToken = logHeaders.get(HEADER_API_TOKEN);
+                    if (apiToken != null) {
+                        logHeaders.put(HEADER_API_TOKEN, HttpUtils.hideSecret(apiToken));
+                    }
+                    MobileCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
+                }
+            }
+        }, new ServiceCallback() {
 
             @Override
             public void onCallSucceeded(String payload) {
