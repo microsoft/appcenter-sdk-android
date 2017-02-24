@@ -778,6 +778,7 @@ public class Updates extends AbstractMobileCenterService {
      * @param alertDialog existing dialog if any, always returning true when null.
      * @return true if a new dialog should be displayed, false otherwise.
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean shouldRefreshDialog(@Nullable AlertDialog alertDialog) {
 
         /* We could be in another activity now, refresh dialog. */
