@@ -6,6 +6,7 @@ import java.io.EOFException;
 import java.io.InterruptedIOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.regex.Pattern;
@@ -15,7 +16,13 @@ import javax.net.ssl.SSLException;
 /**
  * HTTP utilities.
  */
-public final class HttpUtils {
+public class HttpUtils {
+
+    /**
+     * Maximum characters to be displayed in a log for application secret.
+     */
+    @VisibleForTesting
+    static final int MAX_CHARACTERS_DISPLAYED_FOR_SECRET = 8;
 
     /**
      * Types of exception that can be retried, no matter what the details are. Sub-classes are included.
@@ -27,7 +34,6 @@ public final class HttpUtils {
             UnknownHostException.class,
             RejectedExecutionException.class
     };
-
     /**
      * Some transient exceptions can only be detected by interpreting the message...
      */
@@ -64,5 +70,19 @@ public final class HttpUtils {
                 return true;
         }
         return false;
+    }
+
+    public static String hideSecret(String secret) {
+
+        /* Cannot hide null or empty string. */
+        if (secret == null || secret.isEmpty()) {
+            return secret;
+        }
+
+        /* Hide secret if string is neither null nor empty string. */
+        int hidingEndIndex = secret.length() - (secret.length() >= MAX_CHARACTERS_DISPLAYED_FOR_SECRET ? MAX_CHARACTERS_DISPLAYED_FOR_SECRET : 0);
+        char[] fill = new char[hidingEndIndex];
+        Arrays.fill(fill, '*');
+        return new String(fill) + secret.substring(hidingEndIndex);
     }
 }

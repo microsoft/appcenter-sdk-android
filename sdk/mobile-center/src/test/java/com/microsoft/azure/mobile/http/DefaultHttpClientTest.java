@@ -29,6 +29,7 @@ import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_POST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
@@ -78,6 +79,7 @@ public class DefaultHttpClientTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void post200() throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
@@ -113,7 +115,10 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
+        verify(urlConnection).setDoOutput(true);
         verify(urlConnection).disconnect();
+        verify(callTemplate).onBeforeCalling(eq(url), any(Map.class));
+        verify(callTemplate).buildRequestBody();
         httpClient.close();
 
         /* Verify payload. */
@@ -122,6 +127,51 @@ public class DefaultHttpClientTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void post200WithoutCallTemplate() throws Exception {
+
+        /* Set log level to verbose to test shorter app secret as well. */
+        MobileCenter.setLogLevel(VERBOSE);
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock/logs?api_version=1.0.0-preview20160914";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(200);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(buffer);
+        when(urlConnection.getInputStream()).thenReturn(new ByteArrayInputStream("OK".getBytes()));
+
+        /* Configure API client. */
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+
+        /* Test calling code. Use shorter but valid app secret. */
+        String appSecret = "SHORT";
+        UUID installId = UUIDUtils.randomUUID();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("App-Secret", appSecret);
+        headers.put("Install-ID", installId.toString());
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        mockCall();
+        httpClient.callAsync(urlString, METHOD_POST, headers, null, serviceCallback);
+        verify(serviceCallback).onCallSucceeded("OK");
+        verifyNoMoreInteractions(serviceCallback);
+        verify(urlConnection).setRequestProperty("Content-Type", "application/json");
+        verify(urlConnection).setRequestProperty("App-Secret", appSecret);
+        verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
+        verify(urlConnection, never()).setDoOutput(true);
+        verify(urlConnection).disconnect();
+        httpClient.close();
+
+        /* Verify payload. */
+        String sentPayload = buffer.toString("UTF-8");
+        assertEquals("", sentPayload);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     public void get200() throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
@@ -156,8 +206,49 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
+        verify(urlConnection, never()).setDoOutput(true);
         verify(urlConnection).disconnect();
+        verify(callTemplate).onBeforeCalling(eq(url), any(Map.class));
         verify(callTemplate, never()).buildRequestBody();
+        httpClient.close();
+    }
+
+    @Test
+    public void get200WithoutCallTemplate() throws Exception {
+
+        /* Set log level to verbose to test shorter app secret as well. */
+        MobileCenter.setLogLevel(VERBOSE);
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock/get";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(200);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(buffer);
+        when(urlConnection.getInputStream()).thenReturn(new ByteArrayInputStream("OK".getBytes()));
+
+        /* Configure API client. */
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+
+        /* Test calling code. */
+        String appSecret = UUIDUtils.randomUUID().toString();
+        UUID installId = UUIDUtils.randomUUID();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("App-Secret", appSecret);
+        headers.put("Install-ID", installId.toString());
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        mockCall();
+        httpClient.callAsync(urlString, METHOD_GET, headers, null, serviceCallback);
+        verify(serviceCallback).onCallSucceeded("OK");
+        verifyNoMoreInteractions(serviceCallback);
+        verify(urlConnection).setRequestProperty("Content-Type", "application/json");
+        verify(urlConnection).setRequestProperty("App-Secret", appSecret);
+        verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
+        verify(urlConnection, never()).setDoOutput(true);
+        verify(urlConnection).disconnect();
         httpClient.close();
     }
 
