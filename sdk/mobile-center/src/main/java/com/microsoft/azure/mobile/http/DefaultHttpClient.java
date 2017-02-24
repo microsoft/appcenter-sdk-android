@@ -12,12 +12,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 
-import static android.util.Log.VERBOSE;
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 import static java.lang.Math.max;
 
@@ -68,11 +65,6 @@ public class DefaultHttpClient implements HttpClient {
     private static final int READ_TIMEOUT = 20000;
 
     /**
-     * Maximum characters to be displayed in a log for application secret.
-     */
-    private static final int MAX_CHARACTERS_DISPLAYED_FOR_APP_SECRET = 8;
-
-    /**
      * Dump stream to string.
      *
      * @param urlConnection URL connection.
@@ -104,7 +96,6 @@ public class DefaultHttpClient implements HttpClient {
 
         /* HTTP session. */
         URL url = new URL(urlString);
-        MobileCenterLog.verbose(LOG_TAG, "Calling " + url + " ...");
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         try {
 
@@ -118,22 +109,12 @@ public class DefaultHttpClient implements HttpClient {
                 urlConnection.setRequestProperty(header.getKey(), header.getValue());
             }
 
-            /* Log headers. */
-            if (MobileCenterLog.getLogLevel() <= VERBOSE) {
-                Map<String, String> logHeaders = new HashMap<>(headers);
-                String appSecret = logHeaders.get(APP_SECRET);
-                if (appSecret != null) {
-                    int hidingEndIndex = appSecret.length() - (appSecret.length() >= MAX_CHARACTERS_DISPLAYED_FOR_APP_SECRET ? MAX_CHARACTERS_DISPLAYED_FOR_APP_SECRET : 0);
-                    char[] fill = new char[hidingEndIndex];
-                    Arrays.fill(fill, '*');
-                    appSecret = new String(fill) + appSecret.substring(hidingEndIndex);
-                    logHeaders.put(APP_SECRET, appSecret);
-                }
-                MobileCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
-            }
+            /* Before send. */
+            if (callTemplate != null)
+                callTemplate.onBeforeCalling(url, headers);
 
             /* Build payload. */
-            if (method.equals(METHOD_POST)) {
+            if (method.equals(METHOD_POST) && callTemplate != null) {
                 String payload = callTemplate.buildRequestBody();
                 MobileCenterLog.verbose(LOG_TAG, payload);
 
