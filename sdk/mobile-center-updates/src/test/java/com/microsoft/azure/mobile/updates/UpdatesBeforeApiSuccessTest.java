@@ -55,6 +55,24 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
  */
 public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
 
+    /**
+     * Shared code to mock a restart of an activity considered to be the launcher.
+     */
+    private static void restartResumeLauncher(Activity activity) {
+        Intent intent = mock(Intent.class);
+        PackageManager packageManager = mock(PackageManager.class);
+        when(activity.getPackageManager()).thenReturn(packageManager);
+        when(packageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
+        ComponentName componentName = mock(ComponentName.class);
+        when(intent.resolveActivity(packageManager)).thenReturn(componentName);
+        when(componentName.getClassName()).thenReturn(activity.getClass().getName());
+        Updates.getInstance().onActivityPaused(activity);
+        Updates.getInstance().onActivityStopped(activity);
+        Updates.getInstance().onActivityDestroyed(activity);
+        Updates.getInstance().onActivityCreated(activity, mock(Bundle.class));
+        Updates.getInstance().onActivityResumed(activity);
+    }
+
     @Test
     public void doNothingIfInstallComesFromStore() throws Exception {
 
@@ -110,6 +128,31 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void postponeBrowserIfNoNetwork() throws Exception {
+
+        /* Check browser not opened if no network. */
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        verifyStatic(never());
+        BrowserUtils.openBrowser(anyString(), any(Activity.class));
+
+        /* If network comes back, we don't open network unless we restart app. */
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        Updates.getInstance().onActivityPaused(mock(Activity.class));
+        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        verifyStatic(never());
+        BrowserUtils.openBrowser(anyString(), any(Activity.class));
+
+        /* Restart should open browser if still have network. */
+        when(UUIDUtils.randomUUID()).thenReturn(UUID.randomUUID());
+        Activity activity = mock(Activity.class);
+        restartResumeLauncher(activity);
+        verifyStatic();
+        BrowserUtils.openBrowser(anyString(), any(Activity.class));
     }
 
     @Test
@@ -189,18 +232,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Call is still in progress. If we restart app, nothing happens we still wait. */
-        Intent intent = mock(Intent.class);
-        PackageManager packageManager = mock(PackageManager.class);
-        when(activity.getPackageManager()).thenReturn(packageManager);
-        when(packageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
-        ComponentName componentName = mock(ComponentName.class);
-        when(intent.resolveActivity(packageManager)).thenReturn(componentName);
-        when(componentName.getClassName()).thenReturn(activity.getClass().getName());
-        Updates.getInstance().onActivityPaused(activity);
-        Updates.getInstance().onActivityStopped(activity);
-        Updates.getInstance().onActivityDestroyed(activity);
-        Updates.getInstance().onActivityCreated(activity, mock(Bundle.class));
-        Updates.getInstance().onActivityResumed(activity);
+        restartResumeLauncher(activity);
         Updates.getInstance().onActivityPaused(activity);
         Updates.getInstance().onActivityStopped(activity);
         Updates.getInstance().onActivityDestroyed(activity);
