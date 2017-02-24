@@ -90,7 +90,7 @@ public class IngestionHttpTest {
 
         /* Test calling code. */
         IngestionHttp ingestionHttp = new IngestionHttp(mock(Context.class), serializer);
-        ingestionHttp.setServerUrl("http://mock");
+        ingestionHttp.setLogUrl("http://mock");
         String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
@@ -149,7 +149,7 @@ public class IngestionHttpTest {
 
         /* Test calling code. */
         IngestionHttp ingestionHttp = new IngestionHttp(mock(Context.class), serializer);
-        ingestionHttp.setServerUrl("http://mock");
+        ingestionHttp.setLogUrl("http://mock");
         String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
@@ -247,7 +247,7 @@ public class IngestionHttpTest {
             }
         });
         IngestionHttp ingestionHttp = new IngestionHttp(mock(Context.class), mock(LogSerializer.class));
-        ingestionHttp.setServerUrl("http://mock");
+        ingestionHttp.setLogUrl("http://mock");
         assertEquals(call, ingestionHttp.sendAsync(appSecret, UUIDUtils.randomUUID(), mock(LogContainer.class), mock(ServiceCallback.class)));
         return callTemplate.get();
     }
