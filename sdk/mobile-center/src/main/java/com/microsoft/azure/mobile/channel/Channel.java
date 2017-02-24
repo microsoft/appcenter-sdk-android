@@ -51,11 +51,11 @@ public interface Channel {
     void setEnabled(boolean enabled);
 
     /**
-     * Update server url.
+     * Update log URL.
      *
-     * @param serverUrl server url.
+     * @param logUrl log URL.
      */
-    void setServerUrl(String serverUrl);
+    void setLogUrl(String logUrl);
 
     /**
      * Clear all persisted logs for the given group.
