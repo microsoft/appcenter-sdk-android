@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
@@ -18,6 +19,7 @@ import com.microsoft.azure.mobile.utils.UUIDUtils;
 import org.json.JSONException;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
+import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -73,11 +75,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         Updates.getInstance().onActivityResumed(activity);
     }
 
-    @Test
-    public void doNothingIfInstallComesFromStore() throws Exception {
-
-        /* Mock from store. */
-        when(InstallerUtils.isInstalledFromAppStore(anyString(), any(Context.class))).thenReturn(true);
+    private void testInAppUpdatesInactive() throws Exception {
 
         /* Check browser not opened. */
         Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
@@ -100,6 +98,18 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
     }
 
     @Test
+    public void doNothingIfDebug() throws Exception {
+        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
+        testInAppUpdatesInactive();
+    }
+
+    @Test
+    public void doNothingIfInstallComesFromStore() throws Exception {
+        when(InstallerUtils.isInstalledFromAppStore(anyString(), any(Context.class))).thenReturn(true);
+        testInAppUpdatesInactive();
+    }
+
+    @Test
     public void storeTokenBeforeStart() throws Exception {
 
         /* Setup mock. */
@@ -109,7 +119,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
 
         /* Store token before start, start in background, no storage access. */
         Updates.getInstance().storeUpdateToken("some token", "r");
-        Updates.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
+        Updates.getInstance().onStarted(mContext, "", mock(Channel.class));
         verifyStatic(never());
         PreferencesStorage.putString(anyString(), anyString());
         verifyStatic(never());
@@ -307,6 +317,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         PackageManager packageManager = mock(PackageManager.class);
         when(context.getPackageName()).thenReturn("com.contoso");
         when(context.getPackageManager()).thenReturn(packageManager);
+        when(context.getApplicationInfo()).thenReturn(mApplicationInfo);
         when(packageManager.getPackageInfo("com.contoso", 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */

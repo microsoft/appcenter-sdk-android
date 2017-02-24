@@ -808,34 +808,6 @@ public class UpdatesDownloadTest extends AbstractUpdatesTest {
     }
 
     @Test
-    public void failsToGetNotificationIcon() throws Exception {
-
-        /* Simulate async task. */
-        waitDownloadTask();
-
-        /* Process download completion. */
-        completeDownload();
-        Cursor cursor = mockSuccessCursor();
-        Intent installIntent = mockInstallIntent();
-
-        /* In background. */
-        Updates.getInstance().onActivityPaused(mFirstActivity);
-
-        /* And the icon will fail. */
-        when(mPackageManager.getApplicationInfo(mContext.getPackageName(), 0)).thenThrow(new PackageManager.NameNotFoundException());
-
-        /* Simulate task. */
-        waitCheckDownloadTask();
-
-        /* Verify complete workflow with no notification. */
-        verify(mContext, never()).startActivity(installIntent);
-        verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verifyNoMoreInteractions(mNotificationManager);
-        verify(cursor).close();
-    }
-
-    @Test
     @PrepareForTest(Uri.class)
     @SuppressWarnings("deprecation")
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
