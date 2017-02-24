@@ -28,7 +28,7 @@ import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.APP_SECRET_KEY;
-import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.SERVER_URL_KEY;
+import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.LOG_URL_KEY;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -83,7 +83,7 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public void setEnabled(boolean enabled) {
                     Crashes.setEnabled(enabled);
-                    crashesEnabledPreference.setChecked(Analytics.isEnabled());
+                    crashesEnabledPreference.setChecked(Crashes.isEnabled());
                 }
 
                 @Override
@@ -205,38 +205,40 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            String defaultServerUrl = getString(R.string.server_url);
-            final String defaultServerUrlDisplay = TextUtils.isEmpty(defaultServerUrl) ? getString(R.string.server_url_production) : defaultServerUrl;
-            initClickableSetting(R.string.server_url_key, MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, defaultServerUrlDisplay), new Preference.OnPreferenceClickListener() {
+            String defaultLogUrl = getString(R.string.log_url);
+            final String defaultLogUrlDisplay = TextUtils.isEmpty(defaultLogUrl) ? getString(R.string.log_url_set_to_production) : defaultLogUrl;
+            initClickableSetting(R.string.log_url_key, MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
                     final EditText input = new EditText(getActivity());
                     input.setInputType(InputType.TYPE_CLASS_TEXT);
-                    input.setText(MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, null));
-                    input.setHint(R.string.server_url_production);
+                    input.setText(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, null));
+                    input.setHint(R.string.log_url_set_to_production);
 
-                    new AlertDialog.Builder(getActivity()).setTitle(R.string.server_url_title).setView(input)
+                    new AlertDialog.Builder(getActivity()).setTitle(R.string.log_url_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     if (Patterns.WEB_URL.matcher(input.getText().toString()).matches()) {
                                         String url = input.getText().toString();
-                                        setKeyValue(SERVER_URL_KEY, url);
-                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.server_url_changed_format), url), Toast.LENGTH_SHORT).show();
+                                        setKeyValue(LOG_URL_KEY, url);
+                                        toastUrlChange(url);
                                     } else if (input.getText().toString().isEmpty()) {
-                                        setProductionUrl();
+                                        setDefaultUrl();
                                     } else {
-                                        Toast.makeText(getActivity(), R.string.server_url_invalid, Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getActivity(), R.string.log_url_invalid, Toast.LENGTH_SHORT).show();
                                     }
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, defaultServerUrlDisplay));
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay));
                                 }
                             })
                             .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
+
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    setProductionUrl();
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(SERVER_URL_KEY, defaultServerUrlDisplay));
+                                    setDefaultUrl();
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)
@@ -244,9 +246,16 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
 
-                private void setProductionUrl() {
-                    setKeyValue(SERVER_URL_KEY, null);
-                    Toast.makeText(getActivity(), R.string.server_url_production, Toast.LENGTH_SHORT).show();
+                private void setDefaultUrl() {
+                    setKeyValue(LOG_URL_KEY, null);
+                    toastUrlChange(getString(R.string.log_url));
+                }
+
+                private void toastUrlChange(String url) {
+                    if (TextUtils.isEmpty(url)) {
+                        url = getString(R.string.log_url_production);
+                    }
+                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.log_url_changed_format), url), Toast.LENGTH_SHORT).show();
                 }
             });
         }

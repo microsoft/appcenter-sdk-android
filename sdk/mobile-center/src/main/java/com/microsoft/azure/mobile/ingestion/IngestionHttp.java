@@ -34,6 +34,12 @@ import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_POST;
 public class IngestionHttp implements Ingestion {
 
     /**
+     * Default log URL.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static final String DEFAULT_LOG_URL = "https://in.mobile.azure.com";
+
+    /**
      * API Path.
      */
     @VisibleForTesting
@@ -46,11 +52,6 @@ public class IngestionHttp implements Ingestion {
     static final String INSTALL_ID = "Install-ID";
 
     /**
-     * Default base URL.
-     */
-    private static final String DEFAULT_BASE_URL = "https://in.mobile.azure.com";
-
-    /**
      * Log serializer.
      */
     private final LogSerializer mLogSerializer;
@@ -61,9 +62,9 @@ public class IngestionHttp implements Ingestion {
     private final HttpClient mHttpClient;
 
     /**
-     * API base URL (scheme + authority).
+     * Log base URL (scheme + authority).
      */
-    private String mBaseUrl;
+    private String mLogUrl;
 
     /**
      * Init.
@@ -76,18 +77,18 @@ public class IngestionHttp implements Ingestion {
         HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(context);
         mHttpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
-        mBaseUrl = DEFAULT_BASE_URL;
+        mLogUrl = DEFAULT_LOG_URL;
     }
 
     /**
-     * Set the base url.
+     * Update log URL.
      *
-     * @param baseUrl the base url.
+     * @param logUrl log URL.
      */
     @Override
     @SuppressWarnings("SameParameterValue")
-    public void setServerUrl(@NonNull String baseUrl) {
-        mBaseUrl = baseUrl;
+    public void setLogUrl(@NonNull String logUrl) {
+        mLogUrl = logUrl;
     }
 
     @Override
@@ -96,7 +97,7 @@ public class IngestionHttp implements Ingestion {
         headers.put(INSTALL_ID, installId.toString());
         headers.put(APP_SECRET, appSecret);
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
-        return mHttpClient.callAsync(mBaseUrl + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);
+        return mHttpClient.callAsync(mLogUrl + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);
     }
 
     @Override
