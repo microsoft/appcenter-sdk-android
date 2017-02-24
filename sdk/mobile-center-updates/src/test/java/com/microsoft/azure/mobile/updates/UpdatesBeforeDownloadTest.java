@@ -64,9 +64,6 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn("someId");
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
-
-        /* Override mock answer by calling it once then configuring new answer. */
-        mPackageManager.getPackageInfo("com.contoso", 0);
         when(mPackageManager.getPackageInfo("com.contoso", 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Trigger call. */
