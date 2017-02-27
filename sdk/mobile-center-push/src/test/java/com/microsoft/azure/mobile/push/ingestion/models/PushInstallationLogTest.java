@@ -22,9 +22,11 @@ public class PushInstallationLogTest {
         PushInstallationLog a = new PushInstallationLog();
         PushInstallationLog b = new PushInstallationLog();
         checkEquals(a, b);
+        checkEquals(a.getType(), PushInstallationLog.TYPE);
 
         /* PushToken. */
         a.setPushToken("a");
+        checkEquals(a.getPushToken(), "a");
         checkNotEquals(a, b);
         b.setPushToken("b");
         checkNotEquals(a, b);

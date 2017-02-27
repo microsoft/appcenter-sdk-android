@@ -33,6 +33,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -106,16 +107,28 @@ public class PushTest {
     @Test
     public void onTokenRefresh() {
         String testToken = "TEST";
-        Push push = Push.getInstance();
+        Push push = Mockito.spy(Push.getInstance());
+        push.setInstanceEnabled(false);
         Channel channel = mock(Channel.class);
         push.onChannelReady(mock(Context.class), channel);
-        push.onTokenRefresh(testToken);
+        verify(mFirebaseInstanceId, never()).getToken();
+
+        /* When token unavailable */
+        when(mFirebaseInstanceId.getToken()).thenReturn(null);
+        push.setInstanceEnabled(true);
+        verify(mFirebaseInstanceId).getToken();
+        verify(push, never()).onTokenRefresh(anyString());
+
+        /* When token available */
+        when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
+        push.setInstanceEnabled(true);
+        verify(push).onTokenRefresh(anyString());
         verifyStatic(times(1));
         StorageHelper.PreferencesStorage.putString(eq(PREFERENCE_KEY_PUSH_TOKEN), eq(testToken));
 
         /* For check enqueue only once */
         push.onTokenRefresh(testToken);
-        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
+        verify(channel).enqueue(any(PushInstallationLog.class), anyString());
     }
 
     @Test
@@ -133,21 +146,13 @@ public class PushTest {
         verify(channel).removeGroup(eq(push.getGroupName()));
         verify(mFirebaseInstanceId, never()).getToken();
 
-        when(mFirebaseInstanceId.getToken()).thenReturn(null);
-        Push.setEnabled(true);
-        verify(mFirebaseInstanceId).getToken();
-        verify(channel, never()).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
-
         /* If disabled when PushTokenTask executing */
         Push.setEnabled(false);
         push.onTokenRefresh(testToken);
         verify(channel, never()).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
 
-        when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
-        Push.setEnabled(true);
-        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
-
         /* For check enqueue only once */
+        Push.setEnabled(true);
         Push.setEnabled(true);
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
     }
