@@ -2,12 +2,10 @@ package com.microsoft.azure.mobile.push;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.google.android.gms.iid.InstanceID;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
@@ -16,10 +14,8 @@ import com.microsoft.azure.mobile.push.ingestion.models.json.PushInstallationLog
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.RejectedExecutionException;
 
 /**
  * Push notifications interface
@@ -59,29 +55,19 @@ public class Push extends AbstractMobileCenterService {
     private static Push sInstance;
 
     /**
-     * GCM sender ID.
-     */
-    private String mSenderId = null;
-
-    /**
      * The PNS handle for this installation.
      */
-    private String mPushToken = null;
+    private String mPushToken;
 
     /**
      * Remember if we already sent push installation log
      */
-    private boolean mPushTokenSent = false;
+    private boolean mPushTokenSent;
 
     /**
      * Log factories managed by this service.
      */
     private final Map<String, LogFactory> mFactories;
-
-    /**
-     * Application context, if not null it means onStart was called.
-     */
-    private Context mContext;
 
     /**
      * Init.
@@ -130,16 +116,6 @@ public class Push extends AbstractMobileCenterService {
     }
 
     /**
-     * Change the GSM sender ID.
-     *
-     * @param senderId GSM sender ID
-     */
-    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
-    public static void setSenderId(String senderId) {
-        getInstance().setInstanceSenderId(senderId);
-    }
-
-    /**
      * Enqueue a push installation log.
      *
      * @param pushToken the push token value
@@ -158,11 +134,11 @@ public class Push extends AbstractMobileCenterService {
     /**
      * Handle push token update success.
      *
-     * @param pushToken the push token value
+     * @param token the push token value
      */
     @VisibleForTesting
-    synchronized void handlePushToken(@NonNull String pushToken) {
-        mPushToken = pushToken;
+    synchronized void onTokenRefresh(@NonNull String token) {
+        mPushToken = token;
         MobileCenterLog.debug(LOG_TAG, "Push token: " + mPushToken);
         PreferencesStorage.putString(PREFERENCE_KEY_PUSH_TOKEN, mPushToken);
         enqueuePushInstallationLog(mPushToken);
@@ -173,19 +149,13 @@ public class Push extends AbstractMobileCenterService {
             return;
         if (mPushTokenSent)
             return;
-
         if (mPushToken != null) {
             enqueuePushInstallationLog(mPushToken);
-        } else if (mSenderId != null) {
-            final PushTokenTask pushTokenTask = new PushTokenTask();
-            /* TODO Need use ASyncTaskUtils here */
-            try {
-                pushTokenTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            } catch (final RejectedExecutionException e) {
-                MobileCenterLog.error(LOG_TAG, "THREAD_POOL_EXECUTOR saturated", e);
-            }
         } else {
-            MobileCenterLog.error(LOG_TAG, "Sender ID is null! Please set it by Push.setSenderId(senderId);");
+            String token = FirebaseInstanceId.getInstance().getToken();
+            if (token != null) {
+                onTokenRefresh(token);
+            }
         }
     }
 
@@ -212,7 +182,6 @@ public class Push extends AbstractMobileCenterService {
     @Override
     public synchronized void onChannelReady(@NonNull Context context, @NonNull Channel channel) {
         super.onChannelReady(context, channel);
-        mContext = context;
         updatePushToken();
     }
 
@@ -221,35 +190,6 @@ public class Push extends AbstractMobileCenterService {
         super.setInstanceEnabled(enabled);
         if (enabled) {
             updatePushToken();
-        }
-    }
-
-    /**
-     * Implements {@link #setSenderId(String)}.
-     */
-    private synchronized void setInstanceSenderId(String senderId) {
-        mSenderId = senderId;
-    }
-
-    @VisibleForTesting
-    class PushTokenTask extends AsyncTask<Void, Void, String> {
-
-        @Override
-        protected String doInBackground(Void[] params) {
-            InstanceID instanceID = InstanceID.getInstance(mContext);
-            try {
-                return instanceID.getToken(mSenderId, GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
-            } catch (IOException e) {
-                MobileCenterLog.error(LOG_TAG, "Cannot get push token", e);
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(String pushToken) {
-            if (pushToken != null) {
-                handlePushToken(pushToken);
-            }
         }
     }
 }
