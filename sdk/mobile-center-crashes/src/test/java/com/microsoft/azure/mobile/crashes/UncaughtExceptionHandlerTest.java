@@ -102,10 +102,12 @@ public class UncaughtExceptionHandlerTest {
 
     @Test
     public void registerWorks() {
-        // Verify that exception handler is default
+
+        /* Verify that exception handler is default */
         assertEquals(mDefaultExceptionHandler, Thread.getDefaultUncaughtExceptionHandler());
         mExceptionHandler.register();
-        // Verify that creation registers handler and previously defined handler is correctly saved
+
+        /* Verify that creation registers handler and previously defined handler is correctly saved */
         assertEquals(mExceptionHandler, Thread.getDefaultUncaughtExceptionHandler());
         assertEquals(mDefaultExceptionHandler, mExceptionHandler.getDefaultUncaughtExceptionHandler());
 
@@ -135,14 +137,13 @@ public class UncaughtExceptionHandlerTest {
     @Test
     public void handleExceptionAndIgnoreDefaultHandler() {
 
-
-        // mock process id
+        /* Mock process id */
         when(Process.myPid()).thenReturn(123);
 
-        // Register crash handler
+        /* Register crash handler */
         mExceptionHandler.register();
 
-        // Verify that the exception is handled and not being passed on to the previous default UncaughtExceptionHandler
+        /* Verify that the exception is handled and not being passed on to the previous default UncaughtExceptionHandler */
         Thread thread = Thread.currentThread();
         RuntimeException exception = new RuntimeException();
         mExceptionHandler.setIgnoreDefaultExceptionHandler(true);
@@ -159,7 +160,7 @@ public class UncaughtExceptionHandlerTest {
 
     @Test
     public void passDefaultHandler() {
-        // Verify that when crashes is disabled, an exception is instantly passed on
+        /* Verify that when crashes is disabled, an exception is instantly passed on */
         when(Crashes.isEnabled()).thenReturn(false);
 
         mExceptionHandler.register();
@@ -175,7 +176,7 @@ public class UncaughtExceptionHandlerTest {
 
     @Test
     public void crashesDisabledNoDefaultHandler() {
-        // Verify that when crashes is disabled, an exception is instantly passed on
+        /* Verify that when crashes is disabled, an exception is instantly passed on */
         when(Crashes.isEnabled()).thenReturn(false);
 
         mExceptionHandler.register();
