@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.microsoft.azure.mobile.updates">
+          package="com.microsoft.azure.mobile.distribute">
 
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 
     <application>
         <activity
-            android:name=".DeepLinkActivity"
+            android:name="com.microsoft.azure.mobile.distribute.DeepLinkActivity"
             android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
@@ -21,7 +21,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".DownloadManagerReceiver">
+        <receiver android:name="com.microsoft.azure.mobile.distribute.DownloadManagerReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.DOWNLOAD_COMPLETE"/>
                 <action android:name="android.intent.action.DOWNLOAD_NOTIFICATION_CLICKED"/>

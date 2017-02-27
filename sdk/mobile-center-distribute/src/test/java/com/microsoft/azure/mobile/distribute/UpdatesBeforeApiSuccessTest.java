@@ -1,4 +1,4 @@
-package com.microsoft.azure.mobile.updates;
+package com.microsoft.azure.mobile.distribute;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -27,16 +27,16 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_PLATFORM_VALUE;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_REDIRECT_ID;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_RELEASE_HASH;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PARAMETER_REQUEST_ID;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_REQUEST_ID;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.UPDATE_SETUP_PATH_FORMAT;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_PLATFORM;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_PLATFORM_VALUE;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_REDIRECT_ID;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_RELEASE_HASH;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_REQUEST_ID;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_REQUEST_ID;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.UPDATE_SETUP_PATH_FORMAT;
 import static com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
