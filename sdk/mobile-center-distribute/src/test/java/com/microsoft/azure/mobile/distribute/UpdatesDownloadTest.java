@@ -1,4 +1,4 @@
-package com.microsoft.azure.mobile.updates;
+package com.microsoft.azure.mobile.distribute;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -46,14 +46,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static android.app.DownloadManager.EXTRA_DOWNLOAD_ID;
 import static android.content.Context.NOTIFICATION_SERVICE;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.DOWNLOAD_STATE_COMPLETED;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.DOWNLOAD_STATE_ENQUEUED;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.DOWNLOAD_STATE_NOTIFIED;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.INVALID_DOWNLOAD_IDENTIFIER;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.DOWNLOAD_STATE_COMPLETED;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.DOWNLOAD_STATE_ENQUEUED;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.DOWNLOAD_STATE_NOTIFIED;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;

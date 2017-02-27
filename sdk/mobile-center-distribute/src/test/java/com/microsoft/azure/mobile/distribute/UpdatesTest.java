@@ -1,4 +1,4 @@
-package com.microsoft.azure.mobile.updates;
+package com.microsoft.azure.mobile.distribute;
 
 import android.content.Context;
 
@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.microsoft.azure.mobile.updates.UpdateConstants.HEADER_API_TOKEN;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.HEADER_API_TOKEN;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;

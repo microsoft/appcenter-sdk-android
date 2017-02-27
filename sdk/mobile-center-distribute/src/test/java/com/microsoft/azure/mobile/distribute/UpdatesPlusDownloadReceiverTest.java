@@ -1,7 +1,6 @@
-package com.microsoft.azure.mobile.updates;
+package com.microsoft.azure.mobile.distribute;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 
 import com.microsoft.azure.mobile.channel.Channel;
@@ -10,7 +9,7 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 import org.junit.Test;
 
 import static android.app.DownloadManager.ACTION_NOTIFICATION_CLICKED;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;

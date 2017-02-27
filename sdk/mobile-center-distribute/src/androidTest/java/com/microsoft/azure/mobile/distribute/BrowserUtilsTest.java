@@ -1,4 +1,4 @@
-package com.microsoft.azure.mobile.updates;
+package com.microsoft.azure.mobile.distribute;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -14,7 +14,7 @@ import org.mockito.InOrder;
 
 import java.util.Collections;
 
-import static com.microsoft.azure.mobile.updates.BrowserUtils.GOOGLE_CHROME_URL_SCHEME;
+import static com.microsoft.azure.mobile.distribute.BrowserUtils.GOOGLE_CHROME_URL_SCHEME;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;

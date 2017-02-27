@@ -1,4 +1,4 @@
-package com.microsoft.azure.mobile.updates;
+package com.microsoft.azure.mobile.distribute;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -6,9 +6,9 @@ import android.os.Bundle;
 
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
-import static com.microsoft.azure.mobile.updates.UpdateConstants.EXTRA_REQUEST_ID;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.EXTRA_UPDATE_TOKEN;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.LOG_TAG;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.EXTRA_REQUEST_ID;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.EXTRA_UPDATE_TOKEN;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.LOG_TAG;
 
 /**
  * Generic activity used for deep linking in updates.

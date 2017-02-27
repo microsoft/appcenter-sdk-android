@@ -1,4 +1,4 @@
-package com.microsoft.azure.mobile.updates;
+package com.microsoft.azure.mobile.distribute;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -27,8 +27,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
-import static com.microsoft.azure.mobile.updates.UpdateConstants.INVALID_DOWNLOAD_IDENTIFIER;
-import static com.microsoft.azure.mobile.updates.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;

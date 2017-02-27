@@ -1,4 +1,4 @@
-package com.microsoft.azure.mobile.updates;
+package com.microsoft.azure.mobile.distribute;
 
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
@@ -15,7 +15,7 @@ import org.powermock.reflect.Whitebox;
 
 import java.util.Arrays;
 
-import static com.microsoft.azure.mobile.updates.InstallerUtils.INSTALL_NON_MARKET_APPS_ENABLED;
+import static com.microsoft.azure.mobile.distribute.InstallerUtils.INSTALL_NON_MARKET_APPS_ENABLED;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
