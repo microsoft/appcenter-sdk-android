@@ -1,6 +1,6 @@
 package com.microsoft.azure.mobile.push.ingestion.models;
 
-import com.microsoft.azure.mobile.ingestion.models.LogWithProperties;
+import com.microsoft.azure.mobile.ingestion.models.AbstractLog;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,7 +10,7 @@ import org.json.JSONStringer;
  * Push installation log.
  */
 
-public class PushInstallationLog extends LogWithProperties {
+public class PushInstallationLog extends AbstractLog {
 
     public static final String TYPE = "push_installation";
 

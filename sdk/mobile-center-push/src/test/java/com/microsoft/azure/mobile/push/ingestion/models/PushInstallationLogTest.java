@@ -1,8 +1,11 @@
 package com.microsoft.azure.mobile.push.ingestion.models;
 
 import com.microsoft.azure.mobile.test.TestUtils;
+import com.microsoft.azure.mobile.utils.UUIDUtils;
 
 import org.junit.Test;
+
+import java.util.UUID;
 
 import static com.microsoft.azure.mobile.test.TestUtils.checkEquals;
 import static com.microsoft.azure.mobile.test.TestUtils.checkNotEquals;
@@ -23,6 +26,12 @@ public class PushInstallationLogTest {
         PushInstallationLog b = new PushInstallationLog();
         checkEquals(a, b);
         checkEquals(a.getType(), PushInstallationLog.TYPE);
+
+        UUID sid = UUIDUtils.randomUUID();
+        a.setSid(sid);
+        checkNotEquals(a, b);
+        b.setSid(sid);
+        checkEquals(a, b);
 
         /* PushToken. */
         a.setPushToken("a");
