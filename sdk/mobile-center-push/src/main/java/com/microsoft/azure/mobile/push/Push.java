@@ -52,12 +52,11 @@ public class Push extends AbstractMobileCenterService {
     @VisibleForTesting
     static final String PREFERENCE_KEY_PUSH_TOKEN = PREFERENCE_PREFIX + "push_token";
 
-
     /**
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
-    private static Push sInstance = null;
+    private static Push sInstance;
 
     /**
      * GCM sender ID.
@@ -150,7 +149,6 @@ public class Push extends AbstractMobileCenterService {
             return;
         if (mPushTokenSent)
             return;
-
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
         mChannel.enqueue(log, PUSH_GROUP);
@@ -180,6 +178,7 @@ public class Push extends AbstractMobileCenterService {
             enqueuePushInstallationLog(mPushToken);
         } else if (mSenderId != null) {
             final PushTokenTask pushTokenTask = new PushTokenTask();
+            /* TODO Need use ASyncTaskUtils here */
             try {
                 pushTokenTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             } catch (final RejectedExecutionException e) {

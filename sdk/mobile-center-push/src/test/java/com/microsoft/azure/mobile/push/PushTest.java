@@ -150,7 +150,7 @@ public class PushTest {
         Push.setEnabled(true);
         verify(mPushTokenTask).executeOnExecutor(any(Executor.class));
 
-        // If disabled when PushTokenTask executing
+        /* If disabled when PushTokenTask executing */
         Push.setEnabled(false);
         push.handlePushToken("TEST");
         verify(channel, never()).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));

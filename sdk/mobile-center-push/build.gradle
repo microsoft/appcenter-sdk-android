@@ -1,6 +1,3 @@
-//
-// :sdk:push
-//
 project.description = 'This package contains functionalities to recive push notifications for your application.'
 evaluationDependsOn(':sdk')
 
