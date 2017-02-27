@@ -2,6 +2,7 @@ package com.microsoft.azure.mobile.push;
 
 import android.content.Context;
 
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
@@ -13,18 +14,17 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 import junit.framework.Assert;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.Map;
-import java.util.concurrent.Executor;
 
 import static com.microsoft.azure.mobile.push.Push.PREFERENCE_KEY_PUSH_TOKEN;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
@@ -41,24 +41,25 @@ import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@RunWith(PowerMockRunner.class)
 @PrepareForTest({
         Push.class,
-        Push.PushTokenTask.class,
         PushInstallationLog.class,
         MobileCenterLog.class,
         MobileCenter.class,
-        StorageHelper.PreferencesStorage.class
+        StorageHelper.PreferencesStorage.class,
+        FirebaseInstanceId.class
 })
 public class PushTest {
 
     private static final String PUSH_ENABLED_KEY = KEY_ENABLED + "_group_push";
 
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
+
     @Mock
-    Push.PushTokenTask mPushTokenTask;
+    FirebaseInstanceId mFirebaseInstanceId;
 
     @Before
     public void setUp() throws Exception {
@@ -84,7 +85,9 @@ public class PushTest {
         }).when(StorageHelper.PreferencesStorage.class);
         StorageHelper.PreferencesStorage.putBoolean(eq(PUSH_ENABLED_KEY), anyBoolean());
 
-        whenNew(Push.PushTokenTask.class).withNoArguments().thenReturn(mPushTokenTask);
+
+        mockStatic(FirebaseInstanceId.class);
+        when(FirebaseInstanceId.getInstance()).thenReturn(mFirebaseInstanceId);
     }
 
     @Test
@@ -101,41 +104,24 @@ public class PushTest {
     }
 
     @Test
-    public void getPushToken() {
-        Push push = Push.getInstance();
-        Push.setSenderId("TEST");
-        Channel channel = mock(Channel.class);
-        push.onChannelReady(mock(Context.class), channel);
-        verify(mPushTokenTask).executeOnExecutor(any(Executor.class));
-    }
-
-    @Test
-    public void noSenderId() {
-        Push push = Push.getInstance();
-        Channel channel = mock(Channel.class);
-        push.onChannelReady(mock(Context.class), channel);
-        verify(mPushTokenTask, never()).executeOnExecutor(any(Executor.class));
-    }
-
-    @Test
-    public void handlePushToken() {
+    public void onTokenRefresh() {
         String testToken = "TEST";
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
         push.onChannelReady(mock(Context.class), channel);
-        push.handlePushToken(testToken);
+        push.onTokenRefresh(testToken);
         verifyStatic(times(1));
         StorageHelper.PreferencesStorage.putString(eq(PREFERENCE_KEY_PUSH_TOKEN), eq(testToken));
 
-        // For check enqueue only once
-        push.handlePushToken(testToken);
+        /* For check enqueue only once */
+        push.onTokenRefresh(testToken);
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
     }
 
     @Test
     public void setEnabled() {
+        String testToken = "TEST";
         Push push = Push.getInstance();
-        Push.setSenderId("TEST");
         Channel channel = mock(Channel.class);
         assertTrue(Push.isEnabled());
         Push.setEnabled(true);
@@ -145,16 +131,23 @@ public class PushTest {
         push.onChannelReady(mock(Context.class), channel);
         verify(channel).clear(push.getGroupName());
         verify(channel).removeGroup(eq(push.getGroupName()));
-        verify(mPushTokenTask, never()).executeOnExecutor(any(Executor.class));
+        verify(mFirebaseInstanceId, never()).getToken();
 
+        when(mFirebaseInstanceId.getToken()).thenReturn(null);
         Push.setEnabled(true);
-        verify(mPushTokenTask).executeOnExecutor(any(Executor.class));
+        verify(mFirebaseInstanceId).getToken();
+        verify(channel, never()).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
 
         /* If disabled when PushTokenTask executing */
         Push.setEnabled(false);
-        push.handlePushToken("TEST");
+        push.onTokenRefresh(testToken);
         verify(channel, never()).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
 
+        when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
+        Push.setEnabled(true);
+        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
+
+        /* For check enqueue only once */
         Push.setEnabled(true);
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
     }
