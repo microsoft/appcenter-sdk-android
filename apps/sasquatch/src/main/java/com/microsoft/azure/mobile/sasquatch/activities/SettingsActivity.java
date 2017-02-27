@@ -50,7 +50,7 @@ public class SettingsActivity extends AppCompatActivity {
             addPreferencesFromResource(R.xml.settings);
             final CheckBoxPreference analyticsEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_analytics_state_key));
             final CheckBoxPreference crashesEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_crashes_state_key));
-            final CheckBoxPreference updatesEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_updates_state_key));
+            final CheckBoxPreference distributeEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_distribute_state_key));
             initCheckBoxSetting(R.string.mobile_center_state_key, MobileCenter.isEnabled(), R.string.mobile_center_state_summary_enabled, R.string.mobile_center_state_summary_disabled, new HasEnabled() {
 
                 @Override
@@ -94,16 +94,16 @@ public class SettingsActivity extends AppCompatActivity {
             try {
 
                 @SuppressWarnings("unchecked")
-                Class<? extends MobileCenterService> updates = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.updates.Updates");
-                final Method isEnabled = updates.getMethod("isEnabled");
-                final Method setEnabled = updates.getMethod("setEnabled", boolean.class);
-                initCheckBoxSetting(R.string.mobile_center_updates_state_key, (boolean) isEnabled.invoke(null), R.string.mobile_center_updates_state_summary_enabled, R.string.mobile_center_updates_state_summary_disabled, new HasEnabled() {
+                Class<? extends MobileCenterService> distribute = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.distribute.Distribute");
+                final Method isEnabled = distribute.getMethod("isEnabled");
+                final Method setEnabled = distribute.getMethod("setEnabled", boolean.class);
+                initCheckBoxSetting(R.string.mobile_center_distribute_state_key, (boolean) isEnabled.invoke(null), R.string.mobile_center_distribute_state_summary_enabled, R.string.mobile_center_distribute_state_summary_disabled, new HasEnabled() {
 
                     @Override
                     public void setEnabled(boolean enabled) {
                         try {
                             setEnabled.invoke(null, enabled);
-                            updatesEnabledPreference.setChecked((boolean) isEnabled.invoke(null));
+                            distributeEnabledPreference.setChecked((boolean) isEnabled.invoke(null));
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
@@ -119,7 +119,7 @@ public class SettingsActivity extends AppCompatActivity {
                     }
                 });
             } catch (Exception e) {
-                getPreferenceScreen().removePreference(findPreference(getString(R.string.updates_key)));
+                getPreferenceScreen().removePreference(findPreference(getString(R.string.distribute_key)));
             }
             initCheckBoxSetting(R.string.mobile_center_auto_page_tracking_key, AnalyticsPrivateHelper.isAutoPageTrackingEnabled(), R.string.mobile_center_auto_page_tracking_enabled, R.string.mobile_center_auto_page_tracking_disabled, new HasEnabled() {
 
