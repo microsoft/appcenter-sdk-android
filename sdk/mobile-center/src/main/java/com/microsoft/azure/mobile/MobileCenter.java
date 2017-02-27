@@ -17,6 +17,7 @@ import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
+import com.microsoft.azure.mobile.utils.ShutdownHelper;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import java.util.HashSet;
@@ -55,6 +56,8 @@ public class MobileCenter {
      * Application context.
      */
     private Application mApplication;
+
+    private UncaughtExceptionHandler mUncaughtExceptionHandler;
 
     /**
      * Configured services.
@@ -290,12 +293,20 @@ public class MobileCenter {
 
             /* If parameters are valid, init context related resources. */
             StorageHelper.initialize(application);
+
+            /* For don't call PreferencesStorage twice. */
+            boolean enabled = isInstanceEnabled();
+
+            /* Init uncaught exception handler. */
+            mUncaughtExceptionHandler = new UncaughtExceptionHandler();
+            if (enabled)
+                mUncaughtExceptionHandler.register();
             mServices = new HashSet<>();
 
             /* Init channel. */
             mLogSerializer = new DefaultLogSerializer();
             mChannel = new DefaultChannel(application, appSecret, mLogSerializer);
-            mChannel.setEnabled(isInstanceEnabled());
+            mChannel.setEnabled(enabled);
             if (mLogUrl != null)
                 mChannel.setLogUrl(mLogUrl);
             MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK configured successfully.");
@@ -383,6 +394,13 @@ public class MobileCenter {
         boolean switchToDisabled = previouslyEnabled && !enabled;
         boolean switchToEnabled = !previouslyEnabled && enabled;
 
+        /* Update uncaught exception subscription. */
+        if (switchToEnabled) {
+            mUncaughtExceptionHandler.register();
+        } else if (switchToDisabled) {
+            mUncaughtExceptionHandler.unregister();
+        }
+
         /* Update state. */
         StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, enabled);
 
@@ -423,5 +441,39 @@ public class MobileCenter {
     @VisibleForTesting
     void setChannel(Channel channel) {
         mChannel = channel;
+    }
+
+    @VisibleForTesting
+    class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
+
+        private Thread.UncaughtExceptionHandler mDefaultUncaughtExceptionHandler;
+
+        @Override
+        public void uncaughtException(Thread thread, Throwable exception) {
+            if (isEnabled()) {
+                /* Wait channel to finish saving other logs in background. */
+                if (mChannel != null)
+                    mChannel.shutdown();
+            }
+            if (mDefaultUncaughtExceptionHandler != null) {
+                mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
+            } else {
+                ShutdownHelper.shutdown(10);
+            }
+        }
+
+        @VisibleForTesting
+        Thread.UncaughtExceptionHandler getDefaultUncaughtExceptionHandler() {
+            return mDefaultUncaughtExceptionHandler;
+        }
+
+        void register() {
+            mDefaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
+            Thread.setDefaultUncaughtExceptionHandler(this);
+        }
+
+        void unregister() {
+            Thread.setDefaultUncaughtExceptionHandler(mDefaultUncaughtExceptionHandler);
+        }
     }
 }
