@@ -677,6 +677,7 @@ public class MobileCenterTest {
 
         when(Thread.getDefaultUncaughtExceptionHandler()).thenReturn(null);
         MobileCenter.setEnabled(true);
+        MobileCenter.getInstance().setChannel(null);
         assertNull(handler.getDefaultUncaughtExceptionHandler());
         handler.uncaughtException(thread, exception);
         verifyStatic();
