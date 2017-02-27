@@ -26,7 +26,6 @@ dependencies {
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     projectDependencyCompile project(':sdk:mobile-center-analytics')
     projectDependencyCompile project(':sdk:mobile-center-crashes')
-    projectDependencyCompile project(':sdk:mobile-center-push')
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-analytics:${version}"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-crashes:${version}"
 }
