@@ -439,6 +439,11 @@ public class MobileCenter {
     }
 
     @VisibleForTesting
+    UncaughtExceptionHandler getUncaughtExceptionHandler() {
+        return mUncaughtExceptionHandler;
+    }
+
+    @VisibleForTesting
     void setChannel(Channel channel) {
         mChannel = channel;
     }

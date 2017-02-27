@@ -48,7 +48,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
-@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, MobileCenterLog.class, Process.class})
+@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, MobileCenterLog.class})
 public class UncaughtExceptionHandlerTest {
 
     private static final String CRASHES_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getGroupName();
@@ -69,7 +69,6 @@ public class UncaughtExceptionHandlerTest {
         mockStatic(StorageHelper.InternalStorage.class);
         mockStatic(ErrorLogHelper.class);
         mockStatic(DeviceInfoHelper.class);
-        mockStatic(Process.class);
         mockStatic(System.class);
 
         when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
@@ -137,9 +136,6 @@ public class UncaughtExceptionHandlerTest {
     @Test
     public void handleExceptionAndIgnoreDefaultHandler() {
 
-        /* Mock process id */
-        when(Process.myPid()).thenReturn(123);
-
         /* Register crash handler */
         mExceptionHandler.register();
 
@@ -152,8 +148,6 @@ public class UncaughtExceptionHandlerTest {
 
         verifyStatic();
         ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean());
-        verifyStatic();
-        Process.killProcess(123);
         verifyStatic();
         System.exit(10);
     }
