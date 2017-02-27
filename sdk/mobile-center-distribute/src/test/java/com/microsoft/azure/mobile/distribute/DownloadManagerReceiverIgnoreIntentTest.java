@@ -15,19 +15,19 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(Updates.class)
+@PrepareForTest(Distribute.class)
 public class DownloadManagerReceiverIgnoreIntentTest {
 
     @Test
     public void invalidIntent() {
-        mockStatic(Updates.class);
-        when(Updates.getInstance()).thenReturn(mock(Updates.class));
+        mockStatic(Distribute.class);
+        when(Distribute.getInstance()).thenReturn(mock(Distribute.class));
         Intent clickIntent = mock(Intent.class);
         when(clickIntent.getAction()).thenReturn(Intent.ACTION_ANSWER);
         new DownloadManagerReceiver().onReceive(mock(Context.class), clickIntent);
         when(clickIntent.getAction()).thenReturn(null);
         new DownloadManagerReceiver().onReceive(mock(Context.class), clickIntent);
         verifyStatic(never());
-        Updates.getInstance();
+        Distribute.getInstance();
     }
 }

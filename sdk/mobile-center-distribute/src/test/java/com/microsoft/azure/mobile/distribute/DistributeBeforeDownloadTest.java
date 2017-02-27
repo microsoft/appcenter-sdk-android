@@ -23,10 +23,10 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import java.util.HashMap;
 import java.util.concurrent.Semaphore;
 
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.INVALID_RELEASE_IDENTIFIER;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_IGNORED_RELEASE_ID;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.INVALID_RELEASE_IDENTIFIER;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_IGNORED_RELEASE_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -44,7 +44,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
+public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
     @Test
     public void failsToCompareVersion() throws Exception {
@@ -62,15 +62,15 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
             }
         });
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         when(mPackageManager.getPackageInfo("com.contoso", 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify on failure we complete workflow. */
@@ -80,8 +80,8 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verify(mDialog, never()).show();
 
         /* After that if we resume app nothing happens. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
@@ -101,15 +101,15 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
             }
         });
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(5);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify on failure we complete workflow. */
@@ -119,8 +119,8 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verify(mDialog, never()).show();
 
         /* After that if we resume app nothing happens. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
@@ -140,15 +140,15 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
             }
         });
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(6);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify on failure we complete workflow. */
@@ -158,8 +158,8 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verify(mDialog, never()).show();
 
         /* After that if we resume app nothing happens. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
@@ -179,7 +179,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
             }
         });
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
@@ -187,20 +187,20 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify dialog. */
-        verify(mDialogBuilder).setTitle(R.string.mobile_center_updates_update_dialog_title);
-        verify(mDialogBuilder).setMessage(R.string.mobile_center_updates_update_dialog_message);
+        verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_dialog_title);
+        verify(mDialogBuilder).setMessage(R.string.mobile_center_distribute_update_dialog_message);
         verify(mDialogBuilder, never()).setMessage(any(CharSequence.class));
         verify(mDialogBuilder).create();
         verify(mDialog).show();
 
         /* After that if we resume app we refresh dialog. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* No more http call. */
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -214,7 +214,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verify(mDialogBuilder, times(2)).create();
 
         /* Disable does not hide the dialog. */
-        Updates.setEnabled(false);
+        Distribute.setEnabled(false);
 
         /* We already called hide once, make sure its not called a second time. */
         verify(mDialog).hide();
@@ -239,7 +239,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
             }
         });
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
@@ -247,12 +247,12 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify dialog. */
-        verify(mDialogBuilder).setTitle(R.string.mobile_center_updates_update_dialog_title);
+        verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_dialog_title);
         verify(mDialogBuilder).setMessage("mock");
         verify(mDialogBuilder).create();
         verify(mDialog).show();
@@ -284,7 +284,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
             }
         });
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
@@ -292,10 +292,10 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
         Activity activity = mock(Activity.class);
-        Updates.getInstance().onActivityResumed(activity);
-        Updates.getInstance().onActivityPaused(activity);
+        Distribute.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityPaused(activity);
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Release call in background. */
@@ -307,15 +307,15 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verify(mDialog, never()).show();
 
         /* Go foreground. */
-        Updates.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityResumed(activity);
 
         /* Verify dialog now shown. */
         verify(mDialogBuilder).create();
         verify(mDialog).show();
 
         /* Pause/resume should not alter dialog. */
-        Updates.getInstance().onActivityPaused(activity);
-        Updates.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityPaused(activity);
+        Distribute.getInstance().onActivityResumed(activity);
 
         /* Only once check, and no hiding. */
         verify(mDialogBuilder).create();
@@ -323,8 +323,8 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verify(mDialog, never()).hide();
 
         /* Cover activity. Dialog must be replaced. */
-        Updates.getInstance().onActivityPaused(activity);
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(activity);
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialogBuilder, times(2)).create();
         verify(mDialog, times(2)).show();
         verify(mDialog).hide();
@@ -351,8 +351,8 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog. */
         ArgumentCaptor<DialogInterface.OnCancelListener> cancelListener = ArgumentCaptor.forClass(DialogInterface.OnCancelListener.class);
@@ -368,15 +368,15 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Restart should check release and show dialog again. */
-        Updates.unsetInstance();
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.unsetInstance();
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog, times(2)).show();
         verify(httpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
@@ -402,12 +402,12 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setNeutralButton(eq(R.string.mobile_center_updates_update_dialog_postpone), clickListener.capture());
+        verify(mDialogBuilder).setNeutralButton(eq(R.string.mobile_center_distribute_update_dialog_postpone), clickListener.capture());
         verify(mDialog).show();
 
         /* Postpone it. */
@@ -419,15 +419,15 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Restart should check release and show dialog again. */
-        Updates.unsetInstance();
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.unsetInstance();
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog, times(2)).show();
         verify(httpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
@@ -473,12 +473,12 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_updates_update_dialog_ignore), clickListener.capture());
+        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_dialog_ignore), clickListener.capture());
         verify(mDialog).show();
 
         /* Ignore it. */
@@ -490,15 +490,15 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Restart app to check ignore. */
-        Updates.unsetInstance();
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.unsetInstance();
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify second http call was made but dialog was skipped (e.g. shown only once). */
         verify(httpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -507,8 +507,8 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Disable: it will prompt again as we clear storage. */
-        Updates.setEnabled(false);
-        Updates.setEnabled(true);
+        Distribute.setEnabled(false);
+        Distribute.setEnabled(true);
         verify(httpClient, times(3)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verify(mDialog, times(2)).show();
     }
@@ -534,8 +534,8 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog. */
         ArgumentCaptor<DialogInterface.OnCancelListener> cancelListener = ArgumentCaptor.forClass(DialogInterface.OnCancelListener.class);
@@ -543,7 +543,7 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verify(mDialog).show();
 
         /* Disable. */
-        Updates.setEnabled(false);
+        Distribute.setEnabled(false);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
@@ -552,8 +552,8 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         when(mDialog.isShowing()).thenReturn(false);
 
         /* Verify no more calls, e.g. happened only once. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verifyStatic();
@@ -602,16 +602,16 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_updates_update_dialog_ignore), clickListener.capture());
+        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_dialog_ignore), clickListener.capture());
         verify(mDialog).show();
 
         /* Disable. */
-        Updates.setEnabled(false);
+        Distribute.setEnabled(false);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
@@ -623,8 +623,8 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verify(mToast).show();
 
         /* Verify no more calls, e.g. happened only once. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verifyStatic();
@@ -659,16 +659,16 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_updates_update_dialog_download), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), clickListener.capture());
         verify(mDialog).show();
 
         /* Disable. */
-        Updates.setEnabled(false);
+        Distribute.setEnabled(false);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
@@ -680,8 +680,8 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
         verify(mToast).show();
 
         /* Verify no more calls, e.g. happened only once. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verifyStatic();
@@ -689,6 +689,6 @@ public class UpdatesBeforeDownloadTest extends AbstractUpdatesTest {
 
         /* Verify no download scheduled. */
         verifyStatic(never());
-        AsyncTaskUtils.execute(anyString(), any(Updates.DownloadTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), any(Distribute.DownloadTask.class), Mockito.<Void>anyVararg());
     }
 }

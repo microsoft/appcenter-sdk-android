@@ -14,7 +14,7 @@ import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import java.util.List;
 
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.LOG_TAG;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.LOG_TAG;
 
 /**
  * Browser utils.

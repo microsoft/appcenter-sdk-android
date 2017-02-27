@@ -56,40 +56,40 @@ import static android.content.Context.DOWNLOAD_SERVICE;
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.DEFAULT_API_URL;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.DEFAULT_INSTALL_URL;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.DOWNLOAD_STATE_COMPLETED;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.DOWNLOAD_STATE_ENQUEUED;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.DOWNLOAD_STATE_NOTIFIED;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.GET_LATEST_RELEASE_PATH_FORMAT;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.HEADER_API_TOKEN;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.INVALID_DOWNLOAD_IDENTIFIER;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.INVALID_RELEASE_IDENTIFIER;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.LOG_TAG;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_PLATFORM;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_PLATFORM_VALUE;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_REDIRECT_ID;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_RELEASE_HASH;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_REQUEST_ID;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_IGNORED_RELEASE_ID;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_REQUEST_ID;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.SERVICE_NAME;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.UPDATE_SETUP_PATH_FORMAT;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.DEFAULT_API_URL;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.DEFAULT_INSTALL_URL;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.GET_LATEST_RELEASE_PATH_FORMAT;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.HEADER_API_TOKEN;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.INVALID_RELEASE_IDENTIFIER;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_PLATFORM;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_PLATFORM_VALUE;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_REDIRECT_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_RELEASE_HASH;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_REQUEST_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_IGNORED_RELEASE_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.SERVICE_NAME;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.UPDATE_SETUP_PATH_FORMAT;
 
 /**
- * Updates service.
+ * Distribute service.
  */
-public class Updates extends AbstractMobileCenterService {
+public class Distribute extends AbstractMobileCenterService {
 
     /**
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
-    private static Updates sInstance = null;
+    private static Distribute sInstance = null;
 
     /**
      * Current install base URL.
@@ -179,7 +179,7 @@ public class Updates extends AbstractMobileCenterService {
     private boolean mCheckedDownload;
 
     /**
-     * True when update workflow reached final state.
+     * True when distribute workflow reached final state.
      * This can be reset to check update again when app restarts.
      */
     private boolean mWorkflowCompleted;
@@ -195,9 +195,9 @@ public class Updates extends AbstractMobileCenterService {
      * @return shared instance.
      */
     @SuppressWarnings("WeakerAccess")
-    public static synchronized Updates getInstance() {
+    public static synchronized Distribute getInstance() {
         if (sInstance == null) {
-            sInstance = new Updates();
+            sInstance = new Distribute();
         }
         return sInstance;
     }
@@ -208,7 +208,7 @@ public class Updates extends AbstractMobileCenterService {
     }
 
     /**
-     * Check whether Updates service is enabled or not.
+     * Check whether Distribute service is enabled or not.
      *
      * @return <code>true</code> if enabled, <code>false</code> otherwise.
      */
@@ -218,7 +218,7 @@ public class Updates extends AbstractMobileCenterService {
     }
 
     /**
-     * Enable or disable Updates service.
+     * Enable or disable Distribute service.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
@@ -270,7 +270,7 @@ public class Updates extends AbstractMobileCenterService {
      */
     @VisibleForTesting
     static int getNotificationId() {
-        return Updates.class.getName().hashCode();
+        return Distribute.class.getName().hashCode();
     }
 
     @SuppressWarnings("deprecation")
@@ -325,7 +325,7 @@ public class Updates extends AbstractMobileCenterService {
         super.onStarted(context, appSecret, channel);
         mContext = context;
         mAppSecret = appSecret;
-        resumeUpdateWorkflow();
+        resumeDistributeWorkflow();
     }
 
     @Override
@@ -354,7 +354,7 @@ public class Updates extends AbstractMobileCenterService {
     @Override
     public synchronized void onActivityResumed(Activity activity) {
         mForegroundActivity = activity;
-        resumeUpdateWorkflow();
+        resumeDistributeWorkflow();
     }
 
     @Override
@@ -366,7 +366,7 @@ public class Updates extends AbstractMobileCenterService {
     public synchronized void setInstanceEnabled(boolean enabled) {
         super.setInstanceEnabled(enabled);
         if (enabled) {
-            resumeUpdateWorkflow();
+            resumeDistributeWorkflow();
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep token though. */
@@ -424,9 +424,9 @@ public class Updates extends AbstractMobileCenterService {
     }
 
     /**
-     * Method that triggers the update workflow or proceed to the next step.
+     * Method that triggers the distribute workflow or proceed to the next step.
      */
-    private synchronized void resumeUpdateWorkflow() {
+    private synchronized void resumeDistributeWorkflow() {
         if (mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
             /* Don't go any further it this is a debug app. */
@@ -665,7 +665,7 @@ public class Updates extends AbstractMobileCenterService {
             @Override
             public String buildRequestBody() throws JSONException {
 
-                /* Only GET is used by Updates service. This method is never getting called. */
+                /* Only GET is used by Distribute service. This method is never getting called. */
                 return null;
             }
 
@@ -821,28 +821,28 @@ public class Updates extends AbstractMobileCenterService {
         }
         MobileCenterLog.debug(LOG_TAG, "Show new update dialog.");
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
-        dialogBuilder.setTitle(R.string.mobile_center_updates_update_dialog_title);
+        dialogBuilder.setTitle(R.string.mobile_center_distribute_update_dialog_title);
         final ReleaseDetails releaseDetails = mReleaseDetails;
         String releaseNotes = releaseDetails.getReleaseNotes();
         if (TextUtils.isEmpty(releaseNotes))
-            dialogBuilder.setMessage(R.string.mobile_center_updates_update_dialog_message);
+            dialogBuilder.setMessage(R.string.mobile_center_distribute_update_dialog_message);
         else
             dialogBuilder.setMessage(releaseNotes);
-        dialogBuilder.setPositiveButton(R.string.mobile_center_updates_update_dialog_download, new DialogInterface.OnClickListener() {
+        dialogBuilder.setPositiveButton(R.string.mobile_center_distribute_update_dialog_download, new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 enqueueDownloadOrShowUnknownSourcesDialog(releaseDetails);
             }
         });
-        dialogBuilder.setNegativeButton(R.string.mobile_center_updates_update_dialog_ignore, new DialogInterface.OnClickListener() {
+        dialogBuilder.setNegativeButton(R.string.mobile_center_distribute_update_dialog_ignore, new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 ignoreRelease(releaseDetails);
             }
         });
-        dialogBuilder.setNeutralButton(R.string.mobile_center_updates_update_dialog_postpone, new DialogInterface.OnClickListener() {
+        dialogBuilder.setNeutralButton(R.string.mobile_center_distribute_update_dialog_postpone, new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -876,7 +876,7 @@ public class Updates extends AbstractMobileCenterService {
          * Also for buttons and texts we try do to the same as the system dialog on standard devices.
          */
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
-        dialogBuilder.setMessage(R.string.mobile_center_updates_unknown_sources_dialog_message);
+        dialogBuilder.setMessage(R.string.mobile_center_distribute_unknown_sources_dialog_message);
         final ReleaseDetails releaseDetails = mReleaseDetails;
         dialogBuilder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
 
@@ -888,7 +888,7 @@ public class Updates extends AbstractMobileCenterService {
         setOnCancelListener(dialogBuilder, releaseDetails);
 
         /* We use generic OK button as we can't promise we can navigate to settings. */
-        dialogBuilder.setPositiveButton(R.string.mobile_center_updates_unknown_sources_dialog_settings, new DialogInterface.OnClickListener() {
+        dialogBuilder.setPositiveButton(R.string.mobile_center_distribute_unknown_sources_dialog_settings, new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -979,7 +979,7 @@ public class Updates extends AbstractMobileCenterService {
      * that will likely never happen but we guard for it.
      */
     private void showDisabledToast() {
-        Toast.makeText(mContext, R.string.mobile_center_updates_dialog_actioned_on_disabled_toast, Toast.LENGTH_SHORT).show();
+        Toast.makeText(mContext, R.string.mobile_center_distribute_dialog_actioned_on_disabled_toast, Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -1078,9 +1078,9 @@ public class Updates extends AbstractMobileCenterService {
         /* Post notification. */
         MobileCenterLog.debug(LOG_TAG, "Post a notification as the download finished in background.");
         Notification.Builder builder = new Notification.Builder(context)
-                .setTicker(context.getString(R.string.mobile_center_updates_download_successful_notification_title))
-                .setContentTitle(context.getString(R.string.mobile_center_updates_download_successful_notification_title))
-                .setContentText(context.getString(R.string.mobile_center_updates_download_successful_notification_message))
+                .setTicker(context.getString(R.string.mobile_center_distribute_download_successful_notification_title))
+                .setContentTitle(context.getString(R.string.mobile_center_distribute_download_successful_notification_title))
+                .setContentText(context.getString(R.string.mobile_center_distribute_download_successful_notification_message))
                 .setSmallIcon(context.getApplicationInfo().icon)
                 .setContentIntent(PendingIntent.getActivities(context, 0, new Intent[]{intent}, 0));
         Notification notification = buildNotification(builder);

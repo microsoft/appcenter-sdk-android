@@ -20,16 +20,16 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(Updates.class)
+@PrepareForTest(Distribute.class)
 public class DeepLinkActivityTest {
 
     @Mock
-    private Updates mUpdates;
+    private Distribute mDistribute;
 
     @Before
     public void setUp() {
-        mockStatic(Updates.class);
-        when(Updates.getInstance()).thenReturn(mUpdates);
+        mockStatic(Distribute.class);
+        when(Distribute.getInstance()).thenReturn(mDistribute);
     }
 
     /**
@@ -48,7 +48,7 @@ public class DeepLinkActivityTest {
         verify(activity).startActivity(intent);
         verify(activity).finish();
         verifyStatic(never());
-        Updates.getInstance();
+        Distribute.getInstance();
     }
 
     @Test
@@ -60,7 +60,7 @@ public class DeepLinkActivityTest {
     @Test
     public void missingRequestId() {
         Intent intent = mock(Intent.class);
-        when(intent.getStringExtra(UpdateConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock");
         invalidIntent(intent);
     }
 
@@ -69,8 +69,8 @@ public class DeepLinkActivityTest {
 
         /* Build valid intent. */
         Intent intent = mock(Intent.class);
-        when(intent.getStringExtra(UpdateConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
-        when(intent.getStringExtra(UpdateConstants.EXTRA_REQUEST_ID)).thenReturn("mock2");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_REQUEST_ID)).thenReturn("mock2");
         when(intent.getFlags()).thenReturn(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
 
         /* Start activity. */
@@ -81,7 +81,7 @@ public class DeepLinkActivityTest {
         /* Verify interactions. */
         verify(activity, never()).startActivity(any(Intent.class));
         verify(activity).finish();
-        verify(mUpdates).storeUpdateToken("mock1", "mock2");
+        verify(mDistribute).storeUpdateToken("mock1", "mock2");
     }
 
     @Test
@@ -89,8 +89,8 @@ public class DeepLinkActivityTest {
 
         /* Build valid intent. */
         Intent intent = mock(Intent.class);
-        when(intent.getStringExtra(UpdateConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
-        when(intent.getStringExtra(UpdateConstants.EXTRA_REQUEST_ID)).thenReturn("mock2");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_REQUEST_ID)).thenReturn("mock2");
         when(intent.getFlags()).thenReturn(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
 
         /* Start activity. */
@@ -103,7 +103,7 @@ public class DeepLinkActivityTest {
         /* Verify interactions. */
         verify(activity, never()).startActivity(any(Intent.class));
         verify(activity).finish();
-        verify(mUpdates).storeUpdateToken("mock1", "mock2");
+        verify(mDistribute).storeUpdateToken("mock1", "mock2");
     }
 
     @Test
@@ -111,8 +111,8 @@ public class DeepLinkActivityTest {
 
         /* Build valid intent. */
         Intent intent = mock(Intent.class);
-        when(intent.getStringExtra(UpdateConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
-        when(intent.getStringExtra(UpdateConstants.EXTRA_REQUEST_ID)).thenReturn("mock2");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_REQUEST_ID)).thenReturn("mock2");
         when(intent.getFlags()).thenReturn(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
 
         /* Start activity. */
@@ -129,6 +129,6 @@ public class DeepLinkActivityTest {
         /* Verify interactions. */
         verify(activity).startActivity(launcherIntent);
         verify(activity).finish();
-        verify(mUpdates).storeUpdateToken("mock1", "mock2");
+        verify(mDistribute).storeUpdateToken("mock1", "mock2");
     }
 }

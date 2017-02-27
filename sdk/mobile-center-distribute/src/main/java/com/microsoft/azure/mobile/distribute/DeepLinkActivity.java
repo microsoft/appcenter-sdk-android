@@ -6,12 +6,12 @@ import android.os.Bundle;
 
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.EXTRA_REQUEST_ID;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.EXTRA_UPDATE_TOKEN;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.LOG_TAG;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.EXTRA_REQUEST_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.EXTRA_UPDATE_TOKEN;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.LOG_TAG;
 
 /**
- * Generic activity used for deep linking in updates.
+ * Generic activity used for deep linking in distribute.
  */
 public class DeepLinkActivity extends Activity {
 
@@ -27,7 +27,7 @@ public class DeepLinkActivity extends Activity {
 
         /* Store update token if the parameters are correct. */
         if (updateToken != null && requestId != null) {
-            Updates.getInstance().storeUpdateToken(updateToken, requestId);
+            Distribute.getInstance().storeUpdateToken(updateToken, requestId);
         }
 
         /*

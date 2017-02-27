@@ -27,16 +27,16 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_PLATFORM;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_PLATFORM_VALUE;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_REDIRECT_ID;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_RELEASE_HASH;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PARAMETER_REQUEST_ID;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_REQUEST_ID;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.UPDATE_SETUP_PATH_FORMAT;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_PLATFORM;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_PLATFORM_VALUE;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_REDIRECT_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_RELEASE_HASH;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_REQUEST_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.UPDATE_SETUP_PATH_FORMAT;
 import static com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -55,7 +55,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 /**
  * Cover scenarios that are happening before we see an API call success for latest release.
  */
-public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
+public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     /**
      * Shared code to mock a restart of an activity considered to be the launcher.
@@ -68,18 +68,18 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         ComponentName componentName = mock(ComponentName.class);
         when(intent.resolveActivity(packageManager)).thenReturn(componentName);
         when(componentName.getClassName()).thenReturn(activity.getClass().getName());
-        Updates.getInstance().onActivityPaused(activity);
-        Updates.getInstance().onActivityStopped(activity);
-        Updates.getInstance().onActivityDestroyed(activity);
-        Updates.getInstance().onActivityCreated(activity, mock(Bundle.class));
-        Updates.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityPaused(activity);
+        Distribute.getInstance().onActivityStopped(activity);
+        Distribute.getInstance().onActivityDestroyed(activity);
+        Distribute.getInstance().onActivityCreated(activity, mock(Bundle.class));
+        Distribute.getInstance().onActivityResumed(activity);
     }
 
-    private void testInAppUpdatesInactive() throws Exception {
+    private void testDistributeInactive() throws Exception {
 
         /* Check browser not opened. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verifyStatic(never());
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
 
@@ -91,22 +91,22 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        Updates.unsetInstance();
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.unsetInstance();
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient, never()).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
     public void doNothingIfDebug() throws Exception {
         Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
-        testInAppUpdatesInactive();
+        testDistributeInactive();
     }
 
     @Test
     public void doNothingIfInstallComesFromStore() throws Exception {
         when(InstallerUtils.isInstalledFromAppStore(anyString(), any(Context.class))).thenReturn(true);
-        testInAppUpdatesInactive();
+        testDistributeInactive();
     }
 
     @Test
@@ -118,15 +118,15 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
 
         /* Store token before start, start in background, no storage access. */
-        Updates.getInstance().storeUpdateToken("some token", "r");
-        Updates.getInstance().onStarted(mContext, "", mock(Channel.class));
+        Distribute.getInstance().storeUpdateToken("some token", "r");
+        Distribute.getInstance().onStarted(mContext, "", mock(Channel.class));
         verifyStatic(never());
         PreferencesStorage.putString(anyString(), anyString());
         verifyStatic(never());
         PreferencesStorage.remove(anyString());
 
         /* Unlock the processing by going into foreground. */
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
         verifyStatic();
@@ -136,7 +136,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
@@ -145,15 +145,15 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
 
         /* Check browser not opened if no network. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verifyStatic(never());
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
 
         /* If network comes back, we don't open network unless we restart app. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verifyStatic(never());
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
 
@@ -176,11 +176,11 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
 
         /* Start and resume: open browser. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
         Activity activity = mock(Activity.class);
-        Updates.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityResumed(activity);
         verifyStatic();
-        String url = UpdateConstants.DEFAULT_INSTALL_URL;
+        String url = DistributeConstants.DEFAULT_INSTALL_URL;
         url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
@@ -191,15 +191,15 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
         /* If browser already opened, activity changed must not recall it. */
-        Updates.getInstance().onActivityPaused(activity);
-        Updates.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityPaused(activity);
+        Distribute.getInstance().onActivityResumed(activity);
         verifyStatic();
         BrowserUtils.openBrowser(url, activity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
         /* Store token. */
-        Updates.getInstance().storeUpdateToken("some token", requestId.toString());
+        Distribute.getInstance().storeUpdateToken("some token", requestId.toString());
 
         /* Verify behavior. */
         verifyStatic();
@@ -211,18 +211,18 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
-                return argument.toString().startsWith(UpdateConstants.DEFAULT_API_URL);
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
             }
         }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* If call already made, activity changed must not recall it. */
-        Updates.getInstance().onActivityPaused(activity);
-        Updates.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityPaused(activity);
+        Distribute.getInstance().onActivityResumed(activity);
 
         /* Verify behavior. */
         verifyStatic();
@@ -237,17 +237,17 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
 
             @Override
             public boolean matches(Object argument) {
-                return argument.toString().startsWith(UpdateConstants.DEFAULT_API_URL);
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
             }
         }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Call is still in progress. If we restart app, nothing happens we still wait. */
         restartResumeLauncher(activity);
-        Updates.getInstance().onActivityPaused(activity);
-        Updates.getInstance().onActivityStopped(activity);
-        Updates.getInstance().onActivityDestroyed(activity);
-        Updates.getInstance().onActivityCreated(activity, mock(Bundle.class));
-        Updates.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityPaused(activity);
+        Distribute.getInstance().onActivityStopped(activity);
+        Distribute.getInstance().onActivityDestroyed(activity);
+        Distribute.getInstance().onActivityCreated(activity, mock(Bundle.class));
+        Distribute.getInstance().onActivityResumed(activity);
 
         /* Verify behavior not changed. */
         verifyStatic();
@@ -264,7 +264,7 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
 
             @Override
             public boolean matches(Object argument) {
-                return argument.toString().startsWith(UpdateConstants.DEFAULT_API_URL);
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
             }
         }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
@@ -273,8 +273,8 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
     public void setUrls() throws Exception {
 
         /* Setup mock. */
-        Updates.setInstallUrl("http://mock");
-        Updates.setApiUrl("https://mock2");
+        Distribute.setInstallUrl("http://mock");
+        Distribute.setApiUrl("https://mock2");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         UUID requestId = UUID.randomUUID();
@@ -282,9 +282,9 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
 
         /* Start and resume: open browser. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
         Activity activity = mock(Activity.class);
-        Updates.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityResumed(activity);
         verifyStatic();
         String url = "http://mock";
         url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
@@ -297,9 +297,9 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
         /* Store token. */
-        Updates.getInstance().storeUpdateToken("some token", requestId.toString());
+        Distribute.getInstance().storeUpdateToken("some token", requestId.toString());
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
@@ -321,8 +321,8 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         when(packageManager.getPackageInfo("com.contoso", 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */
-        Updates.getInstance().onStarted(context, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(context, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify only tried once. */
         verify(packageManager).getPackageInfo("com.contoso", 0);
@@ -340,11 +340,11 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         /* Start and resume: open browser. */
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
         Activity activity = mock(Activity.class);
-        Updates.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityResumed(activity);
         verifyStatic();
-        String url = UpdateConstants.DEFAULT_INSTALL_URL;
+        String url = DistributeConstants.DEFAULT_INSTALL_URL;
         url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
@@ -355,11 +355,11 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
         /* Disable. */
-        Updates.setEnabled(false);
-        assertFalse(Updates.isEnabled());
+        Distribute.setEnabled(false);
+        assertFalse(Distribute.isEnabled());
 
         /* Store token. */
-        Updates.getInstance().storeUpdateToken("some token", requestId.toString());
+        Distribute.getInstance().storeUpdateToken("some token", requestId.toString());
 
         /* Verify behavior. */
         verifyStatic(never());
@@ -372,11 +372,11 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Since after disabling once, the request id was deleted we can enable/disable it will also ignore the request. */
-        Updates.setEnabled(true);
-        assertTrue(Updates.isEnabled());
+        Distribute.setEnabled(true);
+        assertTrue(Distribute.isEnabled());
 
         /* Store token. */
-        Updates.getInstance().storeUpdateToken("some token", requestId.toString());
+        Distribute.getInstance().storeUpdateToken("some token", requestId.toString());
 
         /* Verify behavior. */
         verifyStatic(never());
@@ -393,22 +393,22 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         ServiceCall firstCall = mock(ServiceCall.class);
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(firstCall).thenReturn(mock(ServiceCall.class));
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* The call is only triggered when app is resumed. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
         verify(httpClient, never()).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify cancel on disabling. */
         verify(firstCall, never()).cancel();
-        Updates.setEnabled(false);
+        Distribute.setEnabled(false);
         verify(firstCall).cancel();
 
         /* No more call on that one. */
-        Updates.setEnabled(true);
-        Updates.setEnabled(false);
+        Distribute.setEnabled(true);
+        Distribute.setEnabled(false);
         verify(firstCall).cancel();
     }
 
@@ -428,11 +428,11 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
             }
         });
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify on failure we complete workflow. */
@@ -440,8 +440,8 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* After that if we resume app nothing happens. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
@@ -461,12 +461,12 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
             }
         });
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         when(ReleaseDetails.parse(anyString())).thenThrow(new JSONException("mock"));
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify on failure we complete workflow. */
@@ -474,8 +474,8 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* After that if we resume app nothing happens. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
@@ -505,15 +505,15 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
             }
         });
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Disable before it fails. */
-        Updates.setEnabled(false);
+        Distribute.setEnabled(false);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verifyStatic(never());
@@ -526,8 +526,8 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* After that if we resume app nothing happens. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
@@ -557,15 +557,15 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
             }
         });
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(UpdateConstants.HEADER_API_TOKEN, "some token");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Disable before it succeeds. */
-        Updates.setEnabled(false);
+        Distribute.setEnabled(false);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verifyStatic(never());
@@ -578,8 +578,8 @@ public class UpdatesBeforeApiSuccessTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* After that if we resume app nothing happens. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verify(mDialog, never()).show();
     }

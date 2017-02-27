@@ -6,14 +6,14 @@ import android.support.annotation.VisibleForTesting;
 import com.microsoft.azure.mobile.MobileCenter;
 
 /**
- * Updates constants.
+ * Distribute constants.
  */
-final class UpdateConstants {
+final class DistributeConstants {
 
     /**
-     * Update service name.
+     * Distribute service name.
      */
-    static final String SERVICE_NAME = "Updates";
+    static final String SERVICE_NAME = "Distribute";
 
     /**
      * Log tag for this service.
@@ -150,7 +150,7 @@ final class UpdateConstants {
     static final String PREFERENCE_KEY_DOWNLOAD_TIME = PREFERENCE_PREFIX + "download_time";
 
     @VisibleForTesting
-    UpdateConstants() {
+    DistributeConstants() {
 
         /* Hide constructor as it's just a constant class. */
     }
