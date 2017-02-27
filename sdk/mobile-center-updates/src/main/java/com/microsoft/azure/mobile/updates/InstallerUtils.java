@@ -36,6 +36,7 @@ class InstallerUtils {
     /* Populate local stores. */
     static {
         LOCAL_STORES.add("adb");
+        LOCAL_STORES.add("com.android.packageinstaller");
         LOCAL_STORES.add("com.google.android.packageinstaller");
     }
 
