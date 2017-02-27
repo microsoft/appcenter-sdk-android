@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.HEADER_API_TOKEN;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.HEADER_API_TOKEN;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
@@ -39,8 +39,8 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({NetworkStateHelper.class, MobileCenterLog.class, Updates.class})
-public class UpdatesTest {
+@PrepareForTest({NetworkStateHelper.class, MobileCenterLog.class, Distribute.class})
+public class DistributeTest {
 
     @Rule
     public PowerMockRule rule = new PowerMockRule();
@@ -112,7 +112,7 @@ public class UpdatesTest {
         String apiToken = UUIDUtils.randomUUID().toString();
         HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret, apiToken);
 
-        /* Updates don't have request body. Verify it. */
+        /* Distribute don't have request body. Verify it. */
         Assert.assertNull(callTemplate.buildRequestBody());
     }
 
@@ -133,8 +133,8 @@ public class UpdatesTest {
                 return call;
             }
         });
-        Updates.getInstance().getLatestReleaseDetails(apiToken);
-        Updates.getInstance().onStarted(mock(Context.class), appSecret, mock(Channel.class));
+        Distribute.getInstance().getLatestReleaseDetails(apiToken);
+        Distribute.getInstance().onStarted(mock(Context.class), appSecret, mock(Channel.class));
         return callTemplate.get();
     }
 }

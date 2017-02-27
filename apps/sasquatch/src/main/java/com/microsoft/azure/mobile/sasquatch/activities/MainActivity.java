@@ -69,12 +69,12 @@ public class MainActivity extends AppCompatActivity {
         try {
 
             @SuppressWarnings("unchecked")
-            Class<? extends MobileCenterService> updates = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.updates.Updates");
-            updates.getMethod("setInstallUrl", String.class).invoke(null, "http://install.asgard-int.trafficmanager.net");
-            updates.getMethod("setApiUrl", String.class).invoke(null, "https://asgard-int.trafficmanager.net/api/v0.1");
-            MobileCenter.start(updates);
+            Class<? extends MobileCenterService> distribute = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.distribute.Distribute");
+            distribute.getMethod("setInstallUrl", String.class).invoke(null, "http://install.asgard-int.trafficmanager.net");
+            distribute.getMethod("setApiUrl", String.class).invoke(null, "https://asgard-int.trafficmanager.net/api/v0.1");
+            MobileCenter.start(distribute);
         } catch (Exception e) {
-            MobileCenterLog.info(LOG_TAG, "Updates class not yet available in this flavor.");
+            MobileCenterLog.info(LOG_TAG, "Distribute class not yet available in this flavor.");
         }
 
         Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());

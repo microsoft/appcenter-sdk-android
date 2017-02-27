@@ -25,8 +25,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_UPDATE_TOKEN;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMapOf;
@@ -45,7 +45,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
+public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
     @Mock
     private AlertDialog mUnknownSourcesDialog;
@@ -74,8 +74,8 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mFirstActivity);
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mFirstActivity);
 
         /* Mock second dialog. */
         when(mDialogBuilder.create()).thenReturn(mUnknownSourcesDialog);
@@ -98,7 +98,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
 
         /* Click on first dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_updates_update_dialog_download), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), clickListener.capture());
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
         when(mDialog.isShowing()).thenReturn(false);
 
@@ -120,8 +120,8 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(mUnknownSourcesDialog).show();
     }
@@ -140,8 +140,8 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(mUnknownSourcesDialog).show();
     }
@@ -150,7 +150,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
     public void disableBeforeCancelWithBack() {
 
         /* Disable. */
-        Updates.setEnabled(false);
+        Distribute.setEnabled(false);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
@@ -165,8 +165,8 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(mUnknownSourcesDialog).show();
     }
@@ -175,7 +175,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
     public void disableBeforeCancelWithButton() {
 
         /* Disable. */
-        Updates.setEnabled(false);
+        Distribute.setEnabled(false);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
@@ -190,8 +190,8 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(mUnknownSourcesDialog).show();
     }
@@ -200,8 +200,8 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
     public void coverActivity() {
 
         /* Pause/resume should not alter dialog. */
-        Updates.getInstance().onActivityPaused(mFirstActivity);
-        Updates.getInstance().onActivityResumed(mFirstActivity);
+        Distribute.getInstance().onActivityPaused(mFirstActivity);
+        Distribute.getInstance().onActivityResumed(mFirstActivity);
 
         /* Only once check, and no hiding. */
         verify(mDialog).show();
@@ -210,8 +210,8 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         verify(mUnknownSourcesDialog, never()).hide();
 
         /* Cover activity. Second dialog must be replaced. First one skipped. */
-        Updates.getInstance().onActivityPaused(mFirstActivity);
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mFirstActivity);
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(mDialog, never()).hide();
         verify(mUnknownSourcesDialog, times(2)).show();
@@ -225,7 +225,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         Intent intent = mock(Intent.class);
         whenNew(Intent.class).withArguments(Settings.ACTION_SECURITY_SETTINGS).thenReturn(intent);
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_updates_unknown_sources_dialog_settings), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_unknown_sources_dialog_settings), clickListener.capture());
         clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
         when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
 
@@ -233,8 +233,8 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         verify(mFirstActivity).startActivity(intent);
 
         /* Simulate we go back and forth to settings without changing the value. */
-        Updates.getInstance().onActivityPaused(mFirstActivity);
-        Updates.getInstance().onActivityResumed(mFirstActivity);
+        Distribute.getInstance().onActivityPaused(mFirstActivity);
+        Distribute.getInstance().onActivityResumed(mFirstActivity);
 
         /* Second dialog will be back directly, no update dialog again. */
         verify(mDialog).show();
@@ -251,7 +251,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         Intent intent = mock(Intent.class);
         whenNew(Intent.class).withArguments(Settings.ACTION_SECURITY_SETTINGS).thenReturn(intent);
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_updates_unknown_sources_dialog_settings), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_unknown_sources_dialog_settings), clickListener.capture());
         clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
         when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
 
@@ -260,9 +260,9 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
 
         /* Simulate we go to settings, change value then go back. */
         mockStatic(AsyncTaskUtils.class);
-        Updates.getInstance().onActivityPaused(mFirstActivity);
+        Distribute.getInstance().onActivityPaused(mFirstActivity);
         when(InstallerUtils.isUnknownSourcesEnabled(mContext)).thenReturn(true);
-        Updates.getInstance().onActivityResumed(mFirstActivity);
+        Distribute.getInstance().onActivityResumed(mFirstActivity);
 
         /* No more dialog, start download. */
         verify(mDialog).show();
@@ -274,7 +274,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
 
             @Override
             public boolean matches(Object argument) {
-                return argument instanceof Updates.DownloadTask;
+                return argument instanceof Distribute.DownloadTask;
             }
         }), anyVararg());
     }
@@ -287,7 +287,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         whenNew(Intent.class).withArguments(Settings.ACTION_SECURITY_SETTINGS).thenReturn(intent);
         doThrow(new ActivityNotFoundException()).when(mFirstActivity).startActivity(intent);
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_updates_unknown_sources_dialog_settings), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_unknown_sources_dialog_settings), clickListener.capture());
         clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
         when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
 
@@ -299,8 +299,8 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(mUnknownSourcesDialog).show();
     }
@@ -309,7 +309,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
     public void disableThenClickSettingsThenFailsToNavigate() throws Exception {
 
         /* Disable. */
-        Updates.setEnabled(false);
+        Distribute.setEnabled(false);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
@@ -318,7 +318,7 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         whenNew(Intent.class).withArguments(Settings.ACTION_SECURITY_SETTINGS).thenReturn(intent);
         doThrow(new ActivityNotFoundException()).when(mFirstActivity).startActivity(intent);
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_updates_unknown_sources_dialog_settings), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_unknown_sources_dialog_settings), clickListener.capture());
         clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
         when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
 
@@ -330,8 +330,8 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
-        Updates.getInstance().onActivityPaused(mock(Activity.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(mUnknownSourcesDialog).show();
     }
@@ -341,10 +341,10 @@ public class UpdatesWarnUnknownSourcesTest extends AbstractUpdatesTest {
 
         /* Restart should check release and show update dialog again. */
         when(mDialogBuilder.create()).thenReturn(mDialog);
-        Updates.unsetInstance();
-        Updates.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Updates.getInstance().onActivityResumed(mock(Activity.class));
-        Updates.setEnabled(true);
+        Distribute.unsetInstance();
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.setEnabled(true);
         verify(mDialog, times(2)).show();
     }
 }

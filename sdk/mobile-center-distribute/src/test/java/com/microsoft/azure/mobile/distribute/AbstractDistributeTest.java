@@ -27,8 +27,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.INVALID_DOWNLOAD_IDENTIFIER;
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.PREFERENCE_KEY_DOWNLOAD_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -41,12 +41,12 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("WeakerAccess")
-@PrepareForTest({Updates.class, PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, NetworkStateHelper.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, InstallerUtils.class, Toast.class})
-public class AbstractUpdatesTest {
+@PrepareForTest({Distribute.class, PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, NetworkStateHelper.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, InstallerUtils.class, Toast.class})
+public class AbstractDistributeTest {
 
     static final String TEST_HASH = HashUtils.sha256("com.contoso:1.2.3:6");
 
-    private static final String UPDATES_ENABLED_KEY = KEY_ENABLED + "_Updates";
+    private static final String DISTRIBUTE_ENABLED_KEY = KEY_ENABLED + "_Distribute";
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -81,14 +81,14 @@ public class AbstractUpdatesTest {
     @SuppressLint("ShowToast")
     @SuppressWarnings("ResourceType")
     public void setUp() throws Exception {
-        Updates.unsetInstance();
+        Distribute.unsetInstance();
         mockStatic(MobileCenterLog.class);
         mockStatic(MobileCenter.class);
         when(MobileCenter.isEnabled()).thenReturn(true);
 
         /* First call to com.microsoft.azure.mobile.MobileCenter.isEnabled shall return true, initial state. */
         mockStatic(PreferencesStorage.class);
-        when(PreferencesStorage.getBoolean(UPDATES_ENABLED_KEY, true)).thenReturn(true);
+        when(PreferencesStorage.getBoolean(DISTRIBUTE_ENABLED_KEY, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
         doAnswer(new Answer<Void>() {
@@ -98,11 +98,11 @@ public class AbstractUpdatesTest {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
-                when(PreferencesStorage.getBoolean(UPDATES_ENABLED_KEY, true)).thenReturn(enabled);
+                when(PreferencesStorage.getBoolean(DISTRIBUTE_ENABLED_KEY, true)).thenReturn(enabled);
                 return null;
             }
         }).when(PreferencesStorage.class);
-        PreferencesStorage.putBoolean(eq(UPDATES_ENABLED_KEY), anyBoolean());
+        PreferencesStorage.putBoolean(eq(DISTRIBUTE_ENABLED_KEY), anyBoolean());
 
         /* Default download id when not found. */
         when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);

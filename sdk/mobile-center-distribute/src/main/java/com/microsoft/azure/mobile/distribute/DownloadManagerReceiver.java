@@ -20,15 +20,15 @@ public class DownloadManagerReceiver extends BroadcastReceiver {
          */
         String action = intent.getAction();
         if (DownloadManager.ACTION_NOTIFICATION_CLICKED.equals(action)) {
-            Updates.getInstance().resumeApp(context);
+            Distribute.getInstance().resumeApp(context);
         }
 
         /*
-         * Forward the download identifier to Updates for inspection when a download completes.
+         * Forward the download identifier to Distribute for inspection when a download completes.
          */
         else if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
             long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
-            Updates.getInstance().checkDownload(context, downloadId);
+            Distribute.getInstance().checkDownload(context, downloadId);
         }
     }
 }

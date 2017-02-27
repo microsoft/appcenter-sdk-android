@@ -11,7 +11,7 @@ import org.mockito.Mock;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
-import static com.microsoft.azure.mobile.distribute.UpdateConstants.LOG_TAG;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.LOG_TAG;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
