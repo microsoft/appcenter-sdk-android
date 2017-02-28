@@ -57,6 +57,9 @@ public class MobileCenter {
      */
     private Application mApplication;
 
+    /**
+     * Handler for uncaught exceptions.
+     */
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
 
     /**
@@ -294,7 +297,7 @@ public class MobileCenter {
             /* If parameters are valid, init context related resources. */
             StorageHelper.initialize(application);
 
-            /* For don't call PreferencesStorage twice. */
+            /* Remember state to avoid double call PreferencesStorage. */
             boolean enabled = isInstanceEnabled();
 
             /* Init uncaught exception handler. */
@@ -456,6 +459,7 @@ public class MobileCenter {
         @Override
         public void uncaughtException(Thread thread, Throwable exception) {
             if (isEnabled()) {
+
                 /* Wait channel to finish saving other logs in background. */
                 if (mChannel != null)
                     mChannel.shutdown();

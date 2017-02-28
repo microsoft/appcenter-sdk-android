@@ -13,10 +13,6 @@ public class ShutdownHelper {
         /* Hide constructor. */
     }
 
-    public static void shutdown() {
-        shutdown(1);
-    }
-
     public static void shutdown(int status) {
         Process.killProcess(Process.myPid());
         System.exit(status);
