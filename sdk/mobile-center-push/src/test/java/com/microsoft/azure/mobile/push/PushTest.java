@@ -86,7 +86,7 @@ public class PushTest {
         }).when(StorageHelper.PreferencesStorage.class);
         StorageHelper.PreferencesStorage.putBoolean(eq(PUSH_ENABLED_KEY), anyBoolean());
 
-
+        /* Mock Firebase instance. */
         mockStatic(FirebaseInstanceId.class);
         when(FirebaseInstanceId.getInstance()).thenReturn(mFirebaseInstanceId);
     }

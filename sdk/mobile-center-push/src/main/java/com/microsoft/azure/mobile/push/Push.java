@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Push notifications interface
+ * Push notifications interface.
  */
 public class Push extends AbstractMobileCenterService {
 
@@ -58,11 +58,6 @@ public class Push extends AbstractMobileCenterService {
      * The PNS handle for this installation.
      */
     private String mPushToken;
-
-    /**
-     * Remember if we already sent push installation log
-     */
-    private boolean mPushTokenSent;
 
     /**
      * Log factories managed by this service.
@@ -123,39 +118,42 @@ public class Push extends AbstractMobileCenterService {
     private void enqueuePushInstallationLog(@NonNull String pushToken) {
         if (isInactive())
             return;
-        if (mPushTokenSent)
-            return;
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
         mChannel.enqueue(log, PUSH_GROUP);
-        mPushTokenSent = true;
     }
 
     /**
      * Handle push token update success.
      *
-     * @param token the push token value
+     * @param pushToken the push token value
      */
     @VisibleForTesting
-    synchronized void onTokenRefresh(@NonNull String token) {
-        mPushToken = token;
-        MobileCenterLog.debug(LOG_TAG, "Push token: " + mPushToken);
-        PreferencesStorage.putString(PREFERENCE_KEY_PUSH_TOKEN, mPushToken);
-        enqueuePushInstallationLog(mPushToken);
-    }
-
-    private synchronized void updatePushToken() {
+    synchronized void onTokenRefresh(@NonNull String pushToken) {
         if (isInactive())
             return;
-        if (mPushTokenSent)
+        if (mPushToken != null && mPushToken.equals(pushToken))
             return;
-        if (mPushToken != null) {
-            enqueuePushInstallationLog(mPushToken);
-        } else {
+        MobileCenterLog.debug(LOG_TAG, "Push token: " + pushToken);
+        PreferencesStorage.putString(PREFERENCE_KEY_PUSH_TOKEN, pushToken);
+        enqueuePushInstallationLog(pushToken);
+        mPushToken = pushToken;
+    }
+
+    /**
+     * React to enable state change.
+     *
+     * @param enabled current state.
+     */
+    private synchronized void applyEnabledState(boolean enabled) {
+        if (enabled) {
             String token = FirebaseInstanceId.getInstance().getToken();
             if (token != null) {
                 onTokenRefresh(token);
             }
+        } else {
+            /* Reset module state if disabled */
+            mPushToken = null;
         }
     }
 
@@ -182,14 +180,12 @@ public class Push extends AbstractMobileCenterService {
     @Override
     public synchronized void onChannelReady(@NonNull Context context, @NonNull Channel channel) {
         super.onChannelReady(context, channel);
-        updatePushToken();
+        applyEnabledState(isInstanceEnabled());
     }
 
     @Override
     public synchronized void setInstanceEnabled(boolean enabled) {
         super.setInstanceEnabled(enabled);
-        if (enabled) {
-            updatePushToken();
-        }
+        applyEnabledState(enabled);
     }
 }
