@@ -116,8 +116,6 @@ public class Push extends AbstractMobileCenterService {
      * @param pushToken the push token value
      */
     private void enqueuePushInstallationLog(@NonNull String pushToken) {
-        if (isInactive())
-            return;
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
         mChannel.enqueue(log, PUSH_GROUP);
@@ -146,7 +144,7 @@ public class Push extends AbstractMobileCenterService {
      * @param enabled current state.
      */
     private synchronized void applyEnabledState(boolean enabled) {
-        if (enabled) {
+        if (enabled && mChannel != null) {
             String token = FirebaseInstanceId.getInstance().getToken();
             if (token != null) {
                 onTokenRefresh(token);

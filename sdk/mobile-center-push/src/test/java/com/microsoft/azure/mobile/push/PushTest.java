@@ -152,6 +152,7 @@ public class PushTest {
         verify(channel, never()).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
 
         /* For check enqueue only once */
+        when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
         Push.setEnabled(true);
         Push.setEnabled(true);
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
