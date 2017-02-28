@@ -1,7 +1,6 @@
 package com.microsoft.azure.mobile.crashes;
 
 import android.content.Context;
-import android.os.Process;
 import android.os.SystemClock;
 
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;

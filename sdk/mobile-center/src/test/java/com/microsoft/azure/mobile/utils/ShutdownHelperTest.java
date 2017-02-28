@@ -35,13 +35,9 @@ public class ShutdownHelperTest {
         /* Mock process id */
         when(Process.myPid()).thenReturn(123);
 
-        ShutdownHelper.shutdown();
+        ShutdownHelper.shutdown(999);
         verifyStatic();
         Process.killProcess(123);
-        verifyStatic();
-        System.exit(1);
-
-        ShutdownHelper.shutdown(999);
         verifyStatic();
         System.exit(999);
     }
