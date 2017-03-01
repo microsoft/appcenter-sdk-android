@@ -41,6 +41,4 @@ public class ShutdownHelperTest {
         verifyStatic();
         System.exit(999);
     }
-
-
 }
