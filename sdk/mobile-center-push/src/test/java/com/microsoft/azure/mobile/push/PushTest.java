@@ -123,6 +123,7 @@ public class PushTest {
         when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
         push.setInstanceEnabled(true);
         verify(push).onTokenRefresh(anyString());
+        push.onTokenRefresh(testToken);
         verifyStatic(times(1));
         StorageHelper.PreferencesStorage.putString(eq(PREFERENCE_KEY_PUSH_TOKEN), eq(testToken));
 
