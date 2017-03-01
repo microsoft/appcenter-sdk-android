@@ -123,13 +123,17 @@ public class PushTest {
         when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
         push.setInstanceEnabled(true);
         verify(push).onTokenRefresh(anyString());
-        push.onTokenRefresh(testToken);
         verifyStatic(times(1));
         StorageHelper.PreferencesStorage.putString(eq(PREFERENCE_KEY_PUSH_TOKEN), eq(testToken));
 
         /* For check enqueue only once */
         push.onTokenRefresh(testToken);
         verify(channel).enqueue(any(PushInstallationLog.class), anyString());
+
+        /* For check resend token on change */
+        push.onTokenRefresh("OTHER");
+        verifyStatic(times(1));
+        StorageHelper.PreferencesStorage.putString(eq(PREFERENCE_KEY_PUSH_TOKEN), eq("OTHER"));
     }
 
     @Test
