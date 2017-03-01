@@ -150,6 +150,7 @@ public class Push extends AbstractMobileCenterService {
                 onTokenRefresh(token);
             }
         } else {
+
             /* Reset module state if disabled */
             mPushToken = null;
         }
