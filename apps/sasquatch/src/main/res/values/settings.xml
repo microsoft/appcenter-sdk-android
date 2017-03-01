@@ -27,6 +27,14 @@
     <string name="mobile_center_crashes_state_summary_enabled">Crashes is enabled</string>
     <string name="mobile_center_crashes_state_summary_disabled">Crashes is disabled</string>
 
+    <string name="push_key">mobile_center_push</string>
+    <string name="push_title">Push</string>
+
+    <string name="mobile_center_push_state_key">mobile_center_push_state_key</string>
+    <string name="mobile_center_push_state_title">Push state</string>
+    <string name="mobile_center_push_state_summary_enabled">Push is enabled</string>
+    <string name="mobile_center_push_state_summary_disabled">Push is disabled</string>
+
     <string name="application_info_key">application_info</string>
     <string name="application_info_title">Application Information</string>
 
