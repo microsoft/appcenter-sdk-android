@@ -16,7 +16,7 @@ The SDK is currently in private beta release and we support the following servic
 
 2. **Crashes**: The Mobile Center SDK will automatically generate a crash log every time your app crashes. The log is first written to the device's storage and when the user starts the app again, the crash report will be forwarded to Mobile Center. Collecting crashes works for both beta and live apps, i.e. those submitted to Google Play or other app stores. Crash logs contain viable information for you to help resolve the issue. The SDK gives you a lot of flexibility how to handle a crash log. As a developer you can collect and add additional information to the report if you like.
 
-3. **Distribute**: Our SDK will let your users install a new version of the app when you distribute it via Mobile Center. With a new version of the app available, the SDK will present an update dialog to the users to either download or ignore the latest version. Once they click "Download", SDK will start the installation process of your application. Note that this feature will NOT work if your app is deployed to the app store.
+3. **Distribute**: Our SDK will let your users install a new version of the app when you distribute it via Mobile Center. With a new version of the app available, the SDK will present an update dialog to the users to either download or ignore the latest version. Once they click "Download", SDK will start the installation process of your application. Note that this feature will `NOT` work if your app is deployed to the app store, if you are developing locally or if the app is a debug build.
 
 This document contains the following sections:
 
@@ -46,7 +46,7 @@ The Mobile Center SDK is designed with a modular approach – a developer only n
 
 Below are the steps on how to integrate our compiled libraries in your application using Android Studio and Gradle.
 
-1. Open your app level build.gradle file (app/build.gradle) and include the dependencies that you want in your project. Each SDK module needs to be added as a separate dependency in this section. If you would want to all the modules - Analytics, Crashes and Distribute, add the following lines:
+1. Open your app level build.gradle file (app/build.gradle) and include the dependencies that you want in your project. Each SDK module needs to be added as a separate dependency in this section. If you want to include all the modules - Analytics, Crashes and Distribute, add the following lines:
 
     ```groovy
     dependencies {
@@ -73,9 +73,9 @@ To start the Mobile Center SDK in your app, follow these steps:
     ```
     You can also copy paste the `start` method call from the Overview page on Mobile Center portal once your app is selected. It already includes the App Secret so that all the data collected by the SDK corresponds to your application. Make sure to replace {Your App Secret} text with the actual value for your application.
     
-    The example above shows how to use the `start()` method and include Analytics, Crashes and Distribute services. If you wish not to use feature provided for Distribute service, remove the parameter from the method call above. Note that, unless you explicitly specify each service as parameters in the start method, you can't use that Mobile Center service. Also, the `start()` API can be used only once in the lifecycle of your app – all other calls will log a warning to the console and only the services included in the first call will be available.
+    The example above shows how to use the `start()` method and include Analytics, Crashes and Distribute services. If you wish not to onboard to any of these services, say you dont want to use features provided by Distribute service, remove the parameter from the method call above. Note that, unless you explicitly specify each service as parameters in the start method, you can't use that Mobile Center service. Also, the `start()` API can be used only once in the lifecycle of your app – all other calls will log a warning to the console and only the services included in the first call will be available.
 
-    For example - if you jsut want to onboard to Analytics service, you should modify the Start() API call like below:
+    For example - if you just want to onboard to Analytics service, you should modify the start() API call like below:
     ```Java
     MobileCenter.start(getApplication(), "{Your App Secret}", Analytics.class);
     ```
@@ -230,10 +230,9 @@ You create your own Crashes listener and assign it like this:
 
 ## 6. Distribute APIs
 
-You can easily let your users to get the latest version of your app by integrating `Distribute` module of Mobile Center SDK. All you need to do is pass the module name as a parameter in the `Start()` API call. Once the activity is created, the SDK checks for new updates in the background. If it finds a new update, users will see a dialog with two options - `Download` and `Ignore`. If the user presses `Download`, it will trigger the new version to be installed.
+You can easily let your users get the latest version of your app by integrating `Distribute` service of Mobile Center SDK. All you need to do is pass the module name as a parameter in the `Start()` API call. Once the activity is created, the SDK checks for new updates in the background. If it finds a new update, users will see a dialog with two options - `Download` and `Ignore`. If the user presses `Download`, it will trigger the new version to be installed.
 
-You can easily provide your own resource strings if you'd like to localize the text displayed in the update dialog. Look at the string files [here](https://github.com/Microsoft/mobile-center-sdk-android/blob/distribute/sdk/mobile-center-distribute/src/main/res/values/strings.xml). Use the same string name and specify the localized value to be reflected in the dialog.  
-
+You can easily provide your own resource strings if you'd like to localize the text displayed in the update dialog. Look at the string files [here](https://github.com/Microsoft/mobile-center-sdk-android/blob/distribute/sdk/mobile-center-distribute/src/main/res/values/strings.xml). Use the same string name and specify the localized value to be reflected in the dialog in your own app resource file.  
 
 * **Enable or disable Distribute:**  You can change the enabled state by calling the `Distribute.setEnabled()` method. If you disable it, the SDK will not prompt your users when a new version is available for install. To re-enable it, pass `true` as a parameter in the same method.
 
