@@ -25,11 +25,11 @@ This document contains the following sections:
 3. [Start the SDK](#3-start-the-sdk)
 4. [Analytics APIs](#4-analytics-apis)
 5. [Crashes APIs](#5-crashes-apis)
-6. [Distribute APIs](#5-crashes-apis)
-7. [Advanced APIs](#6-advanced-apis)
-8. [Troubleshooting](#7-troubleshooting)
-9. [Contributing](#8-contributing)
-10. [Contact](#9-contact)
+6. [Distribute APIs](#6-distribute-apis)
+7. [Advanced APIs](#7-advanced-apis)
+8. [Troubleshooting](#8-troubleshooting)
+9. [Contributing](#9-contributing)
+10. [Contact](#10-contact)
 
 Let's get started with setting up Mobile Center Android SDK in your app to use these services:
 
