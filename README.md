@@ -46,7 +46,7 @@ The Mobile Center SDK is designed with a modular approach – a developer only n
 
 Below are the steps on how to integrate our compiled libraries in your application using Android Studio and Gradle.
 
-1. Open your app level build.gradle file (app/build.gradle) and include the dependencies that you want in your project. Each SDK module needs to be added as a separate dependency in this section. If you want to include all the modules - Analytics, Crashes and Distribute, add the following lines:
+1. Open your app level build.gradle file (app/build.gradle) and include the dependencies that you want in your project. Each SDK module needs to be added as a separate dependency in this section. If you want to include all the services - Analytics, Crashes and Distribute, add the following lines:
 
     ```groovy
     dependencies {
@@ -230,9 +230,9 @@ You create your own Crashes listener and assign it like this:
 
 ## 6. Distribute APIs
 
-You can easily let your users get the latest version of your app by integrating `Distribute` service of Mobile Center SDK. All you need to do is pass the module name as a parameter in the `Start()` API call. Once the activity is created, the SDK checks for new updates in the background. If it finds a new update, users will see a dialog with two options - `Download` and `Ignore`. If the user presses `Download`, it will trigger the new version to be installed.
+You can easily let your users get the latest version of your app by integrating `Distribute` service of Mobile Center SDK. All you need to do is pass the service name as a parameter in the `Start()` API call. Once the activity is created, the SDK checks for new updates in the background. If it finds a new update, users will see a dialog with two options - `Download` and `Ignore`. If the user presses `Download`, it will trigger the new version to be installed.
 
-You can easily provide your own resource strings if you'd like to localize the text displayed in the update dialog. Look at the string files [here](https://github.com/Microsoft/mobile-center-sdk-android/blob/distribute/sdk/mobile-center-distribute/src/main/res/values/strings.xml). Use the same string name and specify the localized value to be reflected in the dialog in your own app resource file.  
+You can easily provide your own resource strings if you'd like to localize the text displayed in the update dialog. Look at the string files [here](https://github.com/Microsoft/mobile-center-sdk-android/blob/distribute/sdk/mobile-center-distribute/src/main/res/values/strings.xml). Use the same string name and specify the localized value to be reflected in the dialog in your own app resource files.  
 
 * **Enable or disable Distribute:**  You can change the enabled state by calling the `Distribute.setEnabled()` method. If you disable it, the SDK will not prompt your users when a new version is available for install. To re-enable it, pass `true` as a parameter in the same method.
 
