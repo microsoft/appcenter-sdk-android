@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import static android.util.Log.ASSERT;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.azure.mobile.utils.MobileCenterLog.NONE;
 
@@ -104,7 +103,7 @@ public class MobileCenter {
      *
      * @return log level as defined by {@link android.util.Log}.
      */
-    @IntRange(from = VERBOSE, to = ASSERT)
+    @IntRange(from = VERBOSE, to = NONE)
     public static int getLogLevel() {
         return MobileCenterLog.getLogLevel();
     }
@@ -273,6 +272,8 @@ public class MobileCenter {
      * @param appSecret   a unique and secret key used to identify the application.
      * @return true if configuration was successful, false otherwise.
      */
+    /* UncaughtExceptionHandler is used by PowerMock but lint does not detect it. */
+    @SuppressLint("VisibleForTests")
     private synchronized boolean instanceConfigure(Application application, String appSecret) {
 
         /* Load some global constants. */
