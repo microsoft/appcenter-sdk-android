@@ -794,10 +794,6 @@ public class Crashes extends AbstractMobileCenterService {
         } catch (IOException e) {
             MobileCenterLog.error(Crashes.LOG_TAG, "Error writing error log to file", e);
         }
-
-        /* Wait channel to finish saving other logs in background. */
-        if (mChannel != null)
-            mChannel.shutdown();
     }
 
     /**

@@ -1,7 +1,8 @@
 package com.microsoft.azure.mobile.crashes;
 
-import android.os.Process;
 import android.support.annotation.VisibleForTesting;
+
+import com.microsoft.azure.mobile.utils.ShutdownHelper;
 
 class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
@@ -20,7 +21,7 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
             if (mDefaultUncaughtExceptionHandler != null) {
                 mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
             } else {
-                ShutdownHelper.shutdown();
+                ShutdownHelper.shutdown(10);
             }
         }
     }
@@ -49,14 +50,5 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
     void unregister() {
         Thread.setDefaultUncaughtExceptionHandler(mDefaultUncaughtExceptionHandler);
-    }
-
-    @VisibleForTesting
-    static class ShutdownHelper {
-
-        static void shutdown() {
-            Process.killProcess(Process.myPid());
-            System.exit(10);
-        }
     }
 }
