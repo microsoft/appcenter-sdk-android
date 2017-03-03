@@ -14,6 +14,7 @@ import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.ShutdownHelper;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.junit.After;
@@ -58,7 +59,20 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({MobileCenter.class, Channel.class, Constants.class, MobileCenterLog.class, StorageHelper.class, StorageHelper.PreferencesStorage.class, IdHelper.class, StorageHelper.DatabaseStorage.class, DeviceInfoHelper.class})
+@PrepareForTest({
+        MobileCenter.class,
+        MobileCenter.UncaughtExceptionHandler.class,
+        Channel.class,
+        Constants.class,
+        MobileCenterLog.class,
+        StorageHelper.class,
+        StorageHelper.PreferencesStorage.class,
+        IdHelper.class,
+        StorageHelper.DatabaseStorage.class,
+        DeviceInfoHelper.class,
+        Thread.class,
+        ShutdownHelper.class
+})
 public class MobileCenterTest {
 
     private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
@@ -86,6 +100,8 @@ public class MobileCenterTest {
         mockStatic(StorageHelper.PreferencesStorage.class);
         mockStatic(IdHelper.class);
         mockStatic(StorageHelper.DatabaseStorage.class);
+        mockStatic(Thread.class);
+        mockStatic(ShutdownHelper.class);
 
         /* First call to com.microsoft.azure.mobile.MobileCenter.isEnabled shall return true, initial state. */
         when(StorageHelper.PreferencesStorage.getBoolean(anyString(), eq(true))).thenReturn(true);
@@ -613,25 +629,59 @@ public class MobileCenterTest {
     }
 
     @Test
-    public void setServerUrl() throws Exception {
+    public void setLogUrl() throws Exception {
 
-        /* Change server URL before start. */
+        /* Change log URL before start. */
         DefaultChannel channel = mock(DefaultChannel.class);
         whenNew(DefaultChannel.class).withAnyArguments().thenReturn(channel);
-        String serverUrl = "http://mock";
-        MobileCenter.setServerUrl(serverUrl);
+        String logUrl = "http://mock";
+        MobileCenter.setLogUrl(logUrl);
 
         /* No effect for now. */
-        verify(channel, never()).setServerUrl(serverUrl);
+        verify(channel, never()).setLogUrl(logUrl);
 
-        /* Start should propagate the server url. */
+        /* Start should propagate the log URL. */
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class);
-        verify(channel).setServerUrl(serverUrl);
+        verify(channel).setLogUrl(logUrl);
 
         /* Change it after, should work immediately. */
-        serverUrl = "http://mock2";
-        MobileCenter.setServerUrl(serverUrl);
-        verify(channel).setServerUrl(serverUrl);
+        logUrl = "http://mock2";
+        MobileCenter.setLogUrl(logUrl);
+        verify(channel).setLogUrl(logUrl);
+    }
+
+    @Test
+    public void uncaughtExceptionHandler() {
+        Thread.UncaughtExceptionHandler defaultUncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
+        when(Thread.getDefaultUncaughtExceptionHandler()).thenReturn(defaultUncaughtExceptionHandler);
+        MobileCenter.configure(application, DUMMY_APP_SECRET);
+        MobileCenter.UncaughtExceptionHandler handler = MobileCenter.getInstance().getUncaughtExceptionHandler();
+        assertNotNull(handler);
+        assertEquals(defaultUncaughtExceptionHandler, handler.getDefaultUncaughtExceptionHandler());
+        verifyStatic();
+        Thread.setDefaultUncaughtExceptionHandler(eq(handler));
+
+        Channel channel = mock(Channel.class);
+        Thread thread = mock(Thread.class);
+        Throwable exception = mock(Throwable.class);
+        MobileCenter.getInstance().setChannel(channel);
+        handler.uncaughtException(thread, exception);
+        verify(channel).shutdown();
+        verify(defaultUncaughtExceptionHandler).uncaughtException(eq(thread), eq(exception));
+
+        MobileCenter.setEnabled(false);
+        verifyStatic();
+        Thread.setDefaultUncaughtExceptionHandler(eq(defaultUncaughtExceptionHandler));
+        handler.uncaughtException(thread, exception);
+        verify(channel, times(1)).shutdown();
+
+        when(Thread.getDefaultUncaughtExceptionHandler()).thenReturn(null);
+        MobileCenter.setEnabled(true);
+        MobileCenter.getInstance().setChannel(null);
+        assertNull(handler.getDefaultUncaughtExceptionHandler());
+        handler.uncaughtException(thread, exception);
+        verifyStatic();
+        ShutdownHelper.shutdown(10);
     }
 
     private static class DummyService extends AbstractMobileCenterService {

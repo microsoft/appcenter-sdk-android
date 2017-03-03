@@ -55,11 +55,11 @@
     <string name="clear_crash_user_confirmation_title">Clear crash user confirmation</string>
     <string name="clear_crash_user_confirmation_toast">Cleared</string>
 
-    <string name="server_url_key">server_url_key</string>
-    <string name="server_url_title">Server URL</string>
-    <string name="server_url_changed_format">Show Server URL has been changed to %s successfully. Please close the application completely and relaunch again.</string>
-    <string name="server_url_invalid">Server URL is not valid.</string>
-    <string name="server_url_production">Server URL currently set to the production.</string>
+    <string name="log_url_key">log_url_key</string>
+    <string name="log_url_title">Log URL</string>
+    <string name="log_url_changed_format">Show Log URL has been changed to %s successfully. Please close the application completely and relaunch again.</string>
+    <string name="log_url_invalid">Log URL is not valid.</string>
+    <string name="log_url_production">Log URL currently set to the production.</string>
 
     <string name="save">Save</string>
     <string name="reset">Reset</string>
