@@ -126,6 +126,7 @@ public class JSONUtilsAndroidTest {
         /* Read a JSON object and verify. */
         JSONObject object = new JSONObject(json);
         assertEquals(list, JSONUtils.readStringArray(object, "list"));
+        assertNull(JSONUtils.readStringArray(object, "missing"));
 
         /* Test null value. */
         writer = new JSONStringer();
