@@ -15,6 +15,7 @@ import static com.microsoft.azure.mobile.utils.crypto.CryptoConstants.AES_KEY_SI
 import static com.microsoft.azure.mobile.utils.crypto.CryptoConstants.ANDROID_KEY_STORE;
 import static com.microsoft.azure.mobile.utils.crypto.CryptoConstants.CIPHER_AES;
 import static com.microsoft.azure.mobile.utils.crypto.CryptoConstants.ENCRYPT_KEY_LIFETIME_IN_YEARS;
+import static com.microsoft.azure.mobile.utils.crypto.CryptoConstants.PROVIDER_ANDROID_M;
 import static javax.crypto.Cipher.DECRYPT_MODE;
 import static javax.crypto.Cipher.ENCRYPT_MODE;
 
@@ -43,7 +44,7 @@ class CryptoAesHandler implements CryptoHandler {
 
     @Override
     public byte[] encrypt(CryptoUtils.ICryptoFactory cryptoFactory, int apiLevel, KeyStore.Entry keyStoreEntry, byte[] input) throws Exception {
-        CryptoUtils.ICipher cipher = cryptoFactory.getCipher(CIPHER_AES, null);
+        CryptoUtils.ICipher cipher = cryptoFactory.getCipher(CIPHER_AES, PROVIDER_ANDROID_M);
         cipher.init(ENCRYPT_MODE, ((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey());
         byte[] cipherIV = cipher.getIV();
         byte[] output = cipher.doFinal(input);
@@ -55,7 +56,7 @@ class CryptoAesHandler implements CryptoHandler {
 
     @Override
     public byte[] decrypt(CryptoUtils.ICryptoFactory cryptoFactory, int apiLevel, KeyStore.Entry keyStoreEntry, byte[] data) throws Exception {
-        CryptoUtils.ICipher cipher = cryptoFactory.getCipher(CIPHER_AES, null);
+        CryptoUtils.ICipher cipher = cryptoFactory.getCipher(CIPHER_AES, PROVIDER_ANDROID_M);
         int blockSize = cipher.getBlockSize();
         IvParameterSpec ivParameterSpec = new IvParameterSpec(data, 0, blockSize);
         cipher.init(DECRYPT_MODE, ((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey(), ivParameterSpec);

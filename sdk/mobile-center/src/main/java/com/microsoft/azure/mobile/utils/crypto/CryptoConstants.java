@@ -64,12 +64,12 @@ class CryptoConstants {
     static final String CIPHER_RSA = KeyProperties.KEY_ALGORITHM_RSA + "/" + KeyProperties.BLOCK_MODE_ECB + "/" + KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1;
 
     /**
-     * RSA provider when running on old devices.
+     * Cipher provider when running on old devices.
      */
-    static final String ANDROID_RSA_OLD_PROVIDER = "AndroidOpenSSL";
+    static final String PROVIDER_ANDROID_OLD = "AndroidOpenSSL";
 
     /**
-     * RSA provider when running on M devices.
+     * Cipher provider when running on M devices.
      */
-    static final String ANDROID_RSA_M_PROVIDER = "AndroidKeyStoreBCWorkaround";
+    static final String PROVIDER_ANDROID_M = "AndroidKeyStoreBCWorkaround";
 }
