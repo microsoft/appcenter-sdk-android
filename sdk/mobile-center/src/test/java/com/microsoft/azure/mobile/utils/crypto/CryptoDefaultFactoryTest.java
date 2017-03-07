@@ -22,7 +22,7 @@ public class CryptoDefaultFactoryTest {
 
     @Test
     public void coverNoOpHandlerGenerate() throws Exception {
-        new CryptoNoOpHandler().generateKey(CryptoUtils.DEFAULT_CRYPTO_FACTORY, 0, null, null);
+        new CryptoNoOpHandler().generateKey(CryptoUtils.DEFAULT_CRYPTO_FACTORY, null, null);
     }
 
     @Test

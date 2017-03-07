@@ -119,6 +119,7 @@ public class UncaughtExceptionHandlerTest {
     }
 
     @Test
+    @SuppressWarnings("WeakerAccess")
     public void handleExceptionAndPassOn() {
         mExceptionHandler.register();
 

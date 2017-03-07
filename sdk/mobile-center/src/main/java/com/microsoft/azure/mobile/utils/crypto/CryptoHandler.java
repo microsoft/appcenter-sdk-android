@@ -20,12 +20,11 @@ interface CryptoHandler {
      * Generate a new key.
      *
      * @param cryptoFactory crypto factory.
-     * @param apiLevel      Android API level.
      * @param alias         keystore alias.
      * @param context       application context.
      * @throws Exception if an error occurs.
      */
-    void generateKey(CryptoUtils.ICryptoFactory cryptoFactory, int apiLevel, String alias, Context context) throws Exception;
+    void generateKey(CryptoUtils.ICryptoFactory cryptoFactory, String alias, Context context) throws Exception;
 
     /**
      * Encrypt data.

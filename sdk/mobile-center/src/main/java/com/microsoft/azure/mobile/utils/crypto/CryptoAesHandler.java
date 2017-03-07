@@ -27,7 +27,7 @@ class CryptoAesHandler implements CryptoHandler {
     }
 
     @Override
-    public void generateKey(CryptoUtils.ICryptoFactory cryptoFactory, int apiLevel, String alias, Context context) throws Exception {
+    public void generateKey(CryptoUtils.ICryptoFactory cryptoFactory, String alias, Context context) throws Exception {
         Calendar writeExpiry = Calendar.getInstance();
         writeExpiry.add(Calendar.YEAR, ENCRYPT_KEY_LIFETIME_IN_YEARS);
         CryptoUtils.IKeyGenerator keyGenerator = cryptoFactory.getKeyGenerator(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEY_STORE);

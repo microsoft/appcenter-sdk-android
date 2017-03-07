@@ -22,7 +22,6 @@ import java.util.Map;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
 
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 import static com.microsoft.azure.mobile.utils.crypto.CryptoConstants.ALGORITHM_DATA_SEPARATOR;
@@ -50,8 +49,8 @@ public class CryptoUtils {
                 }
 
                 @Override
-                public SecretKey generateKey() {
-                    return keyGenerator.generateKey();
+                public void generateKey() {
+                    keyGenerator.generateKey();
                 }
             };
         }
@@ -133,7 +132,7 @@ public class CryptoUtils {
     /**
      * Supported crypto handlers. Ordered, first one is the preferred one.
      */
-    private Map<String, CryptoHandlerEntry> mCryptoHandlers = new LinkedHashMap<>();
+    private final Map<String, CryptoHandlerEntry> mCryptoHandlers = new LinkedHashMap<>();
 
     /**
      * Init.
@@ -228,7 +227,7 @@ public class CryptoUtils {
         /* If it's the first time we use the preferred handler, create the alias. */
         if (mCryptoHandlers.isEmpty() && !mKeyStore.containsAlias(alias)) {
             MobileCenterLog.debug(LOG_TAG, "Creating alias: " + alias);
-            handler.generateKey(mCryptoFactory, mApiLevel, alias, mContext);
+            handler.generateKey(mCryptoFactory, alias, mContext);
         }
 
         /* Register the handler. */
@@ -294,7 +293,7 @@ public class CryptoUtils {
 
                 /* Generate new key. */
                 MobileCenterLog.debug(LOG_TAG, "Creating alias: " + newAlias);
-                handler.generateKey(mCryptoFactory, mApiLevel, newAlias, mContext);
+                handler.generateKey(mCryptoFactory, newAlias, mContext);
 
                 /* And encrypt using that new key. */
                 return encrypt(data);
@@ -373,7 +372,7 @@ public class CryptoUtils {
         /**
          * Adapt {@link KeyGenerator#generateKey()}.
          */
-        SecretKey generateKey();
+        void generateKey();
     }
 
     /**
@@ -389,6 +388,7 @@ public class CryptoUtils {
         /**
          * Adapt {@link Cipher#init(int, Key, AlgorithmParameterSpec)}.
          */
+        @SuppressWarnings("SameParameterValue")
         void init(int opMode, Key key, AlgorithmParameterSpec params) throws Exception;
 
         /**
@@ -430,14 +430,13 @@ public class CryptoUtils {
     private static class CryptoHandlerEntry {
 
         /**
+         * Crypto handler.
+         */
+        final CryptoHandler mCryptoHandler;
+        /**
          * Keystore alias index, 0 or 1.
          */
         int mAliasIndex;
-
-        /**
-         * Crypto handler.
-         */
-        CryptoHandler mCryptoHandler;
 
         /**
          * Init.
@@ -456,12 +455,12 @@ public class CryptoUtils {
         /**
          * Decrypted data.
          */
-        String mDecryptedData;
+        final String mDecryptedData;
 
         /**
          * Better encrypted data.
          */
-        String mNewEncryptedData;
+        final String mNewEncryptedData;
 
         /**
          * Init.
