@@ -15,6 +15,7 @@ import com.microsoft.azure.mobile.http.HttpException;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
+import com.microsoft.azure.mobile.utils.crypto.CryptoUtils;
 
 import org.json.JSONException;
 import org.junit.Test;
@@ -413,7 +414,44 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void checkReleaseFails() throws Exception {
+    public void checkReleaseFailsRecoverable() throws Exception {
+
+        /* Mock we already have token. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(new HttpException(503));
+                return mock(ServiceCall.class);
+            }
+        });
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+
+        /* Trigger call. */
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Verify on failure we complete workflow. */
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+
+        /* The error was recoverable, keep token. */
+        verifyStatic(never());
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+
+        /* After that if we resume app nothing happens. */
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void checkReleaseFailsNotRecoverable() throws Exception {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -438,6 +476,10 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Verify on failure we complete workflow. */
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+
+        /* The error was unrecoverable, get rid of token. */
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
 
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
@@ -582,5 +624,26 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verify(mDialog, never()).show();
+    }
+
+    @Test
+    public void storeBetterEncryptedToken() throws Exception {
+
+        /* Mock we already have token. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some encrypted token");
+        when(mCryptoUtils.decrypt("some encrypted token")).thenReturn(new CryptoUtils.DecryptedData("some token", "some better encrypted token"));
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+
+        /* Trigger call. */
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Verify storage was updated with new encrypted value. */
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some better encrypted token");
     }
 }

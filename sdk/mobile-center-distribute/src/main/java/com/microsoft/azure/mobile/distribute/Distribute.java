@@ -41,6 +41,7 @@ import com.microsoft.azure.mobile.utils.HashUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
+import com.microsoft.azure.mobile.utils.crypto.CryptoUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
@@ -55,7 +56,6 @@ import java.util.NoSuchElementException;
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
-import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DEFAULT_API_URL;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DEFAULT_INSTALL_URL;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
@@ -79,6 +79,7 @@ import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFEREN
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.SERVICE_NAME;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.UPDATE_SETUP_PATH_FORMAT;
+import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
 
 /**
  * Distribute service.
@@ -511,7 +512,18 @@ public class Distribute extends AbstractMobileCenterService {
             /* Check if we have previous stored the update token. */
             String updateToken = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             if (updateToken != null) {
-                getLatestReleaseDetails(updateToken);
+
+                /* Decrypt token. */
+                CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(updateToken);
+                String newEncryptedData = decryptedData.getNewEncryptedData();
+
+                /* Store new encrypted value if updated. */
+                if (newEncryptedData != null) {
+                    PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, newEncryptedData);
+                }
+
+                /* Check latest release. */
+                getLatestReleaseDetails(decryptedData.getDecryptedData());
                 return;
             }
 
@@ -623,9 +635,6 @@ public class Distribute extends AbstractMobileCenterService {
 
     /*
      * Store update token and possibly trigger application update check.
-     * TODO encrypt token, but where to store encryption key? If it's retrieved from server,
-     * how do we protect server call to get the key in the first place?
-     * Even having the encryption key temporarily in memory is risky as that can be heap dumped.
      */
     synchronized void storeUpdateToken(@NonNull String updateToken, @NonNull String requestId) {
 
@@ -635,7 +644,8 @@ public class Distribute extends AbstractMobileCenterService {
             mBeforeStartUpdateToken = updateToken;
             mBeforeStartRequestId = requestId;
         } else if (requestId.equals(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
-            PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, updateToken);
+            String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(updateToken);
+            PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, encryptedToken);
             PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
             MobileCenterLog.debug(LOG_TAG, "Stored update token.");
             cancelPreviousTasks();
@@ -713,6 +723,9 @@ public class Distribute extends AbstractMobileCenterService {
         if (mCheckReleaseCallId == releaseCallId) {
             MobileCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
             completeWorkflow();
+            if (!HttpUtils.isRecoverableError(e)) {
+                PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+            }
         }
     }
 
@@ -1109,6 +1122,7 @@ public class Distribute extends AbstractMobileCenterService {
     /**
      * Remove a previously downloaded file and any notification.
      */
+    @SuppressLint("VisibleForTests")
     private synchronized void removeDownload(long downloadId) {
         cancelNotification(mContext);
         AsyncTaskUtils.execute(LOG_TAG, new RemoveDownloadTask(), downloadId);
