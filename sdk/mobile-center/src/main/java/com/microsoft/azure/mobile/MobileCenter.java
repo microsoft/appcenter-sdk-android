@@ -14,6 +14,7 @@ import com.microsoft.azure.mobile.ingestion.models.WrapperSdk;
 import com.microsoft.azure.mobile.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
+import com.microsoft.azure.mobile.ingestion.models.json.StartServiceLogFactory;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
@@ -321,6 +322,7 @@ public class MobileCenter {
 
             /* Init channel. */
             mLogSerializer = new DefaultLogSerializer();
+            mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
             mChannel = new DefaultChannel(application, appSecret, mLogSerializer);
             mChannel.setEnabled(enabled);
             mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null);
@@ -355,14 +357,16 @@ public class MobileCenter {
                 MobileCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
             } else {
                 try {
-                    startService((MobileCenterService) service.getMethod("getInstance").invoke(null));
-                    startedServices.add(service.getSimpleName());
+                    if (startService((MobileCenterService) service.getMethod("getInstance").invoke(null))) {
+                        startedServices.add(service.getSimpleName());
+                    }
                 } catch (Exception e) {
                     MobileCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
                 }
             }
         }
-        queueStartService(startedServices);
+        if (startedServices.size() > 0)
+            queueStartService(startedServices);
     }
 
     /**
@@ -370,10 +374,10 @@ public class MobileCenter {
      *
      * @param service service to start.
      */
-    private synchronized void startService(@NonNull MobileCenterService service) {
+    private synchronized boolean startService(@NonNull MobileCenterService service) {
         if (mServices.contains(service)) {
             MobileCenterLog.warn(LOG_TAG, "Mobile Center has already started the service with class name: " + service.getClass().getName());
-            return;
+            return false;
         }
         Map<String, LogFactory> logFactories = service.getLogFactories();
         if (logFactories != null) {
@@ -385,6 +389,7 @@ public class MobileCenter {
         if (isInstanceEnabled())
             mApplication.registerActivityLifecycleCallbacks(service);
         MobileCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
+        return true;
     }
 
     @SafeVarargs
