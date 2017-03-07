@@ -93,11 +93,11 @@ public class CrashesTest {
 
     private Looper mMockLooper;
 
-    private static void assertErrorEquals(ManagedErrorLog errorLog, Throwable throwable, ErrorReport report) {
+    private static void assertErrorEquals(ManagedErrorLog errorLog, ErrorReport report) {
         assertNotNull(report);
         assertEquals(errorLog.getId().toString(), report.getId());
         assertEquals(errorLog.getErrorThreadName(), report.getThreadName());
-        assertEquals(throwable, report.getThrowable());
+        assertEquals(CrashesTest.EXCEPTION, report.getThrowable());
         assertEquals(errorLog.getToffset() - errorLog.getAppLaunchTOffset(), report.getAppStartTime().getTime());
         assertEquals(errorLog.getToffset(), report.getAppErrorTime().getTime());
         assertEquals(errorLog.getDevice(), report.getDevice());
@@ -651,17 +651,17 @@ public class CrashesTest {
         Crashes.setListener(new AbstractCrashesListener() {
             @Override
             public void onBeforeSending(ErrorReport report) {
-                assertErrorEquals(mErrorLog, EXCEPTION, report);
+                assertErrorEquals(mErrorLog, report);
             }
 
             @Override
             public void onSendingSucceeded(ErrorReport report) {
-                assertErrorEquals(mErrorLog, EXCEPTION, report);
+                assertErrorEquals(mErrorLog, report);
             }
 
             @Override
             public void onSendingFailed(ErrorReport report, Exception e) {
-                assertErrorEquals(mErrorLog, EXCEPTION, report);
+                assertErrorEquals(mErrorLog, report);
             }
         });
 
@@ -777,7 +777,7 @@ public class CrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         ErrorReport report = crashes.buildErrorReport(mErrorLog);
-        assertErrorEquals(mErrorLog, EXCEPTION, report);
+        assertErrorEquals(mErrorLog, report);
 
         mErrorLog.setId(UUIDUtils.randomUUID());
         report = crashes.buildErrorReport(mErrorLog);

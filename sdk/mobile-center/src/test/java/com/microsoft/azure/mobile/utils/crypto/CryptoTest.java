@@ -59,7 +59,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressLint("NewApi")
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation", "CanBeFinal"})
 @PowerMockIgnore({"javax.security.auth.x500.*"})
 @PrepareForTest({KeyStore.class, KeyPairGenerator.class, Base64.class, CryptoUtils.class, CryptoRsaHandler.class, CryptoAesHandler.class})
 public class CryptoTest {
@@ -187,7 +187,7 @@ public class CryptoTest {
         assertNull(nullDecryptedData.getNewEncryptedData());
     }
 
-    private void verifyNoCrypto(int apiLevel) throws Exception {
+    private void verifyNoCrypto(int apiLevel) {
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, apiLevel);
         String encrypted = cryptoUtils.encrypt("anything");
         assertEquals("None" + ALGORITHM_DATA_SEPARATOR + "anything", encrypted);

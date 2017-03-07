@@ -15,7 +15,7 @@ class CryptoNoOpHandler implements CryptoHandler {
     }
 
     @Override
-    public void generateKey(CryptoUtils.ICryptoFactory cryptoFactory, int apiLevel, String alias, Context context) {
+    public void generateKey(CryptoUtils.ICryptoFactory cryptoFactory, String alias, Context context) {
     }
 
     @Override

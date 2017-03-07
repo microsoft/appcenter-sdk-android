@@ -41,7 +41,7 @@ class CryptoRsaHandler implements CryptoHandler {
     @Override
     @SuppressWarnings("deprecation")
     @SuppressLint({"InlinedApi", "TrulyRandom"})
-    public void generateKey(CryptoUtils.ICryptoFactory cryptoFactory, int apiLevel, String alias, Context context) throws Exception {
+    public void generateKey(CryptoUtils.ICryptoFactory cryptoFactory, String alias, Context context) throws Exception {
         Calendar writeExpiry = Calendar.getInstance();
         writeExpiry.add(Calendar.YEAR, ENCRYPT_KEY_LIFETIME_IN_YEARS);
         KeyPairGenerator generator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEY_STORE);

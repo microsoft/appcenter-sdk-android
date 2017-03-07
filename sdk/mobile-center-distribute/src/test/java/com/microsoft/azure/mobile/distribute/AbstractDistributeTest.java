@@ -42,7 +42,7 @@ import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings({"WeakerAccess", "CanBeFinal"})
 @PrepareForTest({Distribute.class, PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, NetworkStateHelper.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, CryptoUtils.class, InstallerUtils.class, Toast.class})
 public class AbstractDistributeTest {
 

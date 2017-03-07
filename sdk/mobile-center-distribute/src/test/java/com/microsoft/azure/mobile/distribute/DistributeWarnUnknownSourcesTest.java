@@ -45,6 +45,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
+@SuppressWarnings("CanBeFinal")
 public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
     @Mock
