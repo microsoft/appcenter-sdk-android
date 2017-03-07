@@ -25,16 +25,16 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     /**
      * Number of metrics queue items which will trigger synchronization.
      */
-    private static final int DEFAULT_TRIGGER_COUNT = 50;
+    static final int DEFAULT_TRIGGER_COUNT = 50;
 
     /**
      * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
      */
-    private static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
+    static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
     /**
      * Maximum number of requests being sent for the group.
      */
-    private static final int DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
+    static final int DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
 
     /**
      * Channel instance.

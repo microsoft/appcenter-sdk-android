@@ -9,6 +9,7 @@ import android.util.Log;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.channel.DefaultChannel;
+import com.microsoft.azure.mobile.ingestion.models.StartServiceLog;
 import com.microsoft.azure.mobile.ingestion.models.WrapperSdk;
 import com.microsoft.azure.mobile.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
@@ -20,15 +21,26 @@ import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.ShutdownHelper;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 import static android.util.Log.VERBOSE;
+import static com.microsoft.azure.mobile.AbstractMobileCenterService.DEFAULT_TRIGGER_COUNT;
+import static com.microsoft.azure.mobile.AbstractMobileCenterService.DEFAULT_TRIGGER_INTERVAL;
+import static com.microsoft.azure.mobile.AbstractMobileCenterService.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
 import static com.microsoft.azure.mobile.utils.MobileCenterLog.NONE;
 
 public class MobileCenter {
+
+    /**
+     * Group for sending logs.
+     */
+    @VisibleForTesting
+    static final String CORE_GROUP = "group_core";
 
     /**
      * TAG used in logging.
@@ -311,6 +323,7 @@ public class MobileCenter {
             mLogSerializer = new DefaultLogSerializer();
             mChannel = new DefaultChannel(application, appSecret, mLogSerializer);
             mChannel.setEnabled(enabled);
+            mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null);
             if (mLogUrl != null)
                 mChannel.setLogUrl(mLogUrl);
             MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK configured successfully.");
@@ -336,17 +349,20 @@ public class MobileCenter {
             return;
         }
 
+        List<String> startedServices = new ArrayList<>();
         for (Class<? extends MobileCenterService> service : services) {
             if (service == null) {
                 MobileCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
             } else {
                 try {
                     startService((MobileCenterService) service.getMethod("getInstance").invoke(null));
+                    startedServices.add(service.getSimpleName());
                 } catch (Exception e) {
                     MobileCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
                 }
             }
         }
+        queueStartService(startedServices);
     }
 
     /**
@@ -376,6 +392,17 @@ public class MobileCenter {
         boolean configuredSuccessfully = instanceConfigure(application, appSecret);
         if (configuredSuccessfully)
             startServices(services);
+    }
+
+    /**
+     * Send started services.
+     *
+     * @param services started services.
+     */
+    private synchronized void queueStartService(List<String> services) {
+        StartServiceLog startServiceLog = new StartServiceLog();
+        startServiceLog.setServices(services);
+        mChannel.enqueue(startServiceLog, CORE_GROUP);
     }
 
     /**
