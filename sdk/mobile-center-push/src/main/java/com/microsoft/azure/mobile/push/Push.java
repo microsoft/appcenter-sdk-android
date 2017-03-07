@@ -172,6 +172,11 @@ public class Push extends AbstractMobileCenterService {
     }
 
     @Override
+    protected int getTriggerCount() {
+        return 1;
+    }
+
+    @Override
     public Map<String, LogFactory> getLogFactories() {
         return mFactories;
     }
