@@ -19,10 +19,10 @@ import java.util.Date;
 import javax.security.auth.x500.X500Principal;
 
 import static com.microsoft.azure.mobile.utils.crypto.CryptoConstants.ANDROID_KEY_STORE;
-import static com.microsoft.azure.mobile.utils.crypto.CryptoConstants.ANDROID_RSA_M_PROVIDER;
-import static com.microsoft.azure.mobile.utils.crypto.CryptoConstants.ANDROID_RSA_OLD_PROVIDER;
 import static com.microsoft.azure.mobile.utils.crypto.CryptoConstants.CIPHER_RSA;
 import static com.microsoft.azure.mobile.utils.crypto.CryptoConstants.ENCRYPT_KEY_LIFETIME_IN_YEARS;
+import static com.microsoft.azure.mobile.utils.crypto.CryptoConstants.PROVIDER_ANDROID_M;
+import static com.microsoft.azure.mobile.utils.crypto.CryptoConstants.PROVIDER_ANDROID_OLD;
 import static com.microsoft.azure.mobile.utils.crypto.CryptoConstants.RSA_KEY_SIZE;
 import static javax.crypto.Cipher.DECRYPT_MODE;
 import static javax.crypto.Cipher.ENCRYPT_MODE;
@@ -62,9 +62,9 @@ class CryptoRsaHandler implements CryptoHandler {
     private CryptoUtils.ICipher getCipher(CryptoUtils.ICryptoFactory cipherFactory, int apiLevel) throws Exception {
         String provider;
         if (apiLevel >= Build.VERSION_CODES.M) {
-            provider = ANDROID_RSA_M_PROVIDER;
+            provider = PROVIDER_ANDROID_M;
         } else {
-            provider = ANDROID_RSA_OLD_PROVIDER;
+            provider = PROVIDER_ANDROID_OLD;
         }
         return cipherFactory.getCipher(CIPHER_RSA, provider);
     }
