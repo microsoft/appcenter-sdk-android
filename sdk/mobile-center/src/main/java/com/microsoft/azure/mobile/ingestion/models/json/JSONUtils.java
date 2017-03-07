@@ -67,7 +67,6 @@ public final class JSONUtils {
     }
 
     public static List<String> readStringArray(JSONObject object, String key) throws JSONException {
-
         JSONArray jArray = object.optJSONArray(key);
         if (jArray == null)
             return null;
