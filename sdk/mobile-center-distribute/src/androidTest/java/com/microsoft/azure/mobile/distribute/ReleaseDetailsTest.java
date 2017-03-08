@@ -19,7 +19,8 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
                 "android_min_api_level: 19," +
-                "download_url: 'http://download.thinkbroadband.com/1GB.zip'" +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
         assertNotNull(releaseDetails);
@@ -29,6 +30,7 @@ public class ReleaseDetailsTest {
         assertEquals("Fix a critical bug, this text was entered in Mobile Center portal.", releaseDetails.getReleaseNotes());
         assertEquals(19, releaseDetails.getMinApiLevel());
         assertEquals(Uri.parse("http://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
+        assertEquals("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60", releaseDetails.getReleaseHash());
     }
 
     @Test(expected = JSONException.class)
@@ -38,7 +40,8 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
                 "android_min_api_level: 19," +
-                "download_url: 'http://download.thinkbroadband.com/1GB.zip'" +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -51,7 +54,8 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
                 "android_min_api_level: 19," +
-                "download_url: 'http://download.thinkbroadband.com/1GB.zip'" +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -64,7 +68,8 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
                 "android_min_api_level: 19," +
-                "download_url: 'http://download.thinkbroadband.com/1GB.zip'" +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
         assertNotNull(releaseDetails);
@@ -74,6 +79,7 @@ public class ReleaseDetailsTest {
         assertEquals("Fix a critical bug, this text was entered in Mobile Center portal.", releaseDetails.getReleaseNotes());
         assertEquals(19, releaseDetails.getMinApiLevel());
         assertEquals(Uri.parse("http://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
+        assertEquals("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60", releaseDetails.getReleaseHash());
     }
 
     @Test(expected = JSONException.class)
@@ -83,7 +89,8 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
                 "android_min_api_level: 19," +
-                "download_url: 'http://download.thinkbroadband.com/1GB.zip'" +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -96,7 +103,8 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
                 "android_min_api_level: 19," +
-                "download_url: 'http://download.thinkbroadband.com/1GB.zip'" +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -108,7 +116,8 @@ public class ReleaseDetailsTest {
                 "version: '14'," +
                 "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
                 "android_min_api_level: 19," +
-                "download_url: 'http://download.thinkbroadband.com/1GB.zip'" +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -120,7 +129,8 @@ public class ReleaseDetailsTest {
                 "version: '14'," +
                 "short_version: '2.1.5'," +
                 "android_min_api_level: 19," +
-                "download_url: 'https://download.thinkbroadband.com/1GB.zip'" +
+                "download_url: 'https://download.thinkbroadband.com/1GB.zip'," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
         assertNotNull(releaseDetails);
@@ -130,6 +140,7 @@ public class ReleaseDetailsTest {
         assertNull(releaseDetails.getReleaseNotes());
         assertEquals(19, releaseDetails.getMinApiLevel());
         assertEquals(Uri.parse("https://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
+        assertEquals("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60", releaseDetails.getReleaseHash());
     }
 
     @Test
@@ -140,7 +151,8 @@ public class ReleaseDetailsTest {
                 "release_notes: null," +
                 "android_min_api_level: 19," +
                 "short_version: '2.1.5'," +
-                "download_url: 'https://download.thinkbroadband.com/1GB.zip'" +
+                "download_url: 'https://download.thinkbroadband.com/1GB.zip'," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
         assertNotNull(releaseDetails);
@@ -150,6 +162,7 @@ public class ReleaseDetailsTest {
         assertNull(releaseDetails.getReleaseNotes());
         assertEquals(19, releaseDetails.getMinApiLevel());
         assertEquals(Uri.parse("https://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
+        assertEquals("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60", releaseDetails.getReleaseHash());
     }
 
     @Test(expected = JSONException.class)
@@ -159,7 +172,8 @@ public class ReleaseDetailsTest {
                 "version: '14'," +
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
-                "download_url: 'http://download.thinkbroadband.com/1GB.zip'" +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -172,7 +186,8 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
                 "android_min_api_level: '19'," +
-                "download_url: 'http://download.thinkbroadband.com/1GB.zip'" +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
         assertNotNull(releaseDetails);
@@ -182,6 +197,7 @@ public class ReleaseDetailsTest {
         assertEquals("Fix a critical bug, this text was entered in Mobile Center portal.", releaseDetails.getReleaseNotes());
         assertEquals(19, releaseDetails.getMinApiLevel());
         assertEquals(Uri.parse("http://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
+        assertEquals("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60", releaseDetails.getReleaseHash());
     }
 
     @Test(expected = JSONException.class)
@@ -192,7 +208,8 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
                 "android_min_api_level: '4.0.3'," +
-                "download_url: 'http://download.thinkbroadband.com/1GB.zip'" +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -205,6 +222,7 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
                 "android_min_api_level: 19" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -217,7 +235,8 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
                 "android_min_api_level: 19," +
-                "download_url: 'someFile'" +
+                "download_url: 'someFile'," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -230,7 +249,49 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
                 "android_min_api_level: 19," +
-                "download_url: 'ftp://someFile'" +
+                "download_url: 'ftp://someFile'," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "}";
+        ReleaseDetails.parse(json);
+    }
+
+    @Test(expected = JSONException.class)
+    public void missingPackageHashes() throws JSONException {
+        String json = "{" +
+                "id: 42," +
+                "version: '14'," +
+                "short_version: '2.1.5'," +
+                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "android_min_api_level: 19," +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'" +
+                "}";
+        ReleaseDetails.parse(json);
+    }
+
+    @Test(expected = JSONException.class)
+    public void emptyPackageHashes() throws JSONException {
+        String json = "{" +
+                "id: 42," +
+                "version: '14'," +
+                "short_version: '2.1.5'," +
+                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "android_min_api_level: 19," +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "package_hashes: []" +
+                "}";
+        ReleaseDetails.parse(json);
+    }
+
+    @Test(expected = JSONException.class)
+    public void invalidPackageHashes() throws JSONException {
+        String json = "{" +
+                "id: 42," +
+                "version: '14'," +
+                "short_version: '2.1.5'," +
+                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "android_min_api_level: 19," +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "package_hashes: '9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60'" +
                 "}";
         ReleaseDetails.parse(json);
     }
