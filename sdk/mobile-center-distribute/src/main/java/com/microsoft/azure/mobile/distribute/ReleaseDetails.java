@@ -22,6 +22,8 @@ class ReleaseDetails {
 
     private static final String DOWNLOAD_URL = "download_url";
 
+    private static final String MIN_API_LEVEL = "android_min_api_level";
+
     /**
      * ID identifying this unique release.
      */
@@ -47,6 +49,11 @@ class ReleaseDetails {
     private String releaseNotes;
 
     /**
+     * The release's minimum required Android API level.
+     */
+    private int minApiLevel;
+
+    /**
      * The URL that hosts the binary for this release.
      */
     private Uri downloadUrl;
@@ -62,13 +69,10 @@ class ReleaseDetails {
         JSONObject object = new JSONObject(json);
         ReleaseDetails releaseDetails = new ReleaseDetails();
         releaseDetails.id = object.getInt(ID);
-        try {
-            releaseDetails.version = Integer.parseInt(object.getString(VERSION));
-        } catch (NumberFormatException e) {
-            throw new JSONException(e.getMessage());
-        }
+        releaseDetails.version = object.getInt(VERSION);
         releaseDetails.shortVersion = object.getString(SHORT_VERSION);
         releaseDetails.releaseNotes = object.isNull(RELEASE_NOTES) ? null : object.getString(RELEASE_NOTES);
+        releaseDetails.minApiLevel = object.getInt(MIN_API_LEVEL);
         releaseDetails.downloadUrl = Uri.parse(object.getString(DOWNLOAD_URL));
         String scheme = releaseDetails.downloadUrl.getScheme();
         if (scheme == null || !scheme.startsWith("http")) {
@@ -113,6 +117,15 @@ class ReleaseDetails {
     @Nullable
     String getReleaseNotes() {
         return releaseNotes;
+    }
+
+    /**
+     * Get the minApiLevel value.
+     *
+     * @return the minApiLevel value
+     */
+    int getMinApiLevel() {
+        return minApiLevel;
     }
 
     /**
