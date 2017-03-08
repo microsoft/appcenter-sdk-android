@@ -20,6 +20,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(PowerMockRunner.class)
+@SuppressWarnings("CanBeFinal")
 @PrepareForTest(Distribute.class)
 public class DeepLinkActivityTest {
 
