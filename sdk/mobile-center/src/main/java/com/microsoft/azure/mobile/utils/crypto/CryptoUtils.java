@@ -236,7 +236,7 @@ public class CryptoUtils {
     }
 
     @NonNull
-    private String getAlias(CryptoHandler handler, int index) {
+    private String getAlias(@NonNull CryptoHandler handler, int index) {
         return KEYSTORE_ALIAS_PREFIX + ALIAS_SEPARATOR + index + ALIAS_SEPARATOR + handler.getAlgorithm();
     }
 

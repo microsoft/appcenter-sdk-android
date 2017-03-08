@@ -334,7 +334,7 @@ public class CryptoTest {
     }
 
     @Test
-    public void aesPreferredOnM() throws Exception {
+    public void aesPreferredInM() throws Exception {
 
         /* Encrypt. */
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
