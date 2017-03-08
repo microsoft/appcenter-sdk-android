@@ -14,6 +14,7 @@ import com.microsoft.azure.mobile.utils.HashUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
+import com.microsoft.azure.mobile.utils.crypto.CryptoUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
 import org.junit.Before;
@@ -33,6 +34,7 @@ import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -40,8 +42,8 @@ import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@SuppressWarnings("WeakerAccess")
-@PrepareForTest({Distribute.class, PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, NetworkStateHelper.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, InstallerUtils.class, Toast.class})
+@SuppressWarnings({"WeakerAccess", "CanBeFinal"})
+@PrepareForTest({Distribute.class, PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, NetworkStateHelper.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, CryptoUtils.class, InstallerUtils.class, Toast.class})
 public class AbstractDistributeTest {
 
     static final String TEST_HASH = HashUtils.sha256("com.contoso:1.2.3:6");
@@ -76,6 +78,9 @@ public class AbstractDistributeTest {
     Toast mToast;
 
     NetworkStateHelper mNetworkStateHelper;
+
+    @Mock
+    CryptoUtils mCryptoUtils;
 
     @Before
     @SuppressLint("ShowToast")
@@ -133,6 +138,24 @@ public class AbstractDistributeTest {
             public Boolean answer(InvocationOnMock invocation) throws Throwable {
                 CharSequence str = (CharSequence) invocation.getArguments()[0];
                 return str == null || str.length() == 0;
+            }
+        });
+
+        /* Mock Crypto to not crypt. */
+        mockStatic(CryptoUtils.class);
+        when(CryptoUtils.getInstance(any(Context.class))).thenReturn(mCryptoUtils);
+        when(mCryptoUtils.decrypt(anyString())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
+
+            @Override
+            public CryptoUtils.DecryptedData answer(InvocationOnMock invocation) throws Throwable {
+                return new CryptoUtils.DecryptedData(invocation.getArguments()[0].toString(), null);
+            }
+        });
+        when(mCryptoUtils.encrypt(anyString())).thenAnswer(new Answer<String>() {
+
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
+                return invocation.getArguments()[0].toString();
             }
         });
 

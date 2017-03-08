@@ -77,6 +77,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
+@SuppressWarnings("CanBeFinal")
 @PrepareForTest(AsyncTaskUtils.class)
 public class DistributeDownloadTest extends AbstractDistributeTest {
 
