@@ -168,10 +168,13 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Verify release hash was not even considered. */
+        verify(releaseDetails, never()).getReleaseHash();
     }
 
     @Test
-    public void sameVersionCode() throws Exception {
+    public void sameVersionCodeSameHash() throws Exception {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -190,6 +193,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(6);
+        when(releaseDetails.getReleaseHash()).thenReturn(TEST_HASH);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
@@ -210,7 +214,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void moreRecentVersionWithoutReleaseNotesDialog() throws Exception {
+    public void moreRecentVersionCodeWithoutReleaseNotesDialog() throws Exception {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -270,7 +274,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void moreRecentVersionWithReleaseNotesDialog() throws Exception {
+    public void sameVersionDifferentHashWithReleaseNotesDialog() throws Exception {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -288,7 +292,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
-        when(releaseDetails.getVersion()).thenReturn(7);
+        when(releaseDetails.getVersion()).thenReturn(6);
+        when(releaseDetails.getReleaseHash()).thenReturn("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60");
         when(releaseDetails.getReleaseNotes()).thenReturn("mock");
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 

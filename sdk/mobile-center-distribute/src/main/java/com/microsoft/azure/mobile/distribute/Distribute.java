@@ -747,7 +747,7 @@ public class Distribute extends AbstractMobileCenterService {
             else if (Build.VERSION.SDK_INT >= releaseDetails.getMinApiLevel()) {
 
                 /* Check version code is equals or higher and hash is different. */
-                MobileCenterLog.debug(LOG_TAG, "Check version code.");
+                MobileCenterLog.debug(LOG_TAG, "Check if latest release is more recent.");
                 PackageManager packageManager = mContext.getPackageManager();
                 try {
                     PackageInfo packageInfo = packageManager.getPackageInfo(mContext.getPackageName(), 0);
@@ -760,10 +760,10 @@ public class Distribute extends AbstractMobileCenterService {
                         }
                         return;
                     } else {
-                        MobileCenterLog.debug(LOG_TAG, "Latest server version is not more recent.");
+                        MobileCenterLog.debug(LOG_TAG, "Latest release is not more recent.");
                     }
                 } catch (PackageManager.NameNotFoundException e) {
-                    MobileCenterLog.error(LOG_TAG, "Could not compare versions.", e);
+                    MobileCenterLog.error(LOG_TAG, "Could not compare release versions.", e);
                 }
             } else {
                 MobileCenterLog.info(LOG_TAG, "This device is not compatible with the latest release.");
@@ -782,10 +782,9 @@ public class Distribute extends AbstractMobileCenterService {
      * @return true if latest release on server should be used.
      */
     private boolean isMoreRecent(PackageInfo packageInfo, ReleaseDetails releaseDetails) {
-//        TODO when releaseHash is exposed in JSON.
-//        if (releaseDetails.getVersion() == packageInfo.versionCode) {
-//            return !releaseDetails.getReleaseHash().equals(computeHash(mContext, packageInfo));
-//        }
+        if (releaseDetails.getVersion() == packageInfo.versionCode) {
+            return !releaseDetails.getReleaseHash().equals(computeHash(mContext, packageInfo));
+        }
         return releaseDetails.getVersion() > packageInfo.versionCode;
     }
 

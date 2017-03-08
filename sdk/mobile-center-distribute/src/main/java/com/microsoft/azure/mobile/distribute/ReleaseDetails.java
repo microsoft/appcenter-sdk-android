@@ -24,6 +24,8 @@ class ReleaseDetails {
 
     private static final String MIN_API_LEVEL = "android_min_api_level";
 
+    private static final String PACKAGE_HASHES = "package_hashes";
+
     /**
      * ID identifying this unique release.
      */
@@ -59,6 +61,11 @@ class ReleaseDetails {
     private Uri downloadUrl;
 
     /**
+     * Release hash.
+     */
+    private String releaseHash;
+
+    /**
      * Parse a JSON string describing release details.
      *
      * @param json a string.
@@ -78,6 +85,7 @@ class ReleaseDetails {
         if (scheme == null || !scheme.startsWith("http")) {
             throw new JSONException("Invalid download_url scheme.");
         }
+        releaseDetails.releaseHash = object.getJSONArray(PACKAGE_HASHES).getString(0);
         return releaseDetails;
     }
 
@@ -136,5 +144,15 @@ class ReleaseDetails {
     @NonNull
     Uri getDownloadUrl() {
         return downloadUrl;
+    }
+
+    /**
+     * Get the release hash value.
+     *
+     * @return the releaseHash value.
+     */
+    @NonNull
+    String getReleaseHash() {
+        return releaseHash;
     }
 }
