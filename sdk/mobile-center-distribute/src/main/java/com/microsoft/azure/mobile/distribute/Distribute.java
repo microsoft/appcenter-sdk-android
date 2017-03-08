@@ -55,7 +55,6 @@ import java.util.NoSuchElementException;
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
-import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DEFAULT_API_URL;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DEFAULT_INSTALL_URL;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
@@ -79,6 +78,7 @@ import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFEREN
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.SERVICE_NAME;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.UPDATE_SETUP_PATH_FORMAT;
+import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
 
 /**
  * Distribute service.
@@ -728,7 +728,10 @@ public class Distribute extends AbstractMobileCenterService {
             int releaseId = releaseDetails.getId();
             if (releaseId == PreferencesStorage.getInt(PREFERENCE_KEY_IGNORED_RELEASE_ID, INVALID_RELEASE_IDENTIFIER)) {
                 MobileCenterLog.debug(LOG_TAG, "This release is ignored id=" + releaseId);
-            } else {
+            }
+
+            /* Check minimum Android API level. */
+            else if (Build.VERSION.SDK_INT >= releaseDetails.getMinApiLevel()) {
 
                 /* Check version code is equals or higher and hash is different. */
                 MobileCenterLog.debug(LOG_TAG, "Check version code.");
@@ -749,6 +752,8 @@ public class Distribute extends AbstractMobileCenterService {
                 } catch (PackageManager.NameNotFoundException e) {
                     MobileCenterLog.error(LOG_TAG, "Could not compare versions.", e);
                 }
+            } else {
+                MobileCenterLog.info(LOG_TAG, "This device is not compatible with the latest release.");
             }
 
             /* If update dialog was not shown or scheduled, complete workflow. */
