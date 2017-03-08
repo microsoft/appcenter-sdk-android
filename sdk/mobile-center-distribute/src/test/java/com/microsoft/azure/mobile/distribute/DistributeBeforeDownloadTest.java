@@ -4,14 +4,17 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.os.Build;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.http.HttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
+import com.microsoft.azure.mobile.test.TestUtils;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 
+import org.junit.After;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
@@ -86,6 +89,47 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void moreRecentWithIncompatibleMinApiLevel() throws Exception {
+
+        /* Mock we already have token. */
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.JELLY_BEAN_MR2);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                return mock(ServiceCall.class);
+            }
+        });
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn(4);
+        when(releaseDetails.getVersion()).thenReturn(7);
+        when(releaseDetails.getMinApiLevel()).thenReturn(Build.VERSION_CODES.KITKAT);
+        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+
+        /* Trigger call. */
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Verify on incompatible version we complete workflow. */
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(mDialogBuilder, never()).create();
+        verify(mDialog, never()).show();
+
+        /* After that if we resume app nothing happens. */
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
     public void olderVersionCode() throws Exception {
 
         /* Mock we already have token. */
@@ -105,7 +149,9 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(5);
+        when(releaseDetails.getMinApiLevel()).thenReturn(Build.VERSION_CODES.M);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.N_MR1);
 
         /* Trigger call. */
         Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
@@ -690,5 +736,10 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Verify no download scheduled. */
         verifyStatic(never());
         AsyncTaskUtils.execute(anyString(), any(Distribute.DownloadTask.class), Mockito.<Void>anyVararg());
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
     }
 }
