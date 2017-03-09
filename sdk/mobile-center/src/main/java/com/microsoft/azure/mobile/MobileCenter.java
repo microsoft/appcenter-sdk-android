@@ -30,9 +30,9 @@ import java.util.Set;
 import java.util.UUID;
 
 import static android.util.Log.VERBOSE;
-import static com.microsoft.azure.mobile.AbstractMobileCenterService.DEFAULT_TRIGGER_COUNT;
-import static com.microsoft.azure.mobile.AbstractMobileCenterService.DEFAULT_TRIGGER_INTERVAL;
-import static com.microsoft.azure.mobile.AbstractMobileCenterService.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_COUNT;
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_INTERVAL;
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
 import static com.microsoft.azure.mobile.utils.MobileCenterLog.NONE;
 
 public class MobileCenter {
