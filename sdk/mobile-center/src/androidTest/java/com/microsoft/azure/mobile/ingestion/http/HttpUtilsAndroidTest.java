@@ -3,6 +3,7 @@ package com.microsoft.azure.mobile.ingestion.http;
 import org.junit.Test;
 
 import java.io.EOFException;
+import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.MalformedURLException;
 import java.net.PortUnreachableException;
@@ -37,6 +38,8 @@ public class HttpUtilsAndroidTest {
         assertTrue(isRecoverableError(new UnknownHostException()));
         assertTrue(isRecoverableError(new RejectedExecutionException()));
         assertFalse(isRecoverableError(new MalformedURLException()));
+        assertFalse(isRecoverableError(new IOException()));
+        assertTrue(isRecoverableError(new IOException(new EOFException())));
         for (int i = 0; i <= 4; i++)
             assertTrue(isRecoverableError(new HttpException(500 + i)));
         for (int i = 2; i <= 6; i++)

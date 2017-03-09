@@ -57,6 +57,14 @@ public final class HttpUtils {
             if (type.isAssignableFrom(t.getClass()))
                 return true;
 
+        /* Check the cause. */
+        Throwable cause = t.getCause();
+        if (cause != null) {
+            for (Class<?> type : RECOVERABLE_EXCEPTIONS)
+                if (type.isAssignableFrom(cause.getClass()))
+                    return true;
+        }
+
         /* Check corner cases. */
         if (t instanceof SSLException) {
             String message = t.getMessage();
