@@ -40,6 +40,7 @@ public class HttpUtilsAndroidTest {
         assertFalse(isRecoverableError(new MalformedURLException()));
         assertFalse(isRecoverableError(new IOException()));
         assertTrue(isRecoverableError(new IOException(new EOFException())));
+        assertFalse(isRecoverableError(new IOException(new Exception())));
         for (int i = 0; i <= 4; i++)
             assertTrue(isRecoverableError(new HttpException(500 + i)));
         for (int i = 2; i <= 6; i++)
