@@ -48,6 +48,4 @@ public class StartServiceLogTest {
         b.setServices(services);
         checkEquals(a, b);
     }
-
-
 }

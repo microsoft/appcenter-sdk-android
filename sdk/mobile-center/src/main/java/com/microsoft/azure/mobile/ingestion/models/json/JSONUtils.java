@@ -103,11 +103,11 @@ public final class JSONUtils {
         }
     }
 
-    public static void writeStringArray(JSONStringer writer, String key, List<String> value) throws JSONException {
-        if (value != null) {
+    public static void writeStringArray(JSONStringer writer, String key, List<String> values) throws JSONException {
+        if (values != null) {
             writer.key(key).array();
-            for (String i : value) {
-                writer.value(i);
+            for (String value : values) {
+                writer.value(value);
             }
             writer.endArray();
         }
