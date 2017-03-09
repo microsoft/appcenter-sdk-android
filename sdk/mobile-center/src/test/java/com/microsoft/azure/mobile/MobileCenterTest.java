@@ -711,7 +711,7 @@ public class MobileCenterTest {
         }
 
         @Override
-        protected String getServiceName() {
+        public String getServiceName() {
             return "Dummy";
         }
 
@@ -746,7 +746,7 @@ public class MobileCenterTest {
         }
 
         @Override
-        protected String getServiceName() {
+        public String getServiceName() {
             return "AnotherDummy";
         }
 
@@ -764,7 +764,7 @@ public class MobileCenterTest {
         }
 
         @Override
-        protected String getServiceName() {
+        public String getServiceName() {
             return "Invalid";
         }
 

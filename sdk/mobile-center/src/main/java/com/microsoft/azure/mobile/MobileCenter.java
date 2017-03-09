@@ -351,14 +351,16 @@ public class MobileCenter {
             return;
         }
 
+        /* Start each service and collect info for send start service log. */
         List<String> startedServices = new ArrayList<>();
         for (Class<? extends MobileCenterService> service : services) {
             if (service == null) {
                 MobileCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
             } else {
                 try {
-                    if (startService((MobileCenterService) service.getMethod("getInstance").invoke(null))) {
-                        startedServices.add(service.getSimpleName());
+                    MobileCenterService serviceInstance = (MobileCenterService) service.getMethod("getInstance").invoke(null);
+                    if (startService(serviceInstance)) {
+                        startedServices.add(serviceInstance.getServiceName());
                     }
                 } catch (Exception e) {
                     MobileCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);

@@ -138,13 +138,6 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     protected abstract String getGroupName();
 
     /**
-     * Gets a name of the service.
-     *
-     * @return The name of the service.
-     */
-    protected abstract String getServiceName();
-
-    /**
      * Gets a tag of the logger.
      *
      * @return The tag of the logger.
