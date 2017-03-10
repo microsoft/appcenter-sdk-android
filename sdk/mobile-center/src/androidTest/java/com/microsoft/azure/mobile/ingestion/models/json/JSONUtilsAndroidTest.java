@@ -106,6 +106,35 @@ public class JSONUtilsAndroidTest {
     }
 
     @Test
+    public void writeReadStringArray() throws JSONException {
+
+        /* Create a test list. */
+        final List<String> list = new ArrayList<>();
+        list.add("FIRST");
+        list.add("SECOND");
+
+        /* Write to JSON object. */
+        JSONStringer writer = new JSONStringer();
+        writer.object();
+        JSONUtils.writeStringArray(writer, "list", list);
+        writer.endObject();
+
+        /* Convert to string. */
+        String json = writer.toString();
+        assertNotNull(json);
+
+        /* Read a JSON object and verify. */
+        JSONObject object = new JSONObject(json);
+        assertEquals(list, JSONUtils.readStringArray(object, "list"));
+        assertNull(JSONUtils.readStringArray(object, "missing"));
+
+        /* Test null value. */
+        writer = new JSONStringer();
+        JSONUtils.writeStringArray(writer, "null", null);
+        assertNull(writer.toString());
+    }
+
+    @Test
     public void readKeyNotExists() throws JSONException {
 
         /* Create an empty JSON object. */
