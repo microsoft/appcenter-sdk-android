@@ -31,6 +31,7 @@ public class Constants {
      * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
      */
     public static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
+    
     /**
      * Maximum number of requests being sent for the group.
      */
