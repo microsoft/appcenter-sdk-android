@@ -31,6 +31,13 @@ public interface MobileCenterService extends Application.ActivityLifecycleCallba
     void setInstanceEnabled(boolean enabled);
 
     /**
+     * Gets a name of the service.
+     *
+     * @return The name of the service.
+     */
+    String getServiceName();
+
+    /**
      * Factories for logs sent by this service.
      *
      * @return log factories.

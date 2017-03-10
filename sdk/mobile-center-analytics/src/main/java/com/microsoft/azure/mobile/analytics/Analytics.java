@@ -229,7 +229,7 @@ public class Analytics extends AbstractMobileCenterService {
     }
 
     @Override
-    protected String getServiceName() {
+    public String getServiceName() {
         return SERVICE_NAME;
     }
 
