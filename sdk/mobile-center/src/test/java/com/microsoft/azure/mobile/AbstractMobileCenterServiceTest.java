@@ -47,7 +47,7 @@ public class AbstractMobileCenterServiceTest {
             }
 
             @Override
-            protected String getServiceName() {
+            public String getServiceName() {
                 return "Test";
             }
 
@@ -172,13 +172,14 @@ public class AbstractMobileCenterServiceTest {
     @Test
     public void optionalGroup() {
         service = new AbstractMobileCenterService() {
+
             @Override
             protected String getGroupName() {
                 return null;
             }
 
             @Override
-            protected String getServiceName() {
+            public String getServiceName() {
                 return "Test";
             }
 
