@@ -47,7 +47,7 @@ public class AbstractMobileCenterServiceTest {
             }
 
             @Override
-            protected String getServiceName() {
+            public String getServiceName() {
                 return "Test";
             }
 

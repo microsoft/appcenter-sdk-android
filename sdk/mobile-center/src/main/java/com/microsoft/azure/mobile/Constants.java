@@ -23,6 +23,21 @@ public class Constants {
     public static boolean APPLICATION_DEBUGGABLE = false;
 
     /**
+     * Number of metrics queue items which will trigger synchronization.
+     */
+    public static final int DEFAULT_TRIGGER_COUNT = 50;
+
+    /**
+     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
+     */
+    public static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
+    
+    /**
+     * Maximum number of requests being sent for the group.
+     */
+    public static final int DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
+
+    /**
      * Initializes constants from the given context. The context is used to set
      * the package name, version code, and the files path.
      *
