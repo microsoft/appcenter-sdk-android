@@ -12,6 +12,9 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import java.util.Map;
 
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_COUNT;
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_INTERVAL;
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 
@@ -21,20 +24,6 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * Separator for preference key.
      */
     private static final String PREFERENCE_KEY_SEPARATOR = "_";
-
-    /**
-     * Number of metrics queue items which will trigger synchronization.
-     */
-    private static final int DEFAULT_TRIGGER_COUNT = 50;
-
-    /**
-     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
-     */
-    private static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
-    /**
-     * Maximum number of requests being sent for the group.
-     */
-    private static final int DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
 
     /**
      * Channel instance.
@@ -136,13 +125,6 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * @return The group name.
      */
     protected abstract String getGroupName();
-
-    /**
-     * Gets a name of the service.
-     *
-     * @return The name of the service.
-     */
-    protected abstract String getServiceName();
 
     /**
      * Gets a tag of the logger.

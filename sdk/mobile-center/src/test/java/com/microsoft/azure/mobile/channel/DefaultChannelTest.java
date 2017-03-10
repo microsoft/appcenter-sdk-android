@@ -69,6 +69,10 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(log, never()).setDevice(any(Device.class));
         verify(log, never()).setToffset(anyLong());
         verify(persistence, never()).putLog(TEST_GROUP, log);
+
+        /* Trying remove group that not registered. */
+        channel.removeGroup(TEST_GROUP);
+        verify(mHandler, never()).removeCallbacks(any(Runnable.class));
     }
 
     @Test
@@ -159,6 +163,10 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Check total timers. */
         verify(mHandler, times(3)).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
         verify(mHandler).removeCallbacks(any(Runnable.class));
+
+        /* Check channel clear clear */
+        channel.clear(TEST_GROUP);
+        verify(mockPersistence).deleteLogs(eq(TEST_GROUP));
     }
 
     @NonNull
