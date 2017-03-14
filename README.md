@@ -288,11 +288,13 @@ You can easily provide your own resource strings if you'd like to localize the t
 
 * **What Android permissions are required for the SDK?**
     Depending on the services you use, the following permissions are required:
-    - Analytics, Crashes: `INTERNET`, `ACCESS_NETWORK_STATE`
+    - All services: `INTERNET`, `ACCESS_NETWORK_STATE`
+    - Distribute: `REQUEST_INSTALL_PACKAGES`
 
     Required permissions are automatically merged into your app's manifest by the SDK.
     
-    
+    None of these permissions require user approval at runtime, those are all install time permissions.
+
 ## 9. Contributing
 
 We're looking forward to your contributions via pull requests.
