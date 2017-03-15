@@ -43,7 +43,7 @@ public class HttpUtilsAndroidTest {
         assertFalse(isRecoverableError(new IOException(new Exception())));
         for (int i = 0; i <= 4; i++)
             assertTrue(isRecoverableError(new HttpException(500 + i)));
-        for (int i = 1; i <= 6; i++)
+        for (int i = 0; i <= 6; i++)
             assertFalse(isRecoverableError(new HttpException(400 + i)));
         assertTrue(isRecoverableError(new HttpException(408)));
         assertFalse(isRecoverableError(new HttpException(413)));
