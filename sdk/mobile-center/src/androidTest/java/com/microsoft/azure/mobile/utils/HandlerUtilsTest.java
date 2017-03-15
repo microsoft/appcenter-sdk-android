@@ -12,10 +12,13 @@ import static org.junit.Assert.assertNotNull;
 public class HandlerUtilsTest {
 
     @Test
-    public void runOnUiThread() {
+    public void coverageWorkAround() {
+        assertNotNull(new HandlerUtils());
+        assertNotNull(HandlerUtils.getMainHandler());
+    }
 
-        /* Constructor code coverage is needed... */
-        new HandlerUtils();
+    @Test
+    public void runOnUiThread() {
         final AtomicReference<Thread> mainThreadFirstRun = new AtomicReference<>();
         final AtomicReference<Thread> mainThreadNestedRun = new AtomicReference<>();
         final Semaphore semaphore = new Semaphore(0);

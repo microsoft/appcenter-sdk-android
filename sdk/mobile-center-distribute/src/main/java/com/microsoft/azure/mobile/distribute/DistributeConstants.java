@@ -109,6 +109,26 @@ final class DistributeConstants {
     static final int DOWNLOAD_STATE_NOTIFIED = 2;
 
     /**
+     * State used for mandatory update to block app until user installs the app.
+     */
+    static final int DOWNLOAD_STATE_INSTALLING = 3;
+
+    /**
+     * Token used for handler callbacks to check download progress.
+     */
+    static final String HANDLER_TOKEN_CHECK_PROGRESS = SERVICE_NAME + ".handler_token_check_progress";
+
+    /**
+     * How often to check download progress in millis.
+     */
+    static final long CHECK_PROGRESS_TIME_INTERVAL = 1000;
+
+    /**
+     * 1 MiB in bytes (this not a megabyte).
+     */
+    static final float MEBIBYTE_IN_BYTES = 1024 * 1024;
+
+    /**
      * Base key for stored preferences.
      */
     private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
@@ -138,6 +158,11 @@ final class DistributeConstants {
      * Preference key to store ignored release id.
      */
     static final String PREFERENCE_KEY_IGNORED_RELEASE_ID = PREFERENCE_PREFIX + "ignored_release_id";
+
+    /**
+     * Preference key to store release details.
+     */
+    static final String PREFERENCE_KEY_RELEASE_DETAILS = PREFERENCE_PREFIX + "release_details";
 
     /**
      * Preference key to store download start time. Used to avoid showing install U.I. of a completed

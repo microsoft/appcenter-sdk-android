@@ -1,6 +1,7 @@
 package com.microsoft.azure.mobile.distribute;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -63,6 +64,9 @@ public class AbstractDistributeTest {
     Context mContext;
 
     @Mock
+    Activity mActivity;
+
+    @Mock
     PackageManager mPackageManager;
 
     @Mock
@@ -114,8 +118,10 @@ public class AbstractDistributeTest {
 
         /* Mock package manager. */
         when(mContext.getPackageName()).thenReturn("com.contoso");
+        when(mActivity.getPackageName()).thenReturn("com.contoso");
         when(mContext.getApplicationInfo()).thenReturn(mApplicationInfo);
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
+        when(mActivity.getPackageManager()).thenReturn(mPackageManager);
         PackageInfo packageInfo = mock(PackageInfo.class);
         when(mPackageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);
         Whitebox.setInternalState(packageInfo, "versionName", "1.2.3");
