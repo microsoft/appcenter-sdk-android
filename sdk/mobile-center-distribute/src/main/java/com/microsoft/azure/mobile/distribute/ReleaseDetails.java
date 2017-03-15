@@ -20,9 +20,11 @@ class ReleaseDetails {
 
     private static final String RELEASE_NOTES = "release_notes";
 
+    private static final String MIN_API_LEVEL = "android_min_api_level";
+
     private static final String DOWNLOAD_URL = "download_url";
 
-    private static final String MIN_API_LEVEL = "android_min_api_level";
+    private static final String MANDATORY_UPDATE = "mandatory_update";
 
     private static final String PACKAGE_HASHES = "package_hashes";
 
@@ -61,6 +63,11 @@ class ReleaseDetails {
     private Uri downloadUrl;
 
     /**
+     * Mandatory update.
+     */
+    private boolean mandatoryUpdate;
+
+    /**
      * Release hash.
      */
     private String releaseHash;
@@ -85,6 +92,7 @@ class ReleaseDetails {
         if (scheme == null || !scheme.startsWith("http")) {
             throw new JSONException("Invalid download_url scheme.");
         }
+        releaseDetails.mandatoryUpdate = object.getBoolean(MANDATORY_UPDATE);
         releaseDetails.releaseHash = object.getJSONArray(PACKAGE_HASHES).getString(0);
         return releaseDetails;
     }
@@ -92,7 +100,7 @@ class ReleaseDetails {
     /**
      * Get the id value.
      *
-     * @return the id value.
+     * @return the id value
      */
     int getId() {
         return id;
@@ -147,9 +155,18 @@ class ReleaseDetails {
     }
 
     /**
+     * Get the mandatory update value.
+     *
+     * @return mandatory update value
+     */
+    boolean isMandatoryUpdate() {
+        return mandatoryUpdate;
+    }
+
+    /**
      * Get the release hash value.
      *
-     * @return the releaseHash value.
+     * @return the releaseHash value
      */
     @NonNull
     String getReleaseHash() {

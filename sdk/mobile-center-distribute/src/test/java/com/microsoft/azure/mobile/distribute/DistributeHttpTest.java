@@ -40,7 +40,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 @PrepareForTest({NetworkStateHelper.class, MobileCenterLog.class, Distribute.class})
-public class DistributeTest {
+public class DistributeHttpTest {
 
     @Rule
     public PowerMockRule rule = new PowerMockRule();

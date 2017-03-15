@@ -29,6 +29,7 @@ import java.util.concurrent.Semaphore;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.INVALID_RELEASE_IDENTIFIER;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_IGNORED_RELEASE_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 import static org.mockito.Matchers.any;
@@ -468,6 +469,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Verify. */
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
 
         /* Verify no more calls, e.g. happened only once. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
@@ -740,7 +743,43 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify no download scheduled. */
         verifyStatic(never());
-        AsyncTaskUtils.execute(anyString(), any(Distribute.DownloadTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), any(DownloadTask.class), Mockito.<Void>anyVararg());
+    }
+
+    @Test
+    public void mandatoryUpdateDialog() throws Exception {
+
+        /* Mock we already have token. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                return mock(ServiceCall.class);
+            }
+        });
+        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn(4);
+        when(releaseDetails.getVersion()).thenReturn(7);
+        when(releaseDetails.isMandatoryUpdate()).thenReturn(true);
+        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+
+        /* Trigger call. */
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Verify release notes persisted. */
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_RELEASE_DETAILS, "mock");
+
+        /* Verify dialog. */
+        verify(mDialogBuilder, never()).setNeutralButton(anyString(), any(DialogInterface.OnClickListener.class));
+        verify(mDialogBuilder, never()).setNegativeButton(anyString(), any(DialogInterface.OnClickListener.class));
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
+        verify(mDialogBuilder).setCancelable(false);
     }
 
     @After
