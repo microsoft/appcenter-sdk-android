@@ -43,12 +43,11 @@ public class HttpUtilsAndroidTest {
         assertFalse(isRecoverableError(new IOException(new Exception())));
         for (int i = 0; i <= 4; i++)
             assertTrue(isRecoverableError(new HttpException(500 + i)));
-        for (int i = 2; i <= 6; i++)
+        for (int i = 0; i <= 6; i++)
             assertFalse(isRecoverableError(new HttpException(400 + i)));
         assertTrue(isRecoverableError(new HttpException(408)));
         assertFalse(isRecoverableError(new HttpException(413)));
         assertTrue(isRecoverableError(new HttpException(429)));
-        assertTrue(isRecoverableError(new HttpException(401)));
         assertTrue(isRecoverableError(new SSLException("Write error: ssl=0x59c28f90: I/O error during system call, Connection timed out")));
         assertFalse(isRecoverableError(new SSLHandshakeException("java.security.cert.CertPathValidatorException: Trust anchor for certification path not found.")));
         assertFalse(isRecoverableError(new SSLException(null, new CertPathValidatorException("Trust anchor for certification path not found."))));
