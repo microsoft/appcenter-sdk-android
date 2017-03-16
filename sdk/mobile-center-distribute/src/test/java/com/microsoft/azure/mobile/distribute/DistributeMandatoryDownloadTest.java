@@ -321,6 +321,21 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
 
         /* Make JSON parsing fail. */
         when(ReleaseDetails.parse(anyString())).thenThrow(new JSONException("mock"));
+        verifyWithInvalidOrMissingCachedJson();
+    }
+
+    @Test
+    public void jsonMissingWhenRestarting() throws Exception {
+
+        /* Simulate async task. */
+        waitDownloadTask();
+
+        /* Make JSON disappear for some reason (should not happen for real). */
+        PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
+        verifyWithInvalidOrMissingCachedJson();
+    }
+
+    private void verifyWithInvalidOrMissingCachedJson() throws Exception {
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mActivity);
         mockProgressCursor(-1);
@@ -331,7 +346,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         /* Unblock the task that is scheduled after restart to check sanity. */
         waitCheckDownloadTask();
 
-        /* Verify JSON corrupted. */
+        /* Verify JSON removed. */
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
 
