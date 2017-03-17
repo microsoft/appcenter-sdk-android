@@ -289,7 +289,7 @@ You can easily provide your own resource strings if you'd like to localize the t
 * **What Android permissions are required for the SDK?**
     Depending on the services you use, the following permissions are required:
     - All services: `INTERNET`, `ACCESS_NETWORK_STATE`
-    - Distribute: `REQUEST_INSTALL_PACKAGES`
+    - Distribute: `REQUEST_INSTALL_PACKAGES`, `DOWNLOAD_WITHOUT_NOTIFICATION`
 
     Required permissions are automatically merged into your app's manifest by the SDK.
     

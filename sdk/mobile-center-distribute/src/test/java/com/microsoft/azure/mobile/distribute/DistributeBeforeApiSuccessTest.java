@@ -68,13 +68,11 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     /**
      * Shared code to mock a restart of an activity considered to be the launcher.
      */
-    private static void restartResumeLauncher(Activity activity) {
+    private void restartResumeLauncher(Activity activity) {
         Intent intent = mock(Intent.class);
-        PackageManager packageManager = mock(PackageManager.class);
-        when(activity.getPackageManager()).thenReturn(packageManager);
-        when(packageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
+        when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
         ComponentName componentName = mock(ComponentName.class);
-        when(intent.resolveActivity(packageManager)).thenReturn(componentName);
+        when(intent.resolveActivity(mPackageManager)).thenReturn(componentName);
         when(componentName.getClassName()).thenReturn(activity.getClass().getName());
         Distribute.getInstance().onActivityPaused(activity);
         Distribute.getInstance().onActivityStopped(activity);
@@ -154,21 +152,20 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Check browser not opened if no network. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic(never());
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
 
         /* If network comes back, we don't open network unless we restart app. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
-        Distribute.getInstance().onActivityPaused(mock(Activity.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic(never());
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
 
         /* Restart should open browser if still have network. */
         when(UUIDUtils.randomUUID()).thenReturn(UUID.randomUUID());
-        Activity activity = mock(Activity.class);
-        restartResumeLauncher(activity);
+        restartResumeLauncher(mActivity);
         verifyStatic();
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
     }
@@ -185,8 +182,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Start and resume: open browser. */
         Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Activity activity = mock(Activity.class);
-        Distribute.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
         String url = DistributeConstants.DEFAULT_INSTALL_URL;
         url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
@@ -194,15 +190,15 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
-        BrowserUtils.openBrowser(url, activity);
+        BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
         /* If browser already opened, activity changed must not recall it. */
-        Distribute.getInstance().onActivityPaused(activity);
-        Distribute.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
-        BrowserUtils.openBrowser(url, activity);
+        BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
@@ -229,8 +225,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* If call already made, activity changed must not recall it. */
-        Distribute.getInstance().onActivityPaused(activity);
-        Distribute.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify behavior. */
         verifyStatic();
@@ -250,16 +246,16 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Call is still in progress. If we restart app, nothing happens we still wait. */
-        restartResumeLauncher(activity);
-        Distribute.getInstance().onActivityPaused(activity);
-        Distribute.getInstance().onActivityStopped(activity);
-        Distribute.getInstance().onActivityDestroyed(activity);
-        Distribute.getInstance().onActivityCreated(activity, mock(Bundle.class));
-        Distribute.getInstance().onActivityResumed(activity);
+        restartResumeLauncher(mActivity);
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityStopped(mActivity);
+        Distribute.getInstance().onActivityDestroyed(mActivity);
+        Distribute.getInstance().onActivityCreated(mActivity, mock(Bundle.class));
+        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify behavior not changed. */
         verifyStatic();
-        BrowserUtils.openBrowser(url, activity);
+        BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
         verifyStatic();
@@ -291,8 +287,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Start and resume: open browser. */
         Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Activity activity = mock(Activity.class);
-        Distribute.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
         String url = "http://mock";
         url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
@@ -300,7 +295,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
-        BrowserUtils.openBrowser(url, activity);
+        BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
@@ -321,19 +316,14 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     public void computeHashFailsWhenOpeningBrowser() throws Exception {
 
         /* Mock package manager. */
-        Context context = mock(Context.class);
-        PackageManager packageManager = mock(PackageManager.class);
-        when(context.getPackageName()).thenReturn("com.contoso");
-        when(context.getPackageManager()).thenReturn(packageManager);
-        when(context.getApplicationInfo()).thenReturn(mApplicationInfo);
-        when(packageManager.getPackageInfo("com.contoso", 0)).thenThrow(new PackageManager.NameNotFoundException());
+        when(mPackageManager.getPackageInfo("com.contoso", 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */
-        Distribute.getInstance().onStarted(context, "a", mock(Channel.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify only tried once. */
-        verify(packageManager).getPackageInfo("com.contoso", 0);
+        verify(mPackageManager).getPackageInfo("com.contoso", 0);
 
         /* And verify we didn't open browser. */
         verifyStatic(never());
@@ -349,8 +339,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Activity activity = mock(Activity.class);
-        Distribute.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
         String url = DistributeConstants.DEFAULT_INSTALL_URL;
         url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
@@ -358,7 +347,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
-        BrowserUtils.openBrowser(url, activity);
+        BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 

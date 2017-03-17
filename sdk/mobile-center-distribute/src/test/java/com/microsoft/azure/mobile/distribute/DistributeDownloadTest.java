@@ -4,11 +4,8 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.DownloadManager;
 import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -17,23 +14,15 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
-import android.support.annotation.NonNull;
 
 import com.microsoft.azure.mobile.channel.Channel;
-import com.microsoft.azure.mobile.http.HttpClient;
-import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
-import com.microsoft.azure.mobile.http.ServiceCall;
-import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.test.TestUtils;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
@@ -42,287 +31,39 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static android.app.DownloadManager.EXTRA_DOWNLOAD_ID;
-import static android.content.Context.NOTIFICATION_SERVICE;
-import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
-import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNew;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@SuppressWarnings("CanBeFinal")
-@PrepareForTest(AsyncTaskUtils.class)
-public class DistributeDownloadTest extends AbstractDistributeTest {
-
-    private static final long DOWNLOAD_ID = 42;
-
-    @Mock
-    private Uri mDownloadUrl;
-
-    @Mock
-    private DownloadManager mDownloadManager;
-
-    @Mock
-    private NotificationManager mNotificationManager;
-
-    @Mock
-    private DownloadManager.Request mDownloadRequest;
-
-    @Mock
-    private Activity mFirstActivity;
-
-    private Semaphore mDownloadBeforeSemaphore;
-
-    private Semaphore mDownloadAfterSemaphore;
-
-    private AtomicReference<Distribute.DownloadTask> mDownloadTask;
-
-    private Semaphore mCheckDownloadBeforeSemaphore;
-
-    private Semaphore mCheckDownloadAfterSemaphore;
-
-    private AtomicReference<Distribute.CheckDownloadTask> mCompletionTask;
+public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest {
 
     @Before
     public void setUpDownload() throws Exception {
-
-        /* Allow unknown sources. */
-        when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
-
-        /* Mock download manager. */
-        when(mContext.getSystemService(Context.DOWNLOAD_SERVICE)).thenReturn(mDownloadManager);
-        whenNew(DownloadManager.Request.class).withAnyArguments().thenReturn(mDownloadRequest);
-        when(mDownloadManager.enqueue(mDownloadRequest)).thenReturn(DOWNLOAD_ID);
-
-        /* Mock notification manager. */
-        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(mNotificationManager);
-
-        /* Mock updates to storage. */
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(PreferencesStorage.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn((Long) invocation.getArguments()[1]);
-                return null;
-            }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.putLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), anyLong());
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(PreferencesStorage.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
-                return null;
-            }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn((Integer) invocation.getArguments()[1]);
-                return null;
-            }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt());
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn(DOWNLOAD_STATE_COMPLETED);
-                return null;
-            }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-
-        /* Mock everything that triggers a download. */
-        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
-                return mock(ServiceCall.class);
-            }
-        });
-        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn(4);
-        when(releaseDetails.getVersion()).thenReturn(7);
-        when(releaseDetails.getDownloadUrl()).thenReturn(mDownloadUrl);
-        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
-        mockStatic(AsyncTaskUtils.class);
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Distribute.getInstance().onActivityResumed(mFirstActivity);
-
-        /* Mock download asyncTask. */
-        mDownloadBeforeSemaphore = new Semaphore(0);
-        mDownloadAfterSemaphore = new Semaphore(0);
-        mDownloadTask = new AtomicReference<>();
-        when(AsyncTaskUtils.execute(anyString(), argThat(new ArgumentMatcher<Distribute.DownloadTask>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof Distribute.DownloadTask;
-            }
-        }), Mockito.<Void>anyVararg())).then(new Answer<Distribute.DownloadTask>() {
-
-            @Override
-            public Distribute.DownloadTask answer(InvocationOnMock invocation) throws Throwable {
-                final Distribute.DownloadTask task = spy((Distribute.DownloadTask) invocation.getArguments()[1]);
-                mDownloadTask.set(task);
-                new Thread() {
-
-                    @Override
-                    public void run() {
-                        mDownloadBeforeSemaphore.acquireUninterruptibly();
-                        task.doInBackground(null);
-                        mDownloadAfterSemaphore.release();
-                    }
-                }.start();
-                return task;
-            }
-        });
-
-        /* Mock remove download async task. */
-        when(AsyncTaskUtils.execute(anyString(), argThat(new ArgumentMatcher<Distribute.RemoveDownloadTask>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof Distribute.RemoveDownloadTask;
-            }
-        }), Mockito.<Long>anyVararg())).then(new Answer<Distribute.RemoveDownloadTask>() {
-
-            @Override
-            public Distribute.RemoveDownloadTask answer(InvocationOnMock invocation) throws Throwable {
-                final Distribute.RemoveDownloadTask task = (Distribute.RemoveDownloadTask) invocation.getArguments()[1];
-                task.doInBackground((Long) invocation.getArguments()[2]);
-                return task;
-            }
-        });
-
-        /* Mock download completion async task. */
-        mCheckDownloadBeforeSemaphore = new Semaphore(0);
-        mCheckDownloadAfterSemaphore = new Semaphore(0);
-        mCompletionTask = new AtomicReference<>();
-        when(AsyncTaskUtils.execute(anyString(), argThat(new ArgumentMatcher<Distribute.CheckDownloadTask>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof Distribute.CheckDownloadTask;
-            }
-        }), Mockito.<Void>anyVararg())).then(new Answer<Distribute.CheckDownloadTask>() {
-
-            @Override
-            public Distribute.CheckDownloadTask answer(InvocationOnMock invocation) throws Throwable {
-                final Distribute.CheckDownloadTask task = spy((Distribute.CheckDownloadTask) invocation.getArguments()[1]);
-                mCompletionTask.set(task);
-                new Thread() {
-
-                    @Override
-                    public void run() {
-                        mCheckDownloadBeforeSemaphore.acquireUninterruptibly();
-                        task.doInBackground();
-                        mCheckDownloadAfterSemaphore.release();
-                    }
-                }.start();
-                return task;
-            }
-        });
-
-        /* Click on dialog. */
-        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), clickListener.capture());
-        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
-    }
-
-    private void waitDownloadTask() {
-        mDownloadBeforeSemaphore.release();
-        mDownloadAfterSemaphore.acquireUninterruptibly();
-    }
-
-    private void waitCheckDownloadTask() {
-        mCheckDownloadBeforeSemaphore.release();
-        mCheckDownloadAfterSemaphore.acquireUninterruptibly();
-    }
-
-    private void completeDownload() {
-        Intent completionIntent = mock(Intent.class);
-        when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-        when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
-        new DownloadManagerReceiver().onReceive(mContext, completionIntent);
-    }
-
-    @NonNull
-    private Cursor mockSuccessCursor() {
-        Cursor cursor = mock(Cursor.class);
-        when(mDownloadManager.query(any(DownloadManager.Query.class))).thenReturn(cursor);
-        when(cursor.moveToFirst()).thenReturn(true);
-        when(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)).thenReturn(0);
-        when(cursor.getInt(0)).thenReturn(DownloadManager.STATUS_SUCCESSFUL);
-        when(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI)).thenReturn(1);
-        when(cursor.getString(1)).thenReturn("content://downloads/all_downloads/" + DOWNLOAD_ID);
-        return cursor;
-    }
-
-    @NonNull
-    private Notification.Builder mockNotificationBuilderChain() throws Exception {
-        Notification.Builder notificationBuilder = mock(Notification.Builder.class);
-        whenNew(Notification.Builder.class).withAnyArguments().thenReturn(notificationBuilder);
-        when(notificationBuilder.setTicker(anyString())).thenReturn(notificationBuilder);
-        when(notificationBuilder.setContentTitle(anyString())).thenReturn(notificationBuilder);
-        when(notificationBuilder.setContentText(anyString())).thenReturn(notificationBuilder);
-        when(notificationBuilder.setSmallIcon(anyInt())).thenReturn(notificationBuilder);
-        when(notificationBuilder.setContentIntent(any(PendingIntent.class))).thenReturn(notificationBuilder);
-        return notificationBuilder;
-    }
-
-    @NonNull
-    private Intent mockInstallIntent() throws Exception {
-        Intent installIntent = mock(Intent.class);
-        whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(installIntent);
-        when(installIntent.resolveActivity(any(PackageManager.class))).thenReturn(mock(ComponentName.class));
-        return installIntent;
-    }
-
-    private void restartActivity() {
-        Distribute.getInstance().onActivityStopped(mFirstActivity);
-        Distribute.getInstance().onActivityDestroyed(mFirstActivity);
-        Distribute.getInstance().onActivityCreated(mFirstActivity, null);
-        Distribute.getInstance().onActivityResumed(mFirstActivity);
-    }
-
-    private void restartProcessAndSdk() {
-        Distribute.unsetInstance();
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        setUpDownload(false);
     }
 
     @Test
@@ -341,8 +82,8 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
 
         /* Pause/resume should do nothing excepting mentioning progress. */
         verify(mDialog).show();
-        Distribute.getInstance().onActivityPaused(mFirstActivity);
-        Distribute.getInstance().onActivityResumed(mFirstActivity);
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
         verify(mDialog).show();
 
         /* Cancel download by disabling. */
@@ -580,7 +321,7 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void longFailingDownload() throws Exception {
+    public void longFailingDownloadForOptionalDownload() throws Exception {
 
         /* Simulate async task. */
         waitDownloadTask();
@@ -593,12 +334,11 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
         when(cursor.getInt(0)).thenReturn(DownloadManager.STATUS_RUNNING);
 
         /* Restart launcher, nothing happens. */
-        when(mFirstActivity.getPackageManager()).thenReturn(mPackageManager);
         Intent launcherIntent = mock(Intent.class);
         when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(launcherIntent);
         ComponentName launcher = mock(ComponentName.class);
         when(launcherIntent.resolveActivity(mPackageManager)).thenReturn(launcher);
-        when(launcher.getClassName()).thenReturn(mFirstActivity.getClass().getName());
+        when(launcher.getClassName()).thenReturn(mActivity.getClass().getName());
         restartActivity();
 
         /* Restart app process. Still nothing as background. */
@@ -606,40 +346,22 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
 
         /* No download check yet. */
         verifyStatic(never());
-        AsyncTaskUtils.execute(anyString(), argThat(new ArgumentMatcher<Distribute.CheckDownloadTask>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof Distribute.CheckDownloadTask;
-            }
-        }), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), argThat(sCheckCompleteTask), Mockito.<Void>anyVararg());
 
         /* Foreground: check still in progress. */
-        Distribute.getInstance().onActivityResumed(mFirstActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
         waitCheckDownloadTask();
         verifyStatic();
-        AsyncTaskUtils.execute(anyString(), argThat(new ArgumentMatcher<Distribute.CheckDownloadTask>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof Distribute.CheckDownloadTask;
-            }
-        }), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), argThat(sCheckCompleteTask), Mockito.<Void>anyVararg());
         verify(cursor).close();
 
         /* Restart launcher. */
-        Distribute.getInstance().onActivityPaused(mFirstActivity);
+        Distribute.getInstance().onActivityPaused(mActivity);
         restartActivity();
 
         /* Verify we don't run the check again. (Only once). */
         verifyStatic();
-        AsyncTaskUtils.execute(anyString(), argThat(new ArgumentMatcher<Distribute.CheckDownloadTask>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof Distribute.CheckDownloadTask;
-            }
-        }), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), argThat(sCheckCompleteTask), Mockito.<Void>anyVararg());
 
         /* Download eventually fails. */
         when(cursor.getInt(0)).thenReturn(DownloadManager.STATUS_FAILED);
@@ -668,9 +390,9 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
         when(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)).thenReturn(0);
         when(cursor.getInt(0)).thenReturn(DownloadManager.STATUS_RUNNING);
 
-        /* Restart app process. Still nothing as background. */
+        /* Restart app process and resume. */
         restartProcessAndSdk();
-        Distribute.getInstance().onActivityResumed(mFirstActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Change behavior of get download it to block to simulate the concurrency issue. */
         final Semaphore beforeDisabledSemaphore = new Semaphore(0);
@@ -742,7 +464,7 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
         });
 
         /* Mock success in background. */
-        Distribute.getInstance().onActivityPaused(mFirstActivity);
+        Distribute.getInstance().onActivityPaused(mActivity);
         mockSuccessCursor();
         mockInstallIntent();
         completeDownload();
@@ -833,7 +555,7 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
         Intent installIntent = mockInstallIntent();
 
         /* In background. */
-        Distribute.getInstance().onActivityPaused(mFirstActivity);
+        Distribute.getInstance().onActivityPaused(mActivity);
 
         /* Mock notification. */
         when(mPackageManager.getApplicationInfo(mContext.getPackageName(), 0)).thenReturn(mock(ApplicationInfo.class));
@@ -850,17 +572,17 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
         PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
         verify(notificationBuilder).build();
         verify(notificationBuilder, never()).getNotification();
-        verify(mNotificationManager).notify(eq(Distribute.getNotificationId()), any(Notification.class));
+        verify(mNotificationManager).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
         verifyNoMoreInteractions(mNotificationManager);
         verify(cursor).close();
 
         /* Launch app should pop install U.I. and cancel notification. */
-        when(mFirstActivity.getPackageManager()).thenReturn(mPackageManager);
+        when(mActivity.getPackageManager()).thenReturn(mPackageManager);
         Intent launcherIntent = mock(Intent.class);
         when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(launcherIntent);
         ComponentName launcher = mock(ComponentName.class);
         when(launcherIntent.resolveActivity(mPackageManager)).thenReturn(launcher);
-        when(launcher.getClassName()).thenReturn(mFirstActivity.getClass().getName());
+        when(launcher.getClassName()).thenReturn(mActivity.getClass().getName());
         restartActivity();
 
         /* Wait again. */
@@ -868,8 +590,10 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
 
         /* Verify U.I shown after restart and workflow completed. */
         verify(mContext).startActivity(installIntent);
-        verify(mNotificationManager).cancel(Distribute.getNotificationId());
+        verify(mNotificationManager).cancel(DistributeUtils.getNotificationId());
         verifyStatic();
+
+        /* Verify workflow completed. */
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify however downloaded file was kept. */
@@ -893,7 +617,7 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
         verify(mDownloadManager).remove(DOWNLOAD_ID);
 
         /* Notification already canceled so no more call, i.e. only once. */
-        verify(mNotificationManager).cancel(Distribute.getNotificationId());
+        verify(mNotificationManager).cancel(DistributeUtils.getNotificationId());
     }
 
     @Test
@@ -929,7 +653,7 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
         verify(mContext, never()).startActivity(installIntent);
         verifyStatic();
         PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
-        verify(mNotificationManager).notify(eq(Distribute.getNotificationId()), any(Notification.class));
+        verify(mNotificationManager).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
         verifyNoMoreInteractions(mNotificationManager);
         verify(cursor).getString(2);
         verify(cursor).close();
@@ -937,14 +661,14 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
         /* Restart app should pop install U.I. and cancel notification and pop a new dialog then a new download. */
         doThrow(new ActivityNotFoundException()).when(mContext).startActivity(installIntent);
         Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Distribute.getInstance().onActivityResumed(mFirstActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Wait download manager query. */
         waitCheckDownloadTask();
 
         /* Verify workflow completed even on failure to show install U.I. */
         verify(mContext).startActivity(installIntent);
-        verify(mNotificationManager).cancel(Distribute.getNotificationId());
+        verify(mNotificationManager).cancel(DistributeUtils.getNotificationId());
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verifyStatic(never());
@@ -957,7 +681,7 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
 
         /* Simulate async task. */
         waitDownloadTask();
-        Distribute.getInstance().onActivityPaused(mFirstActivity);
+        Distribute.getInstance().onActivityPaused(mActivity);
 
         /* Process download completion to notify. */
         completeDownload();
@@ -977,8 +701,8 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
          * already notified.
          */
         restartProcessAndSdk();
-        Distribute.getInstance().onActivityResumed(mFirstActivity);
-        Distribute.getInstance().onActivityPaused(mFirstActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
+        Distribute.getInstance().onActivityPaused(mActivity);
         waitCheckDownloadTask();
         verify(mNotificationManager).notify(anyInt(), any(Notification.class));
         verify(mContext).startActivity(installIntent);
@@ -1012,7 +736,7 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
         when(notificationBuilder.getNotification()).thenReturn(mock(Notification.class));
 
         /* Make notification happen. */
-        Distribute.getInstance().onActivityPaused(mFirstActivity);
+        Distribute.getInstance().onActivityPaused(mActivity);
         completeDownload();
         waitCheckDownloadTask();
 
@@ -1025,7 +749,7 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
         packageInfo.lastUpdateTime = Long.MAX_VALUE;
         when(mPackageManager.getPackageInfo(mContext.getPackageName(), 0)).thenReturn(packageInfo);
         restartProcessAndSdk();
-        Distribute.getInstance().onActivityResumed(mFirstActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
         verify(mDownloadManager).remove(DOWNLOAD_ID);
 
         /* Verify new release checked (for example what we installed was something else than the upgrade. */
@@ -1040,15 +764,10 @@ public class DistributeDownloadTest extends AbstractDistributeTest {
         waitDownloadTask();
         when(mPackageManager.getPackageInfo(mContext.getPackageName(), 0)).thenThrow(new PackageManager.NameNotFoundException());
         restartProcessAndSdk();
-        Distribute.getInstance().onActivityResumed(mFirstActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify workflow completed on failure. */
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
     }
 }
