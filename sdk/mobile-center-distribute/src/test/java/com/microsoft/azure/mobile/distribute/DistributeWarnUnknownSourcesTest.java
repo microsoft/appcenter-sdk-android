@@ -15,6 +15,7 @@ import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -154,9 +155,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
     public void cancelDialogWithButton() {
 
         /* Mandatory update cannot be canceled. */
-        if (mMandatoryUpdate) {
-            return;
-        }
+        Assume.assumeFalse(mMandatoryUpdate);
 
         /* Cancel. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
@@ -179,9 +178,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
     public void disableBeforeCancelWithBack() {
 
         /* Mandatory update cannot be canceled. */
-        if (mMandatoryUpdate) {
-            return;
-        }
+        Assume.assumeFalse(mMandatoryUpdate);
 
         /* Disable. */
         Distribute.setEnabled(false);
@@ -209,9 +206,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
     public void disableBeforeCancelWithButton() {
 
         /* Mandatory update cannot be canceled. */
-        if (mMandatoryUpdate) {
-            return;
-        }
+        Assume.assumeFalse(mMandatoryUpdate);
 
         /* Disable. */
         Distribute.setEnabled(false);

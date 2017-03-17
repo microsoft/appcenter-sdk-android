@@ -155,7 +155,7 @@ class DistributeUtils {
             try {
                 return ReleaseDetails.parse(cachedReleaseDetails);
             } catch (JSONException e) {
-                MobileCenterLog.error(LOG_TAG, "Invalid cached release details.", e);
+                MobileCenterLog.error(LOG_TAG, "Invalid release details in cache.", e);
                 StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
             }
         }

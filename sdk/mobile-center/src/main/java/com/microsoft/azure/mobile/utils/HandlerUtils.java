@@ -2,6 +2,7 @@ package com.microsoft.azure.mobile.utils;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.VisibleForTesting;
 
 /**
  * Utilities related to Handler class.
@@ -11,7 +12,8 @@ public class HandlerUtils {
     /**
      * Main/UI thread Handler.
      */
-    private static final Handler sMainHandler = new Handler(Looper.getMainLooper());
+    @VisibleForTesting
+    static final Handler sMainHandler = new Handler(Looper.getMainLooper());
 
     /**
      * Runs the specified runnable on the UI thread.

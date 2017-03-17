@@ -121,7 +121,7 @@ final class DistributeConstants {
     /**
      * How often to check download progress in millis.
      */
-    static final long CHECK_PROGRESS_TIME_INTERVAL = 1000;
+    static final long CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS = 1000;
 
     /**
      * 1 MiB in bytes (this not a megabyte).
