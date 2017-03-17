@@ -23,10 +23,14 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.mockito.verification.VerificationMode;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
+
+import javax.net.ssl.SSLPeerUnverifiedException;
 
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_PLATFORM;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_PLATFORM_VALUE;
@@ -48,14 +52,17 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 /**
  * Cover scenarios that are happening before we see an API call success for latest release.
  */
+@PrepareForTest(ErrorDetails.class)
 public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     /**
@@ -413,8 +420,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verify(firstCall).cancel();
     }
 
-    @Test
-    public void checkReleaseFailsRecoverable() throws Exception {
+    private void checkReleaseFailure(final Exception exception, VerificationMode deleteTokenVerificationMode) throws Exception {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -424,7 +430,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(new HttpException(503));
+                ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(exception);
                 return mock(ServiceCall.class);
             }
         });
@@ -440,8 +446,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
-        /* The error was recoverable, keep token. */
-        verifyStatic(never());
+        /* Check token kept or not depending on the test. */
+        verifyStatic(deleteTokenVerificationMode);
         PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
 
         /* After that if we resume app nothing happens. */
@@ -451,41 +457,44 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void checkReleaseFailsNotRecoverable() throws Exception {
-
-        /* Mock we already have token. */
-        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(new HttpException(403));
-                return mock(ServiceCall.class);
-            }
-        });
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
-
-        /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-
-        /* Verify on failure we complete workflow. */
-        verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-
-        /* The error was unrecoverable, get rid of token. */
-        verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
-
-        /* After that if we resume app nothing happens. */
-        Distribute.getInstance().onActivityPaused(mock(Activity.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    public void checkReleaseFailsRecoverable503() throws Exception {
+        checkReleaseFailure(new HttpException(503), never());
     }
+
+    @Test
+    public void checkReleaseFailsWith403() throws Exception {
+        checkReleaseFailure(new HttpException(403), times(1));
+
+    }
+
+    @Test
+    public void checkReleaseFailsWithSomeSSL() throws Exception {
+        checkReleaseFailure(new SSLPeerUnverifiedException("unsecured connection"), times(1));
+    }
+
+    @Test
+    public void checkReleaseFailsWithSome404urlNotFound() throws Exception {
+
+        /* Mock error parsing. */
+        mockStatic(ErrorDetails.class);
+        final String errorPayload = "<html>Not Found</html>";
+        when(ErrorDetails.parse(errorPayload)).thenThrow(new JSONException("Expected {"));
+        final Exception exception = new HttpException(404, errorPayload);
+        checkReleaseFailure(exception, times(1));
+    }
+
+    @Test
+    public void checkReleaseFailsWithSome404noRelease() throws Exception {
+
+        /* Mock error parsing. */
+        ErrorDetails errorDetails = mock(ErrorDetails.class);
+        when(errorDetails.getCode()).thenReturn(ErrorDetails.NO_RELEASES_FOR_USER_CODE);
+        mockStatic(ErrorDetails.class);
+        String errorPayload = "{code: 'no_releases_for_user'}";
+        when(ErrorDetails.parse(errorPayload)).thenReturn(errorDetails);
+        checkReleaseFailure(new HttpException(404, errorPayload), never());
+    }
+
 
     @Test
     public void checkReleaseFailsParsing() throws Exception {
