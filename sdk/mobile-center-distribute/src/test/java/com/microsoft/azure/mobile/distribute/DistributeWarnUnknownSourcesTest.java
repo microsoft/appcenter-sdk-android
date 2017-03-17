@@ -15,15 +15,20 @@ import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 
-import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
@@ -46,13 +51,23 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("CanBeFinal")
+@RunWith(Parameterized.class)
 public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
+
+    @SuppressWarnings("WeakerAccess")
+    @Parameterized.Parameter
+    public boolean mMandatoryUpdate;
 
     @Mock
     private AlertDialog mUnknownSourcesDialog;
 
     @Mock
     private Activity mFirstActivity;
+
+    @Parameterized.Parameters(name = "mandatory_update={0}")
+    public static Collection<Boolean> data() {
+        return Arrays.asList(false, true);
+    }
 
     @Before
     public void setUpDialog() throws Exception {
@@ -72,6 +87,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
+        when(releaseDetails.isMandatoryUpdate()).thenReturn(mMandatoryUpdate);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
@@ -110,6 +126,14 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
     @Test
     public void cancelDialogWithBack() {
 
+        /* Mandatory update cannot be canceled. */
+        if (mMandatoryUpdate) {
+
+            /* 1 for update dialog, 1 for unknown sources dialog. */
+            verify(mDialogBuilder, times(2)).setCancelable(false);
+            return;
+        }
+
         /* Cancel. */
         ArgumentCaptor<DialogInterface.OnCancelListener> cancelListener = ArgumentCaptor.forClass(DialogInterface.OnCancelListener.class);
         verify(mDialogBuilder, times(2)).setOnCancelListener(cancelListener.capture());
@@ -130,6 +154,9 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
     @Test
     public void cancelDialogWithButton() {
 
+        /* Mandatory update cannot be canceled. */
+        Assume.assumeFalse(mMandatoryUpdate);
+
         /* Cancel. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
         verify(mDialogBuilder).setNegativeButton(eq(android.R.string.cancel), clickListener.capture());
@@ -149,6 +176,9 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
     @Test
     public void disableBeforeCancelWithBack() {
+
+        /* Mandatory update cannot be canceled. */
+        Assume.assumeFalse(mMandatoryUpdate);
 
         /* Disable. */
         Distribute.setEnabled(false);
@@ -174,6 +204,9 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
     @Test
     public void disableBeforeCancelWithButton() {
+
+        /* Mandatory update cannot be canceled. */
+        Assume.assumeFalse(mMandatoryUpdate);
 
         /* Disable. */
         Distribute.setEnabled(false);
@@ -275,7 +308,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
             @Override
             public boolean matches(Object argument) {
-                return argument instanceof Distribute.DownloadTask;
+                return argument instanceof DownloadTask;
             }
         }), anyVararg());
     }
@@ -335,17 +368,5 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
         verify(mUnknownSourcesDialog).show();
-    }
-
-    @After
-    public void restartShowDialog() {
-
-        /* Restart should check release and show update dialog again. */
-        when(mDialogBuilder.create()).thenReturn(mDialog);
-        Distribute.unsetInstance();
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        Distribute.setEnabled(true);
-        verify(mDialog, times(2)).show();
     }
 }

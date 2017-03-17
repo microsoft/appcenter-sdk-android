@@ -63,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
                 throw new RuntimeException(e);
             }
         }
-        MobileCenter.setLogLevel(Log.VERBOSE);
         Crashes.setListener(getCrashesListener());
         MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class);
         try {

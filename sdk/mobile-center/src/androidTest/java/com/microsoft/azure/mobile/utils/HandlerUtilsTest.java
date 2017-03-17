@@ -8,14 +8,23 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 
 public class HandlerUtilsTest {
 
     @Test
-    public void runOnUiThread() {
+    public void init() {
+        assertNotNull(new HandlerUtils());
+    }
 
-        /* Constructor code coverage is needed... */
-        new HandlerUtils();
+    @Test
+    public void getMainThreadHandler() {
+        assertSame(HandlerUtils.sMainHandler, HandlerUtils.getMainHandler());
+        assertSame(HandlerUtils.getMainHandler(), HandlerUtils.getMainHandler());
+    }
+
+    @Test
+    public void runOnUiThread() {
         final AtomicReference<Thread> mainThreadFirstRun = new AtomicReference<>();
         final AtomicReference<Thread> mainThreadNestedRun = new AtomicReference<>();
         final Semaphore semaphore = new Semaphore(0);
