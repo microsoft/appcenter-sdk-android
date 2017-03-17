@@ -34,7 +34,8 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
     private final long mDownloadId;
 
     /**
-     * Flag just to check progress.
+     * Flag to only check progress and not notify or show install U.I. if checking progress while
+     * download completed in the meantime.
      */
     private final boolean mCheckProgress;
 

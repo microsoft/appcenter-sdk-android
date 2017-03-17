@@ -8,13 +8,19 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 
 public class HandlerUtilsTest {
 
     @Test
-    public void coverageWorkAround() {
+    public void init() {
         assertNotNull(new HandlerUtils());
-        assertNotNull(HandlerUtils.getMainHandler());
+    }
+
+    @Test
+    public void getMainThreadHandler() {
+        assertSame(HandlerUtils.sMainHandler, HandlerUtils.getMainHandler());
+        assertSame(HandlerUtils.getMainHandler(), HandlerUtils.getMainHandler());
     }
 
     @Test

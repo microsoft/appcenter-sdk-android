@@ -25,7 +25,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.concurrent.Semaphore;
 
-import static com.microsoft.azure.mobile.distribute.DistributeConstants.CHECK_PROGRESS_TIME_INTERVAL;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_INSTALLING;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
@@ -143,7 +143,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         waitDownloadTask();
         waitCheckDownloadTask();
         verify(cursor).close();
-        verify(mHandler).postAtTime(any(Runnable.class), eq(HANDLER_TOKEN_CHECK_PROGRESS), eq(CHECK_PROGRESS_TIME_INTERVAL + 1));
+        verify(mHandler).postAtTime(any(Runnable.class), eq(HANDLER_TOKEN_CHECK_PROGRESS), eq(CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS + 1));
         verify(mProgressDialog, never()).setProgress(anyInt());
 
         /* Mock some progress. */
@@ -166,7 +166,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
 
         /* Check no more timer and progress update while paused. */
         verify(mProgressDialog).setProgress(42);
-        verify(mHandler, times(3)).postAtTime(any(Runnable.class), eq(HANDLER_TOKEN_CHECK_PROGRESS), eq(CHECK_PROGRESS_TIME_INTERVAL + 1));
+        verify(mHandler, times(3)).postAtTime(any(Runnable.class), eq(HANDLER_TOKEN_CHECK_PROGRESS), eq(CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS + 1));
 
         /* Reusing dialog on resume. */
         Distribute.getInstance().onActivityResumed(mActivity);

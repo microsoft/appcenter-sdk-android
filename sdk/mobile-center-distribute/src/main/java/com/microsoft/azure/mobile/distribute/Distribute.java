@@ -54,7 +54,7 @@ import java.util.Map;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
-import static com.microsoft.azure.mobile.distribute.DistributeConstants.CHECK_PROGRESS_TIME_INTERVAL;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DEFAULT_API_URL;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DEFAULT_INSTALL_URL;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
@@ -1151,7 +1151,7 @@ public class Distribute extends AbstractMobileCenterService {
                 public void run() {
                     checkDownload(mContext, DistributeUtils.getStoredDownloadId(), true);
                 }
-            }, HANDLER_TOKEN_CHECK_PROGRESS, SystemClock.uptimeMillis() + CHECK_PROGRESS_TIME_INTERVAL);
+            }, HANDLER_TOKEN_CHECK_PROGRESS, SystemClock.uptimeMillis() + CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS);
         }
     }
 
