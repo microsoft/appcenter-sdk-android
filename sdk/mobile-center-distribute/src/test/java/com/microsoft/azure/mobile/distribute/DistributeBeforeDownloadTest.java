@@ -246,6 +246,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_dialog_title);
         verify(mDialogBuilder).setMessage(R.string.mobile_center_distribute_update_dialog_message);
         verify(mDialogBuilder, never()).setMessage(any(CharSequence.class));
+        verify(mDialogBuilder, never()).setCancelable(false);
         verify(mDialogBuilder).create();
         verify(mDialog).show();
 
@@ -306,6 +307,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Verify dialog. */
         verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_dialog_title);
         verify(mDialogBuilder).setMessage("mock");
+        verify(mDialogBuilder, never()).setCancelable(false);
         verify(mDialogBuilder).create();
         verify(mDialog).show();
     }
