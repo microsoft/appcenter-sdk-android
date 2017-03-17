@@ -33,6 +33,7 @@ import com.microsoft.azure.mobile.http.DefaultHttpClient;
 import com.microsoft.azure.mobile.http.HttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.HttpClientRetryer;
+import com.microsoft.azure.mobile.http.HttpException;
 import com.microsoft.azure.mobile.http.HttpUtils;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
@@ -721,10 +722,35 @@ public class Distribute extends AbstractMobileCenterService {
 
         /* Check if state did not change. */
         if (mCheckReleaseCallId == releaseCallId) {
-            MobileCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
+
+            /* Complete workflow in error. */
             completeWorkflow();
+
+            /* Delete token on unrecoverable error. */
             if (!HttpUtils.isRecoverableError(e)) {
-                PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+
+                /*
+                 * Unless its a special case: 404 with json code that no release is found.
+                 * Could happen by cleaning releases with remove button.
+                 */
+                String code = null;
+                if (e instanceof HttpException) {
+                    HttpException httpException = (HttpException) e;
+                    try {
+
+                        /* We actually don't care of the http code if JSON code is specified. */
+                        ErrorDetails errorDetails = ErrorDetails.parse(httpException.getPayload());
+                        code = errorDetails.getCode();
+                    } catch (JSONException je) {
+                        MobileCenterLog.verbose(LOG_TAG, "Cannot read the error as JSON", je);
+                    }
+                }
+                if (ErrorDetails.NO_RELEASES_FOR_USER_CODE.equals(code)) {
+                    MobileCenterLog.info(LOG_TAG, "No release available to the current user.");
+                } else {
+                    MobileCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
+                    PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+                }
             }
         }
     }
