@@ -38,7 +38,7 @@ final class DistributeConstants {
     /**
      * Base URL to call server to check latest release.
      */
-    static final String DEFAULT_API_URL = "https://api.mobile.azure.com";
+    static final String DEFAULT_API_URL = "https://api.mobile.azure.com/v0.1";
 
     /**
      * Update setup URL path. Contains the app secret variable to replace.
