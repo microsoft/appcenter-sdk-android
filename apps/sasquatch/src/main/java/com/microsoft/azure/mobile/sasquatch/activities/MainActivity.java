@@ -18,18 +18,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
-import com.microsoft.azure.mobile.MobileCenterService;
 import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
+import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
-import com.microsoft.azure.mobile.utils.MobileCenterLog;
-
-import java.lang.reflect.Method;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -49,33 +46,26 @@ public class MainActivity extends AppCompatActivity {
         /* Set custom log URL if one was configured in settings. */
         String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getString(R.string.log_url));
         if (!TextUtils.isEmpty(logUrl)) {
-            try {
-
-                /* Method name changed and jCenter not yet updated so need to use reflection. */
-                Method setLogUrl;
-                try {
-                    setLogUrl = MobileCenter.class.getMethod("setLogUrl", String.class);
-                } catch (NoSuchMethodException e) {
-                    setLogUrl = MobileCenter.class.getMethod("setServerUrl", String.class);
-                }
-                setLogUrl.invoke(null, logUrl);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            MobileCenter.setLogUrl(logUrl);
         }
+
+        /* Set crash listener. */
         Crashes.setListener(getCrashesListener());
-        MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class);
-        try {
 
-            @SuppressWarnings("unchecked")
-            Class<? extends MobileCenterService> distribute = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.distribute.Distribute");
-            distribute.getMethod("setInstallUrl", String.class).invoke(null, "http://install.asgard-int.trafficmanager.net");
-            distribute.getMethod("setApiUrl", String.class).invoke(null, "https://asgard-int.trafficmanager.net/api/v0.1");
-            MobileCenter.start(distribute);
-        } catch (Exception e) {
-            MobileCenterLog.info(LOG_TAG, "Distribute class not yet available in this flavor.");
+        /* Set distribute urls. */
+        String installUrl = getString(R.string.install_url);
+        if (!TextUtils.isEmpty(installUrl)) {
+            Distribute.setInstallUrl(installUrl);
+        }
+        String apiUrl = getString(R.string.api_url);
+        if (!TextUtils.isEmpty(apiUrl)) {
+            Distribute.setApiUrl(apiUrl);
         }
 
+        /* Start Mobile center. */
+        MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class);
+
+        /* Print last crash. */
         Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
         Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
 
@@ -87,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        /* Populate UI. */
         ((TextView) findViewById(R.id.package_name)).setText(String.format(getString(R.string.sdk_source_format), getPackageName().substring(getPackageName().lastIndexOf(".") + 1)));
         TestFeatures.initialize(this);
         ListView listView = (ListView) findViewById(R.id.list);
