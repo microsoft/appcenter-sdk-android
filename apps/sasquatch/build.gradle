@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    def version = "0.6.0-3"
+    def version = "0.6.0-4"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     projectDependencyCompile project(':sdk:mobile-center-analytics')
     projectDependencyCompile project(':sdk:mobile-center-crashes')
