@@ -21,12 +21,16 @@ import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
 import com.microsoft.azure.mobile.crashes.Crashes;
+import com.microsoft.azure.mobile.crashes.ErrorAttachments;
+import com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.UUID;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -142,11 +146,19 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
 
-            /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
-//            @Override
-//            public ErrorAttachment getErrorAttachment(ErrorReport report) {
-//                return ErrorAttachments.attachment("This is a text attachment.", "This is a binary attachment.".getBytes(), "binary.txt", "text/plain");
-//            }
+            @Override
+            public Iterable<ErrorAttachmentLog> getErrorAttachment(ErrorReport report) {
+                ErrorAttachmentLog textLog = ErrorAttachments.attachmentWithText("This is a text attachment.", "text.txt");
+                ErrorAttachmentLog binaryLog = ErrorAttachments.attachmentWithBinary("This is a binary attachment.".getBytes(), "binary.txt");
+
+                textLog.setId(UUID.randomUUID());
+                binaryLog.setId(UUID.randomUUID());
+
+                textLog.setErrorId(UUID.fromString(report.getId()));
+                binaryLog.setErrorId(UUID.fromString(report.getId()));
+
+                return Arrays.asList(textLog, binaryLog);
+            }
 
             @Override
             public void onBeforeSending(ErrorReport report) {
