@@ -17,7 +17,15 @@ then
 else
   buildNumber=$((bintrayBuildNumber+1))
 fi
-newVersion=$gradleVersion-$buildNumber
+
+newVersion="$gradleVersion-"
+branch=`git symbolic-ref --short HEAD`
+if [[ "$branch" != "master" ]] && [[ "$branch" != "develop" ]]
+then
+  branch=`echo $branch | sed 's#.*/##'`
+  newVersion+="$branch."
+fi
+newVersion+=$buildNumber
 
 if [[ "$1" == "--use-hash" ]]
 then
