@@ -739,14 +739,17 @@ public class Crashes extends AbstractMobileCenterService {
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
 
-                        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
-//                        ErrorAttachment attachment = mCrashesListener.getErrorAttachment(errorLogReport.report);
-//                        if (attachment == null)
-//                            MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
-//                        else
-//                            errorLogReport.log.setErrorAttachment(attachment);
                         mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
 
+                        Iterable<ErrorAttachmentLog> attachments = mCrashesListener.getErrorAttachment(errorLogReport.report);
+                        if (attachments == null) {
+                            MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
+                        }
+                        else {
+                            for (ErrorAttachmentLog attachment : attachments) {
+                                mChannel.enqueue(attachment, ERROR_GROUP);
+                            }
+                        }
                         /* Clean up an error log file and map entry. */
                         unprocessedIterator.remove();
                         ErrorLogHelper.removeStoredErrorLogFile(unprocessedEntry.getKey());
