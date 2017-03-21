@@ -10,8 +10,8 @@
 
     <string name="mobile_center_analytics_state_key">mobile_center_analytics_state_key</string>
     <string name="mobile_center_analytics_state_title">Analytics state</string>
-    <string name="mobile_center_analytics_state_summary_enabled">Analytics is enabled</string>
-    <string name="mobile_center_analytics_state_summary_disabled">Analytics is disabled</string>
+    <string name="mobile_center_analytics_state_summary_enabled">Analytics are enabled</string>
+    <string name="mobile_center_analytics_state_summary_disabled">Analytics are disabled</string>
 
     <string name="mobile_center_auto_page_tracking_key">mobile_center_auto_page_tracking_key</string>
     <string name="mobile_center_auto_page_tracking_title">Analytics automatic page tracking</string>
@@ -24,8 +24,16 @@
 
     <string name="mobile_center_crashes_state_key">mobile_center_crashes_state_key</string>
     <string name="mobile_center_crashes_state_title">Crashes state</string>
-    <string name="mobile_center_crashes_state_summary_enabled">Crashes is enabled</string>
-    <string name="mobile_center_crashes_state_summary_disabled">Crashes is disabled</string>
+    <string name="mobile_center_crashes_state_summary_enabled">Crashes are enabled</string>
+    <string name="mobile_center_crashes_state_summary_disabled">Crashes are disabled</string>
+
+    <string name="distribute_key">mobile_center_distribute</string>
+    <string name="distribute_title">Distribute</string>
+
+    <string name="mobile_center_distribute_state_key">mobile_center_distribute_state_key</string>
+    <string name="mobile_center_distribute_state_title">Distribute state</string>
+    <string name="mobile_center_distribute_state_summary_enabled">Distribute is enabled</string>
+    <string name="mobile_center_distribute_state_summary_disabled">Distribute is disabled</string>
 
     <string name="application_info_key">application_info</string>
     <string name="application_info_title">Application Information</string>
@@ -51,7 +59,8 @@
     <string name="log_url_title">Log URL</string>
     <string name="log_url_changed_format">Show Log URL has been changed to %s successfully. Please close the application completely and relaunch again.</string>
     <string name="log_url_invalid">Log URL is not valid.</string>
-    <string name="log_url_production">Log URL currently set to the production.</string>
+    <string name="log_url_set_to_production">Log URL currently set to the production.</string>
+    <string name="log_url_production">production</string>
 
     <string name="save">Save</string>
     <string name="reset">Reset</string>

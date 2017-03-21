@@ -3,7 +3,6 @@ package com.microsoft.azure.mobile.crashes;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 
-import com.microsoft.azure.mobile.crashes.model.ErrorAttachment;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 
 /**
@@ -30,7 +29,7 @@ public interface CrashesListener {
     @UiThread
     boolean shouldAwaitUserConfirmation();
 
-    /**
+    /*
      * Called to get additional information to be attached to a crash report before sending.
      * Attachment is an optional so this method can also return <code>null</code>.
      *

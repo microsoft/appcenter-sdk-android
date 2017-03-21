@@ -1,12 +1,14 @@
 package com.microsoft.azure.mobile.ingestion;
 
+import com.microsoft.azure.mobile.http.ServiceCall;
+import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 
 import java.io.Closeable;
 import java.util.UUID;
 
 /**
- * The interface for Ingestion class.
+ * Interface to send logs to the Ingestion service.
  */
 public interface Ingestion extends Closeable {
 

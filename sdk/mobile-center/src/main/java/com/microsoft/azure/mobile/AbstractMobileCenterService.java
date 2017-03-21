@@ -79,38 +79,39 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
         }
 
         /* If channel initialized. */
-        if (mChannel != null) {
+        String groupName = getGroupName();
+        if (groupName != null && mChannel != null) {
 
             /* Register service to channel on enabling. */
             if (enabled)
-                mChannel.addGroup(getGroupName(), getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
+                mChannel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
 
             /* Otherwise, clear all persisted logs and remove a group for the service. */
             else {
-                /* TODO: Expose a method and do this in one place. */
-                mChannel.clear(getGroupName());
-                mChannel.removeGroup(getGroupName());
+                mChannel.clear(groupName);
+                mChannel.removeGroup(groupName);
             }
         }
 
         /* Save new state. */
         StorageHelper.PreferencesStorage.putBoolean(getEnabledPreferenceKey(), enabled);
-
         MobileCenterLog.info(getLoggerTag(), String.format("%s service has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
     }
 
     @Override
-    public synchronized void onChannelReady(@NonNull Context context, @NonNull Channel channel) {
-        channel.removeGroup(getGroupName());
+    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
+        String groupName = getGroupName();
+        if (groupName != null) {
+            channel.removeGroup(groupName);
 
-        /* Add a group to the channel if the service is enabled */
-        if (isInstanceEnabled())
-            channel.addGroup(getGroupName(), getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
+            /* Add a group to the channel if the service is enabled */
+            if (isInstanceEnabled())
+                channel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
 
-        /* Otherwise, clear all persisted logs for the service. */
-        else
-            channel.clear(getGroupName());
-
+            /* Otherwise, clear all persisted logs for the service. */
+            else
+                channel.clear(groupName);
+        }
         mChannel = channel;
     }
 
@@ -136,7 +137,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     @SuppressWarnings("WeakerAccess")
     @NonNull
     protected String getEnabledPreferenceKey() {
-        return KEY_ENABLED + PREFERENCE_KEY_SEPARATOR + getGroupName();
+        return KEY_ENABLED + PREFERENCE_KEY_SEPARATOR + getServiceName();
     }
 
     /**
