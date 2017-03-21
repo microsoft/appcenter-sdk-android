@@ -468,18 +468,6 @@ public class ErrorModelTest {
                 checkEquals(errorAttachment1, errorAttachment2);
             }
             {
-                errorLog1.setErrorAttachment(errorAttachment1);
-                errorLog2.setErrorAttachment(null);
-                checkNotEquals(errorLog1, errorLog2);
-                checkSerialization(errorLog1, serializer);
-
-                errorLog1.setErrorAttachment(null);
-                errorLog2.setErrorAttachment(errorAttachment2);
-                checkNotEquals(errorLog1, errorLog2);
-
-                errorLog1.setErrorAttachment(errorLog2.getErrorAttachment());
-                checkEquals(errorLog1, errorLog2);
-
                 ErrorBinaryAttachment errorBinaryAttachment1 = new ErrorBinaryAttachment();
                 ErrorBinaryAttachment errorBinaryAttachment2 = new ErrorBinaryAttachment();
 
