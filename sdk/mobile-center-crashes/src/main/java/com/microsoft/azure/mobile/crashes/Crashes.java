@@ -15,7 +15,9 @@ import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.Constants;
 import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.channel.Channel;
+import com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
+import com.microsoft.azure.mobile.crashes.ingestion.models.json.ErrorAttachmentLogFactory;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.model.TestCrashException;
@@ -168,8 +170,10 @@ public class Crashes extends AbstractMobileCenterService {
     private Crashes() {
         mFactories = new HashMap<>();
         mFactories.put(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
+        mFactories.put(ErrorAttachmentLog.TYPE, ErrorAttachmentLogFactory.getInstance());
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
+        mLogSerializer.addLogFactory(ErrorAttachmentLog.TYPE, ErrorAttachmentLogFactory.getInstance());
         mCrashesListener = DEFAULT_ERROR_REPORTING_LISTENER;
         mUnprocessedErrorReports = new LinkedHashMap<>();
         mErrorReportCache = new LinkedHashMap<>();
@@ -735,14 +739,17 @@ public class Crashes extends AbstractMobileCenterService {
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
 
-                        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
-//                        ErrorAttachment attachment = mCrashesListener.getErrorAttachment(errorLogReport.report);
-//                        if (attachment == null)
-//                            MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
-//                        else
-//                            errorLogReport.log.setErrorAttachment(attachment);
                         mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
 
+                        Iterable<ErrorAttachmentLog> attachments = mCrashesListener.getErrorAttachment(errorLogReport.report);
+                        if (attachments == null) {
+                            MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
+                        }
+                        else {
+                            for (ErrorAttachmentLog attachment : attachments) {
+                                mChannel.enqueue(attachment, ERROR_GROUP);
+                            }
+                        }
                         /* Clean up an error log file and map entry. */
                         unprocessedIterator.remove();
                         ErrorLogHelper.removeStoredErrorLogFile(unprocessedEntry.getKey());

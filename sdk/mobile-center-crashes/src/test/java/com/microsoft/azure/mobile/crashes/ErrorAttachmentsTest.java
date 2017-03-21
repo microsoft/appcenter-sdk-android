@@ -1,10 +1,13 @@
 package com.microsoft.azure.mobile.crashes;
 
-import com.microsoft.azure.mobile.crashes.model.ErrorAttachment;
+
+import android.util.Base64;
+
+import com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -19,76 +22,36 @@ public class ErrorAttachmentsTest {
     @Test
     public void attachmentWithText() {
         String text = "Hello World!";
-        ErrorAttachment attachment = ErrorAttachments.attachmentWithText(text);
+        String fileName = "1";
+        ErrorAttachmentLog attachment = ErrorAttachments.attachmentWithText(text, fileName);
         assertNotNull(attachment);
-        assertEquals(text, attachment.getTextAttachment());
-        assertEquals(attachment, ErrorAttachments.attachment(text, null, null, null));
+        assertEquals(text, attachment.getData());
+        assertEquals(fileName, attachment.getFileName());
+        assertEquals(ErrorAttachments.CONTENT_TYPE_TEXT_PLAIN, attachment.getContentType());
     }
 
     @Test
     public void attachmentWithNullText() {
-        assertNull(ErrorAttachments.attachmentWithText(null));
-        assertNull(ErrorAttachments.attachment(null, null, null, null));
+        String text = "1";
+        assertNull(ErrorAttachments.attachmentWithText(null, text));
+        assertNull(ErrorAttachments.attachmentWithText(text, null));
     }
-
     @Test
     public void attachmentWithBinary() {
         byte[] data = "Hello Binary!".getBytes();
         String fileName = "binary.txt";
-        String contentType = "text/plain";
-        ErrorAttachment attachment = ErrorAttachments.attachmentWithBinary(data, fileName, contentType);
+        ErrorAttachmentLog attachment = ErrorAttachments.attachmentWithBinary(data, fileName);
         assertNotNull(attachment);
-        assertNotNull(attachment.getBinaryAttachment());
-        assertEquals(data, attachment.getBinaryAttachment().getData());
-        assertEquals(fileName, attachment.getBinaryAttachment().getFileName());
-        assertEquals(contentType, attachment.getBinaryAttachment().getContentType());
-        assertEquals(attachment, ErrorAttachments.attachment(null, data, fileName, contentType));
+        assertEquals(Base64.encodeToString(data, Base64.DEFAULT), attachment.getData());
+        assertEquals(fileName, attachment.getFileName());
+        assertEquals(ErrorAttachments.CONTENT_TYPE_BINARY, attachment.getContentType());
     }
 
     @Test
     public void attachmentWithNullBinary() {
-        String fileName = "binary.txt";
-        String contentType = "text/plain";
-        {
-            assertNull(ErrorAttachments.attachmentWithBinary(null, fileName, contentType));
-            assertNull(ErrorAttachments.attachmentWithBinary(null, null, contentType));
-            assertNull(ErrorAttachments.attachmentWithBinary(null, fileName, null));
-            assertNull(ErrorAttachments.attachmentWithBinary(null, null, null));
-        }
-        {
-            assertNull(ErrorAttachments.attachment(null, null, fileName, contentType));
-            assertNull(ErrorAttachments.attachment(null, null, null, contentType));
-            assertNull(ErrorAttachments.attachment(null, null, fileName, null));
-            assertNull(ErrorAttachments.attachment(null, null, null, null));
-        }
-    }
-
-    @Test
-    public void attachmentWithTextAndBinary() {
-        String text = "Hello World!";
-        byte[] data = "Hello Binary!".getBytes();
-        String fileName = "binary.txt";
-        String contentType = "text/plain";
-        ErrorAttachment attachment = ErrorAttachments.attachment(text, data, fileName, contentType);
-        assertNotNull(attachment);
-        assertEquals(text, attachment.getTextAttachment());
-        assertNotNull(attachment.getBinaryAttachment());
-        assertEquals(data, attachment.getBinaryAttachment().getData());
-        assertEquals(fileName, attachment.getBinaryAttachment().getFileName());
-        assertEquals(contentType, attachment.getBinaryAttachment().getContentType());
-    }
-
-    @Test
-    public void attachmentWithTextAndNullBinary() {
-        String text = "Hello World!";
-        String fileName = "binary.txt";
-        String contentType = "text/plain";
-        ErrorAttachment attachment = ErrorAttachments.attachment(text, null, null, null);
-        assertNotNull(attachment);
-        assertEquals(text, attachment.getTextAttachment());
-        assertNull(attachment.getBinaryAttachment());
-        assertEquals(attachment, ErrorAttachments.attachment(text, null, fileName, null));
-        assertEquals(attachment, ErrorAttachments.attachment(text, null, null, contentType));
-        assertEquals(attachment, ErrorAttachments.attachment(text, null, fileName, contentType));
+        String text = "1";
+        byte[] data = {};
+        assertNull(ErrorAttachments.attachmentWithBinary(null, text));
+        assertNull(ErrorAttachments.attachmentWithBinary(data, null));
     }
 }

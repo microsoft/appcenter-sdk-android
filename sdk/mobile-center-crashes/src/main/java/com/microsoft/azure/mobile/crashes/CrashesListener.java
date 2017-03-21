@@ -3,7 +3,7 @@ package com.microsoft.azure.mobile.crashes;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 
-import com.microsoft.azure.mobile.crashes.model.ErrorAttachment;
+import com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 
 /**
@@ -31,15 +31,14 @@ public interface CrashesListener {
     boolean shouldAwaitUserConfirmation();
 
     /**
-     * Called to get additional information to be attached to a crash report before sending.
-     * Attachment is an optional so this method can also return <code>null</code>.
+     * Called to get additional information to be send as separate ErrorAttachmentLog logs
+     * Attachments are optional so this method can also return <code>null</code>.
      *
      * @param report The crash report for additional information.
-     * @return {@link ErrorAttachment} instance to be attached to the crash report.
+     * @return {@link Iterable<ErrorAttachmentLog>} instances of ErrorAttachmentLog to be send as separate logs.
      */
-    /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
-//    @WorkerThread
-//    ErrorAttachment getErrorAttachment(ErrorReport report);
+    @WorkerThread
+    Iterable<ErrorAttachmentLog> getErrorAttachment(ErrorReport report);
 
     /**
      * Called right before sending a crash report. The callback can be invoked multiple times based on the number of crash reports.
