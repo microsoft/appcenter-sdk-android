@@ -109,7 +109,7 @@ subprojects {
         afterEvaluate {
             source = android.sourceSets.main.java.srcDirs
             classpath += configurations.javadocDeps
-            classpath += fileTree(dir: "$buildDir/intermediates/exploded-aar/", include: "**/classes.jar")
+            configurations.compile.dependencies.withType(ProjectDependency).dependencyProject.buildDir.each { dir -> classpath += files("${dir}/intermediates/classes/release") }
             //noinspection GroovyAssignabilityCheck
             classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
             javadoc.dependsOn project.assembleRelease

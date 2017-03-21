@@ -58,7 +58,7 @@ public class AnalyticsAndroidTest {
         AnalyticsListener analyticsListener = mock(AnalyticsListener.class);
         Analytics.setListener(analyticsListener);
         Channel channel = mock(Channel.class);
-        Analytics.getInstance().onChannelReady(sContext, channel);
+        Analytics.getInstance().onStarted(sContext, "", channel);
         Analytics.trackEvent("event");
 
         /* First process: enqueue log but network is down... */
@@ -84,7 +84,7 @@ public class AnalyticsAndroidTest {
         }).when(channel).addGroup(anyString(), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
         Analytics.unsetInstance();
         Analytics.setListener(analyticsListener);
-        Analytics.getInstance().onChannelReady(sContext, channel);
+        Analytics.getInstance().onStarted(sContext, "", channel);
         assertNotNull(groupListener.get());
         groupListener.get().onSuccess(log);
         verify(channel, never()).enqueue(any(Log.class), anyString());

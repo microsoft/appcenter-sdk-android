@@ -9,26 +9,39 @@ import android.util.Log;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.channel.DefaultChannel;
+import com.microsoft.azure.mobile.ingestion.models.StartServiceLog;
 import com.microsoft.azure.mobile.ingestion.models.WrapperSdk;
 import com.microsoft.azure.mobile.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
+import com.microsoft.azure.mobile.ingestion.models.json.StartServiceLogFactory;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
+import com.microsoft.azure.mobile.utils.ShutdownHelper;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import static android.util.Log.ASSERT;
 import static android.util.Log.VERBOSE;
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_COUNT;
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_INTERVAL;
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
 import static com.microsoft.azure.mobile.utils.MobileCenterLog.NONE;
 
 public class MobileCenter {
+
+    /**
+     * Group for sending logs.
+     */
+    @VisibleForTesting
+    static final String CORE_GROUP = "group_core";
 
     /**
      * TAG used in logging.
@@ -47,14 +60,24 @@ public class MobileCenter {
     private boolean mLogLevelConfigured;
 
     /**
-     * Custom server Url if any.
+     * Custom log URL if any.
      */
-    private String mServerUrl;
+    private String mLogUrl;
 
     /**
      * Application context.
      */
     private Application mApplication;
+
+    /**
+     * Application secret.
+     */
+    private String mAppSecret;
+
+    /*
+     * Handler for uncaught exceptions.
+     */
+    private UncaughtExceptionHandler mUncaughtExceptionHandler;
 
     /**
      * Configured services.
@@ -98,7 +121,7 @@ public class MobileCenter {
      *
      * @return log level as defined by {@link android.util.Log}.
      */
-    @IntRange(from = VERBOSE, to = ASSERT)
+    @IntRange(from = VERBOSE, to = NONE)
     public static int getLogLevel() {
         return MobileCenterLog.getLogLevel();
     }
@@ -120,12 +143,12 @@ public class MobileCenter {
     }
 
     /**
-     * Change the base URL (scheme + authority + port only) used to communicate with the backend.
+     * Change the base URL (scheme + authority + port only) used to send logs.
      *
-     * @param serverUrl base URL to use for server communication.
+     * @param logUrl base log URL.
      */
-    public static void setServerUrl(String serverUrl) {
-        getInstance().setInstanceServerUrl(serverUrl);
+    public static void setLogUrl(String logUrl) {
+        getInstance().setInstanceLogUrl(logUrl);
     }
 
     /**
@@ -243,14 +266,14 @@ public class MobileCenter {
     }
 
     /**
-     * {@link #setServerUrl(String)} implementation at instance level.
+     * {@link #setLogUrl(String)} implementation at instance level.
      *
-     * @param serverUrl server URL.
+     * @param logUrl log URL.
      */
-    private synchronized void setInstanceServerUrl(String serverUrl) {
-        mServerUrl = serverUrl;
+    private synchronized void setInstanceLogUrl(String logUrl) {
+        mLogUrl = logUrl;
         if (mChannel != null)
-            mChannel.setServerUrl(serverUrl);
+            mChannel.setLogUrl(logUrl);
     }
 
     /**
@@ -267,6 +290,8 @@ public class MobileCenter {
      * @param appSecret   a unique and secret key used to identify the application.
      * @return true if configuration was successful, false otherwise.
      */
+    /* UncaughtExceptionHandler is used by PowerMock but lint does not detect it. */
+    @SuppressLint("VisibleForTests")
     private synchronized boolean instanceConfigure(Application application, String appSecret) {
 
         /* Load some global constants. */
@@ -286,18 +311,31 @@ public class MobileCenter {
         } else if (appSecret == null || appSecret.isEmpty()) {
             MobileCenterLog.error(LOG_TAG, "appSecret may not be null or empty");
         } else {
+
+            /* Store state. */
             mApplication = application;
+            mAppSecret = appSecret;
 
             /* If parameters are valid, init context related resources. */
             StorageHelper.initialize(application);
+
+            /* Remember state to avoid double call PreferencesStorage. */
+            boolean enabled = isInstanceEnabled();
+
+            /* Init uncaught exception handler. */
+            mUncaughtExceptionHandler = new UncaughtExceptionHandler();
+            if (enabled)
+                mUncaughtExceptionHandler.register();
             mServices = new HashSet<>();
 
             /* Init channel. */
             mLogSerializer = new DefaultLogSerializer();
+            mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
             mChannel = new DefaultChannel(application, appSecret, mLogSerializer);
-            mChannel.setEnabled(isInstanceEnabled());
-            if (mServerUrl != null)
-                mChannel.setServerUrl(mServerUrl);
+            mChannel.setEnabled(enabled);
+            mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null);
+            if (mLogUrl != null)
+                mChannel.setLogUrl(mLogUrl);
             MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK configured successfully.");
             return true;
         }
@@ -321,17 +359,24 @@ public class MobileCenter {
             return;
         }
 
+        /* Start each service and collect info for send start service log. */
+        List<String> startedServices = new ArrayList<>();
         for (Class<? extends MobileCenterService> service : services) {
             if (service == null) {
                 MobileCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
             } else {
                 try {
-                    startService((MobileCenterService) service.getMethod("getInstance").invoke(null));
+                    MobileCenterService serviceInstance = (MobileCenterService) service.getMethod("getInstance").invoke(null);
+                    if (startService(serviceInstance)) {
+                        startedServices.add(serviceInstance.getServiceName());
+                    }
                 } catch (Exception e) {
                     MobileCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
                 }
             }
         }
+        if (startedServices.size() > 0)
+            queueStartService(startedServices);
     }
 
     /**
@@ -339,10 +384,10 @@ public class MobileCenter {
      *
      * @param service service to start.
      */
-    private synchronized void startService(@NonNull MobileCenterService service) {
+    private synchronized boolean startService(@NonNull MobileCenterService service) {
         if (mServices.contains(service)) {
             MobileCenterLog.warn(LOG_TAG, "Mobile Center has already started the service with class name: " + service.getClass().getName());
-            return;
+            return false;
         }
         Map<String, LogFactory> logFactories = service.getLogFactories();
         if (logFactories != null) {
@@ -350,10 +395,11 @@ public class MobileCenter {
                 mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
         }
         mServices.add(service);
-        service.onChannelReady(mApplication, mChannel);
+        service.onStarted(mApplication, mAppSecret, mChannel);
         if (isInstanceEnabled())
             mApplication.registerActivityLifecycleCallbacks(service);
         MobileCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
+        return true;
     }
 
     @SafeVarargs
@@ -361,6 +407,17 @@ public class MobileCenter {
         boolean configuredSuccessfully = instanceConfigure(application, appSecret);
         if (configuredSuccessfully)
             startServices(services);
+    }
+
+    /**
+     * Send started services.
+     *
+     * @param services started services.
+     */
+    private synchronized void queueStartService(List<String> services) {
+        StartServiceLog startServiceLog = new StartServiceLog();
+        startServiceLog.setServices(services);
+        mChannel.enqueue(startServiceLog, CORE_GROUP);
     }
 
     /**
@@ -382,6 +439,13 @@ public class MobileCenter {
         boolean previouslyEnabled = isInstanceEnabled();
         boolean switchToDisabled = previouslyEnabled && !enabled;
         boolean switchToEnabled = !previouslyEnabled && enabled;
+
+        /* Update uncaught exception subscription. */
+        if (switchToEnabled) {
+            mUncaughtExceptionHandler.register();
+        } else if (switchToDisabled) {
+            mUncaughtExceptionHandler.unregister();
+        }
 
         /* Update state. */
         StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, enabled);
@@ -421,7 +485,47 @@ public class MobileCenter {
     }
 
     @VisibleForTesting
+    UncaughtExceptionHandler getUncaughtExceptionHandler() {
+        return mUncaughtExceptionHandler;
+    }
+
+    @VisibleForTesting
     void setChannel(Channel channel) {
         mChannel = channel;
+    }
+
+    @VisibleForTesting
+    class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
+
+        private Thread.UncaughtExceptionHandler mDefaultUncaughtExceptionHandler;
+
+        @Override
+        public void uncaughtException(Thread thread, Throwable exception) {
+            if (isEnabled()) {
+
+                /* Wait channel to finish saving other logs in background. */
+                if (mChannel != null)
+                    mChannel.shutdown();
+            }
+            if (mDefaultUncaughtExceptionHandler != null) {
+                mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
+            } else {
+                ShutdownHelper.shutdown(10);
+            }
+        }
+
+        @VisibleForTesting
+        Thread.UncaughtExceptionHandler getDefaultUncaughtExceptionHandler() {
+            return mDefaultUncaughtExceptionHandler;
+        }
+
+        void register() {
+            mDefaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
+            Thread.setDefaultUncaughtExceptionHandler(this);
+        }
+
+        void unregister() {
+            Thread.setDefaultUncaughtExceptionHandler(mDefaultUncaughtExceptionHandler);
+        }
     }
 }

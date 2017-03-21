@@ -1,12 +1,14 @@
 package com.microsoft.azure.mobile.ingestion;
 
+import com.microsoft.azure.mobile.http.ServiceCall;
+import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 
 import java.io.Closeable;
 import java.util.UUID;
 
 /**
- * The interface for Ingestion class.
+ * Interface to send logs to the Ingestion service.
  */
 public interface Ingestion extends Closeable {
 
@@ -23,9 +25,9 @@ public interface Ingestion extends Closeable {
     ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException;
 
     /**
-     * Update server url.
+     * Update log URL.
      *
-     * @param serverUrl server url.
+     * @param logUrl log URL.
      */
-    void setServerUrl(String serverUrl);
+    void setLogUrl(String logUrl);
 }

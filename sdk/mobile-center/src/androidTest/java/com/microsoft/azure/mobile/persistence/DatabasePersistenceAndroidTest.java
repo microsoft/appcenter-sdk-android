@@ -344,11 +344,11 @@ public class DatabasePersistenceAndroidTest {
                 persistence.putLog("test", log);
 
             /* Get. */
-            getAllLogs(persistence, "test", numberOfLogs, sizeForGetLogs);
+            getAllLogs(persistence, numberOfLogs, sizeForGetLogs);
 
             /* Clear ids, we should be able to get the logs again in the same sequence. */
             persistence.clearPendingLogState();
-            getAllLogs(persistence, "test", numberOfLogs, sizeForGetLogs);
+            getAllLogs(persistence, numberOfLogs, sizeForGetLogs);
 
             /* Count. */
             assertEquals(10, persistence.countLogs("test"));
@@ -366,19 +366,19 @@ public class DatabasePersistenceAndroidTest {
         }
     }
 
-    private void getAllLogs(DatabasePersistence persistence, String group, int numberOfLogs, int sizeForGetLogs) {
+    private void getAllLogs(DatabasePersistence persistence, int numberOfLogs, int sizeForGetLogs) {
         List<Log> outputLogs = new ArrayList<>();
         int expected = 0;
         do {
             numberOfLogs -= expected;
-            persistence.getLogs(group, sizeForGetLogs, outputLogs);
+            persistence.getLogs("test", sizeForGetLogs, outputLogs);
             expected = Math.min(Math.max(numberOfLogs, 0), sizeForGetLogs);
             assertEquals(expected, outputLogs.size());
             outputLogs.clear();
         } while (numberOfLogs > 0);
 
         /* Get should be 0 now. */
-        persistence.getLogs(group, sizeForGetLogs, outputLogs);
+        persistence.getLogs("test", sizeForGetLogs, outputLogs);
         assertEquals(0, outputLogs.size());
     }
 

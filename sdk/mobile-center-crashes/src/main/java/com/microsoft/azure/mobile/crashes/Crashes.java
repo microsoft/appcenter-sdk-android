@@ -339,8 +339,8 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     @Override
-    public synchronized void onChannelReady(@NonNull Context context, @NonNull Channel channel) {
-        super.onChannelReady(context, channel);
+    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
+        super.onStarted(context, appSecret, channel);
         mContext = context;
         initialize();
         if (isInstanceEnabled()) {
@@ -379,7 +379,7 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     @Override
-    protected String getServiceName() {
+    public String getServiceName() {
         return SERVICE_NAME;
     }
 
@@ -794,10 +794,6 @@ public class Crashes extends AbstractMobileCenterService {
         } catch (IOException e) {
             MobileCenterLog.error(Crashes.LOG_TAG, "Error writing error log to file", e);
         }
-
-        /* Wait channel to finish saving other logs in background. */
-        if (mChannel != null)
-            mChannel.shutdown();
     }
 
     /**

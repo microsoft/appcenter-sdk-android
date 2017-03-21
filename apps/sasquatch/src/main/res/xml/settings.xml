@@ -24,6 +24,14 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        android:key="@string/distribute_key"
+        android:title="@string/distribute_title">
+        <CheckBoxPreference
+            android:key="@string/mobile_center_distribute_state_key"
+            android:title="@string/mobile_center_distribute_state_title"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:key="@string/application_info_key"
         android:title="@string/application_info_title">
         <Preference
@@ -41,7 +49,7 @@
             android:key="@string/clear_crash_user_confirmation_key"
             android:title="@string/clear_crash_user_confirmation_title" />
         <Preference
-            android:key="@string/server_url_key"
-            android:title="@string/server_url_title" />
+            android:key="@string/log_url_key"
+            android:title="@string/log_url_title"/>
     </PreferenceCategory>
 </PreferenceScreen>

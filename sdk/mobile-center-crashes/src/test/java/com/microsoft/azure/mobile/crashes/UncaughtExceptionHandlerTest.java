@@ -1,7 +1,6 @@
 package com.microsoft.azure.mobile.crashes;
 
 import android.content.Context;
-import android.os.Process;
 import android.os.SystemClock;
 
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
@@ -11,6 +10,7 @@ import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
+import com.microsoft.azure.mobile.utils.ShutdownHelper;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.json.JSONException;
@@ -47,10 +47,10 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
-@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, UncaughtExceptionHandler.ShutdownHelper.class, MobileCenterLog.class, Process.class})
+@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, MobileCenterLog.class})
 public class UncaughtExceptionHandlerTest {
 
-    private static final String CRASHES_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getGroupName();
+    private static final String CRASHES_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -68,7 +68,6 @@ public class UncaughtExceptionHandlerTest {
         mockStatic(StorageHelper.InternalStorage.class);
         mockStatic(ErrorLogHelper.class);
         mockStatic(DeviceInfoHelper.class);
-        mockStatic(Process.class);
         mockStatic(System.class);
 
         when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
@@ -101,10 +100,12 @@ public class UncaughtExceptionHandlerTest {
 
     @Test
     public void registerWorks() {
-        // Verify that exception handler is default
+
+        /* Verify that exception handler is default */
         assertEquals(mDefaultExceptionHandler, Thread.getDefaultUncaughtExceptionHandler());
         mExceptionHandler.register();
-        // Verify that creation registers handler and previously defined handler is correctly saved
+
+        /* Verify that creation registers handler and previously defined handler is correctly saved */
         assertEquals(mExceptionHandler, Thread.getDefaultUncaughtExceptionHandler());
         assertEquals(mDefaultExceptionHandler, mExceptionHandler.getDefaultUncaughtExceptionHandler());
 
@@ -118,6 +119,7 @@ public class UncaughtExceptionHandlerTest {
     }
 
     @Test
+    @SuppressWarnings("WeakerAccess")
     public void handleExceptionAndPassOn() {
         mExceptionHandler.register();
 
@@ -134,16 +136,10 @@ public class UncaughtExceptionHandlerTest {
     @Test
     public void handleExceptionAndIgnoreDefaultHandler() {
 
-        // dummy coverage
-        new UncaughtExceptionHandler.ShutdownHelper();
-
-        // mock process id
-        when(Process.myPid()).thenReturn(123);
-
-        // Register crash handler
+        /* Register crash handler */
         mExceptionHandler.register();
 
-        // Verify that the exception is handled and not being passed on to the previous default UncaughtExceptionHandler
+        /* Verify that the exception is handled and not being passed on to the previous default UncaughtExceptionHandler */
         Thread thread = Thread.currentThread();
         RuntimeException exception = new RuntimeException();
         mExceptionHandler.setIgnoreDefaultExceptionHandler(true);
@@ -153,14 +149,12 @@ public class UncaughtExceptionHandlerTest {
         verifyStatic();
         ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean());
         verifyStatic();
-        Process.killProcess(123);
-        verifyStatic();
         System.exit(10);
     }
 
     @Test
     public void passDefaultHandler() {
-        // Verify that when crashes is disabled, an exception is instantly passed on
+        /* Verify that when crashes is disabled, an exception is instantly passed on */
         when(Crashes.isEnabled()).thenReturn(false);
 
         mExceptionHandler.register();
@@ -176,7 +170,7 @@ public class UncaughtExceptionHandlerTest {
 
     @Test
     public void crashesDisabledNoDefaultHandler() {
-        // Verify that when crashes is disabled, an exception is instantly passed on
+        /* Verify that when crashes is disabled, an exception is instantly passed on */
         when(Crashes.isEnabled()).thenReturn(false);
 
         mExceptionHandler.register();

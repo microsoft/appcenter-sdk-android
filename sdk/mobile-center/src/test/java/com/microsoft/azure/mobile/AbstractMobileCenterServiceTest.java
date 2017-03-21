@@ -24,6 +24,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
@@ -33,7 +34,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @PrepareForTest({StorageHelper.PreferencesStorage.class, MobileCenter.class})
 public class AbstractMobileCenterServiceTest {
 
-    private static final String SERVICE_ENABLED_KEY = KEY_ENABLED + "_group_test";
+    private static final String SERVICE_ENABLED_KEY = KEY_ENABLED + "_Test";
 
     private AbstractMobileCenterService service;
 
@@ -46,7 +47,7 @@ public class AbstractMobileCenterServiceTest {
             }
 
             @Override
-            protected String getServiceName() {
+            public String getServiceName() {
                 return "Test";
             }
 
@@ -136,7 +137,7 @@ public class AbstractMobileCenterServiceTest {
     @Test
     public void onChannelReadyEnabledThenDisable() {
         Channel channel = mock(Channel.class);
-        service.onChannelReady(mock(Context.class), channel);
+        service.onStarted(mock(Context.class), "", channel);
         verify(channel).removeGroup(service.getGroupName());
         verify(channel).addGroup(service.getGroupName(), service.getTriggerCount(), service.getTriggerInterval(), service.getTriggerMaxParallelRequests(), service.getChannelListener());
         verifyNoMoreInteractions(channel);
@@ -152,7 +153,7 @@ public class AbstractMobileCenterServiceTest {
     public void onChannelReadyDisabledThenEnable() {
         Channel channel = mock(Channel.class);
         service.setInstanceEnabled(false);
-        service.onChannelReady(mock(Context.class), channel);
+        service.onStarted(mock(Context.class), "", channel);
         verify(channel).removeGroup(service.getGroupName());
         verify(channel).clear(service.getGroupName());
         verifyNoMoreInteractions(channel);
@@ -166,5 +167,31 @@ public class AbstractMobileCenterServiceTest {
     @Test
     public void getGroupName() {
         Assert.assertEquals("group_test", service.getGroupName());
+    }
+
+    @Test
+    public void optionalGroup() {
+        service = new AbstractMobileCenterService() {
+
+            @Override
+            protected String getGroupName() {
+                return null;
+            }
+
+            @Override
+            public String getServiceName() {
+                return "Test";
+            }
+
+            @Override
+            protected String getLoggerTag() {
+                return "TestLog";
+            }
+        };
+        Channel channel = mock(Channel.class);
+        service.onStarted(mock(Context.class), "", channel);
+        service.setInstanceEnabled(false);
+        service.setInstanceEnabled(true);
+        verifyZeroInteractions(channel);
     }
 }

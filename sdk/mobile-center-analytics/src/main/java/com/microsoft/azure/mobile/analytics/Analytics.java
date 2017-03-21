@@ -114,7 +114,6 @@ public class Analytics extends AbstractMobileCenterService {
      *
      * @return <code>true</code> if enabled, <code>false</code> otherwise.
      */
-    @SuppressWarnings("WeakerAccess")
     public static boolean isEnabled() {
         return getInstance().isInstanceEnabled();
     }
@@ -124,7 +123,6 @@ public class Analytics extends AbstractMobileCenterService {
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
-    @SuppressWarnings("WeakerAccess")
     public static void setEnabled(boolean enabled) {
         getInstance().setInstanceEnabled(enabled);
     }
@@ -231,7 +229,7 @@ public class Analytics extends AbstractMobileCenterService {
     }
 
     @Override
-    protected String getServiceName() {
+    public String getServiceName() {
         return SERVICE_NAME;
     }
 
@@ -246,8 +244,8 @@ public class Analytics extends AbstractMobileCenterService {
     }
 
     @Override
-    public synchronized void onChannelReady(@NonNull Context context, @NonNull Channel channel) {
-        super.onChannelReady(context, channel);
+    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
+        super.onStarted(context, appSecret, channel);
         applyEnabledState(isInstanceEnabled());
     }
 

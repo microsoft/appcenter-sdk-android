@@ -6,10 +6,10 @@ import android.support.annotation.NonNull;
 
 import com.microsoft.azure.mobile.CancellationException;
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.http.HttpException;
+import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.Ingestion;
-import com.microsoft.azure.mobile.ingestion.ServiceCallback;
-import com.microsoft.azure.mobile.ingestion.http.HttpException;
-import com.microsoft.azure.mobile.ingestion.http.IngestionHttp;
+import com.microsoft.azure.mobile.ingestion.IngestionHttp;
 import com.microsoft.azure.mobile.ingestion.models.Device;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.LogContainer;
@@ -69,6 +69,10 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(log, never()).setDevice(any(Device.class));
         verify(log, never()).setToffset(anyLong());
         verify(persistence, never()).putLog(TEST_GROUP, log);
+
+        /* Trying remove group that not registered. */
+        channel.removeGroup(TEST_GROUP);
+        verify(mHandler, never()).removeCallbacks(any(Runnable.class));
     }
 
     @Test
@@ -159,6 +163,10 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Check total timers. */
         verify(mHandler, times(3)).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
         verify(mHandler).removeCallbacks(any(Runnable.class));
+
+        /* Check channel clear clear */
+        channel.clear(TEST_GROUP);
+        verify(mockPersistence).deleteLogs(eq(TEST_GROUP));
     }
 
     @NonNull
@@ -211,7 +219,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
         /* Make 1 of the call succeed. Verify log deleted. */
-        callbacks.get(0).onCallSucceeded();
+        callbacks.get(0).onCallSucceeded("");
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
         /* The request N+1 is now unlocked. */
@@ -219,7 +227,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Unlock all requests and check logs deleted. */
         for (int i = 1; i < 4; i++)
-            callbacks.get(i).onCallSucceeded();
+            callbacks.get(i).onCallSucceeded("");
         verify(mockPersistence, times(4)).deleteLogs(any(String.class), any(String.class));
 
         /* The counter should be 0 now as we sent data. */
@@ -261,7 +269,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
         /* Make 1 of the call succeed. Verify log deleted. */
-        callbacks.get(0).onCallSucceeded();
+        callbacks.get(0).onCallSucceeded("");
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
         /* The request N+1 is now unlocked. */
@@ -269,7 +277,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Unlock all requests and check logs deleted. */
         for (int i = 1; i < 4; i++)
-            callbacks.get(i).onCallSucceeded();
+            callbacks.get(i).onCallSucceeded("");
         verify(mockPersistence, times(4)).deleteLogs(any(String.class), any(String.class));
 
         /* The counter should be 0 now as we sent data. */
@@ -683,7 +691,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 /* Simulate a service disabled in the middle of network transaction. */
                 ServiceCallback callback = (ServiceCallback) invocation.getArguments()[3];
                 channel.removeGroup(TEST_GROUP);
-                callback.onCallSucceeded();
+                callback.onCallSucceeded("");
                 return null;
             }
         });
@@ -700,12 +708,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void setServerUrl() {
+    public void setLogUrl() {
         Ingestion ingestion = mock(Ingestion.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), ingestion);
-        String serverUrl = "http://mockUrl";
-        channel.setServerUrl(serverUrl);
-        verify(ingestion).setServerUrl(serverUrl);
+        String logUrl = "http://mockUrl";
+        channel.setLogUrl(logUrl);
+        verify(ingestion).setLogUrl(logUrl);
     }
 
     @Test

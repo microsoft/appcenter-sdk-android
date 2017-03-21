@@ -9,11 +9,13 @@ import android.os.Looper;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.channel.DefaultChannel;
+import com.microsoft.azure.mobile.ingestion.models.StartServiceLog;
 import com.microsoft.azure.mobile.ingestion.models.WrapperSdk;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.ShutdownHelper;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.junit.After;
@@ -27,8 +29,10 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -57,8 +61,22 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@SuppressWarnings("unused")
-@PrepareForTest({MobileCenter.class, Channel.class, Constants.class, MobileCenterLog.class, StorageHelper.class, StorageHelper.PreferencesStorage.class, IdHelper.class, StorageHelper.DatabaseStorage.class, DeviceInfoHelper.class})
+@SuppressWarnings({"unused", "CanBeFinal"})
+@PrepareForTest({
+        MobileCenter.class,
+        MobileCenter.UncaughtExceptionHandler.class,
+        DefaultChannel.class,
+        Constants.class,
+        MobileCenterLog.class,
+        StartServiceLog.class,
+        StorageHelper.class,
+        StorageHelper.PreferencesStorage.class,
+        IdHelper.class,
+        StorageHelper.DatabaseStorage.class,
+        DeviceInfoHelper.class,
+        Thread.class,
+        ShutdownHelper.class
+})
 public class MobileCenterTest {
 
     private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
@@ -69,13 +87,25 @@ public class MobileCenterTest {
     @Mock
     private Iterator<ContentValues> mDataBaseScannerIterator;
 
+    @Mock
+    private DefaultChannel mChannel;
+
+    @Mock
+    private StartServiceLog mStartServiceLog;
+
     private Application application;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         MobileCenter.unsetInstance();
         DummyService.sharedInstance = null;
         AnotherDummyService.sharedInstance = null;
+
+        mChannel = mock(DefaultChannel.class);
+        whenNew(DefaultChannel.class).withAnyArguments().thenReturn(mChannel);
+
+        mStartServiceLog = mock(StartServiceLog.class);
+        whenNew(StartServiceLog.class).withAnyArguments().thenReturn(mStartServiceLog);
 
         application = mock(Application.class);
         when(application.getApplicationContext()).thenReturn(application);
@@ -86,6 +116,8 @@ public class MobileCenterTest {
         mockStatic(StorageHelper.PreferencesStorage.class);
         mockStatic(IdHelper.class);
         mockStatic(StorageHelper.DatabaseStorage.class);
+        mockStatic(Thread.class);
+        mockStatic(ShutdownHelper.class);
 
         /* First call to com.microsoft.azure.mobile.MobileCenter.isEnabled shall return true, initial state. */
         when(StorageHelper.PreferencesStorage.getBoolean(anyString(), eq(true))).thenReturn(true);
@@ -164,8 +196,12 @@ public class MobileCenterTest {
         DummyService service = DummyService.getInstance();
         assertTrue(MobileCenter.getInstance().getServices().contains(service));
         verify(service).getLogFactories();
-        verify(service).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
         verify(application).registerActivityLifecycleCallbacks(service);
+        verify(mChannel).enqueue(eq(mStartServiceLog), eq(MobileCenter.CORE_GROUP));
+        List<String> services = new ArrayList<>();
+        services.add(service.getServiceName());
+        verify(mStartServiceLog).setServices(eq(services));
     }
 
     @Test
@@ -180,28 +216,37 @@ public class MobileCenterTest {
         DummyService service = DummyService.getInstance();
         assertTrue(MobileCenter.getInstance().getServices().contains(service));
         verify(service).getLogFactories();
-        verify(service).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
         verify(application).registerActivityLifecycleCallbacks(service);
+        verify(mChannel).enqueue(eq(mStartServiceLog), eq(MobileCenter.CORE_GROUP));
+        List<String> services = new ArrayList<>();
+        services.add(service.getServiceName());
+        verify(mStartServiceLog).setServices(eq(services));
     }
 
     @Test
     public void configureAndStartTwiceTest() {
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class);
-        MobileCenter.start(application, DUMMY_APP_SECRET, AnotherDummyService.class); //ignored
+        MobileCenter.start(application, DUMMY_APP_SECRET + "a", AnotherDummyService.class); //ignored
 
         /* Verify that single service has been loaded and configured */
         assertEquals(1, MobileCenter.getInstance().getServices().size());
         DummyService service = DummyService.getInstance();
         assertTrue(MobileCenter.getInstance().getServices().contains(service));
         verify(service).getLogFactories();
-        verify(service).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
+        verify(service, never()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET + "a"), any(Channel.class));
         verify(application).registerActivityLifecycleCallbacks(service);
+        verify(mChannel).enqueue(eq(mStartServiceLog), eq(MobileCenter.CORE_GROUP));
+        List<String> services = new ArrayList<>();
+        services.add(service.getServiceName());
+        verify(mStartServiceLog).setServices(eq(services));
     }
 
     @Test
     public void configureTwiceTest() {
         MobileCenter.configure(application, DUMMY_APP_SECRET);
-        MobileCenter.configure(application, DUMMY_APP_SECRET); //ignored
+        MobileCenter.configure(application, DUMMY_APP_SECRET + "a"); //ignored
         MobileCenter.start(DummyService.class);
 
         /* Verify that single service has been loaded and configured */
@@ -209,10 +254,14 @@ public class MobileCenterTest {
         DummyService service = DummyService.getInstance();
         assertTrue(MobileCenter.getInstance().getServices().contains(service));
         verify(service).getLogFactories();
-        verify(service).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
+        verify(service, never()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET + "a"), any(Channel.class));
         verify(application).registerActivityLifecycleCallbacks(service);
+        verify(mChannel).enqueue(eq(mStartServiceLog), eq(MobileCenter.CORE_GROUP));
+        List<String> services = new ArrayList<>();
+        services.add(service.getServiceName());
+        verify(mStartServiceLog).setServices(eq(services));
     }
-
 
     @Test
     public void startTwoServicesTest() {
@@ -223,15 +272,20 @@ public class MobileCenterTest {
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
             verify(DummyService.getInstance()).getLogFactories();
-            verify(DummyService.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(DummyService.getInstance());
         }
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
             verify(AnotherDummyService.getInstance()).getLogFactories();
-            verify(AnotherDummyService.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
         }
+        verify(mChannel).enqueue(eq(mStartServiceLog), eq(MobileCenter.CORE_GROUP));
+        List<String> services = new ArrayList<>();
+        services.add(DummyService.getInstance().getServiceName());
+        services.add(AnotherDummyService.getInstance().getServiceName());
+        verify(mStartServiceLog).setServices(eq(services));
     }
 
     @Test
@@ -244,15 +298,20 @@ public class MobileCenterTest {
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
             verify(DummyService.getInstance()).getLogFactories();
-            verify(DummyService.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(DummyService.getInstance());
         }
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
             verify(AnotherDummyService.getInstance()).getLogFactories();
-            verify(AnotherDummyService.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
         }
+        verify(mChannel).enqueue(eq(mStartServiceLog), eq(MobileCenter.CORE_GROUP));
+        List<String> services = new ArrayList<>();
+        services.add(DummyService.getInstance().getServiceName());
+        services.add(AnotherDummyService.getInstance().getServiceName());
+        verify(mStartServiceLog).setServices(eq(services));
     }
 
     @Test
@@ -266,15 +325,22 @@ public class MobileCenterTest {
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
             verify(DummyService.getInstance()).getLogFactories();
-            verify(DummyService.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(DummyService.getInstance());
         }
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
             verify(AnotherDummyService.getInstance()).getLogFactories();
-            verify(AnotherDummyService.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
         }
+        verify(mChannel, times(2)).enqueue(any(StartServiceLog.class), eq(MobileCenter.CORE_GROUP));
+        List<String> services1 = new ArrayList<>();
+        services1.add(DummyService.getInstance().getServiceName());
+        verify(mStartServiceLog).setServices(eq(services1));
+        List<String> services2 = new ArrayList<>();
+        services2.add(DummyService.getInstance().getServiceName());
+        verify(mStartServiceLog).setServices(eq(services2));
     }
 
     @Test
@@ -286,15 +352,20 @@ public class MobileCenterTest {
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
             verify(DummyService.getInstance()).getLogFactories();
-            verify(DummyService.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(DummyService.getInstance());
         }
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
             verify(AnotherDummyService.getInstance()).getLogFactories();
-            verify(AnotherDummyService.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
         }
+        verify(mChannel).enqueue(eq(mStartServiceLog), eq(MobileCenter.CORE_GROUP));
+        List<String> services = new ArrayList<>();
+        services.add(DummyService.getInstance().getServiceName());
+        services.add(AnotherDummyService.getInstance().getServiceName());
+        verify(mStartServiceLog).setServices(eq(services));
     }
 
     @Test
@@ -308,15 +379,22 @@ public class MobileCenterTest {
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(DummyService.getInstance()));
             verify(DummyService.getInstance()).getLogFactories();
-            verify(DummyService.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(DummyService.getInstance());
         }
         {
             assertTrue(MobileCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
             verify(AnotherDummyService.getInstance()).getLogFactories();
-            verify(AnotherDummyService.getInstance()).onChannelReady(any(Context.class), notNull(Channel.class));
+            verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
             verify(application).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
         }
+        verify(mChannel, times(2)).enqueue(any(StartServiceLog.class), eq(MobileCenter.CORE_GROUP));
+        List<String> services1 = new ArrayList<>();
+        services1.add(DummyService.getInstance().getServiceName());
+        verify(mStartServiceLog).setServices(eq(services1));
+        List<String> services2 = new ArrayList<>();
+        services2.add(DummyService.getInstance().getServiceName());
+        verify(mStartServiceLog).setServices(eq(services2));
     }
 
     @Test
@@ -331,7 +409,7 @@ public class MobileCenterTest {
         DummyService service = DummyService.getInstance();
         assertTrue(MobileCenter.getInstance().getServices().contains(service));
         verify(service).getLogFactories();
-        verify(service).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
         verify(application).registerActivityLifecycleCallbacks(service);
 
         /* Start twice, this call is ignored. */
@@ -340,8 +418,12 @@ public class MobileCenterTest {
         /* Verify that single service has been loaded and configured (only once interaction). */
         assertEquals(1, MobileCenter.getInstance().getServices().size());
         verify(service).getLogFactories();
-        verify(service).onChannelReady(any(Context.class), notNull(Channel.class));
+        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
         verify(application).registerActivityLifecycleCallbacks(service);
+        verify(mChannel).enqueue(eq(mStartServiceLog), eq(MobileCenter.CORE_GROUP));
+        List<String> services = new ArrayList<>();
+        services.add(DummyService.getInstance().getServiceName());
+        verify(mStartServiceLog).setServices(eq(services));
     }
 
     @Test
@@ -365,9 +447,7 @@ public class MobileCenterTest {
 
         /* Start MobileCenter SDK */
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class, AnotherDummyService.class);
-        Channel channel = mock(Channel.class);
         MobileCenter mobileCenter = MobileCenter.getInstance();
-        mobileCenter.setChannel(channel);
 
         /* Verify services are enabled by default */
         Set<MobileCenterService> services = mobileCenter.getServices();
@@ -386,7 +466,7 @@ public class MobileCenterTest {
         }
         verify(dummyService, never()).setInstanceEnabled(anyBoolean());
         verify(anotherDummyService, never()).setInstanceEnabled(anyBoolean());
-        verify(channel).setEnabled(true);
+        verify(mChannel, times(2)).setEnabled(true);
 
         /* Verify disabling base disables all services */
         MobileCenter.setEnabled(false);
@@ -398,7 +478,7 @@ public class MobileCenterTest {
         verify(anotherDummyService).setInstanceEnabled(false);
         verify(application).unregisterActivityLifecycleCallbacks(dummyService);
         verify(application).unregisterActivityLifecycleCallbacks(anotherDummyService);
-        verify(channel).setEnabled(false);
+        verify(mChannel).setEnabled(false);
 
         /* Verify re-enabling base re-enables all services */
         MobileCenter.setEnabled(true);
@@ -410,7 +490,7 @@ public class MobileCenterTest {
         verify(anotherDummyService).setInstanceEnabled(true);
         verify(application, times(2)).registerActivityLifecycleCallbacks(dummyService);
         verify(application, times(2)).registerActivityLifecycleCallbacks(anotherDummyService);
-        verify(channel, times(2)).setEnabled(true);
+        verify(mChannel, times(3)).setEnabled(true);
 
         /* Verify that disabling one service leaves base and other services enabled */
         dummyService.setInstanceEnabled(false);
@@ -426,7 +506,7 @@ public class MobileCenterTest {
         }
         verify(dummyService, times(2)).setInstanceEnabled(true);
         verify(anotherDummyService).setInstanceEnabled(true);
-        verify(channel, times(3)).setEnabled(true);
+        verify(mChannel, times(4)).setEnabled(true);
 
         /* Enable service after the SDK is disabled. */
         MobileCenter.setEnabled(false);
@@ -439,7 +519,7 @@ public class MobileCenterTest {
         PowerMockito.verifyStatic();
         MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
         assertFalse(MobileCenter.isEnabled());
-        verify(channel, times(2)).setEnabled(false);
+        verify(mChannel, times(2)).setEnabled(false);
 
         /* Disable back via main class. */
         MobileCenter.setEnabled(false);
@@ -447,13 +527,13 @@ public class MobileCenterTest {
         for (MobileCenterService service : services) {
             assertFalse(service.isInstanceEnabled());
         }
-        verify(channel, times(3)).setEnabled(false);
+        verify(mChannel, times(3)).setEnabled(false);
 
         /* Check factories / channel only once interactions. */
         verify(dummyService).getLogFactories();
-        verify(dummyService).onChannelReady(any(Context.class), any(Channel.class));
+        verify(dummyService).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
         verify(anotherDummyService).getLogFactories();
-        verify(anotherDummyService).onChannelReady(any(Context.class), any(Channel.class));
+        verify(anotherDummyService).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
     }
 
     @Test
@@ -470,9 +550,7 @@ public class MobileCenterTest {
     public void disablePersisted() {
         when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class, AnotherDummyService.class);
-        Channel channel = mock(Channel.class);
         MobileCenter mobileCenter = MobileCenter.getInstance();
-        mobileCenter.setChannel(channel);
 
         /* Verify services are enabled by default but MobileCenter is disabled. */
         assertFalse(MobileCenter.isEnabled());
@@ -495,9 +573,7 @@ public class MobileCenterTest {
     public void disablePersistedAndDisable() {
         when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class, AnotherDummyService.class);
-        Channel channel = mock(Channel.class);
         MobileCenter mobileCenter = MobileCenter.getInstance();
-        mobileCenter.setChannel(channel);
 
         /* Its already disabled so disable should have no effect on MobileCenter but should disable services. */
         MobileCenter.setEnabled(false);
@@ -528,6 +604,7 @@ public class MobileCenterTest {
     @Test
     public void nullApplicationTest() {
         MobileCenter.start(null, DUMMY_APP_SECRET, DummyService.class);
+        verify(DummyService.getInstance(), never()).onStarted(any(Context.class), anyString(), any(Channel.class));
         PowerMockito.verifyStatic();
         MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
     }
@@ -535,6 +612,7 @@ public class MobileCenterTest {
     @Test
     public void nullAppIdentifierTest() {
         MobileCenter.start(application, null, DummyService.class);
+        verify(DummyService.getInstance(), never()).onStarted(any(Context.class), anyString(), any(Channel.class));
         PowerMockito.verifyStatic();
         MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
     }
@@ -542,6 +620,7 @@ public class MobileCenterTest {
     @Test
     public void emptyAppIdentifierTest() {
         MobileCenter.start(application, "", DummyService.class);
+        verify(DummyService.getInstance(), never()).onStarted(any(Context.class), anyString(), any(Channel.class));
         PowerMockito.verifyStatic();
         MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
     }
@@ -551,6 +630,7 @@ public class MobileCenterTest {
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class, DummyService.class);
 
         /* Verify that only one service has been loaded and configured */
+        verify(DummyService.getInstance()).onStarted(notNull(Context.class), eq(DUMMY_APP_SECRET), any(Channel.class));
         assertEquals(1, MobileCenter.getInstance().getServices().size());
     }
 
@@ -613,25 +693,57 @@ public class MobileCenterTest {
     }
 
     @Test
-    public void setServerUrl() throws Exception {
+    public void setLogUrl() throws Exception {
 
-        /* Change server URL before start. */
+        /* Change log URL before start. */
         DefaultChannel channel = mock(DefaultChannel.class);
         whenNew(DefaultChannel.class).withAnyArguments().thenReturn(channel);
-        String serverUrl = "http://mock";
-        MobileCenter.setServerUrl(serverUrl);
+        String logUrl = "http://mock";
+        MobileCenter.setLogUrl(logUrl);
 
         /* No effect for now. */
-        verify(channel, never()).setServerUrl(serverUrl);
+        verify(channel, never()).setLogUrl(logUrl);
 
-        /* Start should propagate the server url. */
+        /* Start should propagate the log URL. */
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class);
-        verify(channel).setServerUrl(serverUrl);
+        verify(channel).setLogUrl(logUrl);
 
         /* Change it after, should work immediately. */
-        serverUrl = "http://mock2";
-        MobileCenter.setServerUrl(serverUrl);
-        verify(channel).setServerUrl(serverUrl);
+        logUrl = "http://mock2";
+        MobileCenter.setLogUrl(logUrl);
+        verify(channel).setLogUrl(logUrl);
+    }
+
+    @Test
+    public void uncaughtExceptionHandler() {
+        Thread.UncaughtExceptionHandler defaultUncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
+        when(Thread.getDefaultUncaughtExceptionHandler()).thenReturn(defaultUncaughtExceptionHandler);
+        MobileCenter.configure(application, DUMMY_APP_SECRET);
+        MobileCenter.UncaughtExceptionHandler handler = MobileCenter.getInstance().getUncaughtExceptionHandler();
+        assertNotNull(handler);
+        assertEquals(defaultUncaughtExceptionHandler, handler.getDefaultUncaughtExceptionHandler());
+        verifyStatic();
+        Thread.setDefaultUncaughtExceptionHandler(eq(handler));
+
+        Thread thread = mock(Thread.class);
+        Throwable exception = mock(Throwable.class);
+        handler.uncaughtException(thread, exception);
+        verify(mChannel).shutdown();
+        verify(defaultUncaughtExceptionHandler).uncaughtException(eq(thread), eq(exception));
+
+        MobileCenter.setEnabled(false);
+        verifyStatic();
+        Thread.setDefaultUncaughtExceptionHandler(eq(defaultUncaughtExceptionHandler));
+        handler.uncaughtException(thread, exception);
+        verify(mChannel, times(1)).shutdown();
+
+        when(Thread.getDefaultUncaughtExceptionHandler()).thenReturn(null);
+        MobileCenter.setEnabled(true);
+        MobileCenter.getInstance().setChannel(null);
+        assertNull(handler.getDefaultUncaughtExceptionHandler());
+        handler.uncaughtException(thread, exception);
+        verifyStatic();
+        ShutdownHelper.shutdown(10);
     }
 
     private static class DummyService extends AbstractMobileCenterService {
@@ -652,7 +764,7 @@ public class MobileCenterTest {
         }
 
         @Override
-        protected String getServiceName() {
+        public String getServiceName() {
             return "Dummy";
         }
 
@@ -687,7 +799,7 @@ public class MobileCenterTest {
         }
 
         @Override
-        protected String getServiceName() {
+        public String getServiceName() {
             return "AnotherDummy";
         }
 
@@ -705,7 +817,7 @@ public class MobileCenterTest {
         }
 
         @Override
-        protected String getServiceName() {
+        public String getServiceName() {
             return "Invalid";
         }
 

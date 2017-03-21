@@ -16,6 +16,7 @@ import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import junit.framework.Assert;
@@ -35,7 +36,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -60,7 +60,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class})
 public class AnalyticsTest {
 
-    private static final String ANALYTICS_ENABLED_KEY = KEY_ENABLED + "_group_analytics";
+    private static final String ANALYTICS_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Analytics.getInstance().getServiceName();
 
     @Before
     public void setUp() {
@@ -124,7 +124,7 @@ public class AnalyticsTest {
     private void activityResumed(final String expectedName, android.app.Activity activity) {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
-        analytics.onChannelReady(mock(Context.class), channel);
+        analytics.onStarted(mock(Context.class), "", channel);
         analytics.onActivityResumed(activity);
         analytics.onActivityPaused(activity);
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
@@ -162,7 +162,7 @@ public class AnalyticsTest {
         Analytics.setAutoPageTrackingEnabled(false);
         assertFalse(Analytics.isAutoPageTrackingEnabled());
         Channel channel = mock(Channel.class);
-        analytics.onChannelReady(mock(Context.class), channel);
+        analytics.onStarted(mock(Context.class), "", channel);
         analytics.onActivityResumed(new MyActivity());
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -198,7 +198,7 @@ public class AnalyticsTest {
     public void trackEvent() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
-        analytics.onChannelReady(mock(Context.class), channel);
+        analytics.onStarted(mock(Context.class), "", channel);
         final String name = "testEvent";
         final HashMap<String, String> properties = new HashMap<>();
         properties.put("a", "b");
@@ -225,7 +225,7 @@ public class AnalyticsTest {
         assertTrue(Analytics.isEnabled());
         Analytics.setEnabled(false);
         assertFalse(Analytics.isEnabled());
-        analytics.onChannelReady(mock(Context.class), channel);
+        analytics.onStarted(mock(Context.class), "", channel);
         verify(channel).clear(analytics.getGroupName());
         verify(channel).removeGroup(eq(analytics.getGroupName()));
         Analytics.trackEvent("test");
@@ -272,7 +272,7 @@ public class AnalyticsTest {
          */
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
-        analytics.onChannelReady(mock(Context.class), channel);
+        analytics.onStarted(mock(Context.class), "", channel);
         Analytics.setEnabled(false);
 
         /* App in foreground: no log yet, we are disabled. */
@@ -316,7 +316,7 @@ public class AnalyticsTest {
          */
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
-        analytics.onChannelReady(mock(Context.class), channel);
+        analytics.onStarted(mock(Context.class), "", channel);
         Analytics.setEnabled(false);
 
         /* App in foreground: no log yet, we are disabled. */

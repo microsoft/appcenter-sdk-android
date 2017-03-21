@@ -108,6 +108,10 @@ public class NetworkStateHelperTest {
         verify(listener2).onNetworkStateUpdated(false);
         verify(listener2).onNetworkStateUpdated(true);
 
+        /* Duplicate WIFI callback. */
+        receiver.onReceive(context, mock(Intent.class));
+        verifyNoMoreInteractions(listener2);
+
         /* But then WIFI is disconnected. */
         helper.removeListener(listener2);
         NetworkStateHelper.Listener listener3 = mock(NetworkStateHelper.Listener.class);

@@ -5,7 +5,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 
-import com.microsoft.azure.mobile.ingestion.ServiceCallback;
+import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.models.Device;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync;
@@ -82,7 +82,7 @@ public class AbstractDefaultChannelTest {
                 Object[] args = invocation.getArguments();
                 if (args[3] instanceof ServiceCallback) {
                     if (e == null)
-                        ((ServiceCallback) invocation.getArguments()[3]).onCallSucceeded();
+                        ((ServiceCallback) invocation.getArguments()[3]).onCallSucceeded("");
                     else
                         ((ServiceCallback) invocation.getArguments()[3]).onCallFailed(e);
                 }
