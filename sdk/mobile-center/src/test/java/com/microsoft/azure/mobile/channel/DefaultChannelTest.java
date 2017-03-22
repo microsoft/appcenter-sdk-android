@@ -6,10 +6,10 @@ import android.support.annotation.NonNull;
 
 import com.microsoft.azure.mobile.CancellationException;
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.http.HttpException;
+import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.Ingestion;
-import com.microsoft.azure.mobile.ingestion.ServiceCallback;
-import com.microsoft.azure.mobile.ingestion.http.HttpException;
-import com.microsoft.azure.mobile.ingestion.http.IngestionHttp;
+import com.microsoft.azure.mobile.ingestion.IngestionHttp;
 import com.microsoft.azure.mobile.ingestion.models.Device;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.LogContainer;
@@ -219,7 +219,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
         /* Make 1 of the call succeed. Verify log deleted. */
-        callbacks.get(0).onCallSucceeded();
+        callbacks.get(0).onCallSucceeded("");
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
         /* The request N+1 is now unlocked. */
@@ -227,7 +227,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Unlock all requests and check logs deleted. */
         for (int i = 1; i < 4; i++)
-            callbacks.get(i).onCallSucceeded();
+            callbacks.get(i).onCallSucceeded("");
         verify(mockPersistence, times(4)).deleteLogs(any(String.class), any(String.class));
 
         /* The counter should be 0 now as we sent data. */
@@ -269,7 +269,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
         /* Make 1 of the call succeed. Verify log deleted. */
-        callbacks.get(0).onCallSucceeded();
+        callbacks.get(0).onCallSucceeded("");
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
         /* The request N+1 is now unlocked. */
@@ -277,7 +277,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Unlock all requests and check logs deleted. */
         for (int i = 1; i < 4; i++)
-            callbacks.get(i).onCallSucceeded();
+            callbacks.get(i).onCallSucceeded("");
         verify(mockPersistence, times(4)).deleteLogs(any(String.class), any(String.class));
 
         /* The counter should be 0 now as we sent data. */
@@ -691,7 +691,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 /* Simulate a service disabled in the middle of network transaction. */
                 ServiceCallback callback = (ServiceCallback) invocation.getArguments()[3];
                 channel.removeGroup(TEST_GROUP);
-                callback.onCallSucceeded();
+                callback.onCallSucceeded("");
                 return null;
             }
         });

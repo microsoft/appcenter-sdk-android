@@ -3,6 +3,7 @@ include ':sdk'
 include ':sdk:mobile-center'
 include ':sdk:mobile-center-crashes'
 include ':sdk:mobile-center-analytics'
+include ':sdk:mobile-center-distribute'
 
 // common test code
 include ':test'

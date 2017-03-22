@@ -85,7 +85,7 @@ public class CrashesTest {
     @SuppressWarnings("ThrowableInstanceNeverThrown")
     private static final Exception EXCEPTION = new Exception("This is a test exception.");
 
-    private static final String CRASHES_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getGroupName();
+    private static final String CRASHES_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
 
     @Rule
     public final TemporaryFolder errorStorageDirectory = new TemporaryFolder();
@@ -97,11 +97,11 @@ public class CrashesTest {
 
     private Looper mMockLooper;
 
-    private static void assertErrorEquals(ManagedErrorLog errorLog, Throwable throwable, ErrorReport report) {
+    private static void assertErrorEquals(ManagedErrorLog errorLog, ErrorReport report) {
         assertNotNull(report);
         assertEquals(errorLog.getId().toString(), report.getId());
         assertEquals(errorLog.getErrorThreadName(), report.getThreadName());
-        assertEquals(throwable, report.getThrowable());
+        assertEquals(CrashesTest.EXCEPTION, report.getThrowable());
         assertEquals(errorLog.getToffset() - errorLog.getAppLaunchTOffset(), report.getAppStartTime().getTime());
         assertEquals(errorLog.getToffset(), report.getAppErrorTime().getTime());
         assertEquals(errorLog.getDevice(), report.getDevice());
@@ -188,7 +188,7 @@ public class CrashesTest {
         when(dir.listFiles()).thenReturn(new File[]{file1, file2});
         crashes.setUncaughtExceptionHandler(mockHandler);
         crashes.setInstanceEnabled(false);
-        crashes.onChannelReady(mock(Context.class), mock(Channel.class));
+        crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
         /* Test. */
         assertFalse(Crashes.isEnabled());
@@ -245,7 +245,7 @@ public class CrashesTest {
         Crashes.setEnabled(false);
         assertFalse(Crashes.isEnabled());
         verify(mMockLooper).quit();
-        crashes.onChannelReady(mock(Context.class), mockChannel);
+        crashes.onStarted(mock(Context.class), "", mockChannel);
         verify(mockChannel).clear(crashes.getGroupName());
         verify(mockChannel).removeGroup(eq(crashes.getGroupName()));
         assertEquals(crashes.getInitializeTimestamp(), -1);
@@ -317,7 +317,7 @@ public class CrashesTest {
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
-        crashes.onChannelReady(mockContext, mockChannel);
+        crashes.onStarted(mockContext, "", mockChannel);
 
         verify(mockListener).shouldProcess(report);
         verify(mockListener).shouldAwaitUserConfirmation();
@@ -357,7 +357,7 @@ public class CrashesTest {
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
-        crashes.onChannelReady(mockContext, mockChannel);
+        crashes.onStarted(mockContext, "", mockChannel);
 
         verify(mockListener).shouldProcess(report);
         verify(mockListener, never()).shouldAwaitUserConfirmation();
@@ -402,7 +402,7 @@ public class CrashesTest {
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
-        crashes.onChannelReady(mockContext, mockChannel);
+        crashes.onStarted(mockContext, "", mockChannel);
 
         verify(mockListener).shouldProcess(report);
         verify(mockListener, never()).shouldAwaitUserConfirmation();
@@ -433,7 +433,7 @@ public class CrashesTest {
         crashes.setInstanceListener(listener);
 
         Channel channel = mock(Channel.class);
-        crashes.onChannelReady(mock(Context.class), channel);
+        crashes.onStarted(mock(Context.class), "", channel);
         verifyZeroInteractions(listener);
         verify(channel, never()).enqueue(any(Log.class), anyString());
     }
@@ -469,7 +469,7 @@ public class CrashesTest {
         Crashes crashes = Crashes.getInstance();
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(listener);
-        crashes.onChannelReady(mock(Context.class), channel);
+        crashes.onStarted(mock(Context.class), "", channel);
 
         verify(channel, never()).enqueue(any(Log.class), anyString());
         verify(listener).shouldProcess(errorReport);
@@ -481,7 +481,7 @@ public class CrashesTest {
         crashes = Crashes.getInstance();
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(listener);
-        crashes.onChannelReady(mock(Context.class), channel);
+        crashes.onStarted(mock(Context.class), "", channel);
 
         verify(channel, never()).enqueue(any(Log.class), anyString());
         verify(listener, times(2)).shouldProcess(errorReport);
@@ -522,7 +522,7 @@ public class CrashesTest {
         Crashes crashes = Crashes.getInstance();
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(listener);
-        crashes.onChannelReady(mock(Context.class), channel);
+        crashes.onStarted(mock(Context.class), "", channel);
 
         verify(mMockLooper).quit();
         verify(listener, times(2)).shouldProcess(any(ErrorReport.class));
@@ -543,7 +543,7 @@ public class CrashesTest {
         Crashes.setEnabled(false);
         Crashes crashes = Crashes.getInstance();
 
-        crashes.onChannelReady(mock(Context.class), mock(Channel.class));
+        crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
         verifyStatic();
         ErrorLogHelper.getErrorStorageDirectory();
@@ -563,7 +563,7 @@ public class CrashesTest {
         when(logSerializer.deserializeLog(anyString())).thenReturn(null);
         crashes.setLogSerializer(logSerializer);
 
-        crashes.onChannelReady(mockContext, mockChannel);
+        crashes.onStarted(mockContext, "", mockChannel);
 
         verify(mockChannel, never()).enqueue(any(Log.class), anyString());
     }
@@ -583,7 +583,7 @@ public class CrashesTest {
         when(logSerializer.deserializeLog(anyString())).thenThrow(jsonException);
         crashes.setLogSerializer(logSerializer);
 
-        crashes.onChannelReady(mockContext, mockChannel);
+        crashes.onStarted(mockContext, "", mockChannel);
 
         verify(mockChannel, never()).enqueue(any(Log.class), anyString());
 
@@ -608,7 +608,7 @@ public class CrashesTest {
         /* Track exception test. */
         Crashes crashes = Crashes.getInstance();
         Channel mockChannel = mock(Channel.class);
-        crashes.onChannelReady(mock(Context.class), mockChannel);
+        crashes.onStarted(mock(Context.class), "", mockChannel);
         Crashes.trackException(EXCEPTION);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -649,7 +649,7 @@ public class CrashesTest {
 
         Crashes.getInstance().trackException(exception);
         verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
-        crashes.onChannelReady(mock(Context.class), mockChannel);
+        crashes.onStarted(mock(Context.class), "", mockChannel);
         Crashes.getInstance().trackException(exception);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -674,17 +674,17 @@ public class CrashesTest {
         Crashes.setListener(new AbstractCrashesListener() {
             @Override
             public void onBeforeSending(ErrorReport report) {
-                assertErrorEquals(mErrorLog, EXCEPTION, report);
+                assertErrorEquals(mErrorLog, report);
             }
 
             @Override
             public void onSendingSucceeded(ErrorReport report) {
-                assertErrorEquals(mErrorLog, EXCEPTION, report);
+                assertErrorEquals(mErrorLog, report);
             }
 
             @Override
             public void onSendingFailed(ErrorReport report, Exception e) {
-                assertErrorEquals(mErrorLog, EXCEPTION, report);
+                assertErrorEquals(mErrorLog, report);
             }
         });
 
@@ -740,7 +740,7 @@ public class CrashesTest {
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
-        crashes.onChannelReady(mock(Context.class), mock(Channel.class));
+        crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
         Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
 
@@ -777,7 +777,7 @@ public class CrashesTest {
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
-        crashes.onChannelReady(mock(Context.class), mock(Channel.class));
+        crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
         Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
 
@@ -799,7 +799,7 @@ public class CrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         ErrorReport report = crashes.buildErrorReport(mErrorLog);
-        assertErrorEquals(mErrorLog, EXCEPTION, report);
+        assertErrorEquals(mErrorLog, report);
 
         mErrorLog.setId(UUIDUtils.randomUUID());
         report = crashes.buildErrorReport(mErrorLog);
@@ -898,7 +898,7 @@ public class CrashesTest {
         };
 
         Crashes.getLastSessionCrashReport(callback);
-        Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
+        Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession());
         Crashes.getLastSessionCrashReport(callback);
     }
@@ -958,7 +958,7 @@ public class CrashesTest {
          * Here the service is enabled by default but we are waiting channel to be ready, simulate that.
          */
         assertTrue(Crashes.isEnabled());
-        Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
+        Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
 
         assertTrue(Crashes.hasCrashedInLastSession());
 
@@ -1030,7 +1030,7 @@ public class CrashesTest {
          */
         assertTrue(Crashes.isEnabled());
         Crashes.getLastSessionCrashReport(callback);
-        Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
+        Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
 
         assertFalse(Crashes.hasCrashedInLastSession());
         Crashes.getLastSessionCrashReport(callback);
@@ -1049,7 +1049,7 @@ public class CrashesTest {
         File file = errorStorageDirectory.newFile("last-error-log.json");
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{file});
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(file);
-        Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
+        Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession());
         Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
 
@@ -1077,7 +1077,7 @@ public class CrashesTest {
         /* Call twice for multiple callbacks before initialize. */
         Crashes.getLastSessionCrashReport(callback);
         Crashes.getLastSessionCrashReport(callback);
-        Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
+        Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession());
     }
 
@@ -1091,7 +1091,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(mock(File.class));
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
 
-        Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
+        Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
         verifyStatic();
         MobileCenterLog.error(anyString(), anyString());
 
@@ -1120,7 +1120,7 @@ public class CrashesTest {
             }
         });
 
-        Crashes.getInstance().onChannelReady(mock(Context.class), mock(Channel.class));
+        Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
     }
 
     @Test

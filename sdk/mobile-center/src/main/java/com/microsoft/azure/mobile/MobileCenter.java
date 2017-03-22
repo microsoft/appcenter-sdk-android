@@ -70,6 +70,11 @@ public class MobileCenter {
     private Application mApplication;
 
     /**
+     * Application secret.
+     */
+    private String mAppSecret;
+
+    /*
      * Handler for uncaught exceptions.
      */
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
@@ -306,7 +311,10 @@ public class MobileCenter {
         } else if (appSecret == null || appSecret.isEmpty()) {
             MobileCenterLog.error(LOG_TAG, "appSecret may not be null or empty");
         } else {
+
+            /* Store state. */
             mApplication = application;
+            mAppSecret = appSecret;
 
             /* If parameters are valid, init context related resources. */
             StorageHelper.initialize(application);
@@ -387,7 +395,7 @@ public class MobileCenter {
                 mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
         }
         mServices.add(service);
-        service.onChannelReady(mApplication, mChannel);
+        service.onStarted(mApplication, mAppSecret, mChannel);
         if (isInstanceEnabled())
             mApplication.registerActivityLifecycleCallbacks(service);
         MobileCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");

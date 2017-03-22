@@ -78,7 +78,7 @@ public class CrashesAndroidTest {
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
         Channel channel = mock(Channel.class);
-        Crashes.getInstance().onChannelReady(sContext, channel);
+        Crashes.getInstance().onStarted(sContext, "", channel);
         final Error exception = generateStackOverflowError();
         assertTrue(exception.getStackTrace().length > ErrorLogHelper.FRAME_LIMIT);
         final Thread thread = new Thread() {
@@ -93,7 +93,7 @@ public class CrashesAndroidTest {
 
         /* Get last session crash on 2nd process. */
         Crashes.unsetInstance();
-        Crashes.getInstance().onChannelReady(sContext, channel);
+        Crashes.getInstance().onStarted(sContext, "", channel);
         assertNotNull(Crashes.getLastSessionCrashReport());
 
         /* Try to get last session crash after Crashes service completed processing. */
@@ -109,7 +109,7 @@ public class CrashesAndroidTest {
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
         Channel channel = mock(Channel.class);
-        Crashes.getInstance().onChannelReady(sContext, channel);
+        Crashes.getInstance().onStarted(sContext, "", channel);
         CrashesListener crashesListener = mock(CrashesListener.class);
         when(crashesListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
         when(crashesListener.shouldAwaitUserConfirmation()).thenReturn(true);
@@ -143,7 +143,7 @@ public class CrashesAndroidTest {
         }).when(channel).enqueue(any(Log.class), anyString());
         Crashes.unsetInstance();
         Crashes.setListener(crashesListener);
-        Crashes.getInstance().onChannelReady(sContext, channel);
+        Crashes.getInstance().onStarted(sContext, "", channel);
         waitForCrashesHandlerTasksToComplete();
 
         /* Check last session error report. */
@@ -191,7 +191,7 @@ public class CrashesAndroidTest {
         }).when(channel).addGroup(anyString(), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
         Crashes.unsetInstance();
         Crashes.setListener(crashesListener);
-        Crashes.getInstance().onChannelReady(sContext, channel);
+        Crashes.getInstance().onStarted(sContext, "", channel);
         waitForCrashesHandlerTasksToComplete();
         assertFalse(Crashes.hasCrashedInLastSession());
         Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
@@ -226,7 +226,7 @@ public class CrashesAndroidTest {
         android.util.Log.i(TAG, "Process 1");
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
-        Crashes.getInstance().onChannelReady(sContext, mock(Channel.class));
+        Crashes.getInstance().onStarted(sContext, "", mock(Channel.class));
         final RuntimeException exception = new RuntimeException();
         final Thread thread = new Thread() {
 
@@ -251,7 +251,7 @@ public class CrashesAndroidTest {
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
         Channel channel = mock(Channel.class);
-        Crashes.getInstance().onChannelReady(sContext, channel);
+        Crashes.getInstance().onStarted(sContext, "", channel);
         Crashes.WrapperSdkListener wrapperSdkListener = mock(Crashes.WrapperSdkListener.class);
         Crashes.getInstance().setWrapperSdkListener(wrapperSdkListener);
         doAnswer(new Answer() {
@@ -276,7 +276,7 @@ public class CrashesAndroidTest {
         thread.join();
         verify(wrapperSdkListener).onCrashCaptured(notNull(ManagedErrorLog.class));
         Crashes.unsetInstance();
-        Crashes.getInstance().onChannelReady(sContext, channel);
+        Crashes.getInstance().onStarted(sContext, "", channel);
         waitForCrashesHandlerTasksToComplete();
         Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
 
@@ -296,7 +296,7 @@ public class CrashesAndroidTest {
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
         Channel channel = mock(Channel.class);
-        Crashes.getInstance().onChannelReady(sContext, channel);
+        Crashes.getInstance().onStarted(sContext, "", channel);
         Crashes.setEnabled(true);
         final RuntimeException exception = new RuntimeException();
         final Thread thread = new Thread() {

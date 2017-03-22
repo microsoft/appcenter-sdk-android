@@ -9,6 +9,7 @@ import android.os.StrictMode;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,6 +23,7 @@ import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
+import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
@@ -30,7 +32,6 @@ import java.lang.reflect.Method;
 
 public class MainActivity extends AppCompatActivity {
 
-    static final String APP_SECRET = "45d1d9f6-2492-4e68-bd44-7190351eb5f3";
     static final String APP_SECRET_KEY = "appSecret";
     static final String LOG_URL_KEY = "logUrl";
     private static final String LOG_TAG = "MobileCenterSasquatch";
@@ -45,26 +46,28 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().build());
 
         /* Set custom log URL if one was configured in settings. */
-        String logUrl = sSharedPreferences.getString(LOG_URL_KEY, null);
-        if (logUrl != null) {
-            try {
-
-                /* Method name changed and jCenter not yet updated so need to use reflection. */
-                Method setLogUrl;
-                try {
-                    setLogUrl = MobileCenter.class.getMethod("setLogUrl", String.class);
-                } catch (NoSuchMethodException e) {
-                    setLogUrl = MobileCenter.class.getMethod("setServerUrl", String.class);
-                }
-                setLogUrl.invoke(null, logUrl);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+        String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getString(R.string.log_url));
+        if (!TextUtils.isEmpty(logUrl)) {
+            MobileCenter.setLogUrl(logUrl);
         }
-        MobileCenter.setLogLevel(Log.VERBOSE);
-        Crashes.setListener(getCrashesListener());
-        MobileCenter.start(getApplication(), getAppSecret(), Analytics.class, Crashes.class);
 
+        /* Set crash listener. */
+        Crashes.setListener(getCrashesListener());
+
+        /* Set distribute urls. */
+        String installUrl = getString(R.string.install_url);
+        if (!TextUtils.isEmpty(installUrl)) {
+            Distribute.setInstallUrl(installUrl);
+        }
+        String apiUrl = getString(R.string.api_url);
+        if (!TextUtils.isEmpty(apiUrl)) {
+            Distribute.setApiUrl(apiUrl);
+        }
+
+        /* Start Mobile center. */
+        MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class);
+
+        /* Print last crash. */
         Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
         Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
 
@@ -76,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        /* Populate UI. */
         ((TextView) findViewById(R.id.package_name)).setText(String.format(getString(R.string.sdk_source_format), getPackageName().substring(getPackageName().lastIndexOf(".") + 1)));
         TestFeatures.initialize(this);
         ListView listView = (ListView) findViewById(R.id.list);
@@ -97,18 +101,6 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
         return true;
-    }
-
-    private String getAppSecret() {
-        String appSecret = sSharedPreferences.getString(APP_SECRET_KEY, null);
-        if (appSecret == null) {
-            SharedPreferences.Editor editor = sSharedPreferences.edit();
-            editor.putString(APP_SECRET_KEY, APP_SECRET);
-            editor.apply();
-            appSecret = sSharedPreferences.getString(APP_SECRET_KEY, null);
-        }
-        Toast.makeText(this, String.format(getString(R.string.app_secret_toast), appSecret), Toast.LENGTH_SHORT).show();
-        return appSecret;
     }
 
     private AbstractCrashesListener getCrashesListener() {

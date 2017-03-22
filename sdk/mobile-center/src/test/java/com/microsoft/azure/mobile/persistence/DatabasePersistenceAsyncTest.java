@@ -35,7 +35,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "CanBeFinal"})
 @PrepareForTest(DatabasePersistenceAsync.class)
 public class DatabasePersistenceAsyncTest {
 
