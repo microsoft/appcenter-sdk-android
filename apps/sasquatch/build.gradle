@@ -21,12 +21,6 @@ android {
     }
 }
 
-repositories {
-    maven {
-        url "http://dl.bintray.com/mobile-center/mobile-center"
-    }
-}
-
 dependencies {
     def version = "0.6.0"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
