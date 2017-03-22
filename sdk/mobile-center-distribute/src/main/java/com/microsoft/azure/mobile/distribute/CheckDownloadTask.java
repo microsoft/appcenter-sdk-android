@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
@@ -162,9 +163,17 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
     }
 
     @Override
-    protected void onPostExecute(DownloadProgress result) {
+    protected void onPostExecute(final DownloadProgress result) {
         if (result != null) {
-            Distribute.getInstance().updateProgressDialog(this, result);
+
+            /* onPostExecute is not always called on UI thread due to an old Android bug. */
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    Distribute.getInstance().updateProgressDialog(CheckDownloadTask.this, result);
+                }
+            });
         }
     }
 
