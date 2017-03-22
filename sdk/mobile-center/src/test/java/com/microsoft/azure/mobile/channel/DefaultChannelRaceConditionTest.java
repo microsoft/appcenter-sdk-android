@@ -11,6 +11,7 @@ import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 import com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync;
 import com.microsoft.azure.mobile.persistence.Persistence;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 
 import org.junit.Test;
@@ -337,6 +338,54 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, listener);
         channel.removeGroup(TEST_GROUP);
         channel.addGroup(TEST_GROUP, 2, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, listener);
+
+        /* Release call to mock ingestion. */
+        beforeCallSemaphore.release();
+
+        /* Wait for callback ingestion. */
+        afterCallSemaphore.acquireUninterruptibly();
+
+        /* Verify ingestion not sent. */
+        verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void disabledWhileSendingLogs() throws Exception {
+
+        /* Set up mocking. */
+        final Semaphore beforeCallSemaphore = new Semaphore(0);
+        final Semaphore afterCallSemaphore = new Semaphore(0);
+        Persistence mockPersistence = mock(Persistence.class);
+        when(mockPersistence.countLogs(anyString())).thenReturn(1);
+        when(mockPersistence.getLogs(anyString(), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(anyString(), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
+        DatabasePersistenceAsync mockPersistenceAsync = spy(new DatabasePersistenceAsync(mockPersistence));
+        whenNew(DatabasePersistenceAsync.class).withArguments(mockPersistence).thenReturn(mockPersistenceAsync);
+        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(final InvocationOnMock invocation) throws Throwable {
+                new Thread() {
+
+                    @Override
+                    public void run() {
+                        beforeCallSemaphore.acquireUninterruptibly();
+                        ((Runnable) invocation.getArguments()[0]).run();
+                        afterCallSemaphore.release();
+                    }
+                }.start();
+                return null;
+            }
+        }).when(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
+
+        /* Simulate enable module then disable. */
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        Channel.GroupListener listener = mock(Channel.GroupListener.class);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, listener);
+        channel.setEnabled(false);
+        channel.setEnabled(true);
 
         /* Release call to mock ingestion. */
         beforeCallSemaphore.release();

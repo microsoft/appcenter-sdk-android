@@ -664,12 +664,20 @@ public class Distribute extends AbstractMobileCenterService {
         }, new ServiceCallback() {
 
             @Override
-            public void onCallSucceeded(String payload) {
-                try {
-                    handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload));
-                } catch (JSONException e) {
-                    onCallFailed(e);
-                }
+            public void onCallSucceeded(final String payload) {
+
+                /* onPostExecute is not always called on UI thread due to an old Android bug. */
+                HandlerUtils.runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        try {
+                            handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload));
+                        } catch (JSONException e) {
+                            onCallFailed(e);
+                        }
+                    }
+                });
             }
 
             @Override
@@ -1172,15 +1180,8 @@ public class Distribute extends AbstractMobileCenterService {
      */
     private synchronized void hideProgressDialog() {
         if (mProgressDialog != null) {
-            final Dialog progressDialog = mProgressDialog;
+            mProgressDialog.hide();
             mProgressDialog = null;
-            HandlerUtils.runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    progressDialog.hide();
-                }
-            });
             HandlerUtils.getMainHandler().removeCallbacksAndMessages(HANDLER_TOKEN_CHECK_PROGRESS);
         }
     }

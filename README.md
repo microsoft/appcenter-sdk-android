@@ -10,7 +10,7 @@
 
 The Microsoft Mobile Center Android SDK lets you add Mobile Center services to your Android application.
 
-The SDK is currently in private beta release and we support the following services:
+The SDK currently supports the following services:
 
 1. **Analytics**: Mobile Center Analytics helps you understand user behavior and customer engagement to improve your Android app. The SDK automatically captures session count and device properties like model, OS Version etc. You can define your own custom events to measure things that matter to your business. All the information captured is available in the Mobile Center portal for you to analyze the data.
 
@@ -50,7 +50,7 @@ Below are the steps on how to integrate our compiled libraries in your applicati
 
     ```groovy
     dependencies {
-        def mobileCenterSdkVersion = '0.5.0'
+        def mobileCenterSdkVersion = '0.6.0'
         compile "com.microsoft.azure.mobile:mobile-center-analytics:${mobileCenterSdkVersion}"
         compile "com.microsoft.azure.mobile:mobile-center-crashes:${mobileCenterSdkVersion}"
         compile "com.microsoft.azure.mobile:mobile-center-distribute:${mobileCenterSdkVersion}"

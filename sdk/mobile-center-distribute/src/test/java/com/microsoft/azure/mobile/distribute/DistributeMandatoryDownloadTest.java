@@ -50,7 +50,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest({SystemClock.class, HandlerUtils.class})
+@PrepareForTest(SystemClock.class)
 public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDownloadTest {
 
     @Mock
@@ -94,7 +94,6 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         when(SystemClock.uptimeMillis()).thenReturn(1L);
 
         /* Mock Handler. */
-        mockStatic(HandlerUtils.class);
         when(mHandler.postAtTime(any(Runnable.class), eq(HANDLER_TOKEN_CHECK_PROGRESS), anyLong())).then(new Answer<Boolean>() {
 
             @Override
@@ -104,15 +103,6 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
             }
         });
         when(HandlerUtils.getMainHandler()).thenReturn(mHandler);
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                ((Runnable) invocation.getArguments()[0]).run();
-                return null;
-            }
-        }).when(HandlerUtils.class);
-        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Set up common download test. */
         setUpDownload(true);
