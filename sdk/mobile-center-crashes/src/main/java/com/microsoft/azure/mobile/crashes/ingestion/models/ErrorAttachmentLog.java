@@ -171,9 +171,7 @@ public class ErrorAttachmentLog extends AbstractLog {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
-
         ErrorAttachmentLog that = (ErrorAttachmentLog) o;
-
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (errorId != null ? !errorId.equals(that.errorId) : that.errorId != null) return false;
         if (contentType != null ? !contentType.equals(that.contentType) : that.contentType != null) return false;

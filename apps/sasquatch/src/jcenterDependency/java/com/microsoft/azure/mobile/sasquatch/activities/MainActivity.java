@@ -28,8 +28,6 @@ import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
 
-import java.lang.reflect.Method;
-
 public class MainActivity extends AppCompatActivity {
 
     static final String APP_SECRET_KEY = "appSecret";
@@ -132,14 +130,13 @@ public class MainActivity extends AppCompatActivity {
                 builder.create().show();
                 return true;
             }
-            /*
-            @Override
-            public Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report) {
-                ErrorAttachmentLog textLog = ErrorAttachments.attachmentWithText("This is a text attachment.", "text.txt");
-                ErrorAttachmentLog binaryLog = ErrorAttachments.attachmentWithBinary("This is a binary attachment.".getBytes(), "binary.jpeg","image/jpeg");
-                return Arrays.asList(textLog, binaryLog);
-            }
-            */
+
+//            @Override
+//            public Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report) {
+//                ErrorAttachmentLog textLog = ErrorAttachments.attachmentWithText("This is a text attachment.", "text.txt");
+//                ErrorAttachmentLog binaryLog = ErrorAttachments.attachmentWithBinary("This is a binary attachment.".getBytes(), "binary.jpeg","image/jpeg");
+//                return Arrays.asList(textLog, binaryLog);
+//            }
 
             @Override
             public void onBeforeSending(ErrorReport report) {
