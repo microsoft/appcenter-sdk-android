@@ -13,8 +13,10 @@ import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
  */
 public final class ErrorAttachments {
 
-    public static final String CONTENT_TYPE_TEXT_PLAIN  = "text/plain";
-    public static final String CONTENT_TYPE_BINARY      = "binary";
+    /**
+     * Plain text mime type
+     */
+    public static final String CONTENT_TYPE_TEXT_PLAIN = "text/plain";
 
     @VisibleForTesting
     ErrorAttachments() {
@@ -23,10 +25,10 @@ public final class ErrorAttachments {
     }
 
     /**
-     * Build an error attachment log with text suitable for using in {link CrashesListener#getErrorAttachment(ErrorReport)}.
+     * Build an error attachment log with text suitable for using in {link CrashesListener#getErrorAttachments(ErrorReport)}.
      *
-     * @param text      text to attach to attachment log.
-     * @param fileName  file name to use in error attachment log.
+     * @param text     text to attach to attachment log.
+     * @param fileName file name to use in error attachment log.
      * @return ErrorAttachmentLog or null if null text is passed.
      */
     public static ErrorAttachmentLog attachmentWithText(String text, String fileName) {
@@ -34,18 +36,18 @@ public final class ErrorAttachments {
     }
 
     /**
-     * Build an error attachment log with binary suitable for using in {link CrashesListener#getErrorAttachment(ErrorReport)}.
+     * Build an error attachment log with binary suitable for using in {link CrashesListener#getErrorAttachments(ErrorReport)}.
      *
-     * @param data        binary data.
-     * @param fileName    file name to use in error attachment log.
+     * @param data     binary data.
+     * @param fileName file name to use in error attachment log.
      * @return ErrorAttachmentLog attachment or null if null data is passed.
      */
-    public static ErrorAttachmentLog attachmentWithBinary(byte[] data, String fileName) {
-        return attachment(data, null, fileName, CONTENT_TYPE_BINARY);
+    public static ErrorAttachmentLog attachmentWithBinary(byte[] data, String fileName, String contentType) {
+        return attachment(data, null, fileName, contentType);
     }
 
     /**
-     * Build an error attachment log with text and binary suitable for using in {link CrashesListener#getErrorAttachment(ErrorReport)}.
+     * Build an error attachment log with text and binary suitable for using in {link CrashesListener#getErrorAttachments(ErrorReport)}.
      *
      * @param data        binary data.
      * @param text        text to attach to the attachment log.
@@ -54,18 +56,21 @@ public final class ErrorAttachments {
      * @return ErrorAttachmentLog attachment or null if text and data are null.
      */
     private static ErrorAttachmentLog attachment(byte[] data, String text, String fileName, String contentType) {
-        if ((data == null && contentType.equals(CONTENT_TYPE_BINARY)) ||
+        if (contentType == null) {
+            MobileCenterLog.error(LOG_TAG, "Null contentType passed to attachment method, returning null");
+            return null;
+        }
+        if ((data == null && isBinaryContentType(contentType)) ||
             (text == null && contentType.equals(CONTENT_TYPE_TEXT_PLAIN))) {
-            MobileCenterLog.warn(LOG_TAG, "Null content passed to attachment method, returning null");
+            MobileCenterLog.error(LOG_TAG, "Null content passed to attachment method, returning null");
             return null;
         }
         if (fileName == null) {
-            MobileCenterLog.warn(LOG_TAG, "Null file name passed to attachment method, returning null");
+            MobileCenterLog.error(LOG_TAG, "Null fileName passed to attachment method, returning null");
             return null;
         }
-
         String content = text;
-        if(contentType.equals(CONTENT_TYPE_BINARY)){
+        if (isBinaryContentType(contentType)) {
             content = Base64.encodeToString(data, Base64.DEFAULT);
         }
         ErrorAttachmentLog attachmentLog = new ErrorAttachmentLog();
@@ -73,5 +78,34 @@ public final class ErrorAttachments {
         attachmentLog.setFileName(fileName);
         attachmentLog.setData(content);
         return attachmentLog;
+    }
+
+    /**
+     * Checks if content type provided by user is binary.
+     *
+     * @param contentType content type.
+     * @return True if binary, otherwise False.
+     */
+    private static boolean isBinaryContentType(String contentType) {
+        return !contentType.startsWith("text/");
+    }
+
+    /**
+     * Validates ErrorAttachmentLog
+     *
+     * @param log ErrorAttachmentLog to validate.
+     * @return true if validation succeeded, otherwise false.
+     */
+    static boolean validateErrorAttachmentLog(ErrorAttachmentLog log) {
+        if (log == null) {
+            MobileCenterLog.error(LOG_TAG, "Null ErrorAttachmentLog passed to validate method");
+            return false;
+        }
+        if( log.getId() == null || log.getErrorId() == null || log.getContentType() == null ||
+            log.getFileName() == null || log.getData() == null){
+            MobileCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
+            return false;
+        }
+        return true;
     }
 }

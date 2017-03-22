@@ -296,14 +296,20 @@ public class CrashesTest {
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
 
-        ErrorAttachmentLog mockAttachment = mock(ErrorAttachmentLog.class);
+
         CrashesListener mockListener = mock(CrashesListener.class);
         when(mockListener.shouldProcess(report)).thenReturn(true);
         when(mockListener.shouldAwaitUserConfirmation()).thenReturn(false);
 
+        ErrorAttachmentLog mockAttachment = mock(ErrorAttachmentLog.class);
+        when(mockAttachment.getId()).thenReturn(UUID.randomUUID());
+        when(mockAttachment.getErrorId()).thenReturn(UUID.randomUUID());
+        when(mockAttachment.getContentType()).thenReturn("");
+        when(mockAttachment.getFileName()).thenReturn("");
+        when(mockAttachment.getData()).thenReturn("");
 
         List<ErrorAttachmentLog> errorAttachmentLogList = Arrays.asList(mockAttachment, mockAttachment);
-        when(mockListener.getErrorAttachment(report)).thenReturn(errorAttachmentLogList);
+        when(mockListener.getErrorAttachments(report)).thenReturn(errorAttachmentLogList);
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -317,7 +323,7 @@ public class CrashesTest {
         verify(mockListener).shouldAwaitUserConfirmation();
 
 
-        verify(mockListener).getErrorAttachment(report);
+        verify(mockListener).getErrorAttachments(report);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
             @Override
             public boolean matches(Object log) {
@@ -356,7 +362,7 @@ public class CrashesTest {
         verify(mockListener).shouldProcess(report);
         verify(mockListener, never()).shouldAwaitUserConfirmation();
 
-        verify(mockListener, never()).getErrorAttachment(report);
+        verify(mockListener, never()).getErrorAttachments(report);
         verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
     }
 
@@ -366,6 +372,11 @@ public class CrashesTest {
         Channel mockChannel = mock(Channel.class);
 
         ErrorAttachmentLog mockAttachment = mock(ErrorAttachmentLog.class);
+        when(mockAttachment.getId()).thenReturn(UUID.randomUUID());
+        when(mockAttachment.getErrorId()).thenReturn(UUID.randomUUID());
+        when(mockAttachment.getContentType()).thenReturn("");
+        when(mockAttachment.getFileName()).thenReturn("");
+        when(mockAttachment.getData()).thenReturn("");
         List<ErrorAttachmentLog> errorAttachmentLogList = Arrays.asList(mockAttachment, mockAttachment);
 
         ErrorReport report = new ErrorReport();
@@ -383,7 +394,7 @@ public class CrashesTest {
 
         when(mockListener.shouldProcess(report)).thenReturn(true);
         when(mockListener.shouldAwaitUserConfirmation()).thenReturn(false);
-        when(mockListener.getErrorAttachment(report)).thenReturn(errorAttachmentLogList);
+        when(mockListener.getErrorAttachments(report)).thenReturn(errorAttachmentLogList);
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -396,7 +407,7 @@ public class CrashesTest {
         verify(mockListener).shouldProcess(report);
         verify(mockListener, never()).shouldAwaitUserConfirmation();
 
-        verify(mockListener).getErrorAttachment(report);
+        verify(mockListener).getErrorAttachments(report);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
             @Override
             public boolean matches(Object log) {
@@ -518,7 +529,7 @@ public class CrashesTest {
         verify(listener).shouldAwaitUserConfirmation();
         verify(channel).enqueue(any(Log.class), anyString());
 
-        verify(listener).getErrorAttachment(any(ErrorReport.class));
+        verify(listener).getErrorAttachments(any(ErrorReport.class));
         verifyNoMoreInteractions(listener);
     }
 
@@ -733,7 +744,7 @@ public class CrashesTest {
 
         Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
 
-        verify(mockListener, never()).getErrorAttachment(any(ErrorReport.class));
+        verify(mockListener, never()).getErrorAttachments(any(ErrorReport.class));
         verify(mMockLooper).quit();
 
         verifyStatic();
@@ -835,7 +846,7 @@ public class CrashesTest {
             }
 
             @Override
-            public Iterable<ErrorAttachmentLog> getErrorAttachment(ErrorReport report) {
+            public Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report) {
                 return null;
             }
 
@@ -862,7 +873,7 @@ public class CrashesTest {
         assertFalse(defaultListener.shouldAwaitUserConfirmation());
 
         /* Nothing to verify. */
-        defaultListener.getErrorAttachment(null);
+        defaultListener.getErrorAttachments(null);
         defaultListener.onBeforeSending(null);
         defaultListener.onSendingSucceeded(null);
         defaultListener.onSendingFailed(null, null);

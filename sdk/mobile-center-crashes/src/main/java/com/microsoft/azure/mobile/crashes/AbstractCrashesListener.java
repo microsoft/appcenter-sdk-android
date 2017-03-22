@@ -18,7 +18,7 @@ public abstract class AbstractCrashesListener implements CrashesListener {
     }
 
     @Override
-    public Iterable<ErrorAttachmentLog> getErrorAttachment(ErrorReport report) {
+    public Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report) {
         return null;
     }
 

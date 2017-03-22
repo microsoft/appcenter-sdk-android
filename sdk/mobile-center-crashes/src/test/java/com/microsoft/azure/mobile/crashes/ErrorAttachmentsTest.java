@@ -40,18 +40,21 @@ public class ErrorAttachmentsTest {
     public void attachmentWithBinary() {
         byte[] data = "Hello Binary!".getBytes();
         String fileName = "binary.txt";
-        ErrorAttachmentLog attachment = ErrorAttachments.attachmentWithBinary(data, fileName);
+        String contentType = "image/jpeg";
+        ErrorAttachmentLog attachment = ErrorAttachments.attachmentWithBinary(data, fileName, contentType);
         assertNotNull(attachment);
         assertEquals(Base64.encodeToString(data, Base64.DEFAULT), attachment.getData());
         assertEquals(fileName, attachment.getFileName());
-        assertEquals(ErrorAttachments.CONTENT_TYPE_BINARY, attachment.getContentType());
+        assertEquals(contentType, attachment.getContentType());
     }
 
     @Test
     public void attachmentWithNullBinary() {
         String text = "1";
         byte[] data = {};
-        assertNull(ErrorAttachments.attachmentWithBinary(null, text));
-        assertNull(ErrorAttachments.attachmentWithBinary(data, null));
+        String contentType = "image/jpeg";
+        assertNull(ErrorAttachments.attachmentWithBinary(null, text, contentType));
+        assertNull(ErrorAttachments.attachmentWithBinary(data, null, contentType));
+        assertNull(ErrorAttachments.attachmentWithBinary(data, text, null));
     }
 }

@@ -35,10 +35,10 @@ public interface CrashesListener {
      * Attachments are optional so this method can also return <code>null</code>.
      *
      * @param report The crash report for additional information.
-     * @return {@link Iterable<ErrorAttachmentLog>} instances of ErrorAttachmentLog to be send as separate logs.
+     * @return {@link Iterable<ErrorAttachmentLog>} instances of ErrorAttachmentLog to be sent as separate logs.
      */
     @WorkerThread
-    Iterable<ErrorAttachmentLog> getErrorAttachment(ErrorReport report);
+    Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report);
 
     /**
      * Called right before sending a crash report. The callback can be invoked multiple times based on the number of crash reports.

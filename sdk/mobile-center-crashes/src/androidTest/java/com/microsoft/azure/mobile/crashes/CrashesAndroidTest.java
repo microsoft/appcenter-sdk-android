@@ -172,7 +172,7 @@ public class CrashesAndroidTest {
         assertNotNull(log.get());
         assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
 
-        verify(crashesListener).getErrorAttachment(any(ErrorReport.class));
+        verify(crashesListener).getErrorAttachments(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);
 
         /* Third process: sending succeeds. */

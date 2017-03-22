@@ -735,21 +735,11 @@ public class Crashes extends AbstractMobileCenterService {
                     while (unprocessedIterator.hasNext()) {
                         if (shouldStopProcessingPendingErrors())
                             break;
-
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
-
                         mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
-
-                        Iterable<ErrorAttachmentLog> attachments = mCrashesListener.getErrorAttachment(errorLogReport.report);
-                        if (attachments == null) {
-                            MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
-                        }
-                        else {
-                            for (ErrorAttachmentLog attachment : attachments) {
-                                mChannel.enqueue(attachment, ERROR_GROUP);
-                            }
-                        }
+                        Iterable<ErrorAttachmentLog> attachments = mCrashesListener.getErrorAttachments(errorLogReport.report);
+                        handleErrorAttachmentLogs(attachments, errorLogReport);
                         /* Clean up an error log file and map entry. */
                         unprocessedIterator.remove();
                         ErrorLogHelper.removeStoredErrorLogFile(unprocessedEntry.getKey());
@@ -767,6 +757,24 @@ public class Crashes extends AbstractMobileCenterService {
             mHandler.post(runnable);
         else
             runnable.run();
+    }
+
+    private void handleErrorAttachmentLogs(Iterable<ErrorAttachmentLog> attachments, ErrorLogReport errorLogReport) {
+        if (attachments == null) {
+            MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachments returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
+        }
+        else {
+            for (ErrorAttachmentLog attachment : attachments) {
+                if(attachment != null) {
+                    attachment.setId(UUID.randomUUID());
+                    attachment.setErrorId(errorLogReport.log.getId());
+                    if(ErrorAttachments.validateErrorAttachmentLog(attachment))
+                        mChannel.enqueue(attachment, ERROR_GROUP);
+                } else {
+                    MobileCenterLog.error(LOG_TAG, "Skipping null ErrorAttachmentLog in CrashesListener.getErrorAttachments");
+                }
+            }
+        }
     }
 
     @VisibleForTesting
