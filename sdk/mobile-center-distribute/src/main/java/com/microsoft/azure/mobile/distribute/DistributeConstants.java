@@ -98,20 +98,27 @@ final class DistributeConstants {
     static final int DOWNLOAD_STATE_COMPLETED = 0;
 
     /**
+     * If the update is mandatory we remember the dialog was displayed to say a new download
+     * was available. We use that to restore blocking dialog at restart
+     * (while checking for more recent in background).
+     */
+    static final int DOWNLOAD_STATE_AVAILABLE = 1;
+
+    /**
      * We are waiting to hear back from download manager, we may poll status on process restart.
      */
-    static final int DOWNLOAD_STATE_ENQUEUED = 1;
+    static final int DOWNLOAD_STATE_ENQUEUED = 2;
 
     /**
      * Download is finished, notification was posted but user could ignore it,
      * we use that state to show install U.I 1 time when application is resumed.
      */
-    static final int DOWNLOAD_STATE_NOTIFIED = 2;
+    static final int DOWNLOAD_STATE_NOTIFIED = 3;
 
     /**
      * State used for mandatory update to block app until user installs the app.
      */
-    static final int DOWNLOAD_STATE_INSTALLING = 3;
+    static final int DOWNLOAD_STATE_INSTALLING = 4;
 
     /**
      * Token used for handler callbacks to check download progress.

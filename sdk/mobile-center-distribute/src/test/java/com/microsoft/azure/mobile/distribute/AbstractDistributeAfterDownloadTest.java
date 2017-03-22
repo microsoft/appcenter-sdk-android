@@ -318,11 +318,6 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         Distribute.getInstance().onActivityResumed(mActivity);
     }
 
-    void restartProcessAndSdk() {
-        Distribute.unsetInstance();
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
-    }
-
     @After
     public void tearDown() throws Exception {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
