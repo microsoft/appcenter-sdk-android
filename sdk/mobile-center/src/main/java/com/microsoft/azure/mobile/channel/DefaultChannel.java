@@ -3,6 +3,7 @@ package com.microsoft.azure.mobile.channel;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
@@ -410,9 +411,15 @@ public class DefaultChannel implements Channel {
 
     /**
      * Send logs.
+     *
+     * @param groupState   The group state.
+     * @param currentState The current state.
+     * @param batch        The log batch.
+     * @param batchId      The batch ID.
      */
-    private synchronized void sendLogs(final GroupState groupState, final int stateSnapshot, List<Log> batch, final String batchId) {
-        if (checkStateDidNotChange(groupState, stateSnapshot)) {
+    @MainThread
+    private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId) {
+        if (checkStateDidNotChange(groupState, currentState)) {
 
             /* Send logs. */
             LogContainer logContainer = new LogContainer();
@@ -421,12 +428,12 @@ public class DefaultChannel implements Channel {
 
                 @Override
                 public void onCallSucceeded(String payload) {
-                    handleSendingSuccess(groupState, stateSnapshot, batchId);
+                    handleSendingSuccess(groupState, currentState, batchId);
                 }
 
                 @Override
                 public void onCallFailed(Exception e) {
-                    handleSendingFailure(groupState, stateSnapshot, batchId, e);
+                    handleSendingFailure(groupState, currentState, batchId, e);
                 }
             });
 
