@@ -10,7 +10,7 @@ import org.json.JSONObject;
 /**
  * Release details JSON schema.
  */
-class ReleaseDetails {
+public class ReleaseDetails {
 
     private static final String ID = "id";
 
@@ -102,7 +102,7 @@ class ReleaseDetails {
      *
      * @return the id value
      */
-    int getId() {
+    public int getId() {
         return id;
     }
 
@@ -111,7 +111,7 @@ class ReleaseDetails {
      *
      * @return the version value
      */
-    int getVersion() {
+    public int getVersion() {
         return version;
     }
 
@@ -121,7 +121,7 @@ class ReleaseDetails {
      * @return the shortVersion value
      */
     @NonNull
-    String getShortVersion() {
+    public String getShortVersion() {
         return shortVersion;
     }
 
@@ -131,7 +131,7 @@ class ReleaseDetails {
      * @return the releaseNotes value
      */
     @Nullable
-    String getReleaseNotes() {
+    public String getReleaseNotes() {
         return releaseNotes;
     }
 
@@ -159,7 +159,7 @@ class ReleaseDetails {
      *
      * @return mandatory update value
      */
-    boolean isMandatoryUpdate() {
+    public boolean isMandatoryUpdate() {
         return mandatoryUpdate;
     }
 

@@ -151,12 +151,12 @@ public class Distribute extends AbstractMobileCenterService {
     /**
      * Last update dialog that was shown.
      */
-    private AlertDialog mUpdateDialog;
+    private Dialog mUpdateDialog;
 
     /**
      * Last unknown sources dialog that was shown.
      */
-    private AlertDialog mUnknownSourcesDialog;
+    private Dialog mUnknownSourcesDialog;
 
     /**
      * Last download progress dialog that was shown.
@@ -166,7 +166,7 @@ public class Distribute extends AbstractMobileCenterService {
     /**
      * Mandatory download completed in app notification.
      */
-    private AlertDialog mCompletedDownloadDialog;
+    private Dialog mCompletedDownloadDialog;
 
     /**
      * Last activity that did show a dialog.
@@ -201,6 +201,17 @@ public class Distribute extends AbstractMobileCenterService {
     private String mLauncherActivityClassName;
 
     /**
+     * Custom listener if any.
+     */
+    private DistributeListener mListener;
+
+    /**
+     * Flag to remember whether update dialog was customized or not.
+     * Value is meaningless when the current state is not {@link DistributeConstants#DOWNLOAD_STATE_AVAILABLE}.
+     */
+    private boolean mUsingDefaultUpdateDialog;
+
+    /**
      * Get shared instance.
      *
      * @return shared instance.
@@ -223,7 +234,6 @@ public class Distribute extends AbstractMobileCenterService {
      *
      * @return <code>true</code> if enabled, <code>false</code> otherwise.
      */
-    @SuppressWarnings("WeakerAccess")
     public static boolean isEnabled() {
         return getInstance().isInstanceEnabled();
     }
@@ -233,7 +243,6 @@ public class Distribute extends AbstractMobileCenterService {
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
-    @SuppressWarnings("WeakerAccess")
     public static void setEnabled(boolean enabled) {
         getInstance().setInstanceEnabled(enabled);
     }
@@ -243,7 +252,6 @@ public class Distribute extends AbstractMobileCenterService {
      *
      * @param installUrl install base URL.
      */
-    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public static void setInstallUrl(String installUrl) {
         getInstance().setInstanceInstallUrl(installUrl);
     }
@@ -253,9 +261,29 @@ public class Distribute extends AbstractMobileCenterService {
      *
      * @param apiUrl API base URL.
      */
-    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public static void setApiUrl(String apiUrl) {
         getInstance().setInstanceApiUrl(apiUrl);
+    }
+
+    /**
+     * Sets a distribute listener.
+     *
+     * @param listener The custom distribute listener.
+     */
+    public static void setListener(DistributeListener listener) {
+        getInstance().setInstanceListener(listener);
+    }
+
+    /**
+     * If update dialog is customized using {@link DistributeListener#shouldCustomizeUpdateDialog(ReleaseDetails)}.
+     * You need to tell the distribute SDK using this function what is the user action.
+     *
+     * @param updateAction one of {@link UserUpdateAction} actions.
+     *                     For mandatory updates, only {@link UserUpdateAction#DOWNLOAD} is allowed.
+     */
+    @SuppressWarnings({"unused", "WeakerAccess"})
+    public static synchronized void notifyUserUpdateAction(@UserUpdateAction int updateAction) {
+        getInstance().handleUserUpdateAction(updateAction);
     }
 
     @Override
@@ -361,6 +389,56 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     /**
+     * Implements {@link #setListener(DistributeListener)}.
+     */
+    private synchronized void setInstanceListener(DistributeListener listener) {
+        mListener = listener;
+    }
+
+    /**
+     * Implements {@link #notifyUserUpdateAction(int)}.
+     */
+    private synchronized void handleUserUpdateAction(int updateAction) {
+        if (!isEnabled()) {
+            MobileCenterLog.error(LOG_TAG, "Distribute is disabled");
+            return;
+        }
+        if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE) {
+            MobileCenterLog.error(LOG_TAG, "Cannot handler user update action at this time.");
+            return;
+        }
+        if (mUsingDefaultUpdateDialog) {
+            MobileCenterLog.error(LOG_TAG, "Cannot handler user update action when using default dialog.");
+            return;
+        }
+        switch (updateAction) {
+
+            case UserUpdateAction.DOWNLOAD:
+                enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
+                break;
+
+            case UserUpdateAction.IGNORE:
+                if (mReleaseDetails.isMandatoryUpdate()) {
+                    MobileCenterLog.error(LOG_TAG, "Cannot ignore a mandatory update.");
+                    return;
+                }
+                ignoreRelease(mReleaseDetails);
+                break;
+
+            case UserUpdateAction.POSTPONE:
+                if (mReleaseDetails.isMandatoryUpdate()) {
+                    MobileCenterLog.error(LOG_TAG, "Cannot postpone a mandatory update.");
+                    return;
+                }
+                completeWorkflow();
+                break;
+
+            default:
+                MobileCenterLog.error(LOG_TAG, "Invalid update action: " + updateAction);
+        }
+    }
+
+    /**
      * Cancel everything.
      */
     private synchronized void cancelPreviousTasks() {
@@ -401,7 +479,7 @@ public class Distribute extends AbstractMobileCenterService {
         if (mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
             /* Don't go any further it this is a debug app. */
-            if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {
+            if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE + 1) {
                 MobileCenterLog.info(LOG_TAG, "Not checking in app updates in debug.");
                 mWorkflowCompleted = true;
                 return;
@@ -822,10 +900,10 @@ public class Distribute extends AbstractMobileCenterService {
     /**
      * Show dialog and remember which activity displayed it for later U.I. state change.
      *
-     * @param alertDialog dialog.
+     * @param dialog dialog.
      */
-    private void showAndRememberDialogActivity(AlertDialog alertDialog) {
-        alertDialog.show();
+    private void showAndRememberDialogActivity(Dialog dialog) {
+        dialog.show();
         mLastActivityWithDialog = new WeakReference<>(mForegroundActivity);
     }
 
@@ -838,43 +916,52 @@ public class Distribute extends AbstractMobileCenterService {
         if (!shouldRefreshDialog(mUpdateDialog)) {
             return;
         }
-        MobileCenterLog.debug(LOG_TAG, "Show new update dialog.");
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
-        dialogBuilder.setTitle(R.string.mobile_center_distribute_update_dialog_title);
-        final ReleaseDetails releaseDetails = mReleaseDetails;
-        String releaseNotes = releaseDetails.getReleaseNotes();
-        if (TextUtils.isEmpty(releaseNotes))
-            dialogBuilder.setMessage(R.string.mobile_center_distribute_update_dialog_message);
-        else
-            dialogBuilder.setMessage(releaseNotes);
-        dialogBuilder.setPositiveButton(R.string.mobile_center_distribute_update_dialog_download, new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                enqueueDownloadOrShowUnknownSourcesDialog(releaseDetails);
-            }
-        });
-        if (releaseDetails.isMandatoryUpdate()) {
-            dialogBuilder.setCancelable(false);
+        if (mListener != null && mListener.shouldCustomizeUpdateDialog(mReleaseDetails)) {
+            MobileCenterLog.debug(LOG_TAG, "Show custom update dialog.");
+            mUsingDefaultUpdateDialog = false;
+            mUpdateDialog = mListener.buildUpdateDialog(mForegroundActivity, mReleaseDetails);
         } else {
-            dialogBuilder.setNegativeButton(R.string.mobile_center_distribute_update_dialog_ignore, new DialogInterface.OnClickListener() {
+            MobileCenterLog.debug(LOG_TAG, "Show default update dialog.");
+            mUsingDefaultUpdateDialog = true;
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
+            dialogBuilder.setTitle(R.string.mobile_center_distribute_update_dialog_title);
+            final ReleaseDetails releaseDetails = mReleaseDetails;
+            String releaseNotes = releaseDetails.getReleaseNotes();
+            if (TextUtils.isEmpty(releaseNotes))
+                dialogBuilder.setMessage(R.string.mobile_center_distribute_update_dialog_message);
+            else
+                dialogBuilder.setMessage(releaseNotes);
+            dialogBuilder.setPositiveButton(R.string.mobile_center_distribute_update_dialog_download, new DialogInterface.OnClickListener() {
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    ignoreRelease(releaseDetails);
+                    enqueueDownloadOrShowUnknownSourcesDialog(releaseDetails);
                 }
             });
-            dialogBuilder.setNeutralButton(R.string.mobile_center_distribute_update_dialog_postpone, new DialogInterface.OnClickListener() {
+            if (releaseDetails.isMandatoryUpdate()) {
+                dialogBuilder.setCancelable(false);
+            } else {
+                dialogBuilder.setNegativeButton(R.string.mobile_center_distribute_update_dialog_ignore, new DialogInterface.OnClickListener() {
 
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    completeWorkflow(releaseDetails);
-                }
-            });
-            setOnCancelListener(dialogBuilder, releaseDetails);
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ignoreRelease(releaseDetails);
+                    }
+                });
+                dialogBuilder.setNeutralButton(R.string.mobile_center_distribute_update_dialog_postpone, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        completeWorkflow(releaseDetails);
+                    }
+                });
+                setOnCancelListener(dialogBuilder, releaseDetails);
+            }
+            mUpdateDialog = dialogBuilder.create();
         }
-        mUpdateDialog = dialogBuilder.create();
-        showAndRememberDialogActivity(mUpdateDialog);
+        if (mUpdateDialog != null) {
+            showAndRememberDialogActivity(mUpdateDialog);
+        }
     }
 
     /**
