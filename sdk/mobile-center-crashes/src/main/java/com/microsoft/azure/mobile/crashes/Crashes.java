@@ -428,7 +428,8 @@ public class Crashes extends AbstractMobileCenterService {
                             MobileCenterLog.warn(LOG_TAG, "Cannot find crash report for the error log: " + id);
                     }
                 } else {
-                    MobileCenterLog.warn(LOG_TAG, "A different type of log comes to crashes: " + log.getClass().getName());
+                    if(!(log instanceof ErrorAttachmentLog))
+                        MobileCenterLog.warn(LOG_TAG, "A different type of log comes to crashes: " + log.getClass().getName());
                 }
             }
 
