@@ -17,7 +17,6 @@ public abstract class AbstractCrashesListener implements CrashesListener {
         return false;
     }
 
-    /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
     @Override
     public Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report) {
         return null;

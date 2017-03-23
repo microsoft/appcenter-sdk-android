@@ -38,7 +38,6 @@ public interface CrashesListener {
      * @return {@link Iterable<ErrorAttachmentLog>} instances of ErrorAttachmentLog to be sent as separate logs.
      */
 
-    /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
     @WorkerThread
     Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report);
 

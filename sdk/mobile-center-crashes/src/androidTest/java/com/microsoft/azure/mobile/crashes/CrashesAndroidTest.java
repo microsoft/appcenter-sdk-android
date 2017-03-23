@@ -172,7 +172,6 @@ public class CrashesAndroidTest {
         assertNotNull(log.get());
         assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
 
-        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
         verify(crashesListener).getErrorAttachments(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);
 

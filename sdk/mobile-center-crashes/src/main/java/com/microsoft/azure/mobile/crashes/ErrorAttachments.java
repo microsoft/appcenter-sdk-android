@@ -11,8 +11,6 @@ import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 /**
  * Error attachment utilities.
  */
-
-/* TODO (getErrorAttachment): Re-enable error attachment in javadoc when the feature becomes available. Add @ before link. */
 public final class ErrorAttachments {
 
     /**
