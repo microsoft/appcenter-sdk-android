@@ -31,7 +31,7 @@ public interface CrashesListener {
     boolean shouldAwaitUserConfirmation();
 
     /**
-     * Called to get additional information to be send as separate ErrorAttachmentLog logs
+     * Called to get additional information to be sent as separate ErrorAttachmentLog logs
      * Attachments are optional so this method can also return <code>null</code>.
      *
      * @param report The crash report for additional information.

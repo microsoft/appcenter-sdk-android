@@ -762,16 +762,15 @@ public class Crashes extends AbstractMobileCenterService {
     private void handleErrorAttachmentLogs(Iterable<ErrorAttachmentLog> attachments, ErrorLogReport errorLogReport) {
         if (attachments == null) {
             MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachments returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
-        }
-        else {
+        } else {
             for (ErrorAttachmentLog attachment : attachments) {
-                if(attachment != null) {
+                if (attachment != null) {
                     attachment.setId(UUID.randomUUID());
                     attachment.setErrorId(errorLogReport.log.getId());
-                    if(ErrorAttachments.validateErrorAttachmentLog(attachment))
+                    if (ErrorAttachments.validateErrorAttachmentLog(attachment))
                         mChannel.enqueue(attachment, ERROR_GROUP);
                 } else {
-                    MobileCenterLog.error(LOG_TAG, "Skipping null ErrorAttachmentLog in CrashesListener.getErrorAttachments");
+                    MobileCenterLog.warn(LOG_TAG, "Skipping null ErrorAttachmentLog in CrashesListener.getErrorAttachments");
                 }
             }
         }

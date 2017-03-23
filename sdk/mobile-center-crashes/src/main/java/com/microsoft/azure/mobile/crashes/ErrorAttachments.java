@@ -61,7 +61,7 @@ public final class ErrorAttachments {
             return null;
         }
         if ((data == null && isBinaryContentType(contentType)) ||
-            (text == null && contentType.equals(CONTENT_TYPE_TEXT_PLAIN))) {
+                (text == null && contentType.equals(CONTENT_TYPE_TEXT_PLAIN))) {
             MobileCenterLog.error(LOG_TAG, "Null content passed to attachment method, returning null");
             return null;
         }
@@ -101,8 +101,8 @@ public final class ErrorAttachments {
             MobileCenterLog.error(LOG_TAG, "Null ErrorAttachmentLog passed to validate method");
             return false;
         }
-        if( log.getId() == null || log.getErrorId() == null || log.getContentType() == null ||
-            log.getFileName() == null || log.getData() == null){
+        if (log.getId() == null || log.getErrorId() == null || log.getContentType() == null ||
+                log.getFileName() == null || log.getData() == null) {
             MobileCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
             return false;
         }
