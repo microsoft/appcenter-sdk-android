@@ -738,6 +738,8 @@ public class Crashes extends AbstractMobileCenterService {
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
                         mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
+
+                        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
                         Iterable<ErrorAttachmentLog> attachments = mCrashesListener.getErrorAttachments(errorLogReport.report);
                         handleErrorAttachmentLogs(attachments, errorLogReport);
                         /* Clean up an error log file and map entry. */

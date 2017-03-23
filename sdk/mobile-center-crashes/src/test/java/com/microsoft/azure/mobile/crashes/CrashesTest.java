@@ -301,6 +301,7 @@ public class CrashesTest {
         when(mockListener.shouldProcess(report)).thenReturn(true);
         when(mockListener.shouldAwaitUserConfirmation()).thenReturn(false);
 
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
         ErrorAttachmentLog mockAttachment = mock(ErrorAttachmentLog.class);
         when(mockAttachment.getId()).thenReturn(UUID.randomUUID());
         when(mockAttachment.getErrorId()).thenReturn(UUID.randomUUID());
@@ -308,6 +309,7 @@ public class CrashesTest {
         when(mockAttachment.getFileName()).thenReturn("");
         when(mockAttachment.getData()).thenReturn("");
 
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
         List<ErrorAttachmentLog> errorAttachmentLogList = Arrays.asList(mockAttachment, mockAttachment);
         when(mockListener.getErrorAttachments(report)).thenReturn(errorAttachmentLogList);
 
@@ -322,7 +324,7 @@ public class CrashesTest {
         verify(mockListener).shouldProcess(report);
         verify(mockListener).shouldAwaitUserConfirmation();
 
-
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
         verify(mockListener).getErrorAttachments(report);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
             @Override
@@ -331,6 +333,7 @@ public class CrashesTest {
             }
         }), eq(crashes.getGroupName()));
 
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
         verify(mockChannel, times(errorAttachmentLogList.size())).enqueue(mockAttachment, crashes.getGroupName());
     }
 
@@ -371,6 +374,7 @@ public class CrashesTest {
         Context mockContext = mock(Context.class);
         Channel mockChannel = mock(Channel.class);
 
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
         ErrorAttachmentLog mockAttachment = mock(ErrorAttachmentLog.class);
         when(mockAttachment.getId()).thenReturn(UUID.randomUUID());
         when(mockAttachment.getErrorId()).thenReturn(UUID.randomUUID());
@@ -394,6 +398,8 @@ public class CrashesTest {
 
         when(mockListener.shouldProcess(report)).thenReturn(true);
         when(mockListener.shouldAwaitUserConfirmation()).thenReturn(false);
+
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
         when(mockListener.getErrorAttachments(report)).thenReturn(errorAttachmentLogList);
 
         Crashes crashes = Crashes.getInstance();
@@ -407,6 +413,7 @@ public class CrashesTest {
         verify(mockListener).shouldProcess(report);
         verify(mockListener, never()).shouldAwaitUserConfirmation();
 
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
         verify(mockListener).getErrorAttachments(report);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
             @Override
@@ -414,6 +421,8 @@ public class CrashesTest {
                 return log.equals(mErrorLog);
             }
         }), eq(crashes.getGroupName()));
+
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
         verify(mockChannel, times(errorAttachmentLogList.size())).enqueue(mockAttachment, crashes.getGroupName());
     }
 
@@ -529,6 +538,7 @@ public class CrashesTest {
         verify(listener).shouldAwaitUserConfirmation();
         verify(channel).enqueue(any(Log.class), anyString());
 
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
         verify(listener).getErrorAttachments(any(ErrorReport.class));
         verifyNoMoreInteractions(listener);
     }
@@ -744,6 +754,7 @@ public class CrashesTest {
 
         Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
 
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
         verify(mockListener, never()).getErrorAttachments(any(ErrorReport.class));
         verify(mMockLooper).quit();
 
@@ -845,6 +856,7 @@ public class CrashesTest {
                 return false;
             }
 
+            /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
             @Override
             public Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report) {
                 return null;
@@ -873,6 +885,7 @@ public class CrashesTest {
         assertFalse(defaultListener.shouldAwaitUserConfirmation());
 
         /* Nothing to verify. */
+        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
         defaultListener.getErrorAttachments(null);
         defaultListener.onBeforeSending(null);
         defaultListener.onSendingSucceeded(null);
