@@ -3,6 +3,7 @@ package com.microsoft.azure.mobile.channel;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
@@ -21,6 +22,7 @@ import com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync.AbstractD
 import com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync.DatabasePersistenceAsyncCallback;
 import com.microsoft.azure.mobile.persistence.Persistence;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
@@ -367,7 +369,7 @@ public class DefaultChannel implements Channel {
         });
     }
 
-    private synchronized void triggerIngestion(final String batchId, final GroupState groupState, final int stateSnapshot, List<Log> batch) {
+    private synchronized void triggerIngestion(final String batchId, final GroupState groupState, final int stateSnapshot, final List<Log> batch) {
         if (batchId != null && checkStateDidNotChange(groupState, stateSnapshot)) {
 
             /* Call group listener before sending logs to ingestion service. */
@@ -384,22 +386,56 @@ public class DefaultChannel implements Channel {
             /* Remember this batch. */
             groupState.mSendingBatches.put(batchId, batch);
 
+            /*
+             * Due to bug on old Android versions (verified on 4.0.4),
+             * if we start an async task from here, i.e. the async persistence handler thread,
+             * we end up with AsyncTask configured with the wrong Handler to use for onPostExecute
+             * instead of using main thread as advertised in Javadoc (and its a static field there).
+             *
+             * Our SDK guards against an application that would make a first async task in non UI
+             * thread before SDK is initialized, but we should also avoid corrupting AsyncTask
+             * with our wrong handler to avoid creating bugs in the application code since we are
+             * a library.
+             *
+             * So make sure we execute the async task from UI thread to avoid any issue.
+             */
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    sendLogs(groupState, stateSnapshot, batch, batchId);
+                }
+            });
+        }
+    }
+
+    /**
+     * Send logs.
+     *
+     * @param groupState   The group state.
+     * @param currentState The current state.
+     * @param batch        The log batch.
+     * @param batchId      The batch ID.
+     */
+    @MainThread
+    private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId) {
+        if (checkStateDidNotChange(groupState, currentState)) {
+
             /* Send logs. */
             LogContainer logContainer = new LogContainer();
             logContainer.setLogs(batch);
             mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
-                        @Override
-                        public void onCallSucceeded(String payload) {
-                            handleSendingSuccess(groupState, stateSnapshot, batchId);
-                        }
+                @Override
+                public void onCallSucceeded(String payload) {
+                    handleSendingSuccess(groupState, currentState, batchId);
+                }
 
-                        @Override
-                        public void onCallFailed(Exception e) {
-                            handleSendingFailure(groupState, stateSnapshot, batchId, e);
-                        }
-                    }
-            );
+                @Override
+                public void onCallFailed(Exception e) {
+                    handleSendingFailure(groupState, currentState, batchId, e);
+                }
+            });
 
             /* Check for more pending logs. */
             checkPendingLogs(groupState.mName);

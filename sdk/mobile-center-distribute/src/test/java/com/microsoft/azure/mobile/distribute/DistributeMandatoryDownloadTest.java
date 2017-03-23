@@ -26,6 +26,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import java.util.concurrent.Semaphore;
 
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_INSTALLING;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
@@ -49,7 +50,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest({SystemClock.class, HandlerUtils.class})
+@PrepareForTest(SystemClock.class)
 public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDownloadTest {
 
     @Mock
@@ -93,7 +94,6 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         when(SystemClock.uptimeMillis()).thenReturn(1L);
 
         /* Mock Handler. */
-        mockStatic(HandlerUtils.class);
         when(mHandler.postAtTime(any(Runnable.class), eq(HANDLER_TOKEN_CHECK_PROGRESS), anyLong())).then(new Answer<Boolean>() {
 
             @Override
@@ -103,15 +103,6 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
             }
         });
         when(HandlerUtils.getMainHandler()).thenReturn(mHandler);
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                ((Runnable) invocation.getArguments()[0]).run();
-                return null;
-            }
-        }).when(HandlerUtils.class);
-        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Set up common download test. */
         setUpDownload(true);
@@ -358,5 +349,104 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         verify(mContext).startActivity(intent);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+    }
+
+    @Test
+    public void newOptionalUpdateWhileInstallingMandatory() throws Exception {
+
+        /* Mock mandatory download and showing install U.I. */
+        waitDownloadTask();
+        completeDownload();
+        mockSuccessCursor();
+        Intent installIntent = mockInstallIntent();
+        waitCheckDownloadTask();
+        waitCheckDownloadTask();
+        verify(mContext).startActivity(installIntent);
+        verifyStatic();
+        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+        verifyStatic();
+        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        verifyNoMoreInteractions(mNotificationManager);
+
+        /* Restart will restore install. */
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        waitCheckDownloadTask();
+        verify(mContext, times(2)).startActivity(installIntent);
+        verifyStatic(times(2));
+        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        Distribute.getInstance().onActivityPaused(mActivity);
+
+        /* Change what the next detected release will be: a more recent mandatory one. */
+        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn(5);
+        when(releaseDetails.getVersion()).thenReturn(8);
+        when(releaseDetails.getDownloadUrl()).thenReturn(mDownloadUrl);
+        when(releaseDetails.isMandatoryUpdate()).thenReturn(false);
+        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verifyStatic(times(2));
+        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+
+        /* Check no more going to installed state. I.e. still happened twice. */
+        verifyStatic(times(2));
+        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+
+        /* Check next restart will use new release. */
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Verify cancelable dialog displayed. */
+        verify(mDialogBuilder).setOnCancelListener(any(DialogInterface.OnCancelListener.class));
+    }
+
+    @Test
+    public void newMandatoryUpdateWhileInstallingMandatory() throws Exception {
+
+        /* Mock mandatory download and showing install U.I. */
+        waitDownloadTask();
+        completeDownload();
+        mockSuccessCursor();
+        Intent installIntent = mockInstallIntent();
+        waitCheckDownloadTask();
+        waitCheckDownloadTask();
+        verify(mContext).startActivity(installIntent);
+        verifyStatic();
+        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+        verifyStatic();
+        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        verifyNoMoreInteractions(mNotificationManager);
+
+        /* Restart will restore install. */
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        waitCheckDownloadTask();
+        verify(mContext, times(2)).startActivity(installIntent);
+        verifyStatic(times(2));
+        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        Distribute.getInstance().onActivityPaused(mActivity);
+
+        /* Change what the next detected release will be: a more recent mandatory one. */
+        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn(5);
+        when(releaseDetails.getVersion()).thenReturn(8);
+        when(releaseDetails.getDownloadUrl()).thenReturn(mDownloadUrl);
+        when(releaseDetails.isMandatoryUpdate()).thenReturn(true);
+        when(releaseDetails.getReleaseNotes()).thenReturn("Newer release!");
+        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verifyStatic(times(2));
+        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+
+        /* Check no more going to installed state. I.e. still happened twice. */
+        verifyStatic(times(2));
+        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+
+        /* Check next restart will use new release. */
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Verify new dialog displayed. */
+        verify(mDialogBuilder).setMessage("Newer release!");
     }
 }

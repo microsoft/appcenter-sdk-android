@@ -58,6 +58,7 @@ import static android.util.Log.VERBOSE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DEFAULT_API_URL;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DEFAULT_INSTALL_URL;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_INSTALLING;
@@ -419,10 +420,17 @@ public class Distribute extends AbstractMobileCenterService {
             int downloadState = getStoredDownloadState();
             if (mReleaseDetails == null && downloadState != DOWNLOAD_STATE_COMPLETED) {
                 mReleaseDetails = DistributeUtils.loadCachedReleaseDetails();
+
+                /* If cached release is optional and we have network, we should not reuse it. */
+                if (mReleaseDetails != null && !mReleaseDetails.isMandatoryUpdate() &&
+                        NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected() &&
+                        downloadState == DOWNLOAD_STATE_AVAILABLE) {
+                    cancelPreviousTasks();
+                }
             }
 
             /* If process restarted during workflow. */
-            if (downloadState != DOWNLOAD_STATE_COMPLETED && !mCheckedDownload) {
+            if (downloadState != DOWNLOAD_STATE_COMPLETED && downloadState != DOWNLOAD_STATE_AVAILABLE && !mCheckedDownload) {
 
                 /* Discard release if application updated. Then immediately check release. */
                 long lastUpdateTime;
@@ -495,7 +503,18 @@ public class Distribute extends AbstractMobileCenterService {
                 else {
                     showUpdateDialog();
                 }
-                return;
+
+                /*
+                 * Normally we would stop processing here after showing/restoring a dialog.
+                 * But if we keep restoring a dialog for an update, we should still
+                 * check in background if this release is replaced by a more recent one.
+                 * Do that extra release check if app restarted AND we are
+                 * displaying either an update/unknown sources dialog OR the install dialog.
+                 * Basically if we are still downloading an update, we won't check a new one.
+                 */
+                if (downloadState != DOWNLOAD_STATE_AVAILABLE && downloadState != DOWNLOAD_STATE_INSTALLING) {
+                    return;
+                }
             }
 
             /* Nothing more to do for now if we are already calling API to check release. */
@@ -645,12 +664,20 @@ public class Distribute extends AbstractMobileCenterService {
         }, new ServiceCallback() {
 
             @Override
-            public void onCallSucceeded(String payload) {
-                try {
-                    handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload));
-                } catch (JSONException e) {
-                    onCallFailed(e);
-                }
+            public void onCallSucceeded(final String payload) {
+
+                /* onPostExecute is not always called on UI thread due to an old Android bug. */
+                HandlerUtils.runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        try {
+                            handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload));
+                        } catch (JSONException e) {
+                            onCallFailed(e);
+                        }
+                    }
+                });
             }
 
             @Override
@@ -724,9 +751,24 @@ public class Distribute extends AbstractMobileCenterService {
                     PackageInfo packageInfo = packageManager.getPackageInfo(mContext.getPackageName(), 0);
                     if (isMoreRecent(packageInfo, releaseDetails)) {
 
+                        /* Update cache. */
+                        PreferencesStorage.putString(PREFERENCE_KEY_RELEASE_DETAILS, rawReleaseDetails);
+
+                        /* If previous release is mandatory and still processing, don't do anything right now. */
+                        if (mReleaseDetails != null && mReleaseDetails.isMandatoryUpdate()) {
+                            if (mReleaseDetails.getId() != releaseDetails.getId()) {
+                                MobileCenterLog.debug(LOG_TAG, "Latest release is more recent than the previous mandatory.");
+                                PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+                            } else {
+                                MobileCenterLog.debug(LOG_TAG, "The latest release is mandatory and already being processed.");
+                            }
+                            return;
+                        }
+
                         /* Show update dialog. */
                         mReleaseDetails = releaseDetails;
-                        PreferencesStorage.putString(PREFERENCE_KEY_RELEASE_DETAILS, rawReleaseDetails);
+                        MobileCenterLog.debug(LOG_TAG, "Latest release is more recent.");
+                        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
                         if (mForegroundActivity != null) {
                             showUpdateDialog();
                         }
@@ -1138,15 +1180,8 @@ public class Distribute extends AbstractMobileCenterService {
      */
     private synchronized void hideProgressDialog() {
         if (mProgressDialog != null) {
-            final Dialog progressDialog = mProgressDialog;
+            mProgressDialog.hide();
             mProgressDialog = null;
-            HandlerUtils.runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    progressDialog.hide();
-                }
-            });
             HandlerUtils.getMainHandler().removeCallbacksAndMessages(HANDLER_TOKEN_CHECK_PROGRESS);
         }
     }

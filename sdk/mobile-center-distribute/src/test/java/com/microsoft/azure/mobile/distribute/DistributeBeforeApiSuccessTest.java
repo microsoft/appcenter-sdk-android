@@ -97,8 +97,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        Distribute.unsetInstance();
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient, never()).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
