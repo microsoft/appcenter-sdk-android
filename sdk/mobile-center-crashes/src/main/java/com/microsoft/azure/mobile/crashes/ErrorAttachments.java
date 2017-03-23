@@ -56,19 +56,6 @@ public final class ErrorAttachments {
      * @return ErrorAttachmentLog attachment or null if text and data are null.
      */
     private static ErrorAttachmentLog attachment(byte[] data, String text, String fileName, String contentType) {
-        if (contentType == null) {
-            MobileCenterLog.error(LOG_TAG, "Null contentType passed to attachment method, returning null");
-            return null;
-        }
-        if ((data == null && isBinaryContentType(contentType)) ||
-                (text == null && contentType.equals(CONTENT_TYPE_TEXT_PLAIN))) {
-            MobileCenterLog.error(LOG_TAG, "Null content passed to attachment method, returning null");
-            return null;
-        }
-        if (fileName == null) {
-            MobileCenterLog.error(LOG_TAG, "Null fileName passed to attachment method, returning null");
-            return null;
-        }
         String content = text;
         if (isBinaryContentType(contentType)) {
             content = Base64.encodeToString(data, Base64.DEFAULT);
