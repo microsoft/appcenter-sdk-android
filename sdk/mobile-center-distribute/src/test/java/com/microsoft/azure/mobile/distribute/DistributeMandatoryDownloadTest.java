@@ -94,14 +94,6 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         when(SystemClock.uptimeMillis()).thenReturn(1L);
 
         /* Mock Handler. */
-        when(mHandler.postAtTime(any(Runnable.class), eq(HANDLER_TOKEN_CHECK_PROGRESS), anyLong())).then(new Answer<Boolean>() {
-
-            @Override
-            public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                ((Runnable) invocation.getArguments()[0]).run();
-                return true;
-            }
-        });
         when(HandlerUtils.getMainHandler()).thenReturn(mHandler);
 
         /* Set up common download test. */
@@ -124,6 +116,17 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
 
     @Test
     public void longMandatoryDownloadAndInstallAcrossRestarts() throws Exception {
+
+        /* Make timer goes off only while updating progress, 3 times here. */
+        final Answer<Boolean> simulateTimeReached = new Answer<Boolean>() {
+
+            @Override
+            public Boolean answer(InvocationOnMock invocation) throws Throwable {
+                ((Runnable) invocation.getArguments()[0]).run();
+                return true;
+            }
+        };
+        when(mHandler.postAtTime(any(Runnable.class), eq(HANDLER_TOKEN_CHECK_PROGRESS), anyLong())).then(simulateTimeReached).then(simulateTimeReached).then(simulateTimeReached).thenReturn(true);
 
         /* Dialog shown upon clicking on download. */
         verify(mProgressDialog).setCancelable(false);
@@ -152,7 +155,11 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         verify(mProgressDialog).hide();
         verify(mHandler).removeCallbacksAndMessages(HANDLER_TOKEN_CHECK_PROGRESS);
 
-        /* Unblock current task that will not reschedule a new one. */
+        /*
+         * Simulate that removeCallbackAndMessages did not cancel in due time,
+         * that can happen if the timer already went off and the runnable is in the looper queue.
+         * There is a double check that will skip updating progress.
+         */
         waitCheckDownloadTask();
 
         /* Check no more timer and progress update while paused. */
@@ -162,18 +169,17 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         /* Reusing dialog on resume. */
         Distribute.getInstance().onActivityResumed(mActivity);
         verify(mProgressDialog, times(2)).show();
+        waitCheckDownloadTask();
 
         /* On restart progress is restored. */
         mProgressDialog = mock(ProgressDialog.class);
         whenNew(ProgressDialog.class).withAnyArguments().thenReturn(mProgressDialog);
         restartProcessAndSdk();
 
-        /* Unblock the previous task now that we are paused. */
-        waitCheckDownloadTask();
-
         /* Resume shows a new dialog as process restarted. */
         Distribute.getInstance().onActivityResumed(mActivity);
         verify(mProgressDialog).show();
+        waitCheckDownloadTask();
         waitCheckDownloadTask();
         verify(mProgressDialog).setProgress(42);
 
@@ -182,13 +188,12 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         mockSuccessCursor();
         Intent installIntent = mockInstallIntent();
         waitCheckDownloadTask();
-        waitCheckDownloadTask();
         verify(mContext).startActivity(installIntent);
         verifyStatic();
         PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
         verifyNoMoreInteractions(mNotificationManager);
 
-        /* Showing install U.I. pauses app. */
+        /* Start activity paused the app. */
         Distribute.getInstance().onActivityPaused(mActivity);
 
         /* We also display mandatory install dialog if user goes back to app. */
@@ -284,15 +289,27 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
                 return null;
             }
         }).when(mContext).startActivity(installIntent);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                beforeStartingActivityLock.release();
+                disabledLock.acquireUninterruptibly();
+                (((Runnable) invocation.getArguments()[0])).run();
+                return null;
+            }
+        }).when(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Complete download, unblock the first check progress. */
         completeDownload();
 
-        /* Disable between check notification and start activity. Also unblock the initial check progress. */
+        /* Disable between check notification and start activity. */
         mCheckDownloadBeforeSemaphore.release(2);
-        beforeStartingActivityLock.acquireUninterruptibly();
+        beforeStartingActivityLock.acquireUninterruptibly(2);
+        Distribute.getInstance().onActivityPaused(mActivity);
         Distribute.setEnabled(false);
-        disabledLock.release();
+        disabledLock.release(2);
         mCheckDownloadAfterSemaphore.acquireUninterruptibly(2);
 
         /* Verify start activity and complete workflow skipped, e.g. clean behavior happened only once. */
@@ -302,6 +319,10 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         verifyStatic(never());
         PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
         verifyZeroInteractions(mNotificationManager);
+
+        /* Check semaphores. */
+        checkSemaphoreSanity(beforeStartingActivityLock);
+        checkSemaphoreSanity(disabledLock);
     }
 
     @Test

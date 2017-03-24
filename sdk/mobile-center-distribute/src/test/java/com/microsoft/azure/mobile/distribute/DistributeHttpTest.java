@@ -14,6 +14,7 @@ import com.microsoft.azure.mobile.utils.UUIDUtils;
 
 import junit.framework.Assert;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -44,6 +45,11 @@ public class DistributeHttpTest {
 
     @Rule
     public PowerMockRule rule = new PowerMockRule();
+
+    @Before
+    public void setUp() {
+        Distribute.unsetInstance();
+    }
 
     @Test
     public void onBeforeCalling() throws Exception {
