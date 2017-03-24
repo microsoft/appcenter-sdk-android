@@ -10,7 +10,6 @@ import android.os.Build;
 
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
-import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import java.util.NoSuchElementException;
 
@@ -54,7 +53,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
      * @param releaseDetails release details.
      */
     CheckDownloadTask(Context context, long downloadId, boolean checkProgress, ReleaseDetails releaseDetails) {
-        mContext = context;
+        mContext = context.getApplicationContext();
         mDownloadId = downloadId;
         mCheckProgress = checkProgress;
         mReleaseDetails = releaseDetails;
@@ -77,10 +76,8 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
          */
         MobileCenterLog.debug(LOG_TAG, "Check download id=" + mDownloadId);
         Distribute distribute = Distribute.getInstance();
-        if (!distribute.isStarted()) {
-            MobileCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
-            StorageHelper.initialize(mContext);
-            mReleaseDetails = DistributeUtils.loadCachedReleaseDetails();
+        if (mReleaseDetails == null) {
+            mReleaseDetails = distribute.startFromBackground(mContext);
         }
 
         /* Check intent data is what we expected. */
@@ -106,11 +103,15 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                     throw new IllegalStateException();
                 }
                 if (status != DownloadManager.STATUS_SUCCESSFUL || mCheckProgress) {
-                    distribute.markDownloadStillInProgress(this);
-                    long totalSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
-                    long currentSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
-                    MobileCenterLog.verbose(LOG_TAG, "currentSize=" + currentSize + " totalSize=" + totalSize);
-                    return new DownloadProgress(currentSize, totalSize);
+                    if (mCheckProgress) {
+                        long totalSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+                        long currentSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+                        MobileCenterLog.verbose(LOG_TAG, "currentSize=" + currentSize + " totalSize=" + totalSize);
+                        return new DownloadProgress(currentSize, totalSize);
+                    } else {
+                        distribute.markDownloadStillInProgress(mReleaseDetails);
+                        return null;
+                    }
                 }
 
                 /* Build install intent. */
@@ -128,12 +129,12 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                 }
                 if (!installerFound) {
                     MobileCenterLog.error(LOG_TAG, "Installer not found");
-                    distribute.completeWorkflow(this);
+                    distribute.completeWorkflow(mReleaseDetails);
                     return null;
                 }
 
                 /* Check if a should install now. */
-                if (!distribute.notifyDownload(mContext, this, intent)) {
+                if (!distribute.notifyDownload(mReleaseDetails, intent)) {
 
                     /*
                      * This start call triggers strict mode in U.I. thread so it
@@ -147,9 +148,9 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                     MobileCenterLog.info(LOG_TAG, "Show install UI now.");
                     mContext.startActivity(intent);
                     if (mReleaseDetails != null && mReleaseDetails.isMandatoryUpdate()) {
-                        distribute.setInstalling(this);
+                        distribute.setInstalling(mReleaseDetails);
                     } else {
-                        distribute.completeWorkflow(this);
+                        distribute.completeWorkflow(mReleaseDetails);
                     }
                 }
             } finally {
@@ -157,7 +158,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
             }
         } catch (RuntimeException e) {
             MobileCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId);
-            distribute.completeWorkflow(this);
+            distribute.completeWorkflow(mReleaseDetails);
         }
         return null;
     }
@@ -171,18 +172,9 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
 
                 @Override
                 public void run() {
-                    Distribute.getInstance().updateProgressDialog(CheckDownloadTask.this, result);
+                    Distribute.getInstance().updateProgressDialog(mReleaseDetails, result);
                 }
             });
         }
-    }
-
-    /**
-     * Get context.
-     *
-     * @return context.
-     */
-    Context getContext() {
-        return mContext;
     }
 }

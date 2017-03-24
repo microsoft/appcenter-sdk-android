@@ -119,6 +119,7 @@ public class AbstractDistributeTest {
         when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
 
         /* Mock package manager. */
+        when(mContext.getApplicationContext()).thenReturn(mContext);
         when(mContext.getPackageName()).thenReturn("com.contoso");
         when(mActivity.getPackageName()).thenReturn("com.contoso");
         when(mContext.getApplicationInfo()).thenReturn(mApplicationInfo);
