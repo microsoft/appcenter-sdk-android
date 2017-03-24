@@ -308,7 +308,10 @@ public class CrashesTest {
         when(mockAttachment.getFileName()).thenReturn("");
         when(mockAttachment.getData()).thenReturn("");
 
-        List<ErrorAttachmentLog> errorAttachmentLogList = Arrays.asList(mockAttachment, mockAttachment);
+        ErrorAttachmentLog mockEmptyAttachment = mock(ErrorAttachmentLog.class);
+
+        final int skipAttachmentLogsCount = 2;
+        List<ErrorAttachmentLog> errorAttachmentLogList = Arrays.asList(mockAttachment, mockAttachment, mockEmptyAttachment, null);
         when(mockListener.getErrorAttachments(report)).thenReturn(errorAttachmentLogList);
 
         Crashes crashes = Crashes.getInstance();
@@ -330,7 +333,7 @@ public class CrashesTest {
             }
         }), eq(crashes.getGroupName()));
 
-        verify(mockChannel, times(errorAttachmentLogList.size())).enqueue(mockAttachment, crashes.getGroupName());
+        verify(mockChannel, times(errorAttachmentLogList.size() - skipAttachmentLogsCount)).enqueue(mockAttachment, crashes.getGroupName());
     }
 
     @Test
@@ -630,6 +633,14 @@ public class CrashesTest {
         crashes.getChannelListener().onSuccess(mockLog);
         verify(mockListener, never()).onSendingSucceeded(any(ErrorReport.class));
         crashes.getChannelListener().onFailure(mockLog, EXCEPTION);
+        verify(mockListener, never()).onSendingFailed(any(ErrorReport.class), eq(EXCEPTION));
+
+        ErrorAttachmentLog attachmentLog = mock(ErrorAttachmentLog.class);
+        crashes.getChannelListener().onBeforeSending(attachmentLog);
+        verify(mockListener, never()).onBeforeSending(any(ErrorReport.class));
+        crashes.getChannelListener().onSuccess(attachmentLog);
+        verify(mockListener, never()).onSendingSucceeded(any(ErrorReport.class));
+        crashes.getChannelListener().onFailure(attachmentLog, EXCEPTION);
         verify(mockListener, never()).onSendingFailed(any(ErrorReport.class), eq(EXCEPTION));
     }
 

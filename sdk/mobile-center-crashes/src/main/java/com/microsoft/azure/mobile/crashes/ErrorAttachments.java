@@ -73,15 +73,16 @@ public final class ErrorAttachments {
      * @param contentType content type.
      * @return True if binary, otherwise False.
      */
-    private static boolean isBinaryContentType(String contentType) {
-        return !contentType.startsWith("text/");
+    @VisibleForTesting
+    static boolean isBinaryContentType(String contentType) {
+        return contentType != null && !contentType.startsWith("text/");
     }
 
     /**
      * Validates ErrorAttachmentLog
      *
      * @param log ErrorAttachmentLog to validate.
-     * @return true if validation succeeded, otherwise false.
+     * @return True if validation succeeded, otherwise False.
      */
     static boolean validateErrorAttachmentLog(ErrorAttachmentLog log) {
         if (log == null) {

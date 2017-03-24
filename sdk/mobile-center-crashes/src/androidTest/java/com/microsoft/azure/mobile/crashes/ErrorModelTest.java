@@ -474,6 +474,7 @@ public class ErrorModelTest {
 
         compareSelfNullClass(attachmentLog1);
         checkEquals(attachmentLog1, attachmentLog2);
+        checkEquals(attachmentLog1.getType(), ErrorAttachmentLog.TYPE);
 
         {
             attachmentLog1.setId(UUID.randomUUID());
@@ -524,6 +525,20 @@ public class ErrorModelTest {
 
             attachmentLog2.setData(attachmentLog1.getData());
             checkEquals(attachmentLog1, attachmentLog2);
+        }
+        {
+            attachmentLog1.setSid(UUID.randomUUID());
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setSid(UUID.randomUUID());
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setSid(attachmentLog1.getSid());
+            checkEquals(attachmentLog1, attachmentLog2);
+        }
+        {
+            checkSerialization(attachmentLog1, serializer);
+            checkSerialization(attachmentLog2, serializer);
         }
     }
 
