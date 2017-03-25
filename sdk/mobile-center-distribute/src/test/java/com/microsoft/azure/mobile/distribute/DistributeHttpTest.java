@@ -1,6 +1,7 @@
 package com.microsoft.azure.mobile.distribute;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.http.HttpClient;
@@ -10,21 +11,17 @@ import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
-import com.microsoft.azure.mobile.utils.UUIDUtils;
 
 import junit.framework.Assert;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.HEADER_API_TOKEN;
@@ -40,32 +37,23 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({NetworkStateHelper.class, MobileCenterLog.class, Distribute.class})
-public class DistributeHttpTest {
-
-    @Rule
-    public PowerMockRule rule = new PowerMockRule();
-
-    @Before
-    public void setUp() {
-        Distribute.unsetInstance();
-    }
+public class DistributeHttpTest extends AbstractDistributeTest {
 
     @Test
     public void onBeforeCalling() throws Exception {
 
         /* Mock instances. */
         String urlFormat = "http://mock/path/%s/path/file";
-        String appSecret = UUIDUtils.randomUUID().toString();
+        String appSecret = UUID.randomUUID().toString();
         String obfuscatedSecret = HttpUtils.hideSecret(appSecret);
-        String apiToken = UUIDUtils.randomUUID().toString();
+        String apiToken = UUID.randomUUID().toString();
         String obfuscatedToken = HttpUtils.hideSecret(apiToken);
         URL url = new URL(String.format(urlFormat, appSecret));
         String obfuscatedUrlString = String.format(urlFormat, obfuscatedSecret);
         Map<String, String> headers = new HashMap<>();
         headers.put("Another-Header", "Another-Value");
         HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret, apiToken);
-        MobileCenterLog.setLogLevel(android.util.Log.VERBOSE);
+        when(MobileCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
         mockStatic(MobileCenterLog.class);
 
         /* Call onBeforeCalling with parameters. */
@@ -95,12 +83,12 @@ public class DistributeHttpTest {
     public void onBeforeCallingWithAnotherLogLevel() throws Exception {
 
         /* Mock instances. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        String apiToken = UUIDUtils.randomUUID().toString();
+        String appSecret = UUID.randomUUID().toString();
+        String apiToken = UUID.randomUUID().toString();
         HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret, apiToken);
 
         /* Change log level. */
-        MobileCenterLog.setLogLevel(android.util.Log.WARN);
+        when(MobileCenterLog.getLogLevel()).thenReturn(Log.WARN);
 
         /* Call onBeforeCalling with parameters. */
         callTemplate.onBeforeCalling(mock(URL.class), mock(Map.class));
@@ -114,8 +102,8 @@ public class DistributeHttpTest {
     public void buildRequestBody() throws Exception {
 
         /* Mock instances. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        String apiToken = UUIDUtils.randomUUID().toString();
+        String appSecret = UUID.randomUUID().toString();
+        String apiToken = UUID.randomUUID().toString();
         HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret, apiToken);
 
         /* Distribute don't have request body. Verify it. */
@@ -125,6 +113,7 @@ public class DistributeHttpTest {
     private HttpClient.CallTemplate getCallTemplate(String appSecret, String apiToken) throws Exception {
 
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
+        Distribute.getInstance().onStarted(mContext, appSecret, mock(Channel.class));
         final ServiceCall call = mock(ServiceCall.class);
         final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
         mockStatic(NetworkStateHelper.class);
@@ -140,7 +129,6 @@ public class DistributeHttpTest {
             }
         });
         Distribute.getInstance().getLatestReleaseDetails(apiToken);
-        Distribute.getInstance().onStarted(mock(Context.class), appSecret, mock(Channel.class));
         return callTemplate.get();
     }
 }
