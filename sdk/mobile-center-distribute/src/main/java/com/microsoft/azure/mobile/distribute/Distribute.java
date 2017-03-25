@@ -207,9 +207,10 @@ public class Distribute extends AbstractMobileCenterService {
 
     /**
      * Flag to remember whether update dialog was customized or not.
-     * Value is meaningless when the current state is not {@link DistributeConstants#DOWNLOAD_STATE_AVAILABLE}.
+     * Value is null when the current state is not {@link DistributeConstants#DOWNLOAD_STATE_AVAILABLE}
+     * or was never in foreground after new release detected.
      */
-    private boolean mUsingDefaultUpdateDialog;
+    private Boolean mUsingDefaultUpdateDialog;
 
     /**
      * Get shared instance.
@@ -275,7 +276,7 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     /**
-     * If update dialog is customized using {@link DistributeListener#shouldCustomizeUpdateDialog(ReleaseDetails)}.
+     * If update dialog is customized by returning <code>true</code> in  {@link DistributeListener#onNewReleaseAvailable(Activity, ReleaseDetails)},
      * You need to tell the distribute SDK using this function what is the user action.
      *
      * @param updateAction one of {@link UserUpdateAction} actions.
@@ -451,6 +452,8 @@ public class Distribute extends AbstractMobileCenterService {
         mUnknownSourcesDialog = null;
         mProgressDialog = null;
         mCompletedDownloadDialog = null;
+        mLastActivityWithDialog.clear();
+        mUsingDefaultUpdateDialog = null;
         mReleaseDetails = null;
         if (mDownloadTask != null) {
             mDownloadTask.cancel(true);
@@ -479,7 +482,7 @@ public class Distribute extends AbstractMobileCenterService {
         if (mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
             /* Don't go any further it this is a debug app. */
-            if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE + 1) {
+            if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {
                 MobileCenterLog.info(LOG_TAG, "Not checking in app updates in debug.");
                 mWorkflowCompleted = true;
                 return;
@@ -664,6 +667,8 @@ public class Distribute extends AbstractMobileCenterService {
         mUpdateDialog = null;
         mUnknownSourcesDialog = null;
         hideProgressDialog();
+        mLastActivityWithDialog.clear();
+        mUsingDefaultUpdateDialog = null;
         mReleaseDetails = null;
         mWorkflowCompleted = true;
     }
@@ -913,16 +918,22 @@ public class Distribute extends AbstractMobileCenterService {
      */
     @UiThread
     private synchronized void showUpdateDialog() {
-        if (!shouldRefreshDialog(mUpdateDialog)) {
-            return;
-        }
-        if (mListener != null && mListener.shouldCustomizeUpdateDialog(mReleaseDetails)) {
-            MobileCenterLog.debug(LOG_TAG, "Show custom update dialog.");
-            mUsingDefaultUpdateDialog = false;
-            mUpdateDialog = mListener.buildUpdateDialog(mForegroundActivity, mReleaseDetails);
-        } else {
-            MobileCenterLog.debug(LOG_TAG, "Show default update dialog.");
+        if (mListener == null && mUsingDefaultUpdateDialog == null) {
             mUsingDefaultUpdateDialog = true;
+        }
+        if (mListener != null && mForegroundActivity != mLastActivityWithDialog.get()) {
+            MobileCenterLog.debug(LOG_TAG, "Calling listener.onNewReleaseAvailable.");
+            boolean customized = mListener.onNewReleaseAvailable(mForegroundActivity, mReleaseDetails);
+            if (customized) {
+                mLastActivityWithDialog = new WeakReference<>(mForegroundActivity);
+            }
+            mUsingDefaultUpdateDialog = !customized;
+        }
+        if (mUsingDefaultUpdateDialog) {
+            if (!shouldRefreshDialog(mUpdateDialog)) {
+                return;
+            }
+            MobileCenterLog.debug(LOG_TAG, "Show default update dialog.");
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
             dialogBuilder.setTitle(R.string.mobile_center_distribute_update_dialog_title);
             final ReleaseDetails releaseDetails = mReleaseDetails;
@@ -958,8 +969,6 @@ public class Distribute extends AbstractMobileCenterService {
                 setOnCancelListener(dialogBuilder, releaseDetails);
             }
             mUpdateDialog = dialogBuilder.create();
-        }
-        if (mUpdateDialog != null) {
             showAndRememberDialogActivity(mUpdateDialog);
         }
     }

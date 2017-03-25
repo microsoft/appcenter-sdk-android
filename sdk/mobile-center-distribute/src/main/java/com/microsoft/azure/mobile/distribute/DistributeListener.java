@@ -1,7 +1,6 @@
 package com.microsoft.azure.mobile.distribute;
 
 import android.app.Activity;
-import android.app.Dialog;
 import android.support.annotation.UiThread;
 
 /**
@@ -11,23 +10,18 @@ import android.support.annotation.UiThread;
 public interface DistributeListener {
 
     /**
-     * Called whenever an update dialog should be shown or restored.
-     *
-     * @param releaseDetails release details for the update.
-     * @return true to customize update dialog, false to use the default one.
-     */
-    @UiThread
-    boolean shouldCustomizeUpdateDialog(ReleaseDetails releaseDetails);
-
-    /**
-     * Called if {@link #shouldCustomizeUpdateDialog} returns true to build custom update dialog.
+     * Called whenever a new release is available to download.
      * <p>
-     * If you want to notify the user with something else than a dialog, just return null.
+     * If user does not action the release (either postpone, ignore or download), this callback
+     * will repeat for every activity change for the same release.
+     * <p>
+     * If you are showing your own U.I. for the new release, return <code>true</code> to this method
+     * and when call {@link Distribute#notifyUserUpdateAction(int)} when the user action the U.I.
      *
      * @param activity       current activity.
      * @param releaseDetails release details for the update.
      * @return the custom dialog whose visibility will be managed for you if not null.
      */
     @UiThread
-    Dialog buildUpdateDialog(Activity activity, ReleaseDetails releaseDetails);
+    boolean onNewReleaseAvailable(Activity activity, ReleaseDetails releaseDetails);
 }
