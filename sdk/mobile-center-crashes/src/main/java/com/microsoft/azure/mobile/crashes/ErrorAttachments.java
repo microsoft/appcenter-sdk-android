@@ -71,7 +71,7 @@ public final class ErrorAttachments {
      * Checks if content type provided by user is binary.
      *
      * @param contentType content type.
-     * @return True if binary, otherwise False.
+     * @return true if binary, otherwise false.
      */
     @VisibleForTesting
     static boolean isBinaryContentType(String contentType) {
@@ -82,7 +82,7 @@ public final class ErrorAttachments {
      * Validates ErrorAttachmentLog
      *
      * @param log ErrorAttachmentLog to validate.
-     * @return True if validation succeeded, otherwise False.
+     * @return true if validation succeeded, otherwise false.
      */
     static boolean validateErrorAttachmentLog(ErrorAttachmentLog log) {
         if (log == null) {
