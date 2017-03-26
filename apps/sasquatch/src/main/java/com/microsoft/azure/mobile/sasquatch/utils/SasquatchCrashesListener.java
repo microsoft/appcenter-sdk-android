@@ -9,9 +9,9 @@ import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 
-public class SasquatchCrashesListener extends AbstractCrashesListener {
+class SasquatchCrashesListener extends AbstractCrashesListener {
 
-    private AppCompatActivity activity;
+    private final AppCompatActivity activity;
 
     public SasquatchCrashesListener(AppCompatActivity activity) {
         this.activity = activity;
