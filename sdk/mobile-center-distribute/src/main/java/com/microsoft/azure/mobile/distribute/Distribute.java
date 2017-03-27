@@ -77,6 +77,7 @@ import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFEREN
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.SERVICE_NAME;
+import static com.microsoft.azure.mobile.distribute.DistributeUtils.computeReleaseHash;
 import static com.microsoft.azure.mobile.distribute.DistributeUtils.getStoredDownloadState;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
 
@@ -111,6 +112,11 @@ public class Distribute extends AbstractMobileCenterService {
      * Application secret.
      */
     private String mAppSecret;
+
+    /**
+     * Package info.
+     */
+    private PackageInfo mPackageInfo;
 
     /**
      * If not null we are in foreground inside this activity.
@@ -278,6 +284,11 @@ public class Distribute extends AbstractMobileCenterService {
         super.onStarted(context, appSecret, channel);
         mContext = context;
         mAppSecret = appSecret;
+        try {
+            mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            MobileCenterLog.error(LOG_TAG, "Could not get self package info.", e);
+        }
         resumeDistributeWorkflow();
     }
 
@@ -398,7 +409,7 @@ public class Distribute extends AbstractMobileCenterService {
      * Method that triggers the distribute workflow or proceed to the next step.
      */
     private synchronized void resumeDistributeWorkflow() {
-        if (mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
+        if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
             /* Don't go any further it this is a debug app. */
             if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {
@@ -440,15 +451,7 @@ public class Distribute extends AbstractMobileCenterService {
             if (downloadState != DOWNLOAD_STATE_COMPLETED && downloadState != DOWNLOAD_STATE_AVAILABLE && !mCheckedDownload) {
 
                 /* Discard release if application updated. Then immediately check release. */
-                long lastUpdateTime;
-                try {
-                    lastUpdateTime = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0).lastUpdateTime;
-                } catch (PackageManager.NameNotFoundException e) {
-                    MobileCenterLog.debug(LOG_TAG, "Could not check last update time.", e);
-                    completeWorkflow();
-                    return;
-                }
-                if (lastUpdateTime > StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_TIME)) {
+                if (mPackageInfo.lastUpdateTime > StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_TIME)) {
                     MobileCenterLog.debug(LOG_TAG, "Discarding previous download as application updated.");
                     cancelPreviousTasks();
                 }
@@ -546,7 +549,7 @@ public class Distribute extends AbstractMobileCenterService {
 
              /* If not, open browser to update setup. */
             if (!mBrowserOpenedOrAborted) {
-                DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret);
+                DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret, mPackageInfo);
                 mBrowserOpenedOrAborted = true;
             }
         }
@@ -623,7 +626,7 @@ public class Distribute extends AbstractMobileCenterService {
         HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
         HttpClient httpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
-        String url = mApiUrl + String.format(GET_LATEST_RELEASE_PATH_FORMAT, mAppSecret);
+        String url = mApiUrl + String.format(GET_LATEST_RELEASE_PATH_FORMAT, mAppSecret, computeReleaseHash(mPackageInfo));
         Map<String, String> headers = new HashMap<>();
         headers.put(HEADER_API_TOKEN, updateToken);
         final Object releaseCallId = mCheckReleaseCallId = new Object();
@@ -738,38 +741,32 @@ public class Distribute extends AbstractMobileCenterService {
 
                 /* Check version code is equals or higher and hash is different. */
                 MobileCenterLog.debug(LOG_TAG, "Check if latest release is more recent.");
-                PackageManager packageManager = mContext.getPackageManager();
-                try {
-                    PackageInfo packageInfo = packageManager.getPackageInfo(mContext.getPackageName(), 0);
-                    if (isMoreRecent(packageInfo, releaseDetails)) {
+                if (isMoreRecent(releaseDetails)) {
 
-                        /* Update cache. */
-                        PreferencesStorage.putString(PREFERENCE_KEY_RELEASE_DETAILS, rawReleaseDetails);
+                    /* Update cache. */
+                    PreferencesStorage.putString(PREFERENCE_KEY_RELEASE_DETAILS, rawReleaseDetails);
 
-                        /* If previous release is mandatory and still processing, don't do anything right now. */
-                        if (mReleaseDetails != null && mReleaseDetails.isMandatoryUpdate()) {
-                            if (mReleaseDetails.getId() != releaseDetails.getId()) {
-                                MobileCenterLog.debug(LOG_TAG, "Latest release is more recent than the previous mandatory.");
-                                PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
-                            } else {
-                                MobileCenterLog.debug(LOG_TAG, "The latest release is mandatory and already being processed.");
-                            }
-                            return;
-                        }
-
-                        /* Show update dialog. */
-                        mReleaseDetails = releaseDetails;
-                        MobileCenterLog.debug(LOG_TAG, "Latest release is more recent.");
-                        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
-                        if (mForegroundActivity != null) {
-                            showUpdateDialog();
+                    /* If previous release is mandatory and still processing, don't do anything right now. */
+                    if (mReleaseDetails != null && mReleaseDetails.isMandatoryUpdate()) {
+                        if (mReleaseDetails.getId() != releaseDetails.getId()) {
+                            MobileCenterLog.debug(LOG_TAG, "Latest release is more recent than the previous mandatory.");
+                            PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+                        } else {
+                            MobileCenterLog.debug(LOG_TAG, "The latest release is mandatory and already being processed.");
                         }
                         return;
-                    } else {
-                        MobileCenterLog.debug(LOG_TAG, "Latest release is not more recent.");
                     }
-                } catch (PackageManager.NameNotFoundException e) {
-                    MobileCenterLog.error(LOG_TAG, "Could not compare release versions.", e);
+
+                    /* Show update dialog. */
+                    mReleaseDetails = releaseDetails;
+                    MobileCenterLog.debug(LOG_TAG, "Latest release is more recent.");
+                    PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+                    if (mForegroundActivity != null) {
+                        showUpdateDialog();
+                    }
+                    return;
+                } else {
+                    MobileCenterLog.debug(LOG_TAG, "Latest release is not more recent.");
                 }
             } else {
                 MobileCenterLog.info(LOG_TAG, "This device is not compatible with the latest release.");
@@ -783,15 +780,14 @@ public class Distribute extends AbstractMobileCenterService {
     /**
      * Check if the fetched release information should be installed.
      *
-     * @param packageInfo    current app version.
      * @param releaseDetails latest release on server.
      * @return true if latest release on server should be used.
      */
-    private boolean isMoreRecent(PackageInfo packageInfo, ReleaseDetails releaseDetails) {
-        if (releaseDetails.getVersion() == packageInfo.versionCode) {
-            return !releaseDetails.getReleaseHash().equals(DistributeUtils.computeReleaseHash(mContext, packageInfo));
+    private boolean isMoreRecent(ReleaseDetails releaseDetails) {
+        if (releaseDetails.getVersion() == mPackageInfo.versionCode) {
+            return !releaseDetails.getReleaseHash().equals(DistributeUtils.computeReleaseHash(mPackageInfo));
         }
-        return releaseDetails.getVersion() > packageInfo.versionCode;
+        return releaseDetails.getVersion() > mPackageInfo.versionCode;
     }
 
     /**
