@@ -1,13 +1,11 @@
 package com.microsoft.azure.mobile.sasquatch.activities;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
@@ -15,18 +13,17 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.analytics.Analytics;
-import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
+import com.microsoft.azure.mobile.sasquatch.utils.CrashesListenerProvider;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -50,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* Set crash listener. */
-        Crashes.setListener(getCrashesListener());
+        Crashes.setListener(CrashesListenerProvider.provideCrashesListener(this));
 
         /* Set distribute urls. */
         String installUrl = getString(R.string.install_url);
@@ -99,61 +96,5 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
         return true;
-    }
-
-    private AbstractCrashesListener getCrashesListener() {
-        return new AbstractCrashesListener() {
-            @Override
-            public boolean shouldAwaitUserConfirmation() {
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder
-                        .setTitle(R.string.crash_confirmation_dialog_title)
-                        .setMessage(R.string.crash_confirmation_dialog_message)
-                        .setPositiveButton(R.string.crash_confirmation_dialog_send_button, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Crashes.notifyUserConfirmation(Crashes.SEND);
-                            }
-                        })
-                        .setNegativeButton(R.string.crash_confirmation_dialog_not_send_button, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
-                            }
-                        })
-                        .setNeutralButton(R.string.crash_confirmation_dialog_always_send_button, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
-                            }
-                        });
-                builder.create().show();
-                return true;
-            }
-
-            /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
-//            @Override
-//            public ErrorAttachment getErrorAttachment(ErrorReport report) {
-//                return ErrorAttachments.attachment("This is a text attachment.", "This is a binary attachment.".getBytes(), "binary.txt", "text/plain");
-//            }
-
-            @Override
-            public void onBeforeSending(ErrorReport report) {
-                Toast.makeText(MainActivity.this, R.string.crash_before_sending, Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onSendingFailed(ErrorReport report, Exception e) {
-                Toast.makeText(MainActivity.this, R.string.crash_sent_failed, Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onSendingSucceeded(ErrorReport report) {
-
-                @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-                String message = String.format("%s\nCrash ID: %s\nThrowable: %s", R.string.crash_sent_succeeded, report.getId(), report.getThrowable().toString());
-                Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
-            }
-        };
     }
 }

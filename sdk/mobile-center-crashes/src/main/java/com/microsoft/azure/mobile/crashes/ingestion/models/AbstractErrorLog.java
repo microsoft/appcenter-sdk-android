@@ -1,6 +1,5 @@
 package com.microsoft.azure.mobile.crashes.ingestion.models;
 
-import com.microsoft.azure.mobile.crashes.model.ErrorAttachment;
 import com.microsoft.azure.mobile.ingestion.models.AbstractLog;
 import com.microsoft.azure.mobile.ingestion.models.json.JSONUtils;
 
@@ -32,8 +31,6 @@ public abstract class AbstractErrorLog extends AbstractLog {
     private static final String FATAL = "fatal";
 
     private static final String APP_LAUNCH_TOFFSET = "app_launch_toffset";
-
-    private static final String ERROR_ATTACHMENT = "error_attachment";
 
     private static final String ARCHITECTURE = "architecture";
 
@@ -82,11 +79,6 @@ public abstract class AbstractErrorLog extends AbstractLog {
      * error occurred and the app was launched.
      */
     private Long appLaunchTOffset;
-
-    /**
-     * Error attachment.
-     */
-    private ErrorAttachment errorAttachment;
 
     /**
      * CPU architecture.
@@ -256,24 +248,6 @@ public abstract class AbstractErrorLog extends AbstractLog {
     }
 
     /**
-     * Get the errorAttachment value.
-     *
-     * @return the errorAttachment value
-     */
-    public ErrorAttachment getErrorAttachment() {
-        return this.errorAttachment;
-    }
-
-    /**
-     * Set the errorAttachment value.
-     *
-     * @param errorAttachment the errorAttachment value to set
-     */
-    public void setErrorAttachment(ErrorAttachment errorAttachment) {
-        this.errorAttachment = errorAttachment;
-    }
-
-    /**
      * Get the architecture value.
      *
      * @return the architecture value
@@ -303,11 +277,6 @@ public abstract class AbstractErrorLog extends AbstractLog {
         setErrorThreadName(object.optString(ERROR_THREAD_NAME, null));
         setFatal(JSONUtils.readBoolean(object, FATAL));
         setAppLaunchTOffset(JSONUtils.readLong(object, APP_LAUNCH_TOFFSET));
-        if (object.has(ERROR_ATTACHMENT)) {
-            ErrorAttachment errorAttachment = new ErrorAttachment();
-            errorAttachment.read(object.getJSONObject(ERROR_ATTACHMENT));
-            setErrorAttachment(errorAttachment);
-        }
         setArchitecture(object.optString(ARCHITECTURE, null));
     }
 
@@ -323,12 +292,6 @@ public abstract class AbstractErrorLog extends AbstractLog {
         JSONUtils.write(writer, ERROR_THREAD_NAME, getErrorThreadName());
         JSONUtils.write(writer, FATAL, getFatal());
         JSONUtils.write(writer, APP_LAUNCH_TOFFSET, getAppLaunchTOffset());
-        if (getErrorAttachment() != null) {
-            writer.key(ERROR_ATTACHMENT).object();
-            getErrorAttachment().write(writer);
-            writer.endObject();
-
-        }
         JSONUtils.write(writer, ARCHITECTURE, getArchitecture());
     }
 
@@ -357,8 +320,6 @@ public abstract class AbstractErrorLog extends AbstractLog {
         if (fatal != null ? !fatal.equals(that.fatal) : that.fatal != null) return false;
         if (appLaunchTOffset != null ? !appLaunchTOffset.equals(that.appLaunchTOffset) : that.appLaunchTOffset != null)
             return false;
-        if (errorAttachment != null ? !errorAttachment.equals(that.errorAttachment) : that.errorAttachment != null)
-            return false;
         return architecture != null ? architecture.equals(that.architecture) : that.architecture == null;
     }
 
@@ -374,7 +335,6 @@ public abstract class AbstractErrorLog extends AbstractLog {
         result = 31 * result + (errorThreadName != null ? errorThreadName.hashCode() : 0);
         result = 31 * result + (fatal != null ? fatal.hashCode() : 0);
         result = 31 * result + (appLaunchTOffset != null ? appLaunchTOffset.hashCode() : 0);
-        result = 31 * result + (errorAttachment != null ? errorAttachment.hashCode() : 0);
         result = 31 * result + (architecture != null ? architecture.hashCode() : 0);
         return result;
     }
