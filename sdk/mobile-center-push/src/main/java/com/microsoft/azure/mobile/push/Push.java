@@ -162,7 +162,7 @@ public class Push extends AbstractMobileCenterService {
     }
 
     @Override
-    protected String getServiceName() {
+    public String getServiceName() {
         return SERVICE_NAME;
     }
 
@@ -182,8 +182,8 @@ public class Push extends AbstractMobileCenterService {
     }
 
     @Override
-    public synchronized void onChannelReady(@NonNull Context context, @NonNull Channel channel) {
-        super.onChannelReady(context, channel);
+    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
+        super.onStarted(context, appSecret, channel);
         applyEnabledState(isInstanceEnabled());
     }
 
