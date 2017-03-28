@@ -20,6 +20,7 @@ import com.microsoft.azure.mobile.MobileCenterService;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
 import com.microsoft.azure.mobile.crashes.Crashes;
+import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
@@ -50,6 +51,7 @@ public class SettingsActivity extends AppCompatActivity {
             addPreferencesFromResource(R.xml.settings);
             final CheckBoxPreference analyticsEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_analytics_state_key));
             final CheckBoxPreference crashesEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_crashes_state_key));
+            final CheckBoxPreference distributeEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_distribute_state_key));
             final CheckBoxPreference pushEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_push_state_key));
             initCheckBoxSetting(R.string.mobile_center_state_key, MobileCenter.isEnabled(), R.string.mobile_center_state_summary_enabled, R.string.mobile_center_state_summary_disabled, new HasEnabled() {
 
@@ -89,6 +91,23 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public boolean isEnabled() {
                     return Crashes.isEnabled();
+                }
+            });
+            initCheckBoxSetting(R.string.mobile_center_distribute_state_key, Distribute.isEnabled(), R.string.mobile_center_distribute_state_summary_enabled, R.string.mobile_center_distribute_state_summary_disabled, new HasEnabled() {
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    try {
+                        Distribute.setEnabled(enabled);
+                        distributeEnabledPreference.setChecked(Distribute.isEnabled());
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    return Distribute.isEnabled();
                 }
             });
             try {
@@ -160,13 +179,13 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            initClickableSetting(R.string.app_secret_key, MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null), new Preference.OnPreferenceClickListener() {
+            initClickableSetting(R.string.app_secret_key, MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
                     final EditText input = new EditText(getActivity());
                     input.setInputType(InputType.TYPE_CLASS_TEXT);
-                    input.setText(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
+                    input.setText(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)));
 
                     new AlertDialog.Builder(getActivity()).setTitle(R.string.app_secret_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
@@ -185,8 +204,9 @@ public class SettingsActivity extends AppCompatActivity {
                             .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    setKeyValue(APP_SECRET_KEY, MainActivity.APP_SECRET);
-                                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), MainActivity.APP_SECRET), Toast.LENGTH_SHORT).show();
+                                    String defaultAppSecret = getString(R.string.app_secret);
+                                    setKeyValue(APP_SECRET_KEY, defaultAppSecret);
+                                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), defaultAppSecret), Toast.LENGTH_SHORT).show();
                                     preference.setSummary(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
                                 }
                             })
@@ -204,14 +224,16 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            initClickableSetting(R.string.log_url_key, MainActivity.sSharedPreferences.getString(LOG_URL_KEY, getString(R.string.log_url_production)), new Preference.OnPreferenceClickListener() {
+            String defaultLogUrl = getString(R.string.log_url);
+            final String defaultLogUrlDisplay = TextUtils.isEmpty(defaultLogUrl) ? getString(R.string.log_url_set_to_production) : defaultLogUrl;
+            initClickableSetting(R.string.log_url_key, MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
                     final EditText input = new EditText(getActivity());
                     input.setInputType(InputType.TYPE_CLASS_TEXT);
                     input.setText(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, null));
-                    input.setHint(R.string.log_url_production);
+                    input.setHint(R.string.log_url_set_to_production);
 
                     new AlertDialog.Builder(getActivity()).setTitle(R.string.log_url_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
@@ -221,21 +243,21 @@ public class SettingsActivity extends AppCompatActivity {
                                     if (Patterns.WEB_URL.matcher(input.getText().toString()).matches()) {
                                         String url = input.getText().toString();
                                         setKeyValue(LOG_URL_KEY, url);
-                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.log_url_changed_format), url), Toast.LENGTH_SHORT).show();
+                                        toastUrlChange(url);
                                     } else if (input.getText().toString().isEmpty()) {
-                                        setProductionUrl();
+                                        setDefaultUrl();
                                     } else {
                                         Toast.makeText(getActivity(), R.string.log_url_invalid, Toast.LENGTH_SHORT).show();
                                     }
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, getString(R.string.log_url_production)));
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay));
                                 }
                             })
                             .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
 
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    setProductionUrl();
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, getString(R.string.log_url_production)));
+                                    setDefaultUrl();
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)
@@ -243,9 +265,16 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
 
-                private void setProductionUrl() {
+                private void setDefaultUrl() {
                     setKeyValue(LOG_URL_KEY, null);
-                    Toast.makeText(getActivity(), R.string.log_url_production, Toast.LENGTH_SHORT).show();
+                    toastUrlChange(getString(R.string.log_url));
+                }
+
+                private void toastUrlChange(String url) {
+                    if (TextUtils.isEmpty(url)) {
+                        url = getString(R.string.log_url_production);
+                    }
+                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.log_url_changed_format), url), Toast.LENGTH_SHORT).show();
                 }
             });
         }

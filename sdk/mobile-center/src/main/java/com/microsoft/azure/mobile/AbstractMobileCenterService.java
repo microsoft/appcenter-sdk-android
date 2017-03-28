@@ -12,6 +12,9 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import java.util.Map;
 
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_COUNT;
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_INTERVAL;
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 
@@ -21,20 +24,6 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * Separator for preference key.
      */
     private static final String PREFERENCE_KEY_SEPARATOR = "_";
-
-    /**
-     * Number of metrics queue items which will trigger synchronization.
-     */
-    private static final int DEFAULT_TRIGGER_COUNT = 50;
-
-    /**
-     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
-     */
-    private static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
-    /**
-     * Maximum number of requests being sent for the group.
-     */
-    private static final int DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
 
     /**
      * Channel instance.
@@ -90,38 +79,39 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
         }
 
         /* If channel initialized. */
-        if (mChannel != null) {
+        String groupName = getGroupName();
+        if (groupName != null && mChannel != null) {
 
             /* Register service to channel on enabling. */
             if (enabled)
-                mChannel.addGroup(getGroupName(), getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
+                mChannel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
 
             /* Otherwise, clear all persisted logs and remove a group for the service. */
             else {
-                /* TODO: Expose a method and do this in one place. */
-                mChannel.clear(getGroupName());
-                mChannel.removeGroup(getGroupName());
+                mChannel.clear(groupName);
+                mChannel.removeGroup(groupName);
             }
         }
 
         /* Save new state. */
         StorageHelper.PreferencesStorage.putBoolean(getEnabledPreferenceKey(), enabled);
-
         MobileCenterLog.info(getLoggerTag(), String.format("%s service has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
     }
 
     @Override
-    public synchronized void onChannelReady(@NonNull Context context, @NonNull Channel channel) {
-        channel.removeGroup(getGroupName());
+    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
+        String groupName = getGroupName();
+        if (groupName != null) {
+            channel.removeGroup(groupName);
 
-        /* Add a group to the channel if the service is enabled */
-        if (isInstanceEnabled())
-            channel.addGroup(getGroupName(), getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
+            /* Add a group to the channel if the service is enabled */
+            if (isInstanceEnabled())
+                channel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
 
-        /* Otherwise, clear all persisted logs for the service. */
-        else
-            channel.clear(getGroupName());
-
+            /* Otherwise, clear all persisted logs for the service. */
+            else
+                channel.clear(groupName);
+        }
         mChannel = channel;
     }
 
@@ -138,13 +128,6 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     protected abstract String getGroupName();
 
     /**
-     * Gets a name of the service.
-     *
-     * @return The name of the service.
-     */
-    protected abstract String getServiceName();
-
-    /**
      * Gets a tag of the logger.
      *
      * @return The tag of the logger.
@@ -154,7 +137,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     @SuppressWarnings("WeakerAccess")
     @NonNull
     protected String getEnabledPreferenceKey() {
-        return KEY_ENABLED + PREFERENCE_KEY_SEPARATOR + getGroupName();
+        return KEY_ENABLED + PREFERENCE_KEY_SEPARATOR + getServiceName();
     }
 
     /**

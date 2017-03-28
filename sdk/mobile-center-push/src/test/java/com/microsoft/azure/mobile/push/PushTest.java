@@ -54,7 +54,8 @@ import static org.powermock.api.mockito.PowerMockito.when;
 })
 public class PushTest {
 
-    private static final String PUSH_ENABLED_KEY = KEY_ENABLED + "_group_push";
+    private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
+    private static final String PUSH_ENABLED_KEY = KEY_ENABLED + "_" + Push.getInstance().getServiceName();
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -110,7 +111,7 @@ public class PushTest {
         Push push = Mockito.spy(Push.getInstance());
         push.setInstanceEnabled(false);
         Channel channel = mock(Channel.class);
-        push.onChannelReady(mock(Context.class), channel);
+        push.onStarted(mock(Context.class), DUMMY_APP_SECRET, channel);
         verify(mFirebaseInstanceId, never()).getToken();
 
         /* When token unavailable */
@@ -146,7 +147,7 @@ public class PushTest {
         assertTrue(Push.isEnabled());
         Push.setEnabled(false);
         assertFalse(Push.isEnabled());
-        push.onChannelReady(mock(Context.class), channel);
+        push.onStarted(mock(Context.class), DUMMY_APP_SECRET, channel);
         verify(channel).clear(push.getGroupName());
         verify(channel).removeGroup(eq(push.getGroupName()));
         verify(mFirebaseInstanceId, never()).getToken();

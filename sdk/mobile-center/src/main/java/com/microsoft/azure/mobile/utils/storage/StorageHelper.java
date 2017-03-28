@@ -57,8 +57,10 @@ public class StorageHelper {
      * @param context The context of the application.
      */
     public static void initialize(Context context) {
-        sContext = context;
-        sSharedPreferences = sContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
+        if (sContext == null) {
+            sContext = context;
+            sSharedPreferences = sContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
+        }
     }
 
     /**
@@ -178,7 +180,7 @@ public class StorageHelper {
          * @param key The key for which the value is to be retrieved.
          * @return The value of {@code key} or 0L if key is not set.
          */
-        @SuppressWarnings({"WeakerAccess", "unused"})
+        @SuppressWarnings({"WeakerAccess", "unused", "SameParameterValue"})
         public static long getLong(@NonNull String key) {
             return getLong(key, 0L);
         }
