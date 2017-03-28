@@ -9,6 +9,7 @@ import android.util.Log;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.channel.DefaultChannel;
+import com.microsoft.azure.mobile.ingestion.models.CustomPropertiesLog;
 import com.microsoft.azure.mobile.ingestion.models.StartServiceLog;
 import com.microsoft.azure.mobile.ingestion.models.WrapperSdk;
 import com.microsoft.azure.mobile.ingestion.models.json.DefaultLogSerializer;
@@ -151,6 +152,15 @@ public class MobileCenter {
         getInstance().setInstanceLogUrl(logUrl);
     }
 
+
+    public static void setCustomProperties(CustomProperties customProperties) {
+        getInstance().setInstanceCustomProperties(customProperties);
+    }
+
+    public static void setCustomProperties(Map<String, Object> properties) {
+        setCustomProperties(new CustomProperties().put(properties));
+    }
+
     /**
      * Check whether SDK has already been configured.
      *
@@ -276,7 +286,19 @@ public class MobileCenter {
             mChannel.setLogUrl(logUrl);
     }
 
-    /**
+    private synchronized void setInstanceCustomProperties(CustomProperties customProperties) {
+        if (customProperties == null)
+            return;
+        Map<String, Object> properties = customProperties.getProperties();
+        if (properties.size() == 0) {
+            MobileCenterLog.error(LOG_TAG, "Properties cannot be empty");
+            return;
+        }
+        customProperties.reset();
+        queueCustomProperties(properties);
+    }
+
+     /**
      * {@link #isConfigured()} implementation at instance level.
      */
     private synchronized boolean isInstanceConfigured() {
@@ -414,10 +436,16 @@ public class MobileCenter {
      *
      * @param services started services.
      */
-    private synchronized void queueStartService(List<String> services) {
+    private synchronized void queueStartService(@NonNull List<String> services) {
         StartServiceLog startServiceLog = new StartServiceLog();
         startServiceLog.setServices(services);
         mChannel.enqueue(startServiceLog, CORE_GROUP);
+    }
+
+    private synchronized void queueCustomProperties(@NonNull Map<String, Object> properties) {
+        CustomPropertiesLog customPropertiesLog = new CustomPropertiesLog();
+        customPropertiesLog.setProperties(properties);
+        mChannel.enqueue(customPropertiesLog, CORE_GROUP);
     }
 
     /**
