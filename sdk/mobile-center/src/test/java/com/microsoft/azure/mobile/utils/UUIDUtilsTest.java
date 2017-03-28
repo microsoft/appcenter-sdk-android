@@ -19,7 +19,6 @@ public class UUIDUtilsTest {
     @Test
     public void secureRandom() {
         UUID uuid = UUIDUtils.randomUUID();
-        System.out.println(uuid);
         assertEquals(4, uuid.version());
         assertEquals(2, uuid.variant());
     }
@@ -30,7 +29,6 @@ public class UUIDUtilsTest {
         when(UUIDUtils.sImplementation.randomUUID()).thenThrow(new SecurityException("mock"));
         for (int i = 0; i < 2; i++) {
             UUID uuid = UUIDUtils.randomUUID();
-            System.out.println(uuid);
             assertEquals(4, uuid.version());
             assertEquals(2, uuid.variant());
         }

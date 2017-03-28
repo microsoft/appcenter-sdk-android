@@ -22,6 +22,14 @@
             android:key="@string/mobile_center_crashes_state_key"
             android:title="@string/mobile_center_crashes_state_title" />
     </PreferenceCategory>
+    
+    <PreferenceCategory
+        android:key="@string/distribute_key"
+        android:title="@string/distribute_title">
+        <CheckBoxPreference
+            android:key="@string/mobile_center_distribute_state_key"
+            android:title="@string/mobile_center_distribute_state_title"/>
+    </PreferenceCategory>
 
     <PreferenceCategory
         android:key="@string/push_key"

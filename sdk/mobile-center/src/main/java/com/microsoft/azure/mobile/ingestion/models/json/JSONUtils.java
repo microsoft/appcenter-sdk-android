@@ -9,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -65,6 +66,17 @@ public final class JSONUtils {
         return array;
     }
 
+    public static List<String> readStringArray(JSONObject object, String key) throws JSONException {
+        JSONArray jArray = object.optJSONArray(key);
+        if (jArray == null)
+            return null;
+        List<String> array = new ArrayList<>(jArray.length());
+        for (int i = 0; i < jArray.length(); i++) {
+            array.add(jArray.getString(i));
+        }
+        return array;
+    }
+
     public static void write(JSONStringer writer, String key, Object value) throws JSONException {
         if (value != null)
             writer.key(key).value(value);
@@ -86,6 +98,16 @@ public final class JSONUtils {
                 writer.object();
                 model.write(writer);
                 writer.endObject();
+            }
+            writer.endArray();
+        }
+    }
+
+    public static void writeStringArray(JSONStringer writer, String key, List<String> values) throws JSONException {
+        if (values != null) {
+            writer.key(key).array();
+            for (String value : values) {
+                writer.value(value);
             }
             writer.endArray();
         }

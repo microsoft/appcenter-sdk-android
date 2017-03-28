@@ -31,6 +31,13 @@ public interface MobileCenterService extends Application.ActivityLifecycleCallba
     void setInstanceEnabled(boolean enabled);
 
     /**
+     * Gets a name of the service.
+     *
+     * @return The name of the service.
+     */
+    String getServiceName();
+
+    /**
      * Factories for logs sent by this service.
      *
      * @return log factories.
@@ -39,10 +46,11 @@ public interface MobileCenterService extends Application.ActivityLifecycleCallba
     Map<String, LogFactory> getLogFactories();
 
     /**
-     * Called when the channel is ready to be used. This is called even when the service is disabled.
+     * Called when the service is started (disregarding if enabled or disabled).
      *
-     * @param context application context.
-     * @param channel  channel.
+     * @param context   application context.
+     * @param appSecret application secret.
+     * @param channel   channel.
      */
-    void onChannelReady(@NonNull Context context, @NonNull Channel channel);
+    void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel);
 }

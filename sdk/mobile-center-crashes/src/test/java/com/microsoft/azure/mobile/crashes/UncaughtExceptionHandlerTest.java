@@ -50,7 +50,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, MobileCenterLog.class})
 public class UncaughtExceptionHandlerTest {
 
-    private static final String CRASHES_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getGroupName();
+    private static final String CRASHES_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -119,6 +119,7 @@ public class UncaughtExceptionHandlerTest {
     }
 
     @Test
+    @SuppressWarnings("WeakerAccess")
     public void handleExceptionAndPassOn() {
         mExceptionHandler.register();
 

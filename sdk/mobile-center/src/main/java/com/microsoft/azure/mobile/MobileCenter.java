@@ -9,10 +9,12 @@ import android.util.Log;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.channel.DefaultChannel;
+import com.microsoft.azure.mobile.ingestion.models.StartServiceLog;
 import com.microsoft.azure.mobile.ingestion.models.WrapperSdk;
 import com.microsoft.azure.mobile.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
+import com.microsoft.azure.mobile.ingestion.models.json.StartServiceLogFactory;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
@@ -20,15 +22,26 @@ import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.ShutdownHelper;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 import static android.util.Log.VERBOSE;
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_COUNT;
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_INTERVAL;
+import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
 import static com.microsoft.azure.mobile.utils.MobileCenterLog.NONE;
 
 public class MobileCenter {
+
+    /**
+     * Group for sending logs.
+     */
+    @VisibleForTesting
+    static final String CORE_GROUP = "group_core";
 
     /**
      * TAG used in logging.
@@ -57,6 +70,11 @@ public class MobileCenter {
     private Application mApplication;
 
     /**
+     * Application secret.
+     */
+    private String mAppSecret;
+
+    /*
      * Handler for uncaught exceptions.
      */
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
@@ -293,7 +311,10 @@ public class MobileCenter {
         } else if (appSecret == null || appSecret.isEmpty()) {
             MobileCenterLog.error(LOG_TAG, "appSecret may not be null or empty");
         } else {
+
+            /* Store state. */
             mApplication = application;
+            mAppSecret = appSecret;
 
             /* If parameters are valid, init context related resources. */
             StorageHelper.initialize(application);
@@ -309,8 +330,10 @@ public class MobileCenter {
 
             /* Init channel. */
             mLogSerializer = new DefaultLogSerializer();
+            mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
             mChannel = new DefaultChannel(application, appSecret, mLogSerializer);
             mChannel.setEnabled(enabled);
+            mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null);
             if (mLogUrl != null)
                 mChannel.setLogUrl(mLogUrl);
             MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK configured successfully.");
@@ -336,17 +359,24 @@ public class MobileCenter {
             return;
         }
 
+        /* Start each service and collect info for send start service log. */
+        List<String> startedServices = new ArrayList<>();
         for (Class<? extends MobileCenterService> service : services) {
             if (service == null) {
                 MobileCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
             } else {
                 try {
-                    startService((MobileCenterService) service.getMethod("getInstance").invoke(null));
+                    MobileCenterService serviceInstance = (MobileCenterService) service.getMethod("getInstance").invoke(null);
+                    if (startService(serviceInstance)) {
+                        startedServices.add(serviceInstance.getServiceName());
+                    }
                 } catch (Exception e) {
                     MobileCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
                 }
             }
         }
+        if (startedServices.size() > 0)
+            queueStartService(startedServices);
     }
 
     /**
@@ -354,10 +384,10 @@ public class MobileCenter {
      *
      * @param service service to start.
      */
-    private synchronized void startService(@NonNull MobileCenterService service) {
+    private synchronized boolean startService(@NonNull MobileCenterService service) {
         if (mServices.contains(service)) {
             MobileCenterLog.warn(LOG_TAG, "Mobile Center has already started the service with class name: " + service.getClass().getName());
-            return;
+            return false;
         }
         Map<String, LogFactory> logFactories = service.getLogFactories();
         if (logFactories != null) {
@@ -365,10 +395,11 @@ public class MobileCenter {
                 mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
         }
         mServices.add(service);
-        service.onChannelReady(mApplication, mChannel);
+        service.onStarted(mApplication, mAppSecret, mChannel);
         if (isInstanceEnabled())
             mApplication.registerActivityLifecycleCallbacks(service);
         MobileCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
+        return true;
     }
 
     @SafeVarargs
@@ -376,6 +407,17 @@ public class MobileCenter {
         boolean configuredSuccessfully = instanceConfigure(application, appSecret);
         if (configuredSuccessfully)
             startServices(services);
+    }
+
+    /**
+     * Send started services.
+     *
+     * @param services started services.
+     */
+    private synchronized void queueStartService(List<String> services) {
+        StartServiceLog startServiceLog = new StartServiceLog();
+        startServiceLog.setServices(services);
+        mChannel.enqueue(startServiceLog, CORE_GROUP);
     }
 
     /**
