@@ -9,9 +9,11 @@ import org.json.JSONStringer;
 
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * The custom properties log model.
@@ -41,7 +43,14 @@ public class CustomPropertiesLog extends AbstractLog {
 
     private static final String PROPERTY_TYPE_STRING = "string";
 
-    private static final DateFormat DATETIME_FORMAT = DateFormat.getDateTimeInstance();
+    private static final ThreadLocal<DateFormat> DATETIME_FORMAT = new ThreadLocal<DateFormat>() {
+        @Override
+        protected DateFormat initialValue() {
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            return dateFormat;
+        }
+    };
 
     /**
      * Additional key/value pair parameters.
@@ -126,11 +135,11 @@ public class CustomPropertiesLog extends AbstractLog {
                 value = object.getBoolean(PROPERTY_VALUE);
                 break;
             case PROPERTY_TYPE_NUMBER:
-                value = object.getBoolean(PROPERTY_VALUE);
+                value = object.get(PROPERTY_VALUE);
                 break;
             case PROPERTY_TYPE_DATETIME:
                 try {
-                    value = DATETIME_FORMAT.parse(object.getString(PROPERTY_VALUE));
+                    value = DATETIME_FORMAT.get().parse(object.getString(PROPERTY_VALUE));
                 } catch (ParseException exception) {
                     throw new JSONException("Cannot parse date");
                 }
@@ -168,7 +177,9 @@ public class CustomPropertiesLog extends AbstractLog {
             JSONUtils.write(writer, PROPERTY_VALUE, value);
         } else if (value instanceof Date) {
             JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_DATETIME);
-            JSONUtils.write(writer, PROPERTY_VALUE, DATETIME_FORMAT.format((Date) value));
+            synchronized (DATETIME_FORMAT) {
+                JSONUtils.write(writer, PROPERTY_VALUE, DATETIME_FORMAT.get().format((Date) value));
+            }
         } else if (value instanceof String) {
             JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_STRING);
             JSONUtils.write(writer, PROPERTY_VALUE, value);
