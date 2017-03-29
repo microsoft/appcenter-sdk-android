@@ -12,6 +12,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -44,9 +45,10 @@ public class CustomPropertiesLog extends AbstractLog {
     private static final String PROPERTY_TYPE_STRING = "string";
 
     private static final ThreadLocal<DateFormat> DATETIME_FORMAT = new ThreadLocal<DateFormat>() {
+
         @Override
         protected DateFormat initialValue() {
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
             dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
             return dateFormat;
         }
@@ -113,7 +115,7 @@ public class CustomPropertiesLog extends AbstractLog {
     private static Map<String, Object> readProperties(JSONObject object) throws JSONException {
         JSONArray jArray = object.optJSONArray(PROPERTIES);
         if (jArray == null)
-            return null;
+            throw new JSONException("Properties not found");
         Map<String, Object> properties = new HashMap<>();
         for (int i = 0; i < jArray.length(); i++) {
             JSONObject jProperty = jArray.getJSONObject(i);
@@ -136,6 +138,9 @@ public class CustomPropertiesLog extends AbstractLog {
                 break;
             case PROPERTY_TYPE_NUMBER:
                 value = object.get(PROPERTY_VALUE);
+                if (!(value instanceof Number)) {
+                    throw new JSONException("Invalid value type");
+                }
                 break;
             case PROPERTY_TYPE_DATETIME:
                 try {
@@ -163,6 +168,8 @@ public class CustomPropertiesLog extends AbstractLog {
                 writer.endObject();
             }
             writer.endArray();
+        } else {
+            throw new JSONException("Properties cannot be null");
         }
     }
 

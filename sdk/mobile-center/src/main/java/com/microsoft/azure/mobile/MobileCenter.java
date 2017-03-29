@@ -293,8 +293,10 @@ public class MobileCenter {
      * @param customProperties custom properties object.
      */
     private synchronized void setInstanceCustomProperties(CustomProperties customProperties) {
-        if (customProperties == null)
+        if (customProperties == null) {
+            MobileCenterLog.error(LOG_TAG, "customProperties may not be null");
             return;
+        }
         Map<String, Object> properties = customProperties.getProperties();
         if (properties.size() == 0) {
             MobileCenterLog.error(LOG_TAG, "Properties cannot be empty");
@@ -528,6 +530,7 @@ public class MobileCenter {
         return mUncaughtExceptionHandler;
     }
 
+    @SuppressWarnings("SameParameterValue")
     @VisibleForTesting
     void setChannel(Channel channel) {
         mChannel = channel;

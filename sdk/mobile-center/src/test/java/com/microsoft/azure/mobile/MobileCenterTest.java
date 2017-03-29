@@ -719,12 +719,14 @@ public class MobileCenterTest {
         /* Set null. */
         MobileCenter.setCustomProperties(null);
         verify(mChannel, never()).enqueue(eq(log), eq(MobileCenter.CORE_GROUP));
+        verifyStatic(times(1));
+        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
 
         /* Set empty. */
         CustomProperties empty = new CustomProperties();
         MobileCenter.setCustomProperties(empty);
         verify(mChannel, never()).enqueue(eq(log), eq(MobileCenter.CORE_GROUP));
-        verifyStatic();
+        verifyStatic(times(2));
         MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
 
         /* Set normal. */
