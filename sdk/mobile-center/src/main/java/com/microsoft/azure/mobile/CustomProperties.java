@@ -16,7 +16,7 @@ public class CustomProperties {
 
     private static final Pattern KEY_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9]*$");
 
-    private static final String VALUE_NULL_ERROR_MESSAGE = "Value cannot be null, did you mean to call clear?";
+    private static final String VALUE_NULL_ERROR_MESSAGE = "Custom property value cannot be null, did you mean to call clear?";
 
     /**
      * Properties key/value pairs.
@@ -126,11 +126,11 @@ public class CustomProperties {
 
     private boolean isValidKey(String key) {
         if (key == null || !KEY_PATTERN.matcher(key).matches()) {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Invalid key: " + key);
+            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" must match + \"" + KEY_PATTERN + "\"");
             return false;
         }
         if (mProperties.containsKey(key)) {
-            MobileCenterLog.warn(MobileCenter.LOG_TAG, "Key \"" + key + "\" is already set or cleared and will be overridden.");
+            MobileCenterLog.warn(MobileCenter.LOG_TAG, "Custom property \"" + key + "\" is already set or cleared and will be overridden.");
         }
         return true;
     }

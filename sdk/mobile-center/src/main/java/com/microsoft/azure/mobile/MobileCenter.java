@@ -294,12 +294,12 @@ public class MobileCenter {
      */
     private synchronized void setInstanceCustomProperties(CustomProperties customProperties) {
         if (customProperties == null) {
-            MobileCenterLog.error(LOG_TAG, "customProperties may not be null");
+            MobileCenterLog.error(LOG_TAG, "Custom properties may not be null");
             return;
         }
         Map<String, Object> properties = customProperties.getProperties();
         if (properties.size() == 0) {
-            MobileCenterLog.error(LOG_TAG, "Properties cannot be empty");
+            MobileCenterLog.error(LOG_TAG, "Custom properties may not be empty");
             return;
         }
         queueCustomProperties(properties);
