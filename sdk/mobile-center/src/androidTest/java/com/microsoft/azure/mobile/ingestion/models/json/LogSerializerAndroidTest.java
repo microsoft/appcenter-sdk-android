@@ -99,6 +99,16 @@ public class LogSerializerAndroidTest {
     }
 
     @Test(expected = JSONException.class)
+    public void deserializeWithoutProperties() throws JSONException {
+        LogSerializer serializer = new DefaultLogSerializer();
+        serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
+        serializer.deserializeLog("{" +
+                "\"type\": \"custom_properties\"," +
+                "\"toffset\":0" +
+                "}");
+    }
+
+    @Test(expected = JSONException.class)
     public void deserializeWithInvalidType() throws JSONException {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());

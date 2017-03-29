@@ -113,7 +113,7 @@ public class CustomPropertiesLog extends AbstractLog {
     }
 
     private static Map<String, Object> readProperties(JSONObject object) throws JSONException {
-        JSONArray jArray = object.optJSONArray(PROPERTIES);
+        JSONArray jArray = object.getJSONArray(PROPERTIES);
         Map<String, Object> properties = new HashMap<>();
         for (int i = 0; i < jArray.length(); i++) {
             JSONObject jProperty = jArray.getJSONObject(i);
