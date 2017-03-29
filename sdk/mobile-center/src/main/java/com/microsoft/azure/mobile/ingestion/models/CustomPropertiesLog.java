@@ -169,7 +169,7 @@ public class CustomPropertiesLog extends AbstractLog {
     private static void writePropertyValue(JSONStringer writer, Object value) throws JSONException {
         if (value == null) {
             JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_CLEAR);
-        } if (value instanceof Boolean) {
+        } else if (value instanceof Boolean) {
             JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_BOOLEAN);
             JSONUtils.write(writer, PROPERTY_VALUE, value);
         } else if (value instanceof Number) {
@@ -177,9 +177,7 @@ public class CustomPropertiesLog extends AbstractLog {
             JSONUtils.write(writer, PROPERTY_VALUE, value);
         } else if (value instanceof Date) {
             JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_DATETIME);
-            synchronized (DATETIME_FORMAT) {
-                JSONUtils.write(writer, PROPERTY_VALUE, DATETIME_FORMAT.get().format((Date) value));
-            }
+            JSONUtils.write(writer, PROPERTY_VALUE, DATETIME_FORMAT.get().format((Date) value));
         } else if (value instanceof String) {
             JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_STRING);
             JSONUtils.write(writer, PROPERTY_VALUE, value);

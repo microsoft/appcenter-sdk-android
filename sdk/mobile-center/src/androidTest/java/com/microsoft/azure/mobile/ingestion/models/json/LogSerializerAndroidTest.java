@@ -1,6 +1,7 @@
 package com.microsoft.azure.mobile.ingestion.models.json;
 
 import com.microsoft.azure.mobile.AndroidTestUtils;
+import com.microsoft.azure.mobile.ingestion.models.CustomPropertiesLog;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 import com.microsoft.azure.mobile.ingestion.models.StartServiceLog;
@@ -13,7 +14,10 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
@@ -57,26 +61,81 @@ public class LogSerializerAndroidTest {
 
     @Test
     public void startServiceLog() throws JSONException {
-        LogContainer expectedContainer = new LogContainer();
-        List<Log> logs = new ArrayList<>();
-        {
-            StartServiceLog log = new StartServiceLog();
-            List<String> services = new ArrayList<>();
-            services.add("FIRST");
-            services.add("SECOND");
-            log.setServices(services);
-            logs.add(log);
-        }
-        expectedContainer.setLogs(logs);
+        StartServiceLog log = new StartServiceLog();
+        List<String> services = new ArrayList<>();
+        services.add("FIRST");
+        services.add("SECOND");
+        log.setServices(services);
         UUID sid = UUIDUtils.randomUUID();
-        for (Log log : logs) {
-            log.setSid(sid);
-        }
+        log.setSid(sid);
 
+        /* Verify serialize and deserialize. */
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
-        String payload = serializer.serializeContainer(expectedContainer);
-        LogContainer actualContainer = serializer.deserializeContainer(payload);
-        Assert.assertEquals(expectedContainer, actualContainer);
+        String payload = serializer.serializeLog(log);
+        Log actualContainer = serializer.deserializeLog(payload);
+        Assert.assertEquals(log, actualContainer);
+    }
+
+    @Test
+    public void customPropertiesLog() throws JSONException {
+        CustomPropertiesLog log = new CustomPropertiesLog();
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("t1", "test");
+        properties.put("t2", new Date(0));
+        properties.put("t3", 0);
+        properties.put("t4", false);
+        properties.put("t5", null);
+        log.setProperties(properties);
+        UUID sid = UUIDUtils.randomUUID();
+        log.setSid(sid);
+
+        /* Verify serialize and deserialize. */
+        LogSerializer serializer = new DefaultLogSerializer();
+        serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
+        String payload = serializer.serializeLog(log);
+        Log actualContainer = serializer.deserializeLog(payload);
+        Assert.assertEquals(log, actualContainer);
+
+        /* Verify exceptions. */
+        /* Without properties (deserialize). */
+        try {
+            serializer.deserializeLog("{" +
+                    "\"type\": \"custom_properties\"" +
+                    "}");
+            Assert.fail();
+        } catch (JSONException ignored) {
+        }
+
+        /* With invalid type (deserialize). */
+        try {
+            serializer.deserializeLog("{" +
+                    "\"type\": \"custom_properties\"," +
+                    "\"properties\":[{\"name\":\"test\",\"type\":\"unknown\",\"value\":42}]" +
+                    "}");
+            Assert.fail();
+        } catch (JSONException ignored) {
+        }
+
+        /* With invalid date (deserialize). */
+        try {
+            serializer.deserializeLog("{" +
+                    "\"type\": \"custom_properties\"," +
+                    "\"properties\":[{\"name\":\"test\",\"type\":\"date_time\",\"value\":\"today\"}]" +
+                    "}");
+            Assert.fail();
+        } catch (JSONException ignored) {
+        }
+
+        /* With invalid type (serialize) */
+        try {
+            CustomPropertiesLog invalidTypeLog = new CustomPropertiesLog();
+            Map<String, Object> invalidTypeProperties = new HashMap<>();
+            invalidTypeProperties.put("nested", properties);
+            invalidTypeLog.setProperties(invalidTypeProperties);
+            serializer.serializeLog(invalidTypeLog);
+            Assert.fail();
+        } catch (JSONException ignored) {
+        }
     }
 }

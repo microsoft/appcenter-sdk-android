@@ -12,6 +12,7 @@ import com.microsoft.azure.mobile.channel.DefaultChannel;
 import com.microsoft.azure.mobile.ingestion.models.CustomPropertiesLog;
 import com.microsoft.azure.mobile.ingestion.models.StartServiceLog;
 import com.microsoft.azure.mobile.ingestion.models.WrapperSdk;
+import com.microsoft.azure.mobile.ingestion.models.json.CustomPropertiesLogFactory;
 import com.microsoft.azure.mobile.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
@@ -357,6 +358,7 @@ public class MobileCenter {
             /* Init channel. */
             mLogSerializer = new DefaultLogSerializer();
             mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
+            mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
             mChannel = new DefaultChannel(application, appSecret, mLogSerializer);
             mChannel.setEnabled(enabled);
             mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null);
