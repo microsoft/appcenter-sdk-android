@@ -157,10 +157,6 @@ public class MobileCenter {
         getInstance().setInstanceCustomProperties(customProperties);
     }
 
-    public static void setCustomProperties(Map<String, Object> properties) {
-        setCustomProperties(new CustomProperties().put(properties));
-    }
-
     /**
      * Check whether SDK has already been configured.
      *
@@ -294,7 +290,6 @@ public class MobileCenter {
             MobileCenterLog.error(LOG_TAG, "Properties cannot be empty");
             return;
         }
-        customProperties.reset();
         queueCustomProperties(properties);
     }
 
