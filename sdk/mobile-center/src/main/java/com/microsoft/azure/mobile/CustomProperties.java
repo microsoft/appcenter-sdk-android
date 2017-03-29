@@ -22,7 +22,7 @@ public class CustomProperties {
      * Properties key/value pairs.
      * Null value means that key marked to clear.
      */
-    private Map<String, Object> mProperties = new HashMap<>();
+    private final Map<String, Object> mProperties = new HashMap<>();
 
     /**
      * Get the properties value.
