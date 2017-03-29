@@ -53,7 +53,7 @@ public class CustomPropertiesLog extends AbstractLog {
     };
 
     /**
-     * Additional key/value pair parameters.
+     * Properties key/value pairs.
      */
     private Map<String, Object> properties;
 

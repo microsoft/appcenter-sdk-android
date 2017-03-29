@@ -75,7 +75,7 @@ public class MobileCenter {
      */
     private String mAppSecret;
 
-    /*
+    /**
      * Handler for uncaught exceptions.
      */
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
@@ -152,7 +152,11 @@ public class MobileCenter {
         getInstance().setInstanceLogUrl(logUrl);
     }
 
-
+    /**
+     * Set the custom properties.
+     *
+     * @param customProperties custom properties object.
+     */
     public static void setCustomProperties(CustomProperties customProperties) {
         getInstance().setInstanceCustomProperties(customProperties);
     }
@@ -282,6 +286,11 @@ public class MobileCenter {
             mChannel.setLogUrl(logUrl);
     }
 
+    /**
+     * {@link #setCustomProperties(CustomProperties)} implementation at instance level.
+     *
+     * @param customProperties custom properties object.
+     */
     private synchronized void setInstanceCustomProperties(CustomProperties customProperties) {
         if (customProperties == null)
             return;
@@ -437,6 +446,11 @@ public class MobileCenter {
         mChannel.enqueue(startServiceLog, CORE_GROUP);
     }
 
+    /**
+     * Send custom properties.
+     *
+     * @param properties properties to send.
+     */
     private synchronized void queueCustomProperties(@NonNull Map<String, Object> properties) {
         CustomPropertiesLog customPropertiesLog = new CustomPropertiesLog();
         customPropertiesLog.setProperties(properties);

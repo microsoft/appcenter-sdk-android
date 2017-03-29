@@ -7,12 +7,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+/**
+ * Custom properties builder.
+ * Collect multiple properties for send its at once in the same log.
+ */
 public class CustomProperties {
 
     private static final Pattern KEY_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9]*$");
 
     /**
-     * Additional key/value pair parameters.
+     * Properties key/value pairs.
      * Null value means that key marked to clear.
      */
     private Map<String, Object> properties = new HashMap<>();
@@ -26,7 +30,16 @@ public class CustomProperties {
         return this.properties;
     }
 
-    public CustomProperties put(String key, String value) {
+    /**
+     * Set the specified property value with the specified key.
+     * If the properties previously contained a property for the key, the old
+     * value is replaced.
+     *
+     * @param key key with which the specified value is to be set
+     * @param value value to be set with the specified key
+     * @return this instance.
+     */
+    public CustomProperties set(String key, String value) {
         if (isValidKey(key)) {
             if (value != null) {
                 properties.put(key, value);
@@ -37,7 +50,16 @@ public class CustomProperties {
         return this;
     }
 
-    public CustomProperties put(String key, Date value) {
+    /**
+     * Set the specified property value with the specified key.
+     * If the properties previously contained a property for the key, the old
+     * value is replaced.
+     *
+     * @param key key with which the specified value is to be set
+     * @param value value to be set with the specified key
+     * @return this instance.
+     */
+    public CustomProperties set(String key, Date value) {
         if (isValidKey(key)) {
             if (value != null) {
                 properties.put(key, value);
@@ -48,7 +70,16 @@ public class CustomProperties {
         return this;
     }
 
-    public CustomProperties put(String key, Number value) {
+    /**
+     * Set the specified property value with the specified key.
+     * If the properties previously contained a property for the key, the old
+     * value is replaced.
+     *
+     * @param key key with which the specified value is to be set
+     * @param value value to be set with the specified key
+     * @return this instance.
+     */
+    public CustomProperties set(String key, Number value) {
         if (isValidKey(key)) {
             if (value != null) {
                 properties.put(key, value);
@@ -59,13 +90,27 @@ public class CustomProperties {
         return this;
     }
 
-    public CustomProperties put(String key, boolean value) {
+    /**
+     * Set the specified property value with the specified key.
+     * If the properties previously contained a property for the key, the old
+     * value is replaced.
+     *
+     * @param key key with which the specified value is to be set
+     * @param value value to be set with the specified key
+     * @return this instance.
+     */
+    public CustomProperties set(String key, boolean value) {
         if (isValidKey(key)) {
             properties.put(key, value);
         }
         return this;
     }
 
+    /**
+     * Clear the property for the specified key.
+     * @param key key whose mapping is to be cleared
+     * @return this instance.
+     */
     public CustomProperties clear(String key) {
         if (isValidKey(key)) {
 
