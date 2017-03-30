@@ -126,7 +126,7 @@ public class CustomProperties {
 
     private boolean isValidKey(String key) {
         if (key == null || !KEY_PATTERN.matcher(key).matches()) {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" must match + \"" + KEY_PATTERN + "\"");
+            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" must match \"" + KEY_PATTERN + "\"");
             return false;
         }
         if (mProperties.containsKey(key)) {
