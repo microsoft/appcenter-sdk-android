@@ -8,6 +8,7 @@ import android.widget.AdapterView;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.activities.CrashActivity;
+import com.microsoft.azure.mobile.sasquatch.activities.CustomPropertiesActivity;
 import com.microsoft.azure.mobile.sasquatch.activities.DeviceInfoActivity;
 import com.microsoft.azure.mobile.sasquatch.activities.DummyActivity;
 import com.microsoft.azure.mobile.sasquatch.activities.EventActivity;
@@ -33,6 +34,7 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeature(R.string.title_crashes, R.string.description_crashes, CrashActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_error, R.string.description_error, ManagedErrorActivity.class));
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));
+        sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
     }
 

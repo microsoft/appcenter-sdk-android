@@ -40,6 +40,7 @@
         <activity
             android:name=".activities.ManagedErrorActivity"
             android:label="@string/title_error"/>
+        <activity android:name=".activities.CustomPropertiesActivity"></activity>
     </application>
 
 </manifest>
