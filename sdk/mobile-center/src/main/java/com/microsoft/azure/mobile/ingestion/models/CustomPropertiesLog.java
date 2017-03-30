@@ -124,34 +124,29 @@ public class CustomPropertiesLog extends AbstractLog {
         return properties;
     }
 
+    @SuppressWarnings("IfCanBeSwitch")
     private static Object readPropertyValue(JSONObject object) throws JSONException {
         String type = object.getString(PROPERTY_TYPE);
         Object value;
-        switch (type) {
-            case PROPERTY_TYPE_CLEAR:
-                value = null;
-                break;
-            case PROPERTY_TYPE_BOOLEAN:
-                value = object.getBoolean(PROPERTY_VALUE);
-                break;
-            case PROPERTY_TYPE_NUMBER:
-                value = object.get(PROPERTY_VALUE);
-                if (!(value instanceof Number)) {
-                    throw new JSONException("Invalid value type");
-                }
-                break;
-            case PROPERTY_TYPE_DATETIME:
-                try {
-                    value = DATETIME_FORMAT.get().parse(object.getString(PROPERTY_VALUE));
-                } catch (ParseException exception) {
-                    throw new JSONException("Cannot parse date");
-                }
-                break;
-            case PROPERTY_TYPE_STRING:
-                value = object.getString(PROPERTY_VALUE);
-                break;
-            default:
+        if (type.equals(PROPERTY_TYPE_CLEAR)) {
+            value = null;
+        } else if (type.equals(PROPERTY_TYPE_BOOLEAN)) {
+            value = object.getBoolean(PROPERTY_VALUE);
+        } else if (type.equals(PROPERTY_TYPE_NUMBER)) {
+            value = object.get(PROPERTY_VALUE);
+            if (!(value instanceof Number)) {
                 throw new JSONException("Invalid value type");
+            }
+        } else if (type.equals(PROPERTY_TYPE_DATETIME)) {
+            try {
+                value = DATETIME_FORMAT.get().parse(object.getString(PROPERTY_VALUE));
+            } catch (ParseException exception) {
+                throw new JSONException("Cannot parse date");
+            }
+        } else if (type.equals(PROPERTY_TYPE_STRING)) {
+            value = object.getString(PROPERTY_VALUE);
+        } else {
+            throw new JSONException("Invalid value type");
         }
         return value;
     }
