@@ -19,10 +19,11 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TimePicker;
 
-import com.microsoft.azure.mobile.CustomProperties;
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.crashes.ingestion.models.Exception;
 import com.microsoft.azure.mobile.sasquatch.R;
 
+import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -49,13 +50,17 @@ public class CustomPropertiesActivity extends AppCompatActivity {
         mProperties.add(fragment);
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "unchecked"})
     public void send(@SuppressWarnings("UnusedParameters") View view) {
-        CustomProperties customProperties = new CustomProperties();
-        for (CustomPropertyFragment property : mProperties) {
-            property.set(customProperties);
+        try {
+            Class classCustomProperties = Class.forName("com.microsoft.azure.mobile.CustomProperties");
+            Object customProperties = classCustomProperties.getConstructor().newInstance();
+            for (CustomPropertyFragment property : mProperties) {
+                property.set(customProperties);
+            }
+            MobileCenter.class.getMethod("setCustomProperties", classCustomProperties).invoke(null, customProperties);
+        } catch (Throwable ignore) {
         }
-        MobileCenter.setCustomProperties(customProperties);
     }
 
     public static class CustomPropertyFragment extends Fragment
@@ -168,15 +173,15 @@ public class CustomPropertiesActivity extends AppCompatActivity {
             setDate(calendar.getTime());
         }
 
-        public void set(CustomProperties customProperties) {
+        public void set(Object customProperties) throws Throwable {
             int type = mEditType.getSelectedItemPosition();
             String key = mEditKey.getText().toString();
             switch (type) {
                 case TYPE_CLEAR:
-                    customProperties.clear(key);
+                    customProperties.getClass().getMethod("clear", String.class).invoke(customProperties, key);
                     break;
                 case TYPE_BOOLEAN:
-                    customProperties.set(key, mEditBool.isChecked());
+                    customProperties.getClass().getMethod("set", String.class, boolean.class).invoke(customProperties, key, mEditBool.isChecked());
                     break;
                 case TYPE_NUMBER:
                     String stringValue = mEditNumber.getText().toString();
@@ -186,13 +191,13 @@ public class CustomPropertiesActivity extends AppCompatActivity {
                     } catch (NumberFormatException ignored) {
                         value = Double.parseDouble(stringValue);
                     }
-                    customProperties.set(key, value);
+                    customProperties.getClass().getMethod("set", String.class, Number.class).invoke(customProperties, key, value);
                     break;
                 case TYPE_DATETIME:
-                    customProperties.set(key, mDate);
+                    customProperties.getClass().getMethod("set", String.class, Date.class).invoke(customProperties, key, mDate);
                     break;
                 case TYPE_STRING:
-                    customProperties.set(key, mEditString.getText().toString());
+                    customProperties.getClass().getMethod("set", String.class, String.class).invoke(customProperties, key, mEditString.getText().toString());
                     break;
             }
         }
