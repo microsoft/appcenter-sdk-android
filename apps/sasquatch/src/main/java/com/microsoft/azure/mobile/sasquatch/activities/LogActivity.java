@@ -1,12 +1,15 @@
 package com.microsoft.azure.mobile.sasquatch.activities;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -16,9 +19,7 @@ import com.microsoft.azure.mobile.sasquatch.R;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class LogActivity extends AppCompatActivity implements TextWatcher {
-
-    private TextView mLastInput;
+public abstract class LogActivity extends AppCompatActivity {
 
     private ViewGroup mList;
 
@@ -33,13 +34,24 @@ public abstract class LogActivity extends AppCompatActivity implements TextWatch
         addProperty();
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.add, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_add:
+                addProperty();
+                break;
+        }
+        return true;
+    }
+
     private void addProperty() {
-        if (mLastInput != null)
-            mLastInput.removeTextChangedListener(this);
-        View view = mLayoutInflater.inflate(R.layout.property, mList, false);
-        mList.addView(view);
-        mLastInput = (TextView) view.findViewById(R.id.value);
-        mLastInput.addTextChangedListener(this);
+        mList.addView(mLayoutInflater.inflate(R.layout.property, mList, false));
     }
 
     @SuppressWarnings("unused")
@@ -60,18 +72,4 @@ public abstract class LogActivity extends AppCompatActivity implements TextWatch
     }
 
     protected abstract void trackLog(String name, Map<String, String> properties);
-
-    @Override
-    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-    }
-
-    @Override
-    public void onTextChanged(CharSequence s, int start, int before, int count) {
-        if (s.length() > 0)
-            addProperty();
-    }
-
-    @Override
-    public void afterTextChanged(Editable s) {
-    }
 }

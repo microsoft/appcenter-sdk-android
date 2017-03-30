@@ -10,6 +10,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -20,10 +22,8 @@ import android.widget.Spinner;
 import android.widget.TimePicker;
 
 import com.microsoft.azure.mobile.MobileCenter;
-import com.microsoft.azure.mobile.crashes.ingestion.models.Exception;
 import com.microsoft.azure.mobile.sasquatch.R;
 
-import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -41,6 +41,22 @@ public class CustomPropertiesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_custom_properties);
         addProperty();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.add, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_add:
+                addProperty();
+                break;
+        }
+        return true;
     }
 
     private void addProperty() {
