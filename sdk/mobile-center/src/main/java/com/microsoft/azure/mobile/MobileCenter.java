@@ -9,8 +9,10 @@ import android.util.Log;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.channel.DefaultChannel;
+import com.microsoft.azure.mobile.ingestion.models.CustomPropertiesLog;
 import com.microsoft.azure.mobile.ingestion.models.StartServiceLog;
 import com.microsoft.azure.mobile.ingestion.models.WrapperSdk;
+import com.microsoft.azure.mobile.ingestion.models.json.CustomPropertiesLogFactory;
 import com.microsoft.azure.mobile.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
@@ -74,7 +76,7 @@ public class MobileCenter {
      */
     private String mAppSecret;
 
-    /*
+    /**
      * Handler for uncaught exceptions.
      */
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
@@ -149,6 +151,15 @@ public class MobileCenter {
      */
     public static void setLogUrl(String logUrl) {
         getInstance().setInstanceLogUrl(logUrl);
+    }
+
+    /**
+     * Set the custom properties.
+     *
+     * @param customProperties custom properties object.
+     */
+    public static void setCustomProperties(CustomProperties customProperties) {
+        getInstance().setInstanceCustomProperties(customProperties);
     }
 
     /**
@@ -277,6 +288,24 @@ public class MobileCenter {
     }
 
     /**
+     * {@link #setCustomProperties(CustomProperties)} implementation at instance level.
+     *
+     * @param customProperties custom properties object.
+     */
+    private synchronized void setInstanceCustomProperties(CustomProperties customProperties) {
+        if (customProperties == null) {
+            MobileCenterLog.error(LOG_TAG, "Custom properties may not be null");
+            return;
+        }
+        Map<String, Object> properties = customProperties.getProperties();
+        if (properties.size() == 0) {
+            MobileCenterLog.error(LOG_TAG, "Custom properties may not be empty");
+            return;
+        }
+        queueCustomProperties(properties);
+    }
+
+     /**
      * {@link #isConfigured()} implementation at instance level.
      */
     private synchronized boolean isInstanceConfigured() {
@@ -331,6 +360,7 @@ public class MobileCenter {
             /* Init channel. */
             mLogSerializer = new DefaultLogSerializer();
             mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
+            mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
             mChannel = new DefaultChannel(application, appSecret, mLogSerializer);
             mChannel.setEnabled(enabled);
             mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null);
@@ -414,10 +444,21 @@ public class MobileCenter {
      *
      * @param services started services.
      */
-    private synchronized void queueStartService(List<String> services) {
+    private synchronized void queueStartService(@NonNull List<String> services) {
         StartServiceLog startServiceLog = new StartServiceLog();
         startServiceLog.setServices(services);
         mChannel.enqueue(startServiceLog, CORE_GROUP);
+    }
+
+    /**
+     * Send custom properties.
+     *
+     * @param properties properties to send.
+     */
+    private synchronized void queueCustomProperties(@NonNull Map<String, Object> properties) {
+        CustomPropertiesLog customPropertiesLog = new CustomPropertiesLog();
+        customPropertiesLog.setProperties(properties);
+        mChannel.enqueue(customPropertiesLog, CORE_GROUP);
     }
 
     /**
@@ -489,6 +530,7 @@ public class MobileCenter {
         return mUncaughtExceptionHandler;
     }
 
+    @SuppressWarnings("SameParameterValue")
     @VisibleForTesting
     void setChannel(Channel channel) {
         mChannel = channel;

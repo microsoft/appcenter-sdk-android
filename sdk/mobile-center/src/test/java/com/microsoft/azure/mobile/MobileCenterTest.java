@@ -9,6 +9,7 @@ import android.os.Looper;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.channel.DefaultChannel;
+import com.microsoft.azure.mobile.ingestion.models.CustomPropertiesLog;
 import com.microsoft.azure.mobile.ingestion.models.StartServiceLog;
 import com.microsoft.azure.mobile.ingestion.models.WrapperSdk;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
@@ -75,7 +76,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         StorageHelper.DatabaseStorage.class,
         DeviceInfoHelper.class,
         Thread.class,
-        ShutdownHelper.class
+        ShutdownHelper.class,
+        CustomProperties.class
 })
 public class MobileCenterTest {
 
@@ -118,6 +120,7 @@ public class MobileCenterTest {
         mockStatic(StorageHelper.DatabaseStorage.class);
         mockStatic(Thread.class);
         mockStatic(ShutdownHelper.class);
+        mockStatic(DeviceInfoHelper.class);
 
         /* First call to com.microsoft.azure.mobile.MobileCenter.isEnabled shall return true, initial state. */
         when(StorageHelper.PreferencesStorage.getBoolean(anyString(), eq(true))).thenReturn(true);
@@ -642,11 +645,6 @@ public class MobileCenterTest {
     @Test
     public void setWrapperSdkTest() throws Exception {
 
-        /* Setup  mocking. */
-        DefaultChannel channel = mock(DefaultChannel.class);
-        whenNew(DefaultChannel.class).withAnyArguments().thenReturn(channel);
-        mockStatic(DeviceInfoHelper.class);
-
         /* Call method. */
         WrapperSdk wrapperSdk = new WrapperSdk();
         MobileCenter.setWrapperSdk(wrapperSdk);
@@ -657,12 +655,12 @@ public class MobileCenterTest {
 
         /* Since the channel was not created when setting wrapper, no need to refresh channel after start. */
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class);
-        verify(channel, never()).invalidateDeviceCache();
+        verify(mChannel, never()).invalidateDeviceCache();
 
         /* Update wrapper SDK and check channel refreshed. */
         wrapperSdk = new WrapperSdk();
         MobileCenter.setWrapperSdk(wrapperSdk);
-        verify(channel).invalidateDeviceCache();
+        verify(mChannel).invalidateDeviceCache();
     }
 
 
@@ -696,22 +694,47 @@ public class MobileCenterTest {
     public void setLogUrl() throws Exception {
 
         /* Change log URL before start. */
-        DefaultChannel channel = mock(DefaultChannel.class);
-        whenNew(DefaultChannel.class).withAnyArguments().thenReturn(channel);
         String logUrl = "http://mock";
         MobileCenter.setLogUrl(logUrl);
 
         /* No effect for now. */
-        verify(channel, never()).setLogUrl(logUrl);
+        verify(mChannel, never()).setLogUrl(logUrl);
 
         /* Start should propagate the log URL. */
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class);
-        verify(channel).setLogUrl(logUrl);
+        verify(mChannel).setLogUrl(logUrl);
 
         /* Change it after, should work immediately. */
         logUrl = "http://mock2";
         MobileCenter.setLogUrl(logUrl);
-        verify(channel).setLogUrl(logUrl);
+        verify(mChannel).setLogUrl(logUrl);
+    }
+
+    @Test
+    public void setCustomPropertiesTest() throws Exception {
+        CustomPropertiesLog log = mock(CustomPropertiesLog.class);
+        whenNew(CustomPropertiesLog.class).withAnyArguments().thenReturn(log);
+        MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class);
+
+        /* Set null. */
+        MobileCenter.setCustomProperties(null);
+        verify(mChannel, never()).enqueue(eq(log), eq(MobileCenter.CORE_GROUP));
+        verifyStatic(times(1));
+        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+
+        /* Set empty. */
+        CustomProperties empty = new CustomProperties();
+        MobileCenter.setCustomProperties(empty);
+        verify(mChannel, never()).enqueue(eq(log), eq(MobileCenter.CORE_GROUP));
+        verifyStatic(times(2));
+        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+
+        /* Set normal. */
+        CustomProperties properties = new CustomProperties();
+        properties.set("test", "test");
+        MobileCenter.setCustomProperties(properties);
+        verify(log).setProperties(eq(properties.getProperties()));
+        verify(mChannel).enqueue(eq(log), eq(MobileCenter.CORE_GROUP));
     }
 
     @Test
