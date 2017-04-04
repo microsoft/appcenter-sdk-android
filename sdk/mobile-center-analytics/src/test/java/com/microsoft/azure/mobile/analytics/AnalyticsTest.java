@@ -48,6 +48,7 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -217,6 +218,122 @@ public class AnalyticsTest {
     }
 
     @Test
+    public void testTrackEvent() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarted(mock(Context.class), "", channel);
+        Analytics.trackEvent(null, null);
+        verify(channel, never()).enqueue(any(Log.class), anyString());
+        reset(channel);
+        Analytics.trackEvent("", null);
+        verify(channel, never()).enqueue(any(Log.class), anyString());
+        reset(channel);
+        Analytics.trackEvent(" ", null);
+        verify(channel, times(1)).enqueue(any(Log.class), anyString());
+        reset(channel);
+        Analytics.trackEvent(generateString(257, '*'), null);
+        verify(channel, never()).enqueue(any(Log.class), anyString());
+        reset(channel);
+        Analytics.trackEvent(generateString(256, '*'), null);
+        verify(channel, times(1)).enqueue(any(Log.class), anyString());
+        reset(channel);
+        Analytics.trackEvent(" ", new HashMap<String, String>() {{
+            put(null, null);
+            put("", null);
+            put(generateString(65, '*'), null);
+            put("1", null);
+            put("2", generateString(65, '*'));
+        }});
+        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    return eventLog.getProperties().size() == 0;
+                }
+                return false;
+            }
+        }), anyString());
+        reset(channel);
+        final String validMapItem = "valid";
+        Analytics.trackEvent(" ", new HashMap<String, String>() {{
+            for (int i = 0; i < 10; i++) {
+                put(validMapItem + i, validMapItem);
+            }
+        }});
+        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    return eventLog.getProperties().size() == 5;
+                }
+                return false;
+            }
+        }), anyString());
+    }
+
+    @Test
+    public void testTrackPage() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarted(mock(Context.class), "", channel);
+        Analytics.trackPage(null, null);
+        verify(channel, never()).enqueue(any(Log.class), anyString());
+        reset(channel);
+        Analytics.trackPage("", null);
+        verify(channel, never()).enqueue(any(Log.class), anyString());
+        reset(channel);
+        Analytics.trackPage(" ", null);
+        verify(channel, times(1)).enqueue(any(Log.class), anyString());
+        reset(channel);
+        Analytics.trackPage(generateString(257, '*'), null);
+        verify(channel, never()).enqueue(any(Log.class), anyString());
+        reset(channel);
+        Analytics.trackPage(generateString(256, '*'), null);
+        verify(channel, times(1)).enqueue(any(Log.class), anyString());
+        reset(channel);
+        Analytics.trackPage(" ", new HashMap<String, String>() {{
+            put(null, null);
+            put("", null);
+            put(generateString(65, '*'), null);
+            put("1", null);
+            put("2", generateString(65, '*'));
+        }});
+        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof PageLog) {
+                    PageLog pageLog = (PageLog) item;
+                    return pageLog.getProperties().size() == 0;
+                }
+                return false;
+            }
+        }), anyString());
+        reset(channel);
+        final String validMapItem = "valid";
+        Analytics.trackPage(" ", new HashMap<String, String>() {{
+            for (int i = 0; i < 10; i++) {
+                put(validMapItem + i, validMapItem);
+            }
+        }});
+        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof PageLog) {
+                    PageLog pageLog = (PageLog) item;
+                    return pageLog.getProperties().size() == 5;
+                }
+                return false;
+            }
+        }), anyString());
+    }
+
+    @Test
     public void setEnabled() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
@@ -377,6 +494,17 @@ public class AnalyticsTest {
         verify(analyticsListener, never()).onBeforeSending(any(EventLog.class));
         verify(analyticsListener, never()).onSendingSucceeded(any(EventLog.class));
         verify(analyticsListener, never()).onSendingFailed(any(EventLog.class), any(Exception.class));
+    }
+
+    /**
+     * Generates string of arbitrary length with contents composed of single character.
+     *
+     * @param length length of the resulting string.
+     * @param charToFill character to compose string of.
+     * @return <code>String<code/> of desired length.
+     */
+    private String generateString(int length, char charToFill) {
+        return new String(new char[length]).replace('\0', charToFill);
     }
 
     /**
