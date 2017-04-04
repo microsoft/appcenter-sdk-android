@@ -15,4 +15,48 @@ subprojects {
             }
         }
     }
+
+    /*
+     * Create a project dependency for assembleDebug and assembleRelease tasks with sub projects.
+     * The project doesn't know about assembleDebug and assembleRelease tasks, this is a workaround
+     * until Build beacon supports custom gradle tasks.
+     */
+    tasks.all {
+        if (it.name.equals('assembleDebug')) {
+            parent.assembleDebug.dependsOn it
+        } else if (it.name.equals('assembleRelease')) {
+            parent.assembleRelease.dependsOn it
+        }
+    }
 }
+
+// Task to copy APKs from sub projects to current project.
+def copyApkToProjectBuildTask(variantName) {
+    subprojects.android.applicationVariants.each { applicationVariant ->
+        applicationVariant.each { variant ->
+            if (variant.name.contains(variantName)) {
+                variant.outputs.outputFile.each { File file ->
+                    copy {
+                        from "${file.absolutePath}"
+                        into "${buildDir}/outputs/apk/"
+                    }
+                }
+            }
+        }
+    }
+}
+
+task assembleDebug() {
+    doLast {
+        copyApkToProjectBuildTask('Debug');
+    }
+}
+
+task assembleRelease() {
+    doLast {
+        copyApkToProjectBuildTask('Release');
+    }
+}
+
+// Empty task with task dependencies.
+task assemble(dependsOn: [assembleDebug, assembleRelease]) {}
