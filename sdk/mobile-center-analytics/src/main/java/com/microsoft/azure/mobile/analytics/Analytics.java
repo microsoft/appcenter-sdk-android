@@ -177,6 +177,10 @@ public class Analytics extends AbstractMobileCenterService {
 
     /**
      * Track a custom page with name and optional properties.
+     * The name parameter can not be null or empty. Maximum allowed length = 256.
+     * The properties parameter maximum item count = 5.
+     * The properties keys/names can not be null or empty, maximum allowed key length = 64.
+     * The properties values can not be null, maximum allowed value length = 64.
      * <p>
      * TODO the backend does not support that service yet, will be public method later.
      *
@@ -202,9 +206,13 @@ public class Analytics extends AbstractMobileCenterService {
 
     /**
      * Track a custom event with name and optional properties.
+     * The name parameter can not be null or empty. Maximum allowed length = 256.
+     * The properties parameter maximum item count = 5.
+     * The properties keys/names can not be null or empty, maximum allowed key length = 64.
+     * The properties values can not be null, maximum allowed value length = 64.
      *
-     * @param name       An event name. name length must be in 1 - 256 range
-     * @param properties Optional properties. M
+     * @param name       An event name.
+     * @param properties Optional properties.
      */
     @SuppressWarnings("WeakerAccess")
     public static void trackEvent(String name, Map<String, String> properties) {
@@ -396,6 +404,8 @@ public class Analytics extends AbstractMobileCenterService {
     }
 
     /**
+     * Validates name.
+     *
      * @param name log name to validate.
      * @return <code>true<code/> if validation succeeds, otherwise <code>false</code>.
      */
@@ -413,6 +423,8 @@ public class Analytics extends AbstractMobileCenterService {
     }
 
     /**
+     * Validates properties.
+     *
      * @param properties properties collection to validate.
      * @return valid properties collection with maximum size of 5
      */
