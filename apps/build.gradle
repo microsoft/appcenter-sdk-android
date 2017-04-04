@@ -30,11 +30,14 @@ subprojects {
     }
 }
 
-// Task to copy APKs from sub projects to current project.
+// Task to copy an APK from sub projects to current project.
 def copyApkToProjectBuildTask(variantName) {
     subprojects.android.applicationVariants.each { applicationVariant ->
         applicationVariant.each { variant ->
-            if (variant.name.contains(variantName)) {
+
+            // Copy only one APK to current project
+            if (variant.name.contains(variantName) && variant.name.contains('projectDependency')) {
+                println "${variant.name}"
                 variant.outputs.outputFile.each { File file ->
                     copy {
                         from "${file.absolutePath}"
