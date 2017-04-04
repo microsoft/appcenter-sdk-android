@@ -171,7 +171,7 @@ public class Analytics extends AbstractMobileCenterService {
      * @param name A page name.
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
-    static void trackPage(@NonNull String name) {
+    static void trackPage(String name) {
         trackPage(name, null);
     }
 
@@ -183,7 +183,7 @@ public class Analytics extends AbstractMobileCenterService {
      * @param name       A page name.
      * @param properties Optional properties.
      */
-    static void trackPage(@NonNull String name, @Nullable Map<String, String> properties) {
+    static void trackPage(String name, Map<String, String> properties) {
         getInstance().queuePage(name, properties);
     }
 
@@ -193,7 +193,7 @@ public class Analytics extends AbstractMobileCenterService {
      * @param name An event name.
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
-    public static void trackEvent(@NonNull String name) {
+    public static void trackEvent(String name) {
         trackEvent(name, null);
     }
 
@@ -204,7 +204,7 @@ public class Analytics extends AbstractMobileCenterService {
      * @param properties Optional properties.
      */
     @SuppressWarnings("WeakerAccess")
-    public static void trackEvent(@NonNull String name, @Nullable Map<String, String> properties) {
+    public static void trackEvent(String name, Map<String, String> properties) {
         getInstance().queueEvent(name, properties);
     }
 
@@ -343,7 +343,7 @@ public class Analytics extends AbstractMobileCenterService {
      * @param name       page name.
      * @param properties optional properties.
      */
-    private synchronized void queuePage(@NonNull String name, @Nullable Map<String, String> properties) {
+    private synchronized void queuePage(String name, Map<String, String> properties) {
         if (isInactive())
             return;
         PageLog pageLog = new PageLog();
@@ -358,7 +358,7 @@ public class Analytics extends AbstractMobileCenterService {
      * @param name       event name.
      * @param properties optional properties.
      */
-    private synchronized void queueEvent(@NonNull String name, @Nullable Map<String, String> properties) {
+    private synchronized void queueEvent(String name, Map<String, String> properties) {
         if (isInactive())
             return;
         EventLog eventLog = new EventLog();
