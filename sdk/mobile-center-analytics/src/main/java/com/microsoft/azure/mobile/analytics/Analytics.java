@@ -140,7 +140,7 @@ public class Analytics extends AbstractMobileCenterService {
 
     /**
      * Check if automatic page tracking is enabled.
-     *
+     * <p>
      * TODO the backend does not support that service yet, will be public method later.
      *
      * @return true if automatic page tracking is enabled. false otherwise.
@@ -154,7 +154,7 @@ public class Analytics extends AbstractMobileCenterService {
      * If enabled (which is the default), automatic page tracking will call {@link #trackPage(String, Map)}
      * automatically every time an activity is resumed, with a generated name and no properties.
      * Call this method with false if you want to track pages yourself in your application.
-     *
+     * <p>
      * TODO the backend does not support that service yet, will be public method later.
      *
      * @param autoPageTrackingEnabled true to let the service track pages automatically, false otherwise (default state is true).
@@ -165,7 +165,7 @@ public class Analytics extends AbstractMobileCenterService {
 
     /**
      * Track a custom page with name.
-     *
+     * <p>
      * TODO the backend does not support that service yet, will be public method later.
      *
      * @param name A page name.
@@ -177,14 +177,17 @@ public class Analytics extends AbstractMobileCenterService {
 
     /**
      * Track a custom page with name and optional properties.
-     *
+     * <p>
      * TODO the backend does not support that service yet, will be public method later.
      *
      * @param name       A page name.
      * @param properties Optional properties.
      */
     static void trackPage(String name, Map<String, String> properties) {
-        getInstance().queuePage(name, properties);
+        if (validateName(name)) {
+            Map<String, String> validatedProperties = validateProperties(properties);
+            getInstance().queuePage(name, validatedProperties);
+        }
     }
 
     /**
@@ -200,12 +203,15 @@ public class Analytics extends AbstractMobileCenterService {
     /**
      * Track a custom event with name and optional properties.
      *
-     * @param name       An event name.
-     * @param properties Optional properties.
+     * @param name       An event name. name length must be in 1 - 256 range
+     * @param properties Optional properties. M
      */
     @SuppressWarnings("WeakerAccess")
     public static void trackEvent(String name, Map<String, String> properties) {
-        getInstance().queueEvent(name, properties);
+        if (validateName(name)) {
+            Map<String, String> validatedProperties = validateProperties(properties);
+            getInstance().queueEvent(name, validatedProperties);
+        }
     }
 
     /**
@@ -385,9 +391,61 @@ public class Analytics extends AbstractMobileCenterService {
     /**
      * Implements {@link #setListener(AnalyticsListener)}.
      */
-    private synchronized void setInstanceListener(AnalyticsListener listener)
-    {
+    private synchronized void setInstanceListener(AnalyticsListener listener) {
         mAnalyticsListener = listener;
     }
 
+    /**
+     * @param name log name to validate.
+     * @return <code>true<code/> if validation succeeds, otherwise <code>false</code>.
+     */
+    private static boolean validateName(String name) {
+        final int maxNameLength = 256;
+        if (name == null || name.isEmpty()) {
+            MobileCenterLog.error(Analytics.LOG_TAG, "Name cannot be null or empty.");
+            return false;
+        }
+        if (name.length() > maxNameLength) {
+            MobileCenterLog.error(Analytics.LOG_TAG, "Name length cannot be longer then " + maxNameLength + " characters.");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * @param properties properties collection to validate.
+     * @return valid properties collection with maximum size of 5
+     */
+    private static Map<String, String> validateProperties(Map<String, String> properties) {
+        if (properties == null)
+            return null;
+        final int maxPropertiesCount = 5;
+        final int maxPropertyItemLength = 64;
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<String, String> property : properties.entrySet()) {
+            if (property.getKey() == null || property.getKey().isEmpty()) {
+                MobileCenterLog.error(Analytics.LOG_TAG, "Property key cannot be null or empty. Property will be skipped.");
+                continue;
+            }
+            if (property.getKey().length() > maxPropertyItemLength) {
+                MobileCenterLog.error(Analytics.LOG_TAG, "Property key length cannot be longer than " + maxPropertyItemLength + " characters. Property " + property.getKey() + " will be skipped.");
+                continue;
+            }
+            if (property.getValue() == null) {
+                MobileCenterLog.error(Analytics.LOG_TAG, "Property value cannot be null. Property " + property.getKey() + " will be skipped.");
+                continue;
+            }
+            if (property.getValue().length() > maxPropertyItemLength) {
+                MobileCenterLog.error(Analytics.LOG_TAG, "Property value length cannot be longer than " + maxPropertyItemLength + " characters. Property " + property.getKey() + " will be skipped.");
+                continue;
+            }
+            if (result.size() < maxPropertiesCount) {
+                result.put(property.getKey(), property.getValue());
+            } else {
+                MobileCenterLog.error(Analytics.LOG_TAG, "Properties cannot contain more than " + maxPropertiesCount + " items. Skipping other properties.");
+                break;
+            }
+        }
+        return result;
+    }
 }
