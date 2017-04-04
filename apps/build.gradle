@@ -22,9 +22,9 @@ subprojects {
      * until Build beacon supports custom gradle tasks.
      */
     tasks.all {
-        if (it.name.equals('assembleDebug')) {
+        if (it.name == 'assembleDebug') {
             parent.assembleDebug.dependsOn it
-        } else if (it.name.equals('assembleRelease')) {
+        } else if (it.name == 'assembleRelease') {
             parent.assembleRelease.dependsOn it
         }
     }
@@ -37,7 +37,6 @@ def copyApkToProjectBuildTask(variantName) {
 
             // Copy only one APK to current project
             if (variant.name.contains(variantName) && variant.name.contains('projectDependency')) {
-                println "${variant.name}"
                 variant.outputs.outputFile.each { File file ->
                     copy {
                         from "${file.absolutePath}"
