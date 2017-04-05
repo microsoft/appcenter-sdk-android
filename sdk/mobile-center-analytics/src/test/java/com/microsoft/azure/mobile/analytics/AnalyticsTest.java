@@ -237,7 +237,7 @@ public class AnalyticsTest {
         Analytics.trackEvent(generateString(256, '*'), null);
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
         reset(channel);
-        Analytics.trackEvent(" ", new HashMap<String, String>() {{
+        Analytics.trackEvent("eventName", new HashMap<String, String>() {{
             put(null, null);
             put("", null);
             put(generateString(65, '*'), null);
@@ -257,7 +257,7 @@ public class AnalyticsTest {
         }), anyString());
         reset(channel);
         final String validMapItem = "valid";
-        Analytics.trackEvent(" ", new HashMap<String, String>() {{
+        Analytics.trackEvent("eventName", new HashMap<String, String>() {{
             for (int i = 0; i < 10; i++) {
                 put(validMapItem + i, validMapItem);
             }
@@ -295,7 +295,7 @@ public class AnalyticsTest {
         Analytics.trackPage(generateString(256, '*'), null);
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
         reset(channel);
-        Analytics.trackPage(" ", new HashMap<String, String>() {{
+        Analytics.trackPage("pageName", new HashMap<String, String>() {{
             put(null, null);
             put("", null);
             put(generateString(65, '*'), null);
@@ -315,7 +315,7 @@ public class AnalyticsTest {
         }), anyString());
         reset(channel);
         final String validMapItem = "valid";
-        Analytics.trackPage(" ", new HashMap<String, String>() {{
+        Analytics.trackPage("pageName", new HashMap<String, String>() {{
             for (int i = 0; i < 10; i++) {
                 put(validMapItem + i, validMapItem);
             }
