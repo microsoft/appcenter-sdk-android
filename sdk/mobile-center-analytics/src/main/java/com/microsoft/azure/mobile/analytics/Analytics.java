@@ -408,8 +408,9 @@ public class Analytics extends AbstractMobileCenterService {
     /**
      * Validates name.
      *
-     * @param name log name to validate.
-     * @return <code>true<code/> if validation succeeds, otherwise <code>false</code>.
+     * @param name Log name to validate.
+     * @param logType Log type.
+     * @return <code>true</code> if validation succeeds, otherwise <code>false</code>.
      */
     private static boolean validateName(String name, String logType) {
         final int maxNameLength = 256;
@@ -427,8 +428,10 @@ public class Analytics extends AbstractMobileCenterService {
     /**
      * Validates properties.
      *
-     * @param properties properties collection to validate.
-     * @return valid properties collection with maximum size of 5
+     * @param properties Properties collection to validate.
+     * @param logName Log name.
+     * @param logType Log type.
+     * @return valid properties collection with maximum size of 5.
      */
     private static Map<String, String> validateProperties(Map<String, String> properties, String logName, String logType) {
         if (properties == null)
@@ -438,6 +441,11 @@ public class Analytics extends AbstractMobileCenterService {
         final int maxPropertyItemLength = 64;
         Map<String, String> result = new HashMap<>();
         for (Map.Entry<String, String> property : properties.entrySet()) {
+            if (result.size() >= maxPropertiesCount) {
+                message = String.format("%s '%s' : properties cannot contain more than %s items. Skipping other properties.", logType, logName, maxPropertiesCount);
+                MobileCenterLog.error(Analytics.LOG_TAG, message);
+                break;
+            }
             if (property.getKey() == null || property.getKey().isEmpty()) {
                 message = String.format("%s '%s' : a property key cannot be null or empty. Property will be skipped.", logType, logName);
                 MobileCenterLog.error(Analytics.LOG_TAG, message);
@@ -458,13 +466,7 @@ public class Analytics extends AbstractMobileCenterService {
                 MobileCenterLog.error(Analytics.LOG_TAG, message);
                 continue;
             }
-            if (result.size() < maxPropertiesCount) {
-                result.put(property.getKey(), property.getValue());
-            } else {
-                message = String.format("%s '%s' : properties cannot contain more than %s items. Skipping other properties.", logType, logName, maxPropertiesCount);
-                MobileCenterLog.error(Analytics.LOG_TAG, message);
-                break;
-            }
+            result.put(property.getKey(), property.getValue());
         }
         return result;
     }

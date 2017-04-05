@@ -501,7 +501,7 @@ public class AnalyticsTest {
      *
      * @param length length of the resulting string.
      * @param charToFill character to compose string of.
-     * @return <code>String<code/> of desired length.
+     * @return <code>String</code> of desired length.
      */
     private String generateString(int length, char charToFill) {
         return new String(new char[length]).replace('\0', charToFill);
