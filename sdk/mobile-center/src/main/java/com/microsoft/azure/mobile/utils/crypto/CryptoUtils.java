@@ -464,6 +464,9 @@ public class CryptoUtils {
 
         /**
          * Init.
+         *
+         * @param decryptedData decrypted data.
+         * @param newEncryptedData new encrypted data that should be replace previously encrypted data.
          */
         @VisibleForTesting
         public DecryptedData(String decryptedData, String newEncryptedData) {

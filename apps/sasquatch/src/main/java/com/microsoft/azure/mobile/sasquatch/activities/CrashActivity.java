@@ -112,6 +112,13 @@ public class CrashActivity extends AppCompatActivity {
                 public void run() {
                     startActivity(new Intent(CrashActivity.this, CrashSubActivity.class).putExtra(INTENT_EXTRA_CRASH_TYPE, 0));
                 }
+            }),
+            new Crash(R.string.title_super_not_called_exception4, R.string.description_super_not_called_exception4, new Runnable() {
+
+                @Override
+                public void run() {
+                    startActivity(new Intent(CrashActivity.this, CrashSubActivity2.class));
+                }
             })
     );
 
