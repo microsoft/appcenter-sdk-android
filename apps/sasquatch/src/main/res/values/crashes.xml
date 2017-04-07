@@ -21,6 +21,8 @@
     <string name="description_super_not_called_exception2">Not calling super method in onDestroy()</string>
     <string name="title_super_not_called_exception3">SuperNotCalledException 3</string>
     <string name="description_super_not_called_exception3">Not calling super method in onResume() in sub activity</string>
+    <string name="title_super_not_called_exception4">SuperNotCalledException 4</string>
+    <string name="description_super_not_called_exception4">Not calling super method in onResume() in another sub activity</string>
     <string name="crash_confirmation_dialog_title">Unexpected crash found</string>
     <string name="crash_confirmation_dialog_message">Would you like to send an anonymous report so we can fix the problem?</string>
     <string name="crash_confirmation_dialog_not_send_button">Don\'t Send</string>

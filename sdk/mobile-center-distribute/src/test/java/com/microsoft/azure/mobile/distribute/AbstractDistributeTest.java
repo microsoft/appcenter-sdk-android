@@ -119,6 +119,7 @@ public class AbstractDistributeTest {
         when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
 
         /* Mock package manager. */
+        when(mContext.getApplicationContext()).thenReturn(mContext);
         when(mContext.getPackageName()).thenReturn("com.contoso");
         when(mActivity.getPackageName()).thenReturn("com.contoso");
         when(mContext.getApplicationInfo()).thenReturn(mApplicationInfo);
@@ -126,6 +127,7 @@ public class AbstractDistributeTest {
         when(mActivity.getPackageManager()).thenReturn(mPackageManager);
         PackageInfo packageInfo = mock(PackageInfo.class);
         when(mPackageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);
+        Whitebox.setInternalState(packageInfo, "packageName", "com.contoso");
         Whitebox.setInternalState(packageInfo, "versionName", "1.2.3");
         Whitebox.setInternalState(packageInfo, "versionCode", 6);
 

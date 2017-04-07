@@ -42,3 +42,6 @@ captures/
 
 # Mac files
 .DS_Store
+
+# Google credentials files
+google-services.json
