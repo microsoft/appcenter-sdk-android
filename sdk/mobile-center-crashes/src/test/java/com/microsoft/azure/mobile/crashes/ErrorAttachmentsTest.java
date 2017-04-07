@@ -74,12 +74,12 @@ public class ErrorAttachmentsTest {
             assertFalse(result);
         }
         {
-            when(emptyLog.getFileName()).thenReturn("2");
+            when(emptyLog.getData()).thenReturn("3");
             result = ErrorAttachments.validateErrorAttachmentLog(emptyLog);
-            assertFalse(result);
+            assertTrue(result);
         }
         {
-            when(emptyLog.getData()).thenReturn("3");
+            when(emptyLog.getFileName()).thenReturn(null);
             result = ErrorAttachments.validateErrorAttachmentLog(emptyLog);
             assertTrue(result);
         }

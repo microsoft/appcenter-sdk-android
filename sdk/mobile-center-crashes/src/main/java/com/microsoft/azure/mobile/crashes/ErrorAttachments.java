@@ -90,7 +90,7 @@ public final class ErrorAttachments {
             return false;
         }
         if (log.getId() == null || log.getErrorId() == null || log.getContentType() == null ||
-                log.getFileName() == null || log.getData() == null) {
+                log.getData() == null) {
             MobileCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
             return false;
         }
