@@ -2,10 +2,8 @@ package com.microsoft.azure.mobile.distribute;
 
 import android.app.Activity;
 import android.app.Notification;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
@@ -90,18 +88,19 @@ class DistributeUtils {
     }
 
     @NonNull
-    static String computeReleaseHash(@NonNull Context context, @NonNull PackageInfo packageInfo) {
-        return HashUtils.sha256(context.getPackageName() + ":" + packageInfo.versionName + ":" + packageInfo.versionCode);
+    static String computeReleaseHash(@NonNull PackageInfo packageInfo) {
+        return HashUtils.sha256(packageInfo.packageName + ":" + packageInfo.versionName + ":" + packageInfo.versionCode);
     }
 
     /**
      * Update setup using browser.
      *
-     * @param activity   activity from which to start browser.
-     * @param installUrl base install site URL.
-     * @param appSecret  application secret.
+     * @param activity    activity from which to start browser.
+     * @param installUrl  base install site URL.
+     * @param appSecret   application secret.
+     * @param packageInfo package info.
      */
-    static void updateSetupUsingBrowser(Activity activity, String installUrl, String appSecret) {
+    static void updateSetupUsingBrowser(Activity activity, String installUrl, String appSecret, PackageInfo packageInfo) {
 
         /*
          * If network is disconnected, browser will fail so wait.
@@ -115,15 +114,7 @@ class DistributeUtils {
         }
 
         /* Compute hash. */
-        String releaseHash;
-        try {
-            PackageManager packageManager = activity.getPackageManager();
-            PackageInfo packageInfo = packageManager.getPackageInfo(activity.getPackageName(), 0);
-            releaseHash = computeReleaseHash(activity, packageInfo);
-        } catch (PackageManager.NameNotFoundException e) {
-            MobileCenterLog.error(LOG_TAG, "Could not get package info", e);
-            return;
-        }
+        String releaseHash = computeReleaseHash(packageInfo);
 
         /* Generate request identifier. */
         String requestId = UUIDUtils.randomUUID().toString();

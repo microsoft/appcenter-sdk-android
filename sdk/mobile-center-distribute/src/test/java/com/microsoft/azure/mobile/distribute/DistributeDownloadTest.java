@@ -755,19 +755,4 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         /* Verify new release checked (for example what we installed was something else than the upgrade. */
         verify(mDialog, times(2)).show();
     }
-
-    @Test
-    @SuppressWarnings("deprecation")
-    public void failToCheckLastUpdateTimeOnRestart() throws PackageManager.NameNotFoundException {
-
-        /* Make the package manager fails on restart after download started. */
-        waitDownloadTask();
-        when(mPackageManager.getPackageInfo(mContext.getPackageName(), 0)).thenThrow(new PackageManager.NameNotFoundException());
-        restartProcessAndSdk();
-        Distribute.getInstance().onActivityResumed(mActivity);
-
-        /* Verify workflow completed on failure. */
-        verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-    }
 }

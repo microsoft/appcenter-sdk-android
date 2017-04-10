@@ -46,6 +46,7 @@ import static com.microsoft.azure.mobile.utils.storage.StorageHelper.Preferences
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
@@ -111,6 +112,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     @Test
     public void doNothingIfInstallComesFromStore() throws Exception {
         when(InstallerUtils.isInstalledFromAppStore(anyString(), any(Context.class))).thenReturn(true);
+        testDistributeInactive();
+    }
+
+    @Test
+    @SuppressWarnings("WrongConstant")
+    public void doNothingIfGetPackageInfoFails() throws Exception {
+        when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenThrow(new PackageManager.NameNotFoundException());
         testDistributeInactive();
     }
 

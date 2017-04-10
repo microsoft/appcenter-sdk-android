@@ -1,6 +1,7 @@
 package com.microsoft.azure.mobile.crashes.ingestion.models;
 
 import com.microsoft.azure.mobile.ingestion.models.AbstractLog;
+import com.microsoft.azure.mobile.ingestion.models.json.JSONUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -151,18 +152,18 @@ public class ErrorAttachmentLog extends AbstractLog {
         setId(UUID.fromString(object.getString(ID)));
         setErrorId(UUID.fromString(object.getString(ERROR_ID)));
         setContentType(object.getString(CONTENT_TYPE));
-        setFileName(object.getString(FILE_NAME));
+        setFileName(object.optString(FILE_NAME, null));
         setData(object.getString(DATA));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
         super.write(writer);
-        writer.key(ID).value(getId());
-        writer.key(ERROR_ID).value(getErrorId());
-        writer.key(CONTENT_TYPE).value(getContentType());
-        writer.key(FILE_NAME).value(getFileName());
-        writer.key(DATA).value(getData());
+        JSONUtils.write(writer, ID, getId());
+        JSONUtils.write(writer, ERROR_ID, getErrorId());
+        JSONUtils.write(writer, CONTENT_TYPE, getContentType());
+        JSONUtils.write(writer, FILE_NAME, getFileName());
+        JSONUtils.write(writer, DATA, getData());
     }
 
     @Override

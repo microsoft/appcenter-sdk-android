@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
@@ -48,6 +49,16 @@ public class ErrorAttachmentsTest {
     }
 
     @Test
+    public void attachmentWithoutFilename() {
+        String text = "Hello World!";
+        ErrorAttachmentLog attachment = ErrorAttachments.attachmentWithText(text, null);
+        assertNotNull(attachment);
+        assertEquals(text, attachment.getData());
+        assertNull(attachment.getFileName());
+        assertEquals(ErrorAttachments.CONTENT_TYPE_TEXT_PLAIN, attachment.getContentType());
+    }
+
+    @Test
     public void validateErrorAttachmentLog(){
         ErrorAttachmentLog emptyLog = null;
         boolean result = ErrorAttachments.validateErrorAttachmentLog(emptyLog);
@@ -74,12 +85,12 @@ public class ErrorAttachmentsTest {
             assertFalse(result);
         }
         {
-            when(emptyLog.getFileName()).thenReturn("2");
+            when(emptyLog.getData()).thenReturn("3");
             result = ErrorAttachments.validateErrorAttachmentLog(emptyLog);
-            assertFalse(result);
+            assertTrue(result);
         }
         {
-            when(emptyLog.getData()).thenReturn("3");
+            when(emptyLog.getFileName()).thenReturn(null);
             result = ErrorAttachments.validateErrorAttachmentLog(emptyLog);
             assertTrue(result);
         }

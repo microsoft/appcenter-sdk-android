@@ -43,6 +43,7 @@ import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFEREN
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
@@ -321,5 +322,14 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
     @After
     public void tearDown() throws Exception {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
+        checkSemaphoreSanity(mCheckDownloadBeforeSemaphore);
+        checkSemaphoreSanity(mCheckDownloadAfterSemaphore);
+        checkSemaphoreSanity(mDownloadBeforeSemaphore);
+        checkSemaphoreSanity(mDownloadAfterSemaphore);
+    }
+
+    void checkSemaphoreSanity(Semaphore semaphore) {
+        assertEquals(0, semaphore.availablePermits());
+        assertEquals(0, semaphore.getQueueLength());
     }
 }
