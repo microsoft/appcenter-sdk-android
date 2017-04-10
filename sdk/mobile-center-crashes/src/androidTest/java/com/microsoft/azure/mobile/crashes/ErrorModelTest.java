@@ -465,7 +465,7 @@ public class ErrorModelTest {
     }
 
     @Test
-    public void errorAttachmentLog() throws JSONException{
+    public void errorAttachmentLog() throws JSONException {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(ErrorAttachmentLog.TYPE, ErrorAttachmentLogFactory.getInstance());
 
@@ -535,6 +535,11 @@ public class ErrorModelTest {
 
             attachmentLog2.setSid(attachmentLog1.getSid());
             checkEquals(attachmentLog1, attachmentLog2);
+        }
+        {
+
+            /* Check serialization without filename. */
+            attachmentLog2.setFileName(null);
         }
         {
             checkSerialization(attachmentLog1, serializer);

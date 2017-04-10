@@ -152,7 +152,7 @@ public class ErrorAttachmentLog extends AbstractLog {
         setId(UUID.fromString(object.getString(ID)));
         setErrorId(UUID.fromString(object.getString(ERROR_ID)));
         setContentType(object.getString(CONTENT_TYPE));
-        setFileName(object.getString(FILE_NAME));
+        setFileName(object.optString(FILE_NAME, null));
         setData(object.getString(DATA));
     }
 
