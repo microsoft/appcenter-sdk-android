@@ -376,30 +376,10 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     /**
-     * Implements {@link #setInstallUrl(String)}.
-     */
-    private synchronized void setInstanceInstallUrl(String installUrl) {
-        mInstallUrl = installUrl;
-    }
-
-    /**
-     * Implements {@link #setApiUrl(String)}}.
-     */
-    private synchronized void setInstanceApiUrl(String apiUrl) {
-        mApiUrl = apiUrl;
-    }
-
-    /**
-     * Implements {@link #setListener(DistributeListener)}.
-     */
-    private synchronized void setInstanceListener(DistributeListener listener) {
-        mListener = listener;
-    }
-
-    /**
      * Implements {@link #notifyUserUpdateAction(int)}.
      */
-    private synchronized void handleUserUpdateAction(int updateAction) {
+    @VisibleForTesting
+    synchronized void handleUserUpdateAction(int updateAction) {
         if (!isEnabled()) {
             MobileCenterLog.error(LOG_TAG, "Distribute is disabled");
             return;
@@ -437,6 +417,27 @@ public class Distribute extends AbstractMobileCenterService {
             default:
                 MobileCenterLog.error(LOG_TAG, "Invalid update action: " + updateAction);
         }
+    }
+
+    /**
+     * Implements {@link #setInstallUrl(String)}.
+     */
+    private synchronized void setInstanceInstallUrl(String installUrl) {
+        mInstallUrl = installUrl;
+    }
+
+    /**
+     * Implements {@link #setApiUrl(String)}}.
+     */
+    private synchronized void setInstanceApiUrl(String apiUrl) {
+        mApiUrl = apiUrl;
+    }
+
+    /**
+     * Implements {@link #setListener(DistributeListener)}.
+     */
+    private synchronized void setInstanceListener(DistributeListener listener) {
+        mListener = listener;
     }
 
     /**
