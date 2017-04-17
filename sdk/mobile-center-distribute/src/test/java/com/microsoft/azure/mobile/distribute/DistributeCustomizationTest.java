@@ -8,7 +8,6 @@ import com.microsoft.azure.mobile.http.HttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
-import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
@@ -19,9 +18,9 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_IGNORED_RELEASE_ID;
-import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -36,36 +35,20 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({DistributeUtils.class, AsyncTaskUtils.class})
+@PrepareForTest(DistributeUtils.class)
 public class DistributeCustomizationTest extends AbstractDistributeTest {
 
     @Test
     public void distributeListener() throws Exception {
 
-        /* Mock http call. */
-        PowerMockito.when(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
-                return mock(ServiceCall.class);
-            }
-        });
-
-        /* Mock data model. */
-        mockStatic(ReleaseDetails.class);
-        ReleaseDetails details = mock(ReleaseDetails.class);
-        when(details.getId()).thenReturn(1);
-        when(details.getVersion()).thenReturn(10);
-        when(ReleaseDetails.parse(anyString())).thenReturn(details);
+        /* Mock. */
+        ReleaseDetails details = mockForCustomizationTest(false);
 
         /* Start Distribute service. */
         Distribute.unsetInstance();
@@ -104,28 +87,9 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
     @Test
     public void handleUserUpdateActionNotProceeded() throws Exception {
 
-        /* Mock http call. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
-                return mock(ServiceCall.class);
-            }
-        });
-
-        /* Mock data model. */
-        mockStatic(ReleaseDetails.class);
-        ReleaseDetails details = mock(ReleaseDetails.class);
-        when(details.getId()).thenReturn(1);
-        when(details.getVersion()).thenReturn(10);
-        when(ReleaseDetails.parse(anyString())).thenReturn(details);
-
-        /* Mock others. */
+        /* Mock. */
+        mockForCustomizationTest(false);
         mockStatic(DistributeUtils.class);
-        when(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         Distribute.unsetInstance();
         Distribute distribute = spy(Distribute.getInstance());
         doNothing().when(distribute).completeWorkflow();
@@ -148,7 +112,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Call handleUserUpdateAction. */
         distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
 
-        /* Verify the user action is not processed. */
+        /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
         verifyStatic(times(++mobileCenterLogErrorCounter));
@@ -164,7 +128,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Call handleUserUpdateAction. */
         distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
 
-        /* Verify the user action is not processed. */
+        /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
         verifyStatic(times(++mobileCenterLogErrorCounter));
@@ -176,42 +140,22 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Call handleUserUpdateAction. */
         distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
 
-        /* Verify the user action is not processed. */
+        /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
         verifyStatic(times(++mobileCenterLogErrorCounter));
         MobileCenterLog.error(anyString(), anyString());
 
-        /* Verify again to make sure the user action has not been processed yet. */
+        /* Verify again to make sure the user action has NOT been processed yet. */
         verify(distribute, never()).completeWorkflow();
     }
 
     @Test
-    public void handleUserUpdateActionProceededForOptionalUpdate() throws Exception {
+    public void handleUserUpdateActionPostponeForOptionalUpdate() throws Exception {
 
-        /* Mock http call. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
-                return mock(ServiceCall.class);
-            }
-        });
-
-        /* Mock data model. */
-        mockStatic(ReleaseDetails.class);
-        ReleaseDetails details = mock(ReleaseDetails.class);
-        when(details.getId()).thenReturn(1);
-        when(details.getVersion()).thenReturn(10);
-        when(ReleaseDetails.parse(anyString())).thenReturn(details);
-
-        /* Mock others. */
+        /* Mock. */
+        ReleaseDetails details = mockForCustomizationTest(false);
         mockStatic(DistributeUtils.class);
-        mockStatic(AsyncTaskUtils.class);
-        when(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
@@ -222,7 +166,6 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute.unsetInstance();
         Distribute.setListener(listener);
         Distribute distribute = spy(Distribute.getInstance());
-        doNothing().when(distribute).completeWorkflow();
 
         /* Start Distribute service. */
         distribute.onStarted(mActivity, "", mock(Channel.class));
@@ -233,50 +176,14 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Verify POSTPONE has been processed. */
         verify(distribute).completeWorkflow();
-
-        /* Call handleUserUpdateAction. */
-        distribute.handleUserUpdateAction(UserUpdateAction.IGNORE);
-
-        /* Verify IGNORE has been processed. */
-        verifyStatic();
-        StorageHelper.PreferencesStorage.putInt(PREFERENCE_KEY_IGNORED_RELEASE_ID, details.getId());
-
-        /* Call handleUserUpdateAction. */
-        when(InstallerUtils.isUnknownSourcesEnabled(mActivity)).thenReturn(true);
-        distribute.handleUserUpdateAction(UserUpdateAction.DOWNLOAD);
-
-        /* Verify DOWNLOAD has been processed. */
-        verifyStatic();
-        AsyncTaskUtils.execute(anyString(), any(DownloadTask.class));
     }
 
     @Test
-    public void handleUserUpdateActionProceededForMandatoryUpdate() throws Exception {
+    public void handleUserUpdateActionIgnoreForOptionalUpdate() throws Exception {
 
-        /* Mock http call. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
-                return mock(ServiceCall.class);
-            }
-        });
-
-        /* Mock data model. */
-        mockStatic(ReleaseDetails.class);
-        ReleaseDetails details = mock(ReleaseDetails.class);
-        when(details.getId()).thenReturn(1);
-        when(details.getVersion()).thenReturn(10);
-        when(details.isMandatoryUpdate()).thenReturn(true);
-        when(ReleaseDetails.parse(anyString())).thenReturn(details);
-
-        /* Mock others. */
+        /* Mock. */
+        ReleaseDetails details = mockForCustomizationTest(false);
         mockStatic(DistributeUtils.class);
-        mockStatic(AsyncTaskUtils.class);
-        when(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
@@ -287,7 +194,64 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute.unsetInstance();
         Distribute.setListener(listener);
         Distribute distribute = spy(Distribute.getInstance());
-        doNothing().when(distribute).completeWorkflow();
+
+        /* Start Distribute service. */
+        distribute.onStarted(mActivity, "", mock(Channel.class));
+        distribute.onActivityResumed(mActivity);
+
+        /* Call handleUserUpdateAction. */
+        distribute.handleUserUpdateAction(UserUpdateAction.IGNORE);
+
+        /* Verify IGNORE has been processed. */
+        verifyStatic();
+        StorageHelper.PreferencesStorage.putInt(PREFERENCE_KEY_IGNORED_RELEASE_ID, details.getId());
+    }
+
+    @Test
+    public void handleUserUpdateActionDownloadForOptionalUpdate() throws Exception {
+
+        /* Mock. */
+        ReleaseDetails details = mockForCustomizationTest(false);
+        mockStatic(DistributeUtils.class);
+
+        /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
+
+        /* Set Distribute listener so that Distribute doesn't use default update dialog. */
+        DistributeListener listener = mock(DistributeListener.class);
+        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
+        Distribute.unsetInstance();
+        Distribute.setListener(listener);
+        Distribute distribute = spy(Distribute.getInstance());
+
+        /* Start Distribute service. */
+        distribute.onStarted(mActivity, "", mock(Channel.class));
+        distribute.onActivityResumed(mActivity);
+
+        /* Call handleUserUpdateAction. */
+        when(InstallerUtils.isUnknownSourcesEnabled(mActivity)).thenReturn(true);
+        distribute.handleUserUpdateAction(UserUpdateAction.DOWNLOAD);
+
+        /* Verify DOWNLOAD has been processed. */
+        verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
+    }
+
+    @Test
+    public void handleUserUpdateActionPostponeForMandatoryUpdate() throws Exception {
+
+        /* Mock. */
+        ReleaseDetails details = mockForCustomizationTest(true);
+        mockStatic(DistributeUtils.class);
+
+        /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
+
+        /* Set Distribute listener so that Distribute doesn't use default update dialog. */
+        DistributeListener listener = mock(DistributeListener.class);
+        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
+        Distribute.unsetInstance();
+        Distribute.setListener(listener);
+        Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
         distribute.onStarted(mActivity, "", mock(Channel.class));
@@ -296,52 +260,75 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Call handleUserUpdateAction. */
         distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
 
-        /* Verify POSTPONE has not been processed. */
+        /* Verify POSTPONE has NOT been processed. */
         verify(distribute, never()).completeWorkflow();
+    }
+
+    @Test
+    public void handleUserUpdateActionIgnoreForMandatoryUpdate() throws Exception {
+
+        /* Mock. */
+        ReleaseDetails details = mockForCustomizationTest(true);
+        mockStatic(DistributeUtils.class);
+
+        /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
+
+        /* Set Distribute listener so that Distribute doesn't use default update dialog. */
+        DistributeListener listener = mock(DistributeListener.class);
+        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
+        Distribute.unsetInstance();
+        Distribute.setListener(listener);
+        Distribute distribute = spy(Distribute.getInstance());
+
+        /* Start Distribute service. */
+        distribute.onStarted(mActivity, "", mock(Channel.class));
+        distribute.onActivityResumed(mActivity);
 
         /* Call handleUserUpdateAction. */
         distribute.handleUserUpdateAction(UserUpdateAction.IGNORE);
 
-        /* Verify IGNORE has not been processed. */
+        /* Verify IGNORE has NOT been processed. */
         verifyStatic(never());
         StorageHelper.PreferencesStorage.putInt(PREFERENCE_KEY_IGNORED_RELEASE_ID, details.getId());
+    }
+
+    @Test
+    public void handleUserUpdateActionDownloadForMandatoryUpdate() throws Exception {
+
+        /* Mock. */
+        ReleaseDetails details = mockForCustomizationTest(true);
+        mockStatic(DistributeUtils.class);
+
+        /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
+
+        /* Set Distribute listener so that Distribute doesn't use default update dialog. */
+        DistributeListener listener = mock(DistributeListener.class);
+        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
+        Distribute.unsetInstance();
+        Distribute.setListener(listener);
+        Distribute distribute = spy(Distribute.getInstance());
+
+        /* Start Distribute service. */
+        distribute.onStarted(mActivity, "", mock(Channel.class));
+        distribute.onActivityResumed(mActivity);
 
         /* Call handleUserUpdateAction. */
         when(InstallerUtils.isUnknownSourcesEnabled(mActivity)).thenReturn(true);
         distribute.handleUserUpdateAction(UserUpdateAction.DOWNLOAD);
 
         /* Verify DOWNLOAD has been processed. */
-        verifyStatic();
-        AsyncTaskUtils.execute(anyString(), any(DownloadTask.class));
+        verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
     }
 
-
     @Test
+    @SuppressWarnings("ResourceType")
     public void handleUserUpdateActionInvalidUserAction() throws Exception {
 
-        /* Mock http call. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
-                return mock(ServiceCall.class);
-            }
-        });
-
-        /* Mock data model. */
-        mockStatic(ReleaseDetails.class);
-        ReleaseDetails details = mock(ReleaseDetails.class);
-        when(details.getId()).thenReturn(1);
-        when(details.getVersion()).thenReturn(10);
-        when(ReleaseDetails.parse(anyString())).thenReturn(details);
-
-        /* Mock others. */
+        /* Mock. */
+        mockForCustomizationTest(false);
         mockStatic(DistributeUtils.class);
-        mockStatic(AsyncTaskUtils.class);
-        when(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
 
         /* Set Distribute listener so that Distribute doesn't use default update dialog. */
         DistributeListener listener = mock(DistributeListener.class);
@@ -360,8 +347,99 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         int invalidUserAction = 10000;
         Distribute.notifyUserUpdateAction(invalidUserAction);
 
-        /* Verify update has not been processed. */
+        /* Verify update has NOT been processed. */
         verifyStatic();
         MobileCenterLog.error(anyString(), contains(String.valueOf(invalidUserAction)));
+    }
+
+    @Test
+    public void notifyUserUpdateActionPostponeAndThenDownload() throws Exception {
+
+        /* Mock. */
+        mockForCustomizationTest(false);
+        mockToGetRealDownloadState();
+
+        /* Set Distribute listener so that Distribute doesn't use default update dialog. */
+        DistributeListener listener = mock(DistributeListener.class);
+        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
+        Distribute.unsetInstance();
+        Distribute.setListener(listener);
+        Distribute distribute = spy(Distribute.getInstance());
+
+        /* Start Distribute service. */
+        distribute.onStarted(mActivity, "", mock(Channel.class));
+        distribute.onActivityResumed(mActivity);
+
+        /* Call handleUserUpdateAction. */
+        distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
+
+        /* Verify POSTPONE has been processed. */
+        verify(distribute).completeWorkflow();
+
+        /* Call handleUserUpdateAction again. */
+        distribute.handleUserUpdateAction(UserUpdateAction.DOWNLOAD);
+
+        /* Verify DOWNLOAD has NOT been processed. */
+        verify(distribute, never()).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
+    }
+
+    private ReleaseDetails mockForCustomizationTest(boolean mandatory) throws Exception {
+
+        /* Mock http call. */
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                return mock(ServiceCall.class);
+            }
+        });
+
+        /* Mock data model. */
+        mockStatic(ReleaseDetails.class);
+        ReleaseDetails details = mock(ReleaseDetails.class);
+        when(details.getId()).thenReturn(1);
+        when(details.getVersion()).thenReturn(10);
+        when(details.isMandatoryUpdate()).thenReturn(mandatory);
+        when(ReleaseDetails.parse(anyString())).thenReturn(details);
+
+        /* Mock update token. */
+        PowerMockito.when(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+
+        return details;
+    }
+
+    private void mockToGetRealDownloadState() {
+
+        /* Mock PreferenceStorage to simulate real download state. */
+        final int[] currentDownloadState = {DOWNLOAD_STATE_COMPLETED};
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                currentDownloadState[0] = (Integer) invocation.getArguments()[1];
+                return null;
+            }
+        }).when(StorageHelper.PreferencesStorage.class);
+        StorageHelper.PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt());
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                currentDownloadState[0] = DOWNLOAD_STATE_COMPLETED;
+                return null;
+            }
+        }).when(StorageHelper.PreferencesStorage.class);
+        StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        PowerMockito.when(StorageHelper.PreferencesStorage.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt()))
+                .thenAnswer(new Answer<Integer>() {
+
+                    @Override
+                    public Integer answer(InvocationOnMock invocation) throws Throwable {
+                        return currentDownloadState[0];
+                    }
+                });
     }
 }
