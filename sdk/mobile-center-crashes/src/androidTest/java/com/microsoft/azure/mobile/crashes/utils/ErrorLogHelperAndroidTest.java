@@ -70,7 +70,7 @@ public class ErrorLogHelperAndroidTest {
         assertEquals(0, files.length);
 
         /* Generate test files. */
-        long date = System.currentTimeMillis();
+        long date = 1000000;
         for (int i = 0; i < 3; i++) {
             File file = new File(mErrorDirectory, new UUID(0, i).toString() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
             //noinspection ResultOfMethodCallIgnored
