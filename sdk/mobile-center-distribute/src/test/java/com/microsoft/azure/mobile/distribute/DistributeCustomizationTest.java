@@ -85,12 +85,81 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void handleUserUpdateActionNotProceeded() throws Exception {
+    public void handleUserUpdateActionNotProceededWithoutListener() throws Exception {
 
         /* Mock. */
         mockForCustomizationTest(false);
         mockStatic(DistributeUtils.class);
         Distribute.unsetInstance();
+        Distribute distribute = spy(Distribute.getInstance());
+        doNothing().when(distribute).completeWorkflow();
+
+        /* Counters to verify multiple times for specific methods. */
+        int mobileCenterLogErrorCounter = 0;
+        int getStoredDownloadStateCounter = 0;
+
+        /* Start Distribute service. */
+        distribute.onStarted(mActivity, "", mock(Channel.class));
+        distribute.onActivityResumed(mActivity);
+
+        /* Verify the method is called by onActivityCreated. */
+        verifyStatic(times(++getStoredDownloadStateCounter));
+        DistributeUtils.getStoredDownloadState();
+
+        /* Disable the service. */
+        distribute.setInstanceEnabled(false);
+
+        /* Call handleUserUpdateAction. */
+        distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
+
+        /* Verify the user action has NOT been processed. */
+        verifyStatic(times(++getStoredDownloadStateCounter));
+        DistributeUtils.getStoredDownloadState();
+        verifyStatic(times(++mobileCenterLogErrorCounter));
+        MobileCenterLog.error(anyString(), anyString());
+
+        /* Enable the service. */
+        distribute.setInstanceEnabled(true);
+
+        /* Verify the method is called by resumeDistributeWorkflow. */
+        verifyStatic(times(++getStoredDownloadStateCounter));
+        DistributeUtils.getStoredDownloadState();
+
+        /* Call handleUserUpdateAction. */
+        distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
+
+        /* Verify the user action has NOT been processed. */
+        verifyStatic(times(++getStoredDownloadStateCounter));
+        DistributeUtils.getStoredDownloadState();
+        verifyStatic(times(++mobileCenterLogErrorCounter));
+        MobileCenterLog.error(anyString(), anyString());
+
+        /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
+
+        /* Call handleUserUpdateAction. */
+        distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
+
+        /* Verify the user action has NOT been processed. */
+        verifyStatic(times(++getStoredDownloadStateCounter));
+        DistributeUtils.getStoredDownloadState();
+        verifyStatic(times(++mobileCenterLogErrorCounter));
+        MobileCenterLog.error(anyString(), anyString());
+
+        /* Verify again to make sure the user action has NOT been processed yet. */
+        verify(distribute, never()).completeWorkflow();
+    }
+
+    @Test
+    public void handleUserUpdateActionNotProceededWithListener() throws Exception {
+
+        /* Mock. */
+        mockForCustomizationTest(false);
+        DistributeListener listener = mock(DistributeListener.class);
+        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(false);
+        mockStatic(DistributeUtils.class);
+        Distribute.unsetInstance();
+        Distribute.setListener(listener);
         Distribute distribute = spy(Distribute.getInstance());
         doNothing().when(distribute).completeWorkflow();
 
