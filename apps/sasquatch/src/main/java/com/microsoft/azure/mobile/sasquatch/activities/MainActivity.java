@@ -1,6 +1,5 @@
 package com.microsoft.azure.mobile.sasquatch.activities;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -25,12 +24,10 @@ import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.distribute.Distribute;
-import com.microsoft.azure.mobile.distribute.DistributeListener;
-import com.microsoft.azure.mobile.distribute.ReleaseDetails;
-import com.microsoft.azure.mobile.distribute.UserUpdateAction;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
+import com.microsoft.azure.mobile.sasquatch.utils.SasquatchDistributeListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -57,55 +54,11 @@ public class MainActivity extends AppCompatActivity {
         Crashes.setListener(getCrashesListener());
 
         /* Set distribute listener. */
-        Distribute.setListener(new DistributeListener() {
-
-            @Override
-            public boolean onNewReleaseAvailable(Activity activity, ReleaseDetails releaseDetails) {
-                final String releaseNotes = releaseDetails.getReleaseNotes();
-                boolean custom = releaseNotes != null && releaseNotes.toLowerCase().contains("custom");
-                if (custom) {
-                    AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(activity);
-                    dialogBuilder.setTitle("Version " + releaseDetails.getShortVersion() + " available!");
-                    if (TextUtils.isEmpty(releaseNotes))
-                        dialogBuilder.setMessage(com.microsoft.azure.mobile.distribute.R.string.mobile_center_distribute_update_dialog_message);
-                    else
-                        dialogBuilder.setMessage(releaseNotes);
-                    dialogBuilder.setPositiveButton(com.microsoft.azure.mobile.distribute.R.string.mobile_center_distribute_update_dialog_download, new DialogInterface.OnClickListener() {
-
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Distribute.notifyUserUpdateAction(UserUpdateAction.DOWNLOAD);
-                        }
-                    });
-                    if (releaseDetails.isMandatoryUpdate()) {
-                        dialogBuilder.setCancelable(false);
-                    } else {
-                        dialogBuilder.setNegativeButton(com.microsoft.azure.mobile.distribute.R.string.mobile_center_distribute_update_dialog_ignore, new DialogInterface.OnClickListener() {
-
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Distribute.notifyUserUpdateAction(UserUpdateAction.IGNORE);
-                            }
-                        });
-                        dialogBuilder.setNeutralButton(com.microsoft.azure.mobile.distribute.R.string.mobile_center_distribute_update_dialog_postpone, new DialogInterface.OnClickListener() {
-
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Distribute.notifyUserUpdateAction(UserUpdateAction.POSTPONE);
-                            }
-                        });
-                        dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                            @Override
-                            public void onCancel(DialogInterface dialog) {
-                                Distribute.notifyUserUpdateAction(UserUpdateAction.POSTPONE);
-                            }
-                        });
-                    }
-                    dialogBuilder.create().show();
-                }
-                return custom;
-            }
-        });
+        try {
+            Distribute.class.getMethod("setListener", Class.forName("com.microsoft.azure.mobile.distribute.DistributeListener")).invoke(null, new SasquatchDistributeListener());
+        } catch (Exception e) {
+            Log.i(LOG_TAG, "Distribute listener is not yet available in this flavor.");
+        }
 
         /* Set distribute urls. */
         String installUrl = getString(R.string.install_url);
