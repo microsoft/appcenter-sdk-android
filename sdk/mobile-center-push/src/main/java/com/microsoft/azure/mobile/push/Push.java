@@ -5,6 +5,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.channel.Channel;
@@ -47,6 +48,11 @@ public class Push extends AbstractMobileCenterService {
      */
     @VisibleForTesting
     static final String PREFERENCE_KEY_PUSH_TOKEN = PREFERENCE_PREFIX + "push_token";
+
+    /**
+     * Preference key to store if firebase analytics collections is enabled.
+     */
+    static final String PREFERENCE_KEY_ANALYTICS_ENABLED = PREFERENCE_PREFIX + "analytics_enabled";
 
     /**
      * Shared instance.
@@ -108,6 +114,28 @@ public class Push extends AbstractMobileCenterService {
     @SuppressWarnings("WeakerAccess")
     public static void setEnabled(boolean enabled) {
         getInstance().setInstanceEnabled(enabled);
+    }
+
+    /**
+     * Enable firebase analytics collection.
+     *
+     * @param context the context to retrieve FirebaseAnalytics instance.
+     */
+    public static void enableFirebaseAnalytics(@NonNull Context context) {
+        MobileCenterLog.debug(LOG_TAG, "Enabling firebase analytics collection.");
+        setFirebaseAnalyticsEnabled(context, true);
+    }
+
+    /**
+     * Enable or disable firebase analytics collection.
+     *
+     * @param context the context to retrieve FirebaseAnalytics instance.
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     */
+    @SuppressWarnings("MissingPermission")
+    private static void setFirebaseAnalyticsEnabled(@NonNull Context context, boolean enabled) {
+        FirebaseAnalytics.getInstance(context).setAnalyticsCollectionEnabled(enabled);
+        PreferencesStorage.putBoolean(PREFERENCE_KEY_ANALYTICS_ENABLED, enabled);
     }
 
     /**
@@ -185,6 +213,10 @@ public class Push extends AbstractMobileCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         super.onStarted(context, appSecret, channel);
         applyEnabledState(isInstanceEnabled());
+        if (!PreferencesStorage.getBoolean(PREFERENCE_KEY_ANALYTICS_ENABLED)) {
+            MobileCenterLog.debug(LOG_TAG, "Disabling firebase analytics collection by default.");
+            setFirebaseAnalyticsEnabled(context, false);
+        }
     }
 
     @Override
