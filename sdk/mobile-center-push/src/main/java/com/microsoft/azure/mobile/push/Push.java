@@ -52,6 +52,7 @@ public class Push extends AbstractMobileCenterService {
     /**
      * Preference key to store if firebase analytics collections is enabled.
      */
+    @VisibleForTesting
     static final String PREFERENCE_KEY_ANALYTICS_ENABLED = PREFERENCE_PREFIX + "analytics_enabled";
 
     /**
