@@ -19,6 +19,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    defaultConfig {
+        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+    }
 }
 
 dependencies {
@@ -30,4 +33,8 @@ dependencies {
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-analytics:${version}"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-crashes:${version}"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-distribute:${version}"
+
+    /* Force usage of support annotations in the test app. */
+    androidTestCompile "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.2'
 }
