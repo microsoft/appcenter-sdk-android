@@ -128,6 +128,7 @@ public class AbstractDistributeTest {
         when(mActivity.getPackageManager()).thenReturn(mPackageManager);
         PackageInfo packageInfo = mock(PackageInfo.class);
         when(mPackageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);
+        Whitebox.setInternalState(packageInfo, "packageName", "com.contoso");
         Whitebox.setInternalState(packageInfo, "versionName", "1.2.3");
         Whitebox.setInternalState(packageInfo, "versionCode", 6);
 
