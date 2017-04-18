@@ -45,7 +45,7 @@ subprojects {
         testOptions {
             unitTests {
                 all {
-                    jvmArgs = ["-noverify", "-javaagent:${configurations.testCompile.find {it.name.startsWith('powermock-module-javaagent')}}"]
+                    jvmArgs '-noverify'
                 }
                 returnDefaultValues = true
             }
@@ -63,7 +63,6 @@ subprojects {
         testCompile 'org.powermock:powermock-api-mockito:1.6.5'
         testCompile 'org.powermock:powermock-module-junit4:1.6.5'
         testCompile 'org.powermock:powermock-module-junit4-rule-agent:1.6.5'
-        testCompile 'org.powermock:powermock-module-javaagent:1.6.5'
         testCompile project(':test')
 
         androidTestCompile 'com.crittercism.dexmaker:dexmaker-dx:1.4'

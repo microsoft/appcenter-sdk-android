@@ -1,8 +1,20 @@
 project.description = 'This package contains functionalities to recive push notifications for your application.'
 evaluationDependsOn(':sdk')
 
+android {
+    testOptions {
+        unitTests {
+            all {
+                jvmArgs = ["-noverify", "-javaagent:${configurations.testCompile.find {it.name.startsWith('powermock-module-javaagent')}}"]
+            }
+            returnDefaultValues = true
+        }
+    }
+}
+
 dependencies {
     compile project(':sdk:mobile-center')
+    testCompile 'org.powermock:powermock-module-javaagent:1.6.5'
 
     /* Need add explicit core dependency to avoid error on transform classes with dex task */
     compile 'com.google.firebase:firebase-core:10.2.0'
