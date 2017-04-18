@@ -376,30 +376,10 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     /**
-     * Implements {@link #setInstallUrl(String)}.
-     */
-    private synchronized void setInstanceInstallUrl(String installUrl) {
-        mInstallUrl = installUrl;
-    }
-
-    /**
-     * Implements {@link #setApiUrl(String)}}.
-     */
-    private synchronized void setInstanceApiUrl(String apiUrl) {
-        mApiUrl = apiUrl;
-    }
-
-    /**
-     * Implements {@link #setListener(DistributeListener)}.
-     */
-    private synchronized void setInstanceListener(DistributeListener listener) {
-        mListener = listener;
-    }
-
-    /**
      * Implements {@link #notifyUserUpdateAction(int)}.
      */
-    private synchronized void handleUserUpdateAction(int updateAction) {
+    @VisibleForTesting
+    synchronized void handleUserUpdateAction(int updateAction) {
         if (!isEnabled()) {
             MobileCenterLog.error(LOG_TAG, "Distribute is disabled");
             return;
@@ -437,6 +417,50 @@ public class Distribute extends AbstractMobileCenterService {
             default:
                 MobileCenterLog.error(LOG_TAG, "Invalid update action: " + updateAction);
         }
+    }
+
+    /**
+     * Check state did not change and schedule download of the release.
+     *
+     * @param releaseDetails release details.
+     */
+    @VisibleForTesting
+    synchronized void enqueueDownloadOrShowUnknownSourcesDialog(final ReleaseDetails releaseDetails) {
+        if (releaseDetails == mReleaseDetails) {
+            if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
+                MobileCenterLog.debug(LOG_TAG, "Schedule download...");
+                if (releaseDetails.isMandatoryUpdate()) {
+                    showDownloadProgress();
+                }
+                mCheckedDownload = true;
+                mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails));
+            } else {
+                showUnknownSourcesDialog();
+            }
+        } else {
+            showDisabledToast();
+        }
+    }
+
+    /**
+     * Implements {@link #setInstallUrl(String)}.
+     */
+    private synchronized void setInstanceInstallUrl(String installUrl) {
+        mInstallUrl = installUrl;
+    }
+
+    /**
+     * Implements {@link #setApiUrl(String)}}.
+     */
+    private synchronized void setInstanceApiUrl(String apiUrl) {
+        mApiUrl = apiUrl;
+    }
+
+    /**
+     * Implements {@link #setListener(DistributeListener)}.
+     */
+    private synchronized void setInstanceListener(DistributeListener listener) {
+        mListener = listener;
     }
 
     /**
@@ -1073,28 +1097,6 @@ public class Distribute extends AbstractMobileCenterService {
             MobileCenterLog.debug(LOG_TAG, "Ignore release id=" + id);
             PreferencesStorage.putInt(PREFERENCE_KEY_IGNORED_RELEASE_ID, id);
             completeWorkflow();
-        } else {
-            showDisabledToast();
-        }
-    }
-
-    /**
-     * Check state did not change and schedule download of the release.
-     *
-     * @param releaseDetails release details.
-     */
-    private synchronized void enqueueDownloadOrShowUnknownSourcesDialog(final ReleaseDetails releaseDetails) {
-        if (releaseDetails == mReleaseDetails) {
-            if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
-                MobileCenterLog.debug(LOG_TAG, "Schedule download...");
-                if (releaseDetails.isMandatoryUpdate()) {
-                    showDownloadProgress();
-                }
-                mCheckedDownload = true;
-                mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails));
-            } else {
-                showUnknownSourcesDialog();
-            }
         } else {
             showDisabledToast();
         }
