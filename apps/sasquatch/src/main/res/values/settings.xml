@@ -10,8 +10,8 @@
 
     <string name="mobile_center_analytics_state_key">mobile_center_analytics_state_key</string>
     <string name="mobile_center_analytics_state_title">Analytics state</string>
-    <string name="mobile_center_analytics_state_summary_enabled">Analytics are enabled</string>
-    <string name="mobile_center_analytics_state_summary_disabled">Analytics are disabled</string>
+    <string name="mobile_center_analytics_state_summary_enabled">Analytics is enabled</string>
+    <string name="mobile_center_analytics_state_summary_disabled">Analytics is disabled</string>
 
     <string name="mobile_center_auto_page_tracking_key">mobile_center_auto_page_tracking_key</string>
     <string name="mobile_center_auto_page_tracking_title">Analytics automatic page tracking</string>
