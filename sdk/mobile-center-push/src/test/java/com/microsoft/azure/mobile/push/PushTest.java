@@ -2,6 +2,7 @@ package com.microsoft.azure.mobile.push;
 
 import android.content.Context;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.channel.Channel;
@@ -43,14 +44,15 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "MissingPermission"})
 @PrepareForTest({
         Push.class,
         PushInstallationLog.class,
         MobileCenterLog.class,
         MobileCenter.class,
         StorageHelper.PreferencesStorage.class,
-        FirebaseInstanceId.class
+        FirebaseInstanceId.class,
+        FirebaseAnalytics.class
 })
 public class PushTest {
 
@@ -62,6 +64,9 @@ public class PushTest {
 
     @Mock
     FirebaseInstanceId mFirebaseInstanceId;
+
+    @Mock
+    FirebaseAnalytics mFirebaseAnalytics;
 
     @Before
     public void setUp() throws Exception {
@@ -90,6 +95,9 @@ public class PushTest {
         /* Mock Firebase instance. */
         mockStatic(FirebaseInstanceId.class);
         when(FirebaseInstanceId.getInstance()).thenReturn(mFirebaseInstanceId);
+
+        mockStatic(FirebaseAnalytics.class);
+        when(FirebaseAnalytics.getInstance(any(Context.class))).thenReturn(mFirebaseAnalytics);
     }
 
     @Test
