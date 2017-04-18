@@ -1,6 +1,7 @@
 package com.microsoft.azure.mobile.sasquatch.activities;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -53,6 +54,7 @@ public class SettingsActivity extends AppCompatActivity {
             final CheckBoxPreference crashesEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_crashes_state_key));
             final CheckBoxPreference distributeEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_distribute_state_key));
             final CheckBoxPreference pushEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_push_state_key));
+            final CheckBoxPreference firebaseEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_push_firebase_state_key));
             initCheckBoxSetting(R.string.mobile_center_state_key, MobileCenter.isEnabled(), R.string.mobile_center_state_summary_enabled, R.string.mobile_center_state_summary_disabled, new HasEnabled() {
 
                 @Override
@@ -132,6 +134,29 @@ public class SettingsActivity extends AppCompatActivity {
                     public boolean isEnabled() {
                         try {
                             return (boolean) isEnabled.invoke(null);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+
+                final Method enableFirebaseAnalytics = push.getMethod("enableFirebaseAnalytics", Context.class);
+                initCheckBoxSetting(R.string.mobile_center_push_firebase_state_key, false, R.string.mobile_center_push_firebase_summary_enabled, R.string.mobile_center_push_firebase_summary_disabled, new HasEnabled() {
+
+                    @Override
+                    public void setEnabled(boolean enabled) {
+                        try {
+                            enableFirebaseAnalytics.invoke(null, getActivity());
+                            firebaseEnabledPreference.setChecked(true);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    @Override
+                    public boolean isEnabled() {
+                        try {
+                            return false;
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
