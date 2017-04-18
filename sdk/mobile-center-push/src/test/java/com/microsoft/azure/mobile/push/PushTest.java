@@ -53,7 +53,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
         MobileCenter.class,
         StorageHelper.PreferencesStorage.class,
         FirebaseInstanceId.class,
-        FirebaseAnalytics.class
+        FirebaseAnalyticsUtils.class
 })
 public class PushTest {
 
@@ -65,9 +65,6 @@ public class PushTest {
 
     @Mock
     FirebaseInstanceId mFirebaseInstanceId;
-
-    @Mock
-    FirebaseAnalytics mFirebaseAnalytics;
 
     @Before
     public void setUp() throws Exception {
@@ -97,8 +94,7 @@ public class PushTest {
         mockStatic(FirebaseInstanceId.class);
         when(FirebaseInstanceId.getInstance()).thenReturn(mFirebaseInstanceId);
 
-        mockStatic(FirebaseAnalytics.class);
-        when(FirebaseAnalytics.getInstance(any(Context.class))).thenReturn(mFirebaseAnalytics);
+        mockStatic(FirebaseAnalyticsUtils.class);
     }
 
     @Test
@@ -179,11 +175,13 @@ public class PushTest {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
         push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
-        verify(mFirebaseAnalytics).setAnalyticsCollectionEnabled(eq(false));
+        verifyStatic();
+        FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(false));
 
         /* For check enable firebase analytics collection */
         Push.enableFirebaseAnalytics(contextMock);
-        verify(mFirebaseAnalytics).setAnalyticsCollectionEnabled(eq(true));
+        verifyStatic();
+        FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(true));
         verifyStatic(times(1));
         StorageHelper.PreferencesStorage.putBoolean(eq(PREFERENCE_KEY_ANALYTICS_ENABLED), eq(true));
     }
