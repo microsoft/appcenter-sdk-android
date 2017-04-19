@@ -731,6 +731,7 @@ public class Distribute extends AbstractMobileCenterService {
         if (mCheckReleaseCallId == releaseCallId) {
 
             /* Check ignored. */
+            mCheckReleaseApiCall = null;
             int releaseId = releaseDetails.getId();
             if (releaseId == PreferencesStorage.getInt(PREFERENCE_KEY_IGNORED_RELEASE_ID, INVALID_RELEASE_IDENTIFIER)) {
                 MobileCenterLog.debug(LOG_TAG, "This release is ignored id=" + releaseId);
@@ -992,6 +993,17 @@ public class Distribute extends AbstractMobileCenterService {
                 }
                 mCheckedDownload = true;
                 mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails));
+
+                /*
+                 * If we restored a cached dialog, we also started a new check release call.
+                 * We might have time to click on download before the call completes (easy to
+                 * reproduce with network down).
+                 * In that case the download will start and we'll see a new update dialog if we
+                 * don't cancel the call.
+                 */
+                if (mCheckReleaseApiCall != null) {
+                    mCheckReleaseApiCall.cancel();
+                }
             } else {
                 showUnknownSourcesDialog();
             }
