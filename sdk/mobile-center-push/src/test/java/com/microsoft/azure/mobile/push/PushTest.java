@@ -92,7 +92,6 @@ public class PushTest {
         /* Mock Firebase instance. */
         mockStatic(FirebaseInstanceId.class);
         when(FirebaseInstanceId.getInstance()).thenReturn(mFirebaseInstanceId);
-
         mockStatic(FirebaseAnalyticsUtils.class);
     }
 
