@@ -714,48 +714,14 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     public void mandatoryUpdateDialogAndCacheTests() throws Exception {
 
         /* Mock some storage calls. */
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                PowerMockito.when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn((Integer) invocation.getArguments()[1]);
-                return null;
-            }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt());
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                PowerMockito.when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn(DOWNLOAD_STATE_COMPLETED);
-                return null;
-            }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                PowerMockito.when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(invocation.getArguments()[1].toString());
-                return null;
-            }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.putString(eq(PREFERENCE_KEY_RELEASE_DETAILS), anyString());
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                PowerMockito.when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(null);
-                return null;
-            }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
+        mockSomeStorage();
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         final AtomicReference<ServiceCallback> serviceCallbackRef = new AtomicReference<>();
+        final ServiceCall serviceCall = mock(ServiceCall.class);
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
@@ -764,7 +730,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
                 if (serviceCallback instanceof ServiceCallback) {
                     serviceCallbackRef.set((ServiceCallback) serviceCallback);
                 }
-                return mock(ServiceCall.class);
+                return serviceCall;
             }
         });
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
@@ -856,7 +822,107 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Dialog shown only after new call made in that scenario. */
         serviceCallbackRef.get().onCallSucceeded("mock");
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        verify(mDialogBuilder, times(5)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), clickListener.capture());
         verify(mDialogBuilder, times(2)).setOnCancelListener(any(DialogInterface.OnCancelListener.class));
+
+        /* If we finally click on download, no call cancel since already successful. */
+        when(InstallerUtils.isUnknownSourcesEnabled(mContext)).thenReturn(true);
+        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
+        verify(serviceCall, never()).cancel();
+    }
+
+    @Test
+    public void cancelGetReleaseCallIfDownloadingCachedDialogAfterRestart() throws Exception {
+
+        /* Mock some storage calls. */
+        mockSomeStorage();
+
+        /* Mock we already have token. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        final AtomicReference<ServiceCallback> serviceCallbackRef = new AtomicReference<>();
+        final ServiceCall serviceCall = mock(ServiceCall.class);
+        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+                Object serviceCallback = invocation.getArguments()[4];
+                if (serviceCallback instanceof ServiceCallback) {
+                    serviceCallbackRef.set((ServiceCallback) serviceCallback);
+                }
+                return serviceCall;
+            }
+        });
+        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn(4);
+        when(releaseDetails.getVersion()).thenReturn(7);
+        when(releaseDetails.isMandatoryUpdate()).thenReturn(false);
+        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+
+        /* Trigger call. */
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Verify dialog. */
+        serviceCallbackRef.get().onCallSucceeded("mock");
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
+
+        /* Restart offline. */
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Verify dialog restored and call scheduled. */
+        verify(httpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), clickListener.capture());
+
+        /* We are offline and call is scheduled, clicking download must cancel pending call. */
+        when(InstallerUtils.isUnknownSourcesEnabled(mContext)).thenReturn(true);
+        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
+        verify(serviceCall).cancel();
+    }
+
+    /** Mock some storage calls. */
+    private void mockSomeStorage() {
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                PowerMockito.when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn((Integer) invocation.getArguments()[1]);
+                return null;
+            }
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt());
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                PowerMockito.when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn(DOWNLOAD_STATE_COMPLETED);
+                return null;
+            }
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                PowerMockito.when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(invocation.getArguments()[1].toString());
+                return null;
+            }
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_RELEASE_DETAILS), anyString());
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                PowerMockito.when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(null);
+                return null;
+            }
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
     }
 
     @After
