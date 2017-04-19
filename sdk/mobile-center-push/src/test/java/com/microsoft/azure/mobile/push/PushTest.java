@@ -2,7 +2,6 @@ package com.microsoft.azure.mobile.push;
 
 import android.content.Context;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.channel.Channel;
@@ -170,7 +169,7 @@ public class PushTest {
     }
 
     @Test
-    public void verifyEnableFirebaseAnalytics(){
+    public void verifyEnableFirebaseAnalytics() {
         Context contextMock = mock(Context.class);
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
@@ -184,5 +183,16 @@ public class PushTest {
         FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(true));
         verifyStatic(times(1));
         StorageHelper.PreferencesStorage.putBoolean(eq(PREFERENCE_KEY_ANALYTICS_ENABLED), eq(true));
+    }
+
+    @Test
+    public void verifyFirebaseAnalyticsStaysEnabled() {
+        Context contextMock = mock(Context.class);
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        when(StorageHelper.PreferencesStorage.getBoolean(PREFERENCE_KEY_ANALYTICS_ENABLED)).thenReturn(true);
+        push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
+        verifyStatic(never());
+        FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(false));
     }
 }
