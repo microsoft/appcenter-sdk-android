@@ -5,7 +5,6 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.channel.Channel;
