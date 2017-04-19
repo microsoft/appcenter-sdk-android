@@ -135,7 +135,7 @@ public class Push extends AbstractMobileCenterService {
      */
     @SuppressWarnings("MissingPermission")
     private static void setFirebaseAnalyticsEnabled(@NonNull Context context, boolean enabled) {
-        FirebaseAnalytics.getInstance(context).setAnalyticsCollectionEnabled(enabled);
+        FirebaseAnalyticsUtils.setEnabled(context, enabled);
         PreferencesStorage.putBoolean(PREFERENCE_KEY_ANALYTICS_ENABLED, enabled);
     }
 
