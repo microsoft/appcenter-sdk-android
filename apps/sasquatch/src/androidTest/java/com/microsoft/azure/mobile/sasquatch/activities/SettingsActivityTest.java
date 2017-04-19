@@ -46,6 +46,8 @@ public class SettingsActivityTest {
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
+        // TODO Uncomment when push merged.
+        // onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
     }
 
     @Test
@@ -59,6 +61,8 @@ public class SettingsActivityTest {
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isNotChecked()));
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isNotChecked()));
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isNotChecked()));
+        // TODO Uncomment when push merged.
+        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isNotChecked()));
 
         /* Unable enable analytics when mobile center is disabled. */
         onCheckbox(R.string.mobile_center_analytics_state_key).perform(click());
@@ -72,6 +76,11 @@ public class SettingsActivityTest {
         onCheckbox(R.string.mobile_center_distribute_state_key).perform(click());
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isNotChecked()));
 
+        /* Unable enable push when mobile center is disabled. */
+        // TODO Uncomment when push merged.
+        //onCheckbox(R.string.mobile_center_push_state_key).perform(click());
+        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isNotChecked()));
+
         /* Enable mobile center. */
         onCheckbox(R.string.mobile_center_state_key).perform(click());
 
@@ -80,6 +89,8 @@ public class SettingsActivityTest {
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
+        // TODO Uncomment when push merged.
+        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
     }
 
     @Test
@@ -93,6 +104,8 @@ public class SettingsActivityTest {
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isNotChecked()));
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
+        // TODO Uncomment when push merged.
+        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
 
         /* Enable analytics service. */
         onCheckbox(R.string.mobile_center_analytics_state_key).perform(click());
@@ -102,6 +115,8 @@ public class SettingsActivityTest {
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
+        // TODO Uncomment when push merged.
+        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
     }
 
     @Test
@@ -115,6 +130,8 @@ public class SettingsActivityTest {
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isNotChecked()));
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
+        // TODO Uncomment when push merged.
+        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
 
         /* Enable distribute service. */
         onCheckbox(R.string.mobile_center_crashes_state_key).perform(click());
@@ -124,6 +141,8 @@ public class SettingsActivityTest {
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
+        // TODO Uncomment when push merged.
+        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
     }
 
     @Test
@@ -137,6 +156,8 @@ public class SettingsActivityTest {
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isNotChecked()));
+        // TODO Uncomment when push merged.
+        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
 
         /* Enable distribute service. */
         onCheckbox(R.string.mobile_center_distribute_state_key).perform(click());
@@ -146,7 +167,34 @@ public class SettingsActivityTest {
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
+        // TODO Uncomment when push merged.
+        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
     }
+
+    // TODO Uncomment when push merged.
+//    @Test
+//    public void testEnablePush() {
+//
+//        /* Disable push service. */
+//        onCheckbox(R.string.mobile_center_push_state_key).perform(click());
+//
+//        /* Check mobile center and services state. */
+//        onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
+//        onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
+//        onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
+//        onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
+//        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isNotChecked()));
+//
+//        /* Enable push service. */
+//        onCheckbox(R.string.mobile_center_push_state_key).perform(click());
+//
+//        /* Check mobile center and services state. */
+//        onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
+//        onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
+//        onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
+//        onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
+//        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
+//    }
 
     private DataInteraction onCheckbox(int id) {
         return onData(withKey(mContext.getString(id))).onChildView(withId(android.R.id.checkbox));
