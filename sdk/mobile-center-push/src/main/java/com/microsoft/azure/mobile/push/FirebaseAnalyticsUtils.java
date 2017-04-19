@@ -7,8 +7,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 class FirebaseAnalyticsUtils {
 
     @SuppressWarnings("MissingPermission")
-    static void setEnabled(Context context, boolean enabled)
-    {
+    static void setEnabled(Context context, boolean enabled) {
         FirebaseAnalytics.getInstance(context).setAnalyticsCollectionEnabled(enabled);
     }
 }

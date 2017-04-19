@@ -359,7 +359,7 @@ public class SettingsActivity extends AppCompatActivity {
             editor.apply();
         }
 
-        private boolean isFirebaseEnabled(){
+        private boolean isFirebaseEnabled() {
             return MainActivity.sSharedPreferences.getString(FIREBASE_ENABLED_KEY, null) != null;
         }
 
