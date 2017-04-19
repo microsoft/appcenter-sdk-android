@@ -122,6 +122,7 @@ public class Push extends AbstractMobileCenterService {
      *
      * @param context the context to retrieve FirebaseAnalytics instance.
      */
+    @SuppressWarnings("WeakerAccess")
     public static void enableFirebaseAnalytics(@NonNull Context context) {
         MobileCenterLog.debug(LOG_TAG, "Enabling firebase analytics collection.");
         setFirebaseAnalyticsEnabled(context, true);
