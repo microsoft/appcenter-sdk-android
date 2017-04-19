@@ -35,7 +35,7 @@ public class SettingsActivityTest {
         /* Clear preferences. */
         mContext.getSharedPreferences("MobileCenter", Context.MODE_PRIVATE).edit().clear().apply();
 
-        /* Launch activity. */
+        /* Launch main activity and go to setting page. Required to properly initialize. */
         mActivityRule.launchActivity(new Intent());
         onView(withId(R.id.action_settings)).perform(click());
     }
@@ -54,16 +54,28 @@ public class SettingsActivityTest {
         /* Disable mobile center. */
         onCheckbox(R.string.mobile_center_state_key).perform(click());
 
-        /* Check services state. */
+        /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isNotChecked()));
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isNotChecked()));
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isNotChecked()));
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isNotChecked()));
 
+        /* Unable enable analytics when mobile center is disabled. */
+        onCheckbox(R.string.mobile_center_analytics_state_key).perform(click());
+        onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isNotChecked()));
+
+        /* Unable enable crashes when mobile center is disabled. */
+        onCheckbox(R.string.mobile_center_crashes_state_key).perform(click());
+        onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isNotChecked()));
+
+        /* Unable enable distribute when mobile center is disabled. */
+        onCheckbox(R.string.mobile_center_distribute_state_key).perform(click());
+        onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isNotChecked()));
+
         /* Enable mobile center. */
         onCheckbox(R.string.mobile_center_state_key).perform(click());
 
-        /* Check services state. */
+        /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
@@ -73,19 +85,63 @@ public class SettingsActivityTest {
     @Test
     public void testEnableAnalytics() {
 
-        /* Disable mobile center. */
+        /* Disable analytics service. */
         onCheckbox(R.string.mobile_center_analytics_state_key).perform(click());
 
-        /* Check services state. */
+        /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isNotChecked()));
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
 
-        /* Enable mobile center. */
+        /* Enable analytics service. */
         onCheckbox(R.string.mobile_center_analytics_state_key).perform(click());
 
-        /* Check services state. */
+        /* Check mobile center and services state. */
+        onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
+        onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
+        onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
+        onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
+    }
+
+    @Test
+    public void testEnableCrashes() {
+
+        /* Disable distribute service. */
+        onCheckbox(R.string.mobile_center_crashes_state_key).perform(click());
+
+        /* Check mobile center and services state. */
+        onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
+        onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
+        onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isNotChecked()));
+        onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
+
+        /* Enable distribute service. */
+        onCheckbox(R.string.mobile_center_crashes_state_key).perform(click());
+
+        /* Check mobile center and services state. */
+        onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
+        onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
+        onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
+        onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
+    }
+
+    @Test
+    public void testEnableDistribute() {
+
+        /* Disable distribute service. */
+        onCheckbox(R.string.mobile_center_distribute_state_key).perform(click());
+
+        /* Check mobile center and services state. */
+        onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
+        onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
+        onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
+        onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isNotChecked()));
+
+        /* Enable distribute service. */
+        onCheckbox(R.string.mobile_center_distribute_state_key).perform(click());
+
+        /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
