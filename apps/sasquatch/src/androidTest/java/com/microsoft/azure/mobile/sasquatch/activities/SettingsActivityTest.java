@@ -21,6 +21,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.isChecked;
 import static android.support.test.espresso.matcher.ViewMatchers.isNotChecked;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 
+@SuppressWarnings("unused")
 public class SettingsActivityTest {
 
     @Rule
