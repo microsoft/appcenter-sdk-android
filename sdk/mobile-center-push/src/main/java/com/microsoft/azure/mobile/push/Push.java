@@ -49,10 +49,9 @@ public class Push extends AbstractMobileCenterService {
     static final String PREFERENCE_KEY_PUSH_TOKEN = PREFERENCE_PREFIX + "push_token";
 
     /**
-     * Preference key to store if firebase analytics collections is enabled.
+     * Firebase analytics flag.
      */
-    @VisibleForTesting
-    static final String PREFERENCE_KEY_ANALYTICS_ENABLED = PREFERENCE_PREFIX + "analytics_enabled";
+    private static boolean sFirebaseAnalyticsEnabled;
 
     /**
      * Shared instance.
@@ -136,7 +135,7 @@ public class Push extends AbstractMobileCenterService {
     @SuppressWarnings("MissingPermission")
     private static void setFirebaseAnalyticsEnabled(@NonNull Context context, boolean enabled) {
         FirebaseAnalyticsUtils.setEnabled(context, enabled);
-        PreferencesStorage.putBoolean(PREFERENCE_KEY_ANALYTICS_ENABLED, enabled);
+        sFirebaseAnalyticsEnabled = enabled;
     }
 
     /**
@@ -153,7 +152,7 @@ public class Push extends AbstractMobileCenterService {
     /**
      * Handle push token update success.
      *
-     * @param pushToken the push token value
+     * @param pushToken the push token value.
      */
     @VisibleForTesting
     synchronized void onTokenRefresh(@NonNull String pushToken) {
@@ -214,7 +213,7 @@ public class Push extends AbstractMobileCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         super.onStarted(context, appSecret, channel);
         applyEnabledState(isInstanceEnabled());
-        if (!PreferencesStorage.getBoolean(PREFERENCE_KEY_ANALYTICS_ENABLED)) {
+        if (!sFirebaseAnalyticsEnabled) {
             MobileCenterLog.debug(LOG_TAG, "Disabling firebase analytics collection by default.");
             setFirebaseAnalyticsEnabled(context, false);
         }
