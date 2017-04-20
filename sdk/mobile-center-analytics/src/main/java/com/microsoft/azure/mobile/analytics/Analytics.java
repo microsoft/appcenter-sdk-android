@@ -130,11 +130,11 @@ public class Analytics extends AbstractMobileCenterService {
     /**
      * Sets an analytics listener.
      *
-     * @param listener The custom crashes listener.
+     * @param listener The custom analytics listener.
      */
     @SuppressWarnings("WeakerAccess")
     @VisibleForTesting
-    protected static void setListener(AnalyticsListener listener) {
+    static void setListener(AnalyticsListener listener) {
         getInstance().setInstanceListener(listener);
     }
 
