@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
     static final String APP_SECRET_KEY = "appSecret";
     static final String LOG_URL_KEY = "logUrl";
+    static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
     private static final String LOG_TAG = "MobileCenterSasquatch";
     static SharedPreferences sSharedPreferences;
 
@@ -44,6 +45,9 @@ public class MainActivity extends AppCompatActivity {
 
         sSharedPreferences = getSharedPreferences("Sasquatch", Context.MODE_PRIVATE);
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().build());
+
+        /* Remove firebase analytics enabled setting. */
+        sSharedPreferences.edit().remove(FIREBASE_ENABLED_KEY).apply();
 
         /* Set custom log URL if one was configured in settings. */
         String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getString(R.string.log_url));

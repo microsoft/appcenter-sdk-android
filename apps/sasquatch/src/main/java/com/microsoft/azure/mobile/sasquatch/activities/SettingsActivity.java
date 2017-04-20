@@ -31,10 +31,9 @@ import java.util.UUID;
 
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.APP_SECRET_KEY;
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.LOG_URL_KEY;
+import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.FIREBASE_ENABLED_KEY;
 
 public class SettingsActivity extends AppCompatActivity {
-
-    private static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
