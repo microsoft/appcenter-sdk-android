@@ -1,10 +1,15 @@
 package com.microsoft.azure.mobile.sasquatch.activities;
 
 
+import android.support.annotation.StringRes;
+import android.support.test.espresso.ViewInteraction;
 import android.support.test.rule.ActivityTestRule;
+import android.view.View;
 
+import com.microsoft.azure.mobile.Constants;
 import com.microsoft.azure.mobile.sasquatch.R;
 
+import org.hamcrest.Matcher;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -18,9 +23,10 @@ import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withChild;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 @SuppressWarnings("unused")
 public class AnalyticsTest {
@@ -29,28 +35,52 @@ public class AnalyticsTest {
     public ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<>(MainActivity.class);
 
     @Test
-    public void sendEventTest() {
+    public void sendEventTest() throws InterruptedException {
         onView(allOf(
                 withChild(withText(R.string.title_event)),
                 withChild(withText(R.string.description_event))))
                 .perform(click());
         onView(withId(R.id.name)).perform(replaceText("test"), closeSoftKeyboard());
         onView(withText(R.string.send)).perform(click());
-        onView(withText(R.string.description_event))
-                .inRoot(withDecorView(not(is(mActivityTestRule.getActivity().getWindow().getDecorView()))))
+
+        /* Wait trigger interval. */
+        Thread.sleep(Constants.DEFAULT_TRIGGER_INTERVAL + 100);
+
+        /* Check toast. */
+        onToast(withText(R.string.event_before_sending))
                 .check(matches(isDisplayed()));
+
+        /* TODO Wait for sending result. */
+        //onToast(anyOf(withContainsText(R.string.event_sent_succeeded), withContainsText(R.string.event_sent_failed)))
+        //        .check(matches(isDisplayed()));
     }
 
     @Test
-    public void sendPageTest() {
+    public void sendPageTest() throws InterruptedException {
         onView(allOf(
                 withChild(withText(R.string.title_page)),
                 withChild(withText(R.string.description_page))))
                 .perform(click());
         onView(withId(R.id.name)).perform(replaceText("test"), closeSoftKeyboard());
         onView(withText(R.string.send)).perform(click());
-        onView(withText(R.string.description_page))
-                .inRoot(withDecorView(not(is(mActivityTestRule.getActivity().getWindow().getDecorView()))))
+
+        /* Wait trigger interval. */
+        Thread.sleep(Constants.DEFAULT_TRIGGER_INTERVAL + 100);
+
+        /* Check toast. */
+        onToast(withText(R.string.page_before_sending))
                 .check(matches(isDisplayed()));
+
+        // TODO Wait for sending result.
+        //onToast(anyOf(withContainsText(R.string.page_sent_succeeded), withContainsText(R.string.page_sent_failed)))
+        //        .check(matches(isDisplayed()));
+    }
+
+    private ViewInteraction onToast(final Matcher<View> viewMatcher) {
+        return onView(viewMatcher).inRoot(withDecorView(not(is(mActivityTestRule.getActivity().getWindow().getDecorView()))));
+    }
+
+    private Matcher<View> withContainsText(@StringRes final int resourceId) {
+        return withText(containsString(mActivityTestRule.getActivity().getString(resourceId)));
     }
 }
