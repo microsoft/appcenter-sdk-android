@@ -31,4 +31,10 @@
     <string name="crash_before_sending">Sending Crash reports.</string>
     <string name="crash_sent_succeeded">Crash reports delivered successfully.</string>
     <string name="crash_sent_failed">Failed to deliver Crash reports.</string>
+    <string name="event_before_sending">Sending Event.</string>
+    <string name="event_sent_succeeded">Event delivered successfully.</string>
+    <string name="event_sent_failed">Failed to deliver Event.</string>
+    <string name="page_before_sending">Sending Page.</string>
+    <string name="page_sent_succeeded">Page delivered successfully.</string>
+    <string name="page_sent_failed">Failed to deliver Page.</string>
 </resources>
