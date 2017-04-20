@@ -20,7 +20,6 @@ The Mobile Center SDK uses a modular architecture so you can use any or all of t
 ## 1. Get started
 It is super easy to use Mobile Center. Have a look at our [get started documentation](https://docs.microsoft.com/en-us/mobile-center/sdk/getting-started/android) and onboard your app within minutes. Our [detailed documentation](https://docs.microsoft.com/en-us/mobile-center/sdk/) is available as well.
 
-
 ## 2. Contributing
 
 We are looking forward to your contributions via pull requests.
