@@ -29,15 +29,15 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
-import static com.microsoft.azure.mobile.distribute.DistributeConstants.INVALID_RELEASE_IDENTIFIER;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_IGNORED_RELEASE_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -180,7 +180,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void moreRecentVersionCodeWithoutReleaseNotesDialog() throws Exception {
+    public void moreRecentVersionCode() throws Exception {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -199,6 +199,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
+        when(releaseDetails.getShortVersion()).thenReturn("7.0");
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
 
@@ -209,9 +210,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify dialog. */
         verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_dialog_title);
-        verify(mDialogBuilder).setMessage(R.string.mobile_center_distribute_update_dialog_message);
-        verify(mDialogBuilder, never()).setMessage(any(CharSequence.class));
-        verify(mDialogBuilder, never()).setCancelable(false);
+        verify(mDialogBuilder).setMessage("unit-test-app7.07");
         verify(mDialogBuilder).create();
         verify(mDialog).show();
 
@@ -241,7 +240,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void sameVersionDifferentHashWithReleaseNotesDialog() throws Exception {
+    public void sameVersionDifferentHash() throws Exception {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -260,8 +259,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(6);
+        when(releaseDetails.getShortVersion()).thenReturn("1.2.3");
         when(releaseDetails.getReleaseHash()).thenReturn("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60");
-        when(releaseDetails.getReleaseNotes()).thenReturn("mock");
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
@@ -271,8 +270,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify dialog. */
         verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_dialog_title);
-        verify(mDialogBuilder).setMessage("mock");
-        verify(mDialogBuilder, never()).setCancelable(false);
+        verify(mDialogBuilder).setMessage("unit-test-app1.2.36");
         verify(mDialogBuilder).create();
         verify(mDialog).show();
     }
@@ -350,56 +348,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void cancelDialog() throws Exception {
-
-        /* Mock we already have token. */
-        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
-                return mock(ServiceCall.class);
-            }
-        });
-        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn(4);
-        when(releaseDetails.getVersion()).thenReturn(7);
-        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
-
-        /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
-
-        /* Verify dialog. */
-        ArgumentCaptor<DialogInterface.OnCancelListener> cancelListener = ArgumentCaptor.forClass(DialogInterface.OnCancelListener.class);
-        verify(mDialogBuilder).setOnCancelListener(cancelListener.capture());
-        verify(mDialog).show();
-
-        /* Cancel it. */
-        cancelListener.getValue().onCancel(mDialog);
-        when(mDialog.isShowing()).thenReturn(false);
-
-        /* Verify. */
-        verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-
-        /* Verify no more calls, e.g. happened only once. */
-        Distribute.getInstance().onActivityPaused(mock(Activity.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mDialog).show();
-        verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-
-        /* Restart should check release and show dialog again. */
-        restartProcessAndSdk();
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mDialog, times(2)).show();
-        verify(httpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-    }
-
-    @Test
     public void postponeDialog() throws Exception {
 
         /* Mock we already have token. */
@@ -425,11 +373,23 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setNeutralButton(eq(R.string.mobile_center_distribute_update_dialog_postpone), clickListener.capture());
+        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_dialog_postpone), clickListener.capture());
         verify(mDialog).show();
 
         /* Postpone it. */
-        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEUTRAL);
+        long now = 20122112L;
+        mockStatic(System.class);
+        when(System.currentTimeMillis()).thenReturn(now);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                when(PreferencesStorage.getLong(invocation.getArguments()[0].toString(), 0)).thenReturn((Long) invocation.getArguments()[1]);
+                return null;
+            }
+        }).when(PreferencesStorage.class);
+        PreferencesStorage.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), anyLong());
+        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
         when(mDialog.isShowing()).thenReturn(false);
 
         /* Verify. */
@@ -437,6 +397,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
+        verifyStatic();
+        PreferencesStorage.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), eq(now));
 
         /* Verify no more calls, e.g. happened only once. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
@@ -444,95 +406,39 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialog).show();
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
-        /* Restart should check release and show dialog again. */
+        /* Restart should check release and should not show dialog again until 1 day has elapsed. */
+        now += DistributeConstants.POSTPONE_TIME_THRESHOLD - 1;
+        when(System.currentTimeMillis()).thenReturn(now);
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verify(mDialog).show();
+
+        /* Now its time to show again. */
+        now += 1;
+        when(System.currentTimeMillis()).thenReturn(now);
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog, times(2)).show();
-        verify(httpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-    }
 
-    @Test
-    public void ignoreDialog() throws Exception {
-
-        /* Mock ignore storage calls. */
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), INVALID_RELEASE_IDENTIFIER)).thenReturn((int) invocation.getArguments()[1]);
-                return null;
-            }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.putInt(eq(PREFERENCE_KEY_IGNORED_RELEASE_ID), anyInt());
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), INVALID_RELEASE_IDENTIFIER)).thenReturn(INVALID_RELEASE_IDENTIFIER);
-                return null;
-            }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.remove(PREFERENCE_KEY_IGNORED_RELEASE_ID);
-
-        /* Mock we already have token. */
-        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
-                return mock(ServiceCall.class);
-            }
-        });
-        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn(4);
-        when(releaseDetails.getVersion()).thenReturn(7);
-        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
-
-        /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
-
-        /* Verify dialog. */
-        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_dialog_ignore), clickListener.capture());
-        verify(mDialog).show();
-
-        /* Ignore it. */
+        /* Postpone again. */
+        clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        verify(mDialogBuilder, times(2)).setNegativeButton(eq(R.string.mobile_center_distribute_update_dialog_postpone), clickListener.capture());
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
-        when(mDialog.isShowing()).thenReturn(false);
 
-        /* Verify. */
-        verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-
-        /* Verify no more calls, e.g. happened only once. */
-        Distribute.getInstance().onActivityPaused(mock(Activity.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mDialog).show();
-        verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-
-        /* Restart app to check ignore. */
+        /* Check postpone again. */
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-
-        /* Verify second http call was made but dialog was skipped (e.g. shown only once). */
-        verify(httpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-        verify(mDialog).show();
-        verifyStatic(times(2));
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-
-        /* Disable: it will prompt again as we clear storage. */
-        Distribute.setEnabled(false);
-        Distribute.setEnabled(true);
-        verify(httpClient, times(3)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verify(mDialog, times(2)).show();
+
+        /* If mandatory release, we ignore postpone and still show dialog. */
+        when(releaseDetails.isMandatoryUpdate()).thenReturn(true);
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verify(mDialog, times(3)).show();
     }
 
     @Test
-    public void disableBeforeCancelDialog() throws Exception {
+    public void disableBeforePostponeDialog() throws Exception {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -550,74 +456,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
-
-        /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
-
-        /* Verify dialog. */
-        ArgumentCaptor<DialogInterface.OnCancelListener> cancelListener = ArgumentCaptor.forClass(DialogInterface.OnCancelListener.class);
-        verify(mDialogBuilder).setOnCancelListener(cancelListener.capture());
-        verify(mDialog).show();
-
-        /* Disable. */
-        Distribute.setEnabled(false);
-        verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-
-        /* Cancel it. */
-        cancelListener.getValue().onCancel(mDialog);
-        when(mDialog.isShowing()).thenReturn(false);
-
-        /* Verify no more calls, e.g. happened only once. */
-        Distribute.getInstance().onActivityPaused(mock(Activity.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mDialog).show();
-        verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-        verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-    }
-
-    @Test
-    public void disableBeforeIgnoreDialog() throws Exception {
-
-        /* Mock ignore storage calls. */
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), INVALID_RELEASE_IDENTIFIER)).thenReturn((int) invocation.getArguments()[1]);
-                return null;
-            }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.putInt(eq(PREFERENCE_KEY_IGNORED_RELEASE_ID), anyInt());
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), INVALID_RELEASE_IDENTIFIER)).thenReturn(INVALID_RELEASE_IDENTIFIER);
-                return null;
-            }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.remove(PREFERENCE_KEY_IGNORED_RELEASE_ID);
-
-        /* Mock we already have token. */
-        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
-                return mock(ServiceCall.class);
-            }
-        });
-        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn(4);
-        when(releaseDetails.getVersion()).thenReturn(7);
-        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
-        when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
 
         /* Trigger call. */
         Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
@@ -625,7 +463,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_dialog_ignore), clickListener.capture());
+        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_dialog_postpone), clickListener.capture());
         verify(mDialog).show();
 
         /* Disable. */
@@ -633,7 +471,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
-        /* Ignore it. */
+        /* Postpone it. */
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
         when(mDialog.isShowing()).thenReturn(false);
 
@@ -647,10 +485,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_IGNORED_RELEASE_ID);
         verifyStatic(never());
-        PreferencesStorage.putInt(eq(PREFERENCE_KEY_IGNORED_RELEASE_ID), anyInt());
+        PreferencesStorage.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), anyLong());
     }
 
     @Test
@@ -753,18 +589,15 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
 
         /* Verify dialog. */
-        verify(mDialogBuilder, never()).setNeutralButton(anyString(), any(DialogInterface.OnClickListener.class));
-        verify(mDialogBuilder, never()).setNegativeButton(anyString(), any(DialogInterface.OnClickListener.class));
+        verify(mDialogBuilder, never()).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
         verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
-        verify(mDialogBuilder).setCancelable(false);
 
         /* Verify dialog restored offline even if process restarts. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
-        verify(mDialogBuilder, never()).setOnCancelListener(any(DialogInterface.OnCancelListener.class));
-        verify(mDialogBuilder, times(2)).setCancelable(false);
+        verify(mDialogBuilder, never()).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
         verify(httpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         assertNotNull(serviceCallbackRef.get());
 
@@ -783,8 +616,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Verify call is made and that we restored again mandatory update dialog in the mean time. */
         verify(httpClient, times(3)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verify(mDialogBuilder, times(3)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
-        verify(mDialogBuilder, never()).setOnCancelListener(any(DialogInterface.OnCancelListener.class));
-        verify(mDialogBuilder, times(3)).setCancelable(false);
+        verify(mDialogBuilder, never()).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
 
         /* Then detect new release in background. */
         releaseDetails = mock(ReleaseDetails.class);
@@ -803,8 +635,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialogBuilder, times(4)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
-        verify(mDialogBuilder).setOnCancelListener(any(DialogInterface.OnCancelListener.class));
-        verify(mDialogBuilder, times(3)).setCancelable(false);
+        verify(mDialogBuilder).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
 
         /* And still check again for further update. */
         verify(httpClient, times(4)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -818,13 +649,13 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog behavior happened only once. */
-        verify(mDialogBuilder).setOnCancelListener(any(DialogInterface.OnCancelListener.class));
+        verify(mDialogBuilder).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
 
         /* Dialog shown only after new call made in that scenario. */
         serviceCallbackRef.get().onCallSucceeded("mock");
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
         verify(mDialogBuilder, times(5)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), clickListener.capture());
-        verify(mDialogBuilder, times(2)).setOnCancelListener(any(DialogInterface.OnCancelListener.class));
+        verify(mDialogBuilder, times(2)).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
 
         /* If we finally click on download, no call cancel since already successful. */
         when(InstallerUtils.isUnknownSourcesEnabled(mContext)).thenReturn(true);
@@ -885,7 +716,9 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(serviceCall).cancel();
     }
 
-    /** Mock some storage calls. */
+    /**
+     * Mock some storage calls.
+     */
     private void mockSomeStorage() {
         doAnswer(new Answer<Void>() {
 
