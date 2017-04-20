@@ -798,9 +798,15 @@ public class Distribute extends AbstractMobileCenterService {
             MobileCenterLog.debug(LOG_TAG, "Release is mandatory, ignoring any postpone action.");
             return true;
         }
+        long now = System.currentTimeMillis();
         long postponedTime = PreferencesStorage.getLong(PREFERENCE_KEY_POSTPONE_TIME, 0);
+        if (now < postponedTime) {
+            MobileCenterLog.debug(LOG_TAG, "User clock has been changed in past, cleaning postpone state and showing dialog");
+            PreferencesStorage.remove(PREFERENCE_KEY_POSTPONE_TIME);
+            return true;
+        }
         long postponedUntil = postponedTime + POSTPONE_TIME_THRESHOLD;
-        if (System.currentTimeMillis() < postponedUntil) {
+        if (now < postponedUntil) {
             MobileCenterLog.debug(LOG_TAG, "Optional updates are postponed until " + new Date(postponedUntil));
             return false;
         }
@@ -861,7 +867,7 @@ public class Distribute extends AbstractMobileCenterService {
         } else {
             message = mContext.getString(R.string.mobile_center_distribute_update_dialog_message_optional);
         }
-        message = String.format(message, getAppName(), mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion());
+        message = formatAppNameAndVersion(message);
         dialogBuilder.setMessage(message);
         dialogBuilder.setPositiveButton(R.string.mobile_center_distribute_update_dialog_download, new DialogInterface.OnClickListener() {
 
@@ -882,10 +888,6 @@ public class Distribute extends AbstractMobileCenterService {
         }
         mUpdateDialog = dialogBuilder.create();
         showAndRememberDialogActivity(mUpdateDialog);
-    }
-
-    private String getAppName() {
-        return mContext.getString(mContext.getApplicationInfo().labelRes);
     }
 
     /**
@@ -1250,8 +1252,18 @@ public class Distribute extends AbstractMobileCenterService {
         }
     }
 
+    /**
+     * Get text for app is ready to be installed.
+     */
     private String getInstallReadyMessage() {
-        return String.format(mContext.getString(R.string.mobile_center_distribute_install_ready_message), getAppName(), mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion());
+        return formatAppNameAndVersion(mContext.getString(R.string.mobile_center_distribute_install_ready_message));
+    }
+
+    /**
+     * Inject app name version and version code in a format string.
+     */
+    private String formatAppNameAndVersion(String format) {
+        return String.format(format, mContext.getString(mContext.getApplicationInfo().labelRes), mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion());
     }
 
     /**

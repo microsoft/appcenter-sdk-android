@@ -435,6 +435,18 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog, times(3)).show();
+
+        /* Set back in time to make SDK clean state and force update. */
+        verifyStatic(never());
+        PreferencesStorage.remove(PREFERENCE_KEY_POSTPONE_TIME);
+        when(releaseDetails.isMandatoryUpdate()).thenReturn(false);
+        now = 1;
+        when(System.currentTimeMillis()).thenReturn(now);
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verify(mDialog, times(4)).show();
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_POSTPONE_TIME);
     }
 
     @Test
