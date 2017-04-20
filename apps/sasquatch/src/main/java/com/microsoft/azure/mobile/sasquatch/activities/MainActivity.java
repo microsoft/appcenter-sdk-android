@@ -160,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
             public void onSendingSucceeded(ErrorReport report) {
 
                 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-                String message = String.format("%s\nCrash ID: %s\nThrowable: %s", R.string.crash_sent_succeeded, report.getId(), report.getThrowable().toString());
+                String message = String.format("%s\nCrash ID: %s\nThrowable: %s", getString(R.string.crash_sent_succeeded), report.getId(), report.getThrowable().toString());
                 Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
             }
         };
