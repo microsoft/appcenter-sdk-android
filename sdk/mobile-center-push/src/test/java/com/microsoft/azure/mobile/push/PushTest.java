@@ -26,7 +26,6 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.Map;
 
-import static com.microsoft.azure.mobile.push.Push.PREFERENCE_KEY_ANALYTICS_ENABLED;
 import static com.microsoft.azure.mobile.push.Push.PREFERENCE_KEY_PUSH_TOKEN;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.junit.Assert.assertFalse;
@@ -176,20 +175,18 @@ public class PushTest {
         verifyStatic();
         FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(false));
 
-        /* For check enable firebase analytics collection */
+        /* For check enable firebase analytics collection. */
         Push.enableFirebaseAnalytics(contextMock);
         verifyStatic();
         FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(true));
-        verifyStatic(times(1));
-        StorageHelper.PreferencesStorage.putBoolean(eq(PREFERENCE_KEY_ANALYTICS_ENABLED), eq(true));
     }
 
     @Test
-    public void verifyFirebaseAnalyticsStaysEnabled() {
+    public void verifyEnableFirebaseAnalyticsBeforeStart() {
         Context contextMock = mock(Context.class);
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        when(StorageHelper.PreferencesStorage.getBoolean(PREFERENCE_KEY_ANALYTICS_ENABLED)).thenReturn(true);
+        Push.enableFirebaseAnalytics(contextMock);
         push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
         verifyStatic(never());
         FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(false));
