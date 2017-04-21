@@ -177,18 +177,12 @@ public class MainActivity extends AppCompatActivity {
     private AnalyticsListener getAnalyticsListener() {
         return new AnalyticsListener() {
 
-            private Toast mToast;
-
             private void showToast(@StringRes int resId) {
                 showToast(getString(resId));
             }
 
             private void showToast(String message) {
-                if (mToast != null) {
-                    mToast.cancel();
-                }
-                mToast = Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT);
-                mToast.show();
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
             }
 
             @Override

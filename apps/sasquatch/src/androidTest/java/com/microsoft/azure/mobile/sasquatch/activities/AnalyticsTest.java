@@ -3,8 +3,10 @@ package com.microsoft.azure.mobile.sasquatch.activities;
 
 import android.support.annotation.StringRes;
 import android.support.test.espresso.Espresso;
+import android.support.test.espresso.NoMatchingViewException;
 import android.support.test.espresso.UiController;
 import android.support.test.espresso.ViewAction;
+import android.support.test.espresso.ViewAssertion;
 import android.support.test.espresso.ViewInteraction;
 import android.support.test.rule.ActivityTestRule;
 import android.view.View;
@@ -13,6 +15,7 @@ import com.microsoft.azure.mobile.Constants;
 import com.microsoft.azure.mobile.sasquatch.R;
 
 import org.hamcrest.Matcher;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -36,6 +39,9 @@ import static org.hamcrest.Matchers.not;
 @SuppressWarnings("unused")
 public class AnalyticsTest {
 
+    private static final int CHECK_DELAY = 50;
+    private static final int TOAST_DELAY = 2000;
+
     @Rule
     public ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<>(MainActivity.class);
 
@@ -50,19 +56,11 @@ public class AnalyticsTest {
         onView(withId(R.id.name)).perform(replaceText("test"), closeSoftKeyboard());
         onView(withText(R.string.send)).perform(click());
 
-        /* Wait trigger interval. */
-        Thread.sleep(Constants.DEFAULT_TRIGGER_INTERVAL);
-
-        /* Check toast. */
-        /* TODO Unstable check: interval may be started via start session or event will be delivered very fast. */
-        //onToast(withText(R.string.event_before_sending))
-        //        .check(matches(isDisplayed()));
-
-        /* Wait for sending result. */
+        /* Check toasts. */
+        waitFor(onToast(withText(R.string.event_before_sending)), Constants.DEFAULT_TRIGGER_INTERVAL + CHECK_DELAY)
+                .check(matches(isDisplayed()));
         waitAnalytics();
-
-        /* Check toast. */
-        onToast(anyOf(withContainsText(R.string.event_sent_succeeded), withContainsText(R.string.event_sent_failed)))
+        waitFor(onToast(anyOf(withContainsText(R.string.event_sent_succeeded), withContainsText(R.string.event_sent_failed))), TOAST_DELAY)
                 .check(matches(isDisplayed()));
     }
 
@@ -77,19 +75,11 @@ public class AnalyticsTest {
         onView(withId(R.id.name)).perform(replaceText("test"), closeSoftKeyboard());
         onView(withText(R.string.send)).perform(click());
 
-        /* Wait trigger interval. */
-        Thread.sleep(Constants.DEFAULT_TRIGGER_INTERVAL);
-
-        /* Check toast. */
-        /* TODO Unstable check: interval may be started via start session or page will be delivered very fast. */
-        //onToast(withText(R.string.page_before_sending))
-        //        .check(matches(isDisplayed()));
-
-        /* Wait for sending result. */
+        /* Check toasts. */
+        waitFor(onToast(withText(R.string.page_before_sending)), Constants.DEFAULT_TRIGGER_INTERVAL + CHECK_DELAY)
+                .check(matches(isDisplayed()));
         waitAnalytics();
-
-        /* Check toast. */
-        onToast(anyOf(withContainsText(R.string.page_sent_succeeded), withContainsText(R.string.page_sent_failed)))
+        waitFor(onToast(anyOf(withContainsText(R.string.page_sent_succeeded), withContainsText(R.string.page_sent_failed))), TOAST_DELAY)
                 .check(matches(isDisplayed()));
     }
 
@@ -103,7 +93,7 @@ public class AnalyticsTest {
 
     private void waitAnalytics() {
         Espresso.registerIdlingResources(MainActivity.analyticsIdlingResource);
-        onView(isRoot()).perform(waitFor(100));
+        onView(isRoot()).perform(waitFor(CHECK_DELAY));
         Espresso.unregisterIdlingResources(MainActivity.analyticsIdlingResource);
     }
 
@@ -125,5 +115,26 @@ public class AnalyticsTest {
                 uiController.loopMainThreadForAtLeast(millis);
             }
         };
+    }
+
+    private static ViewInteraction waitFor(final ViewInteraction viewInteraction, final long millis) throws InterruptedException {
+        final long startTime = System.currentTimeMillis();
+        final long endTime = startTime + millis;
+        final View[] found = new View[] { null };
+        while (System.currentTimeMillis() < endTime)
+        {
+            viewInteraction.check(new ViewAssertion() {
+
+                @Override
+                public void check(View view, NoMatchingViewException noViewFoundException) {
+                    found[0] = view;
+                }
+            });
+            if (found[0] != null)
+                return viewInteraction;
+            Thread.sleep(CHECK_DELAY);
+        }
+        Assert.fail();
+        return viewInteraction;
     }
 }
