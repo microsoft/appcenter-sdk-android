@@ -49,6 +49,11 @@ public class Push extends AbstractMobileCenterService {
     static final String PREFERENCE_KEY_PUSH_TOKEN = PREFERENCE_PREFIX + "push_token";
 
     /**
+     * Firebase analytics flag.
+     */
+    private static boolean sFirebaseAnalyticsEnabled;
+
+    /**
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
@@ -111,6 +116,29 @@ public class Push extends AbstractMobileCenterService {
     }
 
     /**
+     * Enable firebase analytics collection.
+     *
+     * @param context the context to retrieve FirebaseAnalytics instance.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static void enableFirebaseAnalytics(@NonNull Context context) {
+        MobileCenterLog.debug(LOG_TAG, "Enabling firebase analytics collection.");
+        setFirebaseAnalyticsEnabled(context, true);
+    }
+
+    /**
+     * Enable or disable firebase analytics collection.
+     *
+     * @param context the context to retrieve FirebaseAnalytics instance.
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     */
+    @SuppressWarnings("MissingPermission")
+    private static void setFirebaseAnalyticsEnabled(@NonNull Context context, boolean enabled) {
+        FirebaseAnalyticsUtils.setEnabled(context, enabled);
+        sFirebaseAnalyticsEnabled = enabled;
+    }
+
+    /**
      * Enqueue a push installation log.
      *
      * @param pushToken the push token value
@@ -124,7 +152,7 @@ public class Push extends AbstractMobileCenterService {
     /**
      * Handle push token update success.
      *
-     * @param pushToken the push token value
+     * @param pushToken the push token value.
      */
     @VisibleForTesting
     synchronized void onTokenRefresh(@NonNull String pushToken) {
@@ -185,6 +213,10 @@ public class Push extends AbstractMobileCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         super.onStarted(context, appSecret, channel);
         applyEnabledState(isInstanceEnabled());
+        if (!sFirebaseAnalyticsEnabled) {
+            MobileCenterLog.debug(LOG_TAG, "Disabling firebase analytics collection by default.");
+            setFirebaseAnalyticsEnabled(context, false);
+        }
     }
 
     @Override

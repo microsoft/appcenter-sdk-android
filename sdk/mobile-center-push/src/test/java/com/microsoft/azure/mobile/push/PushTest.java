@@ -43,14 +43,15 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "MissingPermission"})
 @PrepareForTest({
         Push.class,
         PushInstallationLog.class,
         MobileCenterLog.class,
         MobileCenter.class,
         StorageHelper.PreferencesStorage.class,
-        FirebaseInstanceId.class
+        FirebaseInstanceId.class,
+        FirebaseAnalyticsUtils.class
 })
 public class PushTest {
 
@@ -90,6 +91,7 @@ public class PushTest {
         /* Mock Firebase instance. */
         mockStatic(FirebaseInstanceId.class);
         when(FirebaseInstanceId.getInstance()).thenReturn(mFirebaseInstanceId);
+        mockStatic(FirebaseAnalyticsUtils.class);
     }
 
     @Test
@@ -162,5 +164,31 @@ public class PushTest {
         Push.setEnabled(true);
         Push.setEnabled(true);
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
+    }
+
+    @Test
+    public void verifyEnableFirebaseAnalytics() {
+        Context contextMock = mock(Context.class);
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
+        verifyStatic();
+        FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(false));
+
+        /* For check enable firebase analytics collection. */
+        Push.enableFirebaseAnalytics(contextMock);
+        verifyStatic();
+        FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(true));
+    }
+
+    @Test
+    public void verifyEnableFirebaseAnalyticsBeforeStart() {
+        Context contextMock = mock(Context.class);
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        Push.enableFirebaseAnalytics(contextMock);
+        push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
+        verifyStatic(never());
+        FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(false));
     }
 }
