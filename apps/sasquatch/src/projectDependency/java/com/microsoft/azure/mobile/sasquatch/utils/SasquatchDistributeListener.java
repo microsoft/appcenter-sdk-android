@@ -24,7 +24,7 @@ public class SasquatchDistributeListener implements DistributeListener {
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    Distribute.notifyUpdateAction(UpdateAction.DOWNLOAD);
+                    Distribute.notifyUpdateAction(UpdateAction.UPDATE);
                 }
             });
             dialogBuilder.setCancelable(false);

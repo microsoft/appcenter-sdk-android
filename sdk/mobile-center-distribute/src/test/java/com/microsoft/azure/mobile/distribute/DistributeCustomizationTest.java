@@ -272,9 +272,9 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Call handleUpdateAction. */
         when(InstallerUtils.isUnknownSourcesEnabled(mActivity)).thenReturn(true);
-        distribute.handleUpdateAction(UpdateAction.DOWNLOAD);
+        distribute.handleUpdateAction(UpdateAction.UPDATE);
 
-        /* Verify DOWNLOAD has been processed. */
+        /* Verify UPDATE has been processed. */
         verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
     }
 
@@ -331,9 +331,9 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Call handleUpdateAction. */
         when(InstallerUtils.isUnknownSourcesEnabled(mActivity)).thenReturn(true);
-        distribute.handleUpdateAction(UpdateAction.DOWNLOAD);
+        distribute.handleUpdateAction(UpdateAction.UPDATE);
 
-        /* Verify DOWNLOAD has been processed. */
+        /* Verify UPDATE has been processed. */
         verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
     }
 
@@ -392,9 +392,9 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         verify(distribute).completeWorkflow();
 
         /* Call handleUpdateAction again. */
-        distribute.handleUpdateAction(UpdateAction.DOWNLOAD);
+        distribute.handleUpdateAction(UpdateAction.UPDATE);
 
-        /* Verify DOWNLOAD has NOT been processed. */
+        /* Verify UPDATE has NOT been processed. */
         verify(distribute, never()).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
     }
 

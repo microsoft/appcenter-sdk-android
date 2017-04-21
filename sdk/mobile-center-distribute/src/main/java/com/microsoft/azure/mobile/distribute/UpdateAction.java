@@ -11,7 +11,7 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.SOURCE)
 @IntDef({
-        UpdateAction.DOWNLOAD,
+        UpdateAction.UPDATE,
         UpdateAction.POSTPONE
 })
 public @interface UpdateAction {
@@ -19,7 +19,7 @@ public @interface UpdateAction {
     /**
      * Action to trigger the download of the release.
      */
-    int DOWNLOAD = DialogInterface.BUTTON_POSITIVE;
+    int UPDATE = DialogInterface.BUTTON_POSITIVE;
 
     /**
      * Action to postpone optional updates for 1 day.

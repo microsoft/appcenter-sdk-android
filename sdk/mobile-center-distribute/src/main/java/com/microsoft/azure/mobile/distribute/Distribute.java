@@ -286,7 +286,7 @@ public class Distribute extends AbstractMobileCenterService {
      * You need to tell the distribute SDK using this function what is the user action.
      *
      * @param updateAction one of {@link UpdateAction} actions.
-     *                     For mandatory updates, only {@link UpdateAction#DOWNLOAD} is allowed.
+     *                     For mandatory updates, only {@link UpdateAction#UPDATE} is allowed.
      */
     @SuppressWarnings({"unused", "WeakerAccess"})
     public static synchronized void notifyUpdateAction(@UpdateAction int updateAction) {
@@ -405,7 +405,7 @@ public class Distribute extends AbstractMobileCenterService {
         }
         switch (updateAction) {
 
-            case UpdateAction.DOWNLOAD:
+            case UpdateAction.UPDATE:
                 enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
                 break;
 
