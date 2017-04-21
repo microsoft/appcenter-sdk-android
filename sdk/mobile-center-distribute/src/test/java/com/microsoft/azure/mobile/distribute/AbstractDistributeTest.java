@@ -123,6 +123,7 @@ public class AbstractDistributeTest {
         when(mContext.getPackageName()).thenReturn("com.contoso");
         when(mActivity.getPackageName()).thenReturn("com.contoso");
         when(mContext.getApplicationInfo()).thenReturn(mApplicationInfo);
+        when(mActivity.getApplicationInfo()).thenReturn(mApplicationInfo);
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
         when(mActivity.getPackageManager()).thenReturn(mPackageManager);
         PackageInfo packageInfo = mock(PackageInfo.class);
