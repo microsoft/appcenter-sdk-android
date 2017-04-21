@@ -46,9 +46,6 @@ public class MainActivity extends AppCompatActivity {
         sSharedPreferences = getSharedPreferences("Sasquatch", Context.MODE_PRIVATE);
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().build());
 
-        /* Remove firebase analytics enabled setting. */
-        sSharedPreferences.edit().remove(FIREBASE_ENABLED_KEY).apply();
-
         /* Set custom log URL if one was configured in settings. */
         String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getString(R.string.log_url));
         if (!TextUtils.isEmpty(logUrl)) {
@@ -68,16 +65,33 @@ public class MainActivity extends AppCompatActivity {
             Distribute.setApiUrl(apiUrl);
         }
 
+        /* Get push module reference in project build flavour. */
+        Class<? extends MobileCenterService> push = null;
+        try {
+            //noinspection unchecked
+            push = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.push.Push");
+        } catch (Exception e) {
+            MobileCenterLog.warn(LOG_TAG, "Push class not yet available in this flavor.");
+        }
+
+        /* Enable Firebase analytics if we enabled the setting previously. */
+        if (push != null && sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false)) {
+            try {
+                push.getMethod("enableFirebaseAnalytics", Context.class).invoke(null, this);
+                MobileCenterLog.info(LOG_TAG, "Enabled firebase analytics.");
+            } catch (Exception e) {
+                MobileCenterLog.error(LOG_TAG, "Failed to enable firebase analytics.", e);
+            }
+        }
+
         /* Start Mobile center. */
         MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class);
-        try {
-
-            @SuppressWarnings("unchecked")
-            Class<? extends MobileCenterService> push = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.push.Push");
-            MobileCenter.start(push);
-        } catch (Exception e) {
-            MobileCenterLog.info(LOG_TAG, "Push class not yet available in this flavor.");
-        }
+        if (push != null)
+            try {
+                MobileCenter.start(push);
+            } catch (Exception e) {
+                MobileCenterLog.error(LOG_TAG, "Failed to start push.", e);
+            }
 
         /* Print last crash. */
         Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
