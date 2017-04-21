@@ -16,6 +16,7 @@ import android.util.Patterns;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.MobileCenterService;
 import com.microsoft.azure.mobile.analytics.Analytics;
@@ -30,8 +31,8 @@ import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.APP_SECRET_KEY;
-import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.LOG_URL_KEY;
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.FIREBASE_ENABLED_KEY;
+import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.LOG_URL_KEY;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -56,7 +57,6 @@ public class SettingsActivity extends AppCompatActivity {
             final CheckBoxPreference distributeEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_distribute_state_key));
             final CheckBoxPreference pushEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_push_state_key));
             final CheckBoxPreference firebaseEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_push_firebase_state_key));
-            firebaseEnabledPreference.setEnabled(!isFirebaseEnabled());
             initCheckBoxSetting(R.string.mobile_center_state_key, MobileCenter.isEnabled(), R.string.mobile_center_state_summary_enabled, R.string.mobile_center_state_summary_disabled, new HasEnabled() {
 
                 @Override
@@ -148,10 +148,13 @@ public class SettingsActivity extends AppCompatActivity {
                     @Override
                     public void setEnabled(boolean enabled) {
                         try {
-                            enableFirebaseAnalytics.invoke(null, getActivity());
-                            setKeyValue(FIREBASE_ENABLED_KEY, "enabled");
+                            if (enabled) {
+                                enableFirebaseAnalytics.invoke(null, getActivity());
+                            } else {
+                                FirebaseAnalytics.getInstance(getActivity()).setAnalyticsCollectionEnabled(false);
+                            }
+                            MainActivity.sSharedPreferences.edit().putBoolean(FIREBASE_ENABLED_KEY, enabled).apply();
                             firebaseEnabledPreference.setChecked(true);
-                            firebaseEnabledPreference.setEnabled(false);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
@@ -159,11 +162,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                     @Override
                     public boolean isEnabled() {
-                        try {
-                            return isFirebaseEnabled();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
+                        return isFirebaseEnabled();
                     }
                 });
             } catch (Exception e) {
@@ -359,7 +358,7 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         private boolean isFirebaseEnabled() {
-            return MainActivity.sSharedPreferences.getString(FIREBASE_ENABLED_KEY, null) != null;
+            return MainActivity.sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false);
         }
 
         private interface HasEnabled {
