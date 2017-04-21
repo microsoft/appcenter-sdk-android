@@ -13,6 +13,7 @@ import android.support.test.espresso.idling.CountingIdlingResource;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
@@ -30,26 +31,22 @@ import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.distribute.Distribute;
-import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.LogWithProperties;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
 import com.microsoft.azure.mobile.sasquatch.utils.SasquatchDistributeListener;
-import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import org.json.JSONObject;
-
 
 public class MainActivity extends AppCompatActivity {
 
     static final String APP_SECRET_KEY = "appSecret";
     static final String LOG_URL_KEY = "logUrl";
-    private static final String LOG_TAG = "MobileCenterSasquatch";
-    static SharedPreferences sSharedPreferences;
-
     @VisibleForTesting
     static final CountingIdlingResource analyticsIdlingResource = new CountingIdlingResource("analytics");
+    private static final String LOG_TAG = "MobileCenterSasquatch";
+    static SharedPreferences sSharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,13 +87,13 @@ public class MainActivity extends AppCompatActivity {
         MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class);
 
         /* Print last crash. */
-        MobileCenterLog.info(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
+        Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
         Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
 
             @Override
             public void onResult(@Nullable ErrorReport data) {
                 if (data != null) {
-                    MobileCenterLog.info(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", data.getThrowable());
+                    Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", data.getThrowable());
                 }
             }
         });
@@ -193,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onBeforeSending(Log log) {
+            public void onBeforeSending(com.microsoft.azure.mobile.ingestion.models.Log log) {
                 if (log instanceof EventLog) {
                     showToast(R.string.event_before_sending);
                 } else if (log instanceof PageLog) {
@@ -203,7 +200,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onSendingFailed(Log log, Exception e) {
+            public void onSendingFailed(com.microsoft.azure.mobile.ingestion.models.Log log, Exception e) {
                 String message = null;
                 if (log instanceof EventLog) {
                     message = getString(R.string.event_sent_failed);
@@ -218,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onSendingSucceeded(Log log) {
+            public void onSendingSucceeded(com.microsoft.azure.mobile.ingestion.models.Log log) {
                 String message = null;
                 if (log instanceof EventLog) {
                     message = String.format("%s\nName: %s", getString(R.string.event_sent_succeeded), ((EventLog) log).getName());

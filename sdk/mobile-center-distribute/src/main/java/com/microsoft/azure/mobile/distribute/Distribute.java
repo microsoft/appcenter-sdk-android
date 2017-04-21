@@ -282,15 +282,15 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     /**
-     * If update dialog is customized by returning <code>true</code> in  {@link DistributeListener#onNewReleaseAvailable(Activity, ReleaseDetails)},
+     * If update dialog is customized by returning <code>true</code> in  {@link DistributeListener#onReleaseAvailable(Activity, ReleaseDetails)},
      * You need to tell the distribute SDK using this function what is the user action.
      *
-     * @param updateAction one of {@link UserUpdateAction} actions.
-     *                     For mandatory updates, only {@link UserUpdateAction#DOWNLOAD} is allowed.
+     * @param updateAction one of {@link UpdateAction} actions.
+     *                     For mandatory updates, only {@link UpdateAction#DOWNLOAD} is allowed.
      */
     @SuppressWarnings({"unused", "WeakerAccess"})
-    public static synchronized void notifyUserUpdateAction(@UserUpdateAction int updateAction) {
-        getInstance().handleUserUpdateAction(updateAction);
+    public static synchronized void notifyUpdateAction(@UpdateAction int updateAction) {
+        getInstance().handleUpdateAction(updateAction);
     }
 
     @Override
@@ -387,10 +387,10 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     /**
-     * Implements {@link #notifyUserUpdateAction(int)}.
+     * Implements {@link #notifyUpdateAction(int)}.
      */
     @VisibleForTesting
-    synchronized void handleUserUpdateAction(int updateAction) {
+    synchronized void handleUpdateAction(int updateAction) {
         if (!isEnabled()) {
             MobileCenterLog.error(LOG_TAG, "Distribute is disabled");
             return;
@@ -405,13 +405,13 @@ public class Distribute extends AbstractMobileCenterService {
         }
         switch (updateAction) {
 
-            case UserUpdateAction.DOWNLOAD:
+            case UpdateAction.DOWNLOAD:
                 enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
                 break;
 
-            case UserUpdateAction.POSTPONE:
+            case UpdateAction.POSTPONE:
                 if (mReleaseDetails.isMandatoryUpdate()) {
-                    MobileCenterLog.error(LOG_TAG, "Cannot ignore a mandatory update.");
+                    MobileCenterLog.error(LOG_TAG, "Cannot postpone a mandatory update.");
                     return;
                 }
                 postponeRelease(mReleaseDetails);
@@ -934,8 +934,8 @@ public class Distribute extends AbstractMobileCenterService {
             mUsingDefaultUpdateDialog = true;
         }
         if (mListener != null && mForegroundActivity != mLastActivityWithDialog.get()) {
-            MobileCenterLog.debug(LOG_TAG, "Calling listener.onNewReleaseAvailable.");
-            boolean customized = mListener.onNewReleaseAvailable(mForegroundActivity, mReleaseDetails);
+            MobileCenterLog.debug(LOG_TAG, "Calling listener.onReleaseAvailable.");
+            boolean customized = mListener.onReleaseAvailable(mForegroundActivity, mReleaseDetails);
             if (customized) {
                 mLastActivityWithDialog = new WeakReference<>(mForegroundActivity);
             }
@@ -1101,7 +1101,7 @@ public class Distribute extends AbstractMobileCenterService {
      *
      * @param releaseDetails release details.
      */
-    private synchronized void enqueueDownloadOrShowUnknownSourcesDialog(final ReleaseDetails releaseDetails) {
+    synchronized void enqueueDownloadOrShowUnknownSourcesDialog(final ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
             if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
                 MobileCenterLog.debug(LOG_TAG, "Schedule download...");

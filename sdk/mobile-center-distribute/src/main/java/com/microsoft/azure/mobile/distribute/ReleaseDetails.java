@@ -149,7 +149,8 @@ public class ReleaseDetails {
      * @return the releaseNotesUrl value.
      */
     @Nullable
-    Uri getReleaseNotesUrl() {
+    @SuppressWarnings("WeakerAccess")
+    public Uri getReleaseNotesUrl() {
         return releaseNotesUrl;
     }
 

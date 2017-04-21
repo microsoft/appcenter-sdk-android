@@ -20,10 +20,11 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_IGNORED_RELEASE_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.contains;
@@ -52,7 +53,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Start Distribute service. */
         Distribute.unsetInstance();
-        Distribute.getInstance().onStarted(mActivity, "", mock(Channel.class));
+        Distribute.getInstance().onStarted(mContext, "", mock(Channel.class));
 
         /* Resume with another activity. */
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
@@ -62,14 +63,14 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Set Distribute listener and customize it. */
         DistributeListener listener = mock(DistributeListener.class);
-        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(false).thenReturn(true);
+        when(listener.onReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(false).thenReturn(true);
         Distribute.setListener(listener);
 
         /* Resume activity again to invoke update request. */
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify the listener gets called. */
-        verify(listener).onNewReleaseAvailable(mActivity, details);
+        verify(listener).onReleaseAvailable(mActivity, details);
 
         /* Verify the default update dialog is built. The count includes previous call. */
         verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
@@ -78,7 +79,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify the listener gets called. */
-        verify(listener).onNewReleaseAvailable(mActivity, details);
+        verify(listener).onReleaseAvailable(mActivity, details);
 
         /* Verify the default update dialog is NOT built. The count includes previous call. */
         verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
@@ -99,7 +100,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         int getStoredDownloadStateCounter = 0;
 
         /* Start Distribute service. */
-        distribute.onStarted(mActivity, "", mock(Channel.class));
+        distribute.onStarted(mContext, "", mock(Channel.class));
         distribute.onActivityResumed(mActivity);
 
         /* Verify the method is called by onActivityCreated. */
@@ -109,8 +110,8 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Disable the service. */
         distribute.setInstanceEnabled(false);
 
-        /* Call handleUserUpdateAction. */
-        distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
+        /* Call handleUpdateAction. */
+        distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
@@ -125,8 +126,8 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
 
-        /* Call handleUserUpdateAction. */
-        distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
+        /* Call handleUpdateAction. */
+        distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
@@ -137,8 +138,8 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
 
-        /* Call handleUserUpdateAction. */
-        distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
+        /* Call handleUpdateAction. */
+        distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
@@ -156,7 +157,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Mock. */
         mockForCustomizationTest(false);
         DistributeListener listener = mock(DistributeListener.class);
-        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(false);
+        when(listener.onReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(false);
         mockStatic(DistributeUtils.class);
         Distribute.unsetInstance();
         Distribute.setListener(listener);
@@ -168,7 +169,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         int getStoredDownloadStateCounter = 0;
 
         /* Start Distribute service. */
-        distribute.onStarted(mActivity, "", mock(Channel.class));
+        distribute.onStarted(mContext, "", mock(Channel.class));
         distribute.onActivityResumed(mActivity);
 
         /* Verify the method is called by onActivityCreated. */
@@ -178,8 +179,8 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Disable the service. */
         distribute.setInstanceEnabled(false);
 
-        /* Call handleUserUpdateAction. */
-        distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
+        /* Call handleUpdateAction. */
+        distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
@@ -194,8 +195,8 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
 
-        /* Call handleUserUpdateAction. */
-        distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
+        /* Call handleUpdateAction. */
+        distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
@@ -206,8 +207,8 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
 
-        /* Call handleUserUpdateAction. */
-        distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
+        /* Call handleUpdateAction. */
+        distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
@@ -231,49 +232,21 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Set Distribute listener so that Distribute doesn't use default update dialog. */
         DistributeListener listener = mock(DistributeListener.class);
-        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
+        when(listener.onReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
         Distribute.unsetInstance();
         Distribute.setListener(listener);
         Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
-        distribute.onStarted(mActivity, "", mock(Channel.class));
+        distribute.onStarted(mContext, "", mock(Channel.class));
         distribute.onActivityResumed(mActivity);
 
-        /* Call handleUserUpdateAction. */
-        distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
+        /* Call handleUpdateAction. */
+        distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify POSTPONE has been processed. */
         verify(distribute).completeWorkflow();
-    }
-
-    @Test
-    public void handleUserUpdateActionIgnoreForOptionalUpdate() throws Exception {
-
-        /* Mock. */
-        ReleaseDetails details = mockForCustomizationTest(false);
-        mockStatic(DistributeUtils.class);
-
-        /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
-
-        /* Set Distribute listener so that Distribute doesn't use default update dialog. */
-        DistributeListener listener = mock(DistributeListener.class);
-        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
-        Distribute.unsetInstance();
-        Distribute.setListener(listener);
-        Distribute distribute = spy(Distribute.getInstance());
-
-        /* Start Distribute service. */
-        distribute.onStarted(mActivity, "", mock(Channel.class));
-        distribute.onActivityResumed(mActivity);
-
-        /* Call handleUserUpdateAction. */
-        distribute.handleUserUpdateAction(UserUpdateAction.IGNORE);
-
-        /* Verify IGNORE has been processed. */
-        verifyStatic();
-        StorageHelper.PreferencesStorage.putInt(PREFERENCE_KEY_IGNORED_RELEASE_ID, details.getId());
+        StorageHelper.PreferencesStorage.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), anyLong());
     }
 
     @Test
@@ -288,18 +261,18 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Set Distribute listener so that Distribute doesn't use default update dialog. */
         DistributeListener listener = mock(DistributeListener.class);
-        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
+        when(listener.onReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
         Distribute.unsetInstance();
         Distribute.setListener(listener);
         Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
-        distribute.onStarted(mActivity, "", mock(Channel.class));
+        distribute.onStarted(mContext, "", mock(Channel.class));
         distribute.onActivityResumed(mActivity);
 
-        /* Call handleUserUpdateAction. */
+        /* Call handleUpdateAction. */
         when(InstallerUtils.isUnknownSourcesEnabled(mActivity)).thenReturn(true);
-        distribute.handleUserUpdateAction(UserUpdateAction.DOWNLOAD);
+        distribute.handleUpdateAction(UpdateAction.DOWNLOAD);
 
         /* Verify DOWNLOAD has been processed. */
         verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
@@ -317,49 +290,22 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Set Distribute listener so that Distribute doesn't use default update dialog. */
         DistributeListener listener = mock(DistributeListener.class);
-        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
+        when(listener.onReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
         Distribute.unsetInstance();
         Distribute.setListener(listener);
         Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
-        distribute.onStarted(mActivity, "", mock(Channel.class));
+        distribute.onStarted(mContext, "", mock(Channel.class));
         distribute.onActivityResumed(mActivity);
 
-        /* Call handleUserUpdateAction. */
-        distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
+        /* Call handleUpdateAction. */
+        distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify POSTPONE has NOT been processed. */
         verify(distribute, never()).completeWorkflow();
-    }
-
-    @Test
-    public void handleUserUpdateActionIgnoreForMandatoryUpdate() throws Exception {
-
-        /* Mock. */
-        ReleaseDetails details = mockForCustomizationTest(true);
-        mockStatic(DistributeUtils.class);
-
-        /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
-
-        /* Set Distribute listener so that Distribute doesn't use default update dialog. */
-        DistributeListener listener = mock(DistributeListener.class);
-        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
-        Distribute.unsetInstance();
-        Distribute.setListener(listener);
-        Distribute distribute = spy(Distribute.getInstance());
-
-        /* Start Distribute service. */
-        distribute.onStarted(mActivity, "", mock(Channel.class));
-        distribute.onActivityResumed(mActivity);
-
-        /* Call handleUserUpdateAction. */
-        distribute.handleUserUpdateAction(UserUpdateAction.IGNORE);
-
-        /* Verify IGNORE has NOT been processed. */
         verifyStatic(never());
-        StorageHelper.PreferencesStorage.putInt(PREFERENCE_KEY_IGNORED_RELEASE_ID, details.getId());
+        StorageHelper.PreferencesStorage.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), anyLong());
     }
 
     @Test
@@ -374,18 +320,18 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Set Distribute listener so that Distribute doesn't use default update dialog. */
         DistributeListener listener = mock(DistributeListener.class);
-        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
+        when(listener.onReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
         Distribute.unsetInstance();
         Distribute.setListener(listener);
         Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
-        distribute.onStarted(mActivity, "", mock(Channel.class));
+        distribute.onStarted(mContext, "", mock(Channel.class));
         distribute.onActivityResumed(mActivity);
 
-        /* Call handleUserUpdateAction. */
+        /* Call handleUpdateAction. */
         when(InstallerUtils.isUnknownSourcesEnabled(mActivity)).thenReturn(true);
-        distribute.handleUserUpdateAction(UserUpdateAction.DOWNLOAD);
+        distribute.handleUpdateAction(UpdateAction.DOWNLOAD);
 
         /* Verify DOWNLOAD has been processed. */
         verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
@@ -401,7 +347,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Set Distribute listener so that Distribute doesn't use default update dialog. */
         DistributeListener listener = mock(DistributeListener.class);
-        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
+        when(listener.onReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
         Distribute.unsetInstance();
         Distribute.setListener(listener);
 
@@ -409,12 +355,12 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
 
         /* Start Distribute service. */
-        Distribute.getInstance().onStarted(mActivity, "", mock(Channel.class));
+        Distribute.getInstance().onStarted(mContext, "", mock(Channel.class));
         Distribute.getInstance().onActivityResumed(mActivity);
 
-        /* Call handleUserUpdateAction with invalid user action. */
+        /* Call handleUpdateAction with invalid user action. */
         int invalidUserAction = 10000;
-        Distribute.notifyUserUpdateAction(invalidUserAction);
+        Distribute.notifyUpdateAction(invalidUserAction);
 
         /* Verify update has NOT been processed. */
         verifyStatic();
@@ -430,23 +376,23 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Set Distribute listener so that Distribute doesn't use default update dialog. */
         DistributeListener listener = mock(DistributeListener.class);
-        when(listener.onNewReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
+        when(listener.onReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
         Distribute.unsetInstance();
         Distribute.setListener(listener);
         Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
-        distribute.onStarted(mActivity, "", mock(Channel.class));
+        distribute.onStarted(mContext, "", mock(Channel.class));
         distribute.onActivityResumed(mActivity);
 
-        /* Call handleUserUpdateAction. */
-        distribute.handleUserUpdateAction(UserUpdateAction.POSTPONE);
+        /* Call handleUpdateAction. */
+        distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify POSTPONE has been processed. */
         verify(distribute).completeWorkflow();
 
-        /* Call handleUserUpdateAction again. */
-        distribute.handleUserUpdateAction(UserUpdateAction.DOWNLOAD);
+        /* Call handleUpdateAction again. */
+        distribute.handleUpdateAction(UpdateAction.DOWNLOAD);
 
         /* Verify DOWNLOAD has NOT been processed. */
         verify(distribute, never()).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
@@ -471,6 +417,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         ReleaseDetails details = mock(ReleaseDetails.class);
         when(details.getId()).thenReturn(1);
         when(details.getVersion()).thenReturn(10);
+        when(details.getShortVersion()).thenReturn("2.3.4");
         when(details.isMandatoryUpdate()).thenReturn(mandatory);
         when(ReleaseDetails.parse(anyString())).thenReturn(details);
 
