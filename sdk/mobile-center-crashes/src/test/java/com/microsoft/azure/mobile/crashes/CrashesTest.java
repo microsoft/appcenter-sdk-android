@@ -284,47 +284,41 @@ public class CrashesTest {
 
     @Test
     public void queuePendingCrashesShouldProcess() throws IOException, ClassNotFoundException, JSONException {
+
+        /* Setup mock. */
         Context mockContext = mock(Context.class);
         Channel mockChannel = mock(Channel.class);
-
         ErrorReport report = new ErrorReport();
-
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report);
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
-
-
         CrashesListener mockListener = mock(CrashesListener.class);
         when(mockListener.shouldProcess(report)).thenReturn(true);
         when(mockListener.shouldAwaitUserConfirmation()).thenReturn(false);
-
         ErrorAttachmentLog mockAttachment = mock(ErrorAttachmentLog.class);
         when(mockAttachment.getId()).thenReturn(UUID.randomUUID());
         when(mockAttachment.getErrorId()).thenReturn(UUID.randomUUID());
         when(mockAttachment.getContentType()).thenReturn("");
         when(mockAttachment.getFileName()).thenReturn("");
         when(mockAttachment.getData()).thenReturn("");
-
+        when(mockAttachment.isValid()).thenReturn(true);
         ErrorAttachmentLog mockEmptyAttachment = mock(ErrorAttachmentLog.class);
-
         final int skipAttachmentLogsCount = 2;
         List<ErrorAttachmentLog> errorAttachmentLogList = Arrays.asList(mockAttachment, mockAttachment, mockEmptyAttachment, null);
         when(mockListener.getErrorAttachments(report)).thenReturn(errorAttachmentLogList);
-
-        Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
         when(logSerializer.deserializeLog(anyString())).thenReturn(mErrorLog);
-
+        Crashes crashes = Crashes.getInstance();
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
         crashes.onStarted(mockContext, "", mockChannel);
 
+        /* Test. */
         verify(mockListener).shouldProcess(report);
         verify(mockListener).shouldAwaitUserConfirmation();
-
         verify(mockListener).getErrorAttachments(report);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
             @Override
@@ -332,7 +326,6 @@ public class CrashesTest {
                 return log.equals(mErrorLog);
             }
         }), eq(crashes.getGroupName()));
-
         verify(mockChannel, times(errorAttachmentLogList.size() - skipAttachmentLogsCount)).enqueue(mockAttachment, crashes.getGroupName());
     }
 
@@ -379,6 +372,7 @@ public class CrashesTest {
         when(mockAttachment.getContentType()).thenReturn("");
         when(mockAttachment.getFileName()).thenReturn("");
         when(mockAttachment.getData()).thenReturn("");
+        when(mockAttachment.isValid()).thenReturn(true);
         List<ErrorAttachmentLog> errorAttachmentLogList = Arrays.asList(mockAttachment, mockAttachment);
 
         ErrorReport report = new ErrorReport();
