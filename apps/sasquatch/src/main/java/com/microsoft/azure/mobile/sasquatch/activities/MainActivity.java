@@ -7,10 +7,12 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.Nullable;
+import android.support.annotation.StringRes;
+import android.support.annotation.VisibleForTesting;
+import android.support.test.espresso.idling.CountingIdlingResource;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
@@ -20,14 +22,24 @@ import android.widget.Toast;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.analytics.Analytics;
+import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
+import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
+import com.microsoft.azure.mobile.analytics.ingestion.models.EventLog;
+import com.microsoft.azure.mobile.analytics.ingestion.models.PageLog;
 import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.distribute.Distribute;
+import com.microsoft.azure.mobile.ingestion.models.Log;
+import com.microsoft.azure.mobile.ingestion.models.LogWithProperties;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
 import com.microsoft.azure.mobile.sasquatch.utils.SasquatchDistributeListener;
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
+
+import org.json.JSONObject;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
     static final String LOG_URL_KEY = "logUrl";
     private static final String LOG_TAG = "MobileCenterSasquatch";
     static SharedPreferences sSharedPreferences;
+
+    @VisibleForTesting
+    static final CountingIdlingResource analyticsIdlingResource = new CountingIdlingResource("analytics");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +65,8 @@ public class MainActivity extends AppCompatActivity {
             MobileCenter.setLogUrl(logUrl);
         }
 
-        /* Set crash listener. */
+        /* Set listeners. */
+        AnalyticsPrivateHelper.setListener(getAnalyticsListener());
         Crashes.setListener(getCrashesListener());
 
         /* Set distribute listener. */
@@ -74,13 +90,13 @@ public class MainActivity extends AppCompatActivity {
         MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class);
 
         /* Print last crash. */
-        Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
+        MobileCenterLog.info(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
         Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
 
             @Override
             public void onResult(@Nullable ErrorReport data) {
                 if (data != null) {
-                    Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", data.getThrowable());
+                    MobileCenterLog.info(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", data.getThrowable());
                 }
             }
         });
@@ -159,8 +175,63 @@ public class MainActivity extends AppCompatActivity {
             public void onSendingSucceeded(ErrorReport report) {
 
                 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-                String message = String.format("%s\nCrash ID: %s\nThrowable: %s", R.string.crash_sent_succeeded, report.getId(), report.getThrowable().toString());
+                String message = String.format("%s\nCrash ID: %s\nThrowable: %s", getString(R.string.crash_sent_succeeded), report.getId(), report.getThrowable().toString());
                 Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        };
+    }
+
+    private AnalyticsListener getAnalyticsListener() {
+        return new AnalyticsListener() {
+
+            private void showToast(@StringRes int resId) {
+                showToast(getString(resId));
+            }
+
+            private void showToast(String message) {
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onBeforeSending(Log log) {
+                if (log instanceof EventLog) {
+                    showToast(R.string.event_before_sending);
+                } else if (log instanceof PageLog) {
+                    showToast(R.string.page_before_sending);
+                }
+                analyticsIdlingResource.increment();
+            }
+
+            @Override
+            public void onSendingFailed(Log log, Exception e) {
+                String message = null;
+                if (log instanceof EventLog) {
+                    message = getString(R.string.event_sent_failed);
+                } else if (log instanceof PageLog) {
+                    message = getString(R.string.page_sent_failed);
+                }
+                if (message != null) {
+                    message = String.format("%s\nException: %s", message, e.toString());
+                    showToast(message);
+                }
+                analyticsIdlingResource.decrement();
+            }
+
+            @Override
+            public void onSendingSucceeded(Log log) {
+                String message = null;
+                if (log instanceof EventLog) {
+                    message = String.format("%s\nName: %s", getString(R.string.event_sent_succeeded), ((EventLog) log).getName());
+                } else if (log instanceof PageLog) {
+                    message = String.format("%s\nName: %s", getString(R.string.page_sent_succeeded), ((PageLog) log).getName());
+                }
+                if (message != null) {
+                    if (((LogWithProperties) log).getProperties() != null) {
+                        message += String.format("\nProperties: %s", new JSONObject(((LogWithProperties) log).getProperties()).toString());
+                    }
+                    showToast(message);
+                }
+                analyticsIdlingResource.decrement();
             }
         };
     }

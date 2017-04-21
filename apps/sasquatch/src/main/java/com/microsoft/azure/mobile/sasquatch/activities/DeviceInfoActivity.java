@@ -2,6 +2,7 @@ package com.microsoft.azure.mobile.sasquatch.activities;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -111,8 +112,9 @@ public class DeviceInfoActivity extends AppCompatActivity implements NetworkStat
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
-    private class DeviceInfoDisplayModel {
-        private String title;
-        private String value;
+    @VisibleForTesting
+    class DeviceInfoDisplayModel {
+        String title;
+        String value;
     }
 }
