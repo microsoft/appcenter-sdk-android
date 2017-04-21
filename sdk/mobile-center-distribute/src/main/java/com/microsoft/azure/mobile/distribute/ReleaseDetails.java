@@ -20,6 +20,8 @@ public class ReleaseDetails {
 
     private static final String RELEASE_NOTES = "release_notes";
 
+    private static final String RELEASE_NOTES_URL = "release_notes_url";
+
     private static final String MIN_API_LEVEL = "android_min_api_level";
 
     private static final String DOWNLOAD_URL = "download_url";
@@ -51,6 +53,11 @@ public class ReleaseDetails {
      * The release's release notes.
      */
     private String releaseNotes;
+
+    /**
+     * The release notes URL.
+     */
+    private Uri releaseNotesUrl;
 
     /**
      * The release's minimum required Android API level.
@@ -86,6 +93,7 @@ public class ReleaseDetails {
         releaseDetails.version = object.getInt(VERSION);
         releaseDetails.shortVersion = object.getString(SHORT_VERSION);
         releaseDetails.releaseNotes = object.isNull(RELEASE_NOTES) ? null : object.getString(RELEASE_NOTES);
+        releaseDetails.releaseNotesUrl = object.isNull(RELEASE_NOTES_URL) ? null : Uri.parse(object.getString(RELEASE_NOTES_URL));
         releaseDetails.minApiLevel = object.getInt(MIN_API_LEVEL);
         releaseDetails.downloadUrl = Uri.parse(object.getString(DOWNLOAD_URL));
         String scheme = releaseDetails.downloadUrl.getScheme();
@@ -133,6 +141,16 @@ public class ReleaseDetails {
     @Nullable
     public String getReleaseNotes() {
         return releaseNotes;
+    }
+
+    /**
+     * Get the releasesNotesUrl value.
+     *
+     * @return the releaseNotesUrl value.
+     */
+    @Nullable
+    Uri getReleaseNotesUrl() {
+        return releaseNotesUrl;
     }
 
     /**

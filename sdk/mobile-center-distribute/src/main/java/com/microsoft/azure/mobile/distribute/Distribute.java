@@ -24,7 +24,6 @@ import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
-import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
@@ -50,6 +49,7 @@ import org.json.JSONException;
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.text.NumberFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -66,13 +66,13 @@ import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.GET_LATEST_RELEASE_PATH_FORMAT;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.HEADER_API_TOKEN;
-import static com.microsoft.azure.mobile.distribute.DistributeConstants.INVALID_RELEASE_IDENTIFIER;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
-import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_IGNORED_RELEASE_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
@@ -382,7 +382,7 @@ public class Distribute extends AbstractMobileCenterService {
             mWorkflowCompleted = false;
             cancelPreviousTasks();
             PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
-            PreferencesStorage.remove(PREFERENCE_KEY_IGNORED_RELEASE_ID);
+            PreferencesStorage.remove(PREFERENCE_KEY_POSTPONE_TIME);
         }
     }
 
@@ -409,47 +409,16 @@ public class Distribute extends AbstractMobileCenterService {
                 enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
                 break;
 
-            case UserUpdateAction.IGNORE:
+            case UserUpdateAction.POSTPONE:
                 if (mReleaseDetails.isMandatoryUpdate()) {
                     MobileCenterLog.error(LOG_TAG, "Cannot ignore a mandatory update.");
                     return;
                 }
-                ignoreRelease(mReleaseDetails);
-                break;
-
-            case UserUpdateAction.POSTPONE:
-                if (mReleaseDetails.isMandatoryUpdate()) {
-                    MobileCenterLog.error(LOG_TAG, "Cannot postpone a mandatory update.");
-                    return;
-                }
-                completeWorkflow();
+                postponeRelease(mReleaseDetails);
                 break;
 
             default:
                 MobileCenterLog.error(LOG_TAG, "Invalid update action: " + updateAction);
-        }
-    }
-
-    /**
-     * Check state did not change and schedule download of the release.
-     *
-     * @param releaseDetails release details.
-     */
-    @VisibleForTesting
-    synchronized void enqueueDownloadOrShowUnknownSourcesDialog(final ReleaseDetails releaseDetails) {
-        if (releaseDetails == mReleaseDetails) {
-            if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
-                MobileCenterLog.debug(LOG_TAG, "Schedule download...");
-                if (releaseDetails.isMandatoryUpdate()) {
-                    showDownloadProgress();
-                }
-                mCheckedDownload = true;
-                mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails));
-            } else {
-                showUnknownSourcesDialog();
-            }
-        } else {
-            showDisabledToast();
         }
     }
 
@@ -837,18 +806,13 @@ public class Distribute extends AbstractMobileCenterService {
         /* Check if state did not change. */
         if (mCheckReleaseCallId == releaseCallId) {
 
-            /* Check ignored. */
-            int releaseId = releaseDetails.getId();
-            if (releaseId == PreferencesStorage.getInt(PREFERENCE_KEY_IGNORED_RELEASE_ID, INVALID_RELEASE_IDENTIFIER)) {
-                MobileCenterLog.debug(LOG_TAG, "This release is ignored id=" + releaseId);
-            }
-
             /* Check minimum Android API level. */
-            else if (Build.VERSION.SDK_INT >= releaseDetails.getMinApiLevel()) {
+            mCheckReleaseApiCall = null;
+            if (Build.VERSION.SDK_INT >= releaseDetails.getMinApiLevel()) {
 
                 /* Check version code is equals or higher and hash is different. */
                 MobileCenterLog.debug(LOG_TAG, "Check if latest release is more recent.");
-                if (isMoreRecent(releaseDetails)) {
+                if (isMoreRecent(releaseDetails) && canUpdateNow(releaseDetails)) {
 
                     /* Update cache. */
                     PreferencesStorage.putString(PREFERENCE_KEY_RELEASE_DETAILS, rawReleaseDetails);
@@ -872,8 +836,6 @@ public class Distribute extends AbstractMobileCenterService {
                         showUpdateDialog();
                     }
                     return;
-                } else {
-                    MobileCenterLog.debug(LOG_TAG, "Latest release is not more recent.");
                 }
             } else {
                 MobileCenterLog.info(LOG_TAG, "This device is not compatible with the latest release.");
@@ -891,10 +853,40 @@ public class Distribute extends AbstractMobileCenterService {
      * @return true if latest release on server should be used.
      */
     private boolean isMoreRecent(ReleaseDetails releaseDetails) {
+        boolean moreRecent;
         if (releaseDetails.getVersion() == mPackageInfo.versionCode) {
-            return !releaseDetails.getReleaseHash().equals(DistributeUtils.computeReleaseHash(mPackageInfo));
+            moreRecent = !releaseDetails.getReleaseHash().equals(DistributeUtils.computeReleaseHash(mPackageInfo));
+        } else {
+            moreRecent = releaseDetails.getVersion() > mPackageInfo.versionCode;
         }
-        return releaseDetails.getVersion() > mPackageInfo.versionCode;
+        MobileCenterLog.debug(LOG_TAG, "Latest release more recent=" + moreRecent);
+        return moreRecent;
+    }
+
+    /**
+     * Check if release can be downloaded and installed now.
+     *
+     * @param releaseDetails release.
+     * @return false if release optional AND user has clicked ask me in day since less than 24 hours ago, true otherwise.
+     */
+    private boolean canUpdateNow(ReleaseDetails releaseDetails) {
+        if (releaseDetails.isMandatoryUpdate()) {
+            MobileCenterLog.debug(LOG_TAG, "Release is mandatory, ignoring any postpone action.");
+            return true;
+        }
+        long now = System.currentTimeMillis();
+        long postponedTime = PreferencesStorage.getLong(PREFERENCE_KEY_POSTPONE_TIME, 0);
+        if (now < postponedTime) {
+            MobileCenterLog.debug(LOG_TAG, "User clock has been changed in past, cleaning postpone state and showing dialog");
+            PreferencesStorage.remove(PREFERENCE_KEY_POSTPONE_TIME);
+            return true;
+        }
+        long postponedUntil = postponedTime + POSTPONE_TIME_THRESHOLD;
+        if (now < postponedUntil) {
+            MobileCenterLog.debug(LOG_TAG, "Optional updates are postponed until " + new Date(postponedUntil));
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -957,11 +949,14 @@ public class Distribute extends AbstractMobileCenterService {
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
             dialogBuilder.setTitle(R.string.mobile_center_distribute_update_dialog_title);
             final ReleaseDetails releaseDetails = mReleaseDetails;
-            String releaseNotes = releaseDetails.getReleaseNotes();
-            if (TextUtils.isEmpty(releaseNotes))
-                dialogBuilder.setMessage(R.string.mobile_center_distribute_update_dialog_message);
-            else
-                dialogBuilder.setMessage(releaseNotes);
+            String message;
+            if (releaseDetails.isMandatoryUpdate()) {
+                message = mContext.getString(R.string.mobile_center_distribute_update_dialog_message_mandatory);
+            } else {
+                message = mContext.getString(R.string.mobile_center_distribute_update_dialog_message_optional);
+            }
+            message = formatAppNameAndVersion(message);
+            dialogBuilder.setMessage(message);
             dialogBuilder.setPositiveButton(R.string.mobile_center_distribute_update_dialog_download, new DialogInterface.OnClickListener() {
 
                 @Override
@@ -969,27 +964,38 @@ public class Distribute extends AbstractMobileCenterService {
                     enqueueDownloadOrShowUnknownSourcesDialog(releaseDetails);
                 }
             });
-            if (releaseDetails.isMandatoryUpdate()) {
-                dialogBuilder.setCancelable(false);
-            } else {
-                dialogBuilder.setNegativeButton(R.string.mobile_center_distribute_update_dialog_ignore, new DialogInterface.OnClickListener() {
+            dialogBuilder.setCancelable(false);
+            if (!releaseDetails.isMandatoryUpdate()) {
+                dialogBuilder.setNegativeButton(R.string.mobile_center_distribute_update_dialog_postpone, new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        ignoreRelease(releaseDetails);
+                        postponeRelease(releaseDetails);
                     }
                 });
-                dialogBuilder.setNeutralButton(R.string.mobile_center_distribute_update_dialog_postpone, new DialogInterface.OnClickListener() {
+            }
+            if (releaseDetails.getReleaseNotes() != null && releaseDetails.getReleaseNotesUrl() != null) {
+                dialogBuilder.setNeutralButton(R.string.mobile_center_distribute_update_dialog_view_release_notes, new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        completeWorkflow(releaseDetails);
+                        viewReleaseNotes(releaseDetails);
                     }
                 });
-                setOnCancelListener(dialogBuilder, releaseDetails);
             }
             mUpdateDialog = dialogBuilder.create();
             showAndRememberDialogActivity(mUpdateDialog);
+        }
+    }
+
+    /**
+     * View release notes. (Using top level method to be able to use whenNew in PowerMock).
+     */
+    private void viewReleaseNotes(ReleaseDetails releaseDetails) {
+        try {
+            mForegroundActivity.startActivity(new Intent(Intent.ACTION_VIEW, releaseDetails.getReleaseNotesUrl()));
+        } catch (ActivityNotFoundException e) {
+            MobileCenterLog.error(LOG_TAG, "Failed to navigate to release notes.", e);
         }
     }
 
@@ -1028,7 +1034,13 @@ public class Distribute extends AbstractMobileCenterService {
                     completeWorkflow(releaseDetails);
                 }
             });
-            setOnCancelListener(dialogBuilder, releaseDetails);
+            dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+
+                @Override
+                public void onCancel(DialogInterface dialog) {
+                    completeWorkflow(releaseDetails);
+                }
+            });
         }
 
         /* We use generic OK button as we can't promise we can navigate to settings. */
@@ -1041,19 +1053,6 @@ public class Distribute extends AbstractMobileCenterService {
         });
         mUnknownSourcesDialog = dialogBuilder.create();
         showAndRememberDialogActivity(mUnknownSourcesDialog);
-    }
-
-    /**
-     * Common code for dialogs cancel action (using BACK).
-     */
-    private void setOnCancelListener(AlertDialog.Builder dialogBuilder, final ReleaseDetails releaseDetails) {
-        dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                completeWorkflow(releaseDetails);
-            }
-        });
     }
 
     /**
@@ -1083,16 +1082,48 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     /**
-     * Ignore the specified release. It won't be prompted anymore until another release is available.
+     * "Ask me in a day" postpone action.
      *
      * @param releaseDetails release details.
      */
-    private synchronized void ignoreRelease(ReleaseDetails releaseDetails) {
+    private synchronized void postponeRelease(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
-            int id = releaseDetails.getId();
-            MobileCenterLog.debug(LOG_TAG, "Ignore release id=" + id);
-            PreferencesStorage.putInt(PREFERENCE_KEY_IGNORED_RELEASE_ID, id);
+            MobileCenterLog.debug(LOG_TAG, "Postpone updates for a day.");
+            PreferencesStorage.putLong(PREFERENCE_KEY_POSTPONE_TIME, System.currentTimeMillis());
             completeWorkflow();
+        } else {
+            showDisabledToast();
+        }
+    }
+
+    /**
+     * Check state did not change and schedule download of the release.
+     *
+     * @param releaseDetails release details.
+     */
+    private synchronized void enqueueDownloadOrShowUnknownSourcesDialog(final ReleaseDetails releaseDetails) {
+        if (releaseDetails == mReleaseDetails) {
+            if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
+                MobileCenterLog.debug(LOG_TAG, "Schedule download...");
+                if (releaseDetails.isMandatoryUpdate()) {
+                    showDownloadProgress();
+                }
+                mCheckedDownload = true;
+                mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails));
+
+                /*
+                 * If we restored a cached dialog, we also started a new check release call.
+                 * We might have time to click on download before the call completes (easy to
+                 * reproduce with network down).
+                 * In that case the download will start and we'll see a new update dialog if we
+                 * don't cancel the call.
+                 */
+                if (mCheckReleaseApiCall != null) {
+                    mCheckReleaseApiCall.cancel();
+                }
+            } else {
+                showUnknownSourcesDialog();
+            }
         } else {
             showDisabledToast();
         }
@@ -1209,11 +1240,14 @@ public class Distribute extends AbstractMobileCenterService {
         /* Post notification. */
         MobileCenterLog.debug(LOG_TAG, "Post a notification as the download finished in background.");
         Notification.Builder builder = new Notification.Builder(mContext)
-                .setTicker(mContext.getString(R.string.mobile_center_distribute_download_successful_notification_title))
-                .setContentTitle(mContext.getString(R.string.mobile_center_distribute_download_successful_notification_title))
-                .setContentText(mContext.getString(R.string.mobile_center_distribute_download_successful_notification_message))
+                .setTicker(mContext.getString(R.string.mobile_center_distribute_install_ready_title))
+                .setContentTitle(mContext.getString(R.string.mobile_center_distribute_install_ready_title))
+                .setContentText(getInstallReadyMessage())
                 .setSmallIcon(mContext.getApplicationInfo().icon)
                 .setContentIntent(PendingIntent.getActivities(mContext, 0, new Intent[]{intent}, 0));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            builder.setStyle(new Notification.BigTextStyle().bigText(getInstallReadyMessage()));
+        }
         Notification notification = DistributeUtils.buildNotification(builder);
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
         NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -1313,8 +1347,8 @@ public class Distribute extends AbstractMobileCenterService {
             final ReleaseDetails releaseDetails = mReleaseDetails;
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
             dialogBuilder.setCancelable(false);
-            dialogBuilder.setTitle(R.string.mobile_center_distribute_update_dialog_title);
-            dialogBuilder.setMessage(R.string.mobile_center_distribute_download_successful_notification_message);
+            dialogBuilder.setTitle(R.string.mobile_center_distribute_install_ready_title);
+            dialogBuilder.setMessage(getInstallReadyMessage());
             dialogBuilder.setPositiveButton(R.string.mobile_center_distribute_install, new DialogInterface.OnClickListener() {
 
                 @Override
@@ -1325,6 +1359,20 @@ public class Distribute extends AbstractMobileCenterService {
             mCompletedDownloadDialog = dialogBuilder.create();
             showAndRememberDialogActivity(mCompletedDownloadDialog);
         }
+    }
+
+    /**
+     * Get text for app is ready to be installed.
+     */
+    private String getInstallReadyMessage() {
+        return formatAppNameAndVersion(mContext.getString(R.string.mobile_center_distribute_install_ready_message));
+    }
+
+    /**
+     * Inject app name version and version code in a format string.
+     */
+    private String formatAppNameAndVersion(String format) {
+        return String.format(format, mContext.getString(mContext.getApplicationInfo().labelRes), mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion());
     }
 
     /**
