@@ -22,7 +22,7 @@ import static org.hamcrest.Matchers.allOf;
 public class DeviceInfoActivityTest {
 
     @Rule
-    public ActivityTestRule<DeviceInfoActivity> mActivityRule = new ActivityTestRule<>(DeviceInfoActivity.class);
+    public ActivityTestRule<DeviceInfoActivity> mActivityTestRule = new ActivityTestRule<>(DeviceInfoActivity.class);
 
     @Test
     public void allValuesExist() {

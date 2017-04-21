@@ -5,8 +5,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.StrictMode;
 import android.support.annotation.Nullable;
+import android.support.annotation.StringRes;
+import android.support.annotation.VisibleForTesting;
+import android.support.test.espresso.idling.CountingIdlingResource;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -42,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
     static final String LOG_URL_KEY = "logUrl";
     private static final String LOG_TAG = "MobileCenterSasquatch";
     static SharedPreferences sSharedPreferences;
+
+    @VisibleForTesting
+    static final CountingIdlingResource analyticsIdlingResource = new CountingIdlingResource("analytics");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -169,13 +177,28 @@ public class MainActivity extends AppCompatActivity {
     private AnalyticsListener getAnalyticsListener() {
         return new AnalyticsListener() {
 
+            private Toast mToast;
+
+            private void showToast(@StringRes int resId) {
+                showToast(getString(resId));
+            }
+
+            private void showToast(String message) {
+                if (mToast != null) {
+                    mToast.cancel();
+                }
+                mToast = Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT);
+                mToast.show();
+            }
+
             @Override
             public void onBeforeSending(Log log) {
                 if (log instanceof EventLog) {
-                    Toast.makeText(MainActivity.this, R.string.event_before_sending, Toast.LENGTH_SHORT).show();
+                    showToast(R.string.event_before_sending);
                 } else if (log instanceof PageLog) {
-                    Toast.makeText(MainActivity.this, R.string.page_before_sending, Toast.LENGTH_SHORT).show();
+                    showToast(R.string.page_before_sending);
                 }
+                analyticsIdlingResource.increment();
             }
 
             @Override
@@ -188,8 +211,9 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (message != null) {
                     message = String.format("%s\nException: %s", message, e.toString());
-                    Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+                    showToast(message);
                 }
+                analyticsIdlingResource.decrement();
             }
 
             @Override
@@ -204,8 +228,9 @@ public class MainActivity extends AppCompatActivity {
                     if (((LogWithProperties) log).getProperties() != null) {
                         message += String.format("\nProperties: %s", new JSONObject(((LogWithProperties) log).getProperties()).toString());
                     }
-                    Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+                    showToast(message);
                 }
+                analyticsIdlingResource.decrement();
             }
         };
     }

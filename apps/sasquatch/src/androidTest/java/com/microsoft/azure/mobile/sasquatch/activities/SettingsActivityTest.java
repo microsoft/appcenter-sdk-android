@@ -30,7 +30,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.withId;
 public class SettingsActivityTest {
 
     @Rule
-    public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<>(MainActivity.class, true, false);
+    public ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<>(MainActivity.class, true, false);
 
     private Context mContext;
 
@@ -42,7 +42,7 @@ public class SettingsActivityTest {
         mContext.getSharedPreferences("MobileCenter", Context.MODE_PRIVATE).edit().clear().apply();
 
         /* Launch main activity and go to setting page. Required to properly initialize. */
-        mActivityRule.launchActivity(new Intent());
+        mActivityTestRule.launchActivity(new Intent());
         onView(withId(R.id.action_settings)).perform(click());
     }
 
