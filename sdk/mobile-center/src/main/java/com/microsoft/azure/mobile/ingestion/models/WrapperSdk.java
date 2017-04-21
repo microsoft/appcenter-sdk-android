@@ -12,6 +12,8 @@ public class WrapperSdk implements Model {
 
     private static final String WRAPPER_SDK_NAME = "wrapper_sdk_name";
 
+    private static final String WRAPPER_RUNTIME_VERSION = "wrapper_runtime_version";
+
     private static final String LIVE_UPDATE_RELEASE_LABEL = "live_update_release_label";
 
     private static final String LIVE_UPDATE_DEPLOYMENT_KEY = "live_update_deployment_key";
@@ -28,6 +30,11 @@ public class WrapperSdk implements Model {
      * Name of the wrapper SDK. Consists of the name of the SDK and the wrapper platform, e.g. "avalanchesdk.xamarin", "hockeysdk.cordova".
      */
     private String wrapperSdkName;
+
+    /**
+     * Version of the wrapper technology framework (Xamarin runtime version or ReactNative or Cordova etc...).
+     */
+    private String wrapperRuntimeVersion;
 
     /**
      * Label that is used to identify application code 'version' released via
@@ -82,6 +89,24 @@ public class WrapperSdk implements Model {
      */
     public void setWrapperSdkName(String wrapperSdkName) {
         this.wrapperSdkName = wrapperSdkName;
+    }
+
+    /**
+     * Get the wrapperRuntimeVersion value.
+     *
+     * @return the wrapperRuntimeVersion value
+     */
+    public String getWrapperRuntimeVersion() {
+        return wrapperRuntimeVersion;
+    }
+
+    /**
+     * Set the wrapperRuntimeVersion value.
+     *
+     * @param wrapperRuntimeVersion the wrapperRuntimeVersion value to set
+     */
+    public void setWrapperRuntimeVersion(String wrapperRuntimeVersion) {
+        this.wrapperRuntimeVersion = wrapperRuntimeVersion;
     }
 
     /**
@@ -142,6 +167,7 @@ public class WrapperSdk implements Model {
     public void read(JSONObject object) throws JSONException {
         setWrapperSdkVersion(object.optString(WRAPPER_SDK_VERSION, null));
         setWrapperSdkName(object.optString(WRAPPER_SDK_NAME, null));
+        setWrapperRuntimeVersion(object.optString(WRAPPER_RUNTIME_VERSION, null));
         setLiveUpdateReleaseLabel(object.optString(LIVE_UPDATE_RELEASE_LABEL, null));
         setLiveUpdateDeploymentKey(object.optString(LIVE_UPDATE_DEPLOYMENT_KEY, null));
         setLiveUpdatePackageHash(object.optString(LIVE_UPDATE_PACKAGE_HASH, null));
@@ -151,6 +177,7 @@ public class WrapperSdk implements Model {
     public void write(JSONStringer writer) throws JSONException {
         JSONUtils.write(writer, WRAPPER_SDK_VERSION, getWrapperSdkVersion());
         JSONUtils.write(writer, WRAPPER_SDK_NAME, getWrapperSdkName());
+        JSONUtils.write(writer, WRAPPER_RUNTIME_VERSION, getWrapperRuntimeVersion());
         JSONUtils.write(writer, LIVE_UPDATE_RELEASE_LABEL, getLiveUpdateReleaseLabel());
         JSONUtils.write(writer, LIVE_UPDATE_DEPLOYMENT_KEY, getLiveUpdateDeploymentKey());
         JSONUtils.write(writer, LIVE_UPDATE_PACKAGE_HASH, getLiveUpdatePackageHash());
@@ -168,6 +195,8 @@ public class WrapperSdk implements Model {
             return false;
         if (wrapperSdkName != null ? !wrapperSdkName.equals(that.wrapperSdkName) : that.wrapperSdkName != null)
             return false;
+        if (wrapperRuntimeVersion != null ? !wrapperRuntimeVersion.equals(that.wrapperRuntimeVersion) : that.wrapperRuntimeVersion != null)
+            return false;
         if (liveUpdateReleaseLabel != null ? !liveUpdateReleaseLabel.equals(that.liveUpdateReleaseLabel) : that.liveUpdateReleaseLabel != null)
             return false;
         if (liveUpdateDeploymentKey != null ? !liveUpdateDeploymentKey.equals(that.liveUpdateDeploymentKey) : that.liveUpdateDeploymentKey != null)
@@ -179,6 +208,7 @@ public class WrapperSdk implements Model {
     public int hashCode() {
         int result = wrapperSdkVersion != null ? wrapperSdkVersion.hashCode() : 0;
         result = 31 * result + (wrapperSdkName != null ? wrapperSdkName.hashCode() : 0);
+        result = 31 * result + (wrapperRuntimeVersion != null ? wrapperRuntimeVersion.hashCode() : 0);
         result = 31 * result + (liveUpdateReleaseLabel != null ? liveUpdateReleaseLabel.hashCode() : 0);
         result = 31 * result + (liveUpdateDeploymentKey != null ? liveUpdateDeploymentKey.hashCode() : 0);
         result = 31 * result + (liveUpdatePackageHash != null ? liveUpdatePackageHash.hashCode() : 0);
