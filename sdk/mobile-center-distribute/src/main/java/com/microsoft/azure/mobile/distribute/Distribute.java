@@ -886,8 +886,28 @@ public class Distribute extends AbstractMobileCenterService {
                 }
             });
         }
+        if (releaseDetails.getReleaseNotes() != null && releaseDetails.getReleaseNotesUrl() != null) {
+            dialogBuilder.setNeutralButton(R.string.mobile_center_distribute_update_dialog_view_release_notes, new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    viewReleaseNotes(releaseDetails);
+                }
+            });
+        }
         mUpdateDialog = dialogBuilder.create();
         showAndRememberDialogActivity(mUpdateDialog);
+    }
+
+    /**
+     * View release notes. (Using top level method to be able to use whenNew in PowerMock).
+     */
+    private void viewReleaseNotes(ReleaseDetails releaseDetails) {
+        try {
+            mForegroundActivity.startActivity(new Intent(Intent.ACTION_VIEW, releaseDetails.getReleaseNotesUrl()));
+        } catch (ActivityNotFoundException e) {
+            MobileCenterLog.error(LOG_TAG, "Failed to navigate to release notes.", e);
+        }
     }
 
     /**

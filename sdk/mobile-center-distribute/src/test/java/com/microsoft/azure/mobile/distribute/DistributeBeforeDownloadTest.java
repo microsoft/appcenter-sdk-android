@@ -1,8 +1,11 @@
 package com.microsoft.azure.mobile.distribute;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 
 import com.microsoft.azure.mobile.channel.Channel;
@@ -12,6 +15,7 @@ import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.test.TestUtils;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import org.junit.After;
 import org.junit.Test;
@@ -41,6 +45,7 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -726,6 +731,78 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(InstallerUtils.isUnknownSourcesEnabled(mContext)).thenReturn(true);
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
         verify(serviceCall).cancel();
+    }
+
+    @Test
+    public void releaseNotes() throws Exception {
+
+        /* Mock we already have token. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                return mock(ServiceCall.class);
+            }
+        });
+
+        /* No release notes. */
+        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn(4);
+        when(releaseDetails.getVersion()).thenReturn(7);
+        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+
+        /* Trigger call. */
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Verify dialog. */
+        verify(mDialogBuilder, never()).setNeutralButton(eq(R.string.mobile_center_distribute_update_dialog_view_release_notes), any(DialogInterface.OnClickListener.class));
+        verify(mDialog).show();
+
+        /* Release notes but somehow no URL. */
+        when(releaseDetails.getReleaseNotes()).thenReturn("Fix a bug");
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verify(mDialogBuilder, never()).setNeutralButton(eq(R.string.mobile_center_distribute_update_dialog_view_release_notes), any(DialogInterface.OnClickListener.class));
+        verify(mDialog, times(2)).show();
+
+        /* Release notes URL this time. */
+        final Uri uri = mock(Uri.class);
+        Intent intent = mock(Intent.class);
+        whenNew(Intent.class).withArguments(Intent.ACTION_VIEW, uri).thenReturn(intent);
+        when(releaseDetails.getReleaseNotesUrl()).thenReturn(uri);
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        verify(mDialogBuilder).setNeutralButton(eq(R.string.mobile_center_distribute_update_dialog_view_release_notes), clickListener.capture());
+        verify(mDialog, times(3)).show();
+
+        /* Click and check navigation. */
+        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEUTRAL);
+        verify(mActivity).startActivity(intent);
+
+        /* We thus leave app. */
+        Distribute.getInstance().onActivityPaused(mActivity);
+        when(mDialog.isShowing()).thenReturn(false);
+
+        /* Going back should restore dialog. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+        clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        verify(mDialogBuilder, times(2)).setNeutralButton(eq(R.string.mobile_center_distribute_update_dialog_view_release_notes), clickListener.capture());
+        verify(mDialog, times(4)).show();
+
+        /* Do the same test and simulate failed navigation. */
+        mockStatic(MobileCenterLog.class);
+        ActivityNotFoundException exception = new ActivityNotFoundException();
+        doThrow(exception).when(mActivity).startActivity(intent);
+        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEUTRAL);
+        verify(mActivity, times(2)).startActivity(intent);
+        verifyStatic();
+        MobileCenterLog.error(anyString(), anyString(), eq(exception));
     }
 
     /**
