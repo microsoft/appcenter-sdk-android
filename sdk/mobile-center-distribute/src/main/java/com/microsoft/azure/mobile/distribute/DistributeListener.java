@@ -10,9 +10,9 @@ import android.support.annotation.UiThread;
 public interface DistributeListener {
 
     /**
-     * Called whenever a new release is available to download.
+     * Called whenever a new release is available to download and install.
      * <p>
-     * If user does not action the release (either postpone or download), this callback
+     * If user does not action the release (either postpone or update), this callback
      * will repeat for every activity change for the same release.
      * <p>
      * If you are showing your own U.I. for the new release, return <code>true</code> to this method
