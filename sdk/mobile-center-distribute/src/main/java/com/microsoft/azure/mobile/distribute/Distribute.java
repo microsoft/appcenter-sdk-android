@@ -13,6 +13,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -1372,7 +1373,15 @@ public class Distribute extends AbstractMobileCenterService {
      * Inject app name version and version code in a format string.
      */
     private String formatAppNameAndVersion(String format) {
-        return String.format(format, mContext.getString(mContext.getApplicationInfo().labelRes), mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion());
+        String appName;
+        ApplicationInfo applicationInfo = mContext.getApplicationInfo();
+        int labelRes = applicationInfo.labelRes;
+        if (labelRes == 0) {
+            appName = String.valueOf(applicationInfo.nonLocalizedLabel);
+        } else {
+            appName = mContext.getString(labelRes);
+        }
+        return String.format(format, appName, mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion());
     }
 
     /**
