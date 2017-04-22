@@ -26,6 +26,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.reflect.Whitebox;
 
 import java.util.HashMap;
 import java.util.concurrent.Semaphore;
@@ -245,7 +246,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void sameVersionDifferentHash() throws Exception {
+    public void sameVersionDifferentHashWithHardcodedAppName() throws Exception {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -268,6 +269,10 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(releaseDetails.getReleaseHash()).thenReturn("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60");
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
+        /* Mock app name to be not localizable. */
+        Whitebox.setInternalState(mContext.getApplicationInfo(), "labelRes", 0);
+        Whitebox.setInternalState(mContext.getApplicationInfo(), "nonLocalizedLabel", "hardcoded-app-name");
+
         /* Trigger call. */
         Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
@@ -275,7 +280,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify dialog. */
         verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_dialog_title);
-        verify(mDialogBuilder).setMessage("unit-test-app1.2.36");
+        verify(mDialogBuilder).setMessage("hardcoded-app-name1.2.36");
         verify(mDialogBuilder).create();
         verify(mDialog).show();
     }
