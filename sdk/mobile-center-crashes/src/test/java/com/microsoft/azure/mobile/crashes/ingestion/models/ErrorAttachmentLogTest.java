@@ -3,8 +3,6 @@ package com.microsoft.azure.mobile.crashes.ingestion.models;
 
 import android.util.Base64;
 
-import com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog;
-
 import org.junit.Test;
 
 import java.util.UUID;
@@ -14,9 +12,6 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 @SuppressWarnings({"unused", "ConstantConditions"})
 public class ErrorAttachmentLogTest {

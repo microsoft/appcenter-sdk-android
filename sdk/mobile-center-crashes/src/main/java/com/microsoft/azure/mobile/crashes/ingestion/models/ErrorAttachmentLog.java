@@ -5,7 +5,6 @@ import android.util.Base64;
 
 import com.microsoft.azure.mobile.ingestion.models.AbstractLog;
 import com.microsoft.azure.mobile.ingestion.models.json.JSONUtils;
-import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,7 +12,6 @@ import org.json.JSONStringer;
 
 import java.util.UUID;
 
-import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 import static com.microsoft.azure.mobile.ingestion.models.CommonProperties.ID;
 
 /**
