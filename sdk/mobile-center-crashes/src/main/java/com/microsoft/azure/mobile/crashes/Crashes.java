@@ -769,10 +769,13 @@ public class Crashes extends AbstractMobileCenterService {
                 if (attachment != null) {
                     attachment.setId(UUID.randomUUID());
                     attachment.setErrorId(errorLogReport.log.getId());
-                    if (ErrorAttachments.validateErrorAttachmentLog(attachment))
+                    if (attachment.isValid()) {
                         mChannel.enqueue(attachment, ERROR_GROUP);
+                    } else {
+                        MobileCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
+                    }
                 } else {
-                    MobileCenterLog.warn(LOG_TAG, "Skipping null ErrorAttachmentLog in CrashesListener.getErrorAttachments");
+                    MobileCenterLog.warn(LOG_TAG, "Skipping null ErrorAttachmentLog in CrashesListener.getErrorAttachments.");
                 }
             }
         }

@@ -1,5 +1,8 @@
 package com.microsoft.azure.mobile.crashes.ingestion.models;
 
+import android.support.annotation.VisibleForTesting;
+import android.util.Base64;
+
 import com.microsoft.azure.mobile.ingestion.models.AbstractLog;
 import com.microsoft.azure.mobile.ingestion.models.json.JSONUtils;
 
@@ -15,6 +18,12 @@ import static com.microsoft.azure.mobile.ingestion.models.CommonProperties.ID;
  * Error attachment log.
  */
 public class ErrorAttachmentLog extends AbstractLog {
+
+    /**
+     * Plain text mime type.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static final String CONTENT_TYPE_TEXT_PLAIN = "text/plain";
 
     public static final String TYPE = "error_attachment";
 
@@ -50,6 +59,60 @@ public class ErrorAttachmentLog extends AbstractLog {
      * Data (plain text or base64 string for binary data).
      */
     private String data;
+
+    /**
+     * Build an error attachment log with text suitable for using in {link CrashesListener#getErrorAttachments(ErrorReport)}.
+     *
+     * @param text     text to attach to attachment log.
+     * @param fileName file name to use in error attachment log.
+     * @return ErrorAttachmentLog or null if null text is passed.
+     */
+    public static ErrorAttachmentLog attachmentWithText(String text, String fileName) {
+        return attachment(null, text, fileName, CONTENT_TYPE_TEXT_PLAIN);
+    }
+
+    /**
+     * Build an error attachment log with binary suitable for using in {link CrashesListener#getErrorAttachments(ErrorReport)}.
+     *
+     * @param data     binary data.
+     * @param fileName file name to use in error attachment log.
+     * @return ErrorAttachmentLog attachment or null if null data is passed.
+     */
+    public static ErrorAttachmentLog attachmentWithBinary(byte[] data, String fileName, String contentType) {
+        return attachment(data, null, fileName, contentType);
+    }
+
+    /**
+     * Build an error attachment log with text and binary suitable for using in {link CrashesListener#getErrorAttachments(ErrorReport)}.
+     *
+     * @param data        binary data.
+     * @param text        text to attach to the attachment log.
+     * @param fileName    file name to use in error attachment log.
+     * @param contentType binary data MIME type.
+     * @return ErrorAttachmentLog attachment or null if text and data are null.
+     */
+    private static ErrorAttachmentLog attachment(byte[] data, String text, String fileName, String contentType) {
+        String content = text;
+        if (isBinaryContentType(contentType)) {
+            content = Base64.encodeToString(data, Base64.DEFAULT);
+        }
+        ErrorAttachmentLog attachmentLog = new ErrorAttachmentLog();
+        attachmentLog.setContentType(contentType);
+        attachmentLog.setFileName(fileName);
+        attachmentLog.setData(content);
+        return attachmentLog;
+    }
+
+    /**
+     * Checks if content type provided by user is binary.
+     *
+     * @param contentType content type.
+     * @return true if binary, otherwise false.
+     */
+    @VisibleForTesting
+    static boolean isBinaryContentType(String contentType) {
+        return contentType != null && !contentType.startsWith("text/");
+    }
 
     @Override
     public String getType() {
@@ -144,6 +207,15 @@ public class ErrorAttachmentLog extends AbstractLog {
      */
     public void setData(String data) {
         this.data = data;
+    }
+
+    /**
+     * Checks if the log's values are valid.
+     *
+     * @return true if validation succeeded, otherwise false.
+     */
+    public boolean isValid() {
+        return getId() != null && getErrorId() != null && getContentType() != null && getData() != null;
     }
 
     @Override
