@@ -391,36 +391,42 @@ public class Distribute extends AbstractMobileCenterService {
      * Implements {@link #notifyUpdateAction(int)}.
      */
     @VisibleForTesting
-    synchronized void handleUpdateAction(int updateAction) {
-        if (!isEnabled()) {
-            MobileCenterLog.error(LOG_TAG, "Distribute is disabled");
-            return;
-        }
-        if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE) {
-            MobileCenterLog.error(LOG_TAG, "Cannot handler user update action at this time.");
-            return;
-        }
-        if (mUsingDefaultUpdateDialog) {
-            MobileCenterLog.error(LOG_TAG, "Cannot handler user update action when using default dialog.");
-            return;
-        }
-        switch (updateAction) {
+    synchronized void handleUpdateAction(final int updateAction) {
+        HandlerUtils.runOnUiThread(new Runnable() {
 
-            case UpdateAction.UPDATE:
-                enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
-                break;
-
-            case UpdateAction.POSTPONE:
-                if (mReleaseDetails.isMandatoryUpdate()) {
-                    MobileCenterLog.error(LOG_TAG, "Cannot postpone a mandatory update.");
+            @Override
+            public void run() {
+                if (!isEnabled()) {
+                    MobileCenterLog.error(LOG_TAG, "Distribute is disabled");
                     return;
                 }
-                postponeRelease(mReleaseDetails);
-                break;
+                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE) {
+                    MobileCenterLog.error(LOG_TAG, "Cannot handler user update action at this time.");
+                    return;
+                }
+                if (mUsingDefaultUpdateDialog) {
+                    MobileCenterLog.error(LOG_TAG, "Cannot handler user update action when using default dialog.");
+                    return;
+                }
+                switch (updateAction) {
 
-            default:
-                MobileCenterLog.error(LOG_TAG, "Invalid update action: " + updateAction);
-        }
+                    case UpdateAction.UPDATE:
+                        enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
+                        break;
+
+                    case UpdateAction.POSTPONE:
+                        if (mReleaseDetails.isMandatoryUpdate()) {
+                            MobileCenterLog.error(LOG_TAG, "Cannot postpone a mandatory update.");
+                            return;
+                        }
+                        postponeRelease(mReleaseDetails);
+                        break;
+
+                    default:
+                        MobileCenterLog.error(LOG_TAG, "Invalid update action: " + updateAction);
+                }
+            }
+        });
     }
 
     /**
