@@ -80,7 +80,6 @@ public class CrashesTest {
         Espresso.registerIdlingResources(MainActivity.crashesIdlingResource);
     }
 
-
     @After
     public final void tearDown() {
 
@@ -103,51 +102,28 @@ public class CrashesTest {
         crashTest(R.string.title_test_ui_crash);
     }
 
-//    @Test
-//    public void stackOverflowTest() throws InterruptedException {
-//        crashTest(R.string.title_stack_overflow_crash);
-//    }
-//
-//    @Test
-//    public void memoryTest() throws InterruptedException {
-//        crashTest(R.string.title_memory_crash);
-//    }
-//
-//    @Test
-//    public void memory2Test() throws InterruptedException {
-//        crashTest(R.string.title_memory_crash2);
-//    }
-
     @Test
     public void variableMessageTest() throws InterruptedException {
         crashTest(R.string.title_variable_message);
     }
 
-//    @Test
-//    public void variableMessage2Test() throws InterruptedException {
-//        crashTest(R.string.title_variable_message2);
-//    }
-//
-//    @Test
-//    public void superNotCalledTest() throws InterruptedException {
-//        crashTest(R.string.title_super_not_called_exception);
-//    }
-//
-//    @Test
-//    public void superNotCalled2Test() throws InterruptedException {
-//        crashTest(R.string.title_super_not_called_exception2);
-//    }
-//
-//    @Test
-//    public void superNotCalled3Test() throws InterruptedException {
-//        crashTest(R.string.title_super_not_called_exception3);
-//    }
-//
-//    @Test
-//    public void superNotCalled4Test() throws InterruptedException {
-//        crashTest(R.string.title_super_not_called_exception4);
-//    }
-
+    /**
+     * Crash and sending report test.
+     * <p>
+     * We can't truly restart application in tests, so some kind of crashes can't be tested by this method.
+     * Out of memory or stack overflow - crash the test process;
+     * UI states errors - problems with restart activity;
+     * <p>
+     * Also to avoid flakiness, please setup your test environment
+     * (https://google.github.io/android-testing-support-library/docs/espresso/setup/index.html#setup-your-test-environment).
+     * On your device, under Settings->Developer options disable the following 3 settings:
+     * - Window animation scale
+     * - Transition animation scale
+     * - Animator duration scale
+     *
+     * @param titleId Title string resource to find list item.
+     * @throws InterruptedException If the current thread is interrupted.
+     */
     private void crashTest(@StringRes int titleId) throws InterruptedException {
 
         /* Crash. */
@@ -188,10 +164,12 @@ public class CrashesTest {
     @SuppressWarnings("rawtypes")
     private static Matcher<Object> withCrashTitle(@StringRes final int titleId) {
         return new BoundedMatcher<Object, CrashActivity.Crash>(CrashActivity.Crash.class) {
+
             @Override
             public boolean matchesSafely(CrashActivity.Crash map) {
                 return map.title == titleId;
             }
+
             @Override
             public void describeTo(Description description) {
                 description.appendText("with item title from resource id: ");
