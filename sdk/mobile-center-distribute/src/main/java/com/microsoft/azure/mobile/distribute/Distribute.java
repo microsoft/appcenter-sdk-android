@@ -1306,8 +1306,17 @@ public class Distribute extends AbstractMobileCenterService {
      */
     private synchronized void hideProgressDialog() {
         if (mProgressDialog != null) {
-            mProgressDialog.hide();
+            final ProgressDialog progressDialog = mProgressDialog;
             mProgressDialog = null;
+
+            /* This can be called from background check download task. */
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    progressDialog.hide();
+                }
+            });
             HandlerUtils.getMainHandler().removeCallbacksAndMessages(HANDLER_TOKEN_CHECK_PROGRESS);
         }
     }

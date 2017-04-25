@@ -291,10 +291,17 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         }).when(mContext).startActivity(installIntent);
         doAnswer(new Answer<Void>() {
 
+            boolean firstCall = true;
+
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                beforeStartingActivityLock.release();
-                disabledLock.acquireUninterruptibly();
+
+                /* First call is update progress dialog, second is hide. */
+                if (firstCall) {
+                    firstCall = false;
+                    beforeStartingActivityLock.release();
+                    disabledLock.acquireUninterruptibly();
+                }
                 (((Runnable) invocation.getArguments()[0])).run();
                 return null;
             }
