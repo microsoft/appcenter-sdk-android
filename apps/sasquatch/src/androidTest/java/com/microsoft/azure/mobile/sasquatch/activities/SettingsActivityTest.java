@@ -5,11 +5,13 @@ import android.content.Intent;
 import android.support.test.espresso.DataInteraction;
 import android.support.test.rule.ActivityTestRule;
 
+import com.microsoft.azure.mobile.Constants;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.sasquatch.R;
+import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -39,7 +41,8 @@ public class SettingsActivityTest {
         mContext = getInstrumentation().getTargetContext();
 
         /* Clear preferences. */
-        mContext.getSharedPreferences("MobileCenter", Context.MODE_PRIVATE).edit().clear().apply();
+        StorageHelper.initialize(mContext);
+        StorageHelper.PreferencesStorage.clear();
 
         /* Launch main activity and go to setting page. Required to properly initialize. */
         mActivityTestRule.launchActivity(new Intent());

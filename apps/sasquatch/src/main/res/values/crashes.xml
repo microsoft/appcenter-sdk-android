@@ -2,7 +2,8 @@
 <resources>
     <string name="title_test_crash">Test crash</string>
     <string name="description_test_crash">Using Crash.generateTestCrash() API</string>
-    <string name="title_crash_divide_by_0">Device by 0</string>
+    <string name="title_crash_divide_by_0">Divide by 0</string>
+    <string name="description_crash_divide_by_0">Divide by 0</string>
     <string name="title_test_ui_crash">Test some UI crash</string>
     <string name="description_test_ui_crash">A UI coding mistake, has inner exception</string>
     <string name="title_stack_overflow_crash">Stack overflow crash</string>

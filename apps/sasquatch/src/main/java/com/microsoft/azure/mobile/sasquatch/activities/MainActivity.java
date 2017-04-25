@@ -45,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     static final String LOG_URL_KEY = "logUrl";
     @VisibleForTesting
     static final CountingIdlingResource analyticsIdlingResource = new CountingIdlingResource("analytics");
+    @VisibleForTesting
+    static final CountingIdlingResource crashesIdlingResource = new CountingIdlingResource("crashes");
     private static final String LOG_TAG = "MobileCenterSasquatch";
     static SharedPreferences sSharedPreferences;
 
@@ -161,19 +163,25 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onBeforeSending(ErrorReport report) {
                 Toast.makeText(MainActivity.this, R.string.crash_before_sending, Toast.LENGTH_SHORT).show();
+                crashesIdlingResource.increment();
             }
 
             @Override
             public void onSendingFailed(ErrorReport report, Exception e) {
                 Toast.makeText(MainActivity.this, R.string.crash_sent_failed, Toast.LENGTH_SHORT).show();
+                crashesIdlingResource.decrement();
             }
 
             @Override
             public void onSendingSucceeded(ErrorReport report) {
 
                 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-                String message = String.format("%s\nCrash ID: %s\nThrowable: %s", getString(R.string.crash_sent_succeeded), report.getId(), report.getThrowable().toString());
-                Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+                String message = String.format("%s\nCrash ID: %s", getString(R.string.crash_sent_succeeded), report.getId());
+                if (report.getThrowable() != null) {
+                    message += String.format("\nThrowable: %s", report.getThrowable().toString());
+                }
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+                crashesIdlingResource.decrement();
             }
         };
     }
@@ -181,20 +189,12 @@ public class MainActivity extends AppCompatActivity {
     private AnalyticsListener getAnalyticsListener() {
         return new AnalyticsListener() {
 
-            private void showToast(@StringRes int resId) {
-                showToast(getString(resId));
-            }
-
-            private void showToast(String message) {
-                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
-            }
-
             @Override
             public void onBeforeSending(com.microsoft.azure.mobile.ingestion.models.Log log) {
                 if (log instanceof EventLog) {
-                    showToast(R.string.event_before_sending);
+                    Toast.makeText(MainActivity.this, R.string.event_before_sending, Toast.LENGTH_SHORT).show();
                 } else if (log instanceof PageLog) {
-                    showToast(R.string.page_before_sending);
+                    Toast.makeText(MainActivity.this, R.string.page_before_sending, Toast.LENGTH_SHORT).show();
                 }
                 analyticsIdlingResource.increment();
             }
@@ -209,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (message != null) {
                     message = String.format("%s\nException: %s", message, e.toString());
-                    showToast(message);
+                    Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
                 }
                 analyticsIdlingResource.decrement();
             }
@@ -226,7 +226,7 @@ public class MainActivity extends AppCompatActivity {
                     if (((LogWithProperties) log).getProperties() != null) {
                         message += String.format("\nProperties: %s", new JSONObject(((LogWithProperties) log).getProperties()).toString());
                     }
-                    showToast(message);
+                    Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
                 }
                 analyticsIdlingResource.decrement();
             }
