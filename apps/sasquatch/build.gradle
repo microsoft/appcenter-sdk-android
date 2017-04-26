@@ -21,14 +21,8 @@ android {
     }
 }
 
-repositories {
-    maven {
-        url  "http://dl.bintray.com/mobile-center/mobile-center-snapshot"
-    }
-}
-
 dependencies {
-    def version = "0.7.0-3+847fda6"
+    def version = "0.7.0"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     projectDependencyCompile project(':sdk:mobile-center-analytics')
     projectDependencyCompile project(':sdk:mobile-center-crashes')
