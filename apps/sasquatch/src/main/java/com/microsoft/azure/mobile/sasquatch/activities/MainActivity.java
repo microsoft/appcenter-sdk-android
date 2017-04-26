@@ -7,7 +7,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
 import android.support.annotation.VisibleForTesting;
 import android.support.test.espresso.idling.CountingIdlingResource;
 import android.support.v7.app.AlertDialog;
@@ -35,7 +34,7 @@ import com.microsoft.azure.mobile.ingestion.models.LogWithProperties;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
-import com.microsoft.azure.mobile.sasquatch.utils.SasquatchDistributeListener;
+import com.microsoft.azure.mobile.sasquatch.SasquatchDistributeListener;
 
 import org.json.JSONObject;
 
@@ -67,13 +66,7 @@ public class MainActivity extends AppCompatActivity {
         /* Set listeners. */
         AnalyticsPrivateHelper.setListener(getAnalyticsListener());
         Crashes.setListener(getCrashesListener());
-
-        /* Set distribute listener. */
-        try {
-            Distribute.class.getMethod("setListener", Class.forName("com.microsoft.azure.mobile.distribute.DistributeListener")).invoke(null, new SasquatchDistributeListener());
-        } catch (Exception e) {
-            Log.i(LOG_TAG, "Distribute listener is not yet available in this flavor.");
-        }
+        Distribute.setListener(new SasquatchDistributeListener());
 
         /* Set distribute urls. */
         String installUrl = getString(R.string.install_url);
