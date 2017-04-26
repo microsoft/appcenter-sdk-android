@@ -157,7 +157,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                 cursor.close();
             }
         } catch (RuntimeException e) {
-            MobileCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId);
+            MobileCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
             distribute.completeWorkflow(mReleaseDetails);
         }
         return null;

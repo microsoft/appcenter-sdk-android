@@ -291,10 +291,17 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         }).when(mContext).startActivity(installIntent);
         doAnswer(new Answer<Void>() {
 
+            boolean firstCall = true;
+
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                beforeStartingActivityLock.release();
-                disabledLock.acquireUninterruptibly();
+
+                /* First call is update progress dialog, second is hide. */
+                if (firstCall) {
+                    firstCall = false;
+                    beforeStartingActivityLock.release();
+                    disabledLock.acquireUninterruptibly();
+                }
                 (((Runnable) invocation.getArguments()[0])).run();
                 return null;
             }
@@ -417,8 +424,8 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mActivity);
 
-        /* Verify cancelable dialog displayed. */
-        verify(mDialogBuilder).setOnCancelListener(any(DialogInterface.OnCancelListener.class));
+        /* Verify postpone-able dialog displayed. */
+        verify(mDialogBuilder).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
     }
 
     @Test
@@ -451,9 +458,9 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(5);
         when(releaseDetails.getVersion()).thenReturn(8);
+        when(releaseDetails.getShortVersion()).thenReturn("4.5.6");
         when(releaseDetails.getDownloadUrl()).thenReturn(mDownloadUrl);
         when(releaseDetails.isMandatoryUpdate()).thenReturn(true);
-        when(releaseDetails.getReleaseNotes()).thenReturn("Newer release!");
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic(times(2));
@@ -468,6 +475,6 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify new dialog displayed. */
-        verify(mDialogBuilder).setMessage("Newer release!");
+        verify(mDialogBuilder).setMessage("unit-test-app4.5.68");
     }
 }

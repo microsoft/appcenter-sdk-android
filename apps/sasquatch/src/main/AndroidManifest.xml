@@ -22,6 +22,7 @@
             android:name=".activities.CrashActivity"
             android:label="@string/title_crashes"/>
         <activity android:name=".activities.CrashSubActivity"/>
+        <activity android:name=".activities.CrashSubActivity2"/>
         <activity
             android:name=".activities.DeviceInfoActivity"
             android:label="@string/title_device_info"/>

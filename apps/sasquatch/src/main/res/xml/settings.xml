@@ -9,7 +9,8 @@
         android:title="@string/analytics_title">
         <CheckBoxPreference
             android:key="@string/mobile_center_analytics_state_key"
-            android:title="@string/mobile_center_analytics_state_title" />
+            android:title="@string/mobile_center_analytics_state_title"
+            android:dependency="@string/mobile_center_state_key" />
         <CheckBoxPreference
             android:key="@string/mobile_center_auto_page_tracking_key"
             android:title="@string/mobile_center_auto_page_tracking_title" />
@@ -20,7 +21,8 @@
         android:title="@string/crashes_title">
         <CheckBoxPreference
             android:key="@string/mobile_center_crashes_state_key"
-            android:title="@string/mobile_center_crashes_state_title" />
+            android:title="@string/mobile_center_crashes_state_title"
+            android:dependency="@string/mobile_center_state_key" />
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -28,7 +30,8 @@
         android:title="@string/distribute_title">
         <CheckBoxPreference
             android:key="@string/mobile_center_distribute_state_key"
-            android:title="@string/mobile_center_distribute_state_title"/>
+            android:title="@string/mobile_center_distribute_state_title"
+            android:dependency="@string/mobile_center_state_key" />
     </PreferenceCategory>
 
     <PreferenceCategory

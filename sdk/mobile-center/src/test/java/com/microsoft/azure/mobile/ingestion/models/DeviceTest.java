@@ -41,6 +41,14 @@ public class DeviceTest {
             b.setWrapperSdkName("a");
             checkEquals(a, b);
 
+            /* Wrapper runtime version. */
+            a.setWrapperRuntimeVersion("a");
+            checkNotEquals(a, b);
+            b.setWrapperRuntimeVersion("b");
+            checkNotEquals(a, b);
+            b.setWrapperRuntimeVersion("a");
+            checkEquals(a, b);
+
             /* Live update release label. */
             a.setLiveUpdateReleaseLabel("a");
             checkNotEquals(a, b);

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.VisibleForTesting;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,7 +38,7 @@ public class CrashActivity extends AppCompatActivity {
                     throw new TestCrashException();
                 }
             }),
-            new Crash(R.string.title_crash_divide_by_0, R.string.title_crash_divide_by_0, new Runnable() {
+            new Crash(R.string.title_crash_divide_by_0, R.string.description_crash_divide_by_0, new Runnable() {
 
                 @Override
                 @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -112,6 +113,13 @@ public class CrashActivity extends AppCompatActivity {
                 public void run() {
                     startActivity(new Intent(CrashActivity.this, CrashSubActivity.class).putExtra(INTENT_EXTRA_CRASH_TYPE, 0));
                 }
+            }),
+            new Crash(R.string.title_super_not_called_exception4, R.string.description_super_not_called_exception4, new Runnable() {
+
+                @Override
+                public void run() {
+                    startActivity(new Intent(CrashActivity.this, CrashSubActivity2.class));
+                }
             })
     );
 
@@ -156,7 +164,8 @@ public class CrashActivity extends AppCompatActivity {
         }
     }
 
-    private static class Crash {
+    @VisibleForTesting
+    static class Crash {
         final int title;
 
         final int description;
