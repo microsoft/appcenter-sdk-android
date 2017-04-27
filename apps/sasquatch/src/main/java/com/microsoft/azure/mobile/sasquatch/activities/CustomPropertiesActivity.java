@@ -24,6 +24,7 @@ import android.widget.TimePicker;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.sasquatch.R;
 
+import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -74,8 +75,11 @@ public class CustomPropertiesActivity extends AppCompatActivity {
             for (CustomPropertyFragment property : mProperties) {
                 property.set(customProperties);
             }
-            MobileCenter.class.getMethod("setCustomProperties", classCustomProperties).invoke(null, customProperties);
-        } catch (Throwable ignore) {
+            Method method = MobileCenter.class.getDeclaredMethod("setCustomProperties",classCustomProperties);
+            method.setAccessible(true);
+            method.invoke(null, customProperties);
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
         }
     }
 
