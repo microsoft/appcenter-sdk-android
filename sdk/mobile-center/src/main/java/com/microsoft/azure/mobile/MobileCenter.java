@@ -155,10 +155,13 @@ public class MobileCenter {
 
     /**
      * Set the custom properties.
+     * <p>
+     * Note: it needs to be protected for Xamarin to change it back to public in bindings.
+     * TODO: Make public when backend is ready.
      *
      * @param customProperties custom properties object.
      */
-    public static void setCustomProperties(CustomProperties customProperties) {
+    protected static void setCustomProperties(CustomProperties customProperties) {
         getInstance().setInstanceCustomProperties(customProperties);
     }
 
