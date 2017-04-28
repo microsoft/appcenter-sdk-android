@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static com.microsoft.azure.mobile.utils.MobileCenterLog.LOG_TAG;
+
 /**
  * Decorator pausing calls while network is down.
  */
@@ -42,7 +44,7 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
         if (mNetworkStateHelper.isNetworkConnected()) {
             call.run();
         } else {
-            MobileCenterLog.debug(MobileCenterLog.LOG_TAG, "Call triggered with no network connectivity, waiting network to become available...");
+            MobileCenterLog.debug(LOG_TAG, "Call triggered with no network connectivity, waiting network to become available...");
         }
         return call;
     }
@@ -59,9 +61,9 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
     @Override
     public synchronized void onNetworkStateUpdated(boolean connected) {
         if (connected) {
-            MobileCenterLog.debug(MobileCenterLog.LOG_TAG, "Network is available. " + mCalls.size() + " pending call(s) to submit now.");
+            MobileCenterLog.debug(LOG_TAG, "Network is available. " + mCalls.size() + " pending call(s) to submit now.");
         } else {
-            MobileCenterLog.debug(MobileCenterLog.LOG_TAG, "Network is down. Pausing " + mCalls.size() + " network call(s).");
+            MobileCenterLog.debug(LOG_TAG, "Network is down. Pausing " + mCalls.size() + " network call(s).");
         }
         for (Call call : mCalls)
             if (connected)
