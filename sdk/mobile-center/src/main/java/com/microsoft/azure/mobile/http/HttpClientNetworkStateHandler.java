@@ -37,14 +37,14 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
 
     @Override
     public synchronized ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
-        Call ingestionCall = new Call(mDecoratedApi, url, method, headers, callTemplate, serviceCallback);
-        mCalls.add(ingestionCall);
+        Call call = new Call(mDecoratedApi, url, method, headers, callTemplate, serviceCallback);
+        mCalls.add(call);
         if (mNetworkStateHelper.isNetworkConnected()) {
-            ingestionCall.run();
+            call.run();
         } else {
             MobileCenterLog.debug(MobileCenterLog.LOG_TAG, "Call triggered with no network connectivity, waiting network to become available...");
         }
-        return ingestionCall;
+        return call;
     }
 
     @Override
