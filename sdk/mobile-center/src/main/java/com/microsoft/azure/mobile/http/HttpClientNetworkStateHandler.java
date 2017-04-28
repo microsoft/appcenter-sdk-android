@@ -1,5 +1,6 @@
 package com.microsoft.azure.mobile.http;
 
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
 
 import java.io.IOException;
@@ -38,8 +39,11 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
     public synchronized ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
         Call ingestionCall = new Call(mDecoratedApi, url, method, headers, callTemplate, serviceCallback);
         mCalls.add(ingestionCall);
-        if (mNetworkStateHelper.isNetworkConnected())
+        if (mNetworkStateHelper.isNetworkConnected()) {
             ingestionCall.run();
+        } else {
+            MobileCenterLog.debug(MobileCenterLog.LOG_TAG, "Call triggered with no network connectivity, waiting network to become available...");
+        }
         return ingestionCall;
     }
 
@@ -54,6 +58,11 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
 
     @Override
     public synchronized void onNetworkStateUpdated(boolean connected) {
+        if (connected) {
+            MobileCenterLog.debug(MobileCenterLog.LOG_TAG, "Network is available. " + mCalls.size() + " pending call(s) to submit now.");
+        } else {
+            MobileCenterLog.debug(MobileCenterLog.LOG_TAG, "Network is down. Pausing " + mCalls.size() + " network call(s).");
+        }
         for (Call call : mCalls)
             if (connected)
                 call.run();
