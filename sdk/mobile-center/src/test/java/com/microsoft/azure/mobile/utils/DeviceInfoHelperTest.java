@@ -161,6 +161,7 @@ public class DeviceInfoHelperTest {
         WrapperSdk wrapperSdk = new WrapperSdk();
         wrapperSdk.setWrapperSdkVersion("1.2.3.4");
         wrapperSdk.setWrapperSdkName("ReactNative");
+        wrapperSdk.setWrapperRuntimeVersion("4.13");
         wrapperSdk.setLiveUpdateReleaseLabel("2.0.3-beta2");
         wrapperSdk.setLiveUpdateDeploymentKey("staging");
         wrapperSdk.setLiveUpdatePackageHash("aa896f791b26a7f464c0f62b0ba69f2b");
@@ -168,6 +169,7 @@ public class DeviceInfoHelperTest {
         Device device2 = DeviceInfoHelper.getDeviceInfo(contextMock);
         assertEquals(wrapperSdk.getWrapperSdkVersion(), device2.getWrapperSdkVersion());
         assertEquals(wrapperSdk.getWrapperSdkName(), device2.getWrapperSdkName());
+        assertEquals(wrapperSdk.getWrapperRuntimeVersion(), device2.getWrapperRuntimeVersion());
         assertEquals(wrapperSdk.getLiveUpdateReleaseLabel(), device2.getLiveUpdateReleaseLabel());
         assertEquals(wrapperSdk.getLiveUpdateDeploymentKey(), device2.getLiveUpdateDeploymentKey());
         assertEquals(wrapperSdk.getLiveUpdatePackageHash(), device2.getLiveUpdatePackageHash());
@@ -175,6 +177,7 @@ public class DeviceInfoHelperTest {
         /* Check non wrapped sdk information are still generated correctly. */
         device2.setWrapperSdkVersion(null);
         device2.setWrapperSdkName(null);
+        device2.setWrapperRuntimeVersion(null);
         device2.setLiveUpdateReleaseLabel(null);
         device2.setLiveUpdateDeploymentKey(null);
         device2.setLiveUpdatePackageHash(null);

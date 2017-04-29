@@ -32,4 +32,5 @@
         <item>Date/Time</item>
         <item>String</item>
     </string-array>
+    <string name="version_x_available">Version %1$s available!</string>
 </resources>
