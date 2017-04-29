@@ -1,11 +1,14 @@
 package com.microsoft.azure.mobile.push;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.messaging.RemoteMessage;
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
@@ -14,12 +17,15 @@ import com.microsoft.azure.mobile.push.ingestion.models.json.PushInstallationLog
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
  * Push notifications interface.
  */
+@SuppressWarnings("WeakerAccess")
 public class Push extends AbstractMobileCenterService {
 
     /**
@@ -30,7 +36,7 @@ public class Push extends AbstractMobileCenterService {
     /**
      * TAG used in logging for Analytics.
      */
-    public static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
+    static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
      * Constant marking event of the push group.
@@ -49,6 +55,23 @@ public class Push extends AbstractMobileCenterService {
     static final String PREFERENCE_KEY_PUSH_TOKEN = PREFERENCE_PREFIX + "push_token";
 
     /**
+     * Google message identifier extra intent key.
+     */
+    private static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
+
+    /**
+     * Intent extras not part of custom data.
+     */
+    private static final HashSet<String> EXTRA_STANDARD_KEYS = new HashSet<String>() {
+        {
+            add(EXTRA_GOOGLE_MESSAGE_ID);
+            add("google.sent_time");
+            add("collapse_key");
+            add("from");
+        }
+    };
+
+    /**
      * Firebase analytics flag.
      */
     private static boolean sFirebaseAnalyticsEnabled;
@@ -60,14 +83,30 @@ public class Push extends AbstractMobileCenterService {
     private static Push sInstance;
 
     /**
-     * The PNS handle for this installation.
+     * Log factories managed by this service.
+     */
+    private final Map<String, LogFactory> mFactories;
+
+    /**
+     * The firebase registration identifier.
      */
     private String mPushToken;
 
     /**
-     * Log factories managed by this service.
+     * Push listener.
      */
-    private final Map<String, LogFactory> mFactories;
+    private PushListener mInstanceListener;
+
+    /**
+     * Check if push already inspected from intent.
+     * Not reset on disabled to avoid repeat push callback when enabled again...
+     */
+    private String mLastGoogleMessageId;
+
+    /**
+     * Last activity.
+     */
+    private WeakReference<Activity> mActivity;
 
     /**
      * Init.
@@ -116,6 +155,15 @@ public class Push extends AbstractMobileCenterService {
     }
 
     /**
+     * Set push listener.
+     *
+     * @param pushListener push listener.
+     */
+    public static void setListener(PushListener pushListener) {
+        getInstance().setInstanceListener(pushListener);
+    }
+
+    /**
      * Enable firebase analytics collection.
      *
      * @param context the context to retrieve FirebaseAnalytics instance.
@@ -154,7 +202,6 @@ public class Push extends AbstractMobileCenterService {
      *
      * @param pushToken the push token value.
      */
-    @VisibleForTesting
     synchronized void onTokenRefresh(@NonNull String pushToken) {
         if (isInactive())
             return;
@@ -223,5 +270,67 @@ public class Push extends AbstractMobileCenterService {
     public synchronized void setInstanceEnabled(boolean enabled) {
         super.setInstanceEnabled(enabled);
         applyEnabledState(enabled);
+    }
+
+    /**
+     * Implements {@link #setListener} at instance level.
+     */
+    private synchronized void setInstanceListener(PushListener instanceListener) {
+        mInstanceListener = instanceListener;
+    }
+
+    /*
+     * We can miss onCreate onStarted depending on how developers init the SDK.
+     * So look for multiple events.
+     */
+
+    @Override
+    public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+        checkPushInActivityIntent(activity);
+    }
+
+    @Override
+    public void onActivityStarted(Activity activity) {
+        checkPushInActivityIntent(activity);
+    }
+
+    @Override
+    public void onActivityResumed(Activity activity) {
+        checkPushInActivityIntent(activity);
+    }
+
+    private synchronized void checkPushInActivityIntent(Activity activity) {
+        mActivity = new WeakReference<>(activity);
+        if (isEnabled() && mInstanceListener != null) {
+            Bundle extras = activity.getIntent().getExtras();
+            if (extras != null) {
+                String googleMessageId = extras.getString(EXTRA_GOOGLE_MESSAGE_ID);
+                if (googleMessageId != null && !googleMessageId.equals(mLastGoogleMessageId)) {
+                    MobileCenterLog.info(LOG_TAG, "Clicked push message from background id=" + googleMessageId);
+                    mLastGoogleMessageId = googleMessageId;
+                    HashMap<String, String> customData = new HashMap<>();
+                    for (String extra : extras.keySet()) {
+                        if (!EXTRA_STANDARD_KEYS.contains(extra)) {
+                            customData.put(extra, extras.getString(extra));
+                        }
+                    }
+                    mInstanceListener.onPushNotificationReceived(new PushNotification(null, null, customData, mActivity));
+                }
+            }
+        }
+    }
+
+    public synchronized void onMessageReceived(RemoteMessage remoteMessage) {
+        MobileCenterLog.info(LOG_TAG, "Received push message in foreground id=" + remoteMessage.getMessageId());
+        if (isEnabled() && mInstanceListener != null) {
+            String title = null;
+            String message = null;
+            RemoteMessage.Notification notification = remoteMessage.getNotification();
+            if (notification != null) {
+                title = notification.getTitle();
+                message = notification.getBody();
+            }
+            mInstanceListener.onPushNotificationReceived(new PushNotification(title, message, remoteMessage.getData(), mActivity));
+        }
     }
 }

@@ -32,6 +32,9 @@ import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.ingestion.models.LogWithProperties;
+import com.microsoft.azure.mobile.push.Push;
+import com.microsoft.azure.mobile.push.PushListener;
+import com.microsoft.azure.mobile.push.PushNotification;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.SasquatchDistributeListener;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
@@ -73,6 +76,13 @@ public class MainActivity extends AppCompatActivity {
         AnalyticsPrivateHelper.setListener(getAnalyticsListener());
         Crashes.setListener(getCrashesListener());
         Distribute.setListener(new SasquatchDistributeListener());
+        Push.setListener(new PushListener() {
+
+            @Override
+            public void onPushNotificationReceived(PushNotification pushNotification) {
+                MobileCenterLog.info(LOG_TAG, "Push received title=" + pushNotification.getTitle() + " message=" + pushNotification.getMessage() + " customData=" + pushNotification.getCustomData() + " activity=" + pushNotification.getActivity().get());
+            }
+        });
 
         /* Set distribute urls. */
         String installUrl = getString(R.string.install_url);
