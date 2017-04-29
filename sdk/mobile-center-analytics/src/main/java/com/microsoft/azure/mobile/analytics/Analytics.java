@@ -129,8 +129,10 @@ public class Analytics extends AbstractMobileCenterService {
 
     /**
      * Sets an analytics listener.
+     * <p>
+     * Note: it needs to be protected for Xamarin to change it back to public in bindings.
      *
-     * @param listener The custom crashes listener.
+     * @param listener The custom analytics listener.
      */
     @SuppressWarnings("WeakerAccess")
     @VisibleForTesting

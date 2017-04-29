@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Patterns;
+import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -44,7 +45,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .commit();
     }
 
-    public static class SettingsFragment extends PreferenceFragment {
+    public static class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
         private static final String UUID_FORMAT_REGEX = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 
@@ -52,18 +53,11 @@ public class SettingsActivity extends AppCompatActivity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.settings);
-            final CheckBoxPreference analyticsEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_analytics_state_key));
-            final CheckBoxPreference crashesEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_crashes_state_key));
-            final CheckBoxPreference distributeEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_distribute_state_key));
-            final CheckBoxPreference pushEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_push_state_key));
-            final CheckBoxPreference firebaseEnabledPreference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(R.string.mobile_center_push_firebase_state_key));
-            initCheckBoxSetting(R.string.mobile_center_state_key, MobileCenter.isEnabled(), R.string.mobile_center_state_summary_enabled, R.string.mobile_center_state_summary_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.mobile_center_state_key, R.string.mobile_center_state_summary_enabled, R.string.mobile_center_state_summary_disabled, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
                     MobileCenter.setEnabled(enabled);
-                    analyticsEnabledPreference.setChecked(Analytics.isEnabled());
-                    crashesEnabledPreference.setChecked(Crashes.isEnabled());
                 }
 
                 @Override
@@ -71,12 +65,11 @@ public class SettingsActivity extends AppCompatActivity {
                     return MobileCenter.isEnabled();
                 }
             });
-            initCheckBoxSetting(R.string.mobile_center_analytics_state_key, Analytics.isEnabled(), R.string.mobile_center_analytics_state_summary_enabled, R.string.mobile_center_analytics_state_summary_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.mobile_center_analytics_state_key, R.string.mobile_center_analytics_state_summary_enabled, R.string.mobile_center_analytics_state_summary_disabled, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
                     Analytics.setEnabled(enabled);
-                    analyticsEnabledPreference.setChecked(Analytics.isEnabled());
                 }
 
                 @Override
@@ -84,12 +77,11 @@ public class SettingsActivity extends AppCompatActivity {
                     return Analytics.isEnabled();
                 }
             });
-            initCheckBoxSetting(R.string.mobile_center_crashes_state_key, Crashes.isEnabled(), R.string.mobile_center_crashes_state_summary_enabled, R.string.mobile_center_crashes_state_summary_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.mobile_center_crashes_state_key, R.string.mobile_center_crashes_state_summary_enabled, R.string.mobile_center_crashes_state_summary_disabled, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
                     Crashes.setEnabled(enabled);
-                    crashesEnabledPreference.setChecked(Crashes.isEnabled());
                 }
 
                 @Override
@@ -97,13 +89,12 @@ public class SettingsActivity extends AppCompatActivity {
                     return Crashes.isEnabled();
                 }
             });
-            initCheckBoxSetting(R.string.mobile_center_distribute_state_key, Distribute.isEnabled(), R.string.mobile_center_distribute_state_summary_enabled, R.string.mobile_center_distribute_state_summary_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.mobile_center_distribute_state_key, R.string.mobile_center_distribute_state_summary_enabled, R.string.mobile_center_distribute_state_summary_disabled, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
                     try {
                         Distribute.setEnabled(enabled);
-                        distributeEnabledPreference.setChecked(Distribute.isEnabled());
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -120,13 +111,12 @@ public class SettingsActivity extends AppCompatActivity {
                 Class<? extends MobileCenterService> push = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.push.Push");
                 final Method isEnabled = push.getMethod("isEnabled");
                 final Method setEnabled = push.getMethod("setEnabled", boolean.class);
-                initCheckBoxSetting(R.string.mobile_center_push_state_key, (boolean) isEnabled.invoke(null), R.string.mobile_center_push_state_summary_enabled, R.string.mobile_center_push_state_summary_disabled, new HasEnabled() {
+                initCheckBoxSetting(R.string.mobile_center_push_state_key, R.string.mobile_center_push_state_summary_enabled, R.string.mobile_center_push_state_summary_disabled, new HasEnabled() {
 
                     @Override
                     public void setEnabled(boolean enabled) {
                         try {
                             setEnabled.invoke(null, enabled);
-                            pushEnabledPreference.setChecked((boolean) isEnabled.invoke(null));
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
@@ -143,7 +133,7 @@ public class SettingsActivity extends AppCompatActivity {
                 });
 
                 final Method enableFirebaseAnalytics = push.getMethod("enableFirebaseAnalytics", Context.class);
-                initCheckBoxSetting(R.string.mobile_center_push_firebase_state_key, isFirebaseEnabled(), R.string.mobile_center_push_firebase_summary_enabled, R.string.mobile_center_push_firebase_summary_disabled, new HasEnabled() {
+                initCheckBoxSetting(R.string.mobile_center_push_firebase_state_key, R.string.mobile_center_push_firebase_summary_enabled, R.string.mobile_center_push_firebase_summary_disabled, new HasEnabled() {
 
                     @Override
                     public void setEnabled(boolean enabled) {
@@ -154,7 +144,6 @@ public class SettingsActivity extends AppCompatActivity {
                                 FirebaseAnalytics.getInstance(getActivity()).setAnalyticsCollectionEnabled(false);
                             }
                             MainActivity.sSharedPreferences.edit().putBoolean(FIREBASE_ENABLED_KEY, enabled).apply();
-                            firebaseEnabledPreference.setChecked(true);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
@@ -168,7 +157,7 @@ public class SettingsActivity extends AppCompatActivity {
             } catch (Exception e) {
                 getPreferenceScreen().removePreference(findPreference(getString(R.string.push_key)));
             }
-            initCheckBoxSetting(R.string.mobile_center_auto_page_tracking_key, AnalyticsPrivateHelper.isAutoPageTrackingEnabled(), R.string.mobile_center_auto_page_tracking_enabled, R.string.mobile_center_auto_page_tracking_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.mobile_center_auto_page_tracking_key, R.string.mobile_center_auto_page_tracking_enabled, R.string.mobile_center_auto_page_tracking_disabled, new HasEnabled() {
 
                 @Override
                 public boolean isEnabled() {
@@ -305,26 +294,55 @@ public class SettingsActivity extends AppCompatActivity {
                     Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.log_url_changed_format), url), Toast.LENGTH_SHORT).show();
                 }
             });
+
+            /* Register preference change listener. */
+            getPreferenceManager().getSharedPreferences()
+                    .registerOnSharedPreferenceChangeListener(this);
         }
 
-        private void initCheckBoxSetting(int key, boolean enabled, final int enabledSummary, final int disabledSummary, final HasEnabled hasEnabled) {
-            CheckBoxPreference preference = (CheckBoxPreference) getPreferenceManager().findPreference(getString(key));
-            updateSummary(preference, enabled, enabledSummary, disabledSummary);
+        @Override
+        public void onDestroy() {
+            super.onDestroy();
+
+            /* Unregister preference change listener. */
+            getPreferenceManager().getSharedPreferences()
+                    .unregisterOnSharedPreferenceChangeListener(this);
+        }
+
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+
+            /* Update other preferences. */
+            final BaseAdapter adapter = (BaseAdapter) getPreferenceScreen().getRootAdapter();
+            for (int i = 0; i < adapter.getCount(); i++) {
+                Preference preference = (Preference) adapter.getItem(i);
+                if (preference.getOnPreferenceChangeListener() != null && !key.equals(preference.getKey())) {
+                    preference.getOnPreferenceChangeListener().onPreferenceChange(preference, null);
+                }
+            }
+        }
+
+        private void initCheckBoxSetting(int key, final int enabledSummary, final int disabledSummary, final HasEnabled hasEnabled) {
+            Preference preference = getPreferenceManager().findPreference(getString(key));
             preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    boolean enabled = (Boolean) newValue;
-                    hasEnabled.setEnabled(enabled);
-                    if (hasEnabled.isEnabled() == enabled) {
-                        updateSummary(preference, enabled, enabledSummary, disabledSummary);
+                    if (newValue != null) {
+                        hasEnabled.setEnabled((Boolean) newValue);
+                    }
+                    boolean enabled = hasEnabled.isEnabled();
+                    if (((CheckBoxPreference) preference).isChecked() != enabled) {
+                        preference.setSummary(enabled ? enabledSummary : disabledSummary);
+                        ((CheckBoxPreference) preference).setChecked(enabled);
                         return true;
                     }
-
                     return false;
                 }
             });
-            preference.setChecked(enabled);
+            boolean enabled = hasEnabled.isEnabled();
+            preference.setSummary(enabled ? enabledSummary : disabledSummary);
+            ((CheckBoxPreference) preference).setChecked(enabled);
         }
 
         @SuppressWarnings("SameParameterValue")
@@ -339,13 +357,6 @@ public class SettingsActivity extends AppCompatActivity {
             if (summary != null) {
                 preference.setSummary(summary);
             }
-        }
-
-        private void updateSummary(Preference preference, boolean enabled, int enabledSummary, int disabledSummary) {
-            if (enabled)
-                preference.setSummary(enabledSummary);
-            else
-                preference.setSummary(disabledSummary);
         }
 
         private void setKeyValue(String key, String value) {

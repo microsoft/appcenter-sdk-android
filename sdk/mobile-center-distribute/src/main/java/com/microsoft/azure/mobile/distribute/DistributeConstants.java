@@ -82,11 +82,6 @@ final class DistributeConstants {
     static final String HEADER_API_TOKEN = "x-api-token";
 
     /**
-     * Invalid release identifier.
-     */
-    static final int INVALID_RELEASE_IDENTIFIER = -1;
-
-    /**
      * Invalid download identifier.
      */
     static final long INVALID_DOWNLOAD_IDENTIFIER = -1;
@@ -136,6 +131,11 @@ final class DistributeConstants {
     static final float MEBIBYTE_IN_BYTES = 1024 * 1024;
 
     /**
+     * Time to wait for installing optional updates if user postponed, in millis.
+     */
+    static final long POSTPONE_TIME_THRESHOLD = 24 * 60 * 60 * 1000;
+
+    /**
      * Base key for stored preferences.
      */
     private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
@@ -162,11 +162,6 @@ final class DistributeConstants {
     static final String PREFERENCE_KEY_UPDATE_TOKEN = PREFERENCE_PREFIX + EXTRA_UPDATE_TOKEN;
 
     /**
-     * Preference key to store ignored release id.
-     */
-    static final String PREFERENCE_KEY_IGNORED_RELEASE_ID = PREFERENCE_PREFIX + "ignored_release_id";
-
-    /**
      * Preference key to store release details.
      */
     static final String PREFERENCE_KEY_RELEASE_DETAILS = PREFERENCE_PREFIX + "release_details";
@@ -180,6 +175,11 @@ final class DistributeConstants {
      * So the time we store as a reference needs to be before download time.
      */
     static final String PREFERENCE_KEY_DOWNLOAD_TIME = PREFERENCE_PREFIX + "download_time";
+
+    /**
+     * Preference key to hold the time when user chose "ask me in a day".
+     */
+    static final String PREFERENCE_KEY_POSTPONE_TIME = PREFERENCE_PREFIX + "postpone_time";
 
     @VisibleForTesting
     DistributeConstants() {
