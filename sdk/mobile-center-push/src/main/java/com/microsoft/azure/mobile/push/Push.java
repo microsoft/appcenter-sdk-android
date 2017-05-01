@@ -14,10 +14,10 @@ import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.push.ingestion.models.PushInstallationLog;
 import com.microsoft.azure.mobile.push.ingestion.models.json.PushInstallationLogFactory;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
-import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -25,7 +25,6 @@ import java.util.Map;
 /**
  * Push notifications interface.
  */
-@SuppressWarnings("WeakerAccess")
 public class Push extends AbstractMobileCenterService {
 
     /**
@@ -36,7 +35,7 @@ public class Push extends AbstractMobileCenterService {
     /**
      * TAG used in logging for Analytics.
      */
-    static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
+    private static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
      * Constant marking event of the push group.
@@ -104,9 +103,9 @@ public class Push extends AbstractMobileCenterService {
     private String mLastGoogleMessageId;
 
     /**
-     * Last activity.
+     * Current activity.
      */
-    private WeakReference<Activity> mActivity;
+    private Activity mActivity;
 
     /**
      * Init.
@@ -299,8 +298,18 @@ public class Push extends AbstractMobileCenterService {
         checkPushInActivityIntent(activity);
     }
 
+    @Override
+    public void onActivityPaused(Activity activity) {
+        mActivity = null;
+    }
+
+    /**
+     * Check for push message clicked from notification center in activity intent.
+     *
+     * @param activity activity to inspect.
+     */
     private synchronized void checkPushInActivityIntent(Activity activity) {
-        mActivity = new WeakReference<>(activity);
+        mActivity = activity;
         if (isEnabled() && mInstanceListener != null) {
             Bundle extras = activity.getIntent().getExtras();
             if (extras != null) {
@@ -314,13 +323,18 @@ public class Push extends AbstractMobileCenterService {
                             customData.put(extra, extras.getString(extra));
                         }
                     }
-                    mInstanceListener.onPushNotificationReceived(new PushNotification(null, null, customData, mActivity));
+                    mInstanceListener.onPushNotificationReceived(activity, new PushNotification(null, null, customData));
                 }
             }
         }
     }
 
-    public synchronized void onMessageReceived(RemoteMessage remoteMessage) {
+    /**
+     * Called when push message received in foreground.
+     *
+     * @param remoteMessage push message details.
+     */
+    synchronized void onMessageReceived(RemoteMessage remoteMessage) {
         MobileCenterLog.info(LOG_TAG, "Received push message in foreground id=" + remoteMessage.getMessageId());
         if (isEnabled() && mInstanceListener != null) {
             String title = null;
@@ -330,7 +344,14 @@ public class Push extends AbstractMobileCenterService {
                 title = notification.getTitle();
                 message = notification.getBody();
             }
-            mInstanceListener.onPushNotificationReceived(new PushNotification(title, message, remoteMessage.getData(), mActivity));
+            final PushNotification pushNotification = new PushNotification(title, message, remoteMessage.getData());
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    mInstanceListener.onPushNotificationReceived(mActivity, pushNotification);
+                }
+            });
         }
     }
 }

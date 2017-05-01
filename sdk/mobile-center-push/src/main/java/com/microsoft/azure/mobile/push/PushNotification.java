@@ -1,9 +1,7 @@
 package com.microsoft.azure.mobile.push;
 
-import android.app.Activity;
 import android.support.annotation.NonNull;
 
-import java.lang.ref.WeakReference;
 import java.util.Map;
 
 /**
@@ -28,18 +26,12 @@ public class PushNotification {
     private Map<String, String> mCustomData;
 
     /**
-     * Activity context of the push notification.
-     */
-    private WeakReference<Activity> mActivity;
-
-    /**
      * Init.
      */
-    public PushNotification(String title, String message, @NonNull Map<String, String> customData, @NonNull WeakReference<Activity> activity) {
+    public PushNotification(String title, String message, @NonNull Map<String, String> customData) {
         mTitle = title;
         mMessage = message;
         mCustomData = customData;
-        mActivity = activity;
     }
 
     /**
@@ -67,15 +59,5 @@ public class PushNotification {
      */
     public Map<String, String> getCustomData() {
         return mCustomData;
-    }
-
-    /**
-     * Get the activity that was current when the push was received in foreground or clicked from
-     * notification.
-     *
-     * @return current activity reference. Reference wrapper is never null but activity can be null.
-     */
-    public WeakReference<Activity> getActivity() {
-        return mActivity;
     }
 }

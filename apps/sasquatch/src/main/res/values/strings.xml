@@ -33,4 +33,5 @@
         <item>String</item>
     </string-array>
     <string name="version_x_available">Version %1$s available!</string>
+    <string name="push_toast">Push clicked with data=%1s</string>
 </resources>
