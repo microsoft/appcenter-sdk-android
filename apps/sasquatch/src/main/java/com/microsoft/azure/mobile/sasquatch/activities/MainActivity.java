@@ -32,11 +32,9 @@ import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.ingestion.models.LogWithProperties;
-import com.microsoft.azure.mobile.push.Push;
-import com.microsoft.azure.mobile.push.PushListener;
-import com.microsoft.azure.mobile.push.PushNotification;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.SasquatchDistributeListener;
+import com.microsoft.azure.mobile.sasquatch.features.PushListenerHelper;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
@@ -45,17 +43,14 @@ import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static final String LOG_TAG = "MobileCenterSasquatch";
     static final String APP_SECRET_KEY = "appSecret";
     static final String LOG_URL_KEY = "logUrl";
-
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
-
     @VisibleForTesting
     static final CountingIdlingResource analyticsIdlingResource = new CountingIdlingResource("analytics");
     @VisibleForTesting
     static final CountingIdlingResource crashesIdlingResource = new CountingIdlingResource("crashes");
-
-    private static final String LOG_TAG = "MobileCenterSasquatch";
     static SharedPreferences sSharedPreferences;
 
     @Override
@@ -76,13 +71,7 @@ public class MainActivity extends AppCompatActivity {
         AnalyticsPrivateHelper.setListener(getAnalyticsListener());
         Crashes.setListener(getCrashesListener());
         Distribute.setListener(new SasquatchDistributeListener());
-        Push.setListener(new PushListener() {
-
-            @Override
-            public void onPushNotificationReceived(PushNotification pushNotification) {
-                MobileCenterLog.info(LOG_TAG, "Push received title=" + pushNotification.getTitle() + " message=" + pushNotification.getMessage() + " customData=" + pushNotification.getCustomData() + " activity=" + pushNotification.getActivity().get());
-            }
-        });
+        PushListenerHelper.setup();
 
         /* Set distribute urls. */
         String installUrl = getString(R.string.install_url);

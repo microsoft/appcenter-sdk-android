@@ -6,6 +6,9 @@ import android.support.annotation.NonNull;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
+/**
+ * Object describing a received push notification.
+ */
 @SuppressWarnings("WeakerAccess")
 public class PushNotification {
 
@@ -67,9 +70,10 @@ public class PushNotification {
     }
 
     /**
-     * Get activity.
+     * Get the activity that was current when the push was received in foreground or clicked from
+     * notification.
      *
-     * @return current activity.
+     * @return current activity reference. Reference wrapper is never null but activity can be null.
      */
     public WeakReference<Activity> getActivity() {
         return mActivity;
