@@ -1,13 +1,17 @@
 package com.microsoft.azure.mobile.push;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.messaging.RemoteMessage;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.push.ingestion.models.PushInstallationLog;
 import com.microsoft.azure.mobile.push.ingestion.models.json.PushInstallationLogFactory;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
@@ -16,6 +20,7 @@ import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -24,12 +29,15 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.microsoft.azure.mobile.push.Push.PREFERENCE_KEY_PUSH_TOKEN;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -39,6 +47,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -51,7 +60,8 @@ import static org.powermock.api.mockito.PowerMockito.when;
         MobileCenter.class,
         StorageHelper.PreferencesStorage.class,
         FirebaseInstanceId.class,
-        FirebaseAnalyticsUtils.class
+        FirebaseAnalyticsUtils.class,
+        HandlerUtils.class
 })
 public class PushTest {
 
@@ -92,6 +102,18 @@ public class PushTest {
         mockStatic(FirebaseInstanceId.class);
         when(FirebaseInstanceId.getInstance()).thenReturn(mFirebaseInstanceId);
         mockStatic(FirebaseAnalyticsUtils.class);
+
+        /* Mock handler. */
+        mockStatic(HandlerUtils.class);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                ((Runnable) invocation.getArguments()[0]).run();
+                return null;
+            }
+        }).when(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
     }
 
     @Test
@@ -190,5 +212,63 @@ public class PushTest {
         push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
         verifyStatic(never());
         FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(false));
+    }
+
+    @Test
+    public void receivedInForeground() {
+        PushListener pushListener = mock(PushListener.class);
+        Push.setListener(pushListener);
+        Context contextMock = mock(Context.class);
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
+        Activity activity = mock(Activity.class);
+        when(activity.getIntent()).thenReturn(mock(Intent.class));
+        push.onActivityResumed(activity);
+
+        /* Mock some message. */
+        RemoteMessage message = mock(RemoteMessage.class);
+        RemoteMessage.Notification notification = mock(RemoteMessage.Notification.class);
+        when(message.getNotification()).thenReturn(notification);
+        when(notification.getTitle()).thenReturn("some title");
+        when(notification.getBody()).thenReturn("some message");
+        push.onMessageReceived(message);
+        ArgumentCaptor<PushNotification> captor = ArgumentCaptor.forClass(PushNotification.class);
+        verify(pushListener).onPushNotificationReceived(eq(activity), captor.capture());
+        PushNotification pushNotification = captor.getValue();
+        assertNotNull(pushNotification);
+        assertEquals("some title", pushNotification.getTitle());
+        assertEquals("some message", pushNotification.getMessage());
+        assertEquals(new HashMap<String, String>(), pushNotification.getCustomData());
+
+        /* If disabled, no notification anymore. */
+        Push.setEnabled(false);
+        push.onMessageReceived(message);
+
+        /* Called once. */
+        verify(pushListener).onPushNotificationReceived(eq(activity), captor.capture());
+
+        /* Enabled but remove listener. */
+        Push.setEnabled(true);
+        Push.setListener(null);
+        push.onMessageReceived(message);
+
+        /* Called once. */
+        verify(pushListener).onPushNotificationReceived(eq(activity), captor.capture());
+
+        /* Mock null notification and custom data. */
+        Push.setListener(pushListener);
+        Map<String, String> data = new HashMap<>();
+        data.put("a", "b");
+        data.put("c", "d");
+        when(message.getNotification()).thenReturn(null);
+        when(message.getData()).thenReturn(data);
+        push.onMessageReceived(message);
+        verify(pushListener, times(2)).onPushNotificationReceived(eq(activity), captor.capture());
+        pushNotification = captor.getValue();
+        assertNotNull(pushNotification);
+        assertNull(pushNotification.getTitle());
+        assertNull(pushNotification.getMessage());
+        assertEquals(data, pushNotification.getCustomData());
     }
 }
