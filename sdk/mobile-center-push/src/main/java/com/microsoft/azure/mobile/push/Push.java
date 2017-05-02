@@ -32,6 +32,7 @@ public class Push extends AbstractMobileCenterService {
      */
     @VisibleForTesting
     static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
+
     /**
      * Intent extras not part of custom data.
      */
@@ -44,27 +45,33 @@ public class Push extends AbstractMobileCenterService {
             add("from");
         }
     };
+
     /**
      * Name of the service.
      */
     private static final String SERVICE_NAME = "Push";
+
     /**
      * TAG used in logging for Analytics.
      */
     private static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
+
     /**
      * Constant marking event of the push group.
      */
     private static final String PUSH_GROUP = "group_push";
+
     /**
      * Base key for stored preferences.
      */
     private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
+
     /**
      * Preference key to store push token.
      */
     @VisibleForTesting
     static final String PREFERENCE_KEY_PUSH_TOKEN = PREFERENCE_PREFIX + "push_token";
+
     /**
      * Firebase analytics flag.
      */
