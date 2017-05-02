@@ -28,40 +28,15 @@ import java.util.Map;
 public class Push extends AbstractMobileCenterService {
 
     /**
-     * Name of the service.
-     */
-    private static final String SERVICE_NAME = "Push";
-
-    /**
-     * TAG used in logging for Analytics.
-     */
-    private static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
-
-    /**
-     * Constant marking event of the push group.
-     */
-    private static final String PUSH_GROUP = "group_push";
-
-    /**
-     * Base key for stored preferences.
-     */
-    private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
-
-    /**
-     * Preference key to store push token.
-     */
-    @VisibleForTesting
-    static final String PREFERENCE_KEY_PUSH_TOKEN = PREFERENCE_PREFIX + "push_token";
-
-    /**
      * Google message identifier extra intent key.
      */
-    private static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
-
+    @VisibleForTesting
+    static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
     /**
      * Intent extras not part of custom data.
      */
-    private static final HashSet<String> EXTRA_STANDARD_KEYS = new HashSet<String>() {
+    @VisibleForTesting
+    static final HashSet<String> EXTRA_STANDARD_KEYS = new HashSet<String>() {
         {
             add(EXTRA_GOOGLE_MESSAGE_ID);
             add("google.sent_time");
@@ -69,7 +44,27 @@ public class Push extends AbstractMobileCenterService {
             add("from");
         }
     };
-
+    /**
+     * Name of the service.
+     */
+    private static final String SERVICE_NAME = "Push";
+    /**
+     * TAG used in logging for Analytics.
+     */
+    private static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
+    /**
+     * Constant marking event of the push group.
+     */
+    private static final String PUSH_GROUP = "group_push";
+    /**
+     * Base key for stored preferences.
+     */
+    private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
+    /**
+     * Preference key to store push token.
+     */
+    @VisibleForTesting
+    static final String PREFERENCE_KEY_PUSH_TOKEN = PREFERENCE_PREFIX + "push_token";
     /**
      * Firebase analytics flag.
      */
@@ -317,12 +312,15 @@ public class Push extends AbstractMobileCenterService {
                 if (googleMessageId != null && !googleMessageId.equals(mLastGoogleMessageId)) {
                     MobileCenterLog.info(LOG_TAG, "Clicked push message from background id=" + googleMessageId);
                     mLastGoogleMessageId = googleMessageId;
-                    HashMap<String, String> customData = new HashMap<>();
+                    Map<String, String> customData = new HashMap<>();
+                    Map<String, Object> allData = new HashMap<>();
                     for (String extra : extras.keySet()) {
+                        allData.put(extra, extras.get(extra));
                         if (!EXTRA_STANDARD_KEYS.contains(extra)) {
                             customData.put(extra, extras.getString(extra));
                         }
                     }
+                    MobileCenterLog.debug(LOG_TAG, "Push intent extra=" + allData);
                     mInstanceListener.onPushNotificationReceived(activity, new PushNotification(null, null, customData));
                 }
             }

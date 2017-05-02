@@ -3,6 +3,7 @@ package com.microsoft.azure.mobile.push;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.RemoteMessage;
@@ -232,7 +233,8 @@ public class PushTest {
         when(message.getNotification()).thenReturn(notification);
         when(notification.getTitle()).thenReturn("some title");
         when(notification.getBody()).thenReturn("some message");
-        push.onMessageReceived(message);
+        PushMessagingService service = new PushMessagingService();
+        service.onMessageReceived(message);
         ArgumentCaptor<PushNotification> captor = ArgumentCaptor.forClass(PushNotification.class);
         verify(pushListener).onPushNotificationReceived(eq(activity), captor.capture());
         PushNotification pushNotification = captor.getValue();
@@ -243,7 +245,7 @@ public class PushTest {
 
         /* If disabled, no notification anymore. */
         Push.setEnabled(false);
-        push.onMessageReceived(message);
+        service.onMessageReceived(message);
 
         /* Called once. */
         verify(pushListener).onPushNotificationReceived(eq(activity), captor.capture());
@@ -251,7 +253,7 @@ public class PushTest {
         /* Enabled but remove listener. */
         Push.setEnabled(true);
         Push.setListener(null);
-        push.onMessageReceived(message);
+        service.onMessageReceived(message);
 
         /* Called once. */
         verify(pushListener).onPushNotificationReceived(eq(activity), captor.capture());
@@ -263,12 +265,92 @@ public class PushTest {
         data.put("c", "d");
         when(message.getNotification()).thenReturn(null);
         when(message.getData()).thenReturn(data);
-        push.onMessageReceived(message);
+        service.onMessageReceived(message);
         verify(pushListener, times(2)).onPushNotificationReceived(eq(activity), captor.capture());
         pushNotification = captor.getValue();
         assertNotNull(pushNotification);
         assertNull(pushNotification.getTitle());
         assertNull(pushNotification.getMessage());
         assertEquals(data, pushNotification.getCustomData());
+    }
+
+    @Test
+    public void clickedFromBackground() {
+        PushListener pushListener = mock(PushListener.class);
+        Push.setListener(pushListener);
+        Context contextMock = mock(Context.class);
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
+
+        /* Mock activity to contain push */
+        Activity activity = mock(Activity.class);
+        Intent intent = mock(Intent.class);
+        when(activity.getIntent()).thenReturn(intent);
+        Bundle extras = mock(Bundle.class);
+        when(intent.getExtras()).thenReturn(extras);
+        when(extras.getString(Push.EXTRA_GOOGLE_MESSAGE_ID)).thenReturn("reserved value by google");
+        final Map<String, String> extraMap = new HashMap<>();
+        for (String key : Push.EXTRA_STANDARD_KEYS) {
+            extraMap.put(key, "reserved value by google");
+        }
+        Map<String, String> customMap = new HashMap<>();
+        customMap.put("custom", "data");
+        customMap.put("b", "c");
+        extraMap.putAll(customMap);
+        when(extras.keySet()).thenReturn(extraMap.keySet());
+        when(extras.getString(anyString())).then(new Answer<String>() {
+
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
+                return extraMap.get(invocation.getArguments()[0].toString());
+            }
+        });
+
+        /* Simulate we detect push in onCreate. */
+        push.onActivityCreated(activity, null);
+        ArgumentCaptor<PushNotification> captor = ArgumentCaptor.forClass(PushNotification.class);
+        verify(pushListener).onPushNotificationReceived(eq(activity), captor.capture());
+        PushNotification pushNotification = captor.getValue();
+        assertNotNull(pushNotification);
+        assertNull(pushNotification.getTitle());
+        assertNull(pushNotification.getMessage());
+        assertEquals(customMap, pushNotification.getCustomData());
+
+        /* On started on resume will not duplicate the callback. */
+        push.onActivityStarted(activity);
+        push.onActivityResumed(activity);
+        verify(pushListener).onPushNotificationReceived(eq(activity), captor.capture());
+
+        /* Disable SDK stops callbacks. */
+        push.onActivityPaused(activity);
+        activity = mock(Activity.class);
+        when(activity.getIntent()).thenReturn(intent);
+        when(extras.getString(Push.EXTRA_GOOGLE_MESSAGE_ID)).thenReturn("new id");
+        Push.setEnabled(false);
+        push.onActivityResumed(activity);
+        verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+
+        /* Same if we remove listener. */
+        Push.setEnabled(true);
+        Push.setListener(null);
+        push.onActivityResumed(activity);
+        verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+
+        /* Set listener to read the new push when resumed. */
+        Push.setListener(pushListener);
+        push.onActivityResumed(activity);
+        verify(pushListener).onPushNotificationReceived(eq(activity), captor.capture());
+
+        /* If intent extras are null, nothing happens. */
+        activity = mock(Activity.class);
+        when(activity.getIntent()).thenReturn(intent);
+        push.onActivityResumed(activity);
+        verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+
+        /* If intent contains non push extras, same thing. */
+        when(intent.getExtras()).thenReturn(mock(Bundle.class));
+        push.onActivityResumed(activity);
+        verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
     }
 }
