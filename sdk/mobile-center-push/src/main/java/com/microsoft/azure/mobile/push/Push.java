@@ -21,6 +21,7 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Push notifications interface.
@@ -37,7 +38,7 @@ public class Push extends AbstractMobileCenterService {
      * Intent extras not part of custom data.
      */
     @VisibleForTesting
-    static final HashSet<String> EXTRA_STANDARD_KEYS = new HashSet<String>() {
+    static final Set<String> EXTRA_STANDARD_KEYS = new HashSet<String>() {
         {
             add(EXTRA_GOOGLE_MESSAGE_ID);
             add("google.sent_time");
@@ -354,9 +355,20 @@ public class Push extends AbstractMobileCenterService {
 
                 @Override
                 public void run() {
-                    mInstanceListener.onPushNotificationReceived(mActivity, pushNotification);
+                    deliverForegroundPushNotification(pushNotification);
                 }
             });
+        }
+    }
+
+    /**
+     * Top level method needed for synchronized code coverage.
+     */
+    private synchronized void deliverForegroundPushNotification(PushNotification pushNotification) {
+
+        /* State can change between the post from 1 thread to another. */
+        if (isEnabled() && mInstanceListener != null) {
+            mInstanceListener.onPushNotificationReceived(mActivity, pushNotification);
         }
     }
 }

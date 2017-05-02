@@ -32,6 +32,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.azure.mobile.push.Push.PREFERENCE_KEY_PUSH_TOKEN;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
@@ -272,6 +273,41 @@ public class PushTest {
         assertNull(pushNotification.getTitle());
         assertNull(pushNotification.getMessage());
         assertEquals(data, pushNotification.getCustomData());
+
+        /* Disable while posting the command to the U.I. thread. */
+        activity = mock(Activity.class);
+        when(activity.getIntent()).thenReturn(mock(Intent.class));
+        push.onActivityResumed(activity);
+        final AtomicReference<Runnable> runnable = new AtomicReference<>();
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                runnable.set((Runnable) invocation.getArguments()[0]);
+                return null;
+            }
+        }).when(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
+        service.onMessageReceived(message);
+        Push.setEnabled(false);
+        runnable.get().run();
+        verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+
+        /* Remove listener while posting to UI thread. */
+        Push.setEnabled(true);
+        service.onMessageReceived(message);
+        Push.setListener(null);
+        runnable.get().run();
+        verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+
+        /* Update listener while posting to UI thread. */
+        Push.setListener(pushListener);
+        service.onMessageReceived(message);
+        PushListener pushListener2 = mock(PushListener.class);
+        Push.setListener(pushListener2);
+        runnable.get().run();
+        verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+        verify(pushListener2).onPushNotificationReceived(eq(activity), captor.capture());
     }
 
     @Test
