@@ -1,11 +1,13 @@
 package com.microsoft.azure.mobile.sasquatch.activities;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.support.test.espresso.idling.CountingIdlingResource;
@@ -20,7 +22,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
-import com.microsoft.azure.mobile.MobileCenterService;
 import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
@@ -32,14 +33,18 @@ import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.ingestion.models.LogWithProperties;
+import com.microsoft.azure.mobile.push.Push;
+import com.microsoft.azure.mobile.push.PushListener;
+import com.microsoft.azure.mobile.push.PushNotification;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.SasquatchDistributeListener;
-import com.microsoft.azure.mobile.sasquatch.features.PushListenerHelper;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import org.json.JSONObject;
+
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -71,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         AnalyticsPrivateHelper.setListener(getAnalyticsListener());
         Crashes.setListener(getCrashesListener());
         Distribute.setListener(new SasquatchDistributeListener());
-        PushListenerHelper.setup();
+        Push.setListener(getPushListener());
 
         /* Set distribute urls. */
         String installUrl = getString(R.string.install_url);
@@ -83,33 +88,13 @@ public class MainActivity extends AppCompatActivity {
             Distribute.setApiUrl(apiUrl);
         }
 
-        /* Get push module reference in project build flavour. */
-        Class<? extends MobileCenterService> push = null;
-        try {
-            //noinspection unchecked
-            push = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.push.Push");
-        } catch (Exception e) {
-            MobileCenterLog.warn(LOG_TAG, "Push class not yet available in this flavor.");
-        }
-
         /* Enable Firebase analytics if we enabled the setting previously. */
-        if (push != null && sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false)) {
-            try {
-                push.getMethod("enableFirebaseAnalytics", Context.class).invoke(null, this);
-                MobileCenterLog.info(LOG_TAG, "Enabled firebase analytics.");
-            } catch (Exception e) {
-                MobileCenterLog.error(LOG_TAG, "Failed to enable firebase analytics.", e);
-            }
+        if (sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false)) {
+            Push.enableFirebaseAnalytics(this);
         }
 
         /* Start Mobile center. */
-        MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class);
-        if (push != null)
-            try {
-                MobileCenter.start(push);
-            } catch (Exception e) {
-                MobileCenterLog.error(LOG_TAG, "Failed to start push.", e);
-            }
+        MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
 
         /* Print last crash. */
         Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
@@ -196,9 +181,8 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
+            @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             public void onSendingSucceeded(ErrorReport report) {
-
-                @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
                 String message = String.format("%s\nCrash ID: %s", getString(R.string.crash_sent_succeeded), report.getId());
                 if (report.getThrowable() != null) {
                     message += String.format("\nThrowable: %s", report.getThrowable().toString());
@@ -252,6 +236,32 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
                 }
                 analyticsIdlingResource.decrement();
+            }
+        };
+    }
+
+    @NonNull
+    private PushListener getPushListener() {
+        return new PushListener() {
+
+            @Override
+            public void onPushNotificationReceived(Activity activity, PushNotification pushNotification) {
+                String title = pushNotification.getTitle();
+                String message = pushNotification.getMessage();
+                Map<String, String> customData = pushNotification.getCustomData();
+                MobileCenterLog.info(MainActivity.LOG_TAG, "Push received title=" + title + " message=" + message + " customData=" + customData + " activity=" + activity);
+                if (message != null) {
+                    android.app.AlertDialog.Builder dialog = new android.app.AlertDialog.Builder(activity);
+                    dialog.setTitle(title);
+                    dialog.setMessage(message);
+                    if (!customData.isEmpty()) {
+                        dialog.setMessage(message + "\n" + customData);
+                    }
+                    dialog.setPositiveButton(android.R.string.ok, null);
+                    dialog.show();
+                } else {
+                    Toast.makeText(activity, String.format(activity.getString(R.string.push_toast), customData), Toast.LENGTH_LONG).show();
+                }
             }
         };
     }
