@@ -1,6 +1,7 @@
 package com.microsoft.azure.mobile.sasquatch.activities;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -16,7 +17,9 @@ import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.MobileCenterService;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
 import com.microsoft.azure.mobile.crashes.Crashes;
@@ -25,9 +28,11 @@ import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.APP_SECRET_KEY;
+import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.FIREBASE_ENABLED_KEY;
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.LOG_URL_KEY;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -100,6 +105,58 @@ public class SettingsActivity extends AppCompatActivity {
                     return Distribute.isEnabled();
                 }
             });
+            try {
+
+                @SuppressWarnings("unchecked")
+                Class<? extends MobileCenterService> push = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.push.Push");
+                final Method isEnabled = push.getMethod("isEnabled");
+                final Method setEnabled = push.getMethod("setEnabled", boolean.class);
+                initCheckBoxSetting(R.string.mobile_center_push_state_key, R.string.mobile_center_push_state_summary_enabled, R.string.mobile_center_push_state_summary_disabled, new HasEnabled() {
+
+                    @Override
+                    public void setEnabled(boolean enabled) {
+                        try {
+                            setEnabled.invoke(null, enabled);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    @Override
+                    public boolean isEnabled() {
+                        try {
+                            return (boolean) isEnabled.invoke(null);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+
+                final Method enableFirebaseAnalytics = push.getMethod("enableFirebaseAnalytics", Context.class);
+                initCheckBoxSetting(R.string.mobile_center_push_firebase_state_key, R.string.mobile_center_push_firebase_summary_enabled, R.string.mobile_center_push_firebase_summary_disabled, new HasEnabled() {
+
+                    @Override
+                    public void setEnabled(boolean enabled) {
+                        try {
+                            if (enabled) {
+                                enableFirebaseAnalytics.invoke(null, getActivity());
+                            } else {
+                                FirebaseAnalytics.getInstance(getActivity()).setAnalyticsCollectionEnabled(false);
+                            }
+                            MainActivity.sSharedPreferences.edit().putBoolean(FIREBASE_ENABLED_KEY, enabled).apply();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    @Override
+                    public boolean isEnabled() {
+                        return isFirebaseEnabled();
+                    }
+                });
+            } catch (Exception e) {
+                getPreferenceScreen().removePreference(findPreference(getString(R.string.push_key)));
+            }
             initCheckBoxSetting(R.string.mobile_center_auto_page_tracking_key, R.string.mobile_center_auto_page_tracking_enabled, R.string.mobile_center_auto_page_tracking_disabled, new HasEnabled() {
 
                 @Override
@@ -309,6 +366,10 @@ public class SettingsActivity extends AppCompatActivity {
             else
                 editor.putString(key, value);
             editor.apply();
+        }
+
+        private boolean isFirebaseEnabled() {
+            return MainActivity.sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false);
         }
 
         private interface HasEnabled {

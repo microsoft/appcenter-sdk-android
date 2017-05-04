@@ -20,6 +20,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.MobileCenterService;
 import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
@@ -32,21 +33,24 @@ import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.ingestion.models.LogWithProperties;
 import com.microsoft.azure.mobile.sasquatch.R;
+import com.microsoft.azure.mobile.sasquatch.SasquatchDistributeListener;
+import com.microsoft.azure.mobile.sasquatch.features.PushListenerHelper;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
-import com.microsoft.azure.mobile.sasquatch.SasquatchDistributeListener;
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static final String LOG_TAG = "MobileCenterSasquatch";
     static final String APP_SECRET_KEY = "appSecret";
     static final String LOG_URL_KEY = "logUrl";
+    static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
     @VisibleForTesting
     static final CountingIdlingResource analyticsIdlingResource = new CountingIdlingResource("analytics");
     @VisibleForTesting
     static final CountingIdlingResource crashesIdlingResource = new CountingIdlingResource("crashes");
-    private static final String LOG_TAG = "MobileCenterSasquatch";
     static SharedPreferences sSharedPreferences;
 
     @Override
@@ -67,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         AnalyticsPrivateHelper.setListener(getAnalyticsListener());
         Crashes.setListener(getCrashesListener());
         Distribute.setListener(new SasquatchDistributeListener());
+        PushListenerHelper.setup();
 
         /* Set distribute urls. */
         String installUrl = getString(R.string.install_url);
@@ -78,8 +83,33 @@ public class MainActivity extends AppCompatActivity {
             Distribute.setApiUrl(apiUrl);
         }
 
+        /* Get push module reference in project build flavour. */
+        Class<? extends MobileCenterService> push = null;
+        try {
+            //noinspection unchecked
+            push = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.push.Push");
+        } catch (Exception e) {
+            MobileCenterLog.warn(LOG_TAG, "Push class not yet available in this flavor.");
+        }
+
+        /* Enable Firebase analytics if we enabled the setting previously. */
+        if (push != null && sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false)) {
+            try {
+                push.getMethod("enableFirebaseAnalytics", Context.class).invoke(null, this);
+                MobileCenterLog.info(LOG_TAG, "Enabled firebase analytics.");
+            } catch (Exception e) {
+                MobileCenterLog.error(LOG_TAG, "Failed to enable firebase analytics.", e);
+            }
+        }
+
         /* Start Mobile center. */
         MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class);
+        if (push != null)
+            try {
+                MobileCenter.start(push);
+            } catch (Exception e) {
+                MobileCenterLog.error(LOG_TAG, "Failed to start push.", e);
+            }
 
         /* Print last crash. */
         Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
