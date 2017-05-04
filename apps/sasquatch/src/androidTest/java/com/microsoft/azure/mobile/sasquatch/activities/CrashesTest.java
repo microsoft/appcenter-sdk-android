@@ -17,6 +17,7 @@ import com.microsoft.azure.mobile.Constants;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.CrashesPrivateHelper;
+import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
@@ -30,6 +31,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.Date;
 
 import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static android.support.test.espresso.Espresso.onData;
@@ -49,6 +51,11 @@ import static com.microsoft.azure.mobile.sasquatch.activities.utils.EspressoUtil
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.lessThan;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("unused")
@@ -131,13 +138,27 @@ public class CrashesTest {
                 withChild(withText(R.string.title_crashes)),
                 withChild(withText(R.string.description_crashes))))
                 .perform(click());
-
+        CrashFailureHandler failureHandler = new CrashFailureHandler();
         onCrash(titleId)
-                .withFailureHandler(new CrashFailureHandler())
+                .withFailureHandler(failureHandler)
                 .perform(click());
 
         /* Check error report. */
         assertTrue(Crashes.hasCrashedInLastSession());
+        ErrorReport errorReport = CrashesPrivateHelper.getLastSessionCrashReport();
+        assertNotNull(errorReport);
+        assertNotNull(errorReport.getId());
+        assertEquals(mContext.getMainLooper().getThread().getName(), errorReport.getThreadName());
+        assertThat("AppStartTime",
+                new Date().getTime() - errorReport.getAppStartTime().getTime(),
+                lessThan(60000L));
+        assertThat("AppErrorTime",
+                new Date().getTime() - errorReport.getAppErrorTime().getTime(),
+                lessThan(10000L));
+        assertNotNull(errorReport.getDevice());
+        assertEquals(failureHandler.uncaughtException.getClass(), errorReport.getThrowable().getClass());
+        assertEquals(failureHandler.uncaughtException.getMessage(), errorReport.getThrowable().getMessage());
+        assertArrayEquals(failureHandler.uncaughtException.getStackTrace(), errorReport.getThrowable().getStackTrace());
 
         /* Send report. */
         waitFor(onView(withText(R.string.crash_confirmation_dialog_send_button))
@@ -180,14 +201,20 @@ public class CrashesTest {
 
     private class CrashFailureHandler implements FailureHandler {
 
+        Throwable uncaughtException;
+
         @Override
         public void handle(Throwable error, Matcher<View> viewMatcher) {
-            Throwable uncaughtException = error instanceof EspressoException ? error.getCause() : error;
+            uncaughtException = error instanceof EspressoException ? error.getCause() : error;
 
             /* Save exception. */
             CrashesPrivateHelper.saveUncaughtException(mContext.getMainLooper().getThread(), uncaughtException);
 
             /* Relaunch. */
+            relaunchActivity();
+        }
+
+        private void relaunchActivity() {
             ActivityCompat.finishAffinity(mActivityTestRule.getActivity());
             unsetInstance(MobileCenter.class);
             unsetInstance(Crashes.class);

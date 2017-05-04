@@ -24,7 +24,7 @@
             android:title="@string/mobile_center_crashes_state_title"
             android:dependency="@string/mobile_center_state_key" />
     </PreferenceCategory>
-
+    
     <PreferenceCategory
         android:key="@string/distribute_key"
         android:title="@string/distribute_title">
@@ -32,6 +32,17 @@
             android:key="@string/mobile_center_distribute_state_key"
             android:title="@string/mobile_center_distribute_state_title"
             android:dependency="@string/mobile_center_state_key" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="@string/push_key"
+        android:title="@string/push_title">
+        <CheckBoxPreference
+            android:key="@string/mobile_center_push_state_key"
+            android:title="@string/mobile_center_push_state_title"/>
+        <CheckBoxPreference
+            android:key="@string/mobile_center_push_firebase_state_key"
+            android:title="@string/mobile_center_push_firebase_state_title"/>
     </PreferenceCategory>
 
     <PreferenceCategory

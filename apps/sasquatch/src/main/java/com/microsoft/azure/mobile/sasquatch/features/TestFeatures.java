@@ -8,11 +8,13 @@ import android.widget.AdapterView;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.activities.CrashActivity;
+import com.microsoft.azure.mobile.sasquatch.activities.CustomPropertiesActivity;
 import com.microsoft.azure.mobile.sasquatch.activities.DeviceInfoActivity;
 import com.microsoft.azure.mobile.sasquatch.activities.DummyActivity;
 import com.microsoft.azure.mobile.sasquatch.activities.EventActivity;
 import com.microsoft.azure.mobile.sasquatch.activities.ManagedErrorActivity;
 import com.microsoft.azure.mobile.sasquatch.activities.PageActivity;
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -33,6 +35,14 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeature(R.string.title_crashes, R.string.description_crashes, CrashActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_error, R.string.description_error, ManagedErrorActivity.class));
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));
+        try {
+            Class classCustomProperties = Class.forName("com.microsoft.azure.mobile.CustomProperties");
+            if (classCustomProperties != null) {
+                sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
+            }
+        } catch (Exception e) {
+            MobileCenterLog.info("MobileCenterSasquatch", "CustomProperties not yet available in this flavor.");
+        }
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
     }
 
