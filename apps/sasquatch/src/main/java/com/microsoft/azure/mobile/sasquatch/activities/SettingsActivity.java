@@ -1,7 +1,6 @@
 package com.microsoft.azure.mobile.sasquatch.activities;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -19,16 +18,15 @@ import android.widget.Toast;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.microsoft.azure.mobile.MobileCenter;
-import com.microsoft.azure.mobile.MobileCenterService;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.distribute.Distribute;
+import com.microsoft.azure.mobile.push.Push;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
-import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.APP_SECRET_KEY;
@@ -93,11 +91,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public void setEnabled(boolean enabled) {
-                    try {
-                        Distribute.setEnabled(enabled);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    Distribute.setEnabled(enabled);
                 }
 
                 @Override
@@ -106,40 +100,25 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
             try {
-
-                @SuppressWarnings("unchecked")
-                Class<? extends MobileCenterService> push = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.push.Push");
-                final Method isEnabled = push.getMethod("isEnabled");
-                final Method setEnabled = push.getMethod("setEnabled", boolean.class);
                 initCheckBoxSetting(R.string.mobile_center_push_state_key, R.string.mobile_center_push_state_summary_enabled, R.string.mobile_center_push_state_summary_disabled, new HasEnabled() {
 
                     @Override
                     public void setEnabled(boolean enabled) {
-                        try {
-                            setEnabled.invoke(null, enabled);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
+                        Push.setEnabled(enabled);
                     }
 
                     @Override
                     public boolean isEnabled() {
-                        try {
-                            return (boolean) isEnabled.invoke(null);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
+                        return Push.isEnabled();
                     }
                 });
-
-                final Method enableFirebaseAnalytics = push.getMethod("enableFirebaseAnalytics", Context.class);
                 initCheckBoxSetting(R.string.mobile_center_push_firebase_state_key, R.string.mobile_center_push_firebase_summary_enabled, R.string.mobile_center_push_firebase_summary_disabled, new HasEnabled() {
 
                     @Override
                     public void setEnabled(boolean enabled) {
                         try {
                             if (enabled) {
-                                enableFirebaseAnalytics.invoke(null, getActivity());
+                                Push.enableFirebaseAnalytics(getActivity());
                             } else {
                                 FirebaseAnalytics.getInstance(getActivity()).setAnalyticsCollectionEnabled(false);
                             }
