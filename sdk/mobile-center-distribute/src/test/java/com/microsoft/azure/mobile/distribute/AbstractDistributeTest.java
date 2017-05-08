@@ -123,6 +123,7 @@ public class AbstractDistributeTest {
         when(mContext.getPackageName()).thenReturn("com.contoso");
         when(mActivity.getPackageName()).thenReturn("com.contoso");
         when(mContext.getApplicationInfo()).thenReturn(mApplicationInfo);
+        when(mActivity.getApplicationInfo()).thenReturn(mApplicationInfo);
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
         when(mActivity.getPackageManager()).thenReturn(mPackageManager);
         PackageInfo packageInfo = mock(PackageInfo.class);
@@ -130,6 +131,13 @@ public class AbstractDistributeTest {
         Whitebox.setInternalState(packageInfo, "packageName", "com.contoso");
         Whitebox.setInternalState(packageInfo, "versionName", "1.2.3");
         Whitebox.setInternalState(packageInfo, "versionCode", 6);
+
+        /* Mock app name and other string resources. */
+        Whitebox.setInternalState(mApplicationInfo, "labelRes", 42);
+        when(mContext.getString(42)).thenReturn("unit-test-app");
+        when(mContext.getString(R.string.mobile_center_distribute_update_dialog_message_optional)).thenReturn("%s%s%d");
+        when(mContext.getString(R.string.mobile_center_distribute_update_dialog_message_mandatory)).thenReturn("%s%s%d");
+        when(mContext.getString(R.string.mobile_center_distribute_install_ready_message)).thenReturn("%s%s%d");
 
         /* Mock network. */
         mockStatic(NetworkStateHelper.class);

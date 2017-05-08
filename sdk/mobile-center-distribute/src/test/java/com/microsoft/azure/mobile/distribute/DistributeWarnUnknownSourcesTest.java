@@ -136,7 +136,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
         /* Cancel. */
         ArgumentCaptor<DialogInterface.OnCancelListener> cancelListener = ArgumentCaptor.forClass(DialogInterface.OnCancelListener.class);
-        verify(mDialogBuilder, times(2)).setOnCancelListener(cancelListener.capture());
+        verify(mDialogBuilder).setOnCancelListener(cancelListener.capture());
         cancelListener.getValue().onCancel(mUnknownSourcesDialog);
         when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
 
@@ -215,7 +215,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
         /* Cancel. */
         ArgumentCaptor<DialogInterface.OnCancelListener> cancelListener = ArgumentCaptor.forClass(DialogInterface.OnCancelListener.class);
-        verify(mDialogBuilder, times(2)).setOnCancelListener(cancelListener.capture());
+        verify(mDialogBuilder).setOnCancelListener(cancelListener.capture());
         cancelListener.getValue().onCancel(mUnknownSourcesDialog);
         when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
 

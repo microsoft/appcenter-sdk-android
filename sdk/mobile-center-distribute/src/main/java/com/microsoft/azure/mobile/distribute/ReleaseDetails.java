@@ -10,7 +10,7 @@ import org.json.JSONObject;
 /**
  * Release details JSON schema.
  */
-class ReleaseDetails {
+public class ReleaseDetails {
 
     private static final String ID = "id";
 
@@ -19,6 +19,8 @@ class ReleaseDetails {
     private static final String SHORT_VERSION = "short_version";
 
     private static final String RELEASE_NOTES = "release_notes";
+
+    private static final String RELEASE_NOTES_URL = "release_notes_url";
 
     private static final String MIN_API_LEVEL = "android_min_api_level";
 
@@ -51,6 +53,11 @@ class ReleaseDetails {
      * The release's release notes.
      */
     private String releaseNotes;
+
+    /**
+     * The release notes URL.
+     */
+    private Uri releaseNotesUrl;
 
     /**
      * The release's minimum required Android API level.
@@ -86,6 +93,7 @@ class ReleaseDetails {
         releaseDetails.version = object.getInt(VERSION);
         releaseDetails.shortVersion = object.getString(SHORT_VERSION);
         releaseDetails.releaseNotes = object.isNull(RELEASE_NOTES) ? null : object.getString(RELEASE_NOTES);
+        releaseDetails.releaseNotesUrl = object.isNull(RELEASE_NOTES_URL) ? null : Uri.parse(object.getString(RELEASE_NOTES_URL));
         releaseDetails.minApiLevel = object.getInt(MIN_API_LEVEL);
         releaseDetails.downloadUrl = Uri.parse(object.getString(DOWNLOAD_URL));
         String scheme = releaseDetails.downloadUrl.getScheme();
@@ -102,7 +110,7 @@ class ReleaseDetails {
      *
      * @return the id value
      */
-    int getId() {
+    public int getId() {
         return id;
     }
 
@@ -111,7 +119,7 @@ class ReleaseDetails {
      *
      * @return the version value
      */
-    int getVersion() {
+    public int getVersion() {
         return version;
     }
 
@@ -121,7 +129,7 @@ class ReleaseDetails {
      * @return the shortVersion value
      */
     @NonNull
-    String getShortVersion() {
+    public String getShortVersion() {
         return shortVersion;
     }
 
@@ -131,8 +139,19 @@ class ReleaseDetails {
      * @return the releaseNotes value
      */
     @Nullable
-    String getReleaseNotes() {
+    public String getReleaseNotes() {
         return releaseNotes;
+    }
+
+    /**
+     * Get the releasesNotesUrl value.
+     *
+     * @return the releaseNotesUrl value.
+     */
+    @Nullable
+    @SuppressWarnings("WeakerAccess")
+    public Uri getReleaseNotesUrl() {
+        return releaseNotesUrl;
     }
 
     /**
@@ -159,7 +178,7 @@ class ReleaseDetails {
      *
      * @return mandatory update value
      */
-    boolean isMandatoryUpdate() {
+    public boolean isMandatoryUpdate() {
         return mandatoryUpdate;
     }
 

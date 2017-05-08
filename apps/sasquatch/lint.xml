@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+
+    <!-- Ignore the UnusedResources issue for the given ids -->
+    <issue id="UnusedResources">
+        <ignore regexp="google_crash_reporting_api_key" />
+    </issue>
+</lint>

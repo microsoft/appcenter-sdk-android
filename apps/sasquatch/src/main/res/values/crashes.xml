@@ -2,7 +2,8 @@
 <resources>
     <string name="title_test_crash">Test crash</string>
     <string name="description_test_crash">Using Crash.generateTestCrash() API</string>
-    <string name="title_crash_divide_by_0">Device by 0</string>
+    <string name="title_crash_divide_by_0">Divide by 0</string>
+    <string name="description_crash_divide_by_0">Divide by 0</string>
     <string name="title_test_ui_crash">Test some UI crash</string>
     <string name="description_test_ui_crash">A UI coding mistake, has inner exception</string>
     <string name="title_stack_overflow_crash">Stack overflow crash</string>
@@ -31,4 +32,10 @@
     <string name="crash_before_sending">Sending Crash reports.</string>
     <string name="crash_sent_succeeded">Crash reports delivered successfully.</string>
     <string name="crash_sent_failed">Failed to deliver Crash reports.</string>
+    <string name="event_before_sending">Sending Event.</string>
+    <string name="event_sent_succeeded">Event delivered successfully.</string>
+    <string name="event_sent_failed">Failed to deliver Event.</string>
+    <string name="page_before_sending">Sending Page.</string>
+    <string name="page_sent_succeeded">Page delivered successfully.</string>
+    <string name="page_sent_failed">Failed to deliver Page.</string>
 </resources>
