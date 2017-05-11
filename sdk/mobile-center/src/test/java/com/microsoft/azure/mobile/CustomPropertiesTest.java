@@ -219,11 +219,13 @@ public class CustomPropertiesTest {
         }
         assertEquals(CustomProperties.MAX_PROPERTIES_COUNT, properties.getProperties().size());
 
+        /* Add extra property 1. */
         properties.set("over1", "value");
         assertEquals(CustomProperties.MAX_PROPERTIES_COUNT, properties.getProperties().size());
         verifyStatic(times(1));
         MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
 
+        /* Add extra property 2. */
         properties.set("over2", "value");
         assertEquals(CustomProperties.MAX_PROPERTIES_COUNT, properties.getProperties().size());
         verifyStatic(times(2));
