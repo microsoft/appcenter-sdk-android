@@ -19,7 +19,11 @@ public class CustomProperties {
     @VisibleForTesting
     static final int MAX_PROPERTIES_COUNT = 60;
 
-    private static final int MAX_PROPERTY_ITEM_LENGTH = 128;
+    @VisibleForTesting
+    static final int MAX_PROPERTY_KEY_LENGTH = 128;
+
+    @VisibleForTesting
+    static final int MAX_PROPERTY_VALUE_LENGTH = 128;
 
     private static final Pattern KEY_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9]*$");
 
@@ -140,8 +144,8 @@ public class CustomProperties {
             MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" must match \"" + KEY_PATTERN + "\"");
             return false;
         }
-        if (key.length() > MAX_PROPERTY_ITEM_LENGTH) {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" length cannot be longer than " + MAX_PROPERTY_ITEM_LENGTH + " characters.");
+        if (key.length() > MAX_PROPERTY_KEY_LENGTH) {
+            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" length cannot be longer than " + MAX_PROPERTY_KEY_LENGTH + " characters.");
             return false;
         }
         if (mProperties.containsKey(key)) {
@@ -155,8 +159,8 @@ public class CustomProperties {
             MobileCenterLog.error(MobileCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
             return false;
         }
-        if (value.length() > MAX_PROPERTY_ITEM_LENGTH) {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" value length cannot be longer than " + MAX_PROPERTY_ITEM_LENGTH + " characters.");
+        if (value.length() > MAX_PROPERTY_VALUE_LENGTH) {
+            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" value length cannot be longer than " + MAX_PROPERTY_VALUE_LENGTH + " characters.");
             return false;
         }
         return true;
