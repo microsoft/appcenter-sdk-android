@@ -303,7 +303,7 @@ public class CrashesTest {
         when(mockAttachment.getErrorId()).thenReturn(UUID.randomUUID());
         when(mockAttachment.getContentType()).thenReturn("");
         when(mockAttachment.getFileName()).thenReturn("");
-        when(mockAttachment.getData()).thenReturn("");
+        when(mockAttachment.getData()).thenReturn(new byte[0]);
         when(mockAttachment.isValid()).thenReturn(true);
         ErrorAttachmentLog mockEmptyAttachment = mock(ErrorAttachmentLog.class);
         final int skipAttachmentLogsCount = 2;
@@ -371,7 +371,7 @@ public class CrashesTest {
         when(mockAttachment.getErrorId()).thenReturn(UUID.randomUUID());
         when(mockAttachment.getContentType()).thenReturn("");
         when(mockAttachment.getFileName()).thenReturn("");
-        when(mockAttachment.getData()).thenReturn("");
+        when(mockAttachment.getData()).thenReturn(new byte[0]);
         when(mockAttachment.isValid()).thenReturn(true);
         List<ErrorAttachmentLog> errorAttachmentLogList = Arrays.asList(mockAttachment, mockAttachment);
 

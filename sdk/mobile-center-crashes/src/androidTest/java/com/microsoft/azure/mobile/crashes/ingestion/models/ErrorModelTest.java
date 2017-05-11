@@ -1,11 +1,5 @@
-package com.microsoft.azure.mobile.crashes;
+package com.microsoft.azure.mobile.crashes.ingestion.models;
 
-import com.microsoft.azure.mobile.crashes.ingestion.models.AbstractErrorLog;
-import com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog;
-import com.microsoft.azure.mobile.crashes.ingestion.models.Exception;
-import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
-import com.microsoft.azure.mobile.crashes.ingestion.models.StackFrame;
-import com.microsoft.azure.mobile.crashes.ingestion.models.Thread;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ErrorAttachmentLogFactory;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.azure.mobile.ingestion.models.Log;
@@ -13,14 +7,20 @@ import com.microsoft.azure.mobile.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
 
 import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONStringer;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.UUID;
 
+import static com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog.CHARSET;
+import static com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog.DATA;
 import static com.microsoft.azure.mobile.test.TestUtils.checkEquals;
 import static com.microsoft.azure.mobile.test.TestUtils.checkNotEquals;
 import static com.microsoft.azure.mobile.test.TestUtils.compareSelfNullClass;
 import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("unused")
@@ -517,10 +517,10 @@ public class ErrorModelTest {
             checkEquals(attachmentLog1, attachmentLog2);
         }
         {
-            attachmentLog1.setData("1");
+            attachmentLog1.setData("1".getBytes(CHARSET));
             checkNotEquals(attachmentLog1, attachmentLog2);
 
-            attachmentLog2.setData("2");
+            attachmentLog2.setData("2".getBytes(CHARSET));
             checkNotEquals(attachmentLog1, attachmentLog2);
 
             attachmentLog2.setData(attachmentLog1.getData());
@@ -544,6 +544,27 @@ public class ErrorModelTest {
         {
             checkSerialization(attachmentLog1, serializer);
             checkSerialization(attachmentLog2, serializer);
+        }
+    }
+
+    @Test
+    public void deserializeInvalidBase64forErrorAttachment() throws JSONException {
+        ErrorAttachmentLog log = new ErrorAttachmentLog();
+        log.setId(UUID.randomUUID());
+        log.setErrorId(UUID.randomUUID());
+        log.setData(new byte[0]);
+        log.setContentType("text/plain");
+        JSONStringer jsonWriter = new JSONStringer();
+        jsonWriter.object();
+        log.write(jsonWriter);
+        jsonWriter.endObject();
+        JSONObject json = new JSONObject(jsonWriter.toString());
+        json.put(DATA, "a");
+        try {
+            new ErrorAttachmentLog().read(json);
+            Assert.fail("Expected json exception here");
+        } catch (JSONException e) {
+            assertEquals("bad base-64", e.getMessage());
         }
     }
 
