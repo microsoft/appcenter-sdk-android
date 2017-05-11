@@ -1,5 +1,7 @@
 package com.microsoft.azure.mobile;
 
+import android.support.annotation.VisibleForTesting;
+
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import java.util.Date;
@@ -14,7 +16,10 @@ import java.util.regex.Pattern;
 @SuppressWarnings({"UnusedReturnValue", "WeakerAccess"})
 public class CustomProperties {
 
-    private static final int MAX_LENGTH = 128;
+    @VisibleForTesting
+    static final int MAX_PROPERTIES_COUNT = 60;
+
+    private static final int MAX_PROPERTY_ITEM_LENGTH = 128;
 
     private static final Pattern KEY_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9]*$");
 
@@ -123,11 +128,10 @@ public class CustomProperties {
     }
 
     private void addProperty(String key, Object value) {
-        final int maxPropertiesCount = 60;
-        if (mProperties.size() < maxPropertiesCount) {
+        if (mProperties.size() < MAX_PROPERTIES_COUNT) {
             mProperties.put(key, value);
         } else {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom properties cannot contain more than " + maxPropertiesCount + " items");
+            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom properties cannot contain more than " + MAX_PROPERTIES_COUNT + " items");
         }
     }
 
@@ -136,8 +140,8 @@ public class CustomProperties {
             MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" must match \"" + KEY_PATTERN + "\"");
             return false;
         }
-        if (key.length() > MAX_LENGTH) {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" length cannot be longer than " + MAX_LENGTH + " characters.");
+        if (key.length() > MAX_PROPERTY_ITEM_LENGTH) {
+            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" length cannot be longer than " + MAX_PROPERTY_ITEM_LENGTH + " characters.");
             return false;
         }
         if (mProperties.containsKey(key)) {
@@ -151,8 +155,8 @@ public class CustomProperties {
             MobileCenterLog.error(MobileCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
             return false;
         }
-        if (value.length() > MAX_LENGTH) {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" value length cannot be longer than " + MAX_LENGTH + " characters.");
+        if (value.length() > MAX_PROPERTY_ITEM_LENGTH) {
+            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" value length cannot be longer than " + MAX_PROPERTY_ITEM_LENGTH + " characters.");
             return false;
         }
         return true;

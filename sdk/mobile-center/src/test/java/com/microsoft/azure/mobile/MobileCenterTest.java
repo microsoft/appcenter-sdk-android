@@ -741,7 +741,7 @@ public class MobileCenterTest {
         for (int i = 0; i < 65; i++) {
             properties.set("test" + i, "test");
         }
-        assertEquals(properties.getProperties().size(), 60);
+        assertEquals(properties.getProperties().size(), CustomProperties.MAX_PROPERTIES_COUNT);
         MobileCenter.setCustomProperties(properties);
         verify(log).setProperties(eq(properties.getProperties()));
         verify(mChannel).enqueue(eq(log), eq(MobileCenter.CORE_GROUP));
