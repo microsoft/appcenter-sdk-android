@@ -31,7 +31,7 @@ public class CrashesListenerProvider {
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
                 byte[] bitMapData = stream.toByteArray();
-                ErrorAttachmentLog binaryLog = ErrorAttachmentLog.attachmentWithBinary(bitMapData, "icon.jpeg", "image/jpeg");
+                ErrorAttachmentLog binaryLog = ErrorAttachmentLog.attachmentWithBinary(bitMapData, "icon.jpeg");
 
                 /* Return attachments as list. */
                 return Arrays.asList(textLog, binaryLog);

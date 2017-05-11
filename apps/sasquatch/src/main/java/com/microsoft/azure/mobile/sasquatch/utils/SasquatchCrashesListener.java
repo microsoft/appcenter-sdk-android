@@ -13,7 +13,7 @@ class SasquatchCrashesListener extends AbstractCrashesListener {
 
     private final AppCompatActivity activity;
 
-    public SasquatchCrashesListener(AppCompatActivity activity) {
+    SasquatchCrashesListener(AppCompatActivity activity) {
         this.activity = activity;
     }
 
