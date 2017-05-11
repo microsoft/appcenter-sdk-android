@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
         sSharedPreferences = getSharedPreferences("Sasquatch", Context.MODE_PRIVATE);
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().build());
+        StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectAll().build());
 
         /* Set custom log URL if one was configured in settings. */
         String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getString(R.string.log_url));

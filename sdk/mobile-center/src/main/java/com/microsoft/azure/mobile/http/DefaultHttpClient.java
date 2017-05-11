@@ -84,12 +84,16 @@ public class DefaultHttpClient implements HttpClient {
             stream = urlConnection.getInputStream();
         else
             stream = urlConnection.getErrorStream();
-        InputStreamReader in = new InputStreamReader(stream, CHARSET_NAME);
-        char[] buffer = new char[READ_BUFFER_SIZE];
-        int len;
-        while ((len = in.read(buffer)) > 0)
-            builder.append(buffer, 0, len);
-        return builder.toString();
+        try {
+            InputStreamReader in = new InputStreamReader(stream, CHARSET_NAME);
+            char[] buffer = new char[READ_BUFFER_SIZE];
+            int len;
+            while ((len = in.read(buffer)) > 0)
+                builder.append(buffer, 0, len);
+            return builder.toString();
+        } finally {
+            stream.close();
+        }
     }
 
     private static String doCall(String urlString, String method, Map<String, String> headers, CallTemplate callTemplate) throws Exception {

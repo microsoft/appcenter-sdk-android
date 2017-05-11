@@ -15,6 +15,8 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
@@ -186,7 +188,8 @@ public class DefaultHttpClientTest {
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
-        when(urlConnection.getInputStream()).thenReturn(new ByteArrayInputStream("OK".getBytes()));
+        ByteArrayInputStream inputStream = spy(new ByteArrayInputStream("OK".getBytes()));
+        when(urlConnection.getInputStream()).thenReturn(inputStream);
 
         /* Configure API client. */
         HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
@@ -208,6 +211,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
         verify(urlConnection, never()).setDoOutput(true);
         verify(urlConnection).disconnect();
+        verify(inputStream).close();
         verify(callTemplate).onBeforeCalling(eq(url), any(Map.class));
         verify(callTemplate, never()).buildRequestBody();
         httpClient.close();
@@ -322,6 +326,29 @@ public class DefaultHttpClientTest {
         verify(serviceCallback).onCallFailed(exception);
         verifyZeroInteractions(callTemplate);
         verifyZeroInteractions(serviceCallback);
+    }
+
+    @Test
+    public void failedToReadResponse() throws Exception {
+        URL url = mock(URL.class);
+        whenNew(URL.class).withAnyArguments().thenReturn(url);
+        IOException exception = new IOException("mock");
+        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(200);
+        InputStream inputStream = mock(InputStream.class);
+        when(urlConnection.getInputStream()).thenReturn(inputStream);
+        InputStreamReader inputStreamReader = mock(InputStreamReader.class);
+        whenNew(InputStreamReader.class).withAnyArguments().thenReturn(inputStreamReader);
+        when(inputStreamReader.read(any(char[].class))).thenThrow(exception);
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        mockCall();
+        httpClient.callAsync("", "", new HashMap<String, String>(), callTemplate, serviceCallback);
+        verify(serviceCallback).onCallFailed(exception);
+        verifyZeroInteractions(serviceCallback);
+        verify(inputStream).close();
     }
 
     @Test
