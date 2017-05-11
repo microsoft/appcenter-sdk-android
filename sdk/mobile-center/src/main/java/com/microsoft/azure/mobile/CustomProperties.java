@@ -14,6 +14,8 @@ import java.util.regex.Pattern;
 @SuppressWarnings({"UnusedReturnValue", "WeakerAccess"})
 public class CustomProperties {
 
+    private static final int MAX_LENGTH = 128;
+
     private static final Pattern KEY_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9]*$");
 
     private static final String VALUE_NULL_ERROR_MESSAGE = "Custom property value cannot be null, did you mean to call clear?";
@@ -43,12 +45,8 @@ public class CustomProperties {
      * @return this instance.
      */
     public CustomProperties set(String key, String value) {
-        if (isValidKey(key)) {
-            if (value != null) {
-                mProperties.put(key, value);
-            } else {
-                MobileCenterLog.error(MobileCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
-            }
+        if (isValidKey(key) && isValidStringValue(key, value)) {
+            addProperty(key, value);
         }
         return this;
     }
@@ -65,7 +63,7 @@ public class CustomProperties {
     public CustomProperties set(String key, Date value) {
         if (isValidKey(key)) {
             if (value != null) {
-                mProperties.put(key, value);
+                addProperty(key, value);
             } else {
                 MobileCenterLog.error(MobileCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
             }
@@ -85,7 +83,7 @@ public class CustomProperties {
     public CustomProperties set(String key, Number value) {
         if (isValidKey(key)) {
             if (value != null) {
-                mProperties.put(key, value);
+                addProperty(key, value);
             } else {
                 MobileCenterLog.error(MobileCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
             }
@@ -104,7 +102,7 @@ public class CustomProperties {
      */
     public CustomProperties set(String key, boolean value) {
         if (isValidKey(key)) {
-            mProperties.put(key, value);
+            addProperty(key, value);
         }
         return this;
     }
@@ -124,13 +122,38 @@ public class CustomProperties {
         return this;
     }
 
+    private void addProperty(String key, Object value) {
+        final int maxPropertiesCount = 60;
+        if (mProperties.size() < maxPropertiesCount) {
+            mProperties.put(key, value);
+        } else {
+            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom properties cannot contain more than " + maxPropertiesCount + " items");
+        }
+    }
+
     private boolean isValidKey(String key) {
         if (key == null || !KEY_PATTERN.matcher(key).matches()) {
             MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" must match \"" + KEY_PATTERN + "\"");
             return false;
         }
+        if (key.length() > MAX_LENGTH) {
+            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" length cannot be longer than " + MAX_LENGTH + " characters.");
+            return false;
+        }
         if (mProperties.containsKey(key)) {
             MobileCenterLog.warn(MobileCenter.LOG_TAG, "Custom property \"" + key + "\" is already set or cleared and will be overridden.");
+        }
+        return true;
+    }
+
+    private boolean isValidStringValue(String key, String value) {
+        if (value == null) {
+            MobileCenterLog.error(MobileCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
+            return false;
+        }
+        if (value.length() > MAX_LENGTH) {
+            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" value length cannot be longer than " + MAX_LENGTH + " characters.");
+            return false;
         }
         return true;
     }
