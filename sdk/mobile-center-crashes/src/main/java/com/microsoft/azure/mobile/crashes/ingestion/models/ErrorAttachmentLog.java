@@ -62,7 +62,7 @@ public class ErrorAttachmentLog extends AbstractLog {
     private String fileName;
 
     /**
-     * Data encoded as base64.
+     * Data encoded as base64 when in JSON.
      */
     private byte[] data;
 
@@ -95,7 +95,6 @@ public class ErrorAttachmentLog extends AbstractLog {
 
     @Override
     public String getType() {
-
         return TYPE;
     }
 
