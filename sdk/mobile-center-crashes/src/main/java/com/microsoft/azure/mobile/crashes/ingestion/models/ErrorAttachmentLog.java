@@ -21,6 +21,12 @@ import static com.microsoft.azure.mobile.ingestion.models.CommonProperties.ID;
  */
 public class ErrorAttachmentLog extends AbstractLog {
 
+    /**
+     * Plain text mime type.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static final String CONTENT_TYPE_TEXT_PLAIN = "text/plain";
+
     public static final String TYPE = "error_attachment";
 
     @VisibleForTesting
@@ -30,6 +36,8 @@ public class ErrorAttachmentLog extends AbstractLog {
     static final String DATA = "data";
 
     private static final String ERROR_ID = "error_id";
+
+    private static final String CONTENT_TYPE = "content_type";
 
     private static final String FILE_NAME = "file_name";
 
@@ -42,6 +50,11 @@ public class ErrorAttachmentLog extends AbstractLog {
      * Error log identifier to attach this log to.
      */
     private UUID errorId;
+
+    /**
+     * Content type (text/plain for text).
+     */
+    private String contentType;
 
     /**
      * File name.
@@ -61,25 +74,28 @@ public class ErrorAttachmentLog extends AbstractLog {
      * @return ErrorAttachmentLog or null if null text is passed.
      */
     public static ErrorAttachmentLog attachmentWithText(String text, String fileName) {
-        return attachmentWithBinary(text.getBytes(CHARSET), fileName);
+        return attachmentWithBinary(text.getBytes(CHARSET), fileName, CONTENT_TYPE_TEXT_PLAIN);
     }
 
     /**
      * Build an error attachment log with binary suitable for using in {link CrashesListener#getErrorAttachments(ErrorReport)}.
      *
-     * @param data     binary data.
-     * @param fileName file name to use in error attachment log.
+     * @param data        binary data.
+     * @param fileName    file name to use in error attachment log.
+     * @param contentType binary data MIME type.
      * @return ErrorAttachmentLog attachment or null if null data is passed.
      */
-    public static ErrorAttachmentLog attachmentWithBinary(byte[] data, String fileName) {
+    public static ErrorAttachmentLog attachmentWithBinary(byte[] data, String fileName, String contentType) {
         ErrorAttachmentLog attachmentLog = new ErrorAttachmentLog();
         attachmentLog.setData(data);
         attachmentLog.setFileName(fileName);
+        attachmentLog.setContentType(contentType);
         return attachmentLog;
     }
 
     @Override
     public String getType() {
+
         return TYPE;
     }
 
@@ -117,6 +133,25 @@ public class ErrorAttachmentLog extends AbstractLog {
      */
     public void setErrorId(UUID errorId) {
         this.errorId = errorId;
+    }
+
+    /**
+     * Get the contentType value.
+     *
+     * @return the contentType value
+     */
+    public String getContentType() {
+        return this.contentType;
+    }
+
+    /**
+     * Set the contentType value.
+     *
+     * @param contentType the contentType value to set
+     */
+    @SuppressWarnings("WeakerAccess")
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 
     /**
@@ -162,7 +197,7 @@ public class ErrorAttachmentLog extends AbstractLog {
      * @return true if validation succeeded, otherwise false.
      */
     public boolean isValid() {
-        return getId() != null && getErrorId() != null && getData() != null;
+        return getId() != null && getErrorId() != null && getContentType() != null && getData() != null;
     }
 
     @Override
@@ -170,6 +205,7 @@ public class ErrorAttachmentLog extends AbstractLog {
         super.read(object);
         setId(UUID.fromString(object.getString(ID)));
         setErrorId(UUID.fromString(object.getString(ERROR_ID)));
+        setContentType(object.getString(CONTENT_TYPE));
         setFileName(object.optString(FILE_NAME, null));
         try {
             setData(Base64.decode(object.getString(DATA), Base64.DEFAULT));
@@ -183,6 +219,7 @@ public class ErrorAttachmentLog extends AbstractLog {
         super.write(writer);
         JSONUtils.write(writer, ID, getId());
         JSONUtils.write(writer, ERROR_ID, getErrorId());
+        JSONUtils.write(writer, CONTENT_TYPE, getContentType());
         JSONUtils.write(writer, FILE_NAME, getFileName());
         JSONUtils.write(writer, DATA, Base64.encodeToString(getData(), Base64.DEFAULT));
     }
@@ -198,6 +235,8 @@ public class ErrorAttachmentLog extends AbstractLog {
 
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (errorId != null ? !errorId.equals(that.errorId) : that.errorId != null) return false;
+        if (contentType != null ? !contentType.equals(that.contentType) : that.contentType != null)
+            return false;
         if (fileName != null ? !fileName.equals(that.fileName) : that.fileName != null)
             return false;
         return Arrays.equals(data, that.data);
@@ -209,6 +248,7 @@ public class ErrorAttachmentLog extends AbstractLog {
         int result = super.hashCode();
         result = 31 * result + (id != null ? id.hashCode() : 0);
         result = 31 * result + (errorId != null ? errorId.hashCode() : 0);
+        result = 31 * result + (contentType != null ? contentType.hashCode() : 0);
         result = 31 * result + (fileName != null ? fileName.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(data);
         return result;

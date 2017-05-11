@@ -497,6 +497,16 @@ public class ErrorModelTest {
             checkEquals(attachmentLog1, attachmentLog2);
         }
         {
+            attachmentLog1.setContentType("1");
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setContentType("2");
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setContentType(attachmentLog1.getContentType());
+            checkEquals(attachmentLog1, attachmentLog2);
+        }
+        {
             attachmentLog1.setFileName("1");
             checkNotEquals(attachmentLog1, attachmentLog2);
 
@@ -543,6 +553,7 @@ public class ErrorModelTest {
         log.setId(UUID.randomUUID());
         log.setErrorId(UUID.randomUUID());
         log.setData(new byte[0]);
+        log.setContentType("text/plain");
         JSONStringer jsonWriter = new JSONStringer();
         jsonWriter.object();
         log.write(jsonWriter);

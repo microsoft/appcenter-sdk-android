@@ -301,6 +301,7 @@ public class CrashesTest {
         ErrorAttachmentLog mockAttachment = mock(ErrorAttachmentLog.class);
         when(mockAttachment.getId()).thenReturn(UUID.randomUUID());
         when(mockAttachment.getErrorId()).thenReturn(UUID.randomUUID());
+        when(mockAttachment.getContentType()).thenReturn("");
         when(mockAttachment.getFileName()).thenReturn("");
         when(mockAttachment.getData()).thenReturn(new byte[0]);
         when(mockAttachment.isValid()).thenReturn(true);
@@ -368,6 +369,7 @@ public class CrashesTest {
         ErrorAttachmentLog mockAttachment = mock(ErrorAttachmentLog.class);
         when(mockAttachment.getId()).thenReturn(UUID.randomUUID());
         when(mockAttachment.getErrorId()).thenReturn(UUID.randomUUID());
+        when(mockAttachment.getContentType()).thenReturn("");
         when(mockAttachment.getFileName()).thenReturn("");
         when(mockAttachment.getData()).thenReturn(new byte[0]);
         when(mockAttachment.isValid()).thenReturn(true);

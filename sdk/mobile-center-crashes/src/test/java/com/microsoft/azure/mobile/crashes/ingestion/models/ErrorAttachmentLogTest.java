@@ -22,16 +22,19 @@ public class ErrorAttachmentLogTest {
         assertNotNull(attachment);
         assertEquals(text, new String(attachment.getData(), CHARSET));
         assertEquals(fileName, attachment.getFileName());
+        assertEquals(ErrorAttachmentLog.CONTENT_TYPE_TEXT_PLAIN, attachment.getContentType());
     }
 
     @Test
     public void attachmentWithBinary() {
         byte[] data = "Hello Binary!".getBytes();
         String fileName = "binary.txt";
-        ErrorAttachmentLog attachment = ErrorAttachmentLog.attachmentWithBinary(data, fileName);
+        String contentType = "image/jpeg";
+        ErrorAttachmentLog attachment = ErrorAttachmentLog.attachmentWithBinary(data, fileName, contentType);
         assertNotNull(attachment);
         assertEquals(data, attachment.getData());
         assertEquals(fileName, attachment.getFileName());
+        assertEquals(contentType, attachment.getContentType());
     }
 
     @Test
@@ -41,6 +44,7 @@ public class ErrorAttachmentLogTest {
         assertNotNull(attachment);
         assertEquals(text, new String(attachment.getData(), CHARSET));
         assertNull(attachment.getFileName());
+        assertEquals(ErrorAttachmentLog.CONTENT_TYPE_TEXT_PLAIN, attachment.getContentType());
     }
 
     @Test
@@ -56,6 +60,10 @@ public class ErrorAttachmentLogTest {
         }
         {
             log.setErrorId(UUID.randomUUID());
+            assertFalse(log.isValid());
+        }
+        {
+            log.setContentType("1");
             assertFalse(log.isValid());
         }
         {
