@@ -71,7 +71,7 @@ public class ErrorAttachmentLog extends AbstractLog {
      *
      * @param text     text to attach to attachment log.
      * @param fileName file name to use in error attachment log.
-     * @return ErrorAttachmentLog or null if null text is passed.
+     * @return ErrorAttachmentLog built attachment.
      */
     public static ErrorAttachmentLog attachmentWithText(String text, String fileName) {
         return attachmentWithBinary(text.getBytes(CHARSET), fileName, CONTENT_TYPE_TEXT_PLAIN);
@@ -83,7 +83,7 @@ public class ErrorAttachmentLog extends AbstractLog {
      * @param data        binary data.
      * @param fileName    file name to use in error attachment log.
      * @param contentType binary data MIME type.
-     * @return ErrorAttachmentLog attachment or null if null data is passed.
+     * @return ErrorAttachmentLog built attachment.
      */
     public static ErrorAttachmentLog attachmentWithBinary(byte[] data, String fileName, String contentType) {
         ErrorAttachmentLog attachmentLog = new ErrorAttachmentLog();
