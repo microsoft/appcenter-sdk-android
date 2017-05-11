@@ -122,13 +122,13 @@ public class CustomProperties {
         if (isValidKey(key)) {
 
             /* Null value means that key marked to clear. */
-            mProperties.put(key, null);
+            addProperty(key, null);
         }
         return this;
     }
 
     private void addProperty(String key, Object value) {
-        if (mProperties.size() < MAX_PROPERTIES_COUNT) {
+        if (mProperties.containsKey(key) || mProperties.size() < MAX_PROPERTIES_COUNT) {
             mProperties.put(key, value);
         } else {
             MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom properties cannot contain more than " + MAX_PROPERTIES_COUNT + " items");
