@@ -13,7 +13,6 @@ import com.microsoft.azure.mobile.ingestion.models.CustomPropertiesLog;
 import com.microsoft.azure.mobile.ingestion.models.StartServiceLog;
 import com.microsoft.azure.mobile.ingestion.models.WrapperSdk;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
-import com.microsoft.azure.mobile.test.TestUtils;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
@@ -39,7 +38,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync.THREAD_NAME;
-import static com.microsoft.azure.mobile.test.TestUtils.generateString;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
@@ -734,14 +732,6 @@ public class MobileCenterTest {
         /* Set normal. */
         CustomProperties properties = new CustomProperties();
         properties.set("test", "test");
-        assertEquals(properties.getProperties().size(), 1);
-        properties.set(generateString(129, 'a'), "test");
-        properties.set("test1", generateString(129, '*'));
-        assertEquals(properties.getProperties().size(), 1);
-        for (int i = 0; i < 65; i++) {
-            properties.set("test" + i, "test");
-        }
-        assertEquals(properties.getProperties().size(), CustomProperties.MAX_PROPERTIES_COUNT);
         MobileCenter.setCustomProperties(properties);
         verify(log).setProperties(eq(properties.getProperties()));
         verify(mChannel).enqueue(eq(log), eq(MobileCenter.CORE_GROUP));
