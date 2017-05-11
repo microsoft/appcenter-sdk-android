@@ -57,4 +57,15 @@ public final class TestUtils {
         modifiers.setInt(field, field.getModifiers() & ~Modifier.FINAL);
         field.set(null, value);
     }
+
+    /**
+     * Generates string of arbitrary length with contents composed of single character.
+     *
+     * @param length length of the resulting string.
+     * @param charToFill character to compose string of.
+     * @return <code>String</code> of desired length.
+     */
+    public static String generateString(int length, char charToFill) {
+        return new String(new char[length]).replace('\0', charToFill);
+    }
 }
