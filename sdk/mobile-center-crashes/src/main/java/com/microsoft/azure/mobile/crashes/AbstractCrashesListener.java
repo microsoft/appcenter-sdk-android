@@ -1,5 +1,6 @@
 package com.microsoft.azure.mobile.crashes;
 
+import com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 
 /**
@@ -16,11 +17,10 @@ public abstract class AbstractCrashesListener implements CrashesListener {
         return false;
     }
 
-    /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
-//    @Override
-//    public ErrorAttachment getErrorAttachment(ErrorReport report) {
-//        return null;
-//    }
+    @Override
+    public Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report) {
+        return null;
+    }
 
     @SuppressWarnings("EmptyMethod")
     @Override
