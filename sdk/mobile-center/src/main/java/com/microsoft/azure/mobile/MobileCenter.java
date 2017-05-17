@@ -43,11 +43,13 @@ public class MobileCenter {
      * TAG used in logging.
      */
     public static final String LOG_TAG = MobileCenterLog.LOG_TAG;
+
     /**
      * Group for sending logs.
      */
     @VisibleForTesting
     static final String CORE_GROUP = "group_core";
+
     /**
      * Shared instance.
      */
