@@ -40,16 +40,14 @@ import static com.microsoft.azure.mobile.utils.MobileCenterLog.NONE;
 public class MobileCenter {
 
     /**
+     * TAG used in logging.
+     */
+    public static final String LOG_TAG = MobileCenterLog.LOG_TAG;
+    /**
      * Group for sending logs.
      */
     @VisibleForTesting
     static final String CORE_GROUP = "group_core";
-
-    /**
-     * TAG used in logging.
-     */
-    public static final String LOG_TAG = MobileCenterLog.LOG_TAG;
-
     /**
      * Shared instance.
      */
@@ -217,7 +215,7 @@ public class MobileCenter {
      * @return true if enabled, false otherwise.
      */
     public static boolean isEnabled() {
-        return checkPrecondition("isEnabled") && getInstance().isInstanceEnabled();
+        return checkPrecondition() && getInstance().isInstanceEnabled();
     }
 
     /**
@@ -228,7 +226,7 @@ public class MobileCenter {
      * @param enabled true to enable, false to disable.
      */
     public static void setEnabled(boolean enabled) {
-        if (checkPrecondition("setEnabled"))
+        if (checkPrecondition())
             getInstance().setInstanceEnabled(enabled);
     }
 
@@ -239,7 +237,7 @@ public class MobileCenter {
      * @return A unique installation identifier.
      */
     public static UUID getInstallId() {
-        if (checkPrecondition("getInstallId"))
+        if (checkPrecondition())
             return IdHelper.getInstallId();
         return null;
     }
@@ -247,14 +245,12 @@ public class MobileCenter {
     /**
      * Check whether the SDK is ready for use or not.
      *
-     * @param methodName A method name that is being called by a host application.
      * @return <code>true</code> if the SDK is ready, <code>false</code> otherwise.
      */
-    private static boolean checkPrecondition(String methodName) {
+    private static boolean checkPrecondition() {
         if (getInstance().isInstanceConfigured())
             return true;
-
-        MobileCenterLog.error(LOG_TAG, "Mobile Center has not been configured and is not ready for " + methodName);
+        MobileCenterLog.error(LOG_TAG, "Mobile Center hasn't been configured. You need to call MobileCenter.start with appSecret or MobileCenter.configure first.");
         return false;
     }
 
@@ -296,6 +292,8 @@ public class MobileCenter {
      * @param customProperties custom properties object.
      */
     private synchronized void setInstanceCustomProperties(CustomProperties customProperties) {
+        if (!checkPrecondition())
+            return;
         if (customProperties == null) {
             MobileCenterLog.error(LOG_TAG, "Custom properties may not be null");
             return;
