@@ -220,7 +220,7 @@ public class ErrorAttachmentLog extends AbstractLog {
         JSONUtils.write(writer, ERROR_ID, getErrorId());
         JSONUtils.write(writer, CONTENT_TYPE, getContentType());
         JSONUtils.write(writer, FILE_NAME, getFileName());
-        JSONUtils.write(writer, DATA, Base64.encodeToString(getData(), Base64.DEFAULT));
+        JSONUtils.write(writer, DATA, Base64.encodeToString(getData(), Base64.NO_WRAP));
     }
 
     @SuppressWarnings("SimplifiableIfStatement")
