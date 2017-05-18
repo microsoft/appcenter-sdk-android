@@ -1,34 +1,45 @@
-package com.microsoft.azure.mobile.crashes;
+package com.microsoft.azure.mobile.crashes.ingestion.models;
 
-import com.microsoft.azure.mobile.crashes.ingestion.models.AbstractErrorLog;
-import com.microsoft.azure.mobile.crashes.ingestion.models.Exception;
-import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
-import com.microsoft.azure.mobile.crashes.ingestion.models.StackFrame;
-import com.microsoft.azure.mobile.crashes.ingestion.models.Thread;
+import com.microsoft.azure.mobile.crashes.ingestion.models.json.ErrorAttachmentLogFactory;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ManagedErrorLogFactory;
-import com.microsoft.azure.mobile.crashes.model.ErrorAttachment;
-import com.microsoft.azure.mobile.crashes.model.ErrorBinaryAttachment;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
 
 import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONStringer;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.UUID;
 
+import static com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog.CHARSET;
+import static com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog.DATA;
 import static com.microsoft.azure.mobile.test.TestUtils.checkEquals;
 import static com.microsoft.azure.mobile.test.TestUtils.checkNotEquals;
 import static com.microsoft.azure.mobile.test.TestUtils.compareSelfNullClass;
 import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("unused")
 public class ErrorModelTest {
 
-    private static void checkSerialization(ManagedErrorLog errorLog, LogSerializer serializer) throws JSONException {
+    private static void checkSerialization(Log errorLog, LogSerializer serializer) throws JSONException {
         String payload = serializer.serializeLog(errorLog);
         Log deserializedLog = serializer.deserializeLog(payload);
         checkEquals(errorLog, deserializedLog);
+    }
+
+    private static void checkSerializationThrowsException(Log errorLog, LogSerializer serializer, Class expectedException){
+        try {
+            checkSerialization(errorLog, serializer);
+        } catch (java.lang.Exception ex) {
+            checkEquals(ex.getClass(), expectedException);
+            return;
+        }
+        assertTrue(false);
     }
 
     private static void checkExceptions(LogSerializer serializer, ManagedErrorLog errorLog1, ManagedErrorLog errorLog2, Exception exception1, Exception exception2) throws JSONException {
@@ -450,94 +461,111 @@ public class ErrorModelTest {
                 }
             }
         }
-        {
-            ErrorAttachment errorAttachment1 = new ErrorAttachment();
-            ErrorAttachment errorAttachment2 = new ErrorAttachment();
-
-            compareSelfNullClass(errorAttachment1);
-            checkEquals(errorAttachment1, errorAttachment2);
-
-            {
-                errorAttachment1.setTextAttachment("1");
-                checkNotEquals(errorAttachment1, errorAttachment2);
-
-                errorAttachment2.setTextAttachment("2");
-                checkNotEquals(errorAttachment1, errorAttachment2);
-
-                errorAttachment2.setTextAttachment(errorAttachment1.getTextAttachment());
-                checkEquals(errorAttachment1, errorAttachment2);
-            }
-            {
-                errorLog1.setErrorAttachment(errorAttachment1);
-                errorLog2.setErrorAttachment(null);
-                checkNotEquals(errorLog1, errorLog2);
-                checkSerialization(errorLog1, serializer);
-
-                errorLog1.setErrorAttachment(null);
-                errorLog2.setErrorAttachment(errorAttachment2);
-                checkNotEquals(errorLog1, errorLog2);
-
-                errorLog1.setErrorAttachment(errorLog2.getErrorAttachment());
-                checkEquals(errorLog1, errorLog2);
-
-                ErrorBinaryAttachment errorBinaryAttachment1 = new ErrorBinaryAttachment();
-                ErrorBinaryAttachment errorBinaryAttachment2 = new ErrorBinaryAttachment();
-
-                compareSelfNullClass(errorBinaryAttachment1);
-                checkEquals(errorBinaryAttachment1, errorBinaryAttachment2);
-
-                {
-                    errorBinaryAttachment1.setContentType("1");
-                    checkNotEquals(errorBinaryAttachment1, errorBinaryAttachment2);
-
-                    errorBinaryAttachment2.setContentType("2");
-                    checkNotEquals(errorBinaryAttachment1, errorBinaryAttachment2);
-
-                    errorBinaryAttachment2.setContentType(errorBinaryAttachment1.getContentType());
-                    checkEquals(errorBinaryAttachment1, errorBinaryAttachment2);
-                }
-                {
-                    errorBinaryAttachment1.setFileName("1");
-                    checkNotEquals(errorBinaryAttachment1, errorBinaryAttachment2);
-
-                    errorBinaryAttachment2.setFileName("2");
-                    checkNotEquals(errorBinaryAttachment1, errorBinaryAttachment2);
-
-                    errorBinaryAttachment2.setFileName(errorBinaryAttachment1.getFileName());
-                    checkEquals(errorBinaryAttachment1, errorBinaryAttachment2);
-                }
-                {
-                    errorBinaryAttachment1.setData(new byte[]{1});
-                    checkNotEquals(errorBinaryAttachment1, errorBinaryAttachment2);
-                    checkSerialization(errorLog1, serializer);
-
-                    errorBinaryAttachment2.setData(new byte[]{2});
-                    checkNotEquals(errorBinaryAttachment1, errorBinaryAttachment2);
-
-                    errorBinaryAttachment2.setData(errorBinaryAttachment1.getData());
-                    checkEquals(errorBinaryAttachment1, errorBinaryAttachment2);
-                }
-                {
-                    errorAttachment1.setBinaryAttachment(errorBinaryAttachment1);
-                    errorAttachment2.setBinaryAttachment(null);
-                    checkNotEquals(errorAttachment1, errorAttachment2);
-
-                    errorAttachment1.setBinaryAttachment(null);
-                    errorAttachment2.setBinaryAttachment(errorBinaryAttachment2);
-                    checkNotEquals(errorAttachment1, errorAttachment2);
-
-                    errorAttachment1.setBinaryAttachment(errorAttachment2.getBinaryAttachment());
-                    checkEquals(errorAttachment1, errorAttachment2);
-
-                    errorBinaryAttachment2.setData(null);
-                    checkSerialization(errorLog1, serializer);
-
-                    errorBinaryAttachment2.setData(errorBinaryAttachment1.getData());
-                    checkSerialization(errorLog1, serializer);
-                }
-            }
-        }
         checkSerialization(errorLog1, serializer);
+    }
+
+    @Test
+    public void errorAttachmentLog() throws JSONException {
+        LogSerializer serializer = new DefaultLogSerializer();
+        serializer.addLogFactory(ErrorAttachmentLog.TYPE, ErrorAttachmentLogFactory.getInstance());
+
+        ErrorAttachmentLog attachmentLog1 = new ErrorAttachmentLog();
+        ErrorAttachmentLog attachmentLog2 = new ErrorAttachmentLog();
+
+        compareSelfNullClass(attachmentLog1);
+        checkEquals(attachmentLog1, attachmentLog2);
+        checkEquals(attachmentLog1.getType(), ErrorAttachmentLog.TYPE);
+
+        {
+            attachmentLog1.setId(UUID.randomUUID());
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setId(UUID.randomUUID());
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setId(attachmentLog1.getId());
+            checkEquals(attachmentLog1, attachmentLog2);
+        }
+        {
+            attachmentLog1.setErrorId(UUID.randomUUID());
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setErrorId(UUID.randomUUID());
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setErrorId(attachmentLog1.getErrorId());
+            checkEquals(attachmentLog1, attachmentLog2);
+        }
+        {
+            attachmentLog1.setContentType("1");
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setContentType("2");
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setContentType(attachmentLog1.getContentType());
+            checkEquals(attachmentLog1, attachmentLog2);
+        }
+        {
+            attachmentLog1.setFileName("1");
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setFileName("2");
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setFileName(attachmentLog1.getFileName());
+            checkEquals(attachmentLog1, attachmentLog2);
+        }
+        {
+            attachmentLog1.setData("1".getBytes(CHARSET));
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setData("2".getBytes(CHARSET));
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setData(attachmentLog1.getData());
+            checkEquals(attachmentLog1, attachmentLog2);
+        }
+        {
+            attachmentLog1.setSid(UUID.randomUUID());
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setSid(UUID.randomUUID());
+            checkNotEquals(attachmentLog1, attachmentLog2);
+
+            attachmentLog2.setSid(attachmentLog1.getSid());
+            checkEquals(attachmentLog1, attachmentLog2);
+        }
+        {
+
+            /* Check serialization without filename. */
+            attachmentLog2.setFileName(null);
+        }
+        {
+            checkSerialization(attachmentLog1, serializer);
+            checkSerialization(attachmentLog2, serializer);
+        }
+    }
+
+    @Test
+    public void deserializeInvalidBase64forErrorAttachment() throws JSONException {
+        ErrorAttachmentLog log = new ErrorAttachmentLog();
+        log.setId(UUID.randomUUID());
+        log.setErrorId(UUID.randomUUID());
+        log.setData(new byte[0]);
+        log.setContentType("text/plain");
+        JSONStringer jsonWriter = new JSONStringer();
+        jsonWriter.object();
+        log.write(jsonWriter);
+        jsonWriter.endObject();
+        JSONObject json = new JSONObject(jsonWriter.toString());
+        json.put(DATA, "a");
+        try {
+            new ErrorAttachmentLog().read(json);
+            Assert.fail("Expected json exception here");
+        } catch (JSONException e) {
+            assertEquals("bad base-64", e.getMessage());
+        }
     }
 
     private static class MockErrorLog extends AbstractErrorLog {

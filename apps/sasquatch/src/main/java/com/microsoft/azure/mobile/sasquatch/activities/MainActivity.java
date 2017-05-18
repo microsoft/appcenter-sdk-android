@@ -2,7 +2,6 @@ package com.microsoft.azure.mobile.sasquatch.activities;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -11,7 +10,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.support.test.espresso.idling.CountingIdlingResource;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
@@ -28,7 +26,6 @@ import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
 import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
 import com.microsoft.azure.mobile.analytics.ingestion.models.EventLog;
 import com.microsoft.azure.mobile.analytics.ingestion.models.PageLog;
-import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.distribute.Distribute;
@@ -40,11 +37,13 @@ import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.SasquatchDistributeListener;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
+import com.microsoft.azure.mobile.sasquatch.utils.CrashesListenerProvider;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import org.json.JSONObject;
 
 import java.util.Map;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -75,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
 
         /* Set listeners. */
         AnalyticsPrivateHelper.setListener(getAnalyticsListener());
-        Crashes.setListener(getCrashesListener());
+        Crashes.setListener(CrashesListenerProvider.provideCrashesListener(this));
         Distribute.setListener(new SasquatchDistributeListener());
         Push.setListener(getPushListener());
 
@@ -131,67 +130,6 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
         return true;
-    }
-
-    private AbstractCrashesListener getCrashesListener() {
-        return new AbstractCrashesListener() {
-            @Override
-            public boolean shouldAwaitUserConfirmation() {
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder
-                        .setTitle(R.string.crash_confirmation_dialog_title)
-                        .setMessage(R.string.crash_confirmation_dialog_message)
-                        .setPositiveButton(R.string.crash_confirmation_dialog_send_button, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Crashes.notifyUserConfirmation(Crashes.SEND);
-                            }
-                        })
-                        .setNegativeButton(R.string.crash_confirmation_dialog_not_send_button, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
-                            }
-                        })
-                        .setNeutralButton(R.string.crash_confirmation_dialog_always_send_button, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
-                            }
-                        });
-                builder.create().show();
-                return true;
-            }
-
-            /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
-//            @Override
-//            public ErrorAttachment getErrorAttachment(ErrorReport report) {
-//                return ErrorAttachments.attachment("This is a text attachment.", "This is a binary attachment.".getBytes(), "binary.txt", "text/plain");
-//            }
-
-            @Override
-            public void onBeforeSending(ErrorReport report) {
-                Toast.makeText(MainActivity.this, R.string.crash_before_sending, Toast.LENGTH_SHORT).show();
-                crashesIdlingResource.increment();
-            }
-
-            @Override
-            public void onSendingFailed(ErrorReport report, Exception e) {
-                Toast.makeText(MainActivity.this, R.string.crash_sent_failed, Toast.LENGTH_SHORT).show();
-                crashesIdlingResource.decrement();
-            }
-
-            @Override
-            @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-            public void onSendingSucceeded(ErrorReport report) {
-                String message = String.format("%s\nCrash ID: %s", getString(R.string.crash_sent_succeeded), report.getId());
-                if (report.getThrowable() != null) {
-                    message += String.format("\nThrowable: %s", report.getThrowable().toString());
-                }
-                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
-                crashesIdlingResource.decrement();
-            }
-        };
     }
 
     private AnalyticsListener getAnalyticsListener() {

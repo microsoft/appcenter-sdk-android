@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.microsoft.azure.mobile.test.TestUtils.generateString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -494,17 +495,6 @@ public class AnalyticsTest {
         verify(analyticsListener, never()).onBeforeSending(any(EventLog.class));
         verify(analyticsListener, never()).onSendingSucceeded(any(EventLog.class));
         verify(analyticsListener, never()).onSendingFailed(any(EventLog.class), any(Exception.class));
-    }
-
-    /**
-     * Generates string of arbitrary length with contents composed of single character.
-     *
-     * @param length length of the resulting string.
-     * @param charToFill character to compose string of.
-     * @return <code>String</code> of desired length.
-     */
-    private String generateString(int length, char charToFill) {
-        return new String(new char[length]).replace('\0', charToFill);
     }
 
     /**

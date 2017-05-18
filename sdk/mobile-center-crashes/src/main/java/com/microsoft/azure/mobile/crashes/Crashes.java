@@ -15,7 +15,9 @@ import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.Constants;
 import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.channel.Channel;
+import com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
+import com.microsoft.azure.mobile.crashes.ingestion.models.json.ErrorAttachmentLogFactory;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.model.TestCrashException;
@@ -168,8 +170,10 @@ public class Crashes extends AbstractMobileCenterService {
     private Crashes() {
         mFactories = new HashMap<>();
         mFactories.put(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
+        mFactories.put(ErrorAttachmentLog.TYPE, ErrorAttachmentLogFactory.getInstance());
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
+        mLogSerializer.addLogFactory(ErrorAttachmentLog.TYPE, ErrorAttachmentLogFactory.getInstance());
         mCrashesListener = DEFAULT_ERROR_REPORTING_LISTENER;
         mUnprocessedErrorReports = new LinkedHashMap<>();
         mErrorReportCache = new LinkedHashMap<>();
@@ -424,7 +428,8 @@ public class Crashes extends AbstractMobileCenterService {
                             MobileCenterLog.warn(LOG_TAG, "Cannot find crash report for the error log: " + id);
                     }
                 } else {
-                    MobileCenterLog.warn(LOG_TAG, "A different type of log comes to crashes: " + log.getClass().getName());
+                    if(!(log instanceof ErrorAttachmentLog))
+                        MobileCenterLog.warn(LOG_TAG, "A different type of log comes to crashes: " + log.getClass().getName());
                 }
             }
 
@@ -731,18 +736,12 @@ public class Crashes extends AbstractMobileCenterService {
                     while (unprocessedIterator.hasNext()) {
                         if (shouldStopProcessingPendingErrors())
                             break;
-
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
-
-                        /* TODO (getErrorAttachment): Re-enable error attachment when the feature becomes available. */
-//                        ErrorAttachment attachment = mCrashesListener.getErrorAttachment(errorLogReport.report);
-//                        if (attachment == null)
-//                            MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachment returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
-//                        else
-//                            errorLogReport.log.setErrorAttachment(attachment);
                         mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
 
+                        Iterable<ErrorAttachmentLog> attachments = mCrashesListener.getErrorAttachments(errorLogReport.report);
+                        handleErrorAttachmentLogs(attachments, errorLogReport);
                         /* Clean up an error log file and map entry. */
                         unprocessedIterator.remove();
                         ErrorLogHelper.removeStoredErrorLogFile(unprocessedEntry.getKey());
@@ -760,6 +759,26 @@ public class Crashes extends AbstractMobileCenterService {
             mHandler.post(runnable);
         else
             runnable.run();
+    }
+
+    private void handleErrorAttachmentLogs(Iterable<ErrorAttachmentLog> attachments, ErrorLogReport errorLogReport) {
+        if (attachments == null) {
+            MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachments returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
+        } else {
+            for (ErrorAttachmentLog attachment : attachments) {
+                if (attachment != null) {
+                    attachment.setId(UUID.randomUUID());
+                    attachment.setErrorId(errorLogReport.log.getId());
+                    if (attachment.isValid()) {
+                        mChannel.enqueue(attachment, ERROR_GROUP);
+                    } else {
+                        MobileCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
+                    }
+                } else {
+                    MobileCenterLog.warn(LOG_TAG, "Skipping null ErrorAttachmentLog in CrashesListener.getErrorAttachments.");
+                }
+            }
+        }
     }
 
     @VisibleForTesting

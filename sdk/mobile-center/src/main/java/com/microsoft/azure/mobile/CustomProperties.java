@@ -1,5 +1,7 @@
 package com.microsoft.azure.mobile;
 
+import android.support.annotation.VisibleForTesting;
+
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import java.util.Date;
@@ -13,6 +15,15 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings({"UnusedReturnValue", "WeakerAccess"})
 public class CustomProperties {
+
+    @VisibleForTesting
+    static final int MAX_PROPERTIES_COUNT = 60;
+
+    @VisibleForTesting
+    static final int MAX_PROPERTY_KEY_LENGTH = 128;
+
+    @VisibleForTesting
+    static final int MAX_PROPERTY_VALUE_LENGTH = 128;
 
     private static final Pattern KEY_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9]*$");
 
@@ -43,12 +54,8 @@ public class CustomProperties {
      * @return this instance.
      */
     public CustomProperties set(String key, String value) {
-        if (isValidKey(key)) {
-            if (value != null) {
-                mProperties.put(key, value);
-            } else {
-                MobileCenterLog.error(MobileCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
-            }
+        if (isValidKey(key) && isValidStringValue(key, value)) {
+            addProperty(key, value);
         }
         return this;
     }
@@ -65,7 +72,7 @@ public class CustomProperties {
     public CustomProperties set(String key, Date value) {
         if (isValidKey(key)) {
             if (value != null) {
-                mProperties.put(key, value);
+                addProperty(key, value);
             } else {
                 MobileCenterLog.error(MobileCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
             }
@@ -85,7 +92,7 @@ public class CustomProperties {
     public CustomProperties set(String key, Number value) {
         if (isValidKey(key)) {
             if (value != null) {
-                mProperties.put(key, value);
+                addProperty(key, value);
             } else {
                 MobileCenterLog.error(MobileCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
             }
@@ -104,7 +111,7 @@ public class CustomProperties {
      */
     public CustomProperties set(String key, boolean value) {
         if (isValidKey(key)) {
-            mProperties.put(key, value);
+            addProperty(key, value);
         }
         return this;
     }
@@ -119,9 +126,17 @@ public class CustomProperties {
         if (isValidKey(key)) {
 
             /* Null value means that key marked to clear. */
-            mProperties.put(key, null);
+            addProperty(key, null);
         }
         return this;
+    }
+
+    private void addProperty(String key, Object value) {
+        if (mProperties.containsKey(key) || mProperties.size() < MAX_PROPERTIES_COUNT) {
+            mProperties.put(key, value);
+        } else {
+            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom properties cannot contain more than " + MAX_PROPERTIES_COUNT + " items");
+        }
     }
 
     private boolean isValidKey(String key) {
@@ -129,8 +144,24 @@ public class CustomProperties {
             MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" must match \"" + KEY_PATTERN + "\"");
             return false;
         }
+        if (key.length() > MAX_PROPERTY_KEY_LENGTH) {
+            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" length cannot be longer than " + MAX_PROPERTY_KEY_LENGTH + " characters.");
+            return false;
+        }
         if (mProperties.containsKey(key)) {
             MobileCenterLog.warn(MobileCenter.LOG_TAG, "Custom property \"" + key + "\" is already set or cleared and will be overridden.");
+        }
+        return true;
+    }
+
+    private boolean isValidStringValue(String key, String value) {
+        if (value == null) {
+            MobileCenterLog.error(MobileCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
+            return false;
+        }
+        if (value.length() > MAX_PROPERTY_VALUE_LENGTH) {
+            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" value length cannot be longer than " + MAX_PROPERTY_VALUE_LENGTH + " characters.");
+            return false;
         }
         return true;
     }
