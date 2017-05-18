@@ -37,7 +37,7 @@ import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.SasquatchDistributeListener;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
-import com.microsoft.azure.mobile.sasquatch.utils.CrashesListenerProvider;
+import com.microsoft.azure.mobile.sasquatch.utils.SasquatchCrashesListener;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import org.json.JSONObject;
@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
 
         /* Set listeners. */
         AnalyticsPrivateHelper.setListener(getAnalyticsListener());
-        Crashes.setListener(CrashesListenerProvider.provideCrashesListener(this));
+        Crashes.setListener(new SasquatchCrashesListener(this));
         Distribute.setListener(new SasquatchDistributeListener());
         Push.setListener(getPushListener());
 
