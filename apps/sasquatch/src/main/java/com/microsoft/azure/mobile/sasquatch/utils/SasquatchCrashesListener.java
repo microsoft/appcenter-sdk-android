@@ -1,19 +1,26 @@
 package com.microsoft.azure.mobile.sasquatch.utils;
 
+import android.app.Activity;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.crashes.AbstractCrashesListener;
 import com.microsoft.azure.mobile.crashes.Crashes;
+import com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
+import com.microsoft.azure.mobile.sasquatch.R;
 
-class SasquatchCrashesListener extends AbstractCrashesListener {
+import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 
-    private final AppCompatActivity activity;
+public class SasquatchCrashesListener extends AbstractCrashesListener {
 
-    SasquatchCrashesListener(AppCompatActivity activity) {
+    private final Activity activity;
+
+    public SasquatchCrashesListener(Activity activity) {
         this.activity = activity;
     }
 
@@ -43,6 +50,23 @@ class SasquatchCrashesListener extends AbstractCrashesListener {
                 });
         builder.create().show();
         return true;
+    }
+
+    @Override
+    public Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report) {
+
+        /* Attach some text. */
+        ErrorAttachmentLog textLog = ErrorAttachmentLog.attachmentWithText("This is a text attachment.", "text.txt");
+
+        /* Attach app icon to test binary. */
+        Bitmap bitmap = BitmapFactory.decodeResource(activity.getResources(), R.mipmap.ic_launcher);
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        byte[] bitMapData = stream.toByteArray();
+        ErrorAttachmentLog binaryLog = ErrorAttachmentLog.attachmentWithBinary(bitMapData, "icon.jpeg", "image/jpeg");
+
+        /* Return attachments as list. */
+        return Arrays.asList(textLog, binaryLog);
     }
 
     @Override
