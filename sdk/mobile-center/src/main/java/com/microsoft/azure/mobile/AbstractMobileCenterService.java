@@ -67,7 +67,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     public synchronized void setInstanceEnabled(boolean enabled) {
 
         /* Check if the SDK is disabled. */
-        if (!MobileCenter.isEnabled() && enabled) {
+        if (!MobileCenter.getInstance().isInstanceEnabled() && enabled) {
             MobileCenterLog.error(LOG_TAG, "The SDK is disabled. Call MobileCenter.setEnabled(true) first before enabling a specific service.");
             return;
         }
