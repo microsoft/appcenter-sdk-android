@@ -28,6 +28,7 @@ import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.async.SimpleFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.json.JSONException;
@@ -198,10 +199,10 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Check whether Crashes service is enabled or not.
      *
-     * @return <code>true</code> if enabled, <code>false</code> otherwise.
+     * @return future, value is <code>true</code> if enabled, <code>false</code> otherwise.
      */
-    public static boolean isEnabled() {
-        return getInstance().isInstanceEnabled();
+    public static SimpleFuture<Boolean> isEnabled() {
+        return getInstance().isInstanceEnabledAsync();
     }
 
     /**
@@ -327,9 +328,7 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     @Override
-    public synchronized void setInstanceEnabled(boolean enabled) {
-        super.setInstanceEnabled(enabled);
-        initialize();
+    protected synchronized void applyEnabledState(boolean enabled) {
         if (!enabled) {
             mHandler.getLooper().quit();
             for (File file : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
@@ -363,18 +362,22 @@ public class Crashes extends AbstractMobileCenterService {
      *
      * @param exception An exception.
      */
-    synchronized void trackException(@NonNull com.microsoft.azure.mobile.crashes.ingestion.models.Exception exception) {
-        if (isInactive())
-            return;
+    @SuppressWarnings("WeakerAccess")
+    protected synchronized void trackException(@NonNull final com.microsoft.azure.mobile.crashes.ingestion.models.Exception exception) {
+        post(new Runnable() {
 
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(
-                mContext,
-                Thread.currentThread(),
-                exception,
-                Thread.getAllStackTraces(),
-                getInitializeTimestamp(),
-                false);
-        mChannel.enqueue(errorLog, ERROR_GROUP);
+            @Override
+            public void run() {
+                ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(
+                        mContext,
+                        Thread.currentThread(),
+                        exception,
+                        Thread.getAllStackTraces(),
+                        getInitializeTimestamp(),
+                        false);
+                mChannel.enqueue(errorLog, ERROR_GROUP);
+            }
+        });
     }
 
     @Override
@@ -428,8 +431,9 @@ public class Crashes extends AbstractMobileCenterService {
                             MobileCenterLog.warn(LOG_TAG, "Cannot find crash report for the error log: " + id);
                     }
                 } else {
-                    if(!(log instanceof ErrorAttachmentLog))
+                    if (!(log instanceof ErrorAttachmentLog)) {
                         MobileCenterLog.warn(LOG_TAG, "A different type of log comes to crashes: " + log.getClass().getName());
+                    }
                 }
             }
 
@@ -509,16 +513,20 @@ public class Crashes extends AbstractMobileCenterService {
      * @param throwable An exception.
      */
     private synchronized void queueException(@NonNull final Throwable throwable) {
-        if (isInactive())
-            return;
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(
-                mContext,
-                Thread.currentThread(),
-                throwable,
-                Thread.getAllStackTraces(),
-                getInitializeTimestamp(),
-                false);
-        mChannel.enqueue(errorLog, ERROR_GROUP);
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(
+                        mContext,
+                        Thread.currentThread(),
+                        throwable,
+                        Thread.getAllStackTraces(),
+                        getInitializeTimestamp(),
+                        false);
+                mChannel.enqueue(errorLog, ERROR_GROUP);
+            }
+        });
     }
 
     private void initialize() {
@@ -530,7 +538,7 @@ public class Crashes extends AbstractMobileCenterService {
                 mUncaughtExceptionHandler.unregister();
                 mUncaughtExceptionHandler = null;
             }
-        } else if (mContext != null && mUncaughtExceptionHandler == null) {
+        } else if (mUncaughtExceptionHandler == null) {
             mUncaughtExceptionHandler = new UncaughtExceptionHandler();
             mUncaughtExceptionHandler.register();
             final File logFile = ErrorLogHelper.getLastErrorLogFile();

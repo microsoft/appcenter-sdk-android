@@ -16,7 +16,7 @@ import com.microsoft.azure.mobile.push.ingestion.models.PushInstallationLog;
 import com.microsoft.azure.mobile.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
-import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
+import com.microsoft.azure.mobile.utils.async.SimpleFuture;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,17 +63,6 @@ public class Push extends AbstractMobileCenterService {
     private static final String PUSH_GROUP = "group_push";
 
     /**
-     * Base key for stored preferences.
-     */
-    private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
-
-    /**
-     * Preference key to store push token.
-     */
-    @VisibleForTesting
-    static final String PREFERENCE_KEY_PUSH_TOKEN = PREFERENCE_PREFIX + "push_token";
-
-    /**
      * Firebase analytics flag.
      */
     private static boolean sFirebaseAnalyticsEnabled;
@@ -88,11 +77,6 @@ public class Push extends AbstractMobileCenterService {
      * Log factories managed by this service.
      */
     private final Map<String, LogFactory> mFactories;
-
-    /**
-     * The firebase registration identifier.
-     */
-    private String mPushToken;
 
     /**
      * Push listener.
@@ -139,11 +123,10 @@ public class Push extends AbstractMobileCenterService {
     /**
      * Check whether Push service is enabled or not.
      *
-     * @return <code>true</code> if enabled, <code>false</code> otherwise.
+     * @return future, value is <code>true</code> if enabled, <code>false</code> otherwise.
      */
-    @SuppressWarnings("WeakerAccess")
-    public static boolean isEnabled() {
-        return getInstance().isInstanceEnabled();
+    public static SimpleFuture<Boolean> isEnabled() {
+        return getInstance().isInstanceEnabledAsync();
     }
 
     /**
@@ -204,15 +187,15 @@ public class Push extends AbstractMobileCenterService {
      *
      * @param pushToken the push token value.
      */
-    synchronized void onTokenRefresh(@NonNull String pushToken) {
-        if (isInactive())
-            return;
-        if (mPushToken != null && mPushToken.equals(pushToken))
-            return;
-        MobileCenterLog.debug(LOG_TAG, "Push token: " + pushToken);
-        PreferencesStorage.putString(PREFERENCE_KEY_PUSH_TOKEN, pushToken);
-        enqueuePushInstallationLog(pushToken);
-        mPushToken = pushToken;
+    synchronized void onTokenRefresh(@NonNull final String pushToken) {
+        MobileCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                enqueuePushInstallationLog(pushToken);
+            }
+        });
     }
 
     /**
@@ -220,16 +203,13 @@ public class Push extends AbstractMobileCenterService {
      *
      * @param enabled current state.
      */
-    private synchronized void applyEnabledState(boolean enabled) {
-        if (enabled && mChannel != null) {
+    @Override
+    protected synchronized void applyEnabledState(boolean enabled) {
+        if (enabled) {
             String token = FirebaseInstanceId.getInstance().getToken();
             if (token != null) {
-                onTokenRefresh(token);
+                enqueuePushInstallationLog(token);
             }
-        } else {
-
-            /* Reset module state if disabled */
-            mPushToken = null;
         }
     }
 
@@ -261,17 +241,10 @@ public class Push extends AbstractMobileCenterService {
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         super.onStarted(context, appSecret, channel);
-        applyEnabledState(isInstanceEnabled());
-        if (!sFirebaseAnalyticsEnabled) {
+        if (isInstanceEnabled() && !sFirebaseAnalyticsEnabled) {
             MobileCenterLog.debug(LOG_TAG, "Disabling firebase analytics collection by default.");
             setFirebaseAnalyticsEnabled(context, false);
         }
-    }
-
-    @Override
-    public synchronized void setInstanceEnabled(boolean enabled) {
-        super.setInstanceEnabled(enabled);
-        applyEnabledState(enabled);
     }
 
     /**
@@ -313,7 +286,7 @@ public class Push extends AbstractMobileCenterService {
      */
     private synchronized void checkPushInActivityIntent(Activity activity) {
         mActivity = activity;
-        if (isEnabled() && mInstanceListener != null) {
+        if (isInstanceEnabled() && mInstanceListener != null) {
             Bundle extras = activity.getIntent().getExtras();
             if (extras != null) {
                 String googleMessageId = extras.getString(EXTRA_GOOGLE_MESSAGE_ID);
@@ -342,7 +315,7 @@ public class Push extends AbstractMobileCenterService {
      */
     synchronized void onMessageReceived(RemoteMessage remoteMessage) {
         MobileCenterLog.info(LOG_TAG, "Received push message in foreground id=" + remoteMessage.getMessageId());
-        if (isEnabled() && mInstanceListener != null) {
+        if (isInstanceEnabled() && mInstanceListener != null) {
             String title = null;
             String message = null;
             RemoteMessage.Notification notification = remoteMessage.getNotification();
@@ -367,7 +340,7 @@ public class Push extends AbstractMobileCenterService {
     private synchronized void deliverForegroundPushNotification(PushNotification pushNotification) {
 
         /* State can change between the post from 1 thread to another. */
-        if (isEnabled() && mInstanceListener != null) {
+        if (isInstanceEnabled() && mInstanceListener != null) {
             mInstanceListener.onPushNotificationReceived(mActivity, pushNotification);
         }
     }

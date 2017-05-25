@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
+import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
@@ -26,6 +27,8 @@ import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.ShutdownHelper;
+import com.microsoft.azure.mobile.utils.async.DefaultSimpleFuture;
+import com.microsoft.azure.mobile.utils.async.SimpleFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import java.util.ArrayList;
@@ -106,6 +109,11 @@ public class MobileCenter {
      * Background thread handler.
      */
     private Handler mHandler;
+
+    /**
+     * Background thread handler abstraction to shared with services.
+     */
+    private MobileCenterHandler mMobileCenterHandler;
 
     static synchronized MobileCenter getInstance() {
         if (sInstance == null)
@@ -225,10 +233,10 @@ public class MobileCenter {
      * Check whether the SDK is enabled or not as a whole.
      * This operation is performed in background as it accesses SharedPreferences.
      *
-     * @param resultCallback callback to get the result in U.I. thread.
+     * @return future, value is true if enabled, false otherwise.
      */
-    public static void isEnabled(ResultCallback<Boolean> resultCallback) {
-        getInstance().isInstanceEnabled(resultCallback);
+    public static SimpleFuture<Boolean> isEnabled() {
+        return getInstance().isInstanceEnabledAsync();
     }
 
     /**
@@ -247,33 +255,10 @@ public class MobileCenter {
      * The identifier is persisted until the application is uninstalled and installed again.
      * This operation is performed in background as it accesses SharedPreferences and UUID.
      *
-     * @param resultCallback callback to get the result in U.I. thread.
+     * @return install ID as a future.
      */
-    public static void getInstallId(ResultCallback<UUID> resultCallback) {
-        getInstance().getInstanceInstallId(resultCallback);
-    }
-
-    /**
-     * Deliver result on U.I. thread.
-     *
-     * @param result         result.
-     * @param resultCallback callback.
-     * @param <T>            result type.
-     */
-    private static <T> void deliverResult(final T result, final ResultCallback<T> resultCallback) {
-
-        /*
-         * Always post even if already in U.I. thread
-         * to avoid original method returning after callback
-         * which can surprising for caller.
-         */
-        HandlerUtils.getMainHandler().post(new Runnable() {
-
-            @Override
-            public void run() {
-                resultCallback.onResult(result);
-            }
-        });
+    public static SimpleFuture<UUID> getInstallId() {
+        return getInstance().getInstanceInstallId();
     }
 
     /**
@@ -327,18 +312,22 @@ public class MobileCenter {
      * @param customProperties custom properties object.
      */
     private synchronized void setInstanceCustomProperties(CustomProperties customProperties) {
-        if (!checkPrecondition())
-            return;
         if (customProperties == null) {
-            MobileCenterLog.error(LOG_TAG, "Custom properties may not be null");
+            MobileCenterLog.error(LOG_TAG, "Custom properties may not be null.");
             return;
         }
-        Map<String, Object> properties = customProperties.getProperties();
+        final Map<String, Object> properties = customProperties.getProperties();
         if (properties.size() == 0) {
-            MobileCenterLog.error(LOG_TAG, "Custom properties may not be empty");
+            MobileCenterLog.error(LOG_TAG, "Custom properties may not be empty.");
             return;
         }
-        queueCustomProperties(properties);
+        handlerMobileCenterOperation(new Runnable() {
+
+            @Override
+            public void run() {
+                queueCustomProperties(properties);
+            }
+        }, false);
     }
 
     /**
@@ -388,8 +377,16 @@ public class MobileCenter {
         HandlerThread handlerThread = new HandlerThread("MobileCenter.Looper");
         handlerThread.start();
         mHandler = new Handler(handlerThread.getLooper());
+        mMobileCenterHandler = new MobileCenterHandler() {
+
+            @Override
+            public void post(Runnable runnable, boolean runWhenDisabled) {
+                handlerMobileCenterOperation(runnable, runWhenDisabled);
+            }
+        };
 
         /* The rest of initialization is done in background as we need storage. */
+        mServices = new HashSet<>();
         mHandler.post(new Runnable() {
 
             @Override
@@ -399,6 +396,22 @@ public class MobileCenter {
         });
         MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK configured successfully.");
         return true;
+    }
+
+    private synchronized void handlerMobileCenterOperation(final Runnable runnable, final boolean runWhenDisabled) {
+        if (checkPrecondition()) {
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    if (runWhenDisabled || isInstanceEnabled()) {
+                        runnable.run();
+                    } else {
+                        MobileCenterLog.error(LOG_TAG, "Mobile Center SDK is disabled.");
+                    }
+                }
+            });
+        }
     }
 
     @WorkerThread
@@ -415,9 +428,9 @@ public class MobileCenter {
 
         /* Init uncaught exception handler. */
         mUncaughtExceptionHandler = new UncaughtExceptionHandler();
-        if (enabled)
+        if (enabled) {
             mUncaughtExceptionHandler.register();
-        mServices = new HashSet<>();
+        }
 
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
@@ -426,8 +439,9 @@ public class MobileCenter {
         mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer);
         mChannel.setEnabled(enabled);
         mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null);
-        if (mLogUrl != null)
+        if (mLogUrl != null) {
             mChannel.setLogUrl(mLogUrl);
+        }
         MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK background initialization done.");
     }
 
@@ -457,6 +471,10 @@ public class MobileCenter {
                     if (mServices.contains(serviceInstance)) {
                         MobileCenterLog.warn(LOG_TAG, "Mobile Center has already started the service with class name: " + service.getClass().getName());
                     } else {
+
+                        /* Share handler now with service while starting. */
+                        serviceInstance.onStarting(mMobileCenterHandler);
+                        mServices.add(serviceInstance);
                         startedServices.add(serviceInstance);
                     }
                 } catch (Exception e) {
@@ -464,19 +482,31 @@ public class MobileCenter {
                 }
             }
         }
+
+        /* Finish starting in background. */
         if (startedServices.size() > 0) {
+
+            /* Post to ensure service started after storage initialized. */
             mHandler.post(new Runnable() {
 
                 @Override
                 public void run() {
-                    doStartServices(startedServices);
+
+                    /* Service onStarted is on U.I. thread. */
+                    HandlerUtils.runOnUiThread(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            finishStartServices(startedServices);
+                        }
+                    });
                 }
             });
         }
     }
 
-    @WorkerThread
-    private synchronized void doStartServices(Iterable<MobileCenterService> services) {
+    @UiThread
+    private synchronized void finishStartServices(Iterable<MobileCenterService> services) {
         List<String> serviceNames = new ArrayList<>();
         for (MobileCenterService service : services) {
             Map<String, LogFactory> logFactories = service.getLogFactories();
@@ -484,16 +514,18 @@ public class MobileCenter {
                 for (Map.Entry<String, LogFactory> logFactory : logFactories.entrySet())
                     mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
             }
-            mServices.add(service);
             service.onStarted(mApplication, mAppSecret, mChannel);
-            if (isInstanceEnabled())
+            if (isInstanceEnabled()) {
                 mApplication.registerActivityLifecycleCallbacks(service);
+            }
             MobileCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
             serviceNames.add(service.getServiceName());
         }
 
         /* Queue start service log. */
-        queueStartService(serviceNames);
+        if (isInstanceEnabled()) {
+            queueStartService(serviceNames);
+        }
     }
 
     @SafeVarargs
@@ -525,20 +557,30 @@ public class MobileCenter {
         mChannel.enqueue(customPropertiesLog, CORE_GROUP);
     }
 
-    private synchronized void isInstanceEnabled(final ResultCallback<Boolean> resultCallback) {
+    /**
+     * Implements {@link #isEnabled()} at instance level.
+     */
+    private synchronized SimpleFuture<Boolean> isInstanceEnabledAsync() {
+        final DefaultSimpleFuture<Boolean> future = new DefaultSimpleFuture<>();
         if (checkPrecondition()) {
             mHandler.post(new Runnable() {
+
                 @Override
                 public void run() {
-                    deliverResult(isInstanceEnabled(), resultCallback);
+                    future.complete(isInstanceEnabled());
                 }
             });
+        } else {
+            future.complete(null);
         }
-        deliverResult(null, resultCallback);
+        return future;
     }
 
-    @WorkerThread
-    public boolean isInstanceEnabled() {
+    /**
+     * This can be called only after storage has been initialized in background.
+     * However after that it can be used from U.I. thread without breaking strict mode.
+     */
+    private boolean isInstanceEnabled() {
         return StorageHelper.PreferencesStorage.getBoolean(PrefStorageConstants.KEY_ENABLED, true);
     }
 
@@ -606,19 +648,22 @@ public class MobileCenter {
     }
 
     /**
-     * Implements {@link #getInstallId(ResultCallback)}.
+     * Implements {@link #getInstallId()}.
      */
-    private synchronized void getInstanceInstallId(final ResultCallback<UUID> resultCallback) {
+    private synchronized SimpleFuture<UUID> getInstanceInstallId() {
+        final DefaultSimpleFuture<UUID> future = new DefaultSimpleFuture<>();
         if (checkPrecondition()) {
             mHandler.post(new Runnable() {
 
                 @Override
                 public void run() {
-                    deliverResult(IdHelper.getInstallId(), resultCallback);
+                    future.complete(IdHelper.getInstallId());
                 }
             });
+        } else {
+            future.complete(null);
         }
-        deliverResult(null, resultCallback);
+        return future;
     }
 
     @VisibleForTesting

@@ -4,10 +4,14 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.UiThread;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.async.DefaultSimpleFuture;
+import com.microsoft.azure.mobile.utils.async.SimpleFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import java.util.Map;
@@ -29,6 +33,11 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * Channel instance.
      */
     protected Channel mChannel;
+
+    /**
+     * Background thread handler.
+     */
+    private MobileCenterHandler mHandler;
 
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
@@ -58,54 +67,90 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     public void onActivityDestroyed(Activity activity) {
     }
 
+    /**
+     * Help implementing static isEnabled() for services with future.
+     */
+    protected synchronized SimpleFuture<Boolean> isInstanceEnabledAsync() {
+        final DefaultSimpleFuture<Boolean> future = new DefaultSimpleFuture<>();
+        if (!post(new Runnable() {
+
+            @Override
+            public void run() {
+                future.complete(isInstanceEnabled());
+            }
+        }, true)) {
+            future.complete(false);
+        }
+        return future;
+    }
+
     @Override
     public synchronized boolean isInstanceEnabled() {
         return StorageHelper.PreferencesStorage.getBoolean(getEnabledPreferenceKey(), true);
     }
 
     @Override
-    public synchronized void setInstanceEnabled(boolean enabled) {
+    public final synchronized void setInstanceEnabled(final boolean enabled) {
+        post(new Runnable() {
 
-        /* Check if the SDK is disabled. */
-        if (!MobileCenter.getInstance().isInstanceEnabled() && enabled) {
-            MobileCenterLog.error(LOG_TAG, "The SDK is disabled. Call MobileCenter.setEnabled(true) first before enabling a specific service.");
-            return;
-        }
+            @Override
+            public void run() {
 
-        /* Nothing to do if state does not change. */
-        else if (enabled == isInstanceEnabled()) {
-            MobileCenterLog.info(getLoggerTag(), String.format("%s service has already been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
-            return;
-        }
+                /* Nothing to do if state does not change. */
+                if (enabled == isInstanceEnabled()) {
+                    MobileCenterLog.info(getLoggerTag(), String.format("%s service has already been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
+                    return;
+                }
 
-        /* If channel initialized. */
-        String groupName = getGroupName();
-        if (groupName != null && mChannel != null) {
+                /* Initialize channel group. */
+                String groupName = getGroupName();
+                if (groupName != null) {
 
-            /* Register service to channel on enabling. */
-            if (enabled)
-                mChannel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
+                    /* Register service to channel on enabling. */
+                    if (enabled) {
+                        mChannel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
+                    }
 
-            /* Otherwise, clear all persisted logs and remove a group for the service. */
-            else {
-                mChannel.clear(groupName);
-                mChannel.removeGroup(groupName);
+                    /* Otherwise, clear all persisted logs and remove a group for the service. */
+                    else {
+                        mChannel.clear(groupName);
+                        mChannel.removeGroup(groupName);
+                    }
+                }
+
+                /* Save new state. */
+                StorageHelper.PreferencesStorage.putBoolean(getEnabledPreferenceKey(), enabled);
+                MobileCenterLog.info(getLoggerTag(), String.format("%s service has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
+
+                /* Allow sub-class to handle state change in U.I. thread. */
+                HandlerUtils.runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        applyEnabledState(enabled);
+                    }
+                });
             }
-        }
+        }, true);
+    }
 
-        /* Save new state. */
-        StorageHelper.PreferencesStorage.putBoolean(getEnabledPreferenceKey(), enabled);
-        MobileCenterLog.info(getLoggerTag(), String.format("%s service has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
+    @UiThread
+    protected abstract void applyEnabledState(boolean enabled);
+
+    @Override
+    public void onStarting(@NonNull MobileCenterHandler handler) {
+        mHandler = handler;
     }
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         String groupName = getGroupName();
+        boolean enabled = isInstanceEnabled();
         if (groupName != null) {
             channel.removeGroup(groupName);
 
             /* Add a group to the channel if the service is enabled */
-            if (isInstanceEnabled())
+            if (enabled)
                 channel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
 
             /* Otherwise, clear all persisted logs for the service. */
@@ -113,6 +158,9 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
                 channel.clear(groupName);
         }
         mChannel = channel;
+        if (enabled) {
+            applyEnabledState(true);
+        }
     }
 
     @Override
@@ -180,19 +228,27 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     }
 
     /**
-     * Check if the service is not active: disabled or not started.
+     * Post a command in background.
      *
-     * @return <code>true</code> if the service is inactive, <code>false</code> otherwise.
+     * @param runnable command.
      */
-    protected synchronized boolean isInactive() {
-        if (mChannel == null) {
-            MobileCenterLog.error(LOG_TAG, getServiceName() + " service not initialized, discarding calls.");
+    protected synchronized void post(Runnable runnable) {
+        post(runnable, false);
+    }
+
+    /**
+     * Post a command in background.
+     *
+     * @param runnable        command.
+     * @param runWhenDisabled whether to run the command when disabled.
+     */
+    private synchronized boolean post(Runnable runnable, boolean runWhenDisabled) {
+        if (mHandler == null) {
+            MobileCenterLog.error(LOG_TAG, getServiceName() + " needs to be started before it can be used.");
+            return false;
+        } else {
+            mHandler.post(runnable, runWhenDisabled);
             return true;
         }
-        if (!isInstanceEnabled()) {
-            MobileCenterLog.info(LOG_TAG, getServiceName() + " service not enabled, discarding calls.");
-            return true;
-        }
-        return false;
     }
 }

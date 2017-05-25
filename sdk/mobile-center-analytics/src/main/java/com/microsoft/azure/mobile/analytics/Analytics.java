@@ -1,9 +1,6 @@
 package com.microsoft.azure.mobile.analytics;
 
 import android.app.Activity;
-import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
@@ -20,6 +17,7 @@ import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
+import com.microsoft.azure.mobile.utils.async.SimpleFuture;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -112,10 +110,10 @@ public class Analytics extends AbstractMobileCenterService {
     /**
      * Check whether Analytics service is enabled or not.
      *
-     * @return <code>true</code> if enabled, <code>false</code> otherwise.
+     * @return future, value is <code>true</code> if enabled, <code>false</code> otherwise.
      */
-    public static boolean isEnabled() {
-        return getInstance().isInstanceEnabled();
+    public static SimpleFuture<Boolean> isEnabled() {
+        return getInstance().isInstanceEnabledAsync();
     }
 
     /**
@@ -148,7 +146,8 @@ public class Analytics extends AbstractMobileCenterService {
      * @return true if automatic page tracking is enabled. false otherwise.
      * @see #setAutoPageTrackingEnabled(boolean)
      */
-    static boolean isAutoPageTrackingEnabled() {
+    @SuppressWarnings("WeakerAccess")
+    protected static boolean isAutoPageTrackingEnabled() {
         return getInstance().isInstanceAutoPageTrackingEnabled();
     }
 
@@ -161,7 +160,8 @@ public class Analytics extends AbstractMobileCenterService {
      *
      * @param autoPageTrackingEnabled true to let the service track pages automatically, false otherwise (default state is true).
      */
-    static void setAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
+    @SuppressWarnings("WeakerAccess")
+    protected static void setAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
         getInstance().setInstanceAutoPageTrackingEnabled(autoPageTrackingEnabled);
     }
 
@@ -173,7 +173,7 @@ public class Analytics extends AbstractMobileCenterService {
      * @param name A page name.
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
-    static void trackPage(String name) {
+    protected static void trackPage(String name) {
         trackPage(name, null);
     }
 
@@ -189,7 +189,8 @@ public class Analytics extends AbstractMobileCenterService {
      * @param name       A page name.
      * @param properties Optional properties.
      */
-    static void trackPage(String name, Map<String, String> properties) {
+    @SuppressWarnings("WeakerAccess")
+    protected static void trackPage(String name, Map<String, String> properties) {
         final String logType = "Page";
         if (validateName(name, logType)) {
             Map<String, String> validatedProperties = validateProperties(properties, name, logType);
@@ -239,172 +240,6 @@ public class Analytics extends AbstractMobileCenterService {
             return name.substring(0, name.length() - suffix.length());
         else
             return name;
-    }
-
-    @Override
-    protected String getGroupName() {
-        return ANALYTICS_GROUP;
-    }
-
-    @Override
-    public String getServiceName() {
-        return SERVICE_NAME;
-    }
-
-    @Override
-    protected String getLoggerTag() {
-        return LOG_TAG;
-    }
-
-    @Override
-    public Map<String, LogFactory> getLogFactories() {
-        return mFactories;
-    }
-
-    @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
-        super.onStarted(context, appSecret, channel);
-        applyEnabledState(isInstanceEnabled());
-    }
-
-    @Override
-    public synchronized void onActivityResumed(Activity activity) {
-        mCurrentActivity = new WeakReference<>(activity);
-        if (mSessionTracker != null) {
-            processOnResume(activity);
-        }
-    }
-
-    /**
-     * On an activity being resumed, start a new session if needed
-     * and track current page automatically if that mode is enabled.
-     *
-     * @param activity current activity.
-     */
-    private void processOnResume(Activity activity) {
-        mSessionTracker.onActivityResumed();
-        if (mAutoPageTrackingEnabled) {
-            queuePage(generatePageName(activity.getClass()), null);
-        }
-    }
-
-    @Override
-    public synchronized void onActivityPaused(Activity activity) {
-        mCurrentActivity = null;
-        if (mSessionTracker != null) {
-            mSessionTracker.onActivityPaused();
-        }
-    }
-
-    @Override
-    public synchronized void setInstanceEnabled(boolean enabled) {
-        super.setInstanceEnabled(enabled);
-        applyEnabledState(enabled);
-    }
-
-    @Override
-    protected Channel.GroupListener getChannelListener() {
-        return new Channel.GroupListener() {
-            @Override
-            public void onBeforeSending(Log log) {
-                if (mAnalyticsListener != null) {
-                    mAnalyticsListener.onBeforeSending(log);
-                }
-            }
-
-            @Override
-            public void onSuccess(Log log) {
-                if (mAnalyticsListener != null) {
-                    mAnalyticsListener.onSendingSucceeded(log);
-                }
-            }
-
-            @Override
-            public void onFailure(Log log, Exception e) {
-                if (mAnalyticsListener != null) {
-                    mAnalyticsListener.onSendingFailed(log, e);
-                }
-            }
-        };
-    }
-
-    /**
-     * React to enable state change.
-     *
-     * @param enabled current state.
-     */
-    private synchronized void applyEnabledState(boolean enabled) {
-
-        /* Delayed initialization once channel ready and enabled (both conditions). */
-        if (enabled && mChannel != null && mSessionTracker == null) {
-            mSessionTracker = new SessionTracker(mChannel, ANALYTICS_GROUP);
-            mChannel.addListener(mSessionTracker);
-            if (mCurrentActivity != null) {
-                Activity activity = mCurrentActivity.get();
-                if (activity != null) {
-                    processOnResume(activity);
-                }
-            }
-        }
-
-        /* Release resources if disabled and enabled before with resources. */
-        else if (!enabled && mSessionTracker != null) {
-            mChannel.removeListener(mSessionTracker);
-            mSessionTracker.clearSessions();
-            mSessionTracker = null;
-        }
-    }
-
-    /**
-     * Send a page.
-     *
-     * @param name       page name.
-     * @param properties optional properties.
-     */
-    private synchronized void queuePage(String name, Map<String, String> properties) {
-        if (isInactive())
-            return;
-        PageLog pageLog = new PageLog();
-        pageLog.setName(name);
-        pageLog.setProperties(properties);
-        mChannel.enqueue(pageLog, ANALYTICS_GROUP);
-    }
-
-    /**
-     * Send an event.
-     *
-     * @param name       event name.
-     * @param properties optional properties.
-     */
-    private synchronized void queueEvent(String name, Map<String, String> properties) {
-        if (isInactive())
-            return;
-        EventLog eventLog = new EventLog();
-        eventLog.setId(UUIDUtils.randomUUID());
-        eventLog.setName(name);
-        eventLog.setProperties(properties);
-        mChannel.enqueue(eventLog, ANALYTICS_GROUP);
-    }
-
-    /**
-     * Implements {@link #isAutoPageTrackingEnabled()}.
-     */
-    private boolean isInstanceAutoPageTrackingEnabled() {
-        return mAutoPageTrackingEnabled;
-    }
-
-    /**
-     * Implements {@link #setAutoPageTrackingEnabled(boolean)}.
-     */
-    private synchronized void setInstanceAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
-        mAutoPageTrackingEnabled = autoPageTrackingEnabled;
-    }
-
-    /**
-     * Implements {@link #setListener(AnalyticsListener)}.
-     */
-    private synchronized void setInstanceListener(AnalyticsListener listener) {
-        mAnalyticsListener = listener;
     }
 
     /**
@@ -471,5 +306,169 @@ public class Analytics extends AbstractMobileCenterService {
             result.put(property.getKey(), property.getValue());
         }
         return result;
+    }
+
+    @Override
+    protected String getGroupName() {
+        return ANALYTICS_GROUP;
+    }
+
+    @Override
+    public String getServiceName() {
+        return SERVICE_NAME;
+    }
+
+    @Override
+    protected String getLoggerTag() {
+        return LOG_TAG;
+    }
+
+    @Override
+    public Map<String, LogFactory> getLogFactories() {
+        return mFactories;
+    }
+
+    @Override
+    public synchronized void onActivityResumed(Activity activity) {
+        mCurrentActivity = new WeakReference<>(activity);
+        if (mSessionTracker != null) {
+            processOnResume(activity);
+        }
+    }
+
+    /**
+     * On an activity being resumed, start a new session if needed
+     * and track current page automatically if that mode is enabled.
+     *
+     * @param activity current activity.
+     */
+    private void processOnResume(Activity activity) {
+        mSessionTracker.onActivityResumed();
+        if (mAutoPageTrackingEnabled) {
+            queuePage(generatePageName(activity.getClass()), null);
+        }
+    }
+
+    @Override
+    public synchronized void onActivityPaused(Activity activity) {
+        mCurrentActivity = null;
+        if (mSessionTracker != null) {
+            mSessionTracker.onActivityPaused();
+        }
+    }
+
+    @Override
+    protected Channel.GroupListener getChannelListener() {
+        return new Channel.GroupListener() {
+
+            @Override
+            public void onBeforeSending(Log log) {
+                if (mAnalyticsListener != null) {
+                    mAnalyticsListener.onBeforeSending(log);
+                }
+            }
+
+            @Override
+            public void onSuccess(Log log) {
+                if (mAnalyticsListener != null) {
+                    mAnalyticsListener.onSendingSucceeded(log);
+                }
+            }
+
+            @Override
+            public void onFailure(Log log, Exception e) {
+                if (mAnalyticsListener != null) {
+                    mAnalyticsListener.onSendingFailed(log, e);
+                }
+            }
+        };
+    }
+
+    /**
+     * React to enable state change.
+     *
+     * @param enabled current state.
+     */
+    @Override
+    public synchronized void applyEnabledState(boolean enabled) {
+
+        /* Start session tracker when enabled. */
+        if (enabled) {
+            mSessionTracker = new SessionTracker(mChannel, ANALYTICS_GROUP);
+            mChannel.addListener(mSessionTracker);
+            if (mCurrentActivity != null) {
+                Activity activity = mCurrentActivity.get();
+                if (activity != null) {
+                    processOnResume(activity);
+                }
+            }
+        }
+
+        /* Release resources if disabled and enabled before with resources. */
+        else {
+            mChannel.removeListener(mSessionTracker);
+            mSessionTracker.clearSessions();
+            mSessionTracker = null;
+        }
+    }
+
+    /**
+     * Send a page.
+     *
+     * @param name       page name.
+     * @param properties optional properties.
+     */
+    private synchronized void queuePage(final String name, final Map<String, String> properties) {
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                PageLog pageLog = new PageLog();
+                pageLog.setName(name);
+                pageLog.setProperties(properties);
+                mChannel.enqueue(pageLog, ANALYTICS_GROUP);
+            }
+        });
+    }
+
+    /**
+     * Send an event.
+     *
+     * @param name       event name.
+     * @param properties optional properties.
+     */
+    private synchronized void queueEvent(final String name, final Map<String, String> properties) {
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                EventLog eventLog = new EventLog();
+                eventLog.setId(UUIDUtils.randomUUID());
+                eventLog.setName(name);
+                eventLog.setProperties(properties);
+                mChannel.enqueue(eventLog, ANALYTICS_GROUP);
+            }
+        });
+    }
+
+    /**
+     * Implements {@link #isAutoPageTrackingEnabled()}.
+     */
+    private boolean isInstanceAutoPageTrackingEnabled() {
+        return mAutoPageTrackingEnabled;
+    }
+
+    /**
+     * Implements {@link #setAutoPageTrackingEnabled(boolean)}.
+     */
+    private synchronized void setInstanceAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
+        mAutoPageTrackingEnabled = autoPageTrackingEnabled;
+    }
+
+    /**
+     * Implements {@link #setListener(AnalyticsListener)}.
+     */
+    private synchronized void setInstanceListener(AnalyticsListener listener) {
+        mAnalyticsListener = listener;
     }
 }

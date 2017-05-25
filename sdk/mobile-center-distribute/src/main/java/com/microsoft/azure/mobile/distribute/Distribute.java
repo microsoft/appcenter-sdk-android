@@ -41,6 +41,8 @@ import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
+import com.microsoft.azure.mobile.utils.async.SimpleFunction;
+import com.microsoft.azure.mobile.utils.async.SimpleFuture;
 import com.microsoft.azure.mobile.utils.crypto.CryptoUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
@@ -240,10 +242,10 @@ public class Distribute extends AbstractMobileCenterService {
     /**
      * Check whether Distribute service is enabled or not.
      *
-     * @return <code>true</code> if enabled, <code>false</code> otherwise.
+     * @return future, value is <code>true</code> if enabled, <code>false</code> otherwise.
      */
-    public static boolean isEnabled() {
-        return getInstance().isInstanceEnabled();
+    public static SimpleFuture<Boolean> isEnabled() {
+        return getInstance().isInstanceEnabledAsync();
     }
 
     /**
@@ -319,7 +321,6 @@ public class Distribute extends AbstractMobileCenterService {
         } catch (PackageManager.NameNotFoundException e) {
             MobileCenterLog.error(LOG_TAG, "Could not get self package info.", e);
         }
-        resumeDistributeWorkflow();
     }
 
     /**
@@ -372,8 +373,7 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     @Override
-    public synchronized void setInstanceEnabled(boolean enabled) {
-        super.setInstanceEnabled(enabled);
+    protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
             resumeDistributeWorkflow();
         } else {
@@ -392,11 +392,11 @@ public class Distribute extends AbstractMobileCenterService {
      */
     @VisibleForTesting
     synchronized void handleUpdateAction(final int updateAction) {
-        HandlerUtils.runOnUiThread(new Runnable() {
+        isEnabled().thenApply(new SimpleFunction<Boolean>() {
 
             @Override
-            public void run() {
-                if (!isEnabled()) {
+            public void apply(Boolean enabled) {
+                if (!enabled) {
                     MobileCenterLog.error(LOG_TAG, "Distribute is disabled");
                     return;
                 }
