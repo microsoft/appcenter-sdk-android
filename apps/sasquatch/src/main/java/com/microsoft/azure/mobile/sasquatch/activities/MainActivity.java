@@ -135,7 +135,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        Push.checkLaunchedFromNotification(this, intent);
+        try {
+            Push.class.getMethod("checkLaunchedFromNotification", Activity.class, Intent.class).invoke(null, this, intent);
+        } catch (Exception ignored) {
+        }
     }
 
     private AnalyticsListener getAnalyticsListener() {
