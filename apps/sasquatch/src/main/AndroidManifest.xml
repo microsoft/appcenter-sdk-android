@@ -41,7 +41,9 @@
         <activity
             android:name=".activities.ManagedErrorActivity"
             android:label="@string/title_error"/>
-        <activity android:name=".activities.CustomPropertiesActivity"></activity>
+        <activity
+            android:name=".activities.CustomPropertiesActivity"
+            android:label="@string/title_custom_properties"/>
     </application>
 
 </manifest>
