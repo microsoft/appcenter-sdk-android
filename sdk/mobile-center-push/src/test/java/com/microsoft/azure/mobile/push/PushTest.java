@@ -389,4 +389,57 @@ public class PushTest {
         push.onActivityResumed(activity);
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
     }
+
+    @Test
+    public void clickedFromPausedAndSingleTop() {
+        PushListener pushListener = mock(PushListener.class);
+        Push.setListener(pushListener);
+        Context contextMock = mock(Context.class);
+        Push.getInstance().onStarted(contextMock, DUMMY_APP_SECRET, mock(Channel.class));
+
+        /* Mock new intent to contain push, but activity with no push in original activity.  */
+        Activity activity = mock(Activity.class);
+        when(activity.getIntent()).thenReturn(mock(Intent.class));
+        Intent intent = mock(Intent.class);
+        Bundle extras = mock(Bundle.class);
+        when(intent.getExtras()).thenReturn(extras);
+        when(extras.getString(Push.EXTRA_GOOGLE_MESSAGE_ID)).thenReturn("reserved value by google");
+        final Map<String, String> extraMap = new HashMap<>();
+        for (String key : Push.EXTRA_STANDARD_KEYS) {
+            extraMap.put(key, "reserved value by google");
+        }
+        Map<String, String> customMap = new HashMap<>();
+        customMap.put("custom", "data");
+        customMap.put("b", "c");
+        extraMap.putAll(customMap);
+        when(extras.keySet()).thenReturn(extraMap.keySet());
+        when(extras.getString(anyString())).then(new Answer<String>() {
+
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
+                return extraMap.get(invocation.getArguments()[0].toString());
+            }
+        });
+
+        /* Simulate we detect push in onCreate. */
+        Push.checkLaunchedFromNotification(activity, intent);
+        ArgumentCaptor<PushNotification> captor = ArgumentCaptor.forClass(PushNotification.class);
+        verify(pushListener).onPushNotificationReceived(eq(activity), captor.capture());
+        PushNotification pushNotification = captor.getValue();
+        assertNotNull(pushNotification);
+        assertNull(pushNotification.getTitle());
+        assertNull(pushNotification.getMessage());
+        assertEquals(customMap, pushNotification.getCustomData());
+    }
+
+    @Test
+    public void validateCheckLaunchedFromNotification() {
+        Push.getInstance().onStarted(mock(Context.class), DUMMY_APP_SECRET, mock(Channel.class));
+        Push.checkLaunchedFromNotification(null, mock(Intent.class));
+        verifyStatic();
+        MobileCenterLog.error(anyString(), anyString());
+        Push.checkLaunchedFromNotification(mock(Activity.class), null);
+        verifyStatic(times(2));
+        MobileCenterLog.error(anyString(), anyString());
+    }
 }
