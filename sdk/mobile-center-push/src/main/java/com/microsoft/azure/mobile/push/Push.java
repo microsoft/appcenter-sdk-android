@@ -3,6 +3,7 @@ package com.microsoft.azure.mobile.push;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
@@ -166,6 +167,18 @@ public class Push extends AbstractMobileCenterService {
     }
 
     /**
+     * If you are using the listener for background push notifications
+     * and your activity has a launch mode such as singleTop, singleInstance or singleTask,
+     * you need to call this method in your launcher {@link Activity#onNewIntent(Intent)} method.
+     *
+     * @param activity activity calling {@link Activity#onNewIntent(Intent)} (pass this).
+     * @param intent   intent from {@link Activity#onNewIntent(Intent)}.
+     */
+    public static void checkLaunchedFromNotification(Activity activity, Intent intent) {
+        getInstance().checkPushInActivityIntent(activity, intent);
+    }
+
+    /**
      * Enable firebase analytics collection.
      *
      * @param context the context to retrieve FirebaseAnalytics instance.
@@ -306,15 +319,23 @@ public class Push extends AbstractMobileCenterService {
         mActivity = null;
     }
 
+    private synchronized void checkPushInActivityIntent(Activity activity) {
+        checkPushInActivityIntent(activity, activity.getIntent());
+    }
+
+    private synchronized void checkPushInActivityIntent(Activity activity, Intent intent) {
+        mActivity = activity;
+        checkPushInIntent(intent);
+    }
+
     /**
      * Check for push message clicked from notification center in activity intent.
      *
-     * @param activity activity to inspect.
+     * @param intent intent to inspect.
      */
-    private synchronized void checkPushInActivityIntent(Activity activity) {
-        mActivity = activity;
+    private void checkPushInIntent(Intent intent) {
         if (isEnabled() && mInstanceListener != null) {
-            Bundle extras = activity.getIntent().getExtras();
+            Bundle extras = intent.getExtras();
             if (extras != null) {
                 String googleMessageId = extras.getString(EXTRA_GOOGLE_MESSAGE_ID);
                 if (googleMessageId != null && !googleMessageId.equals(mLastGoogleMessageId)) {
@@ -329,7 +350,7 @@ public class Push extends AbstractMobileCenterService {
                         }
                     }
                     MobileCenterLog.debug(LOG_TAG, "Push intent extra=" + allData);
-                    mInstanceListener.onPushNotificationReceived(activity, new PushNotification(null, null, customData));
+                    mInstanceListener.onPushNotificationReceived(mActivity, new PushNotification(null, null, customData));
                 }
             }
         }
