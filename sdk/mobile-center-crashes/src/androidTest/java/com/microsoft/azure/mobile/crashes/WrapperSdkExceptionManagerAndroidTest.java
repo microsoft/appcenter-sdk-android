@@ -1,9 +1,10 @@
 package com.microsoft.azure.mobile.crashes;
 
+import android.app.Application;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
-import com.microsoft.azure.mobile.Constants;
+import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
@@ -27,8 +28,7 @@ public class WrapperSdkExceptionManagerAndroidTest {
     public static void setUpClass() {
         MobileCenterLog.setLogLevel(android.util.Log.VERBOSE);
         Context context = InstrumentationRegistry.getContext();
-        Constants.loadFromContext(context);
-        StorageHelper.initialize(context);
+        MobileCenter.configure((Application) context.getApplicationContext(), "dummy");
     }
 
     @Before

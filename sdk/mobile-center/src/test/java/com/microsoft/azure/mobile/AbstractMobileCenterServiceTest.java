@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -114,7 +115,7 @@ public class AbstractMobileCenterServiceTest {
     }
 
     @Test
-    public void setEnabled() {
+    public void setEnabledIfCoreEnabled() {
         assertTrue(service.isInstanceEnabled());
         service.setInstanceEnabled(true);
         service.setInstanceEnabled(false);
@@ -127,6 +128,19 @@ public class AbstractMobileCenterServiceTest {
         StorageHelper.PreferencesStorage.putBoolean(service.getEnabledPreferenceKey(), false);
         verifyStatic();
         StorageHelper.PreferencesStorage.putBoolean(service.getEnabledPreferenceKey(), true);
+    }
+
+    @Test
+    public void setEnabledIfCoreDisabled() {
+        when(MobileCenter.isEnabled()).thenReturn(false);
+        assertFalse(service.isInstanceEnabled());
+        service.setInstanceEnabled(true);
+        assertFalse(service.isInstanceEnabled());
+        service.setInstanceEnabled(false);
+        assertFalse(service.isInstanceEnabled());
+        service.setInstanceEnabled(true);
+        verifyStatic(never());
+        StorageHelper.PreferencesStorage.putBoolean(eq(service.getEnabledPreferenceKey()), anyBoolean());
     }
 
     @Test

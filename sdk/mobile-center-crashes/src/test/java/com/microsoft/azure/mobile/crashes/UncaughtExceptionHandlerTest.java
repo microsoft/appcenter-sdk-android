@@ -1,15 +1,16 @@
 package com.microsoft.azure.mobile.crashes;
 
+import android.app.Application;
 import android.content.Context;
 import android.os.SystemClock;
 
+import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
-import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.ShutdownHelper;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
 import static org.mockito.Matchers.any;
@@ -50,7 +52,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, MobileCenterLog.class})
 public class UncaughtExceptionHandlerTest {
 
-    private static final String CRASHES_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
+    private static final String CRASHES_ENABLED_KEY = KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -70,6 +72,7 @@ public class UncaughtExceptionHandlerTest {
         mockStatic(DeviceInfoHelper.class);
         mockStatic(System.class);
 
+        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(true);
         when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
@@ -96,6 +99,8 @@ public class UncaughtExceptionHandlerTest {
         mDefaultExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(mDefaultExceptionHandler);
         mExceptionHandler = new UncaughtExceptionHandler();
+
+        MobileCenter.configure(mock(Application.class), "dummy");
     }
 
     @Test
@@ -119,7 +124,6 @@ public class UncaughtExceptionHandlerTest {
     }
 
     @Test
-    @SuppressWarnings("WeakerAccess")
     public void handleExceptionAndPassOn() {
         mExceptionHandler.register();
 
