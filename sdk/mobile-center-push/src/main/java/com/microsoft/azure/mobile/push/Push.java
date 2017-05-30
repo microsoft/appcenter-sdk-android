@@ -324,6 +324,14 @@ public class Push extends AbstractMobileCenterService {
     }
 
     private synchronized void checkPushInActivityIntent(Activity activity, Intent intent) {
+        if (activity == null) {
+            MobileCenterLog.error(LOG_TAG, "Push.checkLaunchedFromNotification: activity may not be null");
+            return;
+        }
+        if (intent == null) {
+            MobileCenterLog.error(LOG_TAG, "Push.checkLaunchedFromNotification: intent may not be null");
+            return;
+        }
         mActivity = activity;
         checkPushInIntent(intent);
     }
