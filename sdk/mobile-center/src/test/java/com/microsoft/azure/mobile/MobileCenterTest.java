@@ -557,10 +557,10 @@ public class MobileCenterTest {
         MobileCenter.start(application, DUMMY_APP_SECRET, DummyService.class, AnotherDummyService.class);
         MobileCenter mobileCenter = MobileCenter.getInstance();
 
-        /* Verify services are enabled by default but MobileCenter is disabled. */
+        /* Verify services are disabled by default if MobileCenter is disabled. */
         assertFalse(MobileCenter.isEnabled());
         for (MobileCenterService service : mobileCenter.getServices()) {
-            assertTrue(service.isInstanceEnabled());
+            assertFalse(service.isInstanceEnabled());
             verify(application, never()).registerActivityLifecycleCallbacks(service);
         }
 
@@ -572,6 +572,21 @@ public class MobileCenterTest {
             verify(application).registerActivityLifecycleCallbacks(service);
             verify(application, never()).unregisterActivityLifecycleCallbacks(service);
         }
+    }
+
+    @Test
+    public void disabledBeforeStart() {
+        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(true);
+        MobileCenter mobileCenter = MobileCenter.getInstance();
+
+        /* Verify services are disabled if called before start (no access to storage). */
+        assertFalse(MobileCenter.isEnabled());
+        assertFalse(DummyService.getInstance().isInstanceEnabled());
+
+        /* Verify we can not enable until start. */
+        MobileCenter.setEnabled(true);
+        assertFalse(MobileCenter.isEnabled());
+        assertFalse(DummyService.getInstance().isInstanceEnabled());
     }
 
     @Test

@@ -7,6 +7,7 @@ import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.Log;
+import com.microsoft.azure.mobile.ingestion.models.StartServiceLog;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
@@ -110,9 +111,13 @@ public class SessionTracker implements Channel.Listener {
     @Override
     public synchronized void onEnqueuingLog(@NonNull Log log, @NonNull String groupName) {
 
-        /* Since we enqueue start session logs, skip them to avoid infinite loop. */
-        if (log instanceof StartSessionLog)
+        /*
+         * Since we enqueue start session logs, skip them to avoid infinite loop.
+         * Also skip start service log as it's always sent and should not trigger a session.
+         */
+        if (log instanceof StartSessionLog || log instanceof StartServiceLog) {
             return;
+        }
 
         /*
          * If the log has already specified a timestamp, try correlating with a past session.

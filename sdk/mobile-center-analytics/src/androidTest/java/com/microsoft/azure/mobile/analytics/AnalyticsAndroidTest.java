@@ -1,10 +1,11 @@
 package com.microsoft.azure.mobile.analytics;
 
 import android.annotation.SuppressLint;
+import android.app.Application;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
-import com.microsoft.azure.mobile.Constants;
+import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
 import com.microsoft.azure.mobile.analytics.ingestion.models.EventLog;
 import com.microsoft.azure.mobile.channel.Channel;
@@ -41,8 +42,7 @@ public class AnalyticsAndroidTest {
     public static void setUpClass() {
         MobileCenterLog.setLogLevel(android.util.Log.VERBOSE);
         sContext = InstrumentationRegistry.getContext();
-        Constants.loadFromContext(sContext);
-        StorageHelper.initialize(sContext);
+        MobileCenter.configure((Application) sContext.getApplicationContext(), "dummy");
     }
 
     @Before
@@ -54,7 +54,6 @@ public class AnalyticsAndroidTest {
 
     @Test
     public void testAnalyticsListener() {
-
         AnalyticsListener analyticsListener = mock(AnalyticsListener.class);
         Analytics.setListener(analyticsListener);
         Channel channel = mock(Channel.class);

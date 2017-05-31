@@ -86,7 +86,9 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
 
     @Override
     public synchronized boolean isInstanceEnabled() {
-        return StorageHelper.PreferencesStorage.getBoolean(getEnabledPreferenceKey(), true);
+
+        /* This is either called from background or when SDK already started so it's fine to use future.get() here. */
+        return MobileCenter.isEnabled().get() && StorageHelper.PreferencesStorage.getBoolean(getEnabledPreferenceKey(), true);
     }
 
     @Override
