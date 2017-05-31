@@ -94,7 +94,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
             public void run() {
                 setInstanceEnabled(enabled);
             }
-        }, true);
+        });
     }
 
     @Override

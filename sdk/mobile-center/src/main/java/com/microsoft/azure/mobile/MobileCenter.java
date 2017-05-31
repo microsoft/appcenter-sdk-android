@@ -571,7 +571,7 @@ public class MobileCenter {
                 }
             });
         } else {
-            future.complete(null);
+            future.complete(false);
         }
         return future;
     }
