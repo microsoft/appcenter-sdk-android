@@ -84,56 +84,61 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
         return future;
     }
 
-    @Override
-    public synchronized boolean isInstanceEnabled() {
-
-        /* This is either called from background or when SDK already started so it's fine to use future.get() here. */
-        return MobileCenter.isEnabled().get() && StorageHelper.PreferencesStorage.getBoolean(getEnabledPreferenceKey(), true);
-    }
-
-    @Override
-    public final synchronized void setInstanceEnabled(final boolean enabled) {
+    /**
+     * Help implementing static setEnabled() for services with future.
+     */
+    protected final synchronized void setInstanceEnabledAsync(final boolean enabled) {
         post(new Runnable() {
 
             @Override
             public void run() {
-
-                /* Nothing to do if state does not change. */
-                if (enabled == isInstanceEnabled()) {
-                    MobileCenterLog.info(getLoggerTag(), String.format("%s service has already been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
-                    return;
-                }
-
-                /* Initialize channel group. */
-                String groupName = getGroupName();
-                if (groupName != null) {
-
-                    /* Register service to channel on enabling. */
-                    if (enabled) {
-                        mChannel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
-                    }
-
-                    /* Otherwise, clear all persisted logs and remove a group for the service. */
-                    else {
-                        mChannel.clear(groupName);
-                        mChannel.removeGroup(groupName);
-                    }
-                }
-
-                /* Save new state. */
-                StorageHelper.PreferencesStorage.putBoolean(getEnabledPreferenceKey(), enabled);
-                MobileCenterLog.info(getLoggerTag(), String.format("%s service has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
-
-                /* Allow sub-class to handle state change in U.I. thread. */
-                HandlerUtils.runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        applyEnabledState(enabled);
-                    }
-                });
+                setInstanceEnabled(enabled);
             }
         }, true);
+    }
+
+    @Override
+    public synchronized boolean isInstanceEnabled() {
+        return StorageHelper.PreferencesStorage.getBoolean(getEnabledPreferenceKey(), true);
+    }
+
+    @Override
+    public synchronized void setInstanceEnabled(final boolean enabled) {
+
+        /* Nothing to do if state does not change. */
+        if (enabled == isInstanceEnabled()) {
+            MobileCenterLog.info(getLoggerTag(), String.format("%s service has already been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
+            return;
+        }
+
+        /* Initialize channel group. */
+        String groupName = getGroupName();
+        if (groupName != null) {
+
+            /* Register service to channel on enabling. */
+            if (enabled) {
+                mChannel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
+            }
+
+            /* Otherwise, clear all persisted logs and remove a group for the service. */
+            else {
+                mChannel.clear(groupName);
+                mChannel.removeGroup(groupName);
+            }
+        }
+
+        /* Save new state. */
+        StorageHelper.PreferencesStorage.putBoolean(getEnabledPreferenceKey(), enabled);
+        MobileCenterLog.info(getLoggerTag(), String.format("%s service has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
+
+        /* Allow sub-class to handle state change in U.I. thread. */
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                applyEnabledState(enabled);
+            }
+        });
     }
 
     @UiThread

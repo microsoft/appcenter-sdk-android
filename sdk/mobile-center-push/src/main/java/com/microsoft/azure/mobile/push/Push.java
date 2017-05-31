@@ -137,7 +137,7 @@ public class Push extends AbstractMobileCenterService {
      */
     @SuppressWarnings("WeakerAccess")
     public static void setEnabled(boolean enabled) {
-        getInstance().setInstanceEnabled(enabled);
+        getInstance().setInstanceEnabledAsync(enabled);
     }
 
     /**

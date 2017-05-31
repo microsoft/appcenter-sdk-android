@@ -211,7 +211,7 @@ public class Crashes extends AbstractMobileCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
     public static void setEnabled(boolean enabled) {
-        getInstance().setInstanceEnabled(enabled);
+        getInstance().setInstanceEnabledAsync(enabled);
     }
 
     /**
