@@ -7,6 +7,7 @@ import com.microsoft.azure.mobile.analytics.ingestion.models.EventLog;
 import com.microsoft.azure.mobile.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.Log;
+import com.microsoft.azure.mobile.ingestion.models.StartServiceLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.junit.Before;
@@ -28,16 +29,19 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
@@ -528,5 +532,13 @@ public class SessionTrackerTest {
         assertTrue(sessions.contains("300/10abd355-40a5-4b51-8071-cb5a4c338533"));
         assertFalse(sessions.contains("400"));
         assertFalse(sessions.contains("500a/10abd355-40a5-4b51-8071-cb5a4c338535"));
+    }
+
+    @Test
+    public void ignoreStartService() {
+        Log startServiceLog = spy(new StartServiceLog());
+        mSessionTracker.onEnqueuingLog(startServiceLog, TEST_GROUP);
+        verify(mChannel, never()).enqueue(any(Log.class), anyString());
+        verify(startServiceLog, never()).setSid(any(UUID.class));
     }
 }
