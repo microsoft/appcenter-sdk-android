@@ -308,7 +308,7 @@ public class MobileCenter {
         queueCustomProperties(properties);
     }
 
-     /**
+    /**
      * {@link #isConfigured()} implementation at instance level.
      */
     private synchronized boolean isInstanceConfigured() {
@@ -491,8 +491,10 @@ public class MobileCenter {
             mUncaughtExceptionHandler.unregister();
         }
 
-        /* Update state. */
-        StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, enabled);
+        /* Update state now if true, services are checking this. */
+        if (enabled) {
+            StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, true);
+        }
 
         /* Apply change to services. */
         for (MobileCenterService service : mServices) {
@@ -506,6 +508,11 @@ public class MobileCenter {
             /* Forward status change. */
             if (service.isInstanceEnabled() != enabled)
                 service.setInstanceEnabled(enabled);
+        }
+
+        /* Update state now if false, services are checking if enabled while disabling. */
+        if (!enabled) {
+            StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, false);
         }
 
         /* Log current state. */
