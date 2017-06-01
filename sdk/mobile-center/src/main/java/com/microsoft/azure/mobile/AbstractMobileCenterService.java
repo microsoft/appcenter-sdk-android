@@ -4,11 +4,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.UiThread;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
-import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.async.DefaultSimpleFuture;
 import com.microsoft.azure.mobile.utils.async.SimpleFuture;
@@ -122,7 +120,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     }
 
     @Override
-    public synchronized void setInstanceEnabled(final boolean enabled) {
+    public synchronized void setInstanceEnabled(boolean enabled) {
 
         /* Nothing to do if state does not change. */
         if (enabled == isInstanceEnabled()) {
@@ -150,24 +148,17 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
         StorageHelper.PreferencesStorage.putBoolean(getEnabledPreferenceKey(), enabled);
         MobileCenterLog.info(getLoggerTag(), String.format("%s service has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
 
-        /* Allow sub-class to handle state change in U.I. thread. */
-        HandlerUtils.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                applyEnabledState(enabled);
-            }
-        });
+        /* Allow sub-class to handle state change. */
+        applyEnabledState(enabled);
     }
 
-    @UiThread
     protected void applyEnabledState(boolean enabled) {
 
         /* Optional callback to react to enabled state change. */
     }
 
     @Override
-    public void onStarting(@NonNull MobileCenterHandler handler) {
+    public final synchronized void onStarting(@NonNull MobileCenterHandler handler) {
         mHandler = handler;
     }
 

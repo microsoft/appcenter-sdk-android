@@ -56,7 +56,7 @@ public class StorageHelper {
      *
      * @param context The context of the application.
      */
-    public static void initialize(Context context) {
+    public static synchronized void initialize(Context context) {
         if (sContext == null) {
             sContext = context;
             sSharedPreferences = sContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);

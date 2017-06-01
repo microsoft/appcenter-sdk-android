@@ -6,7 +6,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
-import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
@@ -22,7 +21,6 @@ import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
 import com.microsoft.azure.mobile.ingestion.models.json.StartServiceLogFactory;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
-import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
@@ -407,9 +405,10 @@ public class MobileCenter {
                     if (isInstanceEnabled()) {
                         runnable.run();
                     } else {
-                        MobileCenterLog.error(LOG_TAG, "Mobile Center SDK is disabled.");
                         if (disabledRunnable != null) {
                             disabledRunnable.run();
+                        } else {
+                            MobileCenterLog.error(LOG_TAG, "Mobile Center SDK is disabled.");
                         }
                     }
                 }
@@ -494,21 +493,13 @@ public class MobileCenter {
 
                 @Override
                 public void run() {
-
-                    /* Service onStarted is on U.I. thread. */
-                    HandlerUtils.runOnUiThread(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            finishStartServices(startedServices);
-                        }
-                    });
+                    finishStartServices(startedServices);
                 }
             });
         }
     }
 
-    @UiThread
+    @WorkerThread
     private synchronized void finishStartServices(Iterable<MobileCenterService> services) {
         List<String> serviceNames = new ArrayList<>();
         for (MobileCenterService service : services) {

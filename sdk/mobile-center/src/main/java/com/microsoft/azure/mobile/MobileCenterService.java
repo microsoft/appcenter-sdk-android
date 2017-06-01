@@ -4,7 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
+import android.support.annotation.WorkerThread;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
@@ -61,6 +61,6 @@ public interface MobileCenterService extends Application.ActivityLifecycleCallba
      * @param appSecret application secret.
      * @param channel   channel.
      */
-    @UiThread
+    @WorkerThread
     void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel);
 }
