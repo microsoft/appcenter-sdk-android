@@ -152,13 +152,18 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
         applyEnabledState(enabled);
     }
 
-    protected void applyEnabledState(boolean enabled) {
+    protected synchronized void applyEnabledState(boolean enabled) {
 
         /* Optional callback to react to enabled state change. */
     }
 
     @Override
     public final synchronized void onStarting(@NonNull MobileCenterHandler handler) {
+
+        /*
+         * The method is final just to avoid a sub-class start using the handler now,
+         * it is not supported and could cause null pointer exception.
+         */
         mHandler = handler;
     }
 
