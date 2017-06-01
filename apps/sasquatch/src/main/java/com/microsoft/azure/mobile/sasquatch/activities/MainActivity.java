@@ -7,7 +7,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.support.test.espresso.idling.CountingIdlingResource;
 import android.support.v7.app.AppCompatActivity;
@@ -20,7 +19,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
-import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
 import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
@@ -108,11 +106,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         /* Print last crash. */
-        Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
+        Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession().get());
+        Crashes.getLastSessionCrashReport().thenApply(new SimpleFunction<ErrorReport>() {
 
             @Override
-            public void onResult(@Nullable ErrorReport data) {
+            public void apply(ErrorReport data) {
                 if (data != null) {
                     Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", data.getThrowable());
                 }

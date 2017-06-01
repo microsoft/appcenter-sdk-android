@@ -500,7 +500,7 @@ public class MobileCenter {
     }
 
     @WorkerThread
-    private synchronized void finishStartServices(Iterable<MobileCenterService> services) {
+    private void finishStartServices(Iterable<MobileCenterService> services) {
         List<String> serviceNames = new ArrayList<>();
         for (MobileCenterService service : services) {
             Map<String, LogFactory> logFactories = service.getLogFactories();
@@ -581,7 +581,7 @@ public class MobileCenter {
     /**
      * Implements {@link #setEnabled(boolean)}}.
      */
-    private void setInstanceEnabled(final boolean enabled) {
+    private synchronized void setInstanceEnabled(final boolean enabled) {
         if (checkPrecondition()) {
             mHandler.post(new Runnable() {
 
@@ -597,7 +597,7 @@ public class MobileCenter {
      * Implements {@link #setInstanceEnabled(boolean)}} in background.
      */
     @WorkerThread
-    private synchronized void doSetInstanceEnabled(boolean enabled) {
+    private void doSetInstanceEnabled(boolean enabled) {
 
         /* Update channel state. */
         mChannel.setEnabled(enabled);
