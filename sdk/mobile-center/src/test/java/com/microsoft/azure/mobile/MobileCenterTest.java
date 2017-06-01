@@ -456,7 +456,7 @@ public class MobileCenterTest {
 
         /* Verify services are enabled by default */
         Set<MobileCenterService> services = mobileCenter.getServices();
-        assertTrue(MobileCenter.isEnabled());
+        assertTrue(MobileCenter.isEnabled().get());
         DummyService dummyService = DummyService.getInstance();
         AnotherDummyService anotherDummyService = AnotherDummyService.getInstance();
         for (MobileCenterService service : services) {
@@ -465,7 +465,7 @@ public class MobileCenterTest {
 
         /* Explicit set enabled should not change that */
         MobileCenter.setEnabled(true);
-        assertTrue(MobileCenter.isEnabled());
+        assertTrue(MobileCenter.isEnabled().get());
         for (MobileCenterService service : services) {
             assertTrue(service.isInstanceEnabled());
         }
@@ -475,7 +475,7 @@ public class MobileCenterTest {
 
         /* Verify disabling base disables all services */
         MobileCenter.setEnabled(false);
-        assertFalse(MobileCenter.isEnabled());
+        assertFalse(MobileCenter.isEnabled().get());
         for (MobileCenterService service : services) {
             assertFalse(service.isInstanceEnabled());
         }
@@ -487,7 +487,7 @@ public class MobileCenterTest {
 
         /* Verify re-enabling base re-enables all services */
         MobileCenter.setEnabled(true);
-        assertTrue(MobileCenter.isEnabled());
+        assertTrue(MobileCenter.isEnabled().get());
         for (MobileCenterService service : services) {
             assertTrue(service.isInstanceEnabled());
         }
@@ -500,12 +500,12 @@ public class MobileCenterTest {
         /* Verify that disabling one service leaves base and other services enabled */
         dummyService.setInstanceEnabled(false);
         assertFalse(dummyService.isInstanceEnabled());
-        assertTrue(MobileCenter.isEnabled());
+        assertTrue(MobileCenter.isEnabled().get());
         assertTrue(anotherDummyService.isInstanceEnabled());
 
         /* Enable back via main class. */
         MobileCenter.setEnabled(true);
-        assertTrue(MobileCenter.isEnabled());
+        assertTrue(MobileCenter.isEnabled().get());
         for (MobileCenterService service : services) {
             assertTrue(service.isInstanceEnabled());
         }
@@ -515,7 +515,7 @@ public class MobileCenterTest {
 
         /* Enable service after the SDK is disabled. */
         MobileCenter.setEnabled(false);
-        assertFalse(MobileCenter.isEnabled());
+        assertFalse(MobileCenter.isEnabled().get());
         for (MobileCenterService service : services) {
             assertFalse(service.isInstanceEnabled());
         }
@@ -523,12 +523,12 @@ public class MobileCenterTest {
         assertFalse(dummyService.isInstanceEnabled());
         PowerMockito.verifyStatic();
         MobileCenterLog.error(eq(LOG_TAG), anyString());
-        assertFalse(MobileCenter.isEnabled());
+        assertFalse(MobileCenter.isEnabled().get());
         verify(mChannel, times(2)).setEnabled(false);
 
         /* Disable back via main class. */
         MobileCenter.setEnabled(false);
-        assertFalse(MobileCenter.isEnabled());
+        assertFalse(MobileCenter.isEnabled().get());
         for (MobileCenterService service : services) {
             assertFalse(service.isInstanceEnabled());
         }
@@ -544,9 +544,9 @@ public class MobileCenterTest {
     @Test
     public void enableBeforeConfiguredTest() {
         /* Test isEnabled and setEnabled before configure */
-        assertFalse(MobileCenter.isEnabled());
+        assertFalse(MobileCenter.isEnabled().get());
         MobileCenter.setEnabled(true);
-        assertFalse(MobileCenter.isEnabled());
+        assertFalse(MobileCenter.isEnabled().get());
         PowerMockito.verifyStatic(times(3));
         MobileCenterLog.error(eq(LOG_TAG), anyString());
     }
@@ -558,7 +558,7 @@ public class MobileCenterTest {
         MobileCenter mobileCenter = MobileCenter.getInstance();
 
         /* Verify services are disabled by default if MobileCenter is disabled. */
-        assertFalse(MobileCenter.isEnabled());
+        assertFalse(MobileCenter.isEnabled().get());
         for (MobileCenterService service : mobileCenter.getServices()) {
             assertFalse(service.isInstanceEnabled());
             verify(application, never()).registerActivityLifecycleCallbacks(service);
@@ -566,7 +566,7 @@ public class MobileCenterTest {
 
         /* Verify we can enable back. */
         MobileCenter.setEnabled(true);
-        assertTrue(MobileCenter.isEnabled());
+        assertTrue(MobileCenter.isEnabled().get());
         for (MobileCenterService service : mobileCenter.getServices()) {
             assertTrue(service.isInstanceEnabled());
             verify(application).registerActivityLifecycleCallbacks(service);
@@ -580,12 +580,12 @@ public class MobileCenterTest {
         MobileCenter mobileCenter = MobileCenter.getInstance();
 
         /* Verify services are disabled if called before start (no access to storage). */
-        assertFalse(MobileCenter.isEnabled());
+        assertFalse(MobileCenter.isEnabled().get());
         assertFalse(DummyService.getInstance().isInstanceEnabled());
 
         /* Verify we can not enable until start. */
         MobileCenter.setEnabled(true);
-        assertFalse(MobileCenter.isEnabled());
+        assertFalse(MobileCenter.isEnabled().get());
         assertFalse(DummyService.getInstance().isInstanceEnabled());
     }
 
@@ -597,7 +597,7 @@ public class MobileCenterTest {
 
         /* Its already disabled so disable should have no effect on MobileCenter but should disable services. */
         MobileCenter.setEnabled(false);
-        assertFalse(MobileCenter.isEnabled());
+        assertFalse(MobileCenter.isEnabled().get());
         for (MobileCenterService service : mobileCenter.getServices()) {
             assertFalse(service.isInstanceEnabled());
             verify(application, never()).registerActivityLifecycleCallbacks(service);
@@ -606,7 +606,7 @@ public class MobileCenterTest {
 
         /* Verify we can enable MobileCenter back, should have no effect on service except registering the application life cycle callbacks. */
         MobileCenter.setEnabled(true);
-        assertTrue(MobileCenter.isEnabled());
+        assertTrue(MobileCenter.isEnabled().get());
         for (MobileCenterService service : mobileCenter.getServices()) {
             assertTrue(service.isInstanceEnabled());
             verify(application).registerActivityLifecycleCallbacks(service);

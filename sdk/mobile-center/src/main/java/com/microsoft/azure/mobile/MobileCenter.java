@@ -327,7 +327,7 @@ public class MobileCenter {
             public void run() {
                 queueCustomProperties(properties);
             }
-        }, false);
+        }, null);
     }
 
     /**
@@ -380,8 +380,8 @@ public class MobileCenter {
         mMobileCenterHandler = new MobileCenterHandler() {
 
             @Override
-            public void post(Runnable runnable, boolean runWhenDisabled) {
-                handlerMobileCenterOperation(runnable, runWhenDisabled);
+            public void post(Runnable runnable, Runnable disabledRunnable) {
+                handlerMobileCenterOperation(runnable, disabledRunnable);
             }
         };
 
@@ -398,16 +398,19 @@ public class MobileCenter {
         return true;
     }
 
-    private synchronized void handlerMobileCenterOperation(final Runnable runnable, final boolean runWhenDisabled) {
+    private synchronized void handlerMobileCenterOperation(final Runnable runnable, final Runnable disabledRunnable) {
         if (checkPrecondition()) {
             mHandler.post(new Runnable() {
 
                 @Override
                 public void run() {
-                    if (runWhenDisabled || isInstanceEnabled()) {
+                    if (isInstanceEnabled()) {
                         runnable.run();
                     } else {
                         MobileCenterLog.error(LOG_TAG, "Mobile Center SDK is disabled.");
+                        if (disabledRunnable != null) {
+                            disabledRunnable.run();
+                        }
                     }
                 }
             });

@@ -78,7 +78,17 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
             public void run() {
                 future.complete(isInstanceEnabled());
             }
-        }, true)) {
+        }, new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* Core is disabled. */
+                future.complete(false);
+            }
+        })) {
+
+            /* Core is not configured. */
             future.complete(false);
         }
         return future;
@@ -142,7 +152,10 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     }
 
     @UiThread
-    protected abstract void applyEnabledState(boolean enabled);
+    protected void applyEnabledState(boolean enabled) {
+
+        /* Optional callback to react to enabled state change. */
+    }
 
     @Override
     public void onStarting(@NonNull MobileCenterHandler handler) {
@@ -240,21 +253,21 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * @param runnable command.
      */
     protected synchronized void post(Runnable runnable) {
-        post(runnable, false);
+        post(runnable, null);
     }
 
     /**
      * Post a command in background.
      *
-     * @param runnable        command.
-     * @param runWhenDisabled whether to run the command when disabled.
+     * @param runnable         command.
+     * @param disabledRunnable optional alternate command if core is disabled.
      */
-    private synchronized boolean post(Runnable runnable, boolean runWhenDisabled) {
+    private synchronized boolean post(Runnable runnable, Runnable disabledRunnable) {
         if (mHandler == null) {
             MobileCenterLog.error(LOG_TAG, getServiceName() + " needs to be started before it can be used.");
             return false;
         } else {
-            mHandler.post(runnable, runWhenDisabled);
+            mHandler.post(runnable, disabledRunnable);
             return true;
         }
     }

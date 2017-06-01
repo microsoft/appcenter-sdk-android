@@ -8,12 +8,15 @@ import android.util.Log;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
+import com.microsoft.azure.mobile.utils.async.SimpleFunction;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -33,15 +36,28 @@ public class MobileCenterAndroidTest {
 
     @Test
     public void getInstallId() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+        StorageHelper.initialize(mApplication);
+        StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
         MobileCenter.start(mApplication, UUIDUtils.randomUUID().toString());
-        StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
-        UUID installId = MobileCenter.getInstallId();
+        UUID installId = MobileCenter.getInstallId().get();
         assertNotNull(installId);
-        assertEquals(installId, MobileCenter.getInstallId());
+        assertEquals(installId, MobileCenter.getInstallId().get());
         StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
-        UUID installId2 = MobileCenter.getInstallId();
+        final UUID installId2 = MobileCenter.getInstallId().get();
         assertNotNull(installId2);
         assertNotEquals(installId2, installId);
+        final Semaphore lock = new Semaphore(0);
+        final AtomicReference<UUID> asyncUUID = new AtomicReference<>();
+        MobileCenter.getInstallId().thenApply(new SimpleFunction<UUID>() {
+
+            @Override
+            public void apply(UUID uuid) {
+                asyncUUID.set(uuid);
+                lock.release();
+            }
+        });
+        lock.acquireUninterruptibly();
+        assertEquals(installId2, asyncUUID.get());
     }
 
     @Test
