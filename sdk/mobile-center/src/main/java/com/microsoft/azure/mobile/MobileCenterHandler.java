@@ -1,6 +1,6 @@
 package com.microsoft.azure.mobile;
 
-interface MobileCenterHandler {
+public interface MobileCenterHandler {
 
     void post(Runnable runnable, Runnable disabledRunnable);
 }

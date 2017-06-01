@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.SystemClock;
 
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.MobileCenterHandler;
 import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
 import com.microsoft.azure.mobile.analytics.channel.SessionTracker;
 import com.microsoft.azure.mobile.analytics.ingestion.models.EventLog;
@@ -15,8 +16,10 @@ import com.microsoft.azure.mobile.analytics.ingestion.models.json.StartSessionLo
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
+import com.microsoft.azure.mobile.utils.async.SimpleFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import junit.framework.Assert;
@@ -24,7 +27,9 @@ import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -37,32 +42,39 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.test.TestUtils.generateString;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class})
+@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, HandlerUtils.class})
 public class AnalyticsTest {
 
     private static final String ANALYTICS_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Analytics.getInstance().getServiceName();
+
+    @Mock
+    private SimpleFuture<Boolean> mCoreEnabledFuture;
+
+    @Mock
+    private MobileCenterHandler mMobileCenterHandler;
 
     @Before
     public void setUp() {
@@ -70,7 +82,20 @@ public class AnalyticsTest {
         mockStatic(SystemClock.class);
         mockStatic(MobileCenterLog.class);
         mockStatic(MobileCenter.class);
-        when(MobileCenter.isEnabled()).thenReturn(true);
+        when(MobileCenter.isEnabled()).thenReturn(mCoreEnabledFuture);
+        when(mCoreEnabledFuture.get()).thenReturn(true);
+        Answer<Void> runNow = new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                ((Runnable) invocation.getArguments()[0]).run();
+                return null;
+            }
+        };
+        doAnswer(runNow).when(mMobileCenterHandler).post(any(Runnable.class), any(Runnable.class));
+        mockStatic(HandlerUtils.class);
+        doAnswer(runNow).when(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* First call to com.microsoft.azure.mobile.MobileCenter.isEnabled shall return true, initial state. */
         mockStatic(StorageHelper.PreferencesStorage.class);
@@ -126,6 +151,7 @@ public class AnalyticsTest {
     private void activityResumed(final String expectedName, android.app.Activity activity) {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
+        analytics.onStarting(mMobileCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
         analytics.onActivityResumed(activity);
         analytics.onActivityPaused(activity);
@@ -164,6 +190,7 @@ public class AnalyticsTest {
         Analytics.setAutoPageTrackingEnabled(false);
         assertFalse(Analytics.isAutoPageTrackingEnabled());
         Channel channel = mock(Channel.class);
+        analytics.onStarting(mMobileCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
         analytics.onActivityResumed(new MyActivity());
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
@@ -197,31 +224,10 @@ public class AnalyticsTest {
     }
 
     @Test
-    public void trackEvent() {
-        Analytics analytics = Analytics.getInstance();
-        Channel channel = mock(Channel.class);
-        analytics.onStarted(mock(Context.class), "", channel);
-        final String name = "testEvent";
-        final HashMap<String, String> properties = new HashMap<>();
-        properties.put("a", "b");
-        Analytics.trackEvent(name, properties);
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    return name.equals(eventLog.getName()) && properties.equals(eventLog.getProperties()) && eventLog.getId() != null;
-                }
-                return false;
-            }
-        }), eq(analytics.getGroupName()));
-    }
-
-    @Test
     public void testTrackEvent() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
+        analytics.onStarting(mMobileCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
         Analytics.trackEvent(null, null);
         verify(channel, never()).enqueue(any(Log.class), anyString());
@@ -280,6 +286,7 @@ public class AnalyticsTest {
     public void testTrackPage() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
+        analytics.onStarting(mMobileCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
         Analytics.trackPage(null, null);
         verify(channel, never()).enqueue(any(Log.class), anyString());
@@ -336,49 +343,55 @@ public class AnalyticsTest {
 
     @Test
     public void setEnabled() {
+
+        /* Before start it does not work to change state, it's disabled. */
         Analytics analytics = Analytics.getInstance();
-        Channel channel = mock(Channel.class);
-        assertTrue(Analytics.isEnabled());
         Analytics.setEnabled(true);
-        assertTrue(Analytics.isEnabled());
+        assertFalse(Analytics.isEnabled().get());
         Analytics.setEnabled(false);
-        assertFalse(Analytics.isEnabled());
+        assertFalse(Analytics.isEnabled().get());
+
+        /* Start. */
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mMobileCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
-        verify(channel).clear(analytics.getGroupName());
         verify(channel).removeGroup(eq(analytics.getGroupName()));
+        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), any(Channel.GroupListener.class));
+        verify(channel).addListener(any(Channel.Listener.class));
+
+        /* Now we can see the service enabled. */
+        assertTrue(Analytics.isEnabled().get());
+
+        /* Disable. */
+        Analytics.setEnabled(false);
+        assertFalse(Analytics.isEnabled().get());
+        verify(channel).removeListener(any(SessionTracker.class));
+        verify(channel, times(2)).removeGroup(analytics.getGroupName());
+        verify(channel).clear(analytics.getGroupName());
+        verifyStatic();
+        StorageHelper.PreferencesStorage.remove("sessions");
+
         Analytics.trackEvent("test");
         Analytics.trackPage("test");
-        analytics.onActivityResumed(new Activity());
-        analytics.onActivityPaused(new Activity());
-        verifyNoMoreInteractions(channel);
+        verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
         /* Enable back, testing double calls. */
         Analytics.setEnabled(true);
-        assertTrue(Analytics.isEnabled());
+        assertTrue(Analytics.isEnabled().get());
         Analytics.setEnabled(true);
-        assertTrue(Analytics.isEnabled());
-        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
-        verify(channel).addListener(any(SessionTracker.class));
+        assertTrue(Analytics.isEnabled().get());
         Analytics.trackEvent("test");
         Analytics.trackPage("test");
         verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
         /* Disable again. */
         Analytics.setEnabled(false);
-        assertFalse(Analytics.isEnabled());
-        /* clear and removeGroup are being called in this test method. */
-        verify(channel, times(2)).clear(analytics.getGroupName());
-        verify(channel, times(2)).removeGroup(eq(analytics.getGroupName()));
-        verify(channel).removeListener(any(SessionTracker.class));
+        assertFalse(Analytics.isEnabled().get());
         Analytics.trackEvent("test");
         Analytics.trackPage("test");
-        analytics.onActivityResumed(new Activity());
-        analytics.onActivityPaused(new Activity());
-        verifyNoMoreInteractions(channel);
 
-        /* Verify session state has been cleared. */
-        verifyStatic();
-        StorageHelper.PreferencesStorage.remove("sessions");
+        /* No more log enqueued. */
+        verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
     }
 
     @Test
@@ -390,6 +403,7 @@ public class AnalyticsTest {
          */
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
+        analytics.onStarting(mMobileCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
         Analytics.setEnabled(false);
 
@@ -434,6 +448,7 @@ public class AnalyticsTest {
          */
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
+        analytics.onStarting(mMobileCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
         Analytics.setEnabled(false);
 
@@ -448,35 +463,29 @@ public class AnalyticsTest {
     }
 
     @Test
-    public void testGetChannelListener() throws IOException, ClassNotFoundException {
-
-        final EventLog testEventLog = new EventLog();
-        testEventLog.setId(UUID.randomUUID());
-        testEventLog.setName("name");
-        final Exception testException = new Exception("test exception message");
-
-        Analytics.setListener(new AnalyticsListener() {
-            @Override
-            public void onBeforeSending(Log log) {
-                assertEquals(log, testEventLog);
-            }
+    public void analyticsListener() throws IOException, ClassNotFoundException {
+        AnalyticsListener listener = mock(AnalyticsListener.class);
+        Analytics.setListener(listener);
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mMobileCenterHandler);
+        analytics.onStarted(mock(Context.class), "", channel);
+        final ArgumentCaptor<Channel.GroupListener> captor = ArgumentCaptor.forClass(Channel.GroupListener.class);
+        verify(channel).addGroup(anyString(), anyInt(), anyLong(), anyInt(), captor.capture());
+        doAnswer(new Answer<Void>() {
 
             @Override
-            public void onSendingSucceeded(Log log) {
-                assertEquals(log, testEventLog);
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                captor.getValue().onBeforeSending((Log) invocation.getArguments()[0]);
+                captor.getValue().onSuccess((Log) invocation.getArguments()[0]);
+                captor.getValue().onFailure((Log) invocation.getArguments()[0], new Exception());
+                return null;
             }
-
-            @Override
-            public void onSendingFailed(Log log, Exception e) {
-                assertEquals(log, testEventLog);
-                assertEquals(e, testException);
-            }
-        });
-
-        Channel.GroupListener listener = Analytics.getInstance().getChannelListener();
-        listener.onBeforeSending(testEventLog);
-        listener.onSuccess(testEventLog);
-        listener.onFailure(testEventLog, testException);
+        }).when(channel).enqueue(any(Log.class), anyString());
+        Analytics.trackEvent("name");
+        verify(listener).onBeforeSending(notNull(Log.class));
+        verify(listener).onSendingSucceeded(notNull(Log.class));
+        verify(listener).onSendingFailed(notNull(Log.class), notNull(Exception.class));
     }
 
     @Test

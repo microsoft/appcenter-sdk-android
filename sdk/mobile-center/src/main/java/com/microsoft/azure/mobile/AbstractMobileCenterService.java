@@ -72,23 +72,26 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      */
     protected synchronized SimpleFuture<Boolean> isInstanceEnabledAsync() {
         final DefaultSimpleFuture<Boolean> future = new DefaultSimpleFuture<>();
+        Runnable disabledRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* Core or service disabled as the same runnable is used for both conditions. */
+                future.complete(false);
+            }
+        };
         if (!post(new Runnable() {
 
             @Override
             public void run() {
-                future.complete(isInstanceEnabled());
+
+                /* If we reach this, the enabled check was already done. */
+                future.complete(true);
             }
-        }, new Runnable() {
+        }, disabledRunnable, disabledRunnable)) {
 
-            @Override
-            public void run() {
-
-                /* Core is disabled. */
-                future.complete(false);
-            }
-        })) {
-
-            /* Core is not configured. */
+            /* Core is not configured if we reach this. */
             future.complete(false);
         }
         return future;
@@ -98,13 +101,19 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * Help implementing static setEnabled() for services with future.
      */
     protected final synchronized void setInstanceEnabledAsync(final boolean enabled) {
-        post(new Runnable() {
+
+        /*
+         * We need to execute this while the service is disabled to enable it again,
+         * but not if core disabled... Hence the parameters in post.
+         */
+        Runnable runnable = new Runnable() {
 
             @Override
             public void run() {
                 setInstanceEnabled(enabled);
             }
-        });
+        };
+        post(runnable, null, runnable);
     }
 
     @Override
@@ -253,21 +262,35 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * @param runnable command.
      */
     protected synchronized void post(Runnable runnable) {
-        post(runnable, null);
+        post(runnable, null, null);
     }
 
     /**
      * Post a command in background.
      *
-     * @param runnable         command.
-     * @param disabledRunnable optional alternate command if core is disabled.
+     * @param runnable                command.
+     * @param coreDisabledRunnable    optional alternate command if core is disabled.
+     * @param serviceDisabledRunnable optional alternate command if this service is disabled.
+     * @return false if core not configured (no handler ready yet), true otherwise.
      */
-    private synchronized boolean post(Runnable runnable, Runnable disabledRunnable) {
+    private synchronized boolean post(final Runnable runnable, final Runnable coreDisabledRunnable, final Runnable serviceDisabledRunnable) {
         if (mHandler == null) {
             MobileCenterLog.error(LOG_TAG, getServiceName() + " needs to be started before it can be used.");
             return false;
         } else {
-            mHandler.post(runnable, disabledRunnable);
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    if (isInstanceEnabled()) {
+                        runnable.run();
+                    } else if (serviceDisabledRunnable != null) {
+                        serviceDisabledRunnable.run();
+                    } else {
+                        MobileCenterLog.info(LOG_TAG, getServiceName() + " service disabled, discarding calls.");
+                    }
+                }
+            }, coreDisabledRunnable);
             return true;
         }
     }
