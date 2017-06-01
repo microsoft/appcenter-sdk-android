@@ -293,6 +293,7 @@ public class Crashes extends AbstractMobileCenterService {
 
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
+        initialize();
         if (!enabled) {
             for (File file : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
                 MobileCenterLog.debug(LOG_TAG, "Deleting file " + file);
@@ -308,7 +309,6 @@ public class Crashes extends AbstractMobileCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         super.onStarted(context, appSecret, channel);
         mContext = context;
-        initialize();
         if (isInstanceEnabled()) {
             processPendingErrors();
         }
