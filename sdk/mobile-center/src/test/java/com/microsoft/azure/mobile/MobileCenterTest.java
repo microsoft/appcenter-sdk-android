@@ -524,7 +524,7 @@ public class MobileCenterTest {
         verify(mChannel, times(3)).setEnabled(true);
 
         /* Verify that disabling one service leaves base and other services enabled */
-        dummyService.setInstanceEnabled(false);
+        dummyService.setInstanceEnabledAsync(false);
         assertFalse(dummyService.isInstanceEnabled());
         assertTrue(MobileCenter.isEnabled().get());
         assertTrue(anotherDummyService.isInstanceEnabled());
@@ -545,7 +545,7 @@ public class MobileCenterTest {
         for (MobileCenterService service : services) {
             assertFalse(service.isInstanceEnabled());
         }
-        dummyService.setInstanceEnabled(true);
+        dummyService.setInstanceEnabledAsync(true);
         assertFalse(dummyService.isInstanceEnabledAsync().get());
         PowerMockito.verifyStatic();
         MobileCenterLog.error(eq(LOG_TAG), anyString());
