@@ -41,7 +41,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
@@ -121,15 +120,17 @@ public class CrashesTest {
         when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
 
         mockStatic(MobileCenter.class);
+
         @SuppressWarnings("unchecked")
-        SimpleFuture<Boolean> future = (SimpleFuture<Boolean>) PowerMockito.mock(SimpleFuture.class);
-        PowerMockito.when(MobileCenter.isEnabled()).thenReturn(future);
-        PowerMockito.when(future.get()).thenReturn(true);
+        SimpleFuture<Boolean> future = (SimpleFuture<Boolean>) mock(SimpleFuture.class);
+        when(MobileCenter.isEnabled()).thenReturn(future);
+        when(future.get()).thenReturn(true);
 
         when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
         doAnswer(new Answer<Object>() {
+
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
 
@@ -224,6 +225,16 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
         when(dir.listFiles()).thenReturn(new File[]{file1, file2});
 
+        /* Before start it's disabled. */
+        assertFalse(Crashes.isEnabled().get());
+        assertEquals(0, crashes.getInitializeTimestamp());
+
+        /* Start. */
+        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarted(mock(Context.class), "", mockChannel);
+        verify(mockChannel).removeGroup(eq(crashes.getGroupName()));
+        verify(mockChannel).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
+
         /* Test. */
         assertTrue(Crashes.isEnabled().get());
         Crashes.setEnabled(true);
@@ -231,10 +242,8 @@ public class CrashesTest {
         assertTrue(crashes.getInitializeTimestamp() > 0);
         Crashes.setEnabled(false);
         assertFalse(Crashes.isEnabled().get());
-        crashes.onStarting(mMobileCenterHandler);
-        crashes.onStarted(mock(Context.class), "", mockChannel);
         verify(mockChannel).clear(crashes.getGroupName());
-        verify(mockChannel).removeGroup(eq(crashes.getGroupName()));
+        verify(mockChannel, times(2)).removeGroup(eq(crashes.getGroupName()));
         assertEquals(crashes.getInitializeTimestamp(), -1);
         assertFalse(Thread.getDefaultUncaughtExceptionHandler() instanceof UncaughtExceptionHandler);
         assertFalse(verify(file1).delete());
@@ -249,7 +258,7 @@ public class CrashesTest {
         assertTrue(Thread.getDefaultUncaughtExceptionHandler() instanceof UncaughtExceptionHandler);
         Crashes.setEnabled(true);
         assertTrue(Crashes.isEnabled().get());
-        verify(mockChannel).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
+        verify(mockChannel, times(2)).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
         Crashes.trackException(EXCEPTION);
         verify(mockChannel, times(1)).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
     }
@@ -774,6 +783,7 @@ public class CrashesTest {
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
+        crashes.onStarting(mMobileCenterHandler);
         crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
         Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
