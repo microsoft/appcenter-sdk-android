@@ -35,6 +35,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -51,7 +52,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
@@ -79,7 +79,6 @@ import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 @PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, Crashes.class, HandlerUtils.class, Looper.class})
@@ -467,8 +466,8 @@ public class CrashesTest {
         verifyNoMoreInteractions(listener);
 
         /* Disabled right before handling user confirmation. */
-        Crashes.unsetInstance();
         Crashes.setEnabled(true);
+        Crashes.unsetInstance();
         crashes = Crashes.getInstance();
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(listener);
@@ -702,8 +701,9 @@ public class CrashesTest {
 
         CrashesListener mockListener = mock(CrashesListener.class);
         Crashes crashes = Crashes.getInstance();
-
         crashes.setInstanceListener(mockListener);
+        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
         Channel.GroupListener listener = Crashes.getInstance().getChannelListener();
 
@@ -737,6 +737,7 @@ public class CrashesTest {
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
+        crashes.onStarting(mMobileCenterHandler);
         crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
         Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
@@ -906,60 +907,50 @@ public class CrashesTest {
         final Throwable throwable = mock(Throwable.class);
         final ErrorReport errorReport = ErrorLogHelper.getErrorReportFromErrorLog(errorLog, throwable);
 
-        /* This callback will be called after Crashes service is initialized. */
-        final SimpleFunction<ErrorReport> callback = new SimpleFunction<ErrorReport>() {
-
-            @Override
-            public void apply(ErrorReport data) {
-                assertNotNull(data);
-                assertEquals(errorReport, data);
-            }
-        };
-
         mockStatic(ErrorLogHelper.class);
         File lastErrorLogFile = errorStorageDirectory.newFile("last-error-log.json");
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(lastErrorLogFile);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(errorStorageDirectory.newFile());
         when(ErrorLogHelper.getErrorReportFromErrorLog(errorLog, throwable)).thenReturn(errorReport);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{lastErrorLogFile});
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenAnswer(new Answer<String>() {
-
-            @Override
-            public String answer(InvocationOnMock invocation) throws Throwable {
-
-                /* Call twice for multiple listeners during initialize. */
-                Crashes.getLastSessionCrashReport().thenApply(callback);
-                Crashes.getLastSessionCrashReport().thenApply(callback);
-                return "";
-            }
-        });
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(throwable);
 
-        Crashes.getInstance().setLogSerializer(logSerializer);
+        Crashes crashes = Crashes.getInstance();
+        crashes.setLogSerializer(logSerializer);
         assertFalse(Crashes.hasCrashedInLastSession().get());
 
         /*
          * Last session error is only fetched upon initialization: enabled and channel ready.
-         * Here the service is enabled by default but we are waiting channel to be ready, simulate that.
+         * Here the service is disabled by default until stated, we are waiting channel to be ready, simulate that.
          */
-        assertTrue(Crashes.isEnabled().get());
-        Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
+        assertFalse(Crashes.isEnabled().get());
+        assertFalse(Crashes.hasCrashedInLastSession().get());
 
+        @SuppressWarnings("unchecked")
+        SimpleFunction<ErrorReport> beforeCallback = (SimpleFunction<ErrorReport>) mock(SimpleFunction.class);
+        assertNull(Crashes.getLastSessionCrashReport().thenApply(beforeCallback).get());
+        verify(beforeCallback).apply(null);
+
+        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarted(mock(Context.class), "", mock(Channel.class));
+        assertTrue(Crashes.isEnabled().get());
         assertTrue(Crashes.hasCrashedInLastSession().get());
 
-        Crashes.getLastSessionCrashReport().thenApply(new SimpleFunction<ErrorReport>() {
-
-            @Override
-            public void apply(ErrorReport errorReport) {
-                assertNotNull(errorReport);
-                assertEquals(errorLog.getId().toString(), errorReport.getId());
-                assertEquals(errorLog.getErrorThreadName(), errorReport.getThreadName());
-                assertEquals(new Date(tOffset - appLaunchTOffset), errorReport.getAppStartTime());
-                assertEquals(new Date(tOffset), errorReport.getAppErrorTime());
-                assertNotNull(errorReport.getDevice());
-                assertEquals(throwable, errorReport.getThrowable());
-            }
-        });
+        @SuppressWarnings("unchecked")
+        SimpleFunction<ErrorReport> afterCallback = (SimpleFunction<ErrorReport>) mock(SimpleFunction.class);
+        Crashes.getLastSessionCrashReport().thenApply(afterCallback).thenApply(afterCallback);
+        ArgumentCaptor<ErrorReport> errorReportCaptor = ArgumentCaptor.forClass(ErrorReport.class);
+        verify(afterCallback, times(2)).apply(errorReportCaptor.capture());
+        assertEquals(errorReportCaptor.getAllValues().get(0), errorReportCaptor.getAllValues().get(1));
+        ErrorReport result = errorReportCaptor.getValue();
+        assertNotNull(result);
+        assertEquals(errorLog.getId().toString(), result.getId());
+        assertEquals(errorLog.getErrorThreadName(), result.getThreadName());
+        assertEquals(new Date(tOffset - appLaunchTOffset), result.getAppStartTime());
+        assertEquals(new Date(tOffset), result.getAppErrorTime());
+        assertNotNull(result.getDevice());
+        assertEquals(throwable, result.getThrowable());
     }
 
     @Test
@@ -988,7 +979,8 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{lastErrorLogFile});
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
 
-        Crashes.getInstance().setLogSerializer(logSerializer);
+        Crashes crashes = Crashes.getInstance();
+        crashes.setLogSerializer(logSerializer);
 
         assertFalse(Crashes.hasCrashedInLastSession().get());
 
@@ -997,12 +989,13 @@ public class CrashesTest {
 
         /*
          * Last session error is only fetched upon initialization: enabled and channel ready.
-         * Here the service is enabled by default but we are waiting channel to be ready, simulate that.
+         * Here the service is disabled by default until started, we are waiting channel to be ready, simulate that.
          */
-        assertTrue(Crashes.isEnabled().get());
+        assertFalse(Crashes.isEnabled().get());
         assertNull(Crashes.getLastSessionCrashReport().get());
-        Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
-
+        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarted(mock(Context.class), "", mock(Channel.class));
+        assertTrue(Crashes.isEnabled().get());
         assertFalse(Crashes.hasCrashedInLastSession().get());
         assertNull(Crashes.getLastSessionCrashReport().get());
 
@@ -1040,49 +1033,6 @@ public class CrashesTest {
         Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession().get());
         verify(callback, times(2)).apply(null);
-    }
-
-    @Test
-    public void getLastSessionCrashReportInterrupted() throws Exception {
-        CountDownLatch latch = mock(CountDownLatch.class);
-        whenNew(CountDownLatch.class).withAnyArguments().thenReturn(latch);
-        doThrow(new InterruptedException()).when(latch).await();
-
-        mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(mock(File.class));
-        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
-
-        Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
-        verifyStatic();
-        MobileCenterLog.error(anyString(), anyString());
-
-        assertNull(Crashes.getLastSessionCrashReport());
-        verify(latch).await();
-        verifyStatic(times(2));
-        MobileCenterLog.debug(anyString(), anyString());
-        verifyStatic();
-        MobileCenterLog.debug(anyString(), anyString(), any(InterruptedException.class));
-    }
-
-    @Test
-    public void hasLastSessionCrashReportWhileProcessing() throws Exception {
-        CountDownLatch latch = mock(CountDownLatch.class);
-        when(latch.getCount()).thenReturn(1L);
-        whenNew(CountDownLatch.class).withAnyArguments().thenReturn(latch);
-
-        mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(mock(File.class));
-        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenAnswer(new Answer<String>() {
-
-            @Override
-            public String answer(InvocationOnMock invocation) throws Throwable {
-                assertTrue(Crashes.hasCrashedInLastSession().get());
-                return "";
-            }
-        });
-
-        Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
     }
 
     @Test
