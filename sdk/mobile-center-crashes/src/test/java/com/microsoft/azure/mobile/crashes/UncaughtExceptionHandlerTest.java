@@ -1,17 +1,19 @@
 package com.microsoft.azure.mobile.crashes;
 
-import android.app.Application;
 import android.content.Context;
 import android.os.SystemClock;
 
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.MobileCenterHandler;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.ShutdownHelper;
+import com.microsoft.azure.mobile.utils.async.SimpleFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.json.JSONException;
@@ -43,13 +45,14 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
-@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, MobileCenterLog.class})
+@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, MobileCenterLog.class, MobileCenter.class, HandlerUtils.class})
 public class UncaughtExceptionHandlerTest {
 
     private static final String CRASHES_ENABLED_KEY = KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
@@ -62,8 +65,9 @@ public class UncaughtExceptionHandlerTest {
     private UncaughtExceptionHandler mExceptionHandler;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         Crashes.unsetInstance();
+        mockStatic(MobileCenter.class);
         mockStatic(MobileCenterLog.class);
         mockStatic(SystemClock.class);
         mockStatic(StorageHelper.PreferencesStorage.class);
@@ -72,11 +76,15 @@ public class UncaughtExceptionHandlerTest {
         mockStatic(DeviceInfoHelper.class);
         mockStatic(System.class);
 
-        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(true);
+        @SuppressWarnings("unchecked")
+        SimpleFuture<Boolean> future = (SimpleFuture<Boolean>) mock(SimpleFuture.class);
+        when(MobileCenter.isEnabled()).thenReturn(future);
+        when(future.get()).thenReturn(true);
         when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
         PowerMockito.doAnswer(new Answer<Object>() {
+
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
 
@@ -90,17 +98,31 @@ public class UncaughtExceptionHandlerTest {
 
         ManagedErrorLog errorLogMock = mock(ManagedErrorLog.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(new File("."));
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean()))
                 .thenReturn(errorLogMock);
 
         when(errorLogMock.getId()).thenReturn(UUID.randomUUID());
 
-
         mDefaultExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(mDefaultExceptionHandler);
         mExceptionHandler = new UncaughtExceptionHandler();
 
-        MobileCenter.configure(mock(Application.class), "dummy");
+        /* Mock handlers. */
+        mockStatic(HandlerUtils.class);
+        Answer<Void> runNow = new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                ((Runnable) invocation.getArguments()[0]).run();
+                return null;
+            }
+        };
+        doAnswer(runNow).when(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
+        MobileCenterHandler handler = mock(MobileCenterHandler.class);
+        Crashes.getInstance().onStarting(handler);
+        doAnswer(runNow).when(handler).post(any(Runnable.class), any(Runnable.class));
     }
 
     @Test
@@ -159,7 +181,7 @@ public class UncaughtExceptionHandlerTest {
     @Test
     public void passDefaultHandler() {
         /* Verify that when crashes is disabled, an exception is instantly passed on */
-        when(Crashes.isEnabled()).thenReturn(false);
+        when(Crashes.isEnabled().get()).thenReturn(false);
 
         mExceptionHandler.register();
         mExceptionHandler.setIgnoreDefaultExceptionHandler(false);
@@ -175,7 +197,7 @@ public class UncaughtExceptionHandlerTest {
     @Test
     public void crashesDisabledNoDefaultHandler() {
         /* Verify that when crashes is disabled, an exception is instantly passed on */
-        when(Crashes.isEnabled()).thenReturn(false);
+        when(Crashes.isEnabled().get()).thenReturn(false);
 
         mExceptionHandler.register();
         mExceptionHandler.setIgnoreDefaultExceptionHandler(true);

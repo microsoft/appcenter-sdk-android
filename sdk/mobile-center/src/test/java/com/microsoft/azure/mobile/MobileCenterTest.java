@@ -15,7 +15,6 @@ import com.microsoft.azure.mobile.ingestion.models.StartServiceLog;
 import com.microsoft.azure.mobile.ingestion.models.WrapperSdk;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
-import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.ShutdownHelper;
@@ -83,8 +82,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         DeviceInfoHelper.class,
         Thread.class,
         ShutdownHelper.class,
-        CustomProperties.class,
-        HandlerUtils.class
+        CustomProperties.class
 })
 public class MobileCenterTest {
 
@@ -132,20 +130,16 @@ public class MobileCenterTest {
         mockStatic(DeviceInfoHelper.class);
 
         /* Mock handlers. */
-        mockStatic(HandlerUtils.class);
-        Answer<Void> runNow = new Answer<Void>() {
+        Handler handler = mock(Handler.class);
+        whenNew(Handler.class).withAnyArguments().thenReturn(handler);
+        doAnswer(new Answer<Void>() {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 ((Runnable) invocation.getArguments()[0]).run();
                 return null;
             }
-        };
-        doAnswer(runNow).when(HandlerUtils.class);
-        HandlerUtils.runOnUiThread(any(Runnable.class));
-        Handler handler = mock(Handler.class);
-        whenNew(Handler.class).withAnyArguments().thenReturn(handler);
-        doAnswer(runNow).when(handler).post(any(Runnable.class));
+        }).when(handler).post(any(Runnable.class));
         HandlerThread handlerThread = mock(HandlerThread.class);
         whenNew(HandlerThread.class).withAnyArguments().thenReturn(handlerThread);
         when(handlerThread.getLooper()).thenReturn(mock(Looper.class));

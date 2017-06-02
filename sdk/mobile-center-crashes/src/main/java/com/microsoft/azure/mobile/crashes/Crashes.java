@@ -293,6 +293,8 @@ public class Crashes extends AbstractMobileCenterService {
         mContext = context;
         if (isInstanceEnabled()) {
             processPendingErrors();
+        } else {
+            initialize();
         }
     }
 

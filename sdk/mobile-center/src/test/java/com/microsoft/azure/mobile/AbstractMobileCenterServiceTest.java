@@ -3,7 +3,6 @@ package com.microsoft.azure.mobile;
 import android.content.Context;
 
 import com.microsoft.azure.mobile.channel.Channel;
-import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.junit.Assert;
@@ -37,7 +36,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({StorageHelper.PreferencesStorage.class, MobileCenter.class, HandlerUtils.class})
+@PrepareForTest({StorageHelper.PreferencesStorage.class, MobileCenter.class})
 public class AbstractMobileCenterServiceTest {
 
     private static final String SERVICE_ENABLED_KEY = KEY_ENABLED + "_Test";
@@ -64,17 +63,6 @@ public class AbstractMobileCenterServiceTest {
             }
         };
         mockStatic(MobileCenter.class);
-        mockStatic(HandlerUtils.class);
-        Answer<Void> runNow = new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                ((Runnable) invocation.getArguments()[0]).run();
-                return null;
-            }
-        };
-        doAnswer(runNow).when(HandlerUtils.class);
-        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* First call to com.microsoft.azure.mobile.MobileCenter.isEnabled shall return true, initial state. */
         mockStatic(StorageHelper.PreferencesStorage.class);
