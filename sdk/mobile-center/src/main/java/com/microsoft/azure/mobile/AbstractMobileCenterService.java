@@ -70,28 +70,13 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      */
     protected synchronized SimpleFuture<Boolean> isInstanceEnabledAsync() {
         final DefaultSimpleFuture<Boolean> future = new DefaultSimpleFuture<>();
-        Runnable disabledRunnable = new Runnable() {
+        postAsyncGetter(new Runnable() {
 
             @Override
             public void run() {
-
-                /* Core or service disabled as the same runnable is used for both conditions. */
-                future.complete(false);
-            }
-        };
-        if (!post(new Runnable() {
-
-            @Override
-            public void run() {
-
-                /* If we reach this, the enabled check was already done. */
                 future.complete(true);
             }
-        }, disabledRunnable, disabledRunnable)) {
-
-            /* Core is not configured if we reach this. */
-            disabledRunnable.run();
-        }
+        }, future, false);
         return future;
     }
 
@@ -269,7 +254,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * @param serviceDisabledRunnable optional alternate command if this service is disabled.
      * @return false if core not configured (no handler ready yet), true otherwise.
      */
-    protected synchronized boolean post(final Runnable runnable, final Runnable coreDisabledRunnable, final Runnable serviceDisabledRunnable) {
+    private synchronized boolean post(final Runnable runnable, final Runnable coreDisabledRunnable, final Runnable serviceDisabledRunnable) {
         if (mHandler == null) {
             MobileCenterLog.error(LOG_TAG, getServiceName() + " needs to be started before it can be used.");
             return false;
@@ -288,6 +273,37 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
                 }
             }, coreDisabledRunnable);
             return true;
+        }
+    }
+
+    /**
+     * Helper method to handle getter methods in services.
+     *
+     * @param runnable        command to run if service is enabled.
+     * @param future          future to complete value if service if disabled.
+     * @param valueIfDisabled value to complete in future if service is disabled.
+     * @param <T>             getter value type.
+     */
+    protected synchronized <T> void postAsyncGetter(final Runnable runnable, final DefaultSimpleFuture<T> future, final T valueIfDisabled) {
+        Runnable disabledRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* Core or service disabled as the same runnable is used for both conditions. */
+                future.complete(valueIfDisabled);
+            }
+        };
+        if (!post(new Runnable() {
+
+            @Override
+            public void run() {
+                runnable.run();
+            }
+        }, disabledRunnable, disabledRunnable)) {
+
+            /* Core is not configured if we reach this. */
+            disabledRunnable.run();
         }
     }
 }

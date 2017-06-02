@@ -247,22 +247,13 @@ public class Crashes extends AbstractMobileCenterService {
      */
     private synchronized SimpleFuture<Boolean> hasInstanceCrashedInLastSession() {
         final DefaultSimpleFuture<Boolean> future = new DefaultSimpleFuture<>();
-        Runnable disabledRunnable = new Runnable() {
-
-            @Override
-            public void run() {
-                future.complete(false);
-            }
-        };
-        if (!post(new Runnable() {
+        postAsyncGetter(new Runnable() {
 
             @Override
             public void run() {
                 future.complete(mLastSessionErrorReport != null);
             }
-        }, disabledRunnable, disabledRunnable)) {
-            disabledRunnable.run();
-        }
+        }, future, false);
         return future;
     }
 
@@ -271,22 +262,13 @@ public class Crashes extends AbstractMobileCenterService {
      */
     private synchronized SimpleFuture<ErrorReport> getInstanceLastSessionCrashReport() {
         final DefaultSimpleFuture<ErrorReport> future = new DefaultSimpleFuture<>();
-        Runnable disabledRunnable = new Runnable() {
-
-            @Override
-            public void run() {
-                future.complete(null);
-            }
-        };
-        if (!post(new Runnable() {
+        postAsyncGetter(new Runnable() {
 
             @Override
             public void run() {
                 future.complete(mLastSessionErrorReport);
             }
-        }, disabledRunnable, disabledRunnable)) {
-            disabledRunnable.run();
-        }
+        }, future, null);
         return future;
     }
 
