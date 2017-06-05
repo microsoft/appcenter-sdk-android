@@ -8,7 +8,6 @@ import android.os.Looper;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.ingestion.models.Device;
 import com.microsoft.azure.mobile.ingestion.models.Log;
-import com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.IdHelper;

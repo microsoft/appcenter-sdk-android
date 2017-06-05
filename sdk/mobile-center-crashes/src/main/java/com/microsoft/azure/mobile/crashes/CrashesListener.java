@@ -37,7 +37,6 @@ public interface CrashesListener {
      * @param report The crash report for additional information.
      * @return {@link Iterable<ErrorAttachmentLog>} instances of ErrorAttachmentLog to be sent as separate logs.
      */
-
     @WorkerThread
     Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report);
 

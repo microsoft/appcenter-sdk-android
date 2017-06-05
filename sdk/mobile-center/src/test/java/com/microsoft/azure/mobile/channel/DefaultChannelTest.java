@@ -13,7 +13,6 @@ import com.microsoft.azure.mobile.ingestion.IngestionHttp;
 import com.microsoft.azure.mobile.ingestion.models.Device;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.LogContainer;
-import com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync;
 import com.microsoft.azure.mobile.persistence.Persistence;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
@@ -61,7 +60,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @Test
     public void invalidGroup() throws Persistence.PersistenceException {
         Persistence persistence = mock(Persistence.class);
-        Channel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(Ingestion.class));
+        Channel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(Ingestion.class), );
 
         /* Enqueue a log before group is registered = failure. */
         Log log = mock(Log.class);
@@ -86,7 +85,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
         /* Enqueuing 49 events. */
@@ -203,7 +202,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         });
 
         /* Init channel with mocks. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
         /* Enqueue enough logs to be split in N + 1 maximum requests. */
@@ -255,7 +254,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         });
 
         /* Init channel with mocks. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
         /* Enqueue enough logs to be split in N + 1 maximum requests. */
@@ -301,7 +300,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 .then(getGetLogsAnswer(20));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException())).then(getSendAsyncAnswer());
 
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
         /* Enqueuing 50 events. */
@@ -382,7 +381,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 .then(getGetLogsAnswer(20));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(403))).then(getSendAsyncAnswer());
 
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
         /* Enqueuing 50 events. */
@@ -461,7 +460,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
         /* Enqueuing 2 error logs. */
@@ -501,7 +500,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer(1));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException())).then(getSendAsyncAnswer());
 
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
         /* Enqueuing n errors. */
@@ -549,7 +548,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @Test
     public void errorLogDiscarded() {
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(Ingestion.class));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(Ingestion.class), );
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
         channel.setEnabled(false);
@@ -584,7 +583,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 /* Simulate mockIngestion failure for the third batch. */
                 .then(getSendAsyncAnswer(new HttpException(404)));
 
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
         /* 30 from countLogs and 10 new logs from getLogs. */
@@ -619,7 +618,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 /* Simulate mockIngestion failure for the third batch. */
                 .then(getSendAsyncAnswer(new SocketException()));
 
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
         assertFalse(channel.isEnabled());
@@ -633,7 +632,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         doThrow(new Persistence.PersistenceException("mock", new IOException("mock"))).
                 when(mockPersistence).putLog(anyString(), any(Log.class));
         IngestionHttp mockIngestion = mock(IngestionHttp.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
         /* Verify no request is sent if Persistence fails. */
@@ -656,7 +655,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         doThrow(new IOException()).when(ingestion).close();
         Persistence persistence = mock(Persistence.class);
         when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(1));
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, );
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
         channel.enqueue(mock(Log.class), TEST_GROUP);
         verify(mHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
@@ -682,7 +681,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     public void disableBeforeCheckingPendingLogs() throws IOException {
         Ingestion ingestion = mock(Ingestion.class);
         Persistence persistence = mock(Persistence.class);
-        final DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion);
+        final DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, );
         when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(1));
         when(ingestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).thenAnswer(new Answer<Void>() {
             @Override
@@ -710,7 +709,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @SuppressWarnings("unchecked")
     public void setLogUrl() {
         Ingestion ingestion = mock(Ingestion.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), ingestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), ingestion, );
         String logUrl = "http://mockUrl";
         channel.setLogUrl(logUrl);
         verify(ingestion).setLogUrl(logUrl);
@@ -725,7 +724,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Persistence persistence = mock(Persistence.class);
         when(persistence.countLogs(anyString())).thenReturn(3);
         when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(3));
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, );
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
         verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         assertEquals(3, channel.getCounter(TEST_GROUP));
@@ -745,7 +744,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Persistence persistence = mock(Persistence.class);
         when(persistence.countLogs(anyString())).thenReturn(103);
         when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(50)).thenAnswer(getGetLogsAnswer(50)).thenAnswer(getGetLogsAnswer(3));
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, );
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
         verify(ingestion, times(2)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         assertEquals(3, channel.getCounter(TEST_GROUP));
@@ -765,7 +764,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Persistence persistence = mock(Persistence.class);
         when(persistence.countLogs(anyString())).thenReturn(3);
         when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(3));
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, );
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
         assertEquals(3, channel.getCounter(TEST_GROUP));
         verify(mHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
@@ -782,7 +781,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     public void listener() throws Persistence.PersistenceException {
 
         @SuppressWarnings("ConstantConditions")
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mock(Persistence.class), mock(IngestionHttp.class));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mock(Persistence.class), mock(IngestionHttp.class), );
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
         Channel.Listener listener = mock(Channel.Listener.class);
         channel.addListener(listener);
@@ -804,7 +803,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new PackageManager.NameNotFoundException()));
         Persistence persistence = mock(Persistence.class);
         @SuppressWarnings("ConstantConditions")
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, mock(IngestionHttp.class));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, mock(IngestionHttp.class), );
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
         Channel.Listener listener = mock(Channel.Listener.class);
         channel.addListener(listener);
@@ -826,7 +825,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         doThrow(new IOException()).when(ingestion).close();
         Persistence persistence = mock(Persistence.class);
         when(persistence.countLogs(anyString())).thenReturn(2);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, );
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
         verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         assertEquals(2, channel.getCounter(TEST_GROUP));
@@ -849,13 +848,13 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockPersistence.getLogs(eq(TEST_GROUP), anyInt(), any(ArrayList.class)))
                 .then(getGetLogsAnswer(1))
                 /* Logs from here will be used TEST_GROUP to clear pending states. */
-                .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE))
-                .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE - 1))
+                .then(getGetLogsAnswer(MobileCenter.CLEAR_BATCH_SIZE))
+                .then(getGetLogsAnswer(MobileCenter.CLEAR_BATCH_SIZE - 1))
                 /* Logs from here will be used another group to skip callbacks. */
-                .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE));
+                .then(getGetLogsAnswer(MobileCenter.CLEAR_BATCH_SIZE));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(403)));
 
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
         channel.addGroup(TEST_GROUP + "2", 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
@@ -863,8 +862,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.enqueue(mock(Log.class), TEST_GROUP);
 
         /* Verify callbacks invoked (1 + DefaultChannel.CLEAR_BATCH_SIZE + DefaultChannel.CLEAR_BATCH_SIZE - 1) times. */
-        verify(mockListener, times(DefaultChannel.CLEAR_BATCH_SIZE * 2)).onBeforeSending(any(Log.class));
-        verify(mockListener, times(DefaultChannel.CLEAR_BATCH_SIZE * 2)).onFailure(any(Log.class), any(Exception.class));
+        verify(mockListener, times(MobileCenter.CLEAR_BATCH_SIZE * 2)).onBeforeSending(any(Log.class));
+        verify(mockListener, times(MobileCenter.CLEAR_BATCH_SIZE * 2)).onFailure(any(Log.class), any(Exception.class));
 
         /* Verify logs were deleted. */
         verify(mockPersistence).deleteLogs(TEST_GROUP);
@@ -883,12 +882,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockPersistence.getLogs(eq(TEST_GROUP), anyInt(), any(ArrayList.class)))
                 .then(getGetLogsAnswer(1))
                 .then(getGetLogsAnswer(1))
-                .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE));
+                .then(getGetLogsAnswer(MobileCenter.CLEAR_BATCH_SIZE));
 
         /* Make first call hang, and the second call return a fatal error. */
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).thenReturn(null).then(getSendAsyncAnswer(new HttpException(403)));
 
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 1, 1, MAX_PARALLEL_BATCHES, null);
         channel.addGroup(TEST_GROUP + "2", 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
@@ -917,7 +916,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 .then(getGetLogsAnswer(1));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(503)));
 
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
         channel.addGroup(TEST_GROUP + "2", 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
@@ -948,7 +947,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockPersistence.getLogs(any(String.class), anyInt(), Matchers.<List<Log>>any()))
                 .then(getGetLogsAnswer(1));
 
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
          /* Enqueuing 1 event. */
@@ -958,7 +957,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.shutdown();
         verify(mockListener, never()).onFailure(any(Log.class), any(Exception.class));
         verify(mockPersistence).clearPendingLogState();
-        verify(mockPersistenceAsync).waitForCurrentTasksToComplete(DefaultChannel.SHUTDOWN_TIMEOUT);
+        verify(mockPersistenceAsync).waitForCurrentTasksToComplete(MobileCenter.SHUTDOWN_TIMEOUT);
     }
 
     @Test
@@ -973,7 +972,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 .then(getGetLogsAnswer(1));
         doThrow(new InterruptedException()).when(mockPersistenceAsync).waitForCurrentTasksToComplete(anyLong());
 
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, );
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
 
          /* Enqueuing 1 event. */
@@ -983,7 +982,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.shutdown();
         verify(mockListener, never()).onFailure(any(Log.class), any(Exception.class));
         verify(mockPersistence).clearPendingLogState();
-        verify(mockPersistenceAsync).waitForCurrentTasksToComplete(DefaultChannel.SHUTDOWN_TIMEOUT);
+        verify(mockPersistenceAsync).waitForCurrentTasksToComplete(MobileCenter.SHUTDOWN_TIMEOUT);
 
         verifyStatic();
         MobileCenterLog.warn(eq(MobileCenterLog.LOG_TAG), anyString(), argThat(new ArgumentMatcher<Throwable>() {

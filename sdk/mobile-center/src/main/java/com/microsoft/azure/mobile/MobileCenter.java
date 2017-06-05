@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
@@ -56,6 +58,12 @@ public class MobileCenter {
      */
     @VisibleForTesting
     static final String CORE_GROUP = "group_core";
+
+    /**
+     * Shutdown timeout in millis.
+     */
+    @VisibleForTesting
+    static final int SHUTDOWN_TIMEOUT = 5000;
 
     /**
      * Shared instance.
@@ -438,7 +446,7 @@ public class MobileCenter {
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
         mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer);
+        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
         mChannel.setEnabled(enabled);
         mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null);
         if (mLogUrl != null) {
@@ -698,8 +706,26 @@ public class MobileCenter {
             if (isInstanceEnabled()) {
 
                 /* Wait channel to finish saving other logs in background. */
-                if (mChannel != null)
-                    mChannel.shutdown();
+                final Semaphore semaphore = new Semaphore(0);
+                if (mHandler != null)
+                    mHandler.post(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            if (mChannel != null) {
+                                mChannel.shutdown();
+                            }
+                            MobileCenterLog.debug(LOG_TAG, "Channel completed shutdown.");
+                            semaphore.release();
+                        }
+                    });
+                try {
+                    if (!semaphore.tryAcquire(SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS)) {
+                        MobileCenterLog.error(LOG_TAG, "Timeout waiting for looper tasks to complete.");
+                    }
+                } catch (InterruptedException e) {
+                    MobileCenterLog.warn(LOG_TAG, "Interrupted while waiting looper to flush.", e);
+                }
             }
             if (mDefaultUncaughtExceptionHandler != null) {
                 mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
