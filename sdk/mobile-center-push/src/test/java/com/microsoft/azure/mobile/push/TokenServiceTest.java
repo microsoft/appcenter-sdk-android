@@ -1,10 +1,6 @@
 package com.microsoft.azure.mobile.push;
 
 import com.google.firebase.iid.FirebaseInstanceId;
-import com.microsoft.azure.mobile.MobileCenter;
-import com.microsoft.azure.mobile.push.ingestion.models.PushInstallationLog;
-import com.microsoft.azure.mobile.utils.MobileCenterLog;
-import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -13,7 +9,6 @@ import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
