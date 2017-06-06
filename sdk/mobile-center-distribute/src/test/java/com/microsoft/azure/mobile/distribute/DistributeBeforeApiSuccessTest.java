@@ -8,7 +8,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
-import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.http.HttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.HttpException;
@@ -85,7 +84,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     private void testDistributeInactive() throws Exception {
 
         /* Check browser not opened. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verifyStatic(never());
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
@@ -132,7 +131,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Store token before start, start in background, no storage access. */
         Distribute.getInstance().storeUpdateToken("some token", "r");
-        Distribute.getInstance().onStarted(mContext, "", mock(Channel.class));
+        start();
         verifyStatic(never());
         PreferencesStorage.putString(anyString(), anyString());
         verifyStatic(never());
@@ -158,7 +157,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Check browser not opened if no network. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic(never());
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
@@ -188,7 +187,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
 
         /* Start and resume: open browser. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
         String url = DistributeConstants.DEFAULT_INSTALL_URL;
@@ -293,7 +292,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
 
         /* Start and resume: open browser. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
         String url = "http://mock";
@@ -326,7 +325,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(mPackageManager.getPackageInfo("com.contoso", 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify only tried once. */
@@ -345,7 +344,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Start and resume: open browser. */
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
         String url = DistributeConstants.DEFAULT_INSTALL_URL;
@@ -360,7 +359,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Disable. */
         Distribute.setEnabled(false);
-        assertFalse(Distribute.isEnabled());
+        assertFalse(Distribute.isEnabled().get());
 
         /* Store token. */
         Distribute.getInstance().storeUpdateToken("some token", requestId.toString());
@@ -377,7 +376,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Since after disabling once, the request id was deleted we can enable/disable it will also ignore the request. */
         Distribute.setEnabled(true);
-        assertTrue(Distribute.isEnabled());
+        assertTrue(Distribute.isEnabled().get());
 
         /* Store token. */
         Distribute.getInstance().storeUpdateToken("some token", requestId.toString());
@@ -400,7 +399,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* The call is only triggered when app is resumed. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         verify(httpClient, never()).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -434,7 +433,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
@@ -512,7 +511,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(ReleaseDetails.parse(anyString())).thenThrow(new JSONException("mock"));
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
@@ -555,7 +554,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
@@ -607,7 +606,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
@@ -643,7 +642,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 

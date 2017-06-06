@@ -14,7 +14,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
 
-import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.http.HttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.ServiceCall;
@@ -185,7 +184,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         when(releaseDetails.isMandatoryUpdate()).thenReturn(mandatoryUpdate);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         mockStatic(AsyncTaskUtils.class);
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Mock download asyncTask. */

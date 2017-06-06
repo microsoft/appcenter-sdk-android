@@ -3,7 +3,6 @@ package com.microsoft.azure.mobile.distribute;
 import android.app.Activity;
 import android.content.DialogInterface;
 
-import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.http.HttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.ServiceCall;
@@ -52,8 +51,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         ReleaseDetails details = mockForCustomizationTest(false);
 
         /* Start Distribute service. */
-        Distribute.unsetInstance();
-        Distribute.getInstance().onStarted(mContext, "", mock(Channel.class));
+        restartProcessAndSdk();
 
         /* Resume with another activity. */
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
@@ -100,7 +98,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         int getStoredDownloadStateCounter = 0;
 
         /* Start Distribute service. */
-        distribute.onStarted(mContext, "", mock(Channel.class));
+        start();
         distribute.onActivityResumed(mActivity);
 
         /* Verify the method is called by onActivityCreated. */
@@ -169,7 +167,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         int getStoredDownloadStateCounter = 0;
 
         /* Start Distribute service. */
-        distribute.onStarted(mContext, "", mock(Channel.class));
+        start();
         distribute.onActivityResumed(mActivity);
 
         /* Verify the method is called by onActivityCreated. */
@@ -238,7 +236,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
-        distribute.onStarted(mContext, "", mock(Channel.class));
+        start();
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */
@@ -267,7 +265,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
-        distribute.onStarted(mContext, "", mock(Channel.class));
+        start();
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */
@@ -296,7 +294,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
-        distribute.onStarted(mContext, "", mock(Channel.class));
+        start();
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */
@@ -326,7 +324,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
-        distribute.onStarted(mContext, "", mock(Channel.class));
+        start();
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */
@@ -355,7 +353,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
 
         /* Start Distribute service. */
-        Distribute.getInstance().onStarted(mContext, "", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Call handleUpdateAction with invalid user action. */
@@ -382,7 +380,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
-        distribute.onStarted(mContext, "", mock(Channel.class));
+        start();
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */

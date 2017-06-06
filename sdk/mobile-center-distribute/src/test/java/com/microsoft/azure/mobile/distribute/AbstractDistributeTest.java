@@ -11,12 +11,14 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.MobileCenterHandler;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.HashUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
+import com.microsoft.azure.mobile.utils.async.SimpleFuture;
 import com.microsoft.azure.mobile.utils.crypto.CryptoUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
@@ -88,6 +90,12 @@ public class AbstractDistributeTest {
     @Mock
     CryptoUtils mCryptoUtils;
 
+    @Mock
+    MobileCenterHandler mMobileCenterHandler;
+
+    @Mock
+    private SimpleFuture<Boolean> mBooleanSimpleFuture;
+
     @Before
     @SuppressLint("ShowToast")
     @SuppressWarnings("ResourceType")
@@ -95,7 +103,16 @@ public class AbstractDistributeTest {
         Distribute.unsetInstance();
         mockStatic(MobileCenterLog.class);
         mockStatic(MobileCenter.class);
-        when(MobileCenter.isEnabled()).thenReturn(true);
+        when(MobileCenter.isEnabled()).thenReturn(mBooleanSimpleFuture);
+        when(mBooleanSimpleFuture.get()).thenReturn(true);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                ((Runnable) invocation.getArguments()[0]).run();
+                return null;
+            }
+        }).when(mMobileCenterHandler).post(any(Runnable.class), any(Runnable.class));
 
         /* First call to com.microsoft.azure.mobile.MobileCenter.isEnabled shall return true, initial state. */
         mockStatic(PreferencesStorage.class);
@@ -216,6 +233,11 @@ public class AbstractDistributeTest {
 
     void restartProcessAndSdk() {
         Distribute.unsetInstance();
+        start();
+    }
+
+    void start() {
+        Distribute.getInstance().onStarting(mMobileCenterHandler);
         Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
     }
 }
