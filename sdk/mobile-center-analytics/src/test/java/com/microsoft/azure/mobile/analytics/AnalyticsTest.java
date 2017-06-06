@@ -373,6 +373,8 @@ public class AnalyticsTest {
 
         Analytics.trackEvent("test");
         Analytics.trackPage("test");
+        analytics.onActivityResumed(new Activity());
+        analytics.onActivityPaused(new Activity());
         verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
         /* Enable back, testing double calls. */
@@ -389,6 +391,8 @@ public class AnalyticsTest {
         assertFalse(Analytics.isEnabled().get());
         Analytics.trackEvent("test");
         Analytics.trackPage("test");
+        analytics.onActivityResumed(new Activity());
+        analytics.onActivityPaused(new Activity());
 
         /* No more log enqueued. */
         verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
