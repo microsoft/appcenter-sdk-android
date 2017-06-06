@@ -676,27 +676,23 @@ public class CrashesTest {
 
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(EXCEPTION);
 
-        Crashes.setListener(new AbstractCrashesListener() {
-            @Override
-            public void onBeforeSending(ErrorReport report) {
-                assertErrorEquals(mErrorLog, report);
-            }
+        CrashesListener crashesListener = mock(CrashesListener.class);
+        Crashes.setListener(crashesListener);
+        Crashes crashes = Crashes.getInstance();
+        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
-            @Override
-            public void onSendingSucceeded(ErrorReport report) {
-                assertErrorEquals(mErrorLog, report);
-            }
-
-            @Override
-            public void onSendingFailed(ErrorReport report, Exception e) {
-                assertErrorEquals(mErrorLog, report);
-            }
-        });
-
-        Channel.GroupListener listener = Crashes.getInstance().getChannelListener();
-        listener.onBeforeSending(mErrorLog);
-        listener.onSuccess(mErrorLog);
-        listener.onFailure(mErrorLog, EXCEPTION);
+        ArgumentCaptor<ErrorReport> errorReportCaptor = ArgumentCaptor.forClass(ErrorReport.class);
+        Channel.GroupListener channelListener = crashes.getChannelListener();
+        channelListener.onBeforeSending(mErrorLog);
+        verify(crashesListener).onBeforeSending(errorReportCaptor.capture());
+        assertErrorEquals(mErrorLog, errorReportCaptor.getValue());
+        channelListener.onSuccess(mErrorLog);
+        verify(crashesListener).onSendingSucceeded(errorReportCaptor.capture());
+        assertErrorEquals(mErrorLog, errorReportCaptor.getValue());
+        channelListener.onFailure(mErrorLog, EXCEPTION);
+        verify(crashesListener).onSendingFailed(errorReportCaptor.capture(), eq(EXCEPTION));
+        assertErrorEquals(mErrorLog, errorReportCaptor.getValue());
     }
 
     @Test
