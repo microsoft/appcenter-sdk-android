@@ -313,7 +313,6 @@ public class Distribute extends AbstractMobileCenterService {
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
-        super.onStarted(context, appSecret, channel);
         mContext = context;
         mAppSecret = appSecret;
         try {
@@ -321,6 +320,7 @@ public class Distribute extends AbstractMobileCenterService {
         } catch (PackageManager.NameNotFoundException e) {
             MobileCenterLog.error(LOG_TAG, "Could not get self package info.", e);
         }
+        super.onStarted(context, appSecret, channel);
     }
 
     /**
