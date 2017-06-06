@@ -322,6 +322,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute.unsetInstance();
         Distribute.setListener(listener);
         Distribute distribute = spy(Distribute.getInstance());
+        Distribute.setInstance(distribute);
 
         /* Start Distribute service. */
         start();
@@ -329,7 +330,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Call handleUpdateAction. */
         when(InstallerUtils.isUnknownSourcesEnabled(mActivity)).thenReturn(true);
-        distribute.handleUpdateAction(UpdateAction.UPDATE);
+        Distribute.notifyUpdateAction(UpdateAction.UPDATE);
 
         /* Verify UPDATE has been processed. */
         verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));

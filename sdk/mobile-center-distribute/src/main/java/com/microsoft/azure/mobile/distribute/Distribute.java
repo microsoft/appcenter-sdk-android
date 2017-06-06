@@ -235,6 +235,11 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     @VisibleForTesting
+    static synchronized void setInstance(Distribute distribute) {
+        sInstance = distribute;
+    }
+
+    @VisibleForTesting
     static synchronized void unsetInstance() {
         sInstance = null;
     }
