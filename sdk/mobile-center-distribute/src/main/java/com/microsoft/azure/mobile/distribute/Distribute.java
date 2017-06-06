@@ -235,11 +235,6 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     @VisibleForTesting
-    static synchronized void setInstance(Distribute distribute) {
-        sInstance = distribute;
-    }
-
-    @VisibleForTesting
     static synchronized void unsetInstance() {
         sInstance = null;
     }
@@ -397,7 +392,7 @@ public class Distribute extends AbstractMobileCenterService {
      */
     @VisibleForTesting
     synchronized void handleUpdateAction(final int updateAction) {
-        isEnabled().thenApply(new SimpleFunction<Boolean>() {
+        isInstanceEnabledAsync().thenApply(new SimpleFunction<Boolean>() {
 
             @Override
             public void apply(Boolean enabled) {

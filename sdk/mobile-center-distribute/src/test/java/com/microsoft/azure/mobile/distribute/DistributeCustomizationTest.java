@@ -3,6 +3,7 @@ package com.microsoft.azure.mobile.distribute;
 import android.app.Activity;
 import android.content.DialogInterface;
 
+import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.http.HttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.ServiceCall;
@@ -43,6 +44,11 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @SuppressWarnings("unused")
 @PrepareForTest(DistributeUtils.class)
 public class DistributeCustomizationTest extends AbstractDistributeTest {
+
+    private void start(Distribute distribute) {
+        distribute.onStarting(mMobileCenterHandler);
+        distribute.onStarted(mContext, "a", mock(Channel.class));
+    }
 
     @Test
     public void distributeListener() throws Exception {
@@ -98,7 +104,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         int getStoredDownloadStateCounter = 0;
 
         /* Start Distribute service. */
-        start();
+        start(distribute);
         distribute.onActivityResumed(mActivity);
 
         /* Verify the method is called by onActivityCreated. */
@@ -167,7 +173,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         int getStoredDownloadStateCounter = 0;
 
         /* Start Distribute service. */
-        start();
+        start(distribute);
         distribute.onActivityResumed(mActivity);
 
         /* Verify the method is called by onActivityCreated. */
@@ -236,7 +242,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
-        start();
+        start(distribute);
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */
@@ -265,7 +271,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
-        start();
+        start(distribute);
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */
@@ -294,7 +300,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
-        start();
+        start(distribute);
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */
@@ -322,15 +328,14 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute.unsetInstance();
         Distribute.setListener(listener);
         Distribute distribute = spy(Distribute.getInstance());
-        Distribute.setInstance(distribute);
 
         /* Start Distribute service. */
-        start();
+        start(distribute);
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */
         when(InstallerUtils.isUnknownSourcesEnabled(mActivity)).thenReturn(true);
-        Distribute.notifyUpdateAction(UpdateAction.UPDATE);
+        distribute.handleUpdateAction(UpdateAction.UPDATE);
 
         /* Verify UPDATE has been processed. */
         verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
@@ -381,7 +386,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute distribute = spy(Distribute.getInstance());
 
         /* Start Distribute service. */
-        start();
+        start(distribute);
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */
