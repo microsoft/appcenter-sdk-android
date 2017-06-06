@@ -41,7 +41,6 @@ import java.util.Set;
 
 import static com.microsoft.azure.mobile.MobileCenter.CORE_GROUP;
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
-import static com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync.THREAD_NAME;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
@@ -453,22 +452,6 @@ public class MobileCenterTest {
 
     @Test
     public void enableTest() throws Exception {
-
-        /* Mock handler for asynchronous persistence */
-        HandlerThread mockHandlerThread = PowerMockito.mock(HandlerThread.class);
-        Looper mockLooper = PowerMockito.mock(Looper.class);
-        whenNew(HandlerThread.class).withArguments(THREAD_NAME).thenReturn(mockHandlerThread);
-        when(mockHandlerThread.getLooper()).thenReturn(mockLooper);
-        Handler mockPersistenceHandler = PowerMockito.mock(Handler.class);
-        whenNew(Handler.class).withArguments(mockLooper).thenReturn(mockPersistenceHandler);
-        when(mockPersistenceHandler.post(any(Runnable.class))).then(new Answer<Boolean>() {
-
-            @Override
-            public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                ((Runnable) invocation.getArguments()[0]).run();
-                return true;
-            }
-        });
 
         /* Start MobileCenter SDK */
         MobileCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class, AnotherDummyService.class);

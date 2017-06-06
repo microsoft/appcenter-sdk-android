@@ -2,7 +2,6 @@ package com.microsoft.azure.mobile.channel;
 
 import android.content.Context;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.Looper;
 
 import com.microsoft.azure.mobile.http.ServiceCallback;
@@ -25,7 +24,6 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.ArrayList;
 
-import static com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync.THREAD_NAME;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -34,7 +32,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("WeakerAccess")
-@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, DatabasePersistenceAsync.class, MobileCenterLog.class, HandlerUtils.class})
+@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, MobileCenterLog.class, HandlerUtils.class})
 public class AbstractDefaultChannelTest {
 
     static final String TEST_GROUP = "group_test";
@@ -48,6 +46,9 @@ public class AbstractDefaultChannelTest {
 
     @Mock
     protected Handler mHandler;
+
+    @Mock
+    protected Handler mCoreHandler;
 
     static Answer<String> getGetLogsAnswer() {
         return getGetLogsAnswer(-1);
@@ -98,17 +99,8 @@ public class AbstractDefaultChannelTest {
         mockStatic(IdHelper.class, new Returns(UUIDUtils.randomUUID()));
         mockStatic(DeviceInfoHelper.class);
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mock(Device.class));
-        mHandler = mock(Handler.class);
         whenNew(Handler.class).withParameterTypes(Looper.class).withArguments(Looper.getMainLooper()).thenReturn(mHandler);
-
-        /* Mock handler for asynchronous Persistence */
-        HandlerThread mockHandlerThread = mock(HandlerThread.class);
-        Looper mockLooper = mock(Looper.class);
-        whenNew(HandlerThread.class).withArguments(THREAD_NAME).thenReturn(mockHandlerThread);
-        when(mockHandlerThread.getLooper()).thenReturn(mockLooper);
-        Handler mockPersistenceHandler = mock(Handler.class);
-        whenNew(Handler.class).withArguments(mockLooper).thenReturn(mockPersistenceHandler);
-        when(mockPersistenceHandler.post(any(Runnable.class))).then(new Answer<Boolean>() {
+        when(mCoreHandler.post(any(Runnable.class))).then(new Answer<Boolean>() {
 
             @Override
             public Boolean answer(InvocationOnMock invocation) throws Throwable {

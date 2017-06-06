@@ -554,19 +554,13 @@ public class DefaultChannel implements Channel {
      */
     private synchronized void checkPendingLogs(@NonNull String groupName) {
         GroupState groupState = mGroupStates.get(groupName);
-
-        /* The service can be disabled before checking pending logs at here. Prevent NullPointerException for the edge case. */
-        if (groupState != null) {
-            long pendingLogCount = groupState.mPendingLogCount;
-            MobileCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupName + ") pendingLogCount=" + pendingLogCount);
-            if (pendingLogCount >= groupState.mMaxLogsPerBatch)
-                triggerIngestion(groupName);
-            else if (pendingLogCount > 0 && !groupState.mScheduled) {
-                groupState.mScheduled = true;
-                mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
-            }
-        } else {
-            MobileCenterLog.info(LOG_TAG, "The service has been disabled. Stop processing logs.");
+        long pendingLogCount = groupState.mPendingLogCount;
+        MobileCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupName + ") pendingLogCount=" + pendingLogCount);
+        if (pendingLogCount >= groupState.mMaxLogsPerBatch)
+            triggerIngestion(groupName);
+        else if (pendingLogCount > 0 && !groupState.mScheduled) {
+            groupState.mScheduled = true;
+            mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
         }
     }
 
