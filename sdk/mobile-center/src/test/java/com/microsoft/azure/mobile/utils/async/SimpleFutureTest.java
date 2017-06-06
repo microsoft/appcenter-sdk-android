@@ -62,7 +62,7 @@ public class SimpleFutureTest {
     }
 
     @Test
-    public void completeTwiceIgnored() throws InterruptedException {
+    public void completeTwiceIgnored() {
         DefaultSimpleFuture<Integer> future = new DefaultSimpleFuture<>();
         future.complete(1);
         future.complete(2);
@@ -71,7 +71,7 @@ public class SimpleFutureTest {
 
     @Test
     @PrepareForTest(HandlerUtils.class)
-    public void multipleCallbacks() throws InterruptedException {
+    public void multipleCallbacks() {
         mockStatic(HandlerUtils.class);
         doAnswer(new Answer<Void>() {
 

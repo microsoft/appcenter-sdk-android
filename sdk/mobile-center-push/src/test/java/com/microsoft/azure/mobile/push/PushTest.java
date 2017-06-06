@@ -184,6 +184,21 @@ public class PushTest {
         /* Verify behavior happened only once. */
         verify(mFirebaseInstanceId).getToken();
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
+
+        /* Verify only once to disable Firebase. */
+        verifyStatic();
+        FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(false));
+        verifyStatic(never());
+        FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(true));
+
+        /* If disabled before start, still we must disable firebase. */
+        Push.unsetInstance();
+        push = Push.getInstance();
+        start(mock(Context.class), push, channel);
+        verifyStatic(times(2));
+        FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(false));
+        verifyStatic(never());
+        FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(true));
     }
 
     @Test

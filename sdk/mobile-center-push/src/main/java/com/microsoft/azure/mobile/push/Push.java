@@ -119,6 +119,7 @@ public class Push extends AbstractMobileCenterService {
     @VisibleForTesting
     static synchronized void unsetInstance() {
         sInstance = null;
+        sFirebaseAnalyticsEnabled = false;
     }
 
     /**
@@ -254,7 +255,7 @@ public class Push extends AbstractMobileCenterService {
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         super.onStarted(context, appSecret, channel);
-        if (isInstanceEnabled() && !sFirebaseAnalyticsEnabled) {
+        if (!sFirebaseAnalyticsEnabled) {
             MobileCenterLog.debug(LOG_TAG, "Disabling firebase analytics collection by default.");
             setFirebaseAnalyticsEnabled(context, false);
         }
