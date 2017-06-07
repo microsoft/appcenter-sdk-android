@@ -144,8 +144,8 @@ public class CrashesTest {
                 .perform(click());
 
         /* Check error report. */
-        assertTrue(Crashes.hasCrashedInLastSession());
-        ErrorReport errorReport = CrashesPrivateHelper.getLastSessionCrashReport();
+        assertTrue(GetHelper.hasCrashedInLastSession());
+        ErrorReport errorReport = GetHelper.getLastSessionCrashReport();
         assertNotNull(errorReport);
         assertNotNull(errorReport.getId());
         assertEquals(mContext.getMainLooper().getThread().getName(), errorReport.getThreadName());

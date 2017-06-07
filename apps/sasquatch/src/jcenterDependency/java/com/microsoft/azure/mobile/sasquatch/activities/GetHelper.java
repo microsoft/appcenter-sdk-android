@@ -11,6 +11,9 @@ import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.push.Push;
 
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicReference;
+
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.LOG_TAG;
 
 public class GetHelper {
@@ -35,6 +38,21 @@ public class GetHelper {
 
     public static boolean hasCrashedInLastSession() {
         return Crashes.hasCrashedInLastSession();
+    }
+
+    public static ErrorReport getLastSessionCrashReport() {
+        final Semaphore semaphore = new Semaphore(0);
+        final AtomicReference<ErrorReport> errorReport = new AtomicReference<>();
+        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
+
+            @Override
+            public void onResult(@Nullable ErrorReport data) {
+                errorReport.set(data);
+                semaphore.release();
+            }
+        });
+        semaphore.acquireUninterruptibly();
+        return errorReport.get();
     }
 
     static boolean isCoreEnabled() {

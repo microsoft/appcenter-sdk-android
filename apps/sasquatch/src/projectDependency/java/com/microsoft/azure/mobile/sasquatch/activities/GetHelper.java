@@ -44,6 +44,10 @@ public class GetHelper {
         return Crashes.hasCrashedInLastSession().get();
     }
 
+    public static ErrorReport getLastSessionCrashReport() {
+        return Crashes.getLastSessionCrashReport().get();
+    }
+
     static boolean isCoreEnabled() {
         return MobileCenter.isEnabled().get();
     }
