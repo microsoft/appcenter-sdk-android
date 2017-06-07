@@ -8,7 +8,7 @@ import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.push.Push;
-import com.microsoft.azure.mobile.utils.async.SimpleFunction;
+import com.microsoft.azure.mobile.utils.async.SimpleConsumer;
 
 import java.util.UUID;
 
@@ -19,7 +19,7 @@ public class GetHelper {
     static void testInstallIdAndLastSessionCrash() {
 
         /* Print install ID. */
-        MobileCenter.getInstallId().thenApply(new SimpleFunction<UUID>() {
+        MobileCenter.getInstallId().thenAccept(new SimpleConsumer<UUID>() {
 
             @Override
             public void apply(UUID uuid) {
@@ -29,7 +29,7 @@ public class GetHelper {
 
         /* Print last crash. */
         Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession().get());
-        Crashes.getLastSessionCrashReport().thenApply(new SimpleFunction<ErrorReport>() {
+        Crashes.getLastSessionCrashReport().thenAccept(new SimpleConsumer<ErrorReport>() {
 
             @Override
             public void apply(ErrorReport data) {

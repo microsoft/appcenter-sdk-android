@@ -12,7 +12,7 @@ import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
 import com.microsoft.azure.mobile.ingestion.models.Log;
-import com.microsoft.azure.mobile.utils.async.SimpleFunction;
+import com.microsoft.azure.mobile.utils.async.SimpleConsumer;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.junit.After;
@@ -178,7 +178,7 @@ public class CrashesAndroidTest {
         startFresh(crashesListener);
 
         /* Check last session error report. */
-        Crashes.getLastSessionCrashReport().thenApply(new SimpleFunction<ErrorReport>() {
+        Crashes.getLastSessionCrashReport().thenAccept(new SimpleConsumer<ErrorReport>() {
 
             @Override
             public void apply(ErrorReport errorReport) {
@@ -242,7 +242,7 @@ public class CrashesAndroidTest {
         assertNotNull(groupListener.get());
         groupListener.get().onSuccess(log.get());
 
-        Crashes.getLastSessionCrashReport().thenApply(new SimpleFunction<ErrorReport>() {
+        Crashes.getLastSessionCrashReport().thenAccept(new SimpleConsumer<ErrorReport>() {
 
             @Override
             public void apply(ErrorReport errorReport) {

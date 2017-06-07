@@ -7,13 +7,27 @@ import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Implementation of {@link SimpleFuture}.
+ *
+ * @param <T> result type.
+ */
 public class DefaultSimpleFuture<T> implements SimpleFuture<T> {
 
+    /**
+     * Lock used to wait or monitor result.
+     */
     private final CountDownLatch mLatch = new CountDownLatch(1);
 
+    /**
+     * Result
+     */
     private T mResult;
 
-    private Collection<SimpleFunction<T>> mFunctions;
+    /**
+     * Callbacks from thenAccept waiting for result
+     */
+    private Collection<SimpleConsumer<T>> mFunctions;
 
     @Override
     public T get() {
@@ -38,7 +52,7 @@ public class DefaultSimpleFuture<T> implements SimpleFuture<T> {
     }
 
     @Override
-    public synchronized SimpleFuture<T> thenApply(final SimpleFunction<T> function) {
+    public synchronized void thenAccept(final SimpleConsumer<T> function) {
         if (isDone()) {
             HandlerUtils.runOnUiThread(new Runnable() {
 
@@ -53,9 +67,11 @@ public class DefaultSimpleFuture<T> implements SimpleFuture<T> {
             }
             mFunctions.add(function);
         }
-        return this;
     }
 
+    /**
+     * Set result.
+     */
     public synchronized void complete(final T value) {
         if (!isDone()) {
             mResult = value;
@@ -67,7 +83,7 @@ public class DefaultSimpleFuture<T> implements SimpleFuture<T> {
                     public void run() {
 
                         /* No need to synchronize anymore as mFunctions cannot be modified anymore. */
-                        for (SimpleFunction<T> function : mFunctions) {
+                        for (SimpleConsumer<T> function : mFunctions) {
                             function.apply(value);
                         }
                         mFunctions = null;

@@ -85,13 +85,15 @@ public class SimpleFutureTest {
         DefaultSimpleFuture<Integer> future = new DefaultSimpleFuture<>();
 
         @SuppressWarnings("unchecked")
-        SimpleFunction<Integer> function = mock(SimpleFunction.class);
-        future.thenApply(function).thenApply(function);
+        SimpleConsumer<Integer> function = mock(SimpleConsumer.class);
+        future.thenAccept(function);
+        future.thenAccept(function);
         future.complete(1);
         verify(function, times(2)).apply(1);
 
         /* Works also after completion. */
-        future.thenApply(function).thenApply(function);
+        future.thenAccept(function);
+        future.thenAccept(function);
         verify(function, times(4)).apply(1);
     }
 }

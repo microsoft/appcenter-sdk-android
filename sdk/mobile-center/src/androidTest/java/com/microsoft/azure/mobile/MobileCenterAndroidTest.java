@@ -8,7 +8,7 @@ import android.util.Log;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
-import com.microsoft.azure.mobile.utils.async.SimpleFunction;
+import com.microsoft.azure.mobile.utils.async.SimpleConsumer;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.junit.Before;
@@ -48,7 +48,7 @@ public class MobileCenterAndroidTest {
         assertNotEquals(installId2, installId);
         final Semaphore lock = new Semaphore(0);
         final AtomicReference<UUID> asyncUUID = new AtomicReference<>();
-        MobileCenter.getInstallId().thenApply(new SimpleFunction<UUID>() {
+        MobileCenter.getInstallId().thenAccept(new SimpleConsumer<UUID>() {
 
             @Override
             public void apply(UUID uuid) {

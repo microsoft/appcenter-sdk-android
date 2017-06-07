@@ -24,7 +24,7 @@ import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
-import com.microsoft.azure.mobile.utils.async.SimpleFunction;
+import com.microsoft.azure.mobile.utils.async.SimpleConsumer;
 import com.microsoft.azure.mobile.utils.async.SimpleFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
@@ -936,8 +936,8 @@ public class CrashesTest {
         assertFalse(Crashes.hasCrashedInLastSession().get());
 
         @SuppressWarnings("unchecked")
-        SimpleFunction<ErrorReport> beforeCallback = (SimpleFunction<ErrorReport>) mock(SimpleFunction.class);
-        assertNull(Crashes.getLastSessionCrashReport().thenApply(beforeCallback).get());
+        SimpleConsumer<ErrorReport> beforeCallback = (SimpleConsumer<ErrorReport>) mock(SimpleConsumer.class);
+        Crashes.getLastSessionCrashReport().thenAccept(beforeCallback);
         verify(beforeCallback).apply(null);
 
         crashes.onStarting(mMobileCenterHandler);
@@ -946,8 +946,10 @@ public class CrashesTest {
         assertTrue(Crashes.hasCrashedInLastSession().get());
 
         @SuppressWarnings("unchecked")
-        SimpleFunction<ErrorReport> afterCallback = (SimpleFunction<ErrorReport>) mock(SimpleFunction.class);
-        Crashes.getLastSessionCrashReport().thenApply(afterCallback).thenApply(afterCallback);
+        SimpleConsumer<ErrorReport> afterCallback = (SimpleConsumer<ErrorReport>) mock(SimpleConsumer.class);
+        SimpleFuture<ErrorReport> future = Crashes.getLastSessionCrashReport();
+        future.thenAccept(afterCallback);
+        future.thenAccept(afterCallback);
         ArgumentCaptor<ErrorReport> errorReportCaptor = ArgumentCaptor.forClass(ErrorReport.class);
         verify(afterCallback, times(2)).apply(errorReportCaptor.capture());
         assertEquals(errorReportCaptor.getAllValues().get(0), errorReportCaptor.getAllValues().get(1));
@@ -1033,11 +1035,11 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
 
         @SuppressWarnings("unchecked")
-        SimpleFunction<ErrorReport> callback = (SimpleFunction<ErrorReport>) mock(SimpleFunction.class);
+        SimpleConsumer<ErrorReport> callback = (SimpleConsumer<ErrorReport>) mock(SimpleConsumer.class);
 
         /* Call twice for multiple callbacks before initialize. */
-        Crashes.getLastSessionCrashReport().thenApply(callback);
-        Crashes.getLastSessionCrashReport().thenApply(callback);
+        Crashes.getLastSessionCrashReport().thenAccept(callback);
+        Crashes.getLastSessionCrashReport().thenAccept(callback);
         Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession().get());
         verify(callback, times(2)).apply(null);

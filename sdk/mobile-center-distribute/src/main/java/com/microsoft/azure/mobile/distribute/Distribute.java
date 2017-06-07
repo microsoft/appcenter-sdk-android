@@ -41,7 +41,7 @@ import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
-import com.microsoft.azure.mobile.utils.async.SimpleFunction;
+import com.microsoft.azure.mobile.utils.async.SimpleConsumer;
 import com.microsoft.azure.mobile.utils.async.SimpleFuture;
 import com.microsoft.azure.mobile.utils.crypto.CryptoUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
@@ -392,7 +392,7 @@ public class Distribute extends AbstractMobileCenterService {
      */
     @VisibleForTesting
     synchronized void handleUpdateAction(final int updateAction) {
-        isInstanceEnabledAsync().thenApply(new SimpleFunction<Boolean>() {
+        isInstanceEnabledAsync().thenAccept(new SimpleConsumer<Boolean>() {
 
             @Override
             public void apply(Boolean enabled) {
