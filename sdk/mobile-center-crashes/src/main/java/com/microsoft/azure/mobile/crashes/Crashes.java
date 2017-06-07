@@ -80,6 +80,11 @@ public class Crashes extends AbstractMobileCenterService {
     public static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
+     * Max allowed attachments per crash.
+     */
+    private static final int MAX_ATTACHMENT_PER_CRASH = 2;
+
+    /**
      * Default crashes listener.
      */
     private static final CrashesListener DEFAULT_ERROR_REPORTING_LISTENER = new DefaultCrashesListener();
@@ -674,11 +679,13 @@ public class Crashes extends AbstractMobileCenterService {
         if (attachments == null) {
             MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachments returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
         } else {
+            int totalErrorAttachments = 0;
             for (ErrorAttachmentLog attachment : attachments) {
                 if (attachment != null) {
                     attachment.setId(UUID.randomUUID());
                     attachment.setErrorId(errorLogReport.log.getId());
                     if (attachment.isValid()) {
+                        ++totalErrorAttachments;
                         mChannel.enqueue(attachment, ERROR_GROUP);
                     } else {
                         MobileCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
@@ -686,6 +693,9 @@ public class Crashes extends AbstractMobileCenterService {
                 } else {
                     MobileCenterLog.warn(LOG_TAG, "Skipping null ErrorAttachmentLog in CrashesListener.getErrorAttachments.");
                 }
+            }
+            if (totalErrorAttachments > MAX_ATTACHMENT_PER_CRASH) {
+                MobileCenterLog.warn(LOG_TAG, "A limit of " + MAX_ATTACHMENT_PER_CRASH + " attachments per error report might be enforced by server.");
             }
         }
     }

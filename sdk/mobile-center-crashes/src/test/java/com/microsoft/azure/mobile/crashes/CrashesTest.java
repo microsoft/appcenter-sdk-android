@@ -3,6 +3,7 @@ package com.microsoft.azure.mobile.crashes;
 import android.content.Context;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
 
 import com.microsoft.azure.mobile.Constants;
 import com.microsoft.azure.mobile.MobileCenter;
@@ -41,15 +42,21 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static java.util.Collections.singletonList;
@@ -69,6 +76,7 @@ import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -1081,5 +1089,46 @@ public class CrashesTest {
         WrapperSdkExceptionManager.saveWrapperSdkErrorLog(errorLog);
         verifyStatic();
         MobileCenterLog.error(anyString(), anyString(), any(IOException.class));
+    }
+
+    @Test
+    public void sendMoreThan2ErrorAttachments() throws IOException, ClassNotFoundException, JSONException {
+        int MAX_ATTACHMENT_PER_CRASH = 2;
+        int numOfAttachments = MAX_ATTACHMENT_PER_CRASH + 1;
+
+        ArrayList<ErrorAttachmentLog> errorAttachmentLogs = new ArrayList<>(3);
+        for(int i = 0; i < numOfAttachments; ++i) {
+            ErrorAttachmentLog log = mock(ErrorAttachmentLog.class);
+            when(log.isValid()).thenReturn(true);
+            errorAttachmentLogs.add(log);
+        }
+
+        CrashesListener listener = mock(CrashesListener.class);
+        when(listener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
+        when(listener.getErrorAttachments(any(ErrorReport.class))).thenReturn(errorAttachmentLogs);
+
+        ManagedErrorLog log = mock(ManagedErrorLog.class);
+        when(log.getId()).thenReturn(UUID.randomUUID());
+
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString())).thenReturn(log);
+
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(new ErrorReport());
+
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(mock(Throwable.class));
+
+        Crashes crashes = Crashes.getInstance();
+        crashes.setInstanceListener(listener);
+        crashes.setLogSerializer(logSerializer);
+
+        Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
+
+        String expectedMessage = "A limit of " + MAX_ATTACHMENT_PER_CRASH + " attachments per error report might be enforced by server.";
+        PowerMockito.verifyStatic();
+        MobileCenterLog.warn(Crashes.LOG_TAG, expectedMessage);
     }
 }
