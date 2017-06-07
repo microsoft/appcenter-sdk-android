@@ -3,7 +3,6 @@ package com.microsoft.azure.mobile.crashes;
 import android.content.Context;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
 
 import com.microsoft.azure.mobile.Constants;
 import com.microsoft.azure.mobile.MobileCenter;
@@ -50,13 +49,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import static java.util.Collections.singletonList;
@@ -76,7 +71,6 @@ import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -1125,7 +1119,8 @@ public class CrashesTest {
         crashes.setInstanceListener(listener);
         crashes.setLogSerializer(logSerializer);
 
-        Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
+        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
         String expectedMessage = "A limit of " + MAX_ATTACHMENT_PER_CRASH + " attachments per error report might be enforced by server.";
         PowerMockito.verifyStatic();
