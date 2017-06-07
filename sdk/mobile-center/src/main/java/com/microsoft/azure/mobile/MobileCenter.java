@@ -385,7 +385,7 @@ public class MobileCenter {
         mMobileCenterHandler = new MobileCenterHandler() {
 
             @Override
-            public void post(Runnable runnable, Runnable disabledRunnable) {
+            public void post(@NonNull Runnable runnable, Runnable disabledRunnable) {
                 handlerMobileCenterOperation(runnable, disabledRunnable);
             }
         };
