@@ -11,7 +11,6 @@ import android.support.annotation.VisibleForTesting;
 import android.support.test.espresso.idling.CountingIdlingResource;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
@@ -25,7 +24,6 @@ import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
 import com.microsoft.azure.mobile.analytics.ingestion.models.EventLog;
 import com.microsoft.azure.mobile.analytics.ingestion.models.PageLog;
 import com.microsoft.azure.mobile.crashes.Crashes;
-import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.ingestion.models.LogWithProperties;
 import com.microsoft.azure.mobile.push.Push;
@@ -37,12 +35,10 @@ import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;
 import com.microsoft.azure.mobile.sasquatch.utils.SasquatchCrashesListener;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
-import com.microsoft.azure.mobile.utils.async.SimpleFunction;
 
 import org.json.JSONObject;
 
 import java.util.Map;
-import java.util.UUID;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -96,26 +92,8 @@ public class MainActivity extends AppCompatActivity {
         /* Start Mobile center. */
         MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
 
-        /* Print install ID. */
-        MobileCenter.getInstallId().thenApply(new SimpleFunction<UUID>() {
-
-            @Override
-            public void apply(UUID uuid) {
-                Log.i(LOG_TAG, "InstallId=" + uuid);
-            }
-        });
-
-        /* Print last crash. */
-        Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession().get());
-        Crashes.getLastSessionCrashReport().thenApply(new SimpleFunction<ErrorReport>() {
-
-            @Override
-            public void apply(ErrorReport data) {
-                if (data != null) {
-                    Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", data.getThrowable());
-                }
-            }
-        });
+        /* Use some mobile center getters. */
+        GetHelper.testInstallIdAndLastSessionCrash();
 
         /* Populate UI. */
         ((TextView) findViewById(R.id.package_name)).setText(String.format(getString(R.string.sdk_source_format), getPackageName().substring(getPackageName().lastIndexOf(".") + 1)));

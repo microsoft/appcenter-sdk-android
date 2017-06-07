@@ -60,7 +60,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return MobileCenter.isEnabled().get();
+                    return GetHelper.isCoreEnabled();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_analytics_state_key, R.string.mobile_center_analytics_state_summary_enabled, R.string.mobile_center_analytics_state_summary_disabled, new HasEnabled() {
@@ -72,7 +72,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return Analytics.isEnabled().get();
+                    return GetHelper.isAnalyticsEnabled();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_crashes_state_key, R.string.mobile_center_crashes_state_summary_enabled, R.string.mobile_center_crashes_state_summary_disabled, new HasEnabled() {
@@ -84,7 +84,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return Crashes.isEnabled().get();
+                    return GetHelper.isCrashesEnabled();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_distribute_state_key, R.string.mobile_center_distribute_state_summary_enabled, R.string.mobile_center_distribute_state_summary_disabled, new HasEnabled() {
@@ -96,7 +96,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return Distribute.isEnabled().get();
+                    return GetHelper.isDistributeEnabled();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_push_state_key, R.string.mobile_center_push_state_summary_enabled, R.string.mobile_center_push_state_summary_disabled, new HasEnabled() {
@@ -108,7 +108,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return Push.isEnabled().get();
+                    return GetHelper.isPushEnabled();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_push_firebase_state_key, R.string.mobile_center_push_firebase_summary_enabled, R.string.mobile_center_push_firebase_summary_disabled, new HasEnabled() {
