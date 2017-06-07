@@ -62,8 +62,7 @@ public class MobileCenter {
     /**
      * Shutdown timeout in millis.
      */
-    @VisibleForTesting
-    static final int SHUTDOWN_TIMEOUT = 5000;
+    private static final int SHUTDOWN_TIMEOUT = 5000;
 
     /**
      * Shared instance.
@@ -707,18 +706,17 @@ public class MobileCenter {
 
                 /* Wait channel to finish saving other logs in background. */
                 final Semaphore semaphore = new Semaphore(0);
-                if (mHandler != null)
-                    mHandler.post(new Runnable() {
+                mHandler.post(new Runnable() {
 
-                        @Override
-                        public void run() {
-                            if (mChannel != null) {
-                                mChannel.shutdown();
-                            }
-                            MobileCenterLog.debug(LOG_TAG, "Channel completed shutdown.");
-                            semaphore.release();
+                    @Override
+                    public void run() {
+                        if (mChannel != null) {
+                            mChannel.shutdown();
                         }
-                    });
+                        MobileCenterLog.debug(LOG_TAG, "Channel completed shutdown.");
+                        semaphore.release();
+                    }
+                });
                 try {
                     if (!semaphore.tryAcquire(SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS)) {
                         MobileCenterLog.error(LOG_TAG, "Timeout waiting for looper tasks to complete.");

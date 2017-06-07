@@ -38,6 +38,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import static com.microsoft.azure.mobile.MobileCenter.CORE_GROUP;
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
@@ -51,6 +53,7 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -796,6 +799,27 @@ public class MobileCenterTest {
         handler.uncaughtException(thread, exception);
         verifyStatic();
         ShutdownHelper.shutdown(10);
+    }
+
+
+    @Test
+    public void uncaughtExceptionHandlerTimeout() throws Exception {
+
+        /* It behaves the same on timeout. */
+        Semaphore semaphore = mock(Semaphore.class);
+        whenNew(Semaphore.class).withAnyArguments().thenReturn(semaphore);
+        when(semaphore.tryAcquire(anyLong(), any(TimeUnit.class))).thenReturn(false);
+        uncaughtExceptionHandler();
+    }
+
+    @Test
+    public void uncaughtExceptionHandlerInterrupted() throws Exception {
+
+        /* It behaves the same on interruption. */
+        Semaphore semaphore = mock(Semaphore.class);
+        whenNew(Semaphore.class).withAnyArguments().thenReturn(semaphore);
+        when(semaphore.tryAcquire(anyLong(), any(TimeUnit.class))).thenThrow(new InterruptedException());
+        uncaughtExceptionHandler();
     }
 
     private static class DummyService extends AbstractMobileCenterService {
