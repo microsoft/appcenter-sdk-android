@@ -154,7 +154,16 @@ public class CrashesAndroidTest {
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
         CrashesListener crashesListener = mock(CrashesListener.class);
-        when(crashesListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
+
+        /* While testing should process, call methods that require the handler to test we avoid a dead lock and run directly. */
+        when(crashesListener.shouldProcess(any(ErrorReport.class))).thenAnswer(new Answer<Boolean>() {
+
+            @Override
+            public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
+                assertNotNull(MobileCenter.getInstallId().get());
+                return MobileCenter.isEnabled().get() && Crashes.isEnabled().get();
+            }
+        });
         when(crashesListener.shouldAwaitUserConfirmation()).thenReturn(true);
         startFresh(crashesListener);
         final Error exception = generateStackOverflowError();

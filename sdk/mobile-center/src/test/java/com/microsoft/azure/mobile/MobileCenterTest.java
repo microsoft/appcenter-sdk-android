@@ -661,11 +661,6 @@ public class MobileCenterTest {
     }
 
     @Test
-    public void getInstallIdBeforeStart() {
-        assertNull(MobileCenter.getInstallId().get());
-    }
-
-    @Test
     public void setWrapperSdkTest() throws Exception {
 
         /* Call method. */

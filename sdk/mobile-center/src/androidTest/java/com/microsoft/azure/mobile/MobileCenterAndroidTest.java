@@ -11,6 +11,7 @@ import com.microsoft.azure.mobile.utils.UUIDUtils;
 import com.microsoft.azure.mobile.utils.async.SimpleConsumer;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 @SuppressWarnings("unused")
 public class MobileCenterAndroidTest {
@@ -34,8 +36,14 @@ public class MobileCenterAndroidTest {
         mApplication = Instrumentation.newApplication(Application.class, InstrumentationRegistry.getTargetContext());
     }
 
+    @After
+    public void tearDown() {
+        MobileCenter.setEnabled(true);
+    }
+
     @Test
     public void getInstallId() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+        assertNull(MobileCenter.getInstallId().get());
         StorageHelper.initialize(mApplication);
         StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
         MobileCenter.start(mApplication, UUIDUtils.randomUUID().toString());
@@ -58,6 +66,8 @@ public class MobileCenterAndroidTest {
         });
         lock.acquireUninterruptibly();
         assertEquals(installId2, asyncUUID.get());
+        MobileCenter.setEnabled(false);
+        assertNull(MobileCenter.getInstallId().get());
     }
 
     @Test

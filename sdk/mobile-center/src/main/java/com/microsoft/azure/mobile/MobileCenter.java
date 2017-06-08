@@ -111,6 +111,11 @@ public class MobileCenter {
     private Channel mChannel;
 
     /**
+     * Background handler thread.
+     */
+    private HandlerThread mHandlerThread;
+
+    /**
      * Background thread handler.
      */
     private Handler mHandler;
@@ -379,9 +384,9 @@ public class MobileCenter {
         mAppSecret = appSecret;
 
         /* Start looper. */
-        HandlerThread handlerThread = new HandlerThread("MobileCenter.Looper");
-        handlerThread.start();
-        mHandler = new Handler(handlerThread.getLooper());
+        mHandlerThread = new HandlerThread("MobileCenter.Looper");
+        mHandlerThread.start();
+        mHandler = new Handler(mHandlerThread.getLooper());
         mMobileCenterHandler = new MobileCenterHandler() {
 
             @Override
@@ -405,7 +410,7 @@ public class MobileCenter {
 
     private synchronized void handlerMobileCenterOperation(final Runnable runnable, final Runnable disabledRunnable) {
         if (checkPrecondition()) {
-            mHandler.post(new Runnable() {
+            Runnable wrapperRunnable = new Runnable() {
 
                 @Override
                 public void run() {
@@ -419,7 +424,17 @@ public class MobileCenter {
                         }
                     }
                 }
-            });
+            };
+
+            /*
+             * We can already be in the background thread in case of callbacks,
+             * run now to avoid dead locks with getters.
+             */
+            if (Thread.currentThread() == mHandlerThread) {
+                runnable.run();
+            } else {
+                mHandler.post(wrapperRunnable);
+            }
         }
     }
 
@@ -564,11 +579,17 @@ public class MobileCenter {
     private synchronized SimpleFuture<Boolean> isInstanceEnabledAsync() {
         final DefaultSimpleFuture<Boolean> future = new DefaultSimpleFuture<>();
         if (checkPrecondition()) {
-            mHandler.post(new Runnable() {
+            mMobileCenterHandler.post(new Runnable() {
 
                 @Override
                 public void run() {
-                    future.complete(isInstanceEnabled());
+                    future.complete(true);
+                }
+            }, new Runnable() {
+
+                @Override
+                public void run() {
+                    future.complete(false);
                 }
             });
         } else {
@@ -661,11 +682,17 @@ public class MobileCenter {
     private synchronized SimpleFuture<UUID> getInstanceInstallId() {
         final DefaultSimpleFuture<UUID> future = new DefaultSimpleFuture<>();
         if (checkPrecondition()) {
-            mHandler.post(new Runnable() {
+            mMobileCenterHandler.post(new Runnable() {
 
                 @Override
                 public void run() {
                     future.complete(IdHelper.getInstallId());
+                }
+            }, new Runnable() {
+
+                @Override
+                public void run() {
+                    future.complete(null);
                 }
             });
         } else {
