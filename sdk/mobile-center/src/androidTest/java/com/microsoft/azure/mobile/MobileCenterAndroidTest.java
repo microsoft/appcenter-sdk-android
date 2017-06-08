@@ -65,7 +65,7 @@ public class MobileCenterAndroidTest {
         MobileCenter.getInstallId().thenAccept(new SimpleConsumer<UUID>() {
 
             @Override
-            public void apply(UUID uuid) {
+            public void accept(UUID uuid) {
                 asyncUUID.set(uuid);
                 lock.release();
             }

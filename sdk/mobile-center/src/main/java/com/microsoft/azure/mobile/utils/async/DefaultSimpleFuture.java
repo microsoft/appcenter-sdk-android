@@ -20,14 +20,14 @@ public class DefaultSimpleFuture<T> implements SimpleFuture<T> {
     private final CountDownLatch mLatch = new CountDownLatch(1);
 
     /**
-     * Result
+     * Result.
      */
     private T mResult;
 
     /**
-     * Callbacks from thenAccept waiting for result
+     * Callbacks from thenAccept waiting for result.
      */
-    private Collection<SimpleConsumer<T>> mFunctions;
+    private Collection<SimpleConsumer<T>> mConsumers;
 
     @Override
     public T get() {
@@ -58,14 +58,14 @@ public class DefaultSimpleFuture<T> implements SimpleFuture<T> {
 
                 @Override
                 public void run() {
-                    function.apply(mResult);
+                    function.accept(mResult);
                 }
             });
         } else {
-            if (mFunctions == null) {
-                mFunctions = new LinkedList<>();
+            if (mConsumers == null) {
+                mConsumers = new LinkedList<>();
             }
-            mFunctions.add(function);
+            mConsumers.add(function);
         }
     }
 
@@ -76,17 +76,17 @@ public class DefaultSimpleFuture<T> implements SimpleFuture<T> {
         if (!isDone()) {
             mResult = value;
             mLatch.countDown();
-            if (mFunctions != null) {
+            if (mConsumers != null) {
                 HandlerUtils.runOnUiThread(new Runnable() {
 
                     @Override
                     public void run() {
 
-                        /* No need to synchronize anymore as mFunctions cannot be modified anymore. */
-                        for (SimpleConsumer<T> function : mFunctions) {
-                            function.apply(value);
+                        /* No need to synchronize anymore as consumers cannot be modified anymore. */
+                        for (SimpleConsumer<T> function : mConsumers) {
+                            function.accept(value);
                         }
-                        mFunctions = null;
+                        mConsumers = null;
                     }
                 });
             }

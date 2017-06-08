@@ -396,7 +396,7 @@ public class Distribute extends AbstractMobileCenterService {
         isInstanceEnabledAsync().thenAccept(new SimpleConsumer<Boolean>() {
 
             @Override
-            public void apply(Boolean enabled) {
+            public void accept(Boolean enabled) {
                 if (!enabled) {
                     MobileCenterLog.error(LOG_TAG, "Distribute is disabled");
                     return;

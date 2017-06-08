@@ -193,7 +193,7 @@ public class CrashesAndroidTest {
         Crashes.getLastSessionCrashReport().thenAccept(new SimpleConsumer<ErrorReport>() {
 
             @Override
-            public void apply(ErrorReport errorReport) {
+            public void accept(ErrorReport errorReport) {
                 assertNotNull(errorReport);
                 Throwable lastThrowable = errorReport.getThrowable();
                 assertTrue(lastThrowable instanceof StackOverflowError);
@@ -258,7 +258,7 @@ public class CrashesAndroidTest {
         Crashes.getLastSessionCrashReport().thenAccept(new SimpleConsumer<ErrorReport>() {
 
             @Override
-            public void apply(ErrorReport errorReport) {
+            public void accept(ErrorReport errorReport) {
                 assertNull(errorReport);
             }
         });

@@ -89,11 +89,11 @@ public class SimpleFutureTest {
         future.thenAccept(function);
         future.thenAccept(function);
         future.complete(1);
-        verify(function, times(2)).apply(1);
+        verify(function, times(2)).accept(1);
 
         /* Works also after completion. */
         future.thenAccept(function);
         future.thenAccept(function);
-        verify(function, times(4)).apply(1);
+        verify(function, times(4)).accept(1);
     }
 }

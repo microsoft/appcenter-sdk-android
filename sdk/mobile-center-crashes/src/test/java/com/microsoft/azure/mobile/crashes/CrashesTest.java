@@ -938,7 +938,7 @@ public class CrashesTest {
         @SuppressWarnings("unchecked")
         SimpleConsumer<ErrorReport> beforeCallback = (SimpleConsumer<ErrorReport>) mock(SimpleConsumer.class);
         Crashes.getLastSessionCrashReport().thenAccept(beforeCallback);
-        verify(beforeCallback).apply(null);
+        verify(beforeCallback).accept(null);
 
         crashes.onStarting(mMobileCenterHandler);
         crashes.onStarted(mock(Context.class), "", mock(Channel.class));
@@ -951,7 +951,7 @@ public class CrashesTest {
         future.thenAccept(afterCallback);
         future.thenAccept(afterCallback);
         ArgumentCaptor<ErrorReport> errorReportCaptor = ArgumentCaptor.forClass(ErrorReport.class);
-        verify(afterCallback, times(2)).apply(errorReportCaptor.capture());
+        verify(afterCallback, times(2)).accept(errorReportCaptor.capture());
         assertEquals(errorReportCaptor.getAllValues().get(0), errorReportCaptor.getAllValues().get(1));
         ErrorReport result = errorReportCaptor.getValue();
         assertNotNull(result);
@@ -1042,7 +1042,7 @@ public class CrashesTest {
         Crashes.getLastSessionCrashReport().thenAccept(callback);
         Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession().get());
-        verify(callback, times(2)).apply(null);
+        verify(callback, times(2)).accept(null);
     }
 
     @Test

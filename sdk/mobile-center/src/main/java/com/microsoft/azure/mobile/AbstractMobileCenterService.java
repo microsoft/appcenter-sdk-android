@@ -285,12 +285,12 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * @param <T>                         getter value type.
      */
     protected synchronized <T> void postAsyncGetter(final Runnable runnable, final DefaultSimpleFuture<T> future, final T valueIfDisabledOrNotStarted) {
-        Runnable disabledRunnable = new Runnable() {
+        Runnable disabledOrNotStartedRunnable = new Runnable() {
 
             @Override
             public void run() {
 
-                /* Same runnable is used whether Mobile Center or the service is disabled. */
+                /* Same runnable is used whether Mobile Center or the service is disabled or not started. */
                 future.complete(valueIfDisabledOrNotStarted);
             }
         };
@@ -300,10 +300,10 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
             public void run() {
                 runnable.run();
             }
-        }, disabledRunnable, disabledRunnable)) {
+        }, disabledOrNotStartedRunnable, disabledOrNotStartedRunnable)) {
 
             /* MobileCenter is not configured if we reach this. */
-            disabledRunnable.run();
+            disabledOrNotStartedRunnable.run();
         }
     }
 }

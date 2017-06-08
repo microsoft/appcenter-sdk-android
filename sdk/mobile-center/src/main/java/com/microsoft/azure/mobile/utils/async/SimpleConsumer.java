@@ -14,5 +14,5 @@ public interface SimpleConsumer<T> {
      *
      * @param t the input argument.
      */
-    void apply(T t);
+    void accept(T t);
 }

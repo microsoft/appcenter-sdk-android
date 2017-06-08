@@ -22,7 +22,7 @@ public class GetHelper {
         MobileCenter.getInstallId().thenAccept(new SimpleConsumer<UUID>() {
 
             @Override
-            public void apply(UUID uuid) {
+            public void accept(UUID uuid) {
                 Log.i(LOG_TAG, "InstallId=" + uuid);
             }
         });
@@ -31,14 +31,14 @@ public class GetHelper {
         Crashes.hasCrashedInLastSession().thenAccept(new SimpleConsumer<Boolean>() {
 
             @Override
-            public void apply(Boolean crashed) {
+            public void accept(Boolean crashed) {
                 Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + crashed);
             }
         });
         Crashes.getLastSessionCrashReport().thenAccept(new SimpleConsumer<ErrorReport>() {
 
             @Override
-            public void apply(ErrorReport data) {
+            public void accept(ErrorReport data) {
                 if (data != null) {
                     Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", data.getThrowable());
                 }
