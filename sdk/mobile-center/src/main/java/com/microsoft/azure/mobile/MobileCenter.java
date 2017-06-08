@@ -557,7 +557,7 @@ public class MobileCenter {
 
     /**
      * Send custom properties.
-     * Top level method needed for PowerMock whenNew.
+     * Unit test requires top level methods when PowerMock.whenNew.
      *
      * @param properties properties to send.
      */

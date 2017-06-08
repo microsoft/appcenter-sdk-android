@@ -321,6 +321,11 @@ public class Distribute extends AbstractMobileCenterService {
         } catch (PackageManager.NameNotFoundException e) {
             MobileCenterLog.error(LOG_TAG, "Could not get self package info.", e);
         }
+
+        /*
+         * Apply enabled state is called by this method, we need fields to be initialized before.
+         * So call super method at the end.
+         */
         super.onStarted(context, appSecret, channel);
     }
 
@@ -395,7 +400,7 @@ public class Distribute extends AbstractMobileCenterService {
     synchronized void handleUpdateAction(final int updateAction) {
 
         /*
-         * We need to check if enabled and also to be in U.I. thread
+         * We need to check if it is enabled and we also need to run download code in U.I. thread
          * so post the command using the async method to achieve both goals at once.
          */
         isInstanceEnabledAsync().thenAccept(new SimpleConsumer<Boolean>() {

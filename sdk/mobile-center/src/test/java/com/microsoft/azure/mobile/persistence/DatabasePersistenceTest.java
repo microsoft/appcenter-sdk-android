@@ -50,6 +50,7 @@ public class DatabasePersistenceTest {
         DatabasePersistence mockPersistence = spy(new DatabasePersistence("test-persistence", "operation.exception", 1));
         doReturn(mockSerializer).when(mockPersistence).getLogSerializer();
         try {
+
             /* Generate a log and persist. */
             Log log = mock(Log.class);
             mockPersistence.putLog("test-p1", log);

@@ -66,6 +66,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class PushTest {
 
     private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
+
     private static final String PUSH_ENABLED_KEY = KEY_ENABLED + "_" + Push.getInstance().getServiceName();
 
     @Rule
@@ -129,6 +130,11 @@ public class PushTest {
             }
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
+    }
+
+    private void start(Context contextMock, Push push, Channel channel) {
+        push.onStarting(mMobileCenterHandler);
+        push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
     }
 
     @Test
@@ -234,11 +240,6 @@ public class PushTest {
         Push.enableFirebaseAnalytics(contextMock);
         verifyStatic();
         FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(true));
-    }
-
-    private void start(Context contextMock, Push push, Channel channel) {
-        push.onStarting(mMobileCenterHandler);
-        push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
     }
 
     @Test

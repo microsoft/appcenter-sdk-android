@@ -945,6 +945,7 @@ public class CrashesTest {
         assertTrue(Crashes.isEnabled().get());
         assertTrue(Crashes.hasCrashedInLastSession().get());
 
+        /* Test with 2 callbacks and check result is the same for both callbacks. */
         @SuppressWarnings("unchecked")
         SimpleConsumer<ErrorReport> afterCallback = (SimpleConsumer<ErrorReport>) mock(SimpleConsumer.class);
         SimpleFuture<ErrorReport> future = Crashes.getLastSessionCrashReport();
@@ -979,7 +980,7 @@ public class CrashesTest {
     }
 
     @Test
-    public void crashInLastSessionError() throws JSONException, IOException, ClassNotFoundException {
+    public void failToDeserializeLastSessionCrashReport() throws JSONException, IOException, ClassNotFoundException {
         LogSerializer logSerializer = mock(LogSerializer.class);
         when(logSerializer.deserializeLog(anyString())).thenReturn(mock(ManagedErrorLog.class));
 
@@ -1029,7 +1030,7 @@ public class CrashesTest {
     }
 
     @Test
-    public void getLastSessionCrashReportWithMultipleListeners() {
+    public void getLastSessionCrashReportWithMultipleListenersAndResultIsNullBeforeInit() {
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(null);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);

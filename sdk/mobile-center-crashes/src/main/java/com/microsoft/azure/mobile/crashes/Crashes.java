@@ -488,7 +488,7 @@ public class Crashes extends AbstractMobileCenterService {
                 mUncaughtExceptionHandler.unregister();
                 mUncaughtExceptionHandler = null;
             }
-        } else if (mUncaughtExceptionHandler == null) {
+        } else {
             mUncaughtExceptionHandler = new UncaughtExceptionHandler();
             mUncaughtExceptionHandler.register();
             final File logFile = ErrorLogHelper.getLastErrorLogFile();

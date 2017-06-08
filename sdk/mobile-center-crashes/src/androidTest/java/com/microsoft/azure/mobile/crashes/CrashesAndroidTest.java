@@ -312,8 +312,6 @@ public class CrashesAndroidTest {
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
         startFresh(null);
-        Channel channel = mock(Channel.class);
-        Crashes.getInstance().onStarted(sApplication, "", channel);
         Crashes.WrapperSdkListener wrapperSdkListener = mock(Crashes.WrapperSdkListener.class);
         Crashes.getInstance().setWrapperSdkListener(wrapperSdkListener);
         doAnswer(new Answer() {

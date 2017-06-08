@@ -2,25 +2,32 @@ package com.microsoft.azure.mobile.utils.async;
 
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@RunWith(PowerMockRunner.class)
 public class SimpleFutureTest {
+
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Test
     public void getWithInterruption() throws InterruptedException {
@@ -41,22 +48,21 @@ public class SimpleFutureTest {
     }
 
     @Test
-    public void isDoneWithInterruption() throws InterruptedException {
+    @PrepareForTest(DefaultSimpleFuture.class)
+    public void isDoneWithInterruption() throws Exception {
+        CountDownLatch latch = mock(CountDownLatch.class);
+        whenNew(CountDownLatch.class).withAnyArguments().thenReturn(latch);
+        when(latch.await(anyLong(), any(TimeUnit.class))).thenThrow(new InterruptedException()).thenReturn(true);
         final DefaultSimpleFuture<Boolean> future = new DefaultSimpleFuture<>();
         final AtomicReference<Boolean> result = new AtomicReference<>();
         Thread thread = new Thread() {
 
             @Override
             public void run() {
-                //noinspection StatementWithEmptyBody
-                while (!isInterrupted()) {
-                }
                 result.set(future.isDone());
             }
         };
         thread.start();
-        thread.interrupt();
-        future.complete(true);
         thread.join();
         assertEquals(true, result.get());
     }
