@@ -40,7 +40,7 @@ public class GetHelper {
         return Crashes.hasCrashedInLastSession();
     }
 
-    public static ErrorReport getLastSessionCrashReport() {
+    static ErrorReport getLastSessionCrashReport() {
         final Semaphore semaphore = new Semaphore(0);
         final AtomicReference<ErrorReport> errorReport = new AtomicReference<>();
         Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {

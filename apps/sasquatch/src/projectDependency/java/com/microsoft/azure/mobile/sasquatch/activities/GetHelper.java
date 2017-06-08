@@ -28,7 +28,13 @@ public class GetHelper {
         });
 
         /* Print last crash. */
-        Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession().get());
+        Crashes.hasCrashedInLastSession().thenAccept(new SimpleConsumer<Boolean>() {
+
+            @Override
+            public void apply(Boolean crashed) {
+                Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + crashed);
+            }
+        });
         Crashes.getLastSessionCrashReport().thenAccept(new SimpleConsumer<ErrorReport>() {
 
             @Override
@@ -44,7 +50,7 @@ public class GetHelper {
         return Crashes.hasCrashedInLastSession().get();
     }
 
-    public static ErrorReport getLastSessionCrashReport() {
+    static ErrorReport getLastSessionCrashReport() {
         return Crashes.getLastSessionCrashReport().get();
     }
 
