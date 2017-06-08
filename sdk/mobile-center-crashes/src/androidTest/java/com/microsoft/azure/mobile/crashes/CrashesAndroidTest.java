@@ -12,6 +12,7 @@ import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
 import com.microsoft.azure.mobile.ingestion.models.Log;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.async.SimpleConsumer;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
@@ -19,12 +20,14 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.azure.mobile.test.TestUtils.TAG;
@@ -234,22 +237,23 @@ public class CrashesAndroidTest {
 
         /* Third process: sending succeeds. */
         android.util.Log.i(TAG, "Process 3");
-        final AtomicReference<Channel.GroupListener> groupListener = new AtomicReference<>();
         mChannel = mock(Channel.class);
-        doAnswer(new Answer() {
+        ArgumentCaptor<Channel.GroupListener> groupListener = ArgumentCaptor.forClass(Channel.GroupListener.class);
+        startFresh(crashesListener);
+        verify(mChannel).addGroup(anyString(), anyInt(), anyInt(), anyInt(), groupListener.capture());
+        groupListener.getValue().onBeforeSending(log.get());
+        groupListener.getValue().onSuccess(log.get());
+
+        /* Wait callback to be processed in UI thread. */
+        final Semaphore semaphore = new Semaphore(0);
+        HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                Channel.GroupListener listener = (Channel.GroupListener) invocationOnMock.getArguments()[4];
-                groupListener.set(listener);
-                listener.onBeforeSending(log.get());
-                return null;
+            public void run() {
+                semaphore.release();
             }
-        }).when(mChannel).addGroup(anyString(), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
-        startFresh(crashesListener);
-
-        assertNotNull(groupListener.get());
-        groupListener.get().onSuccess(log.get());
+        });
+        semaphore.acquire();
 
         Crashes.getLastSessionCrashReport().thenAccept(new SimpleConsumer<ErrorReport>() {
 
