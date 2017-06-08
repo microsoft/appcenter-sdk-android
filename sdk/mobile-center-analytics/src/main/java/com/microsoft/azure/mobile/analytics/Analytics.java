@@ -110,7 +110,8 @@ public class Analytics extends AbstractMobileCenterService {
     /**
      * Check whether Analytics service is enabled or not.
      *
-     * @return future, value is <code>true</code> if enabled, <code>false</code> otherwise.
+     * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
+     * @see SimpleFuture
      */
     public static SimpleFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
@@ -390,7 +391,7 @@ public class Analytics extends AbstractMobileCenterService {
      * @param enabled current state.
      */
     @Override
-    public synchronized void applyEnabledState(boolean enabled) {
+    protected synchronized void applyEnabledState(boolean enabled) {
 
         /* Start session tracker when enabled. */
         if (enabled) {

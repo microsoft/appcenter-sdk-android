@@ -5,11 +5,6 @@ import android.content.Intent;
 import android.support.test.espresso.DataInteraction;
 import android.support.test.rule.ActivityTestRule;
 
-import com.microsoft.azure.mobile.Constants;
-import com.microsoft.azure.mobile.MobileCenter;
-import com.microsoft.azure.mobile.analytics.Analytics;
-import com.microsoft.azure.mobile.crashes.Crashes;
-import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
@@ -52,7 +47,7 @@ public class SettingsActivityTest {
     @Test
     public void testInitialState() {
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(GetHelper.isCoreEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
@@ -71,7 +66,7 @@ public class SettingsActivityTest {
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isNotChecked()));
-        Assert.assertFalse(GetHelper.isCoreEnabled());
+        Assert.assertFalse(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isNotChecked()));
         Assert.assertFalse(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isNotChecked()));
@@ -106,7 +101,7 @@ public class SettingsActivityTest {
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(GetHelper.isCoreEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
@@ -125,7 +120,7 @@ public class SettingsActivityTest {
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(GetHelper.isCoreEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isNotChecked()));
         Assert.assertFalse(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
@@ -140,7 +135,7 @@ public class SettingsActivityTest {
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(GetHelper.isCoreEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
@@ -159,7 +154,7 @@ public class SettingsActivityTest {
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(GetHelper.isCoreEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isNotChecked()));
@@ -174,7 +169,7 @@ public class SettingsActivityTest {
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(GetHelper.isCoreEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
@@ -193,7 +188,7 @@ public class SettingsActivityTest {
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(GetHelper.isCoreEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
@@ -208,7 +203,7 @@ public class SettingsActivityTest {
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(GetHelper.isCoreEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
@@ -227,7 +222,7 @@ public class SettingsActivityTest {
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(GetHelper.isCoreEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
@@ -242,7 +237,7 @@ public class SettingsActivityTest {
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(GetHelper.isCoreEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
         Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));

@@ -54,7 +54,7 @@ public class GetHelper {
         return Crashes.getLastSessionCrashReport().get();
     }
 
-    static boolean isCoreEnabled() {
+    static boolean isMobileCenterEnabled() {
         return MobileCenter.isEnabled().get();
     }
 

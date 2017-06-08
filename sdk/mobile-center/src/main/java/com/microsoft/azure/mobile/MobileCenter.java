@@ -243,7 +243,8 @@ public class MobileCenter {
      * Check whether the SDK is enabled or not as a whole.
      * This operation is performed in background as it accesses SharedPreferences.
      *
-     * @return future, value is true if enabled, false otherwise.
+     * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
+     * @see SimpleFuture
      */
     public static SimpleFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
@@ -265,7 +266,8 @@ public class MobileCenter {
      * The identifier is persisted until the application is uninstalled and installed again.
      * This operation is performed in background as it accesses SharedPreferences and UUID.
      *
-     * @return install ID as a future.
+     * @return future with result being the installation identifier.
+     * @see SimpleFuture
      */
     public static SimpleFuture<UUID> getInstallId() {
         return getInstance().getInstanceInstallId();

@@ -173,7 +173,8 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Check whether Crashes service is enabled or not.
      *
-     * @return future, value is <code>true</code> if enabled, <code>false</code> otherwise.
+     * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
+     * @see SimpleFuture
      */
     public static SimpleFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
@@ -232,7 +233,8 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Check whether the app crashed in its last session.
      *
-     * @return {@code true} if a crash was recorded in the last session, otherwise {@code false}.
+     * @return future with result being <code>true</code> if there was a crash in the last session, <code>false</code> otherwise.
+     * @see SimpleFuture
      */
     public static SimpleFuture<Boolean> hasCrashedInLastSession() {
         return getInstance().hasInstanceCrashedInLastSession();
@@ -241,7 +243,8 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Provides information about any available crash report from the last session, if it crashed.
      *
-     * @return The crash report from the last session if one was set.
+     * @return future with result being the crash report from last session or null if there wasn't one.
+     * @see SimpleFuture
      */
     public static SimpleFuture<ErrorReport> getLastSessionCrashReport() {
         return getInstance().getInstanceLastSessionCrashReport();

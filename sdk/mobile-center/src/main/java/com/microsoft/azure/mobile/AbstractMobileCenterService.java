@@ -279,19 +279,19 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     /**
      * Helper method to handle getter methods in services.
      *
-     * @param runnable        command to run if service is enabled.
-     * @param future          future to complete value if service if disabled.
-     * @param valueIfDisabled value to complete in future if service is disabled.
-     * @param <T>             getter value type.
+     * @param runnable                    command to run if service is enabled.
+     * @param future                      future to complete the result of the async operation.
+     * @param valueIfDisabledOrNotStarted value to use for the future async operation result if service is disabled or not started or MobileCenter not started.
+     * @param <T>                         getter value type.
      */
-    protected synchronized <T> void postAsyncGetter(final Runnable runnable, final DefaultSimpleFuture<T> future, final T valueIfDisabled) {
+    protected synchronized <T> void postAsyncGetter(final Runnable runnable, final DefaultSimpleFuture<T> future, final T valueIfDisabledOrNotStarted) {
         Runnable disabledRunnable = new Runnable() {
 
             @Override
             public void run() {
 
-                /* Core or service disabled as the same runnable is used for both conditions. */
-                future.complete(valueIfDisabled);
+                /* Same runnable is used whether Mobile Center or the service is disabled. */
+                future.complete(valueIfDisabledOrNotStarted);
             }
         };
         if (!post(new Runnable() {
@@ -302,7 +302,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
             }
         }, disabledRunnable, disabledRunnable)) {
 
-            /* Core is not configured if we reach this. */
+            /* MobileCenter is not configured if we reach this. */
             disabledRunnable.run();
         }
     }

@@ -55,7 +55,7 @@ public class MobileCenterAndroidTest {
         UUID installId = MobileCenter.getInstallId().get();
         assertNotNull(installId);
         assertEquals(installId, MobileCenter.getInstallId().get());
-        assertEquals(installId, DummyService.getUUID().get());
+        assertEquals(installId, DummyService.getInstallId().get());
         StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
         final UUID installId2 = MobileCenter.getInstallId().get();
         assertNotNull(installId2);
@@ -89,7 +89,7 @@ public class MobileCenterAndroidTest {
 
         private static UUID mInstallId;
 
-        static SimpleFuture<UUID> getUUID() {
+        static SimpleFuture<UUID> getInstallId() {
             final DefaultSimpleFuture<UUID> future = new DefaultSimpleFuture<>();
             getInstance().post(new Runnable() {
 

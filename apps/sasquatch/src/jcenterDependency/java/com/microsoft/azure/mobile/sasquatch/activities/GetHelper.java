@@ -55,7 +55,7 @@ public class GetHelper {
         return errorReport.get();
     }
 
-    static boolean isCoreEnabled() {
+    static boolean isMobileCenterEnabled() {
         return MobileCenter.isEnabled();
     }
 

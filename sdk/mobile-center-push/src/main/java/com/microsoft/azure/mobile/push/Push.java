@@ -125,7 +125,8 @@ public class Push extends AbstractMobileCenterService {
     /**
      * Check whether Push service is enabled or not.
      *
-     * @return future, value is <code>true</code> if enabled, <code>false</code> otherwise.
+     * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
+     * @see SimpleFuture
      */
     public static SimpleFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();

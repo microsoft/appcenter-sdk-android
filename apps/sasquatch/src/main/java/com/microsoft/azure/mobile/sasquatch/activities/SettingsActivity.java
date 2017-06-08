@@ -60,7 +60,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return GetHelper.isCoreEnabled();
+                    return GetHelper.isMobileCenterEnabled();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_analytics_state_key, R.string.mobile_center_analytics_state_summary_enabled, R.string.mobile_center_analytics_state_summary_disabled, new HasEnabled() {
