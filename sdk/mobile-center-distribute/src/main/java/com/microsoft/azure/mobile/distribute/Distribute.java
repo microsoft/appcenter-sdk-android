@@ -393,6 +393,11 @@ public class Distribute extends AbstractMobileCenterService {
      */
     @VisibleForTesting
     synchronized void handleUpdateAction(final int updateAction) {
+
+        /*
+         * We need to check if enabled and also to be in U.I. thread
+         * so post the command using the async method to achieve both goals at once.
+         */
         isInstanceEnabledAsync().thenAccept(new SimpleConsumer<Boolean>() {
 
             @Override

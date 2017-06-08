@@ -258,7 +258,7 @@ public class MobileCenter {
      * @param enabled true to enable, false to disable.
      */
     public static void setEnabled(boolean enabled) {
-        getInstance().setInstanceEnabled(enabled);
+        getInstance().setInstanceEnabledAsync(enabled);
     }
 
     /**
@@ -441,7 +441,7 @@ public class MobileCenter {
     }
 
     @WorkerThread
-    private synchronized void finishConfiguration() {
+    private void finishConfiguration() {
 
         /* Load some global constants. */
         Constants.loadFromContext(mApplication);
@@ -449,7 +449,7 @@ public class MobileCenter {
         /* If parameters are valid, init context related resources. */
         StorageHelper.initialize(mApplication);
 
-        /* Remember state to avoid double call PreferencesStorage. */
+        /* Get enabled state. */
         boolean enabled = isInstanceEnabled();
 
         /* Init uncaught exception handler. */
@@ -468,7 +468,7 @@ public class MobileCenter {
         if (mLogUrl != null) {
             mChannel.setLogUrl(mLogUrl);
         }
-        MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK background initialization done.");
+        MobileCenterLog.debug(LOG_TAG, "Mobile Center storage initialized.");
     }
 
     @SafeVarargs
@@ -542,7 +542,9 @@ public class MobileCenter {
 
         /* Queue start service log. */
         if (isInstanceEnabled()) {
-            queueStartService(serviceNames);
+            StartServiceLog startServiceLog = new StartServiceLog();
+            startServiceLog.setServices(serviceNames);
+            mChannel.enqueue(startServiceLog, CORE_GROUP);
         }
     }
 
@@ -554,22 +556,13 @@ public class MobileCenter {
     }
 
     /**
-     * Send started services.
-     *
-     * @param services started services.
-     */
-    private synchronized void queueStartService(@NonNull List<String> services) {
-        StartServiceLog startServiceLog = new StartServiceLog();
-        startServiceLog.setServices(services);
-        mChannel.enqueue(startServiceLog, CORE_GROUP);
-    }
-
-    /**
      * Send custom properties.
+     * Top level method needed for PowerMock whenNew.
      *
      * @param properties properties to send.
      */
-    private synchronized void queueCustomProperties(@NonNull Map<String, Object> properties) {
+    @WorkerThread
+    private void queueCustomProperties(@NonNull Map<String, Object> properties) {
         CustomPropertiesLog customPropertiesLog = new CustomPropertiesLog();
         customPropertiesLog.setProperties(properties);
         mChannel.enqueue(customPropertiesLog, CORE_GROUP);
@@ -609,25 +602,10 @@ public class MobileCenter {
     }
 
     /**
-     * Implements {@link #setEnabled(boolean)}}.
-     */
-    private synchronized void setInstanceEnabled(final boolean enabled) {
-        if (checkPrecondition()) {
-            mHandler.post(new Runnable() {
-
-                @Override
-                public void run() {
-                    doSetInstanceEnabled(enabled);
-                }
-            });
-        }
-    }
-
-    /**
-     * Implements {@link #setInstanceEnabled(boolean)}} in background.
+     * Implements {@link #setInstanceEnabledAsync(boolean)}} after it's posted in background loop.
      */
     @WorkerThread
-    private void doSetInstanceEnabled(boolean enabled) {
+    private void setInstanceEnabled(boolean enabled) {
 
         /* Update channel state. */
         mChannel.setEnabled(enabled);
@@ -675,6 +653,21 @@ public class MobileCenter {
             MobileCenterLog.info(LOG_TAG, "Mobile Center has been enabled.");
         } else {
             MobileCenterLog.info(LOG_TAG, "Mobile Center has already been " + (enabled ? "enabled" : "disabled") + ".");
+        }
+    }
+
+    /**
+     * Implements {@link #setEnabled(boolean)}}.
+     */
+    private synchronized void setInstanceEnabledAsync(final boolean enabled) {
+        if (checkPrecondition()) {
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    setInstanceEnabled(enabled);
+                }
+            });
         }
     }
 

@@ -47,8 +47,8 @@ public interface MobileCenterService extends Application.ActivityLifecycleCallba
     Map<String, LogFactory> getLogFactories();
 
     /**
-     * Called when a MobileCenter is starting. Storage is not accessible until {@link #onStarted} is called.
-     * This is called from the same thread that cause the service to start (determined by user).
+     * Called when this service is starting. Storage is not accessible until {@link #onStarted} is called.
+     * This is called from the same thread as the caller of {@link MobileCenter#start(Class[])}).
      *
      * @param handler background thread handler.
      */
