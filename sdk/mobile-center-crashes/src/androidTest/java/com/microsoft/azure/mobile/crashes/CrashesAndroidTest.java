@@ -244,7 +244,17 @@ public class CrashesAndroidTest {
         groupListener.getValue().onBeforeSending(log.get());
         groupListener.getValue().onSuccess(log.get());
 
-        /* Wait callback to be processed in UI thread. */
+        /* Wait callback to be processed in background thread (file manipulations) then called back in UI. */
+
+        /*
+         * Wait background thread to process the 2 previous commands,
+         * to do we check if crashed in last session, since we restarted process again after crash,
+         * it's false even if we couldn't send the log yet.
+         */
+        assertFalse(Crashes.hasCrashedInLastSession().get());
+        assertNull(Crashes.getLastSessionCrashReport().get());
+
+        /* Wait U.I. thread callbacks. */
         final Semaphore semaphore = new Semaphore(0);
         HandlerUtils.runOnUiThread(new Runnable() {
 
@@ -254,15 +264,6 @@ public class CrashesAndroidTest {
             }
         });
         semaphore.acquire();
-
-        Crashes.getLastSessionCrashReport().thenAccept(new SimpleConsumer<ErrorReport>() {
-
-            @Override
-            public void accept(ErrorReport errorReport) {
-                assertNull(errorReport);
-            }
-        });
-        assertFalse(Crashes.hasCrashedInLastSession().get());
 
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
         verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString());
