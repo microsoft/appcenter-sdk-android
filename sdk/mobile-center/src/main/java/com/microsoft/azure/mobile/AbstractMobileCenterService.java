@@ -67,6 +67,8 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
 
     /**
      * Help implementing static isEnabled() for services with future.
+     *
+     * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      */
     protected synchronized SimpleFuture<Boolean> isInstanceEnabledAsync() {
         final DefaultSimpleFuture<Boolean> future = new DefaultSimpleFuture<>();
@@ -82,6 +84,8 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
 
     /**
      * Help implementing static setEnabled() for services with future.
+     *
+     * @param enabled true to enable, false to disable.
      */
     protected final synchronized void setInstanceEnabledAsync(final boolean enabled) {
 

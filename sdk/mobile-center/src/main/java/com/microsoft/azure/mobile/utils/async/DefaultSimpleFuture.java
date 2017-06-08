@@ -71,6 +71,8 @@ public class DefaultSimpleFuture<T> implements SimpleFuture<T> {
 
     /**
      * Set result.
+     *
+     * @param value result.
      */
     public synchronized void complete(final T value) {
         if (!isDone()) {
