@@ -13,6 +13,7 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -32,6 +33,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.doAnswer;
@@ -297,6 +299,15 @@ public class SessionTrackerTest {
             expectedStartSessionLog.setSid(expectedSid);
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
+
+        /* In total we sent only 2 session logs. */
+        verify(mChannel, times(2)).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof StartSessionLog;
+            }
+        }), anyString());
     }
 
     @Test
