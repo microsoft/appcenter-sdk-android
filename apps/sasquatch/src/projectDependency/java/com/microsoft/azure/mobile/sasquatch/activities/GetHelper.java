@@ -46,7 +46,7 @@ public class GetHelper {
         });
     }
 
-    public static boolean hasCrashedInLastSession() {
+    static boolean hasCrashedInLastSession() {
         return Crashes.hasCrashedInLastSession().get();
     }
 

@@ -25,6 +25,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -56,6 +57,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
@@ -766,6 +768,8 @@ public class MobileCenterTest {
 
     @Test
     public void uncaughtExceptionHandler() {
+
+        /* Setup mock Mobile Center. */
         Thread.UncaughtExceptionHandler defaultUncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         when(Thread.getDefaultUncaughtExceptionHandler()).thenReturn(defaultUncaughtExceptionHandler);
         MobileCenter.configure(mApplication, DUMMY_APP_SECRET);
@@ -775,18 +779,21 @@ public class MobileCenterTest {
         verifyStatic();
         Thread.setDefaultUncaughtExceptionHandler(eq(handler));
 
+        /* Crash an verify. */
         Thread thread = mock(Thread.class);
         Throwable exception = mock(Throwable.class);
         handler.uncaughtException(thread, exception);
         verify(mChannel).shutdown();
         verify(defaultUncaughtExceptionHandler).uncaughtException(eq(thread), eq(exception));
 
+        /* But we don't do it if Mobile Center is disabled. */
         MobileCenter.setEnabled(false);
         verifyStatic();
         Thread.setDefaultUncaughtExceptionHandler(eq(defaultUncaughtExceptionHandler));
         handler.uncaughtException(thread, exception);
         verify(mChannel, times(1)).shutdown();
 
+        /* Try enabled without default thread handler: should shut down process. */
         when(Thread.getDefaultUncaughtExceptionHandler()).thenReturn(null);
         MobileCenter.setEnabled(true);
         MobileCenter.getInstance().setChannel(null);
@@ -796,25 +803,87 @@ public class MobileCenterTest {
         ShutdownHelper.shutdown(10);
     }
 
-
     @Test
     public void uncaughtExceptionHandlerTimeout() throws Exception {
 
-        /* It behaves the same on timeout. */
+        /* Mock semaphore to time out. */
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                System.out.println(invocation.getArguments()[1]);
+                return null;
+            }
+        }).when(MobileCenterLog.class);
+        MobileCenterLog.error(eq(LOG_TAG), anyString());
         Semaphore semaphore = mock(Semaphore.class);
         whenNew(Semaphore.class).withAnyArguments().thenReturn(semaphore);
         when(semaphore.tryAcquire(anyLong(), any(TimeUnit.class))).thenReturn(false);
-        uncaughtExceptionHandler();
+
+        /* Setup mock Mobile Center. */
+        Thread.UncaughtExceptionHandler defaultUncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
+        when(Thread.getDefaultUncaughtExceptionHandler()).thenReturn(defaultUncaughtExceptionHandler);
+        MobileCenter.configure(mApplication, DUMMY_APP_SECRET);
+        MobileCenter.UncaughtExceptionHandler handler = MobileCenter.getInstance().getUncaughtExceptionHandler();
+        assertNotNull(handler);
+        assertEquals(defaultUncaughtExceptionHandler, handler.getDefaultUncaughtExceptionHandler());
+        verifyStatic();
+        Thread.setDefaultUncaughtExceptionHandler(eq(handler));
+
+        /* Simulate crash to shutdown channel. */
+        Thread thread = mock(Thread.class);
+        Throwable exception = mock(Throwable.class);
+        handler.uncaughtException(thread, exception);
+
+        /* We let channel shutdown even if we gave up with timeout it can happen later while process still running. */
+        verify(mChannel).shutdown();
+
+        /* Verify we still chain exception handlers correctly. */
+        verify(defaultUncaughtExceptionHandler).uncaughtException(eq(thread), eq(exception));
+
+        /* Verify we log an error on timeout. */
+        verifyStatic();
+        MobileCenterLog.error(eq(LOG_TAG), anyString());
     }
 
     @Test
     public void uncaughtExceptionHandlerInterrupted() throws Exception {
 
-        /* It behaves the same on interruption. */
+        /* Mock semaphore to be interrupted while waiting. */
         Semaphore semaphore = mock(Semaphore.class);
         whenNew(Semaphore.class).withAnyArguments().thenReturn(semaphore);
         when(semaphore.tryAcquire(anyLong(), any(TimeUnit.class))).thenThrow(new InterruptedException());
-        uncaughtExceptionHandler();
+
+        /* Setup mock Mobile Center. */
+        Thread.UncaughtExceptionHandler defaultUncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
+        when(Thread.getDefaultUncaughtExceptionHandler()).thenReturn(defaultUncaughtExceptionHandler);
+        MobileCenter.configure(mApplication, DUMMY_APP_SECRET);
+        MobileCenter.UncaughtExceptionHandler handler = MobileCenter.getInstance().getUncaughtExceptionHandler();
+        assertNotNull(handler);
+        assertEquals(defaultUncaughtExceptionHandler, handler.getDefaultUncaughtExceptionHandler());
+        verifyStatic();
+        Thread.setDefaultUncaughtExceptionHandler(eq(handler));
+
+        /* Simulate crash to shutdown channel. */
+        Thread thread = mock(Thread.class);
+        Throwable exception = mock(Throwable.class);
+        handler.uncaughtException(thread, exception);
+
+        /* Channel still shut down in the thread, the interruption is in the waiting one. */
+        verify(mChannel).shutdown();
+
+        /* Verify we still chain exception handlers correctly. */
+        verify(defaultUncaughtExceptionHandler).uncaughtException(eq(thread), eq(exception));
+
+        /* Verify we log a warning on interruption. */
+        verifyStatic();
+        MobileCenterLog.warn(eq(LOG_TAG), anyString(), argThat(new ArgumentMatcher<Throwable>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof InterruptedException;
+            }
+        }));
     }
 
     private static class DummyService extends AbstractMobileCenterService {
