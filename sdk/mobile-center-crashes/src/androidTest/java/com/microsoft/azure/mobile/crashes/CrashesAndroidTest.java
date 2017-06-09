@@ -202,6 +202,17 @@ public class CrashesAndroidTest {
         });
         assertTrue(Crashes.hasCrashedInLastSession().get());
 
+        /* Wait U.I. thread callback (shouldAwaitUserConfirmation). */
+        final Semaphore semaphore = new Semaphore(0);
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                semaphore.release();
+            }
+        });
+        semaphore.acquire();
+
         /* Waiting user confirmation so no log sent yet. */
         ArgumentMatcher<Log> matchCrashLog = new ArgumentMatcher<Log>() {
 
@@ -255,7 +266,6 @@ public class CrashesAndroidTest {
         assertNull(Crashes.getLastSessionCrashReport().get());
 
         /* Wait U.I. thread callbacks. */
-        final Semaphore semaphore = new Semaphore(0);
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
