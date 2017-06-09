@@ -109,7 +109,7 @@ public class SessionTracker implements Channel.Listener {
     }
 
     @Override
-    public synchronized void onEnqueuingLog(@NonNull Log log, @NonNull String groupName) {
+    public void onEnqueuingLog(@NonNull Log log, @NonNull String groupName) {
 
         /*
          * Since we enqueue start session logs, skip them to avoid infinite loop.
@@ -188,7 +188,7 @@ public class SessionTracker implements Channel.Listener {
     /**
      * Call this whenever an activity is resumed to update session tracker state.
      */
-    public synchronized void onActivityResumed() {
+    public void onActivityResumed() {
 
         /* Record resume time for session timeout management. */
         MobileCenterLog.debug(Analytics.LOG_TAG, "onActivityResumed");
@@ -199,7 +199,7 @@ public class SessionTracker implements Channel.Listener {
     /**
      * Call this whenever an activity is paused to update session tracker state.
      */
-    public synchronized void onActivityPaused() {
+    public void onActivityPaused() {
 
         /* Record pause time for session timeout management. */
         MobileCenterLog.debug(Analytics.LOG_TAG, "onActivityPaused");
@@ -209,7 +209,7 @@ public class SessionTracker implements Channel.Listener {
     /**
      * Clear storage from saved session state.
      */
-    public synchronized void clearSessions() {
+    public void clearSessions() {
         StorageHelper.PreferencesStorage.remove(STORAGE_KEY);
     }
 

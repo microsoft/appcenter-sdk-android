@@ -258,7 +258,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * @param serviceDisabledRunnable optional alternate command if this service is disabled.
      * @return false if core not configured (no handler ready yet), true otherwise.
      */
-    private synchronized boolean post(final Runnable runnable, final Runnable coreDisabledRunnable, final Runnable serviceDisabledRunnable) {
+    protected synchronized boolean post(final Runnable runnable, final Runnable coreDisabledRunnable, final Runnable serviceDisabledRunnable) {
         if (mHandler == null) {
             MobileCenterLog.error(LOG_TAG, getServiceName() + " needs to be started before it can be used.");
             return false;

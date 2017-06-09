@@ -2,6 +2,7 @@ package com.microsoft.azure.mobile.analytics;
 
 import android.app.Activity;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
@@ -195,7 +196,7 @@ public class Analytics extends AbstractMobileCenterService {
         final String logType = "Page";
         if (validateName(name, logType)) {
             Map<String, String> validatedProperties = validateProperties(properties, name, logType);
-            getInstance().queuePage(name, validatedProperties);
+            getInstance().trackPageAsync(name, validatedProperties);
         }
     }
 
@@ -224,7 +225,7 @@ public class Analytics extends AbstractMobileCenterService {
         final String logType = "Event";
         if (validateName(name, logType)) {
             Map<String, String> validatedProperties = validateProperties(properties, name, logType);
-            getInstance().queueEvent(name, validatedProperties);
+            getInstance().trackEventAsync(name, validatedProperties);
         }
     }
 
@@ -330,11 +331,22 @@ public class Analytics extends AbstractMobileCenterService {
     }
 
     @Override
-    public synchronized void onActivityResumed(Activity activity) {
-        mCurrentActivity = new WeakReference<>(activity);
-        if (mSessionTracker != null) {
-            processOnResume(activity);
-        }
+    public synchronized void onActivityResumed(final Activity activity) {
+        final Runnable updateCurrentActivityRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+                mCurrentActivity = new WeakReference<>(activity);
+            }
+        };
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                updateCurrentActivityRunnable.run();
+                processOnResume(activity);
+            }
+        }, updateCurrentActivityRunnable, updateCurrentActivityRunnable);
     }
 
     /**
@@ -352,10 +364,21 @@ public class Analytics extends AbstractMobileCenterService {
 
     @Override
     public synchronized void onActivityPaused(Activity activity) {
-        mCurrentActivity = null;
-        if (mSessionTracker != null) {
-            mSessionTracker.onActivityPaused();
-        }
+        final Runnable updateCurrentActivityRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+                mCurrentActivity = null;
+            }
+        };
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                updateCurrentActivityRunnable.run();
+                mSessionTracker.onActivityPaused();
+            }
+        }, updateCurrentActivityRunnable, updateCurrentActivityRunnable);
     }
 
     @Override
@@ -419,17 +442,25 @@ public class Analytics extends AbstractMobileCenterService {
      * @param name       page name.
      * @param properties optional properties.
      */
-    private synchronized void queuePage(final String name, final Map<String, String> properties) {
+    private synchronized void trackPageAsync(final String name, final Map<String, String> properties) {
         post(new Runnable() {
 
             @Override
             public void run() {
-                PageLog pageLog = new PageLog();
-                pageLog.setName(name);
-                pageLog.setProperties(properties);
-                mChannel.enqueue(pageLog, ANALYTICS_GROUP);
+                queuePage(name, properties);
             }
         });
+    }
+
+    /**
+     * Enqueue page log now.
+     */
+    @WorkerThread
+    private void queuePage(String name, Map<String, String> properties) {
+        PageLog pageLog = new PageLog();
+        pageLog.setName(name);
+        pageLog.setProperties(properties);
+        mChannel.enqueue(pageLog, ANALYTICS_GROUP);
     }
 
     /**
@@ -438,7 +469,7 @@ public class Analytics extends AbstractMobileCenterService {
      * @param name       event name.
      * @param properties optional properties.
      */
-    private synchronized void queueEvent(final String name, final Map<String, String> properties) {
+    private synchronized void trackEventAsync(final String name, final Map<String, String> properties) {
         post(new Runnable() {
 
             @Override
@@ -471,5 +502,10 @@ public class Analytics extends AbstractMobileCenterService {
      */
     private synchronized void setInstanceListener(AnalyticsListener listener) {
         mAnalyticsListener = listener;
+    }
+
+    @VisibleForTesting
+    WeakReference<Activity> getCurrentActivity() {
+        return mCurrentActivity;
     }
 }
