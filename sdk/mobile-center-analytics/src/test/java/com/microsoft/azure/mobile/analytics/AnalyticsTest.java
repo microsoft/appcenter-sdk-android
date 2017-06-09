@@ -458,7 +458,7 @@ public class AnalyticsTest {
 
         /* App in foreground: no log yet, we are disabled. */
         analytics.onActivityResumed(new Activity());
-        System.gc();
+        analytics.getCurrentActivity().clear();
         verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
         /* Enable: start session not sent retroactively, weak reference lost. */
