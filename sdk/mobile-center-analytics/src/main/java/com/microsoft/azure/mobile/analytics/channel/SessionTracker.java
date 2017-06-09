@@ -148,7 +148,7 @@ public class SessionTracker implements Channel.Listener {
      * Generate a new session identifier if the first time or
      * we went in background for more X seconds or
      * if enough time has elapsed since the last background usage of the API.
-     *
+     * <p>
      * Indeed the API can be used for events or crashes only for example, we need to renew
      * the session even when no pages are triggered but at the same time we want to keep using
      * the same session as long as the current activity is not paused (long video for example).
@@ -171,6 +171,12 @@ public class SessionTracker implements Channel.Listener {
             for (Map.Entry<Long, UUID> session : mSessions.entrySet())
                 sessionStorage.add(session.getKey() + STORAGE_KEY_VALUE_SEPARATOR + session.getValue());
             StorageHelper.PreferencesStorage.putStringSet(STORAGE_KEY, sessionStorage);
+
+            /*
+             * Record queued time for the session log itself to avoid double log if resuming
+             * from background after timeout and sending a log at same time we resume like a page.
+             */
+            mLastQueuedLogTime = SystemClock.elapsedRealtime();
 
             /* Enqueue a start session log. */
             StartSessionLog startSessionLog = new StartSessionLog();
