@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentManager;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
@@ -18,7 +19,9 @@ import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
 
-public abstract class AbstractMobileCenterService implements MobileCenterService {
+public abstract class AbstractMobileCenterService
+        extends  FragmentManager.FragmentLifecycleCallbacks
+        implements MobileCenterService {
 
     /**
      * Separator for preference key.
