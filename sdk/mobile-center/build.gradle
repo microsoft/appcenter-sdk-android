@@ -3,5 +3,6 @@ evaluationDependsOn(':sdk')
 
 
 dependencies {
-    compile "com.android.support:support-fragment:25.3.1"
+
+    compile "com.android.support:support-fragment:${rootProject.ext.supportLibVersion}"
 }
