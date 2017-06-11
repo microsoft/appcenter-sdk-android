@@ -77,7 +77,7 @@ public class Analytics extends AbstractMobileCenterService {
     /**
      * subpages should be tracked if auto Subpage tacking is enable
      */
-    private ArrayList<String>  mFragmentAutoTrackList;
+    private  static  ArrayList<String>  mFragmentAutoTrackList;
     /**
      * Session tracker.
      */
@@ -262,8 +262,8 @@ public class Analytics extends AbstractMobileCenterService {
 
 
         /*initialize list in first time*/
-        if(getInstance().mFragmentAutoTrackList == null){
-            getInstance().mFragmentAutoTrackList = new ArrayList<>();
+        if(mFragmentAutoTrackList == null){
+            mFragmentAutoTrackList = new ArrayList<>();
         }
 
         /*add class names to list*/
@@ -273,9 +273,9 @@ public class Analytics extends AbstractMobileCenterService {
             Class.forName(fragCalssName);
 
             /*if not add before add to list*/
-            if(!getInstance().mFragmentAutoTrackList.contains(fragCalssName)){
+            if(!mFragmentAutoTrackList.contains(fragCalssName)){
 
-                getInstance().mFragmentAutoTrackList.add(fragCalssName);
+                mFragmentAutoTrackList.add(fragCalssName);
             }
 
         }
@@ -295,12 +295,12 @@ public class Analytics extends AbstractMobileCenterService {
     static void removeFromAutoSubPagesTrackList(String subPageClassName) {
 
         //if inputs are correct
-        if(subPageClassName!= null && getInstance().mFragmentAutoTrackList!= null ){
+        if(subPageClassName!= null && mFragmentAutoTrackList!= null ){
 
             /*search if found, remove*/
-            int Index = getInstance().mFragmentAutoTrackList.indexOf(subPageClassName);
+            int Index = mFragmentAutoTrackList.indexOf(subPageClassName);
             if(Index > -1){
-                getInstance().mFragmentAutoTrackList.remove(Index);
+                mFragmentAutoTrackList.remove(Index);
             }
         }
     }
@@ -314,9 +314,9 @@ public class Analytics extends AbstractMobileCenterService {
      */
     static void clearAutoSubPagesTrackList() {
 
-        if(getInstance().mFragmentAutoTrackList!= null ){
+        if(mFragmentAutoTrackList!= null ){
 
-            getInstance().mFragmentAutoTrackList.clear();
+            mFragmentAutoTrackList.clear();
         }
     }
 
@@ -501,7 +501,7 @@ public class Analytics extends AbstractMobileCenterService {
         super.onFragmentResumed(fm, f);
 
         //if user add this fragment to auto track list
-        if(mFragmentAutoTrackList.contains(f.getClass().getName())){
+        if(mFragmentAutoTrackList!= null && mFragmentAutoTrackList.contains(f.getClass().getName())){
 
             mCurrentFragment = new WeakReference<Fragment>(f);
             if (mSessionTracker != null) {
@@ -685,7 +685,7 @@ public class Analytics extends AbstractMobileCenterService {
      * Implements {@link #addToAutoSubPagesTrackList(FragmentManager, String)}.
      */
     private void  setFragmentCallBackRegistered(boolean isRegistered) {
-       getInstance().mIsFragmentCallBackRegistered =  isRegistered;
+       mIsFragmentCallBackRegistered =  isRegistered;
     }
 
     /**
