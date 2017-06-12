@@ -500,6 +500,7 @@ public class MobileCenter {
 
                         /* Share handler now with service while starting. */
                         serviceInstance.onStarting(mMobileCenterHandler);
+                        mApplication.registerActivityLifecycleCallbacks(serviceInstance);
                         mServices.add(serviceInstance);
                         startedServices.add(serviceInstance);
                     }
@@ -525,6 +526,11 @@ public class MobileCenter {
 
     @WorkerThread
     private void finishStartServices(Iterable<MobileCenterService> services) {
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         List<String> serviceNames = new ArrayList<>();
         for (MobileCenterService service : services) {
             Map<String, LogFactory> logFactories = service.getLogFactories();
@@ -533,9 +539,6 @@ public class MobileCenter {
                     mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
             }
             service.onStarted(mApplication, mAppSecret, mChannel);
-            if (isInstanceEnabled()) {
-                mApplication.registerActivityLifecycleCallbacks(service);
-            }
             MobileCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
             serviceNames.add(service.getServiceName());
         }
@@ -630,15 +633,10 @@ public class MobileCenter {
         /* Apply change to services. */
         for (MobileCenterService service : mServices) {
 
-            /* Add or remove callbacks depending on state change. */
-            if (switchToDisabled)
-                mApplication.unregisterActivityLifecycleCallbacks(service);
-            else if (switchToEnabled)
-                mApplication.registerActivityLifecycleCallbacks(service);
-
             /* Forward status change. */
-            if (service.isInstanceEnabled() != enabled)
+            if (service.isInstanceEnabled() != enabled) {
                 service.setInstanceEnabled(enabled);
+            }
         }
 
         /* Update state now if false, services are checking if enabled while disabling. */

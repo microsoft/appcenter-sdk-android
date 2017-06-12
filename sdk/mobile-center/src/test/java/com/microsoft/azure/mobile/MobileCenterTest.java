@@ -489,8 +489,6 @@ public class MobileCenterTest {
         }
         verify(dummyService).setInstanceEnabled(false);
         verify(anotherDummyService).setInstanceEnabled(false);
-        verify(mApplication).unregisterActivityLifecycleCallbacks(dummyService);
-        verify(mApplication).unregisterActivityLifecycleCallbacks(anotherDummyService);
         verify(mChannel).setEnabled(false);
 
         /* Verify re-enabling base re-enables all services */
@@ -501,8 +499,8 @@ public class MobileCenterTest {
         }
         verify(dummyService).setInstanceEnabled(true);
         verify(anotherDummyService).setInstanceEnabled(true);
-        verify(mApplication, times(2)).registerActivityLifecycleCallbacks(dummyService);
-        verify(mApplication, times(2)).registerActivityLifecycleCallbacks(anotherDummyService);
+        verify(mApplication, times(1)).registerActivityLifecycleCallbacks(dummyService);
+        verify(mApplication, times(1)).registerActivityLifecycleCallbacks(anotherDummyService);
         verify(mChannel, times(3)).setEnabled(true);
 
         /* Verify that disabling one service leaves base and other services enabled */
@@ -569,7 +567,7 @@ public class MobileCenterTest {
         assertFalse(MobileCenter.isEnabled().get());
         for (MobileCenterService service : mobileCenter.getServices()) {
             assertFalse(((AbstractMobileCenterService) service).isInstanceEnabledAsync().get());
-            verify(mApplication, never()).registerActivityLifecycleCallbacks(service);
+            verify(mApplication).registerActivityLifecycleCallbacks(service);
         }
 
         /* Verify we can enable back. */
@@ -577,8 +575,6 @@ public class MobileCenterTest {
         assertTrue(MobileCenter.isEnabled().get());
         for (MobileCenterService service : mobileCenter.getServices()) {
             assertTrue(((AbstractMobileCenterService) service).isInstanceEnabledAsync().get());
-            verify(mApplication).registerActivityLifecycleCallbacks(service);
-            verify(mApplication, never()).unregisterActivityLifecycleCallbacks(service);
         }
     }
 
@@ -608,8 +604,7 @@ public class MobileCenterTest {
         assertFalse(MobileCenter.isEnabled().get());
         for (MobileCenterService service : mobileCenter.getServices()) {
             assertFalse(service.isInstanceEnabled());
-            verify(mApplication, never()).registerActivityLifecycleCallbacks(service);
-            verify(mApplication, never()).unregisterActivityLifecycleCallbacks(service);
+            verify(mApplication).registerActivityLifecycleCallbacks(service);
         }
 
         /* Verify we can enable MobileCenter back, should have no effect on service except registering the mApplication life cycle callbacks. */
@@ -617,8 +612,9 @@ public class MobileCenterTest {
         assertTrue(MobileCenter.isEnabled().get());
         for (MobileCenterService service : mobileCenter.getServices()) {
             assertTrue(service.isInstanceEnabled());
+
+            /* Happened only once. */
             verify(mApplication).registerActivityLifecycleCallbacks(service);
-            verify(mApplication, never()).unregisterActivityLifecycleCallbacks(service);
         }
     }
 
