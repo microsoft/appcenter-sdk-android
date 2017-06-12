@@ -495,7 +495,7 @@ public class MobileCenter {
                 try {
                     MobileCenterService serviceInstance = (MobileCenterService) service.getMethod("getInstance").invoke(null);
                     if (mServices.contains(serviceInstance)) {
-                        MobileCenterLog.warn(LOG_TAG, "Mobile Center has already started the service with class name: " + service.getClass().getName());
+                        MobileCenterLog.warn(LOG_TAG, "Mobile Center has already started the service with class name: " + service.getName());
                     } else {
 
                         /* Share handler now with service while starting. */

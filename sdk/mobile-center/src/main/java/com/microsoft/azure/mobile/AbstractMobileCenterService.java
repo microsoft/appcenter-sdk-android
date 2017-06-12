@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.async.DefaultSimpleFuture;
 import com.microsoft.azure.mobile.utils.async.SimpleFuture;
@@ -140,6 +141,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
         /* Allow sub-class to handle state change. */
         applyEnabledState(enabled);
     }
+
 
     protected synchronized void applyEnabledState(boolean enabled) {
 
@@ -309,5 +311,30 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
             /* MobileCenter is not configured if we reach this. */
             disabledOrNotStartedRunnable.run();
         }
+    }
+
+    /**
+     * Like {{@link #post(Runnable)}} but also post back in U.I. thread.
+     * Use this for example to manage life cycle callbacks to make sure SDK is started and that
+     * every operation runs in order.
+     *
+     * @param runnable command to run.
+     */
+    protected synchronized void postOnUiThread(final Runnable runnable) {
+
+        /*
+         * We don't try to optimize with if channel if not null as there could be race conditions:
+         * If onResume was queued, then onStarted called, onResume will be next in queue and thus
+         * onPause could be called between the queued onStarted and the queued onResume.
+         */
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* And make sure we run the original command on U.I. thread. */
+                HandlerUtils.runOnUiThread(runnable);
+            }
+        });
     }
 }

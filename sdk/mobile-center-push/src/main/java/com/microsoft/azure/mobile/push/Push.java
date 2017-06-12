@@ -15,7 +15,6 @@ import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.push.ingestion.models.PushInstallationLog;
 import com.microsoft.azure.mobile.push.ingestion.models.json.PushInstallationLogFactory;
-import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.async.SimpleFuture;
 
@@ -291,14 +290,20 @@ public class Push extends AbstractMobileCenterService {
 
     @Override
     public void onActivityPaused(Activity activity) {
-        mActivity = null;
+        postOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                mActivity = null;
+            }
+        });
     }
 
-    private synchronized void checkPushInActivityIntent(Activity activity) {
+    private void checkPushInActivityIntent(Activity activity) {
         checkPushInActivityIntent(activity, activity.getIntent());
     }
 
-    private synchronized void checkPushInActivityIntent(Activity activity, Intent intent) {
+    private void checkPushInActivityIntent(final Activity activity, final Intent intent) {
         if (activity == null) {
             MobileCenterLog.error(LOG_TAG, "Push.checkLaunchedFromNotification: activity may not be null");
             return;
@@ -307,8 +312,14 @@ public class Push extends AbstractMobileCenterService {
             MobileCenterLog.error(LOG_TAG, "Push.checkLaunchedFromNotification: intent may not be null");
             return;
         }
-        mActivity = activity;
-        checkPushInIntent(intent);
+        postOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                mActivity = activity;
+                checkPushInIntent(intent);
+            }
+        });
     }
 
     /**
@@ -316,8 +327,8 @@ public class Push extends AbstractMobileCenterService {
      *
      * @param intent intent to inspect.
      */
-    private void checkPushInIntent(Intent intent) {
-        if (isInstanceEnabled() && mInstanceListener != null) {
+    private synchronized void checkPushInIntent(Intent intent) {
+        if (mInstanceListener != null) {
             Bundle extras = intent.getExtras();
             if (extras != null) {
                 String googleMessageId = extras.getString(EXTRA_GOOGLE_MESSAGE_ID);
@@ -344,8 +355,21 @@ public class Push extends AbstractMobileCenterService {
      *
      * @param remoteMessage push message details.
      */
-    synchronized void onMessageReceived(RemoteMessage remoteMessage) {
+    void onMessageReceived(final RemoteMessage remoteMessage) {
         MobileCenterLog.info(LOG_TAG, "Received push message in foreground id=" + remoteMessage.getMessageId());
+        postOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                handleOnMessageReceived(remoteMessage);
+            }
+        });
+    }
+
+    /**
+     * Top level method needed for synchronized code coverage.
+     */
+    private synchronized void handleOnMessageReceived(RemoteMessage remoteMessage) {
         if (isInstanceEnabled() && mInstanceListener != null) {
             String title = null;
             String message = null;
@@ -354,24 +378,7 @@ public class Push extends AbstractMobileCenterService {
                 title = notification.getTitle();
                 message = notification.getBody();
             }
-            final PushNotification pushNotification = new PushNotification(title, message, remoteMessage.getData());
-            HandlerUtils.runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    deliverForegroundPushNotification(pushNotification);
-                }
-            });
-        }
-    }
-
-    /**
-     * Top level method needed for synchronized code coverage.
-     */
-    private synchronized void deliverForegroundPushNotification(PushNotification pushNotification) {
-
-        /* State can change between the post from 1 thread to another. */
-        if (isInstanceEnabled() && mInstanceListener != null) {
+            PushNotification pushNotification = new PushNotification(title, message, remoteMessage.getData());
             mInstanceListener.onPushNotificationReceived(mActivity, pushNotification);
         }
     }

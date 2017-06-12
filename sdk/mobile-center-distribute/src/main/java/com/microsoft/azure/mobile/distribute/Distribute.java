@@ -345,7 +345,7 @@ public class Distribute extends AbstractMobileCenterService {
 
     @Override
     public synchronized void onActivityCreated(final Activity activity, Bundle savedInstanceState) {
-        handleLifeCycleChange(new Runnable() {
+        postOnUiThread(new Runnable() {
 
             @Override
             public void run() {
@@ -374,7 +374,7 @@ public class Distribute extends AbstractMobileCenterService {
 
     @Override
     public synchronized void onActivityResumed(final Activity activity) {
-        handleLifeCycleChange(new Runnable() {
+        postOnUiThread(new Runnable() {
 
             @Override
             public void run() {
@@ -386,31 +386,12 @@ public class Distribute extends AbstractMobileCenterService {
 
     @Override
     public synchronized void onActivityPaused(Activity activity) {
-        handleLifeCycleChange(new Runnable() {
+        postOnUiThread(new Runnable() {
 
             @Override
             public void run() {
                 mForegroundActivity = null;
                 hideProgressDialog();
-            }
-        });
-    }
-
-    @UiThread
-    private synchronized void handleLifeCycleChange(final Runnable runnable) {
-
-        /*
-         * We don't try to optimize with if channel if not null as there could be race conditions:
-         * If onResume was queued, then onStarted called, onResume will be next in queue and thus
-         * onPause could be called between the queued onStarted and the queued onResume.
-         */
-        post(new Runnable() {
-
-            @Override
-            public void run() {
-
-                /* And make sure we run the original command on U.I. thread. */
-                HandlerUtils.runOnUiThread(runnable);
             }
         });
     }
