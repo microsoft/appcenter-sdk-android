@@ -344,38 +344,75 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     @Override
-    public synchronized void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+    public synchronized void onActivityCreated(final Activity activity, Bundle savedInstanceState) {
+        handleLifeCycleChange(new Runnable() {
 
-        /* Resolve launcher class name only once, use empty string to cache a failed resolution. */
-        if (mLauncherActivityClassName == null) {
-            mLauncherActivityClassName = "";
-            PackageManager packageManager = activity.getPackageManager();
-            Intent intent = packageManager.getLaunchIntentForPackage(activity.getPackageName());
-            if (intent != null) {
-                mLauncherActivityClassName = intent.resolveActivity(packageManager).getClassName();
-            }
-        }
+            @Override
+            public void run() {
 
-        /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
-        if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
-            MobileCenterLog.info(LOG_TAG, "Launcher activity restarted.");
-            if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
-                mWorkflowCompleted = false;
-                mBrowserOpenedOrAborted = false;
+                /* Resolve launcher class name only once, use empty string to cache a failed resolution. */
+                if (mLauncherActivityClassName == null) {
+                    mLauncherActivityClassName = "";
+                    PackageManager packageManager = activity.getPackageManager();
+                    Intent intent = packageManager.getLaunchIntentForPackage(activity.getPackageName());
+                    if (intent != null) {
+                        mLauncherActivityClassName = intent.resolveActivity(packageManager).getClassName();
+                    }
+                }
+
+                /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
+                if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
+                    MobileCenterLog.info(LOG_TAG, "Launcher activity restarted.");
+                    if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
+                        mWorkflowCompleted = false;
+                        mBrowserOpenedOrAborted = false;
+                    }
+                }
             }
-        }
+        });
     }
 
     @Override
-    public synchronized void onActivityResumed(Activity activity) {
-        mForegroundActivity = activity;
-        resumeDistributeWorkflow();
+    public synchronized void onActivityResumed(final Activity activity) {
+        handleLifeCycleChange(new Runnable() {
+
+            @Override
+            public void run() {
+                mForegroundActivity = activity;
+                resumeDistributeWorkflow();
+            }
+        });
     }
 
     @Override
     public synchronized void onActivityPaused(Activity activity) {
-        mForegroundActivity = null;
-        hideProgressDialog();
+        handleLifeCycleChange(new Runnable() {
+
+            @Override
+            public void run() {
+                mForegroundActivity = null;
+                hideProgressDialog();
+            }
+        });
+    }
+
+    @UiThread
+    private synchronized void handleLifeCycleChange(final Runnable runnable) {
+
+        /*
+         * We don't try to optimize with if channel if not null as there could be race conditions:
+         * If onResume was queued, then onStarted called, onResume will be next in queue and thus
+         * onPause could be called between the queued onStarted and the queued onResume.
+         */
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* And make sure we run the original command on U.I. thread. */
+                HandlerUtils.runOnUiThread(runnable);
+            }
+        });
     }
 
     @Override
@@ -501,7 +538,7 @@ public class Distribute extends AbstractMobileCenterService {
      * Method that triggers the distribute workflow or proceed to the next step.
      */
     private synchronized void resumeDistributeWorkflow() {
-        if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
+        if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted) {
 
             /* Don't go any further it this is a debug app. */
             if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {
