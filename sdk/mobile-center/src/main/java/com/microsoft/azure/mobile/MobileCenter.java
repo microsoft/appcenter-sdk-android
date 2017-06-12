@@ -526,11 +526,6 @@ public class MobileCenter {
 
     @WorkerThread
     private void finishStartServices(Iterable<MobileCenterService> services) {
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         List<String> serviceNames = new ArrayList<>();
         for (MobileCenterService service : services) {
             Map<String, LogFactory> logFactories = service.getLogFactories();
