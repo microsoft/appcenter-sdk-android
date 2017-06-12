@@ -44,6 +44,7 @@ import java.util.UUID;
 import static com.microsoft.azure.mobile.test.TestUtils.generateString;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -149,10 +150,26 @@ public class AnalyticsTest {
     }
 
     private void activityResumed(final String expectedName, android.app.Activity activity) {
+
+        /*
+         * Before start, calling onActivityResume is ignored.
+         * In reality it never happens, it means someone is messing with internals directly.
+         */
         Analytics analytics = Analytics.getInstance();
+        analytics.onActivityResumed(new Activity());
+        assertNull(analytics.getCurrentActivity());
+        verifyStatic();
+        MobileCenterLog.error(anyString(), anyString());
+        analytics.onActivityPaused(new Activity());
+        verifyStatic(times(2));
+        MobileCenterLog.error(anyString(), anyString());
+
+        /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mMobileCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
+
+        /* Test resume/pause. */
         analytics.onActivityResumed(activity);
         analytics.onActivityPaused(activity);
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
@@ -458,7 +475,7 @@ public class AnalyticsTest {
 
         /* App in foreground: no log yet, we are disabled. */
         analytics.onActivityResumed(new Activity());
-        System.gc();
+        analytics.getCurrentActivity().clear();
         verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
         /* Enable: start session not sent retroactively, weak reference lost. */
