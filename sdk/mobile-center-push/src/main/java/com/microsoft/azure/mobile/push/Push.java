@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
 
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -369,6 +370,7 @@ public class Push extends AbstractMobileCenterService {
     /**
      * Top level method needed for synchronized code coverage.
      */
+    @UiThread
     private synchronized void handleOnMessageReceived(RemoteMessage remoteMessage) {
         if (mInstanceListener != null) {
             String title = null;

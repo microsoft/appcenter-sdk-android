@@ -142,7 +142,6 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
         applyEnabledState(enabled);
     }
 
-
     protected synchronized void applyEnabledState(boolean enabled) {
 
         /* Optional callback to react to enabled state change. */
@@ -345,7 +344,10 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     }
 
     /**
+     * Run the command only if service is enabled.
      * The method is top level just because code coverage when using synchronized.
+     *
+     * @param runnable command to run.
      */
     private synchronized void runIfEnabled(Runnable runnable) {
         if (isInstanceEnabled()) {

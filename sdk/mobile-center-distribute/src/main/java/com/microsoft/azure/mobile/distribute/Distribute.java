@@ -344,7 +344,7 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     @Override
-    public synchronized void onActivityCreated(final Activity activity, Bundle savedInstanceState) {
+    public synchronized void onActivityCreated(Activity activity, Bundle savedInstanceState) {
 
         /* Resolve launcher class name only once, use empty string to cache a failed resolution. */
         if (mLauncherActivityClassName == null) {
@@ -367,7 +367,7 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     @Override
-    public synchronized void onActivityResumed(final Activity activity) {
+    public synchronized void onActivityResumed(Activity activity) {
         mForegroundActivity = activity;
 
         /* If started, resume now, otherwise this will be called by onStarted. */
