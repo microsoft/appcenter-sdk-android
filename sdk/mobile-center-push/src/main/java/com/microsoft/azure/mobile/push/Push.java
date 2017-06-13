@@ -328,7 +328,7 @@ public class Push extends AbstractMobileCenterService {
      * @param intent intent to inspect.
      */
     private synchronized void checkPushInIntent(Intent intent) {
-        if (mInstanceListener != null) {
+        if (isInstanceEnabled() && mInstanceListener != null) {
             Bundle extras = intent.getExtras();
             if (extras != null) {
                 String googleMessageId = extras.getString(EXTRA_GOOGLE_MESSAGE_ID);

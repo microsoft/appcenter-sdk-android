@@ -13,6 +13,7 @@ import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.HttpException;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 import com.microsoft.azure.mobile.utils.crypto.CryptoUtils;
 
@@ -28,6 +29,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 
@@ -55,6 +57,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -173,6 +176,26 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(UUIDUtils.randomUUID()).thenReturn(UUID.randomUUID());
         restartResumeLauncher(mActivity);
         verifyStatic();
+        BrowserUtils.openBrowser(anyString(), any(Activity.class));
+    }
+
+    @Test
+    public void disableBeforeOpenBrowserWhilePostingOnUIThread() {
+        final AtomicReference<Runnable> runnable = new AtomicReference<>();
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                runnable.set((Runnable) invocation.getArguments()[0]);
+                return null;
+            }
+        }).when(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        Distribute.setEnabled(false);
+        runnable.get().run();
+        verifyStatic(never());
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
     }
 
