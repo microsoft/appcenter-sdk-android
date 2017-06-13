@@ -28,6 +28,7 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -424,6 +425,44 @@ public class PushTest {
         /* If intent contains non push extras, same thing. */
         when(intent.getExtras()).thenReturn(mock(Bundle.class));
         push.onActivityResumed(activity);
+        verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+    }
+
+    @Test
+    public void clickedFromBackgroundDisableWhilePostingToUI() {
+
+        /* Mock activity to contain push */
+        PushListener pushListener = mock(PushListener.class);
+        Push.setListener(pushListener);
+        Context contextMock = mock(Context.class);
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(contextMock, push, channel);
+        Activity activity = mock(Activity.class);
+        Intent intent = mock(Intent.class);
+        when(activity.getIntent()).thenReturn(intent);
+        Bundle extras = mock(Bundle.class);
+        when(intent.getExtras()).thenReturn(extras);
+        when(extras.getString(Push.EXTRA_GOOGLE_MESSAGE_ID)).thenReturn("some id");
+        when(extras.keySet()).thenReturn(Collections.<String>emptySet());
+
+        /* Disable while posting the command to the U.I. thread. */
+        activity = mock(Activity.class);
+        when(activity.getIntent()).thenReturn(intent);
+        final AtomicReference<Runnable> runnable = new AtomicReference<>();
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                runnable.set((Runnable) invocation.getArguments()[0]);
+                return null;
+            }
+        }).when(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
+        push.onActivityResumed(activity);
+        Push.setEnabled(false);
+        runnable.get().run();
+        ArgumentCaptor<PushNotification> captor = ArgumentCaptor.forClass(PushNotification.class);
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
     }
 

@@ -369,7 +369,11 @@ public class Distribute extends AbstractMobileCenterService {
     @Override
     public synchronized void onActivityResumed(Activity activity) {
         mForegroundActivity = activity;
-        resumeDistributeWorkflow();
+
+        /* If started, resume now, otherwise this will be called by onStarted. */
+        if (mChannel != null) {
+            resumeDistributeWorkflow();
+        }
     }
 
     @Override
@@ -381,7 +385,13 @@ public class Distribute extends AbstractMobileCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
-            resumeDistributeWorkflow();
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    resumeDistributeWorkflow();
+                }
+            });
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep token though. */
