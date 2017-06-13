@@ -345,61 +345,53 @@ public class Distribute extends AbstractMobileCenterService {
 
     @Override
     public synchronized void onActivityCreated(final Activity activity, Bundle savedInstanceState) {
-        postOnUiThread(new Runnable() {
 
-            @Override
-            public void run() {
-
-                /* Resolve launcher class name only once, use empty string to cache a failed resolution. */
-                if (mLauncherActivityClassName == null) {
-                    mLauncherActivityClassName = "";
-                    PackageManager packageManager = activity.getPackageManager();
-                    Intent intent = packageManager.getLaunchIntentForPackage(activity.getPackageName());
-                    if (intent != null) {
-                        mLauncherActivityClassName = intent.resolveActivity(packageManager).getClassName();
-                    }
-                }
-
-                /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
-                if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
-                    MobileCenterLog.info(LOG_TAG, "Launcher activity restarted.");
-                    if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
-                        mWorkflowCompleted = false;
-                        mBrowserOpenedOrAborted = false;
-                    }
-                }
+        /* Resolve launcher class name only once, use empty string to cache a failed resolution. */
+        if (mLauncherActivityClassName == null) {
+            mLauncherActivityClassName = "";
+            PackageManager packageManager = activity.getPackageManager();
+            Intent intent = packageManager.getLaunchIntentForPackage(activity.getPackageName());
+            if (intent != null) {
+                mLauncherActivityClassName = intent.resolveActivity(packageManager).getClassName();
             }
-        });
+        }
+
+        /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
+        if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
+            MobileCenterLog.info(LOG_TAG, "Launcher activity restarted.");
+            if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
+                mWorkflowCompleted = false;
+                mBrowserOpenedOrAborted = false;
+            }
+        }
     }
 
     @Override
     public synchronized void onActivityResumed(final Activity activity) {
-        postOnUiThread(new Runnable() {
+        mForegroundActivity = activity;
 
-            @Override
-            public void run() {
-                mForegroundActivity = activity;
-                resumeDistributeWorkflow();
-            }
-        });
+        /* If started, resume now, otherwise this will be called by onStarted. */
+        if (mChannel != null) {
+            resumeDistributeWorkflow();
+        }
     }
 
     @Override
     public synchronized void onActivityPaused(Activity activity) {
-        postOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                mForegroundActivity = null;
-                hideProgressDialog();
-            }
-        });
+        mForegroundActivity = null;
+        hideProgressDialog();
     }
 
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
-            resumeDistributeWorkflow();
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    resumeDistributeWorkflow();
+                }
+            });
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep token though. */
@@ -519,7 +511,7 @@ public class Distribute extends AbstractMobileCenterService {
      * Method that triggers the distribute workflow or proceed to the next step.
      */
     private synchronized void resumeDistributeWorkflow() {
-        if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted) {
+        if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
             /* Don't go any further it this is a debug app. */
             if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {

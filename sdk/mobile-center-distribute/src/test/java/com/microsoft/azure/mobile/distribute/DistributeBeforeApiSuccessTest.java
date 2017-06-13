@@ -8,6 +8,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
+import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.http.HttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.HttpException;
@@ -180,7 +181,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void disableBeforeOpenBrowserWhilePostingOnUIThread() {
+    public void resumeWhileStartingAndDisableWhileRunningBrowserCodeOnUI() {
         final AtomicReference<Runnable> runnable = new AtomicReference<>();
         doAnswer(new Answer<Void>() {
 
@@ -191,8 +192,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
             }
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
-        start();
+        Distribute.getInstance().onStarting(mMobileCenterHandler);
         Distribute.getInstance().onActivityResumed(mActivity);
+        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
         Distribute.setEnabled(false);
         runnable.get().run();
         verifyStatic(never());
