@@ -519,7 +519,7 @@ public class Distribute extends AbstractMobileCenterService {
      * Method that triggers the distribute workflow or proceed to the next step.
      */
     private synchronized void resumeDistributeWorkflow() {
-        if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
+        if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted) {
 
             /* Don't go any further it this is a debug app. */
             if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {

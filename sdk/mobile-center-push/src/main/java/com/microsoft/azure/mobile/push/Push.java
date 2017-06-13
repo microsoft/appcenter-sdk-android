@@ -328,7 +328,7 @@ public class Push extends AbstractMobileCenterService {
      * @param intent intent to inspect.
      */
     private synchronized void checkPushInIntent(Intent intent) {
-        if (isInstanceEnabled() && mInstanceListener != null) {
+        if (mInstanceListener != null) {
             Bundle extras = intent.getExtras();
             if (extras != null) {
                 String googleMessageId = extras.getString(EXTRA_GOOGLE_MESSAGE_ID);
@@ -370,7 +370,7 @@ public class Push extends AbstractMobileCenterService {
      * Top level method needed for synchronized code coverage.
      */
     private synchronized void handleOnMessageReceived(RemoteMessage remoteMessage) {
-        if (isInstanceEnabled() && mInstanceListener != null) {
+        if (mInstanceListener != null) {
             String title = null;
             String message = null;
             RemoteMessage.Notification notification = remoteMessage.getNotification();

@@ -333,8 +333,23 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
             public void run() {
 
                 /* And make sure we run the original command on U.I. thread. */
-                HandlerUtils.runOnUiThread(runnable);
+                HandlerUtils.runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        runIfEnabled(runnable);
+                    }
+                });
             }
         });
+    }
+
+    /**
+     * The method is top level just because code coverage when using synchronized.
+     */
+    private synchronized void runIfEnabled(Runnable runnable) {
+        if (isInstanceEnabled()) {
+            runnable.run();
+        }
     }
 }
