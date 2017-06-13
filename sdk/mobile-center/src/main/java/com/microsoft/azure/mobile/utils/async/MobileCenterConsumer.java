@@ -7,7 +7,7 @@ package com.microsoft.azure.mobile.utils.async;
  *
  * @param <T> input argument type.
  */
-public interface SimpleConsumer<T> {
+public interface MobileCenterConsumer<T> {
 
     /**
      * Performs this operation on the given argument.

@@ -18,7 +18,7 @@ import com.microsoft.azure.mobile.utils.HashUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
-import com.microsoft.azure.mobile.utils.async.SimpleFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.crypto.CryptoUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
 
@@ -94,7 +94,7 @@ public class AbstractDistributeTest {
     MobileCenterHandler mMobileCenterHandler;
 
     @Mock
-    private SimpleFuture<Boolean> mBooleanSimpleFuture;
+    private MobileCenterFuture<Boolean> mBooleanMobileCenterFuture;
 
     @Before
     @SuppressLint("ShowToast")
@@ -103,8 +103,8 @@ public class AbstractDistributeTest {
         Distribute.unsetInstance();
         mockStatic(MobileCenterLog.class);
         mockStatic(MobileCenter.class);
-        when(MobileCenter.isEnabled()).thenReturn(mBooleanSimpleFuture);
-        when(mBooleanSimpleFuture.get()).thenReturn(true);
+        when(MobileCenter.isEnabled()).thenReturn(mBooleanMobileCenterFuture);
+        when(mBooleanMobileCenterFuture.get()).thenReturn(true);
         doAnswer(new Answer<Void>() {
 
             @Override

@@ -4,7 +4,7 @@ package com.microsoft.azure.mobile.utils.async;
  * Tiny subset of CompletableFuture usable on Java 7.
  * Does not throw any exception.
  */
-public interface SimpleFuture<T> {
+public interface MobileCenterFuture<T> {
 
     /**
      * Waits if necessary for the computation to complete, and then
@@ -20,7 +20,7 @@ public interface SimpleFuture<T> {
      *
      * @param function the action to perform upon completion.
      */
-    void thenAccept(SimpleConsumer<T> function);
+    void thenAccept(MobileCenterConsumer<T> function);
 
     /**
      * Returns true if completed.

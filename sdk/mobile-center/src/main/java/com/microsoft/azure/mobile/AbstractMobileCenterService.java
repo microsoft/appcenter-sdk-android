@@ -9,8 +9,8 @@ import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
-import com.microsoft.azure.mobile.utils.async.DefaultSimpleFuture;
-import com.microsoft.azure.mobile.utils.async.SimpleFuture;
+import com.microsoft.azure.mobile.utils.async.DefaultMobileCenterFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import java.util.Map;
@@ -71,8 +71,8 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      */
-    protected synchronized SimpleFuture<Boolean> isInstanceEnabledAsync() {
-        final DefaultSimpleFuture<Boolean> future = new DefaultSimpleFuture<>();
+    protected synchronized MobileCenterFuture<Boolean> isInstanceEnabledAsync() {
+        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
         postAsyncGetter(new Runnable() {
 
             @Override
@@ -289,7 +289,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * @param valueIfDisabledOrNotStarted value to use for the future async operation result if service is disabled or not started or MobileCenter not started.
      * @param <T>                         getter value type.
      */
-    protected synchronized <T> void postAsyncGetter(final Runnable runnable, final DefaultSimpleFuture<T> future, final T valueIfDisabledOrNotStarted) {
+    protected synchronized <T> void postAsyncGetter(final Runnable runnable, final DefaultMobileCenterFuture<T> future, final T valueIfDisabledOrNotStarted) {
         Runnable disabledOrNotStartedRunnable = new Runnable() {
 
             @Override

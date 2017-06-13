@@ -24,14 +24,14 @@ import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-public class SimpleFutureTest {
+public class MobileCenterFutureTest {
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Test
     public void getWithInterruption() throws InterruptedException {
-        final DefaultSimpleFuture<Boolean> future = new DefaultSimpleFuture<>();
+        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
         final AtomicReference<Boolean> result = new AtomicReference<>();
         Thread thread = new Thread() {
 
@@ -48,12 +48,12 @@ public class SimpleFutureTest {
     }
 
     @Test
-    @PrepareForTest(DefaultSimpleFuture.class)
+    @PrepareForTest(DefaultMobileCenterFuture.class)
     public void isDoneWithInterruption() throws Exception {
         CountDownLatch latch = mock(CountDownLatch.class);
         whenNew(CountDownLatch.class).withAnyArguments().thenReturn(latch);
         when(latch.await(anyLong(), any(TimeUnit.class))).thenThrow(new InterruptedException()).thenReturn(true);
-        final DefaultSimpleFuture<Boolean> future = new DefaultSimpleFuture<>();
+        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
         final AtomicReference<Boolean> result = new AtomicReference<>();
         Thread thread = new Thread() {
 
@@ -69,7 +69,7 @@ public class SimpleFutureTest {
 
     @Test
     public void completeTwiceIgnored() {
-        DefaultSimpleFuture<Integer> future = new DefaultSimpleFuture<>();
+        DefaultMobileCenterFuture<Integer> future = new DefaultMobileCenterFuture<>();
         future.complete(1);
         future.complete(2);
         assertEquals(Integer.valueOf(1), future.get());
@@ -88,10 +88,10 @@ public class SimpleFutureTest {
             }
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
-        DefaultSimpleFuture<Integer> future = new DefaultSimpleFuture<>();
+        DefaultMobileCenterFuture<Integer> future = new DefaultMobileCenterFuture<>();
 
         @SuppressWarnings("unchecked")
-        SimpleConsumer<Integer> function = mock(SimpleConsumer.class);
+        MobileCenterConsumer<Integer> function = mock(MobileCenterConsumer.class);
         future.thenAccept(function);
         future.thenAccept(function);
         future.complete(1);

@@ -13,7 +13,7 @@ import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.ShutdownHelper;
-import com.microsoft.azure.mobile.utils.async.SimpleFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.json.JSONException;
@@ -77,7 +77,7 @@ public class UncaughtExceptionHandlerTest {
         mockStatic(System.class);
 
         @SuppressWarnings("unchecked")
-        SimpleFuture<Boolean> future = (SimpleFuture<Boolean>) mock(SimpleFuture.class);
+        MobileCenterFuture<Boolean> future = (MobileCenterFuture<Boolean>) mock(MobileCenterFuture.class);
         when(MobileCenter.isEnabled()).thenReturn(future);
         when(future.get()).thenReturn(true);
         when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);

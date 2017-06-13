@@ -18,7 +18,7 @@ import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
-import com.microsoft.azure.mobile.utils.async.SimpleFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -112,9 +112,9 @@ public class Analytics extends AbstractMobileCenterService {
      * Check whether Analytics service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see SimpleFuture
+     * @see MobileCenterFuture
      */
-    public static SimpleFuture<Boolean> isEnabled() {
+    public static MobileCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
 

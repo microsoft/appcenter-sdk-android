@@ -17,7 +17,7 @@ import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.push.ingestion.models.PushInstallationLog;
 import com.microsoft.azure.mobile.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
-import com.microsoft.azure.mobile.utils.async.SimpleFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -126,9 +126,9 @@ public class Push extends AbstractMobileCenterService {
      * Check whether Push service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see SimpleFuture
+     * @see MobileCenterFuture
      */
-    public static SimpleFuture<Boolean> isEnabled() {
+    public static MobileCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
 

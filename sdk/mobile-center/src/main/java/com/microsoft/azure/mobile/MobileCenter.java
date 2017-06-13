@@ -25,8 +25,8 @@ import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.ShutdownHelper;
-import com.microsoft.azure.mobile.utils.async.DefaultSimpleFuture;
-import com.microsoft.azure.mobile.utils.async.SimpleFuture;
+import com.microsoft.azure.mobile.utils.async.DefaultMobileCenterFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import java.util.ArrayList;
@@ -244,9 +244,9 @@ public class MobileCenter {
      * This operation is performed in background as it accesses SharedPreferences.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see SimpleFuture
+     * @see MobileCenterFuture
      */
-    public static SimpleFuture<Boolean> isEnabled() {
+    public static MobileCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
 
@@ -267,9 +267,9 @@ public class MobileCenter {
      * This operation is performed in background as it accesses SharedPreferences and UUID.
      *
      * @return future with result being the installation identifier.
-     * @see SimpleFuture
+     * @see MobileCenterFuture
      */
-    public static SimpleFuture<UUID> getInstallId() {
+    public static MobileCenterFuture<UUID> getInstallId() {
         return getInstance().getInstanceInstallId();
     }
 
@@ -569,8 +569,8 @@ public class MobileCenter {
     /**
      * Implements {@link #isEnabled()} at instance level.
      */
-    private synchronized SimpleFuture<Boolean> isInstanceEnabledAsync() {
-        final DefaultSimpleFuture<Boolean> future = new DefaultSimpleFuture<>();
+    private synchronized MobileCenterFuture<Boolean> isInstanceEnabledAsync() {
+        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
         if (checkPrecondition()) {
             mMobileCenterHandler.post(new Runnable() {
 
@@ -667,8 +667,8 @@ public class MobileCenter {
     /**
      * Implements {@link #getInstallId()}.
      */
-    private synchronized SimpleFuture<UUID> getInstanceInstallId() {
-        final DefaultSimpleFuture<UUID> future = new DefaultSimpleFuture<>();
+    private synchronized MobileCenterFuture<UUID> getInstanceInstallId() {
+        final DefaultMobileCenterFuture<UUID> future = new DefaultMobileCenterFuture<>();
         if (checkPrecondition()) {
             mMobileCenterHandler.post(new Runnable() {
 

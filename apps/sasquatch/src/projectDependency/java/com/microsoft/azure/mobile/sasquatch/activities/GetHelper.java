@@ -8,18 +8,18 @@ import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.push.Push;
-import com.microsoft.azure.mobile.utils.async.SimpleConsumer;
+import com.microsoft.azure.mobile.utils.async.MobileCenterConsumer;
 
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.LOG_TAG;
 
-public class GetHelper {
+class GetHelper {
 
     static void testInstallIdAndLastSessionCrash() {
 
         /* Print install ID. */
-        MobileCenter.getInstallId().thenAccept(new SimpleConsumer<UUID>() {
+        MobileCenter.getInstallId().thenAccept(new MobileCenterConsumer<UUID>() {
 
             @Override
             public void accept(UUID uuid) {
@@ -28,14 +28,14 @@ public class GetHelper {
         });
 
         /* Print last crash. */
-        Crashes.hasCrashedInLastSession().thenAccept(new SimpleConsumer<Boolean>() {
+        Crashes.hasCrashedInLastSession().thenAccept(new MobileCenterConsumer<Boolean>() {
 
             @Override
             public void accept(Boolean crashed) {
                 Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + crashed);
             }
         });
-        Crashes.getLastSessionCrashReport().thenAccept(new SimpleConsumer<ErrorReport>() {
+        Crashes.getLastSessionCrashReport().thenAccept(new MobileCenterConsumer<ErrorReport>() {
 
             @Override
             public void accept(ErrorReport data) {

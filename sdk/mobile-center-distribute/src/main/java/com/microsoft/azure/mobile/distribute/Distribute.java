@@ -41,8 +41,8 @@ import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
-import com.microsoft.azure.mobile.utils.async.SimpleConsumer;
-import com.microsoft.azure.mobile.utils.async.SimpleFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterConsumer;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.crypto.CryptoUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
@@ -243,9 +243,9 @@ public class Distribute extends AbstractMobileCenterService {
      * Check whether Distribute service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see SimpleFuture
+     * @see MobileCenterFuture
      */
-    public static SimpleFuture<Boolean> isEnabled() {
+    public static MobileCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
 
@@ -413,7 +413,7 @@ public class Distribute extends AbstractMobileCenterService {
          * We need to check if it is enabled and we also need to run download code in U.I. thread
          * so post the command using the async method to achieve both goals at once.
          */
-        isInstanceEnabledAsync().thenAccept(new SimpleConsumer<Boolean>() {
+        isInstanceEnabledAsync().thenAccept(new MobileCenterConsumer<Boolean>() {
 
             @Override
             public void accept(Boolean enabled) {

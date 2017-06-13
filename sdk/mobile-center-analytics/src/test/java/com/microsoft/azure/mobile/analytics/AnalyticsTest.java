@@ -19,7 +19,7 @@ import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
-import com.microsoft.azure.mobile.utils.async.SimpleFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import junit.framework.Assert;
@@ -72,7 +72,7 @@ public class AnalyticsTest {
     private static final String ANALYTICS_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Analytics.getInstance().getServiceName();
 
     @Mock
-    private SimpleFuture<Boolean> mCoreEnabledFuture;
+    private MobileCenterFuture<Boolean> mCoreEnabledFuture;
 
     @Mock
     private MobileCenterHandler mMobileCenterHandler;

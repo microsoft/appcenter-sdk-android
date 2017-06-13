@@ -24,8 +24,8 @@ import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
-import com.microsoft.azure.mobile.utils.async.SimpleConsumer;
-import com.microsoft.azure.mobile.utils.async.SimpleFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterConsumer;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import junit.framework.Assert;
@@ -124,7 +124,7 @@ public class CrashesTest {
         mockStatic(MobileCenter.class);
 
         @SuppressWarnings("unchecked")
-        SimpleFuture<Boolean> future = (SimpleFuture<Boolean>) mock(SimpleFuture.class);
+        MobileCenterFuture<Boolean> future = (MobileCenterFuture<Boolean>) mock(MobileCenterFuture.class);
         when(MobileCenter.isEnabled()).thenReturn(future);
         when(future.get()).thenReturn(true);
 
@@ -936,7 +936,7 @@ public class CrashesTest {
         assertFalse(Crashes.hasCrashedInLastSession().get());
 
         @SuppressWarnings("unchecked")
-        SimpleConsumer<ErrorReport> beforeCallback = (SimpleConsumer<ErrorReport>) mock(SimpleConsumer.class);
+        MobileCenterConsumer<ErrorReport> beforeCallback = (MobileCenterConsumer<ErrorReport>) mock(MobileCenterConsumer.class);
         Crashes.getLastSessionCrashReport().thenAccept(beforeCallback);
         verify(beforeCallback).accept(null);
 
@@ -947,8 +947,8 @@ public class CrashesTest {
 
         /* Test with 2 callbacks and check result is the same for both callbacks. */
         @SuppressWarnings("unchecked")
-        SimpleConsumer<ErrorReport> afterCallback = (SimpleConsumer<ErrorReport>) mock(SimpleConsumer.class);
-        SimpleFuture<ErrorReport> future = Crashes.getLastSessionCrashReport();
+        MobileCenterConsumer<ErrorReport> afterCallback = (MobileCenterConsumer<ErrorReport>) mock(MobileCenterConsumer.class);
+        MobileCenterFuture<ErrorReport> future = Crashes.getLastSessionCrashReport();
         future.thenAccept(afterCallback);
         future.thenAccept(afterCallback);
         ArgumentCaptor<ErrorReport> errorReportCaptor = ArgumentCaptor.forClass(ErrorReport.class);
@@ -1036,7 +1036,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
 
         @SuppressWarnings("unchecked")
-        SimpleConsumer<ErrorReport> callback = (SimpleConsumer<ErrorReport>) mock(SimpleConsumer.class);
+        MobileCenterConsumer<ErrorReport> callback = (MobileCenterConsumer<ErrorReport>) mock(MobileCenterConsumer.class);
 
         /* Call twice for multiple callbacks before initialize. */
         Crashes.getLastSessionCrashReport().thenAccept(callback);

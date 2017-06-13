@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.LOG_TAG;
 
-public class GetHelper {
+class GetHelper {
 
     static void testInstallIdAndLastSessionCrash() {
 

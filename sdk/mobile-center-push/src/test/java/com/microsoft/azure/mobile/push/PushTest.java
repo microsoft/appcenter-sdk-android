@@ -15,7 +15,7 @@ import com.microsoft.azure.mobile.push.ingestion.models.PushInstallationLog;
 import com.microsoft.azure.mobile.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
-import com.microsoft.azure.mobile.utils.async.SimpleFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.junit.Before;
@@ -80,15 +80,15 @@ public class PushTest {
     private MobileCenterHandler mMobileCenterHandler;
 
     @Mock
-    private SimpleFuture<Boolean> mBooleanSimpleFuture;
+    private MobileCenterFuture<Boolean> mBooleanMobileCenterFuture;
 
     @Before
     public void setUp() throws Exception {
         Push.unsetInstance();
         mockStatic(MobileCenterLog.class);
         mockStatic(MobileCenter.class);
-        when(MobileCenter.isEnabled()).thenReturn(mBooleanSimpleFuture);
-        when(mBooleanSimpleFuture.get()).thenReturn(true);
+        when(MobileCenter.isEnabled()).thenReturn(mBooleanMobileCenterFuture);
+        when(mBooleanMobileCenterFuture.get()).thenReturn(true);
         doAnswer(new Answer<Void>() {
 
             @Override

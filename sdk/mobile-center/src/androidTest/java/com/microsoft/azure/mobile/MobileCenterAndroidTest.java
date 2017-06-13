@@ -11,9 +11,9 @@ import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
-import com.microsoft.azure.mobile.utils.async.DefaultSimpleFuture;
-import com.microsoft.azure.mobile.utils.async.SimpleConsumer;
-import com.microsoft.azure.mobile.utils.async.SimpleFuture;
+import com.microsoft.azure.mobile.utils.async.DefaultMobileCenterFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterConsumer;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.junit.After;
@@ -62,7 +62,7 @@ public class MobileCenterAndroidTest {
         assertNotEquals(installId2, installId);
         final Semaphore lock = new Semaphore(0);
         final AtomicReference<UUID> asyncUUID = new AtomicReference<>();
-        MobileCenter.getInstallId().thenAccept(new SimpleConsumer<UUID>() {
+        MobileCenter.getInstallId().thenAccept(new MobileCenterConsumer<UUID>() {
 
             @Override
             public void accept(UUID uuid) {
@@ -89,8 +89,8 @@ public class MobileCenterAndroidTest {
 
         private static UUID mInstallId;
 
-        static SimpleFuture<UUID> getInstallId() {
-            final DefaultSimpleFuture<UUID> future = new DefaultSimpleFuture<>();
+        static MobileCenterFuture<UUID> getInstallId() {
+            final DefaultMobileCenterFuture<UUID> future = new DefaultMobileCenterFuture<>();
             getInstance().post(new Runnable() {
 
                 @Override

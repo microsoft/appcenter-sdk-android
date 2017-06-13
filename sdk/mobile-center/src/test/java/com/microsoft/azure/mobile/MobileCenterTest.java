@@ -18,7 +18,7 @@ import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.ShutdownHelper;
-import com.microsoft.azure.mobile.utils.async.SimpleFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.junit.After;
@@ -894,7 +894,7 @@ public class MobileCenterTest {
             return sharedInstance;
         }
 
-        static SimpleFuture<Boolean> isEnabled() {
+        static MobileCenterFuture<Boolean> isEnabled() {
             return getInstance().isInstanceEnabledAsync();
         }
 
@@ -926,7 +926,7 @@ public class MobileCenterTest {
             return sharedInstance;
         }
 
-        static SimpleFuture<Boolean> isEnabled() {
+        static MobileCenterFuture<Boolean> isEnabled() {
             return getInstance().isInstanceEnabledAsync();
         }
 

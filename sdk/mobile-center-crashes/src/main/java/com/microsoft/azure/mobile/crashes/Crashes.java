@@ -23,8 +23,8 @@ import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
-import com.microsoft.azure.mobile.utils.async.DefaultSimpleFuture;
-import com.microsoft.azure.mobile.utils.async.SimpleFuture;
+import com.microsoft.azure.mobile.utils.async.DefaultMobileCenterFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.json.JSONException;
@@ -174,9 +174,9 @@ public class Crashes extends AbstractMobileCenterService {
      * Check whether Crashes service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see SimpleFuture
+     * @see MobileCenterFuture
      */
-    public static SimpleFuture<Boolean> isEnabled() {
+    public static MobileCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
 
@@ -234,9 +234,9 @@ public class Crashes extends AbstractMobileCenterService {
      * Check whether the app crashed in its last session.
      *
      * @return future with result being <code>true</code> if there was a crash in the last session, <code>false</code> otherwise.
-     * @see SimpleFuture
+     * @see MobileCenterFuture
      */
-    public static SimpleFuture<Boolean> hasCrashedInLastSession() {
+    public static MobileCenterFuture<Boolean> hasCrashedInLastSession() {
         return getInstance().hasInstanceCrashedInLastSession();
     }
 
@@ -244,17 +244,17 @@ public class Crashes extends AbstractMobileCenterService {
      * Provides information about any available crash report from the last session, if it crashed.
      *
      * @return future with result being the crash report from last session or null if there wasn't one.
-     * @see SimpleFuture
+     * @see MobileCenterFuture
      */
-    public static SimpleFuture<ErrorReport> getLastSessionCrashReport() {
+    public static MobileCenterFuture<ErrorReport> getLastSessionCrashReport() {
         return getInstance().getInstanceLastSessionCrashReport();
     }
 
     /**
      * Implements {@link #hasCrashedInLastSession()} at instance level.
      */
-    private synchronized SimpleFuture<Boolean> hasInstanceCrashedInLastSession() {
-        final DefaultSimpleFuture<Boolean> future = new DefaultSimpleFuture<>();
+    private synchronized MobileCenterFuture<Boolean> hasInstanceCrashedInLastSession() {
+        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
         postAsyncGetter(new Runnable() {
 
             @Override
@@ -268,8 +268,8 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Implements {@link #getLastSessionCrashReport()} at instance level.
      */
-    private synchronized SimpleFuture<ErrorReport> getInstanceLastSessionCrashReport() {
-        final DefaultSimpleFuture<ErrorReport> future = new DefaultSimpleFuture<>();
+    private synchronized MobileCenterFuture<ErrorReport> getInstanceLastSessionCrashReport() {
+        final DefaultMobileCenterFuture<ErrorReport> future = new DefaultMobileCenterFuture<>();
         postAsyncGetter(new Runnable() {
 
             @Override
