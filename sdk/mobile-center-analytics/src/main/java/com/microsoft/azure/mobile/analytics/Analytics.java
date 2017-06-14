@@ -3,8 +3,9 @@ package com.microsoft.azure.mobile.analytics;
 import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
@@ -22,6 +23,7 @@ import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,6 +51,10 @@ public class Analytics extends AbstractMobileCenterService {
      * Activity suffix to exclude from generated page names.
      */
     private static final String ACTIVITY_SUFFIX = "Activity";
+    /**
+     * Activity suffix to exclude from generated page names.
+     */
+    private static final String FRAGMENT_SUFFIX = "Fragment";
 
     /**
      * Shared instance.
@@ -64,7 +70,14 @@ public class Analytics extends AbstractMobileCenterService {
      * Current activity to replay onResume when enabled in foreground.
      */
     private WeakReference<Activity> mCurrentActivity;
-
+    /**
+     * Current activity to replay onResume when enabled in foreground.
+     */
+    private WeakReference<Fragment> mCurrentFragment;
+    /**
+     * subpages should be tracked if auto Subpage tacking is enable
+     */
+    private  static  ArrayList<String>  mFragmentAutoTrackList;
     /**
      * Session tracker.
      */
@@ -82,6 +95,18 @@ public class Analytics extends AbstractMobileCenterService {
     private boolean mAutoPageTrackingEnabled = false;
 
     /**
+     * Automatic page tracking flag.
+     * TODO the backend does not support sub pages yet so the default value would be true after the service becomes public.
+     */
+    private boolean mAutoSubPageTrackingEnabled = false;
+
+    /**
+     * Automatic page tracking flag.
+     * TODO the backend does not support pages yet so the default value would be true after the service becomes public.
+     */
+    private boolean mIsFragmentCallBackRegistered = false;
+
+    /**
      * Init.
      */
     private Analytics() {
@@ -89,6 +114,8 @@ public class Analytics extends AbstractMobileCenterService {
         mFactories.put(StartSessionLog.TYPE, new StartSessionLogFactory());
         mFactories.put(PageLog.TYPE, new PageLogFactory());
         mFactories.put(EventLog.TYPE, new EventLogFactory());
+
+
     }
 
     /**
@@ -165,6 +192,134 @@ public class Analytics extends AbstractMobileCenterService {
         getInstance().setInstanceAutoPageTrackingEnabled(autoPageTrackingEnabled);
     }
 
+
+    /**
+     * Check if automatic sub page tracking is enabled.
+     * <p>
+     * TODO the backend does not support that service yet, will be public method later.
+     *
+     * @return true if automatic page tracking is enabled. false otherwise.
+     * @see #setAutoSubPageTrackingEnabled(boolean)
+     */
+    static boolean isAutoSubPageTrackingEnabled() {
+        return getInstance().isInstanceAutoSubPageTrackingEnabled();
+    }
+
+    /**
+     * If enabled (which is the default), automatic page tracking will call {@link #trackSubPage(String, Map)}
+     * automatically very time an fragment is resumed if fragment added to track list
+     * by {@link #addToAutoSubPagesTrackList} e, with a generated name and no properties.
+     * Call this method with false if you want to track pages yourself in your application.
+     * <p>
+     * TODO the backend does not support that service yet, will be public method later.
+     *
+     * @param autoSubPageTrackingEnabled true to let the service track pages automatically, false otherwise (default state is true).
+     */
+    static void setAutoSubPageTrackingEnabled(boolean autoSubPageTrackingEnabled) {
+        getInstance().setInstanceAutoSubPageTrackingEnabled(autoSubPageTrackingEnabled);
+    }
+
+
+    /**
+     * an implement for {@link #addToAutoSubPagesTrackList(FragmentManager, String[])}
+     *
+     *
+     * <p>
+     * TODO the backend does not support that service yet, will be public method later.
+     *
+     * @param fragManager               suppoert fragment Manager
+     * @param fragmentClassName         class name of fragment class
+     * @throws ClassNotFoundException   if the class cannot be located
+     * @throws InstantiationException   if the initialization provoked by this method fails
+     */
+    static void addToAutoSubPagesTrackList(FragmentManager fragManager , String fragmentClassName)
+            throws ClassNotFoundException, InstantiationException{
+
+        addToAutoSubPagesTrackList(fragManager , new String[]{fragmentClassName});
+
+    }
+
+    /**
+     * add fragments to subpage's auto track list ,so page tracking will call {@link #trackSubPage(String, Map)}
+     * automatically every time an fragment is resumed with a generated name and no properties.
+     *
+     * <p>
+     * TODO the backend does not support that service yet, will be public method later.
+     *
+     * @param fragManager               suppoert fragment Manager
+     * @param fragmentClassNames         class names of fragment classes
+     * @throws ClassNotFoundException   if the class cannot be located
+     * @throws InstantiationException   if the initialization provoked by this method fails
+     */
+    static void addToAutoSubPagesTrackList(FragmentManager fragManager , String[] fragmentClassNames)
+            throws ClassNotFoundException, InstantiationException{
+
+         /*if fragmentcallback is not registered*/
+        if(!getInstance().isFragmentCallBackRegistered()){
+            fragManager.registerFragmentLifecycleCallbacks(getInstance(),true);
+            getInstance().setFragmentCallBackRegistered(true);
+        }
+
+
+        /*initialize list in first time*/
+        if(mFragmentAutoTrackList == null){
+            mFragmentAutoTrackList = new ArrayList<>();
+        }
+
+        /*add class names to list*/
+        for (String fragCalssName:fragmentClassNames) {
+
+            //validate class name
+            Class.forName(fragCalssName);
+
+            /*if not add before add to list*/
+            if(!mFragmentAutoTrackList.contains(fragCalssName)){
+
+                mFragmentAutoTrackList.add(fragCalssName);
+            }
+
+        }
+
+
+
+    }
+
+    /**
+     * remove  fragment from  auto track list ,so should track yourself by {@link #trackSubPage(String, Map)}
+     * <p>
+     *
+     * TODO the backend does not support that service yet, will be public method later.
+     *
+     * @param subPageClassName          fragment class name
+     */
+    static void removeFromAutoSubPagesTrackList(String subPageClassName) {
+
+        //if inputs are correct
+        if(subPageClassName!= null && mFragmentAutoTrackList!= null ){
+
+            /*search if found, remove*/
+            int Index = mFragmentAutoTrackList.indexOf(subPageClassName);
+            if(Index > -1){
+                mFragmentAutoTrackList.remove(Index);
+            }
+        }
+    }
+
+
+    /**
+     * remove all fragment that add to  auto track list
+     * <p>
+     * TODO the backend does not support that service yet, will be public method later.
+     *
+     */
+    static void clearAutoSubPagesTrackList() {
+
+        if(mFragmentAutoTrackList!= null ){
+
+            mFragmentAutoTrackList.clear();
+        }
+    }
+
     /**
      * Track a custom page with name.
      * <p>
@@ -178,7 +333,7 @@ public class Analytics extends AbstractMobileCenterService {
     }
 
     /**
-     * Track a custom page with name and optional properties.
+     * Track a custom sub page(fragment) with name and optional properties.
      * The name parameter can not be null or empty. Maximum allowed length = 256.
      * The properties parameter maximum item count = 5.
      * The properties keys/names can not be null or empty, maximum allowed key length = 64.
@@ -191,6 +346,36 @@ public class Analytics extends AbstractMobileCenterService {
      */
     static void trackPage(String name, Map<String, String> properties) {
         final String logType = "Page";
+        if (validateName(name, logType)) {
+            Map<String, String> validatedProperties = validateProperties(properties, name, logType);
+            getInstance().queuePage(name, validatedProperties);
+        }
+    }
+
+    /**
+     * Track a custom sub page (fragment)with name.
+     * <p>
+     * TODO the backend does not support that service yet, will be public method later.
+     *
+     * @param name A page name.
+     */
+    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
+    static void trackSubPage(String name) {trackSubPage(name, null);}
+
+    /**
+     * Track a custom sub page(fragment) with name and optional properties.
+     * The name parameter can not be null or empty. Maximum allowed length = 256.
+     * The properties parameter maximum item count = 5.
+     * The properties keys/names can not be null or empty, maximum allowed key length = 64.
+     * The properties values can not be null, maximum allowed value length = 64.
+     * <p>
+     * TODO the backend does not support that service yet, will be public method later.
+     *
+     * @param name       A page name.
+     * @param properties Optional properties.
+     */
+    static void trackSubPage(String name, Map<String, String> properties) {
+        final String logType = "SubPage";
         if (validateName(name, logType)) {
             Map<String, String> validatedProperties = validateProperties(properties, name, logType);
             getInstance().queuePage(name, validatedProperties);
@@ -240,6 +425,20 @@ public class Analytics extends AbstractMobileCenterService {
         else
             return name;
     }
+    /**
+     * Generate a sub page name for an fragment.
+     *
+     * @param fragmentCalss fragment class.
+     * @return page name.
+     */
+    private static String generateSubPageName(Class<?> fragmentCalss) {
+        String name = fragmentCalss.getSimpleName();
+        String suffix = FRAGMENT_SUFFIX;
+        if (name.endsWith(suffix) && name.length() > suffix.length())
+            return name.substring(0, name.length() - suffix.length());
+        else
+            return name;
+    }
 
     @Override
     protected String getGroupName() {
@@ -271,7 +470,7 @@ public class Analytics extends AbstractMobileCenterService {
     public synchronized void onActivityResumed(Activity activity) {
         mCurrentActivity = new WeakReference<>(activity);
         if (mSessionTracker != null) {
-            processOnResume(activity);
+            processOnResumeActivity(activity);
         }
     }
 
@@ -281,7 +480,7 @@ public class Analytics extends AbstractMobileCenterService {
      *
      * @param activity current activity.
      */
-    private void processOnResume(Activity activity) {
+    private void processOnResumeActivity(Activity activity) {
         mSessionTracker.onActivityResumed();
         if (mAutoPageTrackingEnabled) {
             queuePage(generatePageName(activity.getClass()), null);
@@ -294,6 +493,48 @@ public class Analytics extends AbstractMobileCenterService {
         if (mSessionTracker != null) {
             mSessionTracker.onActivityPaused();
         }
+    }
+
+    @Override
+    public void onFragmentResumed(FragmentManager fm, Fragment f) {
+
+        super.onFragmentResumed(fm, f);
+
+        //if user add this fragment to auto track list
+        if(mFragmentAutoTrackList!= null && mFragmentAutoTrackList.contains(f.getClass().getName())){
+
+            mCurrentFragment = new WeakReference<Fragment>(f);
+            if (mSessionTracker != null) {
+                processOnResumeFragment(f);
+            }
+        }
+
+    }
+
+    /**
+     * On an Fragment being resumed, start a new session if needed
+     * and track current sub page automatically if that mode is enabled
+     * and add to track list.
+     *
+     * @param fragment current fragment.
+     */
+    private void processOnResumeFragment(Fragment fragment) {
+
+        mSessionTracker.onFragmentResumed();
+        if (mAutoSubPageTrackingEnabled) {
+            queueSubPage(generateSubPageName(fragment.getClass()), null);
+        }
+    }
+
+
+    @Override
+    public void onFragmentPaused(FragmentManager fm, Fragment f) {
+        super.onFragmentPaused(fm, f);
+        mCurrentFragment = null;
+        if (mSessionTracker != null) {
+            mSessionTracker.onFragmentPaused();
+        }
+
     }
 
     @Override
@@ -342,7 +583,13 @@ public class Analytics extends AbstractMobileCenterService {
             if (mCurrentActivity != null) {
                 Activity activity = mCurrentActivity.get();
                 if (activity != null) {
-                    processOnResume(activity);
+                    processOnResumeActivity(activity);
+                }
+            }
+            if (mCurrentFragment != null) {
+                Fragment fragment = mCurrentFragment.get();
+                if (fragment != null) {
+                    processOnResumeFragment(fragment);
                 }
             }
         }
@@ -362,6 +609,21 @@ public class Analytics extends AbstractMobileCenterService {
      * @param properties optional properties.
      */
     private synchronized void queuePage(String name, Map<String, String> properties) {
+        if (isInactive())
+            return;
+        PageLog pageLog = new PageLog();
+        pageLog.setName(name);
+        pageLog.setProperties(properties);
+        mChannel.enqueue(pageLog, ANALYTICS_GROUP);
+    }
+
+    /**
+     * Send a sub page.
+     *
+     * @param name       sub page name.
+     * @param properties optional properties.
+     */
+    private synchronized void queueSubPage(String name, Map<String, String> properties) {
         if (isInactive())
             return;
         PageLog pageLog = new PageLog();
@@ -398,6 +660,32 @@ public class Analytics extends AbstractMobileCenterService {
      */
     private synchronized void setInstanceAutoPageTrackingEnabled(boolean autoPageTrackingEnabled) {
         mAutoPageTrackingEnabled = autoPageTrackingEnabled;
+    }
+
+    /**
+     * Implements {@link #isAutoSubPageTrackingEnabled()}.
+     */
+    private boolean isInstanceAutoSubPageTrackingEnabled() {
+        return mAutoPageTrackingEnabled;
+    }
+
+    /**
+     * Implements {@link #setAutoSubPageTrackingEnabled(boolean)}.
+     */
+    private synchronized void setInstanceAutoSubPageTrackingEnabled(boolean autoSubPageTrackingEnabled) {
+        mAutoPageTrackingEnabled = autoSubPageTrackingEnabled;
+    }
+    /**
+     * Implements {@link #addToAutoSubPagesTrackList(FragmentManager, String)}.
+     */
+    private boolean  isFragmentCallBackRegistered() {
+       return mIsFragmentCallBackRegistered;
+    }
+    /**
+     * Implements {@link #addToAutoSubPagesTrackList(FragmentManager, String)}.
+     */
+    private void  setFragmentCallBackRegistered(boolean isRegistered) {
+       mIsFragmentCallBackRegistered =  isRegistered;
     }
 
     /**

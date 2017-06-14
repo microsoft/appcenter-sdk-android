@@ -207,6 +207,27 @@ public class SessionTracker implements Channel.Listener {
     }
 
     /**
+     * Call this whenever an fragment is resumed to update session tracker state.
+     */
+    public synchronized void onFragmentResumed() {
+
+        /* Record resume time for session timeout management. */
+        MobileCenterLog.debug(Analytics.LOG_TAG, "oFragmentResumed");
+        mLastResumedTime = SystemClock.elapsedRealtime();
+        sendStartSessionIfNeeded();
+    }
+
+    /**
+     * Call this whenever an activity is paused to update session tracker state.
+     */
+    public synchronized void onFragmentPaused() {
+
+        /* Record pause time for session timeout management. */
+        MobileCenterLog.debug(Analytics.LOG_TAG, "onFragmentPaused");
+        mLastPausedTime = SystemClock.elapsedRealtime();
+    }
+
+    /**
      * Clear storage from saved session state.
      */
     public synchronized void clearSessions() {
