@@ -145,7 +145,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                      * This corner case cannot be avoided without triggering
                      * strict mode exception.
                      */
-                    MobileCenterLog.info(LOG_TAG, "Show install UI now.");
+                    MobileCenterLog.info(LOG_TAG, "Show install UI now intentUri=" + intent.getData());
                     mContext.startActivity(intent);
                     if (mReleaseDetails != null && mReleaseDetails.isMandatoryUpdate()) {
                         distribute.setInstalling(mReleaseDetails);
