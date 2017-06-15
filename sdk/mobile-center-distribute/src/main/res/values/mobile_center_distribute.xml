@@ -14,4 +14,5 @@
     <string name="mobile_center_distribute_install_ready_title">App update downloaded</string>
     <string name="mobile_center_distribute_install_ready_message">%1$s %2$s (%3$d) has been downloaded and is ready to be installed.</string>
     <string name="mobile_center_distribute_install">Install</string>
+    <string name="mobile_center_distribute_notification_category">App updates</string>
 </resources>

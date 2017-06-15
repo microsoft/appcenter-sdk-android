@@ -136,6 +136,11 @@ final class DistributeConstants {
     static final long POSTPONE_TIME_THRESHOLD = 24 * 60 * 60 * 1000;
 
     /**
+     * Notification channel identifier.
+     */
+    static final String NOTIFICATION_CHANNEL_ID = "mobile.center.distribute";
+
+    /**
      * Base key for stored preferences.
      */
     private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
