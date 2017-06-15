@@ -1,5 +1,6 @@
 package com.microsoft.azure.mobile.distribute;
 
+import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -293,6 +294,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
     }
 
     @NonNull
+    @SuppressLint("NewApi")
     Notification.Builder mockNotificationBuilderChain() throws Exception {
         Notification.Builder notificationBuilder = mock(Notification.Builder.class);
         whenNew(Notification.Builder.class).withAnyArguments().thenReturn(notificationBuilder);
@@ -301,6 +303,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         when(notificationBuilder.setContentText(anyString())).thenReturn(notificationBuilder);
         when(notificationBuilder.setSmallIcon(anyInt())).thenReturn(notificationBuilder);
         when(notificationBuilder.setContentIntent(any(PendingIntent.class))).thenReturn(notificationBuilder);
+        when(notificationBuilder.setChannelId(anyString())).thenReturn(notificationBuilder);
         return notificationBuilder;
     }
 
