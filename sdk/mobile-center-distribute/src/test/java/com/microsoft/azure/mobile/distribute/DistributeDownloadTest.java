@@ -1,9 +1,11 @@
 package com.microsoft.azure.mobile.distribute;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.DownloadManager;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.DialogInterface;
@@ -708,6 +710,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
     }
 
     @Test
+    @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
     public void dontShowInstallUiIfUpgradedAfterNotification() throws Exception {
 
@@ -731,8 +734,9 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         mockSuccessCursor();
         Intent installIntent = mockInstallIntent();
         when(mPackageManager.getApplicationInfo(mContext.getPackageName(), 0)).thenReturn(mock(ApplicationInfo.class));
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.O);
         Notification.Builder notificationBuilder = mockNotificationBuilderChain();
-        when(notificationBuilder.getNotification()).thenReturn(mock(Notification.class));
+        when(notificationBuilder.build()).thenReturn(mock(Notification.class));
 
         /* Make notification happen. */
         Distribute.getInstance().onActivityPaused(mActivity);
@@ -741,6 +745,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Verify. */
         verify(mNotificationManager).notify(anyInt(), any(Notification.class));
+        verify(mNotificationManager).createNotificationChannel(any(NotificationChannel.class));
         verify(mContext, never()).startActivity(installIntent);
 
         /* Restart app after upgrade, discard download and check update again. */

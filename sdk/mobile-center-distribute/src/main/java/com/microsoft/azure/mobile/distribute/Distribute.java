@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DownloadManager;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
@@ -71,6 +72,7 @@ import static com.microsoft.azure.mobile.distribute.DistributeConstants.HANDLER_
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.HEADER_API_TOKEN;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.NOTIFICATION_CHANNEL_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
@@ -169,7 +171,11 @@ public class Distribute extends AbstractMobileCenterService {
 
     /**
      * Last download progress dialog that was shown.
+     * Android 8 deprecates this dialog but only reason is that they want us to use a non modal
+     * progress indicator while we actually use it to be a modal dialog for forced update.
+     * They will always keep this dialog to remain compatible but just mark it deprecated.
      */
+    @SuppressWarnings("deprecation")
     private ProgressDialog mProgressDialog;
 
     /**
@@ -1267,8 +1273,22 @@ public class Distribute extends AbstractMobileCenterService {
 
         /* Post notification. */
         MobileCenterLog.debug(LOG_TAG, "Post a notification as the download finished in background.");
-        Notification.Builder builder = new Notification.Builder(mContext)
-                .setTicker(mContext.getString(R.string.mobile_center_distribute_install_ready_title))
+        NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            /* Create or update notification channel (mandatory on Android 8 target). */
+            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
+                    mContext.getString(R.string.mobile_center_distribute_notification_category),
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+            builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
+        } else {
+
+            //noinspection deprecation
+            builder = new Notification.Builder(mContext);
+        }
+        builder.setTicker(mContext.getString(R.string.mobile_center_distribute_install_ready_title))
                 .setContentTitle(mContext.getString(R.string.mobile_center_distribute_install_ready_title))
                 .setContentText(getInstallReadyMessage())
                 .setSmallIcon(mContext.getApplicationInfo().icon)
@@ -1278,7 +1298,6 @@ public class Distribute extends AbstractMobileCenterService {
         }
         Notification notification = DistributeUtils.buildNotification(builder);
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
-        NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(DistributeUtils.getNotificationId(), notification);
         PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
 
@@ -1311,6 +1330,7 @@ public class Distribute extends AbstractMobileCenterService {
     /**
      * Show download progress.
      */
+    @SuppressWarnings("deprecation")
     private void showDownloadProgress() {
         mProgressDialog = new ProgressDialog(mForegroundActivity);
         mProgressDialog.setTitle(R.string.mobile_center_distribute_downloading_mandatory_update);
@@ -1325,6 +1345,7 @@ public class Distribute extends AbstractMobileCenterService {
     /**
      * Hide progress dialog and stop updating.
      */
+    @SuppressWarnings("deprecation")
     private synchronized void hideProgressDialog() {
         if (mProgressDialog != null) {
             final ProgressDialog progressDialog = mProgressDialog;

@@ -5,6 +5,6 @@ dependencies {
     compile project(':sdk:mobile-center')
 
     /* Need add explicit core dependency to avoid error on transform classes with dex task */
-    compile 'com.google.firebase:firebase-core:10.2.0'
-    compile 'com.google.firebase:firebase-messaging:10.2.0'
+    compile 'com.google.firebase:firebase-core:11.0.0'
+    compile 'com.google.firebase:firebase-messaging:11.0.0'
 }
