@@ -21,10 +21,10 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TimePicker;
 
+import com.microsoft.azure.mobile.CustomProperties;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.sasquatch.R;
 
-import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -69,18 +69,11 @@ public class CustomPropertiesActivity extends AppCompatActivity {
 
     @SuppressWarnings({"unused", "unchecked"})
     public void send(@SuppressWarnings("UnusedParameters") View view) {
-        try {
-            Class classCustomProperties = Class.forName("com.microsoft.azure.mobile.CustomProperties");
-            Object customProperties = classCustomProperties.getConstructor().newInstance();
-            for (CustomPropertyFragment property : mProperties) {
-                property.set(customProperties);
-            }
-            Method method = MobileCenter.class.getDeclaredMethod("setCustomProperties",classCustomProperties);
-            method.setAccessible(true);
-            method.invoke(null, customProperties);
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
+        CustomProperties customProperties = new CustomProperties();
+        for (CustomPropertyFragment property : mProperties) {
+            property.set(customProperties);
         }
+        MobileCenter.setCustomProperties(customProperties);
     }
 
     public static class CustomPropertyFragment extends Fragment
@@ -108,13 +101,13 @@ public class CustomPropertiesActivity extends AppCompatActivity {
                                  Bundle savedInstanceState) {
             View view = inflater.inflate(R.layout.custom_property, container, false);
 
-            mEditKey = (EditText) view.findViewById(R.id.key);
-            mEditType = (Spinner) view.findViewById(R.id.type);
-            mEditString = (EditText) view.findViewById(R.id.string);
-            mEditNumber = (EditText) view.findViewById(R.id.number);
-            mEditDate = (EditText) view.findViewById(R.id.date);
-            mEditTime = (EditText) view.findViewById(R.id.time);
-            mEditBool = (CheckBox) view.findViewById(R.id.bool);
+            mEditKey = view.findViewById(R.id.key);
+            mEditType = view.findViewById(R.id.type);
+            mEditString = view.findViewById(R.id.string);
+            mEditNumber = view.findViewById(R.id.number);
+            mEditDate = view.findViewById(R.id.date);
+            mEditTime = view.findViewById(R.id.time);
+            mEditBool = view.findViewById(R.id.bool);
             mDateTime = view.findViewById(R.id.datetime);
 
             mEditType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -193,15 +186,15 @@ public class CustomPropertiesActivity extends AppCompatActivity {
             setDate(calendar.getTime());
         }
 
-        public void set(Object customProperties) throws Throwable {
+        public void set(CustomProperties customProperties) {
             int type = mEditType.getSelectedItemPosition();
             String key = mEditKey.getText().toString();
             switch (type) {
                 case TYPE_CLEAR:
-                    customProperties.getClass().getMethod("clear", String.class).invoke(customProperties, key);
+                    customProperties.clear(key);
                     break;
                 case TYPE_BOOLEAN:
-                    customProperties.getClass().getMethod("set", String.class, boolean.class).invoke(customProperties, key, mEditBool.isChecked());
+                    customProperties.set(key, mEditBool.isChecked());
                     break;
                 case TYPE_NUMBER:
                     String stringValue = mEditNumber.getText().toString();
@@ -211,13 +204,13 @@ public class CustomPropertiesActivity extends AppCompatActivity {
                     } catch (NumberFormatException ignored) {
                         value = Double.parseDouble(stringValue);
                     }
-                    customProperties.getClass().getMethod("set", String.class, Number.class).invoke(customProperties, key, value);
+                    customProperties.set(key, value);
                     break;
                 case TYPE_DATETIME:
-                    customProperties.getClass().getMethod("set", String.class, Date.class).invoke(customProperties, key, mDate);
+                    customProperties.set(key, mDate);
                     break;
                 case TYPE_STRING:
-                    customProperties.getClass().getMethod("set", String.class, String.class).invoke(customProperties, key, mEditString.getText().toString());
+                    customProperties.set(key, mEditString.getText().toString());
                     break;
             }
         }
