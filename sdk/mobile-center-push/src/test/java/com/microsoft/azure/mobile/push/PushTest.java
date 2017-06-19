@@ -15,6 +15,7 @@ import com.microsoft.azure.mobile.push.ingestion.models.PushInstallationLog;
 import com.microsoft.azure.mobile.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.async.MobileCenterConsumer;
 import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
@@ -31,6 +32,8 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
@@ -152,7 +155,7 @@ public class PushTest {
     }
 
     @Test
-    public void setEnabled() {
+    public void setEnabled() throws InterruptedException {
 
         /* Before start it's disabled. */
         assertFalse(Push.isEnabled().get());
@@ -177,13 +180,21 @@ public class PushTest {
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
 
         /* Disable. */
-        Push.setEnabled(false);
+        Push.setEnabled(false).get();
         assertFalse(Push.isEnabled().get());
         verify(channel).clear(push.getGroupName());
         verify(channel, times(2)).removeGroup(eq(push.getGroupName()));
 
-        /* Disable again. */
-        Push.setEnabled(false);
+        /* Disable again. Test async. */
+        final CountDownLatch latch = new CountDownLatch(1);
+        Push.setEnabled(false).thenAccept(new MobileCenterConsumer<Void>() {
+
+            @Override
+            public void accept(Void aVoid) {
+                latch.countDown();
+            }
+        });
+        assertTrue(latch.await(0, TimeUnit.MILLISECONDS));
 
         /* Ignore on token refresh. */
         push.onTokenRefresh(testToken);

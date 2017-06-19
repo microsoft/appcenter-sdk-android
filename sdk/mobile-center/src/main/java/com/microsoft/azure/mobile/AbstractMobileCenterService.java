@@ -87,21 +87,35 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * Help implementing static setEnabled() for services with future.
      *
      * @param enabled true to enable, false to disable.
+     * @return future with null result to monitor when the operation completes.
      */
-    protected final synchronized void setInstanceEnabledAsync(final boolean enabled) {
+    protected final synchronized MobileCenterFuture<Void> setInstanceEnabledAsync(final boolean enabled) {
 
         /*
          * We need to execute this while the service is disabled to enable it again,
          * but not if core disabled... Hence the parameters in post.
          */
+        final DefaultMobileCenterFuture<Void> future = new DefaultMobileCenterFuture<>();
+        final Runnable coreDisabledRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+                MobileCenterLog.error(LOG_TAG, "Mobile Center SDK is disabled.");
+                future.complete(null);
+            }
+        };
         Runnable runnable = new Runnable() {
 
             @Override
             public void run() {
                 setInstanceEnabled(enabled);
+                future.complete(null);
             }
         };
-        post(runnable, null, runnable);
+        if (!post(runnable, coreDisabledRunnable, runnable)) {
+            future.complete(null);
+        }
+        return future;
     }
 
     @Override
