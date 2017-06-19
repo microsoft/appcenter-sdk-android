@@ -1,10 +1,11 @@
 package com.microsoft.azure.mobile.crashes;
 
 import android.annotation.SuppressLint;
+import android.app.Application;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
-import com.microsoft.azure.mobile.Constants;
+import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
@@ -55,8 +56,7 @@ public class CrashesAndroidTest {
     public static void setUpClass() {
         MobileCenterLog.setLogLevel(android.util.Log.VERBOSE);
         sContext = InstrumentationRegistry.getContext();
-        Constants.loadFromContext(sContext);
-        StorageHelper.initialize(sContext);
+        MobileCenter.configure((Application) sContext.getApplicationContext(), "dummy");
         sDefaultCrashHandler = Thread.getDefaultUncaughtExceptionHandler();
     }
 
