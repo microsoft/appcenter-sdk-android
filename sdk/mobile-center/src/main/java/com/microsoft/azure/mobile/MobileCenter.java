@@ -416,12 +416,8 @@ public class MobileCenter {
                 public void run() {
                     if (isInstanceEnabled()) {
                         runnable.run();
-                    } else {
-                        if (disabledRunnable != null) {
-                            disabledRunnable.run();
-                        } else {
-                            MobileCenterLog.error(LOG_TAG, "Mobile Center SDK is disabled.");
-                        }
+                    } else if (disabledRunnable != null) {
+                        disabledRunnable.run();
                     }
                 }
             };
