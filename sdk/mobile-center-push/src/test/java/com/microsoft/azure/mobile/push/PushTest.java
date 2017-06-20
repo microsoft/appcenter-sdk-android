@@ -96,7 +96,12 @@ public class PushTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                ((Runnable) invocation.getArguments()[0]).run();
+                Object[] args = invocation.getArguments();
+                if (MobileCenter.isEnabled().get()) {
+                    ((Runnable) args[0]).run();
+                } else if (args[1] instanceof Runnable) {
+                    ((Runnable) args[1]).run();
+                }
                 return null;
             }
         }).when(mMobileCenterHandler).post(any(Runnable.class), any(Runnable.class));
@@ -426,8 +431,18 @@ public class PushTest {
         Push.setEnabled(false);
         push.onActivityResumed(activity);
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+        verifyStatic(never());
+        MobileCenterLog.error(anyString(), anyString());
+
+        /* Same effect if we disable Mobile Center. */
+        when(mBooleanMobileCenterFuture.get()).thenReturn(false);
+        push.onActivityResumed(activity);
+        verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+        verifyStatic(never());
+        MobileCenterLog.error(anyString(), anyString());
 
         /* Same if we remove listener. */
+        when(mBooleanMobileCenterFuture.get()).thenReturn(true);
         Push.setEnabled(true);
         Push.setListener(null);
         push.onActivityResumed(activity);
