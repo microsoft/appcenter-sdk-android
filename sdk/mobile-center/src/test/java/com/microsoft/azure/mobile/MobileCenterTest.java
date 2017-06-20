@@ -760,6 +760,15 @@ public class MobileCenterTest {
         MobileCenter.setCustomProperties(properties);
         verify(log).setProperties(eq(properties.getProperties()));
         verify(mChannel).enqueue(eq(log), eq(CORE_GROUP));
+
+        /* Call after disabled triggers an error. */
+        MobileCenter.setEnabled(false);
+        MobileCenter.setCustomProperties(properties);
+        verifyStatic(times(4));
+        MobileCenterLog.error(eq(LOG_TAG), anyString());
+
+        /* No more log enqueued. */
+        verify(mChannel).enqueue(eq(log), eq(CORE_GROUP));
     }
 
     @Test

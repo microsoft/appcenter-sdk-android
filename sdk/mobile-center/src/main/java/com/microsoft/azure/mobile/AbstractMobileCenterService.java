@@ -331,6 +331,8 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * Use this for example to manage life cycle callbacks to make sure SDK is started and that
      * every operation runs in order.
      *
+     * This method will not SDK is disabled, the purpose is for internal commands, not APIs.
+     *
      * @param runnable command to run.
      */
     protected synchronized void postOnUiThread(final Runnable runnable) {
@@ -354,7 +356,14 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
                     }
                 });
             }
-        });
+        }, new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* Avoid logging SDK disabled by providing an empty command. */
+            }
+        }, null);
     }
 
     /**

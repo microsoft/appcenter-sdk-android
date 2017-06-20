@@ -159,6 +159,8 @@ public class PushTest {
 
         /* Before start it's disabled. */
         assertFalse(Push.isEnabled().get());
+        verifyStatic();
+        MobileCenterLog.error(anyString(), anyString());
 
         /* Start. */
         String testToken = "TEST";
@@ -202,6 +204,15 @@ public class PushTest {
         /* Verify behavior happened only once. */
         verify(mFirebaseInstanceId).getToken();
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
+
+        /* Make sure no logging when posting check activity intent commands. */
+        Activity activity = mock(Activity.class);
+        when(activity.getIntent()).thenReturn(mock(Intent.class));
+        push.onActivityResumed(activity);
+
+        /* No additional error was logged since before start. */
+        verifyStatic();
+        MobileCenterLog.error(anyString(), anyString());
 
         /* Verify only once to disable Firebase. */
         verifyStatic();
