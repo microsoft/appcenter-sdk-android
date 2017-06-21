@@ -8,34 +8,36 @@ import android.os.Bundle;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.RemoteMessage;
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.MobileCenterHandler;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.push.ingestion.models.PushInstallationLog;
 import com.microsoft.azure.mobile.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.async.MobileCenterConsumer;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
-
-import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.microsoft.azure.mobile.push.Push.PREFERENCE_KEY_PUSH_TOKEN;
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
+import static junit.framework.Assert.assertSame;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -68,33 +70,54 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class PushTest {
 
     private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
+
     private static final String PUSH_ENABLED_KEY = KEY_ENABLED + "_" + Push.getInstance().getServiceName();
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
-    FirebaseInstanceId mFirebaseInstanceId;
+    private FirebaseInstanceId mFirebaseInstanceId;
+
+    @Mock
+    private MobileCenterHandler mMobileCenterHandler;
+
+    @Mock
+    private MobileCenterFuture<Boolean> mBooleanMobileCenterFuture;
 
     @Before
     public void setUp() throws Exception {
         Push.unsetInstance();
         mockStatic(MobileCenterLog.class);
         mockStatic(MobileCenter.class);
-        when(MobileCenter.isEnabled()).thenReturn(true);
+        when(MobileCenter.isEnabled()).thenReturn(mBooleanMobileCenterFuture);
+        when(mBooleanMobileCenterFuture.get()).thenReturn(true);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                Object[] args = invocation.getArguments();
+                if (MobileCenter.isEnabled().get()) {
+                    ((Runnable) args[0]).run();
+                } else if (args[1] instanceof Runnable) {
+                    ((Runnable) args[1]).run();
+                }
+                return null;
+            }
+        }).when(mMobileCenterHandler).post(any(Runnable.class), any(Runnable.class));
 
         /* First call to com.microsoft.azure.mobile.MobileCenter.isEnabled shall return true, initial state. */
         mockStatic(StorageHelper.PreferencesStorage.class);
         when(StorageHelper.PreferencesStorage.getBoolean(PUSH_ENABLED_KEY, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
-        PowerMockito.doAnswer(new Answer<Object>() {
+        doAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
-                Mockito.when(StorageHelper.PreferencesStorage.getBoolean(PUSH_ENABLED_KEY, true)).thenReturn(enabled);
+                when(StorageHelper.PreferencesStorage.getBoolean(PUSH_ENABLED_KEY, true)).thenReturn(enabled);
                 return null;
             }
         }).when(StorageHelper.PreferencesStorage.class);
@@ -118,9 +141,14 @@ public class PushTest {
         HandlerUtils.runOnUiThread(any(Runnable.class));
     }
 
+    private void start(Context contextMock, Push push, Channel channel) {
+        push.onStarting(mMobileCenterHandler);
+        push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
+    }
+
     @Test
     public void singleton() {
-        Assert.assertSame(Push.getInstance(), Push.getInstance());
+        assertSame(Push.getInstance(), Push.getInstance());
     }
 
     @Test
@@ -132,62 +160,99 @@ public class PushTest {
     }
 
     @Test
-    public void onTokenRefresh() {
-        String testToken = "TEST";
-        Push push = Mockito.spy(Push.getInstance());
-        push.setInstanceEnabled(false);
-        Channel channel = mock(Channel.class);
-        push.onStarted(mock(Context.class), DUMMY_APP_SECRET, channel);
-        verify(mFirebaseInstanceId, never()).getToken();
+    public void setEnabled() throws InterruptedException {
 
-        /* When token unavailable */
-        when(mFirebaseInstanceId.getToken()).thenReturn(null);
-        push.setInstanceEnabled(true);
-        verify(mFirebaseInstanceId).getToken();
-        verify(push, never()).onTokenRefresh(anyString());
+        /* Before start it's disabled. */
+        assertFalse(Push.isEnabled().get());
+        verifyStatic();
+        MobileCenterLog.error(anyString(), anyString());
 
-        /* When token available */
-        when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
-        push.setInstanceEnabled(true);
-        verify(push).onTokenRefresh(anyString());
-        verifyStatic(times(1));
-        StorageHelper.PreferencesStorage.putString(eq(PREFERENCE_KEY_PUSH_TOKEN), eq(testToken));
-
-        /* For check enqueue only once */
-        push.onTokenRefresh(testToken);
-        verify(channel).enqueue(any(PushInstallationLog.class), anyString());
-
-        /* For check resend token on change */
-        push.onTokenRefresh("OTHER");
-        verifyStatic(times(1));
-        StorageHelper.PreferencesStorage.putString(eq(PREFERENCE_KEY_PUSH_TOKEN), eq("OTHER"));
-    }
-
-    @Test
-    public void setEnabled() {
+        /* Start. */
         String testToken = "TEST";
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        assertTrue(Push.isEnabled());
-        Push.setEnabled(true);
-        assertTrue(Push.isEnabled());
-        Push.setEnabled(false);
-        assertFalse(Push.isEnabled());
-        push.onStarted(mock(Context.class), DUMMY_APP_SECRET, channel);
-        verify(channel).clear(push.getGroupName());
+        when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
+        start(mock(Context.class), push, channel);
         verify(channel).removeGroup(eq(push.getGroupName()));
-        verify(mFirebaseInstanceId, never()).getToken();
+        assertTrue(Push.isEnabled().get());
+        verify(mFirebaseInstanceId).getToken();
+        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
 
-        /* If disabled when PushTokenTask executing */
-        Push.setEnabled(false);
+        /* Enable while already enabled. */
+        Push.setEnabled(true);
+        assertTrue(Push.isEnabled().get());
+
+        /* Verify behavior happened only once. */
+        verify(mFirebaseInstanceId).getToken();
+        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
+
+        /* Disable. */
+        Push.setEnabled(false).get();
+        assertFalse(Push.isEnabled().get());
+        verify(channel).clear(push.getGroupName());
+        verify(channel, times(2)).removeGroup(eq(push.getGroupName()));
+
+        /* Disable again. Test waiting with async callback. */
+        final CountDownLatch latch = new CountDownLatch(1);
+        Push.setEnabled(false).thenAccept(new MobileCenterConsumer<Void>() {
+
+            @Override
+            public void accept(Void aVoid) {
+                latch.countDown();
+            }
+        });
+        assertTrue(latch.await(0, TimeUnit.MILLISECONDS));
+
+        /* Ignore on token refresh. */
         push.onTokenRefresh(testToken);
+
+        /* Verify behavior happened only once. */
+        verify(mFirebaseInstanceId).getToken();
+        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
+
+        /* Make sure no logging when posting check activity intent commands. */
+        Activity activity = mock(Activity.class);
+        when(activity.getIntent()).thenReturn(mock(Intent.class));
+        push.onActivityResumed(activity);
+
+        /* No additional error was logged since before start. */
+        verifyStatic();
+        MobileCenterLog.error(anyString(), anyString());
+
+        /* Verify only once to disable Firebase. */
+        verifyStatic();
+        FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(false));
+        verifyStatic(never());
+        FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(true));
+
+        /* If disabled before start, still we must disable firebase. */
+        Push.unsetInstance();
+        push = Push.getInstance();
+        start(mock(Context.class), push, channel);
+        verifyStatic(times(2));
+        FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(false));
+        verifyStatic(never());
+        FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(true));
+    }
+
+    @Test
+    public void nullTokenOnStartThenRefresh() {
+
+        /* Start. */
+        String testToken = "TEST";
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(mock(Context.class), push, channel);
+        assertTrue(Push.isEnabled().get());
+        verify(mFirebaseInstanceId).getToken();
         verify(channel, never()).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
 
-        /* For check enqueue only once */
-        when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
-        Push.setEnabled(true);
-        Push.setEnabled(true);
+        /* Refresh. */
+        push.onTokenRefresh(testToken);
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
+
+        /* Only once. */
+        verify(mFirebaseInstanceId).getToken();
     }
 
     @Test
@@ -195,7 +260,7 @@ public class PushTest {
         Context contextMock = mock(Context.class);
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
+        start(contextMock, push, channel);
         verifyStatic();
         FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(false));
 
@@ -211,7 +276,7 @@ public class PushTest {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
         Push.enableFirebaseAnalytics(contextMock);
-        push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
+        start(contextMock, push, channel);
         verifyStatic(never());
         FirebaseAnalyticsUtils.setEnabled(any(Context.class), eq(false));
     }
@@ -223,7 +288,7 @@ public class PushTest {
         Context contextMock = mock(Context.class);
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
+        start(contextMock, push, channel);
         Activity activity = mock(Activity.class);
         when(activity.getIntent()).thenReturn(mock(Intent.class));
         push.onActivityResumed(activity);
@@ -317,7 +382,7 @@ public class PushTest {
         Context contextMock = mock(Context.class);
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
+        start(contextMock, push, channel);
 
         /* Mock activity to contain push */
         Activity activity = mock(Activity.class);
@@ -366,8 +431,18 @@ public class PushTest {
         Push.setEnabled(false);
         push.onActivityResumed(activity);
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+        verifyStatic(never());
+        MobileCenterLog.error(anyString(), anyString());
+
+        /* Same effect if we disable Mobile Center. */
+        when(mBooleanMobileCenterFuture.get()).thenReturn(false);
+        push.onActivityResumed(activity);
+        verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+        verifyStatic(never());
+        MobileCenterLog.error(anyString(), anyString());
 
         /* Same if we remove listener. */
+        when(mBooleanMobileCenterFuture.get()).thenReturn(true);
         Push.setEnabled(true);
         Push.setListener(null);
         push.onActivityResumed(activity);
@@ -391,11 +466,49 @@ public class PushTest {
     }
 
     @Test
+    public void clickedFromBackgroundDisableWhilePostingToUI() {
+
+        /* Mock activity to contain push */
+        PushListener pushListener = mock(PushListener.class);
+        Push.setListener(pushListener);
+        Context contextMock = mock(Context.class);
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(contextMock, push, channel);
+        Activity activity = mock(Activity.class);
+        Intent intent = mock(Intent.class);
+        when(activity.getIntent()).thenReturn(intent);
+        Bundle extras = mock(Bundle.class);
+        when(intent.getExtras()).thenReturn(extras);
+        when(extras.getString(Push.EXTRA_GOOGLE_MESSAGE_ID)).thenReturn("some id");
+        when(extras.keySet()).thenReturn(Collections.<String>emptySet());
+
+        /* Disable while posting the command to the U.I. thread. */
+        activity = mock(Activity.class);
+        when(activity.getIntent()).thenReturn(intent);
+        final AtomicReference<Runnable> runnable = new AtomicReference<>();
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                runnable.set((Runnable) invocation.getArguments()[0]);
+                return null;
+            }
+        }).when(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
+        push.onActivityResumed(activity);
+        Push.setEnabled(false);
+        runnable.get().run();
+        ArgumentCaptor<PushNotification> captor = ArgumentCaptor.forClass(PushNotification.class);
+        verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+    }
+
+    @Test
     public void clickedFromPausedAndSingleTop() {
         PushListener pushListener = mock(PushListener.class);
         Push.setListener(pushListener);
         Context contextMock = mock(Context.class);
-        Push.getInstance().onStarted(contextMock, DUMMY_APP_SECRET, mock(Channel.class));
+        start(contextMock, Push.getInstance(), mock(Channel.class));
 
         /* Mock new intent to contain push, but activity with no push in original activity.  */
         Activity activity = mock(Activity.class);
@@ -434,12 +547,23 @@ public class PushTest {
 
     @Test
     public void validateCheckLaunchedFromNotification() {
-        Push.getInstance().onStarted(mock(Context.class), DUMMY_APP_SECRET, mock(Channel.class));
+        start(mock(Context.class), Push.getInstance(), mock(Channel.class));
         Push.checkLaunchedFromNotification(null, mock(Intent.class));
         verifyStatic();
         MobileCenterLog.error(anyString(), anyString());
         Push.checkLaunchedFromNotification(mock(Activity.class), null);
         verifyStatic(times(2));
         MobileCenterLog.error(anyString(), anyString());
+    }
+
+    @Test
+    public void failToInit() {
+        IllegalStateException exception = new IllegalStateException();
+        when(FirebaseInstanceId.getInstance()).thenThrow(exception);
+        Context contextMock = mock(Context.class);
+        start(contextMock, Push.getInstance(), mock(Channel.class));
+        assertTrue(Push.isEnabled().get());
+        verifyStatic();
+        MobileCenterLog.error(anyString(), anyString(), eq(exception));
     }
 }

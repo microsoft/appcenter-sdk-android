@@ -5,11 +5,6 @@ import android.content.Intent;
 import android.support.test.espresso.DataInteraction;
 import android.support.test.rule.ActivityTestRule;
 
-import com.microsoft.azure.mobile.Constants;
-import com.microsoft.azure.mobile.MobileCenter;
-import com.microsoft.azure.mobile.analytics.Analytics;
-import com.microsoft.azure.mobile.crashes.Crashes;
-import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
@@ -52,16 +47,15 @@ public class SettingsActivityTest {
     @Test
     public void testInitialState() {
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(MobileCenter.isEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Analytics.isEnabled());
+        Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Crashes.isEnabled());
+        Assert.assertTrue(GetHelper.isCrashesEnabled());
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Distribute.isEnabled());
-        // TODO Uncomment when push merged.
-        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
-        //Assert.assertTrue(Push.isEnabled());
+        Assert.assertTrue(GetHelper.isDistributeEnabled());
+        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isPushEnabled());
     }
 
     @Test
@@ -72,53 +66,50 @@ public class SettingsActivityTest {
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isNotChecked()));
-        Assert.assertFalse(MobileCenter.isEnabled());
+        Assert.assertFalse(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isNotChecked()));
-        Assert.assertFalse(Analytics.isEnabled());
+        Assert.assertFalse(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isNotChecked()));
-        Assert.assertFalse(Crashes.isEnabled());
+        Assert.assertFalse(GetHelper.isCrashesEnabled());
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isNotChecked()));
-        Assert.assertFalse(Distribute.isEnabled());
-        // TODO Uncomment when push merged.
-        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isNotChecked()));
-        //Assert.assertFalse(Push.isEnabled());
+        Assert.assertFalse(GetHelper.isDistributeEnabled());
+        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isNotChecked()));
+        Assert.assertFalse(GetHelper.isPushEnabled());
 
         /* Unable enable analytics when mobile center is disabled. */
         onCheckbox(R.string.mobile_center_analytics_state_key).perform(click());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isNotChecked()));
-        Assert.assertFalse(Analytics.isEnabled());
+        Assert.assertFalse(GetHelper.isAnalyticsEnabled());
 
         /* Unable enable crashes when mobile center is disabled. */
         onCheckbox(R.string.mobile_center_crashes_state_key).perform(click());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isNotChecked()));
-        Assert.assertFalse(Crashes.isEnabled());
+        Assert.assertFalse(GetHelper.isCrashesEnabled());
 
         /* Unable enable distribute when mobile center is disabled. */
         onCheckbox(R.string.mobile_center_distribute_state_key).perform(click());
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isNotChecked()));
-        Assert.assertFalse(Distribute.isEnabled());
+        Assert.assertFalse(GetHelper.isDistributeEnabled());
 
         /* Unable enable push when mobile center is disabled. */
-        // TODO Uncomment when push merged.
-        //onCheckbox(R.string.mobile_center_push_state_key).perform(click());
-        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isNotChecked()));
-        //Assert.assertFalse(Push.isEnabled());
+        onCheckbox(R.string.mobile_center_push_state_key).perform(click());
+        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isNotChecked()));
+        Assert.assertFalse(GetHelper.isPushEnabled());
 
         /* Enable mobile center. */
         onCheckbox(R.string.mobile_center_state_key).perform(click());
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(MobileCenter.isEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Analytics.isEnabled());
+        Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Crashes.isEnabled());
+        Assert.assertTrue(GetHelper.isCrashesEnabled());
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Distribute.isEnabled());
-        // TODO Uncomment when push merged.
-        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
-        //Assert.assertTrue(Push.isEnabled());
+        Assert.assertTrue(GetHelper.isDistributeEnabled());
+        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isPushEnabled());
     }
 
     @Test
@@ -129,32 +120,30 @@ public class SettingsActivityTest {
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(MobileCenter.isEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isNotChecked()));
-        Assert.assertFalse(Analytics.isEnabled());
+        Assert.assertFalse(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Crashes.isEnabled());
+        Assert.assertTrue(GetHelper.isCrashesEnabled());
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Distribute.isEnabled());
-        // TODO Uncomment when push merged.
-        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
-        //Assert.assertTrue(Push.isEnabled());
+        Assert.assertTrue(GetHelper.isDistributeEnabled());
+        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isPushEnabled());
 
         /* Enable analytics service. */
         onCheckbox(R.string.mobile_center_analytics_state_key).perform(click());
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(MobileCenter.isEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Analytics.isEnabled());
+        Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Crashes.isEnabled());
+        Assert.assertTrue(GetHelper.isCrashesEnabled());
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Distribute.isEnabled());
-        // TODO Uncomment when push merged.
-        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
-        //Assert.assertTrue(Push.isEnabled());
+        Assert.assertTrue(GetHelper.isDistributeEnabled());
+        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isPushEnabled());
     }
 
     @Test
@@ -165,32 +154,30 @@ public class SettingsActivityTest {
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(MobileCenter.isEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Analytics.isEnabled());
+        Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isNotChecked()));
-        Assert.assertFalse(Crashes.isEnabled());
+        Assert.assertFalse(GetHelper.isCrashesEnabled());
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Distribute.isEnabled());
-        // TODO Uncomment when push merged.
-        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
-        //Assert.assertTrue(Push.isEnabled());
+        Assert.assertTrue(GetHelper.isDistributeEnabled());
+        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isPushEnabled());
 
         /* Enable distribute service. */
         onCheckbox(R.string.mobile_center_crashes_state_key).perform(click());
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(MobileCenter.isEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Analytics.isEnabled());
+        Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Crashes.isEnabled());
+        Assert.assertTrue(GetHelper.isCrashesEnabled());
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Distribute.isEnabled());
-        // TODO Uncomment when push merged.
-        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
-        //Assert.assertTrue(Push.isEnabled());
+        Assert.assertTrue(GetHelper.isDistributeEnabled());
+        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isPushEnabled());
     }
 
     @Test
@@ -201,68 +188,65 @@ public class SettingsActivityTest {
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(MobileCenter.isEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Analytics.isEnabled());
+        Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Crashes.isEnabled());
+        Assert.assertTrue(GetHelper.isCrashesEnabled());
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isNotChecked()));
-        Assert.assertFalse(Distribute.isEnabled());
-        // TODO Uncomment when push merged.
-        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
-        //Assert.assertTrue(Push.isEnabled());
+        Assert.assertFalse(GetHelper.isDistributeEnabled());
+        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isPushEnabled());
 
         /* Enable distribute service. */
         onCheckbox(R.string.mobile_center_distribute_state_key).perform(click());
 
         /* Check mobile center and services state. */
         onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-        Assert.assertTrue(MobileCenter.isEnabled());
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
         onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Analytics.isEnabled());
+        Assert.assertTrue(GetHelper.isAnalyticsEnabled());
         onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Crashes.isEnabled());
+        Assert.assertTrue(GetHelper.isCrashesEnabled());
         onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
-        Assert.assertTrue(Distribute.isEnabled());
-        // TODO Uncomment when push merged.
-        //onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
-        //Assert.assertTrue(Push.isEnabled());
+        Assert.assertTrue(GetHelper.isDistributeEnabled());
+        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isPushEnabled());
     }
 
-    // TODO Uncomment when push merged.
-//    @Test
-//    public void testEnablePush() {
-//
-//        /* Disable push service. */
-//        onCheckbox(R.string.mobile_center_push_state_key).perform(click());
-//
-//        /* Check mobile center and services state. */
-//        onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-//        Assert.assertTrue(MobileCenter.isEnabled());
-//        onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
-//        Assert.assertTrue(Analytics.isEnabled());
-//        onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
-//        Assert.assertTrue(Crashes.isEnabled());
-//        onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
-//        Assert.assertTrue(Distribute.isEnabled());
-//        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isNotChecked()));
-//        Assert.assertFalse(Push.isEnabled());
-//
-//        /* Enable push service. */
-//        onCheckbox(R.string.mobile_center_push_state_key).perform(click());
-//
-//        /* Check mobile center and services state. */
-//        onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
-//        Assert.assertTrue(MobileCenter.isEnabled());
-//        onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
-//        Assert.assertTrue(Analytics.isEnabled());
-//        onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
-//        Assert.assertTrue(Crashes.isEnabled());
-//        onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
-//        Assert.assertTrue(Distribute.isEnabled());
-//        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
-//        Assert.assertTrue(Push.isEnabled());
-//    }
+    @Test
+    public void testEnablePush() {
+
+        /* Disable push service. */
+        onCheckbox(R.string.mobile_center_push_state_key).perform(click());
+
+        /* Check mobile center and services state. */
+        onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
+        onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isAnalyticsEnabled());
+        onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isCrashesEnabled());
+        onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isDistributeEnabled());
+        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isNotChecked()));
+        Assert.assertFalse(GetHelper.isPushEnabled());
+
+        /* Enable push service. */
+        onCheckbox(R.string.mobile_center_push_state_key).perform(click());
+
+        /* Check mobile center and services state. */
+        onCheckbox(R.string.mobile_center_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isMobileCenterEnabled());
+        onCheckbox(R.string.mobile_center_analytics_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isAnalyticsEnabled());
+        onCheckbox(R.string.mobile_center_crashes_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isCrashesEnabled());
+        onCheckbox(R.string.mobile_center_distribute_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isDistributeEnabled());
+        onCheckbox(R.string.mobile_center_push_state_key).check(matches(isChecked()));
+        Assert.assertTrue(GetHelper.isPushEnabled());
+    }
 
     private DataInteraction onCheckbox(int id) {
         return onData(withKey(mContext.getString(id))).onChildView(withId(android.R.id.checkbox));

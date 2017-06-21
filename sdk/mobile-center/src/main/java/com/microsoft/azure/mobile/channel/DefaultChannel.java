@@ -17,9 +17,6 @@ import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
 import com.microsoft.azure.mobile.persistence.DatabasePersistence;
-import com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync;
-import com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync.AbstractDatabasePersistenceAsyncCallback;
-import com.microsoft.azure.mobile.persistence.DatabasePersistenceAsync.DatabasePersistenceAsyncCallback;
 import com.microsoft.azure.mobile.persistence.Persistence;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
@@ -45,12 +42,6 @@ public class DefaultChannel implements Channel {
      */
     @VisibleForTesting
     static final int CLEAR_BATCH_SIZE = 100;
-
-    /**
-     * Shutdown timeout in millis.
-     */
-    @VisibleForTesting
-    static final int SHUTDOWN_TIMEOUT = 5000;
 
     /**
      * Application context.
@@ -83,14 +74,19 @@ public class DefaultChannel implements Channel {
     private final Collection<Listener> mListeners;
 
     /**
-     * The Persistence instance used to store events in the local storage asynchronously.
+     * The Persistence instance used to store events in the local storage.
      */
-    private final DatabasePersistenceAsync mPersistence;
+    private final Persistence mPersistence;
 
     /**
      * The ingestion object used to send batches to the server.
      */
     private final Ingestion mIngestion;
+
+    /**
+     * Mobile Center core handler.
+     */
+    private final Handler mMobileCenterHandler;
 
     /**
      * Is channel enabled?
@@ -121,28 +117,30 @@ public class DefaultChannel implements Channel {
      * @param appSecret     The application secret.
      * @param logSerializer The log serializer.
      */
-    public DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull LogSerializer logSerializer) {
-        this(context, appSecret, buildDefaultPersistence(logSerializer), new IngestionHttp(context, logSerializer));
+    public DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler mobileCenterHandler) {
+        this(context, appSecret, buildDefaultPersistence(logSerializer), new IngestionHttp(context, logSerializer), mobileCenterHandler);
     }
 
     /**
      * Overloaded constructor with limited visibility that allows for dependency injection.
      *
-     * @param context     The context.
-     * @param appSecret   The application secret.
-     * @param persistence Persistence object for dependency injection.
-     * @param ingestion   Ingestion object for dependency injection.
+     * @param context             The context.
+     * @param appSecret           The application secret.
+     * @param persistence         Persistence object for dependency injection.
+     * @param ingestion           Ingestion object for dependency injection.
+     * @param mobileCenterHandler Mobile Center looper thread handler.
      */
     @VisibleForTesting
-    DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull Persistence persistence, @NonNull Ingestion ingestion) {
+    DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull Persistence persistence, @NonNull Ingestion ingestion, @NonNull Handler mobileCenterHandler) {
         mContext = context;
         mAppSecret = appSecret;
         mInstallId = IdHelper.getInstallId();
         mIngestionHandler = new Handler(Looper.getMainLooper());
         mGroupStates = new HashMap<>();
         mListeners = new HashSet<>();
-        mPersistence = new DatabasePersistenceAsync(persistence);
+        mPersistence = persistence;
         mIngestion = ingestion;
+        mMobileCenterHandler = mobileCenterHandler;
         mEnabled = true;
     }
 
@@ -178,25 +176,10 @@ public class DefaultChannel implements Channel {
         mGroupStates.put(groupName, groupState);
 
         /* Count pending logs. */
-        final int stateSnapshot = mCurrentState;
-        mPersistence.countLogs(groupName, new AbstractDatabasePersistenceAsyncCallback() {
+        groupState.mPendingLogCount = mPersistence.countLogs(groupName);
 
-            @Override
-            public void onSuccess(Object result) {
-                checkPendingLogsAfterCounting(groupState, stateSnapshot, (Integer) result);
-            }
-        });
-    }
-
-    private synchronized void checkPendingLogsAfterCounting(GroupState groupState, int currentState, int logCount) {
-
-        /* Check state did not change in the mean time. */
-        if (checkStateDidNotChange(groupState, currentState)) {
-            groupState.mPendingLogCount = logCount;
-
-            /* Schedule sending any pending log. */
-            checkPendingLogs(groupState.mName);
-        }
+        /* Schedule sending any pending log. */
+        checkPendingLogs(groupState.mName);
     }
 
     @Override
@@ -296,29 +279,17 @@ public class DefaultChannel implements Channel {
 
     private void deleteLogsOnSuspended(final GroupState groupState) {
         final List<Log> logs = new ArrayList<>();
-        final int stateSnapshot = mCurrentState;
-        mPersistence.getLogs(groupState.mName, CLEAR_BATCH_SIZE, logs, new AbstractDatabasePersistenceAsyncCallback() {
-
-            @Override
-            public void onSuccess(Object result) {
-                deleteLogsOnSuspended(groupState, stateSnapshot, logs);
+        mPersistence.getLogs(groupState.mName, CLEAR_BATCH_SIZE, logs);
+        if (logs.size() > 0 && groupState.mListener != null) {
+            for (Log log : logs) {
+                groupState.mListener.onBeforeSending(log);
+                groupState.mListener.onFailure(log, new CancellationException());
             }
-        });
-    }
-
-    private synchronized void deleteLogsOnSuspended(GroupState groupState, int currentState, List<Log> logs) {
-        if (checkStateDidNotChange(groupState, currentState)) {
-            if (logs.size() > 0 && groupState.mListener != null) {
-                for (Log log : logs) {
-                    groupState.mListener.onBeforeSending(log);
-                    groupState.mListener.onFailure(log, new CancellationException());
-                }
-            }
-            if (logs.size() >= CLEAR_BATCH_SIZE && groupState.mListener != null) {
-                deleteLogsOnSuspended(groupState);
-            } else {
-                mPersistence.deleteLogs(groupState.mName);
-            }
+        }
+        if (logs.size() >= CLEAR_BATCH_SIZE && groupState.mListener != null) {
+            deleteLogsOnSuspended(groupState);
+        } else {
+            mPersistence.deleteLogs(groupState.mName);
         }
     }
 
@@ -360,53 +331,45 @@ public class DefaultChannel implements Channel {
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(groupState.mMaxLogsPerBatch);
         final int stateSnapshot = mCurrentState;
-        mPersistence.getLogs(groupName, groupState.mMaxLogsPerBatch, batch, new AbstractDatabasePersistenceAsyncCallback() {
+        final String batchId = mPersistence.getLogs(groupName, groupState.mMaxLogsPerBatch, batch);
+        if (batchId == null) {
+            return;
+        }
+
+        /* Call group listener before sending logs to ingestion service. */
+        if (groupState.mListener != null) {
+            for (Log log : batch) {
+                groupState.mListener.onBeforeSending(log);
+            }
+        }
+
+        /* Decrement counter. */
+        groupState.mPendingLogCount -= batch.size();
+        MobileCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
+
+        /* Remember this batch. */
+        groupState.mSendingBatches.put(batchId, batch);
+
+        /*
+         * Due to bug on old Android versions (verified on 4.0.4),
+         * if we start an async task from here, i.e. the async persistence handler thread,
+         * we end up with AsyncTask configured with the wrong Handler to use for onPostExecute
+         * instead of using main thread as advertised in Javadoc (and its a static field there).
+         *
+         * Our SDK guards against an application that would make a first async task in non UI
+         * thread before SDK is initialized, but we should also avoid corrupting AsyncTask
+         * with our wrong handler to avoid creating bugs in the application code since we are
+         * a library.
+         *
+         * So make sure we execute the async task from UI thread to avoid any issue.
+         */
+        HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
-            public void onSuccess(Object result) {
-                triggerIngestion((String) result, groupState, stateSnapshot, batch);
+            public void run() {
+                sendLogs(groupState, stateSnapshot, batch, batchId);
             }
         });
-    }
-
-    private synchronized void triggerIngestion(final String batchId, final GroupState groupState, final int stateSnapshot, final List<Log> batch) {
-        if (batchId != null && checkStateDidNotChange(groupState, stateSnapshot)) {
-
-            /* Call group listener before sending logs to ingestion service. */
-            if (groupState.mListener != null) {
-                for (Log log : batch) {
-                    groupState.mListener.onBeforeSending(log);
-                }
-            }
-
-            /* Decrement counter. */
-            groupState.mPendingLogCount -= batch.size();
-            MobileCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
-
-            /* Remember this batch. */
-            groupState.mSendingBatches.put(batchId, batch);
-
-            /*
-             * Due to bug on old Android versions (verified on 4.0.4),
-             * if we start an async task from here, i.e. the async persistence handler thread,
-             * we end up with AsyncTask configured with the wrong Handler to use for onPostExecute
-             * instead of using main thread as advertised in Javadoc (and its a static field there).
-             *
-             * Our SDK guards against an application that would make a first async task in non UI
-             * thread before SDK is initialized, but we should also avoid corrupting AsyncTask
-             * with our wrong handler to avoid creating bugs in the application code since we are
-             * a library.
-             *
-             * So make sure we execute the async task from UI thread to avoid any issue.
-             */
-            HandlerUtils.runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    sendLogs(groupState, stateSnapshot, batch, batchId);
-                }
-            });
-        }
     }
 
     /**
@@ -428,16 +391,40 @@ public class DefaultChannel implements Channel {
 
                 @Override
                 public void onCallSucceeded(String payload) {
-                    handleSendingSuccess(groupState, currentState, batchId);
+                    mMobileCenterHandler.post(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            handleSendingSuccess(groupState, currentState, batchId);
+                        }
+                    });
                 }
 
                 @Override
-                public void onCallFailed(Exception e) {
-                    handleSendingFailure(groupState, currentState, batchId, e);
+                public void onCallFailed(final Exception e) {
+                    mMobileCenterHandler.post(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            handleSendingFailure(groupState, currentState, batchId, e);
+                        }
+                    });
                 }
             });
 
             /* Check for more pending logs. */
+            mMobileCenterHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    checkPendingLogsAfterPost(groupState, currentState);
+                }
+            });
+        }
+    }
+
+    private void checkPendingLogsAfterPost(@NonNull final GroupState groupState, int currentState) {
+        if (checkStateDidNotChange(groupState, currentState)) {
             checkPendingLogs(groupState.mName);
         }
     }
@@ -544,32 +531,19 @@ public class DefaultChannel implements Channel {
             log.setToffset(System.currentTimeMillis());
 
         /* Persist log. */
-        final int stateSnapshot = mCurrentState;
-        mPersistence.putLog(groupName, log, new DatabasePersistenceAsyncCallback() {
-
-            @Override
-            public void onSuccess(Object result) {
-                checkLogsAfterPut(groupState, stateSnapshot);
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                MobileCenterLog.error(LOG_TAG, "Error persisting log with exception: " + e.toString());
-            }
-        });
-    }
-
-    private synchronized void checkLogsAfterPut(GroupState groupState, int stateSnapshot) {
-        if (checkStateDidNotChange(groupState, stateSnapshot)) {
-            groupState.mPendingLogCount++;
-            MobileCenterLog.debug(LOG_TAG, "enqueue(" + groupState.mName + ") pendingLogCount=" + groupState.mPendingLogCount);
+        try {
 
             /* Increment counters and schedule ingestion if we are enabled. */
+            mPersistence.putLog(groupName, log);
+            groupState.mPendingLogCount++;
+            MobileCenterLog.debug(LOG_TAG, "enqueue(" + groupState.mName + ") pendingLogCount=" + groupState.mPendingLogCount);
             if (mEnabled) {
                 checkPendingLogs(groupState.mName);
             } else {
                 MobileCenterLog.warn(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
             }
+        } catch (Persistence.PersistenceException e) {
+            MobileCenterLog.error(LOG_TAG, "Error persisting log with exception: " + e.toString());
         }
     }
 
@@ -580,19 +554,13 @@ public class DefaultChannel implements Channel {
      */
     private synchronized void checkPendingLogs(@NonNull String groupName) {
         GroupState groupState = mGroupStates.get(groupName);
-
-        /* The service can be disabled before checking pending logs at here. Prevent NullPointerException for the edge case. */
-        if (groupState != null) {
-            long pendingLogCount = groupState.mPendingLogCount;
-            MobileCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupName + ") pendingLogCount=" + pendingLogCount);
-            if (pendingLogCount >= groupState.mMaxLogsPerBatch)
-                triggerIngestion(groupName);
-            else if (pendingLogCount > 0 && !groupState.mScheduled) {
-                groupState.mScheduled = true;
-                mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
-            }
-        } else {
-            MobileCenterLog.info(LOG_TAG, "The service has been disabled. Stop processing logs.");
+        long pendingLogCount = groupState.mPendingLogCount;
+        MobileCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupName + ") pendingLogCount=" + pendingLogCount);
+        if (pendingLogCount >= groupState.mMaxLogsPerBatch)
+            triggerIngestion(groupName);
+        else if (pendingLogCount > 0 && !groupState.mScheduled) {
+            groupState.mScheduled = true;
+            mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
         }
     }
 
@@ -609,12 +577,6 @@ public class DefaultChannel implements Channel {
     @Override
     public synchronized void shutdown() {
         suspend(false, new CancellationException());
-        try {
-            MobileCenterLog.debug(LOG_TAG, "Wait for persistence to process queue.");
-            mPersistence.waitForCurrentTasksToComplete(SHUTDOWN_TIMEOUT);
-        } catch (InterruptedException e) {
-            MobileCenterLog.warn(LOG_TAG, "Interrupted while waiting persistence to flush.", e);
-        }
     }
 
     /**
@@ -671,7 +633,13 @@ public class DefaultChannel implements Channel {
             @Override
             public void run() {
                 mScheduled = false;
-                triggerIngestion(mName);
+                mMobileCenterHandler.post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        triggerIngestion(mName);
+                    }
+                });
             }
         };
 

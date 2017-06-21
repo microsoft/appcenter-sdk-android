@@ -17,7 +17,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 
-import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.test.TestUtils;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
@@ -662,7 +661,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Restart app should pop install U.I. and cancel notification and pop a new dialog then a new download. */
         doThrow(new ActivityNotFoundException()).when(mContext).startActivity(installIntent);
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Wait download manager query. */

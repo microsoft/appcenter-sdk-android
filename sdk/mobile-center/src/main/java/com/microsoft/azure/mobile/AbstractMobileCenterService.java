@@ -7,7 +7,10 @@ import android.support.annotation.NonNull;
 
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
+import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.async.DefaultMobileCenterFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import java.util.Map;
@@ -29,6 +32,11 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * Channel instance.
      */
     protected Channel mChannel;
+
+    /**
+     * Background thread handler.
+     */
+    private MobileCenterHandler mHandler;
 
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
@@ -58,33 +66,80 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     public void onActivityDestroyed(Activity activity) {
     }
 
+    /**
+     * Help implementing static isEnabled() for services with future.
+     *
+     * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
+     */
+    protected synchronized MobileCenterFuture<Boolean> isInstanceEnabledAsync() {
+        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
+        postAsyncGetter(new Runnable() {
+
+            @Override
+            public void run() {
+                future.complete(true);
+            }
+        }, future, false);
+        return future;
+    }
+
+    /**
+     * Help implementing static setEnabled() for services with future.
+     *
+     * @param enabled true to enable, false to disable.
+     * @return future with null result to monitor when the operation completes.
+     */
+    protected final synchronized MobileCenterFuture<Void> setInstanceEnabledAsync(final boolean enabled) {
+
+        /*
+         * We need to execute this while the service is disabled to enable it again,
+         * but not if core disabled... Hence the parameters in post.
+         */
+        final DefaultMobileCenterFuture<Void> future = new DefaultMobileCenterFuture<>();
+        final Runnable coreDisabledRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+                MobileCenterLog.error(LOG_TAG, "Mobile Center SDK is disabled.");
+                future.complete(null);
+            }
+        };
+        Runnable runnable = new Runnable() {
+
+            @Override
+            public void run() {
+                setInstanceEnabled(enabled);
+                future.complete(null);
+            }
+        };
+        if (!post(runnable, coreDisabledRunnable, runnable)) {
+            future.complete(null);
+        }
+        return future;
+    }
+
     @Override
     public synchronized boolean isInstanceEnabled() {
-        return MobileCenter.isEnabled() && StorageHelper.PreferencesStorage.getBoolean(getEnabledPreferenceKey(), true);
+        return StorageHelper.PreferencesStorage.getBoolean(getEnabledPreferenceKey(), true);
     }
 
     @Override
     public synchronized void setInstanceEnabled(boolean enabled) {
 
-        /* Check if the SDK is disabled. */
-        if (!MobileCenter.isEnabled() && enabled) {
-            MobileCenterLog.error(LOG_TAG, "The SDK is disabled. Call MobileCenter.setEnabled(true) first before enabling a specific service.");
-            return;
-        }
-
         /* Nothing to do if state does not change. */
-        else if (enabled == isInstanceEnabled()) {
+        if (enabled == isInstanceEnabled()) {
             MobileCenterLog.info(getLoggerTag(), String.format("%s service has already been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
             return;
         }
 
-        /* If channel initialized. */
+        /* Initialize channel group. */
         String groupName = getGroupName();
-        if (groupName != null && mChannel != null) {
+        if (groupName != null) {
 
             /* Register service to channel on enabling. */
-            if (enabled)
+            if (enabled) {
                 mChannel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
+            }
 
             /* Otherwise, clear all persisted logs and remove a group for the service. */
             else {
@@ -96,16 +151,35 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
         /* Save new state. */
         StorageHelper.PreferencesStorage.putBoolean(getEnabledPreferenceKey(), enabled);
         MobileCenterLog.info(getLoggerTag(), String.format("%s service has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
+
+        /* Allow sub-class to handle state change. */
+        applyEnabledState(enabled);
+    }
+
+    protected synchronized void applyEnabledState(boolean enabled) {
+
+        /* Optional callback to react to enabled state change. */
+    }
+
+    @Override
+    public final synchronized void onStarting(@NonNull MobileCenterHandler handler) {
+
+        /*
+         * The method is final just to avoid a sub-class start using the handler now,
+         * it is not supported and could cause null pointer exception.
+         */
+        mHandler = handler;
     }
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         String groupName = getGroupName();
+        boolean enabled = isInstanceEnabled();
         if (groupName != null) {
             channel.removeGroup(groupName);
 
             /* Add a group to the channel if the service is enabled */
-            if (isInstanceEnabled())
+            if (enabled)
                 channel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
 
             /* Otherwise, clear all persisted logs for the service. */
@@ -113,6 +187,9 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
                 channel.clear(groupName);
         }
         mChannel = channel;
+        if (enabled) {
+            applyEnabledState(true);
+        }
     }
 
     @Override
@@ -180,19 +257,124 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     }
 
     /**
-     * Check if the service is not active: disabled or not started.
+     * Post a command in background.
      *
-     * @return <code>true</code> if the service is inactive, <code>false</code> otherwise.
+     * @param runnable command.
      */
-    protected synchronized boolean isInactive() {
-        if (mChannel == null) {
-            MobileCenterLog.error(LOG_TAG, getServiceName() + " service not initialized, discarding calls.");
+    protected synchronized void post(Runnable runnable) {
+        post(runnable, null, null);
+    }
+
+    /**
+     * Post a command in background.
+     *
+     * @param runnable                command.
+     * @param coreDisabledRunnable    optional alternate command if core is disabled.
+     * @param serviceDisabledRunnable optional alternate command if this service is disabled.
+     * @return false if core not configured (no handler ready yet), true otherwise.
+     */
+    protected synchronized boolean post(final Runnable runnable, final Runnable coreDisabledRunnable, final Runnable serviceDisabledRunnable) {
+        if (mHandler == null) {
+            MobileCenterLog.error(LOG_TAG, getServiceName() + " needs to be started before it can be used.");
+            return false;
+        } else {
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    if (isInstanceEnabled()) {
+                        runnable.run();
+                    } else if (serviceDisabledRunnable != null) {
+                        serviceDisabledRunnable.run();
+                    } else {
+                        MobileCenterLog.info(LOG_TAG, getServiceName() + " service disabled, discarding calls.");
+                    }
+                }
+            }, coreDisabledRunnable);
             return true;
         }
-        if (!isInstanceEnabled()) {
-            MobileCenterLog.info(LOG_TAG, getServiceName() + " service not enabled, discarding calls.");
-            return true;
+    }
+
+    /**
+     * Helper method to handle getter methods in services.
+     *
+     * @param runnable                    command to run if service is enabled.
+     * @param future                      future to complete the result of the async operation.
+     * @param valueIfDisabledOrNotStarted value to use for the future async operation result if service is disabled or not started or MobileCenter not started.
+     * @param <T>                         getter value type.
+     */
+    protected synchronized <T> void postAsyncGetter(final Runnable runnable, final DefaultMobileCenterFuture<T> future, final T valueIfDisabledOrNotStarted) {
+        Runnable disabledOrNotStartedRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* Same runnable is used whether Mobile Center or the service is disabled or not started. */
+                future.complete(valueIfDisabledOrNotStarted);
+            }
+        };
+        if (!post(new Runnable() {
+
+            @Override
+            public void run() {
+                runnable.run();
+            }
+        }, disabledOrNotStartedRunnable, disabledOrNotStartedRunnable)) {
+
+            /* MobileCenter is not configured if we reach this. */
+            disabledOrNotStartedRunnable.run();
         }
-        return false;
+    }
+
+    /**
+     * Like {{@link #post(Runnable)}} but also post back in U.I. thread.
+     * Use this for example to manage life cycle callbacks to make sure SDK is started and that
+     * every operation runs in order.
+     *
+     * This method will not SDK is disabled, the purpose is for internal commands, not APIs.
+     *
+     * @param runnable command to run.
+     */
+    protected synchronized void postOnUiThread(final Runnable runnable) {
+
+        /*
+         * We don't try to optimize with if channel if not null as there could be race conditions:
+         * If onResume was queued, then onStarted called, onResume will be next in queue and thus
+         * onPause could be called between the queued onStarted and the queued onResume.
+         */
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* And make sure we run the original command on U.I. thread. */
+                HandlerUtils.runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        runIfEnabled(runnable);
+                    }
+                });
+            }
+        }, new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* Avoid logging SDK disabled by providing an empty command. */
+            }
+        }, null);
+    }
+
+    /**
+     * Run the command only if service is enabled.
+     * The method is top level just because code coverage when using synchronized.
+     *
+     * @param runnable command to run.
+     */
+    private synchronized void runIfEnabled(Runnable runnable) {
+        if (isInstanceEnabled()) {
+            runnable.run();
+        }
     }
 }

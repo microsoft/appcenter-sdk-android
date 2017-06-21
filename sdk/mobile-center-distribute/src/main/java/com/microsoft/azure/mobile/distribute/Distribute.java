@@ -42,6 +42,8 @@ import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
+import com.microsoft.azure.mobile.utils.async.MobileCenterConsumer;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.crypto.CryptoUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
@@ -246,19 +248,21 @@ public class Distribute extends AbstractMobileCenterService {
     /**
      * Check whether Distribute service is enabled or not.
      *
-     * @return <code>true</code> if enabled, <code>false</code> otherwise.
+     * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
+     * @see MobileCenterFuture
      */
-    public static boolean isEnabled() {
-        return getInstance().isInstanceEnabled();
+    public static MobileCenterFuture<Boolean> isEnabled() {
+        return getInstance().isInstanceEnabledAsync();
     }
 
     /**
      * Enable or disable Distribute service.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     * @return future with null result to monitor when the operation completes.
      */
-    public static void setEnabled(boolean enabled) {
-        getInstance().setInstanceEnabled(enabled);
+    public static MobileCenterFuture<Void> setEnabled(boolean enabled) {
+        return getInstance().setInstanceEnabledAsync(enabled);
     }
 
     /**
@@ -317,7 +321,6 @@ public class Distribute extends AbstractMobileCenterService {
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
-        super.onStarted(context, appSecret, channel);
         mContext = context;
         mAppSecret = appSecret;
         try {
@@ -325,7 +328,12 @@ public class Distribute extends AbstractMobileCenterService {
         } catch (PackageManager.NameNotFoundException e) {
             MobileCenterLog.error(LOG_TAG, "Could not get self package info.", e);
         }
-        resumeDistributeWorkflow();
+
+        /*
+         * Apply enabled state is called by this method, we need fields to be initialized before.
+         * So call super method at the end.
+         */
+        super.onStarted(context, appSecret, channel);
     }
 
     /**
@@ -368,7 +376,11 @@ public class Distribute extends AbstractMobileCenterService {
     @Override
     public synchronized void onActivityResumed(Activity activity) {
         mForegroundActivity = activity;
-        resumeDistributeWorkflow();
+
+        /* If started, resume now, otherwise this will be called by onStarted. */
+        if (mChannel != null) {
+            resumeDistributeWorkflow();
+        }
     }
 
     @Override
@@ -378,10 +390,15 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     @Override
-    public synchronized void setInstanceEnabled(boolean enabled) {
-        super.setInstanceEnabled(enabled);
+    protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
-            resumeDistributeWorkflow();
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    resumeDistributeWorkflow();
+                }
+            });
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep token though. */
@@ -398,11 +415,16 @@ public class Distribute extends AbstractMobileCenterService {
      */
     @VisibleForTesting
     synchronized void handleUpdateAction(final int updateAction) {
-        HandlerUtils.runOnUiThread(new Runnable() {
+
+        /*
+         * We need to check if it is enabled and we also need to run download code in U.I. thread
+         * so post the command using the async method to achieve both goals at once.
+         */
+        isInstanceEnabledAsync().thenAccept(new MobileCenterConsumer<Boolean>() {
 
             @Override
-            public void run() {
-                if (!isEnabled()) {
+            public void accept(Boolean enabled) {
+                if (!enabled) {
                     MobileCenterLog.error(LOG_TAG, "Distribute is disabled");
                     return;
                 }

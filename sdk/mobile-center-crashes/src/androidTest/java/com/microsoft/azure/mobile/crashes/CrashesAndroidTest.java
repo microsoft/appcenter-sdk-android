@@ -2,27 +2,31 @@ package com.microsoft.azure.mobile.crashes;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
-import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
+import com.microsoft.azure.mobile.Constants;
 import com.microsoft.azure.mobile.MobileCenter;
-import com.microsoft.azure.mobile.ResultCallback;
+import com.microsoft.azure.mobile.MobileCenterPrivateHelper;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
-import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.async.MobileCenterConsumer;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -35,6 +39,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -48,37 +53,79 @@ import static org.mockito.Mockito.when;
 public class CrashesAndroidTest {
 
     @SuppressLint("StaticFieldLeak")
-    private static Context sContext;
+    private static Application sApplication;
 
     private static Thread.UncaughtExceptionHandler sDefaultCrashHandler;
 
+    private Channel mChannel;
+
     @BeforeClass
     public static void setUpClass() {
-        MobileCenterLog.setLogLevel(android.util.Log.VERBOSE);
-        sContext = InstrumentationRegistry.getContext();
-        MobileCenter.configure((Application) sContext.getApplicationContext(), "dummy");
         sDefaultCrashHandler = Thread.getDefaultUncaughtExceptionHandler();
+        sApplication = (Application) InstrumentationRegistry.getContext().getApplicationContext();
+        StorageHelper.initialize(sApplication);
+        Constants.loadFromContext(sApplication);
     }
 
     @Before
-    public void cleanup() {
-        android.util.Log.i(TAG, "Cleanup");
-        Crashes.unsetInstance();
+    public void setUp() {
         Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
         StorageHelper.PreferencesStorage.clear();
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
             assertTrue(logFile.delete());
         }
+        mChannel = mock(Channel.class);
+    }
+
+    @After
+    public void tearDown() {
+        Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
+    }
+
+    private void startFresh(CrashesListener listener) throws Exception {
+
+        /* Configure new instance. */
+        MobileCenterPrivateHelper.unsetInstance();
+        Crashes.unsetInstance();
+        MobileCenter.setLogLevel(android.util.Log.VERBOSE);
+        MobileCenter.configure(sApplication, "a");
+
+        /* Clean logs. */
+        MobileCenter.setEnabled(false);
+        MobileCenter.setEnabled(true).get();
+
+        /* Replace channel. */
+        Method method = MobileCenter.class.getDeclaredMethod("getInstance");
+        method.setAccessible(true);
+        MobileCenter mobileCenter = (MobileCenter) method.invoke(null);
+        method = MobileCenter.class.getDeclaredMethod("setChannel", Channel.class);
+        method.setAccessible(true);
+        method.invoke(mobileCenter, mChannel);
+
+        /* Set listener. */
+        Crashes.setListener(listener);
+
+        /* Start crashes. */
+        MobileCenter.start(Crashes.class);
+
+        /* Wait for start. */
+        assertTrue(Crashes.isEnabled().get());
     }
 
     @Test
-    public void getLastSessionCrashReport() throws InterruptedException {
+    public void getLastSessionCrashReport() throws Exception {
+
+        /* Null before start. */
+        Crashes.unsetInstance();
+        assertNull(Crashes.getLastSessionCrashReport().get());
+        assertFalse(Crashes.hasCrashedInLastSession().get());
 
         /* Crash on 1st process. */
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
-        Channel channel = mock(Channel.class);
-        Crashes.getInstance().onStarted(sContext, "", channel);
+        startFresh(null);
+        assertNull(Crashes.getLastSessionCrashReport().get());
+        assertFalse(Crashes.hasCrashedInLastSession().get());
         final Error exception = generateStackOverflowError();
         assertTrue(exception.getStackTrace().length > ErrorLogHelper.FRAME_LIMIT);
         final Thread thread = new Thread() {
@@ -92,28 +139,33 @@ public class CrashesAndroidTest {
         thread.join();
 
         /* Get last session crash on 2nd process. */
-        Crashes.unsetInstance();
-        Crashes.getInstance().onStarted(sContext, "", channel);
-        assertNotNull(Crashes.getLastSessionCrashReport());
-
-        /* Try to get last session crash after Crashes service completed processing. */
-        assertNotNull(Crashes.getLastSessionCrashReport());
+        startFresh(null);
+        ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
+        assertNotNull(errorReport);
+        assertTrue(Crashes.hasCrashedInLastSession().get());
     }
 
     @Test
-    public void testNoDuplicateCallbacksOrSending() throws InterruptedException {
+    public void testNoDuplicateCallbacksOrSending() throws Exception {
 
         /* Crash on 1st process. */
-        assertFalse(Crashes.hasCrashedInLastSession());
+        assertFalse(Crashes.hasCrashedInLastSession().get());
         android.util.Log.i(TAG, "Process 1");
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
-        Channel channel = mock(Channel.class);
-        Crashes.getInstance().onStarted(sContext, "", channel);
         CrashesListener crashesListener = mock(CrashesListener.class);
-        when(crashesListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
+
+        /* While testing should process, call methods that require the handler to test we avoid a dead lock and run directly. */
+        when(crashesListener.shouldProcess(any(ErrorReport.class))).thenAnswer(new Answer<Boolean>() {
+
+            @Override
+            public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
+                assertNotNull(MobileCenter.getInstallId().get());
+                return MobileCenter.isEnabled().get() && Crashes.isEnabled().get();
+            }
+        });
         when(crashesListener.shouldAwaitUserConfirmation()).thenReturn(true);
-        Crashes.setListener(crashesListener);
+        startFresh(crashesListener);
         final Error exception = generateStackOverflowError();
         assertTrue(exception.getStackTrace().length > ErrorLogHelper.FRAME_LIMIT);
         final Thread thread = new Thread() {
@@ -132,6 +184,47 @@ public class CrashesAndroidTest {
 
         /* Second process: enqueue log but network is down... */
         android.util.Log.i(TAG, "Process 2");
+        startFresh(crashesListener);
+
+        /* Check last session error report. */
+        Crashes.getLastSessionCrashReport().thenAccept(new MobileCenterConsumer<ErrorReport>() {
+
+            @Override
+            public void accept(ErrorReport errorReport) {
+                assertNotNull(errorReport);
+                Throwable lastThrowable = errorReport.getThrowable();
+                assertTrue(lastThrowable instanceof StackOverflowError);
+                assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
+            }
+        });
+        assertTrue(Crashes.hasCrashedInLastSession().get());
+
+        /* Wait U.I. thread callback (shouldAwaitUserConfirmation). */
+        final Semaphore semaphore = new Semaphore(0);
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                semaphore.release();
+            }
+        });
+        semaphore.acquire();
+
+        /* Waiting user confirmation so no log sent yet. */
+        ArgumentMatcher<Log> matchCrashLog = new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object o) {
+                return o instanceof ManagedErrorLog;
+            }
+        };
+        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString());
+        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        verify(crashesListener).shouldProcess(any(ErrorReport.class));
+        verify(crashesListener).shouldAwaitUserConfirmation();
+        verifyNoMoreInteractions(crashesListener);
+
+        /* Confirm to resume processing. */
         final AtomicReference<Log> log = new AtomicReference<>();
         doAnswer(new Answer() {
 
@@ -140,35 +233,10 @@ public class CrashesAndroidTest {
                 log.set((Log) invocationOnMock.getArguments()[0]);
                 return null;
             }
-        }).when(channel).enqueue(any(Log.class), anyString());
-        Crashes.unsetInstance();
-        Crashes.setListener(crashesListener);
-        Crashes.getInstance().onStarted(sContext, "", channel);
-        waitForCrashesHandlerTasksToComplete();
-
-        /* Check last session error report. */
-        assertTrue(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
-
-            @Override
-            public void onResult(ErrorReport errorReport) {
-                assertNotNull(errorReport);
-                Throwable lastThrowable = errorReport.getThrowable();
-                assertTrue(lastThrowable instanceof StackOverflowError);
-                assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
-            }
-        });
-
-        /* Waiting user confirmation so no log sent yet. */
-        verify(channel, never()).enqueue(any(Log.class), anyString());
-        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
-        verify(crashesListener).shouldProcess(any(ErrorReport.class));
-        verify(crashesListener).shouldAwaitUserConfirmation();
-        verifyNoMoreInteractions(crashesListener);
-
-        /* Confirm to resume processing. */
+        }).when(mChannel).enqueue(argThat(matchCrashLog), anyString());
         Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
-        verify(channel).enqueue(any(Log.class), anyString());
+        assertTrue(Crashes.isEnabled().get());
+        verify(mChannel).enqueue(argThat(matchCrashLog), anyString());
         assertNotNull(log.get());
         assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
 
@@ -177,36 +245,35 @@ public class CrashesAndroidTest {
 
         /* Third process: sending succeeds. */
         android.util.Log.i(TAG, "Process 3");
-        final AtomicReference<Channel.GroupListener> groupListener = new AtomicReference<>();
-        channel = mock(Channel.class);
-        doAnswer(new Answer() {
+        mChannel = mock(Channel.class);
+        ArgumentCaptor<Channel.GroupListener> groupListener = ArgumentCaptor.forClass(Channel.GroupListener.class);
+        startFresh(crashesListener);
+        verify(mChannel).addGroup(anyString(), anyInt(), anyInt(), anyInt(), groupListener.capture());
+        groupListener.getValue().onBeforeSending(log.get());
+        groupListener.getValue().onSuccess(log.get());
+
+        /* Wait callback to be processed in background thread (file manipulations) then called back in UI. */
+
+        /*
+         * Wait background thread to process the 2 previous commands,
+         * to do we check if crashed in last session, since we restarted process again after crash,
+         * it's false even if we couldn't send the log yet.
+         */
+        assertFalse(Crashes.hasCrashedInLastSession().get());
+        assertNull(Crashes.getLastSessionCrashReport().get());
+
+        /* Wait U.I. thread callbacks. */
+        HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                Channel.GroupListener listener = (Channel.GroupListener) invocationOnMock.getArguments()[4];
-                groupListener.set(listener);
-                listener.onBeforeSending(log.get());
-                return null;
-            }
-        }).when(channel).addGroup(anyString(), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
-        Crashes.unsetInstance();
-        Crashes.setListener(crashesListener);
-        Crashes.getInstance().onStarted(sContext, "", channel);
-        waitForCrashesHandlerTasksToComplete();
-        assertFalse(Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
-
-            @Override
-            public void onResult(ErrorReport errorReport) {
-                assertNull(errorReport);
+            public void run() {
+                semaphore.release();
             }
         });
+        semaphore.acquire();
 
-        assertNotNull(groupListener.get());
-        groupListener.get().onSuccess(log.get());
-        waitForCrashesHandlerTasksToComplete();
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
-        verify(channel, never()).enqueue(any(Log.class), anyString());
+        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString());
         verify(crashesListener).onBeforeSending(any(ErrorReport.class));
         verify(crashesListener).onSendingSucceeded(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);
@@ -220,13 +287,14 @@ public class CrashesAndroidTest {
     }
 
     @Test
-    public void cleanupFilesOnDisable() throws InterruptedException {
+    public void cleanupFilesOnDisable() throws Exception {
 
-        /* Crash on 1st process. */
+        /* Crash. */
         android.util.Log.i(TAG, "Process 1");
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
-        Crashes.getInstance().onStarted(sContext, "", mock(Channel.class));
+        startFresh(null);
+        assertTrue(Crashes.isEnabled().get());
         final RuntimeException exception = new RuntimeException();
         final Thread thread = new Thread() {
 
@@ -240,18 +308,17 @@ public class CrashesAndroidTest {
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
 
-        /* Disable in process 2. */
-        Crashes.unsetInstance();
-        Crashes.setEnabled(false);
+        /* Disable, test waiting for disable to finish. */
+        Crashes.setEnabled(false).get();
+        assertFalse(Crashes.isEnabled().get());
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
     }
 
     @Test
-    public void wrapperSdkOverrideLog() throws InterruptedException {
+    public void wrapperSdkOverrideLog() throws Exception {
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
-        Channel channel = mock(Channel.class);
-        Crashes.getInstance().onStarted(sContext, "", channel);
+        startFresh(null);
         Crashes.WrapperSdkListener wrapperSdkListener = mock(Crashes.WrapperSdkListener.class);
         Crashes.getInstance().setWrapperSdkListener(wrapperSdkListener);
         doAnswer(new Answer() {
@@ -275,29 +342,25 @@ public class CrashesAndroidTest {
         thread.start();
         thread.join();
         verify(wrapperSdkListener).onCrashCaptured(notNull(ManagedErrorLog.class));
-        Crashes.unsetInstance();
-        Crashes.getInstance().onStarted(sContext, "", channel);
-        waitForCrashesHandlerTasksToComplete();
-        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
 
-            @Override
-            public void onResult(ErrorReport errorReport) {
-                assertNotNull(errorReport);
-                assertEquals("ReplacedErrorThreadName", errorReport.getThreadName());
-            }
-        });
+        /* Check wrapper on restart. */
+        startFresh(null);
+        ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
+        assertNotNull(errorReport);
+        assertEquals("ReplacedErrorThreadName", errorReport.getThreadName());
     }
 
     @Test
-    public void setEnabledWhileAlreadyEnabledShouldNotDuplicateCrashReport() throws InterruptedException {
+    public void setEnabledWhileAlreadyEnabledShouldNotDuplicateCrashReport() throws Exception {
 
         /* Test the fix of the duplicate crash sending bug. */
         android.util.Log.i(TAG, "Process 1");
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
         Channel channel = mock(Channel.class);
-        Crashes.getInstance().onStarted(sContext, "", channel);
+        startFresh(null);
         Crashes.setEnabled(true);
+        assertTrue(Crashes.isEnabled().get());
         final RuntimeException exception = new RuntimeException();
         final Thread thread = new Thread() {
 
@@ -320,29 +383,5 @@ public class CrashesAndroidTest {
         } catch (StackOverflowError error) {
             return error;
         }
-    }
-
-    private void waitForCrashesHandlerTasksToComplete() throws InterruptedException {
-        final Semaphore semaphore = new Semaphore(0);
-
-        /* Waiting background thread for initialize and processPendingErrors. */
-        Crashes.getInstance().getHandler().post(new Runnable() {
-
-            @Override
-            public void run() {
-                semaphore.release();
-            }
-        });
-        semaphore.acquire();
-
-        /* Waiting main thread for processUserConfirmation. */
-        HandlerUtils.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                semaphore.release();
-            }
-        });
-        semaphore.acquire();
     }
 }
