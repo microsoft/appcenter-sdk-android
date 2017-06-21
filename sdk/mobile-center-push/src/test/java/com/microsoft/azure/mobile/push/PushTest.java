@@ -518,4 +518,15 @@ public class PushTest {
         verifyStatic(times(2));
         MobileCenterLog.error(anyString(), anyString());
     }
+
+    @Test
+    public void failToInit() {
+        IllegalStateException exception = new IllegalStateException();
+        when(FirebaseInstanceId.getInstance()).thenThrow(exception);
+        Context contextMock = mock(Context.class);
+        start(contextMock, Push.getInstance(), mock(Channel.class));
+        assertTrue(Push.isEnabled().get());
+        verifyStatic();
+        MobileCenterLog.error(anyString(), anyString(), eq(exception));
+    }
 }

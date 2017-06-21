@@ -221,9 +221,13 @@ public class Push extends AbstractMobileCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
-            String token = FirebaseInstanceId.getInstance().getToken();
-            if (token != null) {
-                enqueuePushInstallationLog(token);
+            try {
+                String token = FirebaseInstanceId.getInstance().getToken();
+                if (token != null) {
+                    enqueuePushInstallationLog(token);
+                }
+            } catch (IllegalStateException e) {
+                MobileCenterLog.error(LOG_TAG, "Failed to get firebase push token.", e);
             }
         }
     }
