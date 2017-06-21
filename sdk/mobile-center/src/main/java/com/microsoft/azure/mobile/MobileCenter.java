@@ -253,9 +253,10 @@ public class MobileCenter {
      * all services registered via {@link #start(Application, String, Class[])}.
      *
      * @param enabled true to enable, false to disable.
+     * @return future with null result to monitor when the operation completes.
      */
-    public static void setEnabled(boolean enabled) {
-        getInstance().setInstanceEnabledAsync(enabled);
+    public static MobileCenterFuture<Void> setEnabled(boolean enabled) {
+        return getInstance().setInstanceEnabledAsync(enabled);
     }
 
     /**
@@ -649,16 +650,21 @@ public class MobileCenter {
     /**
      * Implements {@link #setEnabled(boolean)}}.
      */
-    private synchronized void setInstanceEnabledAsync(final boolean enabled) {
+    private synchronized MobileCenterFuture<Void> setInstanceEnabledAsync(final boolean enabled) {
+        final DefaultMobileCenterFuture<Void> future = new DefaultMobileCenterFuture<>();
         if (checkPrecondition()) {
             mHandler.post(new Runnable() {
 
                 @Override
                 public void run() {
                     setInstanceEnabled(enabled);
+                    future.complete(null);
                 }
             });
+        } else {
+            future.complete(null);
         }
+        return future;
     }
 
     /**

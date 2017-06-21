@@ -92,10 +92,7 @@ public class CrashesAndroidTest {
 
         /* Clean logs. */
         MobileCenter.setEnabled(false);
-        MobileCenter.setEnabled(true);
-
-        /* This will block until every command processed. */
-        assertTrue(MobileCenter.isEnabled().get());
+        MobileCenter.setEnabled(true).get();
 
         /* Replace channel. */
         Method method = MobileCenter.class.getDeclaredMethod("getInstance");
@@ -311,8 +308,8 @@ public class CrashesAndroidTest {
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
 
-        /* Disable. */
-        Crashes.setEnabled(false);
+        /* Disable, test waiting for disable to finish. */
+        Crashes.setEnabled(false).get();
         assertFalse(Crashes.isEnabled().get());
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
     }

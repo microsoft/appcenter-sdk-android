@@ -87,21 +87,35 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * Help implementing static setEnabled() for services with future.
      *
      * @param enabled true to enable, false to disable.
+     * @return future with null result to monitor when the operation completes.
      */
-    protected final synchronized void setInstanceEnabledAsync(final boolean enabled) {
+    protected final synchronized MobileCenterFuture<Void> setInstanceEnabledAsync(final boolean enabled) {
 
         /*
          * We need to execute this while the service is disabled to enable it again,
          * but not if core disabled... Hence the parameters in post.
          */
+        final DefaultMobileCenterFuture<Void> future = new DefaultMobileCenterFuture<>();
+        final Runnable coreDisabledRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+                MobileCenterLog.error(LOG_TAG, "Mobile Center SDK is disabled.");
+                future.complete(null);
+            }
+        };
         Runnable runnable = new Runnable() {
 
             @Override
             public void run() {
                 setInstanceEnabled(enabled);
+                future.complete(null);
             }
         };
-        post(runnable, null, runnable);
+        if (!post(runnable, coreDisabledRunnable, runnable)) {
+            future.complete(null);
+        }
+        return future;
     }
 
     @Override
@@ -317,6 +331,8 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * Use this for example to manage life cycle callbacks to make sure SDK is started and that
      * every operation runs in order.
      *
+     * This method will not SDK is disabled, the purpose is for internal commands, not APIs.
+     *
      * @param runnable command to run.
      */
     protected synchronized void postOnUiThread(final Runnable runnable) {
@@ -340,7 +356,14 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
                     }
                 });
             }
-        });
+        }, new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* Avoid logging SDK disabled by providing an empty command. */
+            }
+        }, null);
     }
 
     /**

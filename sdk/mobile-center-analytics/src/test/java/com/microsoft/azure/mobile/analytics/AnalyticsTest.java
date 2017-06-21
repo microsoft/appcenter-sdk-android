@@ -19,6 +19,7 @@ import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
+import com.microsoft.azure.mobile.utils.async.MobileCenterConsumer;
 import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
@@ -40,6 +41,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static com.microsoft.azure.mobile.test.TestUtils.generateString;
 import static org.junit.Assert.assertFalse;
@@ -359,7 +362,7 @@ public class AnalyticsTest {
     }
 
     @Test
-    public void setEnabled() {
+    public void setEnabled() throws InterruptedException {
 
         /* Before start it does not work to change state, it's disabled. */
         Analytics analytics = Analytics.getInstance();
@@ -379,8 +382,8 @@ public class AnalyticsTest {
         /* Now we can see the service enabled. */
         assertTrue(Analytics.isEnabled().get());
 
-        /* Disable. */
-        Analytics.setEnabled(false);
+        /* Disable. Testing to wait setEnabled to finish while we are at it. */
+        Analytics.setEnabled(false).get();
         assertFalse(Analytics.isEnabled().get());
         verify(channel).removeListener(any(SessionTracker.class));
         verify(channel, times(2)).removeGroup(analytics.getGroupName());
@@ -394,9 +397,19 @@ public class AnalyticsTest {
         analytics.onActivityPaused(new Activity());
         verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
-        /* Enable back, testing double calls. */
-        Analytics.setEnabled(true);
+        /* Enable again, verify the async behavior of setEnabled with the callback. */
+        final CountDownLatch latch = new CountDownLatch(1);
+        Analytics.setEnabled(true).thenAccept(new MobileCenterConsumer<Void>() {
+
+            @Override
+            public void accept(Void aVoid) {
+                latch.countDown();
+            }
+        });
+        assertTrue(latch.await(0, TimeUnit.MILLISECONDS));
         assertTrue(Analytics.isEnabled().get());
+
+        /* Test double call to setEnabled true. */
         Analytics.setEnabled(true);
         assertTrue(Analytics.isEnabled().get());
         Analytics.trackEvent("test");

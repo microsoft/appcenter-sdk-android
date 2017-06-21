@@ -16,6 +16,7 @@ import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
+import com.microsoft.azure.mobile.utils.async.MobileCenterConsumer;
 import com.microsoft.azure.mobile.utils.crypto.CryptoUtils;
 
 import org.json.JSONException;
@@ -29,7 +30,9 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -181,7 +184,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void resumeWhileStartingAndDisableWhileRunningBrowserCodeOnUI() {
+    public void resumeWhileStartingAndDisableWhileRunningBrowserCodeOnUI() throws InterruptedException {
         final AtomicReference<Runnable> runnable = new AtomicReference<>();
         doAnswer(new Answer<Void>() {
 
@@ -195,8 +198,18 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.getInstance().onStarting(mMobileCenterHandler);
         Distribute.getInstance().onActivityResumed(mActivity);
         Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
-        Distribute.setEnabled(false);
+
+        /* Disable and test async behavior of setEnabled. */
+        final CountDownLatch latch = new CountDownLatch(1);
+        Distribute.setEnabled(false).thenAccept(new MobileCenterConsumer<Void>() {
+
+            @Override
+            public void accept(Void aVoid) {
+                latch.countDown();
+            }
+        });
         runnable.get().run();
+        assertTrue(latch.await(0, TimeUnit.MILLISECONDS));
         verifyStatic(never());
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
     }

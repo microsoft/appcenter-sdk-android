@@ -184,9 +184,10 @@ public class Crashes extends AbstractMobileCenterService {
      * Enable or disable Crashes service.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     * @return future with null result to monitor when the operation completes.
      */
-    public static void setEnabled(boolean enabled) {
-        getInstance().setInstanceEnabledAsync(enabled);
+    public static MobileCenterFuture<Void> setEnabled(boolean enabled) {
+        return getInstance().setInstanceEnabledAsync(enabled);
     }
 
     /**

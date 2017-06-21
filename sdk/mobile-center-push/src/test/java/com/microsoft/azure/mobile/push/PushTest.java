@@ -15,6 +15,7 @@ import com.microsoft.azure.mobile.push.ingestion.models.PushInstallationLog;
 import com.microsoft.azure.mobile.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.async.MobileCenterConsumer;
 import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
@@ -31,6 +32,8 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.azure.mobile.utils.PrefStorageConstants.KEY_ENABLED;
@@ -93,7 +96,12 @@ public class PushTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                ((Runnable) invocation.getArguments()[0]).run();
+                Object[] args = invocation.getArguments();
+                if (MobileCenter.isEnabled().get()) {
+                    ((Runnable) args[0]).run();
+                } else if (args[1] instanceof Runnable) {
+                    ((Runnable) args[1]).run();
+                }
                 return null;
             }
         }).when(mMobileCenterHandler).post(any(Runnable.class), any(Runnable.class));
@@ -152,10 +160,12 @@ public class PushTest {
     }
 
     @Test
-    public void setEnabled() {
+    public void setEnabled() throws InterruptedException {
 
         /* Before start it's disabled. */
         assertFalse(Push.isEnabled().get());
+        verifyStatic();
+        MobileCenterLog.error(anyString(), anyString());
 
         /* Start. */
         String testToken = "TEST";
@@ -177,13 +187,21 @@ public class PushTest {
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
 
         /* Disable. */
-        Push.setEnabled(false);
+        Push.setEnabled(false).get();
         assertFalse(Push.isEnabled().get());
         verify(channel).clear(push.getGroupName());
         verify(channel, times(2)).removeGroup(eq(push.getGroupName()));
 
-        /* Disable again. */
-        Push.setEnabled(false);
+        /* Disable again. Test waiting with async callback. */
+        final CountDownLatch latch = new CountDownLatch(1);
+        Push.setEnabled(false).thenAccept(new MobileCenterConsumer<Void>() {
+
+            @Override
+            public void accept(Void aVoid) {
+                latch.countDown();
+            }
+        });
+        assertTrue(latch.await(0, TimeUnit.MILLISECONDS));
 
         /* Ignore on token refresh. */
         push.onTokenRefresh(testToken);
@@ -191,6 +209,15 @@ public class PushTest {
         /* Verify behavior happened only once. */
         verify(mFirebaseInstanceId).getToken();
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
+
+        /* Make sure no logging when posting check activity intent commands. */
+        Activity activity = mock(Activity.class);
+        when(activity.getIntent()).thenReturn(mock(Intent.class));
+        push.onActivityResumed(activity);
+
+        /* No additional error was logged since before start. */
+        verifyStatic();
+        MobileCenterLog.error(anyString(), anyString());
 
         /* Verify only once to disable Firebase. */
         verifyStatic();
@@ -404,8 +431,18 @@ public class PushTest {
         Push.setEnabled(false);
         push.onActivityResumed(activity);
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+        verifyStatic(never());
+        MobileCenterLog.error(anyString(), anyString());
+
+        /* Same effect if we disable Mobile Center. */
+        when(mBooleanMobileCenterFuture.get()).thenReturn(false);
+        push.onActivityResumed(activity);
+        verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+        verifyStatic(never());
+        MobileCenterLog.error(anyString(), anyString());
 
         /* Same if we remove listener. */
+        when(mBooleanMobileCenterFuture.get()).thenReturn(true);
         Push.setEnabled(true);
         Push.setListener(null);
         push.onActivityResumed(activity);

@@ -43,7 +43,7 @@ public class MobileCenterAndroidTest {
 
     @After
     public void tearDown() {
-        MobileCenter.setEnabled(true);
+        MobileCenter.setEnabled(true).get();
     }
 
     @Test
