@@ -382,7 +382,7 @@ public class AnalyticsTest {
         /* Now we can see the service enabled. */
         assertTrue(Analytics.isEnabled().get());
 
-        /* Disable. */
+        /* Disable. Testing to wait setEnabled to finish while we are at it. */
         Analytics.setEnabled(false).get();
         assertFalse(Analytics.isEnabled().get());
         verify(channel).removeListener(any(SessionTracker.class));
@@ -397,7 +397,7 @@ public class AnalyticsTest {
         analytics.onActivityPaused(new Activity());
         verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
-        /* Enable back, testing double calls. */
+        /* Enable again, verify the async behavior of setEnabled with the callback. */
         final CountDownLatch latch = new CountDownLatch(1);
         Analytics.setEnabled(true).thenAccept(new MobileCenterConsumer<Void>() {
 
@@ -408,6 +408,8 @@ public class AnalyticsTest {
         });
         assertTrue(latch.await(0, TimeUnit.MILLISECONDS));
         assertTrue(Analytics.isEnabled().get());
+
+        /* Test double call to setEnabled true. */
         Analytics.setEnabled(true);
         assertTrue(Analytics.isEnabled().get());
         Analytics.trackEvent("test");

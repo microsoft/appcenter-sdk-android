@@ -192,7 +192,7 @@ public class PushTest {
         verify(channel).clear(push.getGroupName());
         verify(channel, times(2)).removeGroup(eq(push.getGroupName()));
 
-        /* Disable again. Test async. */
+        /* Disable again. Test waiting with async callback. */
         final CountDownLatch latch = new CountDownLatch(1);
         Push.setEnabled(false).thenAccept(new MobileCenterConsumer<Void>() {
 

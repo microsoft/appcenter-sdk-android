@@ -308,7 +308,7 @@ public class CrashesAndroidTest {
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
 
-        /* Disable. */
+        /* Disable, test waiting for disable to finish. */
         Crashes.setEnabled(false).get();
         assertFalse(Crashes.isEnabled().get());
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);

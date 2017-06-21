@@ -198,6 +198,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.getInstance().onStarting(mMobileCenterHandler);
         Distribute.getInstance().onActivityResumed(mActivity);
         Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+
+        /* Disable and test async behavior of setEnabled. */
         final CountDownLatch latch = new CountDownLatch(1);
         Distribute.setEnabled(false).thenAccept(new MobileCenterConsumer<Void>() {
 
@@ -206,7 +208,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
                 latch.countDown();
             }
         });
-        assertFalse(latch.await(0, TimeUnit.MILLISECONDS));
         runnable.get().run();
         assertTrue(latch.await(0, TimeUnit.MILLISECONDS));
         verifyStatic(never());
