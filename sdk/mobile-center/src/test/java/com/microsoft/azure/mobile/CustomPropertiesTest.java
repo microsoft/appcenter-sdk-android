@@ -137,7 +137,7 @@ public class CustomPropertiesTest {
         MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
 
         /* Normal value with max length. */
-        String maxLengthValue = generateString(CustomProperties.MAX_PROPERTY_KEY_LENGTH, 'a');;
+        String maxLengthValue = generateString(CustomProperties.MAX_PROPERTY_KEY_LENGTH, 'a');
         properties.set(key + "1", maxLengthValue);
         assertEquals(2, properties.getProperties().size());
         verifyStatic(times(2));

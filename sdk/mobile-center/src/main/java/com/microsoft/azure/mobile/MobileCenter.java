@@ -718,6 +718,12 @@ public class MobileCenter {
 
         private Thread.UncaughtExceptionHandler mDefaultUncaughtExceptionHandler;
 
+        /**
+         * This is to avoid lint warning.
+         */
+        public UncaughtExceptionHandler() {
+        }
+
         @Override
         public void uncaughtException(Thread thread, Throwable exception) {
             if (isInstanceEnabled()) {

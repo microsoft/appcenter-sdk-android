@@ -57,8 +57,8 @@ public class DeviceInfoActivity extends AppCompatActivity implements NetworkStat
             @Override
             public View getView(int position, View convertView, @NonNull ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                TextView text1 = (TextView) view.findViewById(android.R.id.text1);
-                TextView text2 = (TextView) view.findViewById(android.R.id.text2);
+                TextView text1 = view.findViewById(android.R.id.text1);
+                TextView text2 = view.findViewById(android.R.id.text2);
 
                 text1.setText(list.get(position).title);
                 text2.setText(list.get(position).value);
