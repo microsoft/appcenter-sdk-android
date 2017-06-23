@@ -357,7 +357,6 @@ public class CrashesAndroidTest {
         android.util.Log.i(TAG, "Process 1");
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
-        Channel channel = mock(Channel.class);
         startFresh(null);
         Crashes.setEnabled(true);
         assertTrue(Crashes.isEnabled().get());

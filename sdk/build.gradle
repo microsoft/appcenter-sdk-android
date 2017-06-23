@@ -50,6 +50,11 @@ subprojects {
                 returnDefaultValues = true
             }
         }
+
+        lintOptions {
+            explainIssues true
+            textReport true
+        }
     }
 
     configurations {
