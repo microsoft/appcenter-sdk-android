@@ -1,5 +1,7 @@
 package com.microsoft.azure.mobile.http;
 
+import android.net.TrafficStats;
+
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
@@ -31,6 +33,7 @@ import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_POST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.any;
@@ -44,10 +47,11 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest(DefaultHttpClient.class)
+@PrepareForTest({DefaultHttpClient.class, TrafficStats.class})
 public class DefaultHttpClientTest {
 
     @Rule
@@ -78,6 +82,7 @@ public class DefaultHttpClientTest {
                 return spyCall;
             }
         });
+        mockStatic(TrafficStats.class);
     }
 
     @Test
@@ -126,6 +131,12 @@ public class DefaultHttpClientTest {
         /* Verify payload. */
         String sentPayload = buffer.toString("UTF-8");
         assertEquals("mockPayload", sentPayload);
+
+        /* Verify socket tagged to avoid strict mode error. */
+        verifyStatic();
+        TrafficStats.setThreadStatsTag(anyInt());
+        verifyStatic();
+        TrafficStats.clearThreadStatsTag();
     }
 
     @Test
@@ -289,6 +300,12 @@ public class DefaultHttpClientTest {
         verify(serviceCallback).onCallFailed(new HttpException(503, "Busy"));
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
+
+        /* Verify socket tagged to avoid strict mode error. */
+        verifyStatic();
+        TrafficStats.setThreadStatsTag(anyInt());
+        verifyStatic();
+        TrafficStats.clearThreadStatsTag();
     }
 
     @Test
@@ -349,6 +366,10 @@ public class DefaultHttpClientTest {
         verify(serviceCallback).onCallFailed(exception);
         verifyZeroInteractions(serviceCallback);
         verify(inputStream).close();
+        verifyStatic();
+        TrafficStats.setThreadStatsTag(anyInt());
+        verifyStatic();
+        TrafficStats.clearThreadStatsTag();
     }
 
     @Test
@@ -373,6 +394,10 @@ public class DefaultHttpClientTest {
         verify(serviceCallback).onCallFailed(exception);
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
+        verifyStatic();
+        TrafficStats.setThreadStatsTag(anyInt());
+        verifyStatic();
+        TrafficStats.clearThreadStatsTag();
     }
 
     @Test
