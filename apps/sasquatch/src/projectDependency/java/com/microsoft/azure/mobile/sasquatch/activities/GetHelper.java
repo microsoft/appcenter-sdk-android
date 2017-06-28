@@ -46,6 +46,10 @@ class GetHelper {
         });
     }
 
+    static UUID getInstallId() {
+        return MobileCenter.getInstallId().get();
+    }
+
     static boolean hasCrashedInLastSession() {
         return Crashes.hasCrashedInLastSession().get();
     }

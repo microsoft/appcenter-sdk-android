@@ -11,6 +11,7 @@ import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.push.Push;
 
+import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -34,6 +35,10 @@ class GetHelper {
                 }
             }
         });
+    }
+
+    static UUID getInstallId() {
+        return MobileCenter.getInstallId();
     }
 
     static boolean hasCrashedInLastSession() {
