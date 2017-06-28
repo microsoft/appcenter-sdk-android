@@ -144,13 +144,13 @@ public class SettingsActivity extends AppCompatActivity {
                     AnalyticsPrivateHelper.setAutoPageTrackingEnabled(enabled);
                 }
             });
-            initClickableSetting(R.string.install_id_key, String.valueOf(MobileCenter.getInstallId()), new Preference.OnPreferenceClickListener() {
+            initClickableSetting(R.string.install_id_key, String.valueOf(GetHelper.getInstallId()), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
                     final EditText input = new EditText(getActivity());
                     input.setInputType(InputType.TYPE_CLASS_TEXT);
-                    input.setText(String.valueOf(MobileCenter.getInstallId()));
+                    input.setText(String.valueOf(GetHelper.getInstallId()));
 
                     new AlertDialog.Builder(getActivity()).setTitle(R.string.install_id_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
@@ -163,7 +163,7 @@ public class SettingsActivity extends AppCompatActivity {
                                     } else {
                                         Toast.makeText(getActivity(), R.string.install_id_invalid, Toast.LENGTH_SHORT).show();
                                     }
-                                    preference.setSummary(String.valueOf(MobileCenter.getInstallId()));
+                                    preference.setSummary(String.valueOf(GetHelper.getInstallId()));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)
