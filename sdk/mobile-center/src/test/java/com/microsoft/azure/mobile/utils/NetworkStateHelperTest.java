@@ -44,7 +44,7 @@ public class NetworkStateHelperTest {
             NetworkInfo networkInfo = mock(NetworkInfo.class);
             when(context.getSystemService(Context.CONNECTIVITY_SERVICE)).thenReturn(connectivityManager);
             when(connectivityManager.getActiveNetworkInfo()).thenReturn(networkInfo);
-            when(networkInfo.getState()).thenReturn(state);
+            when(networkInfo.isConnected()).thenReturn(state == NetworkInfo.State.CONNECTED);
             NetworkStateHelper helper = new NetworkStateHelper(context);
             assertEquals(state == NetworkInfo.State.CONNECTED, helper.isNetworkConnected());
         }
@@ -91,7 +91,7 @@ public class NetworkStateHelperTest {
 
         /* Change state to up. */
         NetworkInfo networkInfo = mock(NetworkInfo.class);
-        when(networkInfo.getState()).thenReturn(NetworkInfo.State.CONNECTED);
+        when(networkInfo.isConnected()).thenReturn(true);
         when(networkInfo.getTypeName()).thenReturn("MOBILE");
         when(networkInfo.getSubtypeName()).thenReturn("EDGE");
         when(connectivityManager.getActiveNetworkInfo()).thenReturn(networkInfo);
@@ -120,7 +120,7 @@ public class NetworkStateHelperTest {
         helper.removeListener(listener2);
         NetworkStateHelper.Listener listener3 = mock(NetworkStateHelper.Listener.class);
         helper.addListener(listener3);
-        when(networkInfo.getState()).thenReturn(NetworkInfo.State.DISCONNECTED);
+        when(networkInfo.isConnected()).thenReturn(false);
         receiver.onReceive(context, intent);
         verify(listener3).onNetworkStateUpdated(false);
 

@@ -116,7 +116,7 @@ public class NetworkStateHelper implements Closeable {
         MobileCenterLog.debug(MobileCenter.LOG_TAG, "Active network info=" + networkInfo);
 
         /* Update network type. null for not connected. */
-        if (networkInfo != null && networkInfo.getState() == NetworkInfo.State.CONNECTED)
+        if (networkInfo != null && networkInfo.isConnected())
             mNetworkType = networkInfo.getTypeName() + networkInfo.getSubtypeName();
         else
             mNetworkType = null;
