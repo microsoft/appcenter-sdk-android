@@ -1,5 +1,6 @@
 package com.microsoft.azure.mobile.http;
 
+import android.net.TrafficStats;
 import android.os.AsyncTask;
 import android.support.annotation.VisibleForTesting;
 
@@ -28,6 +29,11 @@ public class DefaultHttpClient implements HttpClient {
     public static final String METHOD_GET = "GET";
 
     public static final String METHOD_POST = "METHOD_POST";
+
+    /**
+     * Thread stats tag for Mobile Center HTTP calls.
+     */
+    private static final int THREAD_STATS_TAG = 0xD83DDC19;
 
     /**
      * Content type header value.
@@ -96,7 +102,22 @@ public class DefaultHttpClient implements HttpClient {
         }
     }
 
+    /**
+     * Do call and tag socket to avoid strict mode issue.
+     */
     private static String doCall(String urlString, String method, Map<String, String> headers, CallTemplate callTemplate) throws Exception {
+        TrafficStats.setThreadStatsTag(THREAD_STATS_TAG);
+        try {
+            return doHttpCall(urlString, method, headers, callTemplate);
+        } finally {
+            TrafficStats.clearThreadStatsTag();
+        }
+    }
+
+    /**
+     * Do http call.
+     */
+    private static String doHttpCall(String urlString, String method, Map<String, String> headers, CallTemplate callTemplate) throws Exception {
 
         /* HTTP session. */
         URL url = new URL(urlString);
