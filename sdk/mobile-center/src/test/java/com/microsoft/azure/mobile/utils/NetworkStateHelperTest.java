@@ -84,8 +84,9 @@ public class NetworkStateHelperTest {
         helper.addListener(listener);
 
         /* Initial state is down, if state does not change, no callback. */
+        final Intent intent = mock(Intent.class);
         BroadcastReceiver receiver = receiverRef.get();
-        receiver.onReceive(context, mock(Intent.class));
+        receiver.onReceive(context, intent);
         verify(listener, never()).onNetworkStateUpdated(anyBoolean());
 
         /* Change state to up. */
@@ -94,7 +95,10 @@ public class NetworkStateHelperTest {
         when(networkInfo.getTypeName()).thenReturn("MOBILE");
         when(networkInfo.getSubtypeName()).thenReturn("EDGE");
         when(connectivityManager.getActiveNetworkInfo()).thenReturn(networkInfo);
-        receiver.onReceive(context, mock(Intent.class));
+
+        //noinspection deprecation
+        when(intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO)).thenReturn(networkInfo);
+        receiver.onReceive(context, intent);
         verify(listener).onNetworkStateUpdated(true);
         verify(listener, never()).onNetworkStateUpdated(false);
 
@@ -104,12 +108,12 @@ public class NetworkStateHelperTest {
         helper.addListener(listener2);
         when(networkInfo.getTypeName()).thenReturn("WIFI");
         when(networkInfo.getSubtypeName()).thenReturn(null);
-        receiver.onReceive(context, mock(Intent.class));
+        receiver.onReceive(context, intent);
         verify(listener2).onNetworkStateUpdated(false);
         verify(listener2).onNetworkStateUpdated(true);
 
         /* Duplicate WIFI callback. */
-        receiver.onReceive(context, mock(Intent.class));
+        receiver.onReceive(context, intent);
         verifyNoMoreInteractions(listener2);
 
         /* But then WIFI is disconnected. */
@@ -117,7 +121,7 @@ public class NetworkStateHelperTest {
         NetworkStateHelper.Listener listener3 = mock(NetworkStateHelper.Listener.class);
         helper.addListener(listener3);
         when(networkInfo.getState()).thenReturn(NetworkInfo.State.DISCONNECTED);
-        receiver.onReceive(context, mock(Intent.class));
+        receiver.onReceive(context, intent);
         verify(listener3).onNetworkStateUpdated(false);
 
         /* Close and verify interactions. */
