@@ -244,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
                 crashesIdlingResource.decrement();
             }
 
+            @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             @Override
             public void onSendingSucceeded(ErrorReport report) {
                 String message = String.format("%s\nCrash ID: %s", getString(R.string.crash_sent_succeeded), report.getId());

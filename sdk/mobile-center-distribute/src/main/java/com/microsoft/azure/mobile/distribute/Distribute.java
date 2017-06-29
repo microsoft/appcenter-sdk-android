@@ -270,6 +270,7 @@ public class Distribute extends AbstractMobileCenterService {
      *
      * @param installUrl install base URL.
      */
+    @SuppressWarnings("SameParameterValue")
     public static void setInstallUrl(String installUrl) {
         getInstance().setInstanceInstallUrl(installUrl);
     }
@@ -279,6 +280,7 @@ public class Distribute extends AbstractMobileCenterService {
      *
      * @param apiUrl API base URL.
      */
+    @SuppressWarnings("SameParameterValue")
     public static void setApiUrl(String apiUrl) {
         getInstance().setInstanceApiUrl(apiUrl);
     }

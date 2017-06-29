@@ -231,7 +231,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      *
      * @return A maximum time interval in milliseconds.
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "SameReturnValue"})
     protected int getTriggerInterval() {
         return DEFAULT_TRIGGER_INTERVAL;
     }
