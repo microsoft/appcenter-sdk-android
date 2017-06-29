@@ -9,7 +9,7 @@ import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 /**
  * Interface for the crashes listener.
  */
-@SuppressWarnings({"WeakerAccess", "UnusedReturnValue", "SameReturnValue", "UnusedParameters"})
+@SuppressWarnings({"WeakerAccess", "UnusedReturnValue", "SameReturnValue", "UnusedParameters", "EmptyMethod"})
 public interface CrashesListener {
 
     /**

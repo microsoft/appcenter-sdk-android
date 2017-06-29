@@ -196,6 +196,7 @@ public class Crashes extends AbstractMobileCenterService {
      *
      * @param throwable An exception.
      */
+    @SuppressWarnings("SameParameterValue")
     static void trackException(@NonNull Throwable throwable) {
         getInstance().queueException(throwable);
     }
