@@ -3,12 +3,9 @@ package com.microsoft.azure.mobile.crashes;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
-
-import org.json.JSONException;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,22 +33,22 @@ public class WrapperSdkExceptionManager {
     }
 
     /**
-     * Store the in-memory wrapper exception data to disk. This should only be used by a wrapper SDK.
+     * Save a crash from wrapper SDK.
      *
-     * @param data    The data to be saved
-     * @param errorId The associated error UUID
+     * @param thread                 thread where uncaught exception originated.
+     * @param modelException         model exception.
+     * @param rawSerializedException raw exception bytes.
      */
-    public static void saveWrapperExceptionData(byte[] data, UUID errorId) {
-        if (errorId == null) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Failed to save wrapper exception data: null errorId");
-            return;
-        }
-
-        sWrapperExceptionDataContainer.put(errorId.toString(), data);
-        File dataFile = getFile(errorId);
+    public static void saveWrapperException(Thread thread, com.microsoft.azure.mobile.crashes.ingestion.models.Exception modelException, byte[] rawSerializedException) {
         try {
-            StorageHelper.InternalStorage.writeObject(dataFile, data);
-        } catch (IOException e) {
+            UUID errorId = Crashes.getInstance().saveUncaughtException(thread, null, modelException);
+            if (errorId != null) {
+                sWrapperExceptionDataContainer.put(errorId.toString(), rawSerializedException);
+                File dataFile = getFile(errorId);
+                StorageHelper.InternalStorage.writeObject(dataFile, rawSerializedException);
+                MobileCenterLog.debug(Crashes.LOG_TAG, "Saved raw wrapper exception data into " + dataFile);
+            }
+        } catch (Exception e) {
             MobileCenterLog.error(Crashes.LOG_TAG, "Failed to save wrapper exception data to file", e);
         }
     }
@@ -117,22 +114,6 @@ public class WrapperSdkExceptionManager {
         File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
         String filename = errorId.toString() + DATA_FILE_EXTENSION;
         return new File(errorStorageDirectory, filename);
-    }
-
-    /**
-     * Save error log modified by a wrapper SDK.
-     *
-     * @param errorLog error log to  save or overwrite.
-     */
-    @SuppressWarnings("WeakerAccess")
-    public static void saveWrapperSdkErrorLog(ManagedErrorLog errorLog) {
-        try {
-            Crashes.getInstance().saveErrorLog(errorLog, ErrorLogHelper.getErrorStorageDirectory(), errorLog.getId().toString());
-        } catch (JSONException e) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Error serializing error log to JSON", e);
-        } catch (IOException e) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Error writing error log to file", e);
-        }
     }
 }
 
