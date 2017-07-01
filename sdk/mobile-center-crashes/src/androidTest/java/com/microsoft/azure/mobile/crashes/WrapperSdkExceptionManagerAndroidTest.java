@@ -5,6 +5,8 @@ import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.channel.Channel;
+import com.microsoft.azure.mobile.crashes.ingestion.models.Exception;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
@@ -21,6 +23,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 public class WrapperSdkExceptionManagerAndroidTest {
 
@@ -41,7 +44,7 @@ public class WrapperSdkExceptionManagerAndroidTest {
     }
 
     @Test
-    public void managedExceptionData() {
+    public void saveWrapperException() {
 
         class ErrorData {
             private byte[] data;
@@ -50,20 +53,23 @@ public class WrapperSdkExceptionManagerAndroidTest {
 
         ErrorData errorA = new ErrorData();
         errorA.data = new byte[]{};
-        errorA.id = UUID.randomUUID();
 
         ErrorData errorB = new ErrorData();
         errorB.data = null;
-        errorB.id = UUID.randomUUID();
 
         ErrorData errorC = new ErrorData();
-        errorC.data = new byte[]{'d','a','t','a'};
-        errorC.id = UUID.randomUUID();
+        errorC.data = new byte[]{'d', 'a', 't', 'a'};
 
         ErrorData[] errors = new ErrorData[]{errorA, errorB, errorC};
 
         for (ErrorData error : errors) {
-            WrapperSdkExceptionManager.saveWrapperExceptionData(error.data, error.id);
+
+            /* Reset crash state as only 1 crash is saved per process life time. */
+            Crashes.unsetInstance();
+            Crashes.getInstance().onStarted(InstrumentationRegistry.getContext(), "", mock(Channel.class));
+
+            /* Save crash. */
+            error.id = WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), error.data);
             byte[] loadedData = WrapperSdkExceptionManager.loadWrapperExceptionData(error.id);
 
             if (error.data == null) {
@@ -92,5 +98,8 @@ public class WrapperSdkExceptionManagerAndroidTest {
         for (int i = 0; i < errorC.data.length; ++i) {
             assertEquals(errorC.data[i], loadedDataC[i]);
         }
+
+        /* Save another crash without reset: will be ignored as only 1 crash per process. */
+        assertNull(WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), new byte[]{'e'}));
     }
 }

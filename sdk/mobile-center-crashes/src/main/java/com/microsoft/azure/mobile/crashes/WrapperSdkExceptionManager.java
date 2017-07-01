@@ -38,8 +38,9 @@ public class WrapperSdkExceptionManager {
      * @param thread                 thread where uncaught exception originated.
      * @param modelException         model exception.
      * @param rawSerializedException raw exception bytes.
+     * @return error log identifier if successful or null if failed to save to disk.
      */
-    public static void saveWrapperException(Thread thread, com.microsoft.azure.mobile.crashes.ingestion.models.Exception modelException, byte[] rawSerializedException) {
+    public static UUID saveWrapperException(Thread thread, com.microsoft.azure.mobile.crashes.ingestion.models.Exception modelException, byte[] rawSerializedException) {
         try {
             UUID errorId = Crashes.getInstance().saveUncaughtException(thread, null, modelException);
             if (errorId != null) {
@@ -48,8 +49,10 @@ public class WrapperSdkExceptionManager {
                 StorageHelper.InternalStorage.writeObject(dataFile, rawSerializedException);
                 MobileCenterLog.debug(Crashes.LOG_TAG, "Saved raw wrapper exception data into " + dataFile);
             }
+            return errorId;
         } catch (Exception e) {
             MobileCenterLog.error(Crashes.LOG_TAG, "Failed to save wrapper exception data to file", e);
+            return null;
         }
     }
 
