@@ -33,7 +33,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Build.class, Settings.Global.class, Settings.Secure.class})
 public class UnknownSourcesDetectionTest {
-    
+
     @Mock
     private Context mContext;
 
@@ -56,7 +56,7 @@ public class UnknownSourcesDetectionTest {
         when(Settings.Secure.getString(any(ContentResolver.class), eq(Settings.Secure.INSTALL_NON_MARKET_APPS))).thenReturn(null);
         when(Settings.Global.getString(any(ContentResolver.class), eq(Settings.Global.INSTALL_NON_MARKET_APPS))).thenReturn(null);
         when(mPackageManager.canRequestPackageInstalls()).thenReturn(true);
-        for (int apiLevel = Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1; apiLevel < Build.VERSION_CODES.JELLY_BEAN_MR1; apiLevel++) {
+        for (int apiLevel = BuildConfig.MIN_SDK_VERSION; apiLevel < Build.VERSION_CODES.JELLY_BEAN_MR1; apiLevel++) {
             mockApiLevel(apiLevel);
             assertFalse(InstallerUtils.isUnknownSourcesEnabled(mContext));
             verify(mPackageManager, never()).canRequestPackageInstalls();
@@ -71,7 +71,7 @@ public class UnknownSourcesDetectionTest {
             assertFalse(InstallerUtils.isUnknownSourcesEnabled(mContext));
             verify(mPackageManager, never()).canRequestPackageInstalls();
         }
-        for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= Build.VERSION_CODES.O; apiLevel++) {
+        for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= BuildConfig.TARGET_SDK_VERSION; apiLevel++) {
             mockApiLevel(apiLevel);
             assertTrue(InstallerUtils.isUnknownSourcesEnabled(mContext));
             verify(mPackageManager).canRequestPackageInstalls();
@@ -84,7 +84,7 @@ public class UnknownSourcesDetectionTest {
         when(Settings.Secure.getString(any(ContentResolver.class), eq(Settings.Secure.INSTALL_NON_MARKET_APPS))).thenReturn(INSTALL_NON_MARKET_APPS_ENABLED);
         when(Settings.Global.getString(any(ContentResolver.class), eq(Settings.Global.INSTALL_NON_MARKET_APPS))).thenReturn(null);
         when(mPackageManager.canRequestPackageInstalls()).thenReturn(false);
-        for (int apiLevel = Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1; apiLevel < Build.VERSION_CODES.JELLY_BEAN_MR1; apiLevel++) {
+        for (int apiLevel = BuildConfig.MIN_SDK_VERSION; apiLevel < Build.VERSION_CODES.JELLY_BEAN_MR1; apiLevel++) {
             mockApiLevel(apiLevel);
             assertTrue(InstallerUtils.isUnknownSourcesEnabled(mContext));
             verify(mPackageManager, never()).canRequestPackageInstalls();
@@ -99,7 +99,7 @@ public class UnknownSourcesDetectionTest {
             assertTrue(InstallerUtils.isUnknownSourcesEnabled(mContext));
             verify(mPackageManager, never()).canRequestPackageInstalls();
         }
-        for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= Build.VERSION_CODES.O; apiLevel++) {
+        for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= BuildConfig.TARGET_SDK_VERSION; apiLevel++) {
             mockApiLevel(apiLevel);
             assertFalse(InstallerUtils.isUnknownSourcesEnabled(mContext));
             verify(mPackageManager).canRequestPackageInstalls();
@@ -112,7 +112,7 @@ public class UnknownSourcesDetectionTest {
         when(Settings.Global.getString(any(ContentResolver.class), eq(Settings.Global.INSTALL_NON_MARKET_APPS))).thenReturn(INSTALL_NON_MARKET_APPS_ENABLED);
         when(Settings.Secure.getString(any(ContentResolver.class), eq(Settings.Secure.INSTALL_NON_MARKET_APPS))).thenReturn(null);
         when(mPackageManager.canRequestPackageInstalls()).thenReturn(false);
-        for (int apiLevel = Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1; apiLevel < Build.VERSION_CODES.JELLY_BEAN_MR1; apiLevel++) {
+        for (int apiLevel = BuildConfig.MIN_SDK_VERSION; apiLevel < Build.VERSION_CODES.JELLY_BEAN_MR1; apiLevel++) {
             mockApiLevel(apiLevel);
             assertFalse(InstallerUtils.isUnknownSourcesEnabled(mContext));
             verify(mPackageManager, never()).canRequestPackageInstalls();
@@ -127,7 +127,7 @@ public class UnknownSourcesDetectionTest {
             assertFalse(InstallerUtils.isUnknownSourcesEnabled(mContext));
             verify(mPackageManager, never()).canRequestPackageInstalls();
         }
-        for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= Build.VERSION_CODES.O; apiLevel++) {
+        for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= BuildConfig.TARGET_SDK_VERSION; apiLevel++) {
             mockApiLevel(apiLevel);
             assertFalse(InstallerUtils.isUnknownSourcesEnabled(mContext));
             verify(mPackageManager).canRequestPackageInstalls();
@@ -140,7 +140,7 @@ public class UnknownSourcesDetectionTest {
         for (String value : Arrays.asList(null, "", "0", "on", "true", "TRUE")) {
             when(Settings.Global.getString(any(ContentResolver.class), eq(Settings.Global.INSTALL_NON_MARKET_APPS))).thenReturn(value);
             when(Settings.Secure.getString(any(ContentResolver.class), eq(Settings.Secure.INSTALL_NON_MARKET_APPS))).thenReturn(value);
-            for (int apiLevel = Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1; apiLevel < Build.VERSION_CODES.O; apiLevel++) {
+            for (int apiLevel = BuildConfig.MIN_SDK_VERSION; apiLevel < Build.VERSION_CODES.O; apiLevel++) {
                 mockApiLevel(apiLevel);
                 assertFalse(InstallerUtils.isUnknownSourcesEnabled(mContext));
             }
