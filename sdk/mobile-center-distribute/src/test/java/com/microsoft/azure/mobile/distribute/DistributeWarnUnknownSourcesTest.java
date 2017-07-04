@@ -1,11 +1,13 @@
 package com.microsoft.azure.mobile.distribute;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.provider.Settings;
 
 import com.microsoft.azure.mobile.http.HttpClient;
@@ -16,6 +18,7 @@ import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -25,7 +28,11 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.powermock.reflect.Whitebox;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -41,6 +48,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
@@ -274,6 +282,48 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         verify(mDialog, never()).hide();
         verify(mUnknownSourcesDialog, times(2)).show();
         verify(mUnknownSourcesDialog, never()).hide();
+    }
+
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
+    @Test
+    @PrepareForTest(Build.class)
+    @SuppressLint("InlinedApi")
+    public void clickSettingsOnAndroidO() throws Exception {
+
+        /* Save original SDK_INT. */
+        final int SDK_INT = Build.VERSION.SDK_INT;
+
+        /* Since Whitebox.setInternalState don't work here, do it manually. */
+        Field field = Whitebox.getField(Build.VERSION.class, "SDK_INT");
+        field.setAccessible(true);
+        Field modifiersField = Field.class.getDeclaredField("modifiers");
+        modifiersField.setAccessible(true);
+        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+
+        /* Click settings. */
+        Intent intentSecuritySettings = mock(Intent.class);
+        whenNew(Intent.class).withArguments(Settings.ACTION_SECURITY_SETTINGS).thenReturn(intentSecuritySettings);
+        Intent intentManageUnknownAppSources = mock(Intent.class);
+        whenNew(Intent.class).withArguments(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).thenReturn(intentManageUnknownAppSources);
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_unknown_sources_dialog_settings), clickListener.capture());
+
+        /* Verify behaviour on old version. */
+        field.setInt(null, BuildConfig.MIN_SDK_VERSION);
+        clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
+        verify(mFirstActivity).startActivity(intentSecuritySettings);
+        verify(mFirstActivity, never()).startActivity(intentManageUnknownAppSources);
+        reset(mFirstActivity);
+
+        /* Verify behaviour on Android O. */
+        field.setInt(null, Build.VERSION_CODES.O);
+        clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
+        verify(mFirstActivity, never()).startActivity(intentSecuritySettings);
+        verify(mFirstActivity).startActivity(intentManageUnknownAppSources);
+
+        /* Restore SDK_INT. */
+        field.setInt(null, SDK_INT);
     }
 
     @Test
