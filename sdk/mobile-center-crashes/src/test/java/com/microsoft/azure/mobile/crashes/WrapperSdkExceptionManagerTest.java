@@ -45,9 +45,10 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class WrapperSdkExceptionManagerTest {
 
     @Rule
-    public final TemporaryFolder errorStorageDirectory = new TemporaryFolder();
+    public final PowerMockRule rule = new PowerMockRule();
+
     @Rule
-    public PowerMockRule rule = new PowerMockRule();
+    public final TemporaryFolder errorStorageDirectory = new TemporaryFolder();
 
     @Before
     public void setUp() {
