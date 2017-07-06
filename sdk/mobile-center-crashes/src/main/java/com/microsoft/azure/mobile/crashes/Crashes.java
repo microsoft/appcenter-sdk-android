@@ -136,14 +136,11 @@ public class Crashes extends AbstractMobileCenterService {
     private CrashesListener mCrashesListener;
 
     /**
-     * Wrapper SDK listener.
-     */
-    private WrapperSdkListener mWrapperSdkListener;
-
-    /**
      * ErrorReport for the last session.
      */
     private ErrorReport mLastSessionErrorReport;
+
+    private boolean mSavedUncaughtException;
 
     private Crashes() {
         mFactories = new HashMap<>();
@@ -372,7 +369,6 @@ public class Crashes extends AbstractMobileCenterService {
                             if (errorLog.getFatal()) {
                                 final ErrorReport report = buildErrorReport(errorLog);
                                 UUID id = errorLog.getId();
-
                                 if (report != null) {
 
                                     /* Clean up before calling callbacks if requested. */
@@ -603,7 +599,10 @@ public class Crashes extends AbstractMobileCenterService {
             File file = ErrorLogHelper.getStoredThrowableFile(id);
             if (file != null) {
                 try {
-                    Throwable throwable = StorageHelper.InternalStorage.readObject(file);
+                    Throwable throwable = null;
+                    if (file.length() > 0) {
+                        throwable = StorageHelper.InternalStorage.readObject(file);
+                    }
                     ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, throwable);
                     mErrorReportCache.put(id, new ErrorLogReport(log, report));
                     return report;
@@ -628,16 +627,6 @@ public class Crashes extends AbstractMobileCenterService {
             listener = DEFAULT_ERROR_REPORTING_LISTENER;
         }
         mCrashesListener = listener;
-    }
-
-    /**
-     * Set wrapper SDK listener.
-     *
-     * @param wrapperSdkListener listener.
-     */
-    @SuppressWarnings("WeakerAccess")
-    public void setWrapperSdkListener(WrapperSdkListener wrapperSdkListener) {
-        mWrapperSdkListener = wrapperSdkListener;
     }
 
     @VisibleForTesting
@@ -713,25 +702,12 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Save a crash.
      *
-     * @param thread    origin thread.
-     * @param exception exception.
+     * @param thread    thread where crash occurred.
+     * @param throwable uncaught exception or error.
      */
-    void saveUncaughtException(Thread thread, Throwable exception) {
-
-        /* Save crash. */
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, exception, Thread.getAllStackTraces(), mInitializeTimestamp, true);
+    void saveUncaughtException(Thread thread, Throwable throwable) {
         try {
-            File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
-            String filename = errorLog.getId().toString();
-            MobileCenterLog.debug(Crashes.LOG_TAG, "Saving uncaught exception:", exception);
-            saveErrorLog(errorLog, errorStorageDirectory, filename);
-            File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
-            StorageHelper.InternalStorage.writeObject(throwableFile, exception);
-
-            MobileCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile);
-            if (mWrapperSdkListener != null) {
-                mWrapperSdkListener.onCrashCaptured(errorLog);
-            }
+            saveUncaughtException(thread, throwable, ErrorLogHelper.getModelExceptionFromThrowable(throwable));
         } catch (JSONException e) {
             MobileCenterLog.error(Crashes.LOG_TAG, "Error serializing error log to JSON", e);
         } catch (IOException e) {
@@ -740,13 +716,45 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Serialize error log to a file.
+     * Save uncaught exception to disk.
+     *
+     * @param thread         thread where exception occurred.
+     * @param throwable      Java exception as is, can be null for non Java exceptions.
+     * @param modelException model exception, supports any language.
+     * @return error log identifier.
+     * @throws JSONException if an error occurred during JSON serialization of modelException.
+     * @throws IOException   if an error occurred while accessing the file system.
      */
-    void saveErrorLog(ManagedErrorLog errorLog, File errorStorageDirectory, String filename) throws JSONException, IOException {
+    UUID saveUncaughtException(Thread thread, Throwable throwable, com.microsoft.azure.mobile.crashes.ingestion.models.Exception modelException) throws JSONException, IOException {
+        if (mSavedUncaughtException) {
+            return null;
+        }
+        mSavedUncaughtException = true;
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, modelException, Thread.getAllStackTraces(), mInitializeTimestamp, true);
+        File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
+        UUID errorLogId = errorLog.getId();
+        String filename = errorLogId.toString();
+        MobileCenterLog.debug(Crashes.LOG_TAG, "Saving uncaught exception.");
         File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
         String errorLogString = mLogSerializer.serializeLog(errorLog);
         StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
         MobileCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
+        File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
+        if (throwable != null) {
+            StorageHelper.InternalStorage.writeObject(throwableFile, throwable);
+            MobileCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile);
+        } else {
+
+            /*
+             * If there is no Java Throwable to save as is (typical in wrapper SDKs),
+             * use file placeholder as we also use this file to manage state.
+             */
+            if (!throwableFile.createNewFile()) {
+                throw new IOException(throwableFile.getName());
+            }
+            MobileCenterLog.debug(Crashes.LOG_TAG, "Saved empty Throwable file in " + throwableFile);
+        }
+        return errorLogId;
     }
 
     /**
@@ -765,20 +773,6 @@ public class Crashes extends AbstractMobileCenterService {
          * @param report error report related to the callback.
          */
         void onCallBack(ErrorReport report);
-    }
-
-    /**
-     * Listener for Wrapper SDK. Meant only for internal use by wrapper SDK developers.
-     */
-    @SuppressWarnings("WeakerAccess")
-    public interface WrapperSdkListener {
-
-        /**
-         * Called when crash has been caught and saved.
-         *
-         * @param errorLog generated error log for the crash.
-         */
-        void onCrashCaptured(ManagedErrorLog errorLog);
     }
 
     /**

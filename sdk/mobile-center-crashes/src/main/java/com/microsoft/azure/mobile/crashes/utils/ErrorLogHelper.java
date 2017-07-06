@@ -141,12 +141,11 @@ public class ErrorLogHelper {
     }
 
     @NonNull
-    public static File getErrorStorageDirectory() {
+    public static synchronized File getErrorStorageDirectory() {
         if (sErrorLogDirectory == null) {
             sErrorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
             StorageHelper.InternalStorage.mkdir(sErrorLogDirectory.getAbsolutePath());
         }
-
         return sErrorLogDirectory;
     }
 
@@ -228,7 +227,7 @@ public class ErrorLogHelper {
     }
 
     @NonNull
-    private static Exception getModelExceptionFromThrowable(@NonNull Throwable t) {
+    public static Exception getModelExceptionFromThrowable(@NonNull Throwable t) {
         Exception topException = null;
         Exception parentException = null;
         for (Throwable cause = t; cause != null; cause = cause.getCause()) {

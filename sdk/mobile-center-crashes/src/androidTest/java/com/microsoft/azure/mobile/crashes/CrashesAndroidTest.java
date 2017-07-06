@@ -40,7 +40,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -312,42 +311,6 @@ public class CrashesAndroidTest {
         Crashes.setEnabled(false).get();
         assertFalse(Crashes.isEnabled().get());
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
-    }
-
-    @Test
-    public void wrapperSdkOverrideLog() throws Exception {
-        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
-        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
-        startFresh(null);
-        Crashes.WrapperSdkListener wrapperSdkListener = mock(Crashes.WrapperSdkListener.class);
-        Crashes.getInstance().setWrapperSdkListener(wrapperSdkListener);
-        doAnswer(new Answer() {
-
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ManagedErrorLog errorLog = (ManagedErrorLog) invocationOnMock.getArguments()[0];
-                errorLog.setErrorThreadName("ReplacedErrorThreadName");
-                WrapperSdkExceptionManager.saveWrapperSdkErrorLog(errorLog);
-                return null;
-            }
-        }).when(wrapperSdkListener).onCrashCaptured(notNull(ManagedErrorLog.class));
-        final RuntimeException exception = new RuntimeException("mock");
-        final Thread thread = new Thread() {
-
-            @Override
-            public void run() {
-                throw exception;
-            }
-        };
-        thread.start();
-        thread.join();
-        verify(wrapperSdkListener).onCrashCaptured(notNull(ManagedErrorLog.class));
-
-        /* Check wrapper on restart. */
-        startFresh(null);
-        ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
-        assertNotNull(errorReport);
-        assertEquals("ReplacedErrorThreadName", errorReport.getThreadName());
     }
 
     @Test

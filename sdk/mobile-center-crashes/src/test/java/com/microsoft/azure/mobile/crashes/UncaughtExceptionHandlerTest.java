@@ -5,6 +5,7 @@ import android.os.SystemClock;
 
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.MobileCenterHandler;
+import com.microsoft.azure.mobile.crashes.ingestion.models.Exception;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
 import com.microsoft.azure.mobile.ingestion.models.Log;
@@ -42,7 +43,6 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
@@ -65,7 +65,7 @@ public class UncaughtExceptionHandlerTest {
     private UncaughtExceptionHandler mExceptionHandler;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws java.lang.Exception {
         Crashes.unsetInstance();
         mockStatic(MobileCenter.class);
         mockStatic(MobileCenterLog.class);
@@ -99,7 +99,7 @@ public class UncaughtExceptionHandlerTest {
         ManagedErrorLog errorLogMock = mock(ManagedErrorLog.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(new File("."));
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
-        when(ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean()))
+        when(ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Exception.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean()))
                 .thenReturn(errorLogMock);
 
         when(errorLogMock.getId()).thenReturn(UUID.randomUUID());
@@ -156,7 +156,7 @@ public class UncaughtExceptionHandlerTest {
         verify(mDefaultExceptionHandler).uncaughtException(thread, exception);
 
         verifyStatic();
-        ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean());
+        ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Exception.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean());
     }
 
     @Test
@@ -173,7 +173,7 @@ public class UncaughtExceptionHandlerTest {
         verifyNoMoreInteractions(mDefaultExceptionHandler);
 
         verifyStatic();
-        ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Throwable.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean());
+        ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Exception.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean());
         verifyStatic();
         System.exit(10);
     }
@@ -230,7 +230,7 @@ public class UncaughtExceptionHandlerTest {
     }
 
     @Test
-    public void testIOException() throws Exception {
+    public void testIOException() throws java.lang.Exception {
         mExceptionHandler.register();
 
         IOException ioException = new IOException("Fake IO exception");
@@ -245,13 +245,5 @@ public class UncaughtExceptionHandlerTest {
         MobileCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(ioException));
 
         verify(mDefaultExceptionHandler).uncaughtException(thread, exception);
-    }
-
-    @Test
-    public void withWrapperSdkListener() {
-        Crashes.WrapperSdkListener wrapperSdkListener = mock(Crashes.WrapperSdkListener.class);
-        Crashes.getInstance().setWrapperSdkListener(wrapperSdkListener);
-        handleExceptionAndPassOn();
-        verify(wrapperSdkListener).onCrashCaptured(notNull(ManagedErrorLog.class));
     }
 }
