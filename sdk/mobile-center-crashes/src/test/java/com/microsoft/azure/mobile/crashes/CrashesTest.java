@@ -76,7 +76,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
@@ -1061,39 +1060,12 @@ public class CrashesTest {
     }
 
     @Test
-    public void saveWrapperSdkErrorLogJSONException() throws JSONException {
-        mockStatic(MobileCenterLog.class);
-        mockStatic(ErrorLogHelper.class);
-        LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenThrow(new JSONException("mock"));
-        Crashes.getInstance().setLogSerializer(logSerializer);
-        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new com.microsoft.azure.mobile.crashes.ingestion.models.Exception(), new byte[]{'d'});
-        verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), any(JSONException.class));
-    }
-
-    @Test
-    public void saveWrapperSdkErrorLogIOException() throws IOException, JSONException {
-        mockStatic(MobileCenterLog.class);
-        mockStatic(ErrorLogHelper.class);
-        mockStatic(StorageHelper.InternalStorage.class);
-        doThrow(new IOException()).when(StorageHelper.InternalStorage.class);
-        StorageHelper.InternalStorage.write(any(File.class), anyString());
-        LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenReturn("mock");
-        Crashes.getInstance().setLogSerializer(logSerializer);
-        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new com.microsoft.azure.mobile.crashes.ingestion.models.Exception(), new byte[]{'d'});
-        verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), any(IOException.class));
-    }
-
-    @Test
     public void sendMoreThan2ErrorAttachments() throws IOException, ClassNotFoundException, JSONException {
         int MAX_ATTACHMENT_PER_CRASH = 2;
         int numOfAttachments = MAX_ATTACHMENT_PER_CRASH + 1;
 
         ArrayList<ErrorAttachmentLog> errorAttachmentLogs = new ArrayList<>(3);
-        for(int i = 0; i < numOfAttachments; ++i) {
+        for (int i = 0; i < numOfAttachments; ++i) {
             ErrorAttachmentLog log = mock(ErrorAttachmentLog.class);
             when(log.isValid()).thenReturn(true);
             errorAttachmentLogs.add(log);
