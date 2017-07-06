@@ -17,6 +17,7 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -1085,7 +1086,7 @@ public class Distribute extends AbstractMobileCenterService {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                goToSettings(releaseDetails);
+                goToUnknownAppsSettings(releaseDetails);
             }
         });
         mUnknownSourcesDialog = dialogBuilder.create();
@@ -1093,11 +1094,18 @@ public class Distribute extends AbstractMobileCenterService {
     }
 
     /**
-     * Navigate to secure settings.
+     * Navigate to security settings or application settings on Android O.
      *
      * @param releaseDetails release details to check for state change.
      */
-    private synchronized void goToSettings(ReleaseDetails releaseDetails) {
+    private synchronized void goToUnknownAppsSettings(ReleaseDetails releaseDetails) {
+        Intent intent;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+            intent.setData(Uri.parse("package:" + mForegroundActivity.getPackageName()));
+        } else {
+            intent = new Intent(Settings.ACTION_SECURITY_SETTINGS);
+        }
         try {
 
             /*
@@ -1105,7 +1113,7 @@ public class Distribute extends AbstractMobileCenterService {
              * And a no U.I. activity of our own must finish in onCreate,
              * so it cannot receive a result.
              */
-            mForegroundActivity.startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS));
+            mForegroundActivity.startActivity(intent);
         } catch (ActivityNotFoundException e) {
 
             /* On some devices, it's not possible, user will do it by himself. */
