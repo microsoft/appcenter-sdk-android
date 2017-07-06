@@ -13,6 +13,7 @@ import org.json.JSONException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
@@ -44,7 +45,10 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class WrapperSdkExceptionManagerTest {
 
     @Rule
-    public PowerMockRule rule = new PowerMockRule();
+    public final PowerMockRule rule = new PowerMockRule();
+
+    @Rule
+    public final TemporaryFolder errorStorageDirectory = new TemporaryFolder();
 
     @Before
     public void setUp() {
@@ -52,7 +56,7 @@ public class WrapperSdkExceptionManagerTest {
         mockStatic(StorageHelper.InternalStorage.class);
         mockStatic(MobileCenterLog.class);
         mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(new File(""));
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
         ManagedErrorLog errorLogMock = mock(ManagedErrorLog.class);
         when(errorLogMock.getId()).thenReturn(UUID.randomUUID());
         PowerMockito.when(ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Exception.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean()))
