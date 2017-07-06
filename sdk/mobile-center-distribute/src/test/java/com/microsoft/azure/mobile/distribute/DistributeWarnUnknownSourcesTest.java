@@ -14,11 +14,12 @@ import com.microsoft.azure.mobile.http.HttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
+import com.microsoft.azure.mobile.test.TestUtils;
 import com.microsoft.azure.mobile.utils.AsyncTaskUtils;
 
+import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -28,11 +29,7 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
-import org.powermock.reflect.Whitebox;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -128,6 +125,11 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
         /* Second should show. */
         verify(mUnknownSourcesDialog).show();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
     }
 
     @Test
@@ -284,22 +286,10 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         verify(mUnknownSourcesDialog, never()).hide();
     }
 
-    @Rule
-    public PowerMockRule mPowerMockRule = new PowerMockRule();
     @Test
     @PrepareForTest(Build.class)
     @SuppressLint("InlinedApi")
     public void clickSettingsOnAndroidO() throws Exception {
-
-        /* Save original SDK_INT. */
-        final int SDK_INT = Build.VERSION.SDK_INT;
-
-        /* Since Whitebox.setInternalState don't work here, do it manually. */
-        Field field = Whitebox.getField(Build.VERSION.class, "SDK_INT");
-        field.setAccessible(true);
-        Field modifiersField = Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
 
         /* Click settings. */
         Intent intentSecuritySettings = mock(Intent.class);
@@ -310,20 +300,17 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_unknown_sources_dialog_settings), clickListener.capture());
 
         /* Verify behaviour on old version. */
-        field.setInt(null, BuildConfig.MIN_SDK_VERSION);
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", BuildConfig.MIN_SDK_VERSION);
         clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
         verify(mFirstActivity).startActivity(intentSecuritySettings);
         verify(mFirstActivity, never()).startActivity(intentManageUnknownAppSources);
         reset(mFirstActivity);
 
         /* Verify behaviour on Android O. */
-        field.setInt(null, Build.VERSION_CODES.O);
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.O);
         clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
         verify(mFirstActivity, never()).startActivity(intentSecuritySettings);
         verify(mFirstActivity).startActivity(intentManageUnknownAppSources);
-
-        /* Restore SDK_INT. */
-        field.setInt(null, SDK_INT);
     }
 
     @Test
