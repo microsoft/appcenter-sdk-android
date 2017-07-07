@@ -12,6 +12,7 @@ import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -124,8 +125,9 @@ public class SessionTracker implements Channel.Listener {
          * Note that it can also find the current session but that's ok: in that case that means
          * its a log that will be associated to current session but won't trigger expiration logic.
          */
-        if (log.getToffset() > 0) {
-            Map.Entry<Long, UUID> pastSession = mSessions.lowerEntry(log.getToffset());
+        Date timestamp = log.getTimestamp();
+        if (timestamp != null) {
+            Map.Entry<Long, UUID> pastSession = mSessions.lowerEntry(timestamp.getTime());
             if (pastSession != null)
                 log.setSid(pastSession.getValue());
         }

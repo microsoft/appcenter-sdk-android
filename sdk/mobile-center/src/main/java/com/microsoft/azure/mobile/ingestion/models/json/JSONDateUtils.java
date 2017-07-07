@@ -1,0 +1,54 @@
+package com.microsoft.azure.mobile.ingestion.models.json;
+
+import org.json.JSONException;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+
+/**
+ * Utility to convert date to string and vice versa to use in JSON payloads.
+ */
+public final class JSONDateUtils {
+
+    /**
+     * Date formatter.
+     */
+    private static final ThreadLocal<DateFormat> DATE_FORMAT = new ThreadLocal<DateFormat>() {
+
+        @Override
+        protected DateFormat initialValue() {
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            return dateFormat;
+        }
+    };
+
+    /**
+     * Convert date to string.
+     *
+     * @param date date.
+     * @return string.
+     */
+    public static String toString(Date date) {
+        return DATE_FORMAT.get().format(date);
+    }
+
+    /**
+     * Convert string to date.
+     *
+     * @param date date.
+     * @return string.
+     * @throws JSONException if string has a wrong format.
+     */
+    public static Date toDate(String date) throws JSONException {
+        try {
+            return DATE_FORMAT.get().parse(date);
+        } catch (ParseException e) {
+            throw new JSONException(e.getMessage());
+        }
+    }
+}
