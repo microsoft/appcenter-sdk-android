@@ -9,6 +9,7 @@ import com.microsoft.azure.mobile.ingestion.models.json.MockLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -34,6 +35,7 @@ public final class AndroidTestUtils {
         MockLog log = new MockLog();
         log.setDevice(generateMockDevice());
         log.setSid(UUIDUtils.randomUUID());
+        log.setTimestamp(new Date());
         return log;
     }
 

@@ -21,11 +21,23 @@ public final class JSONDateUtils {
 
         @Override
         protected DateFormat initialValue() {
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
             dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
             return dateFormat;
         }
     };
+
+    /**
+     * Check date parameter is null.
+     *
+     * @param date date parameter.
+     * @throws JSONException if parameter is null.
+     */
+    private static void checkNull(Object date) throws JSONException {
+        if (date == null) {
+            throw new JSONException("date cannot be null");
+        }
+    }
 
     /**
      * Convert date to string.
@@ -33,7 +45,8 @@ public final class JSONDateUtils {
      * @param date date.
      * @return string.
      */
-    public static String toString(Date date) {
+    public static String toString(Date date) throws JSONException {
+        checkNull(date);
         return DATE_FORMAT.get().format(date);
     }
 
@@ -42,9 +55,10 @@ public final class JSONDateUtils {
      *
      * @param date date.
      * @return string.
-     * @throws JSONException if string has a wrong format.
+     * @throws JSONException if string has a wrong format or is null.
      */
     public static Date toDate(String date) throws JSONException {
+        checkNull(date);
         try {
             return DATE_FORMAT.get().parse(date);
         } catch (ParseException e) {
