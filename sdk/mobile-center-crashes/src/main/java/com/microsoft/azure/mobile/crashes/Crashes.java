@@ -2,7 +2,6 @@ package com.microsoft.azure.mobile.crashes;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
@@ -449,7 +448,7 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Get initialization timestamp.
      *
-     * @return initialization timestamp expressed using {@link SystemClock#elapsedRealtime()}.
+     * @return initialization timestamp expressed using {@link System#currentTimeMillis()}}.
      */
     @VisibleForTesting
     synchronized long getInitializeTimestamp() {
@@ -480,7 +479,7 @@ public class Crashes extends AbstractMobileCenterService {
 
     private void initialize() {
         boolean enabled = isInstanceEnabled();
-        mInitializeTimestamp = enabled ? SystemClock.elapsedRealtime() : -1;
+        mInitializeTimestamp = enabled ? System.currentTimeMillis() : -1;
         if (!enabled) {
             if (mUncaughtExceptionHandler != null) {
                 mUncaughtExceptionHandler.unregister();

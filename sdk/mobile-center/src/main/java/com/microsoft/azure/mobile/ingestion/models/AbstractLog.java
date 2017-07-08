@@ -33,22 +33,9 @@ public abstract class AbstractLog implements Log {
     static final String DEVICE = "device";
 
     /**
-     * toffset property.
-     */
-    private static final String TOFFSET = "toffset";
-
-    /**
      * timestamp property.
      */
     private static final String TIMESTAMP = "timestamp";
-
-    /**
-     * Deprecated, use timestamp.
-     * <p>
-     * Corresponds to the number of milliseconds elapsed between the time the
-     * request is sent and the time the log is emitted.
-     */
-    private Long toffset;
 
     /**
      * Log timestamp.
@@ -64,24 +51,6 @@ public abstract class AbstractLog implements Log {
      * Device characteristics associated to this log.
      */
     private Device device;
-
-    /**
-     * Get the toffset value.
-     *
-     * @return the toffset value
-     */
-    public Long getToffset() {
-        return this.toffset;
-    }
-
-    /**
-     * Set the toffset value.
-     *
-     * @param toffset the toffset value to set
-     */
-    public void setToffset(Long toffset) {
-        this.toffset = toffset;
-    }
 
     @Override
     public Date getTimestamp() {
@@ -132,7 +101,6 @@ public abstract class AbstractLog implements Log {
     @Override
     public void write(JSONStringer writer) throws JSONException {
         JSONUtils.write(writer, TYPE, getType());
-        JSONUtils.write(writer, TOFFSET, getToffset());
         writer.key(TIMESTAMP).value(JSONDateUtils.toString(getTimestamp()));
         JSONUtils.write(writer, SID, getSid());
         if (getDevice() != null) {
@@ -146,11 +114,7 @@ public abstract class AbstractLog implements Log {
     public void read(JSONObject object) throws JSONException {
         if (!object.getString(TYPE).equals(getType()))
             throw new JSONException("Invalid type");
-        if (object.has(TIMESTAMP)) {
-            setTimestamp(JSONDateUtils.toDate(object.getString(TIMESTAMP)));
-        } else {
-            setTimestamp(new Date(object.getLong(TOFFSET)));
-        }
+        setTimestamp(JSONDateUtils.toDate(object.getString(TIMESTAMP)));
         if (object.has(SID)) {
             setSid(UUID.fromString(object.getString(SID)));
         }
@@ -169,7 +133,6 @@ public abstract class AbstractLog implements Log {
 
         AbstractLog that = (AbstractLog) o;
 
-        if (toffset != null ? !toffset.equals(that.toffset) : that.toffset != null) return false;
         if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null)
             return false;
         if (sid != null ? !sid.equals(that.sid) : that.sid != null) return false;
@@ -178,8 +141,7 @@ public abstract class AbstractLog implements Log {
 
     @Override
     public int hashCode() {
-        int result = toffset != null ? toffset.hashCode() : 0;
-        result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
+        int result = timestamp != null ? timestamp.hashCode() : 0;
         result = 31 * result + (sid != null ? sid.hashCode() : 0);
         result = 31 * result + (device != null ? device.hashCode() : 0);
         return result;

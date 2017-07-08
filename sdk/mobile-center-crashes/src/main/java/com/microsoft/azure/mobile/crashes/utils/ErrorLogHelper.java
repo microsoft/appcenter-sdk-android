@@ -5,7 +5,6 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Build;
 import android.os.Process;
-import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
@@ -80,8 +79,8 @@ public class ErrorLogHelper {
         ManagedErrorLog errorLog = new ManagedErrorLog();
         errorLog.setId(UUIDUtils.randomUUID());
 
-        /* Set absolute current time. Will be correlated to session and converted to relative later. */
-        errorLog.setToffset(System.currentTimeMillis());
+        /* Set current time. Will be correlated to session after restart. */
+        errorLog.setTimestamp(new Date());
 
         /* Snapshot device properties. */
         try {
@@ -111,8 +110,8 @@ public class ErrorLogHelper {
         /* Uncaught exception or managed exception. */
         errorLog.setFatal(fatal);
 
-        /* Relative application launch time to error time. */
-        errorLog.setAppLaunchTOffset(SystemClock.elapsedRealtime() - initializeTimestamp);
+        /* Application launch time. */
+        errorLog.setAppLaunchTimestamp(new Date(initializeTimestamp));
 
         /* Attach exceptions. */
         errorLog.setException(exception);
@@ -203,8 +202,8 @@ public class ErrorLogHelper {
         report.setId(log.getId().toString());
         report.setThreadName(log.getErrorThreadName());
         report.setThrowable(throwable);
-        report.setAppStartTime(new Date(log.getToffset() - log.getAppLaunchTOffset()));
-        report.setAppErrorTime(new Date(log.getToffset()));
+        report.setAppStartTime(log.getAppLaunchTimestamp());
+        report.setAppErrorTime(log.getTimestamp());
         report.setDevice(log.getDevice());
         return report;
     }
