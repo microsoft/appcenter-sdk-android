@@ -21,6 +21,12 @@ import static com.microsoft.azure.mobile.ingestion.models.CommonProperties.TYPE;
 public abstract class AbstractLog implements Log {
 
     /**
+     * timestamp property.
+     */
+    @VisibleForTesting
+    static final String TIMESTAMP = "timestamp";
+
+    /**
      * Session identifier property.
      */
     @VisibleForTesting
@@ -31,11 +37,6 @@ public abstract class AbstractLog implements Log {
      */
     @VisibleForTesting
     static final String DEVICE = "device";
-
-    /**
-     * timestamp property.
-     */
-    private static final String TIMESTAMP = "timestamp";
 
     /**
      * Log timestamp.

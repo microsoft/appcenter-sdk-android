@@ -61,18 +61,11 @@ public class IngestionHttpTest {
         /* Build some payload. */
         LogContainer container = new LogContainer();
         Log log = mock(Log.class);
-        long logAbsoluteTime = 123L;
-        when(log.getToffset()).thenReturn(logAbsoluteTime);
         List<Log> logs = new ArrayList<>();
         logs.add(log);
         container.setLogs(logs);
         LogSerializer serializer = mock(LogSerializer.class);
         when(serializer.serializeContainer(any(LogContainer.class))).thenReturn("mockPayload");
-
-        /* Stable time. */
-        mockStatic(System.class);
-        long now = 456L;
-        when(System.currentTimeMillis()).thenReturn(now);
 
         /* Configure mock HTTP. */
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
@@ -104,10 +97,6 @@ public class IngestionHttpTest {
         assertNotNull(callTemplate.get());
         assertEquals("mockPayload", callTemplate.get().buildRequestBody());
 
-        /* Verify toffset manipulation. */
-        verify(log).setToffset(now - logAbsoluteTime);
-        verify(log).setToffset(logAbsoluteTime);
-
         /* Verify close. */
         ingestionHttp.close();
         verify(httpClient).close();
@@ -119,19 +108,12 @@ public class IngestionHttpTest {
         /* Build some payload. */
         LogContainer container = new LogContainer();
         Log log = mock(Log.class);
-        long logAbsoluteTime = 123L;
-        when(log.getToffset()).thenReturn(logAbsoluteTime);
         List<Log> logs = new ArrayList<>();
         logs.add(log);
         container.setLogs(logs);
         LogSerializer serializer = mock(LogSerializer.class);
         JSONException exception = new JSONException("mock");
         when(serializer.serializeContainer(any(LogContainer.class))).thenThrow(exception);
-
-        /* Stable time. */
-        mockStatic(System.class);
-        long now = 456L;
-        when(System.currentTimeMillis()).thenReturn(now);
 
         /* Configure mock HTTP. */
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
@@ -167,10 +149,6 @@ public class IngestionHttpTest {
             Assert.fail("Expected json exception");
         } catch (JSONException ignored) {
         }
-
-        /* Verify toffset manipulation. */
-        verify(log).setToffset(now - logAbsoluteTime);
-        verify(log).setToffset(logAbsoluteTime);
 
         /* Verify close. */
         ingestionHttp.close();

@@ -15,10 +15,10 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.Date;
 import java.util.UUID;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -46,7 +46,7 @@ public class ChannelLogDecorateTest {
             Log log = mock(Log.class);
             channel.enqueue(log, "");
             verify(log).setDevice(device);
-            verify(log).setToffset(anyLong());
+            verify(log).setTimestamp(any(Date.class));
         }
 
         /* Check cache was used, meaning only 1 call to generate a device. */
@@ -56,10 +56,10 @@ public class ChannelLogDecorateTest {
         /* Test a log that is already decorated. */
         Log log2 = mock(Log.class);
         when(log2.getDevice()).thenReturn(device);
-        when(log2.getToffset()).thenReturn(123L);
+        when(log2.getTimestamp()).thenReturn(new Date(123L));
         channel.enqueue(log2, "");
         verify(log2, never()).setDevice(any(Device.class));
-        verify(log2, never()).setToffset(anyLong());
+        verify(log2, never()).setTimestamp(any(Date.class));
 
         /* Simulate update to wrapper SDK. */
         Device device2 = mock(Device.class);
@@ -71,7 +71,7 @@ public class ChannelLogDecorateTest {
             Log log3 = mock(Log.class);
             channel.enqueue(log3, "");
             verify(log3).setDevice(device2);
-            verify(log3).setToffset(anyLong());
+            verify(log3).setTimestamp(any(Date.class));
         }
 
         /* Check only 1 device has been generated after cache invalidate. */

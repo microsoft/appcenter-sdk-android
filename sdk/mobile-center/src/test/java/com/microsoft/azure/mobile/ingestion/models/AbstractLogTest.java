@@ -7,6 +7,7 @@ import org.json.JSONObject;
 import org.json.JSONStringer;
 import org.junit.Test;
 
+import java.util.Date;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.test.TestUtils.checkEquals;
@@ -33,7 +34,7 @@ public class AbstractLogTest {
         TestUtils.compareSelfNullClass(new MockLog());
         MockLogWithProperties mockLogWithProperties = new MockLogWithProperties();
         TestUtils.compareSelfNullClass(mockLogWithProperties);
-        mockLogWithProperties.setToffset(1L);
+        mockLogWithProperties.setTimestamp(new Date(1L));
         checkNotEquals(mockLogWithProperties, new MockLogWithProperties());
     }
 
@@ -45,10 +46,10 @@ public class AbstractLogTest {
         AbstractLog b = new MockLog();
         checkEquals(a, b);
 
-        /* Toffset. */
-        a.setToffset(1);
+        /* Timestamp. */
+        a.setTimestamp(new Date(1));
         checkNotEquals(a, b);
-        b.setToffset(1);
+        b.setTimestamp(new Date(1));
         checkEquals(a, b);
 
         /* Sid. */
@@ -89,6 +90,7 @@ public class AbstractLogTest {
 
         JSONObject mockJsonObject = mock(JSONObject.class);
         when(mockJsonObject.getString(CommonProperties.TYPE)).thenReturn(mockLog.getType());
+        when(mockJsonObject.getString(AbstractLog.TIMESTAMP)).thenReturn("2017-07-08T01:17:43.245Z");
         when(mockJsonObject.has(AbstractLog.SID)).thenReturn(false).thenReturn(true);
         when(mockJsonObject.has(AbstractLog.DEVICE)).thenReturn(false).thenReturn(true);
         when(mockJsonObject.getString(AbstractLog.SID)).thenReturn(uuid.toString());
@@ -110,6 +112,7 @@ public class AbstractLogTest {
         when(mockJsonStringer.value(anyString())).thenReturn(mockJsonStringer);
 
         AbstractLog mockLog = new MockLog();
+        mockLog.setTimestamp(new Date());
         mockLog.write(mockJsonStringer);
 
         verify(mockJsonStringer, never()).key(AbstractLog.DEVICE);
