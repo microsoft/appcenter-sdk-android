@@ -106,7 +106,7 @@ public class LogSerializerAndroidTest {
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         serializer.deserializeLog("{" +
                 "\"type\": \"custom_properties\"," +
-                "\"timestamp\": \"2017-07-08T00:32:58Z\"" +
+                "\"timestamp\": \"2017-07-08T00:32:58.123Z\"" +
                 "}");
     }
 
@@ -116,7 +116,7 @@ public class LogSerializerAndroidTest {
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         serializer.deserializeLog("{" +
                 "\"type\": \"custom_properties\"," +
-                "\"timestamp\": \"2017-07-08T00:32:58Z\"," +
+                "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
                 "\"properties\":[{\"name\":\"test\",\"type\":\"unknown\",\"value\":42}]" +
                 "}");
     }
@@ -127,7 +127,7 @@ public class LogSerializerAndroidTest {
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         serializer.deserializeLog("{" +
                 "\"type\": \"custom_properties\"," +
-                "\"timestamp\": \"2017-07-08T00:32:58Z\"," +
+                "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
                 "\"properties\":[{\"name\":\"test\",\"type\":\"date_time\",\"value\":\"today\"}]" +
                 "}");
     }
@@ -138,7 +138,7 @@ public class LogSerializerAndroidTest {
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         serializer.deserializeLog("{" +
                 "\"type\": \"custom_properties\"," +
-                "\"timestamp\": \"2017-07-08T00:32:58Z\"," +
+                "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
                 "\"properties\":[{\"name\":\"test\",\"type\":\"number\",\"value\":false}]" +
                 "}");
     }
