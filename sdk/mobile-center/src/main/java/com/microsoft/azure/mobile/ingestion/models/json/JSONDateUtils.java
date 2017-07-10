@@ -11,6 +11,8 @@ import java.util.TimeZone;
 
 /**
  * Utility to convert date to string and vice versa to use in JSON payloads.
+ * The date format is using ISO 8601 and includes date and time to milliseconds accuracy.
+ * It also always uses UTC timezone.
  */
 public final class JSONDateUtils {
 
