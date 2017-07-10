@@ -14,17 +14,18 @@ import com.microsoft.azure.mobile.crashes.ingestion.models.Thread;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.model.TestCrashException;
 import com.microsoft.azure.mobile.ingestion.models.Device;
+import com.microsoft.azure.mobile.test.TestUtils;
 import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -45,14 +46,23 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, File.class, Date.class, ErrorLogHelper.class})
+@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class})
 public class ErrorLogHelperTest {
+
+    @Rule
+    public PowerMockRule mRule = new PowerMockRule();
 
     @Before
     public void setUp() {
         mockStatic(DeviceInfoHelper.class);
         mockStatic(Process.class);
+    }
+
+    @After
+    public void tearDown() throws java.lang.Exception {
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
+        TestUtils.setInternalState(Build.class, "SUPPORTED_ABIS", null);
+        TestUtils.setInternalState(Build.class, "CPU_ABI", null);
     }
 
     @Test
@@ -87,8 +97,8 @@ public class ErrorLogHelperTest {
         when(activityManager.getRunningAppProcesses()).thenReturn(Arrays.asList(mock(RunningAppProcessInfo.class), runningAppProcessInfo));
 
         /* Mock architecture. */
-        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", 23);
-        Whitebox.setInternalState(Build.class, "SUPPORTED_ABIS", new String[]{"armeabi-v7a", "arm"});
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 23);
+        TestUtils.setInternalState(Build.class, "SUPPORTED_ABIS", new String[]{"armeabi-v7a", "arm"});
 
         /* Test. */
         long launchTimeStamp = 2000;
@@ -177,8 +187,8 @@ public class ErrorLogHelperTest {
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new PackageManager.NameNotFoundException()));
 
         /* Mock architecture. */
-        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", 15);
-        Whitebox.setInternalState(Build.class, "CPU_ABI", "armeabi-v7a");
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 15);
+        TestUtils.setInternalState(Build.class, "CPU_ABI", "armeabi-v7a");
 
         /* Test. */
         long launchTimeStamp = 2000;
@@ -199,7 +209,7 @@ public class ErrorLogHelperTest {
     }
 
     @Test
-    public void getErrorReportFromErrorLog() throws DeviceInfoHelper.DeviceInfoException {
+    public void getErrorReportFromErrorLog() throws java.lang.Exception {
 
         /* Mock base. */
         Context mockContext = mock(Context.class);
@@ -218,8 +228,8 @@ public class ErrorLogHelperTest {
         when(activityManager.getRunningAppProcesses()).thenReturn(Arrays.asList(mock(RunningAppProcessInfo.class), runningAppProcessInfo));
 
         /* Mock architecture. */
-        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", 23);
-        Whitebox.setInternalState(Build.class, "SUPPORTED_ABIS", new String[]{"armeabi-v7a", "arm"});
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 23);
+        TestUtils.setInternalState(Build.class, "SUPPORTED_ABIS", new String[]{"armeabi-v7a", "arm"});
 
         /* Create an error log. */
         ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new TestCrashException()), java.lang.Thread.getAllStackTraces(), 900, true);
