@@ -909,15 +909,15 @@ public class CrashesTest {
 
     @Test
     public void crashInLastSession() throws JSONException, IOException, ClassNotFoundException {
-        final int tOffset = 10;
-        final long appLaunchTOffset = 100L;
 
         final ManagedErrorLog errorLog = new ManagedErrorLog();
         errorLog.setId(UUIDUtils.randomUUID());
         errorLog.setErrorThreadName(Thread.currentThread().getName());
-        errorLog.setTimestamp(new Date(tOffset));
+        Date logTimestamp = new Date(10);
+        errorLog.setTimestamp(logTimestamp);
 
-        errorLog.setAppLaunchTimestamp(new Date(appLaunchTOffset));
+        Date appLaunchTimestamp = new Date(100L);
+        errorLog.setAppLaunchTimestamp(appLaunchTimestamp);
         errorLog.setDevice(mock(Device.class));
 
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -971,8 +971,8 @@ public class CrashesTest {
         assertNotNull(result);
         assertEquals(errorLog.getId().toString(), result.getId());
         assertEquals(errorLog.getErrorThreadName(), result.getThreadName());
-        assertEquals(new Date(appLaunchTOffset), result.getAppStartTime());
-        assertEquals(new Date(tOffset), result.getAppErrorTime());
+        assertEquals(appLaunchTimestamp, result.getAppStartTime());
+        assertEquals(logTimestamp, result.getAppErrorTime());
         assertNotNull(result.getDevice());
         assertEquals(throwable, result.getThrowable());
     }

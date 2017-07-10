@@ -12,10 +12,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.ingestion.models.Device;
-import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
-import com.microsoft.azure.mobile.utils.NetworkStateHelper;
-import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.sasquatch.R;
+import com.microsoft.azure.mobile.utils.DeviceInfoHelper;
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.NetworkStateHelper;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ public class DeviceInfoActivity extends AppCompatActivity implements NetworkStat
      */
     private static final String TAG = "DeviceInfoActivity";
 
-    private static final String[] METHOD_BLACK_LIST = {"getClass", "getToffset", "getType"};
+    private static final String[] METHOD_BLACK_LIST = {"getClass"};
 
     private NetworkStateHelper mNetworkStateHelper;
 
