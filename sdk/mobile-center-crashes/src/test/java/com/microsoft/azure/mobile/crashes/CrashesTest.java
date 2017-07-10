@@ -105,8 +105,8 @@ public class CrashesTest {
         assertEquals(errorLog.getId().toString(), report.getId());
         assertEquals(errorLog.getErrorThreadName(), report.getThreadName());
         assertEquals(CrashesTest.EXCEPTION, report.getThrowable());
-        assertEquals(errorLog.getToffset() - errorLog.getAppLaunchTOffset(), report.getAppStartTime().getTime());
-        assertEquals(errorLog.getToffset(), report.getAppErrorTime().getTime());
+        assertEquals(errorLog.getAppLaunchTimestamp(), report.getAppStartTime());
+        assertEquals(errorLog.getTimestamp(), report.getAppErrorTime());
         assertEquals(errorLog.getDevice(), report.getDevice());
     }
 
@@ -915,9 +915,9 @@ public class CrashesTest {
         final ManagedErrorLog errorLog = new ManagedErrorLog();
         errorLog.setId(UUIDUtils.randomUUID());
         errorLog.setErrorThreadName(Thread.currentThread().getName());
-        errorLog.setToffset(tOffset);
+        errorLog.setTimestamp(new Date(tOffset));
 
-        errorLog.setAppLaunchTOffset(appLaunchTOffset);
+        errorLog.setAppLaunchTimestamp(new Date(appLaunchTOffset));
         errorLog.setDevice(mock(Device.class));
 
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -971,7 +971,7 @@ public class CrashesTest {
         assertNotNull(result);
         assertEquals(errorLog.getId().toString(), result.getId());
         assertEquals(errorLog.getErrorThreadName(), result.getThreadName());
-        assertEquals(new Date(tOffset - appLaunchTOffset), result.getAppStartTime());
+        assertEquals(new Date(appLaunchTOffset), result.getAppStartTime());
         assertEquals(new Date(tOffset), result.getAppErrorTime());
         assertNotNull(result.getDevice());
         assertEquals(throwable, result.getThrowable());

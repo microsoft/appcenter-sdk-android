@@ -14,6 +14,7 @@ import org.json.JSONException;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +27,7 @@ public class PushSerializerTest {
         List<Log> logs = new ArrayList<>();
         {
             PushInstallationLog log = new PushInstallationLog();
+            log.setTimestamp(new Date());
             log.setPushToken("TEST");
             logs.add(log);
         }

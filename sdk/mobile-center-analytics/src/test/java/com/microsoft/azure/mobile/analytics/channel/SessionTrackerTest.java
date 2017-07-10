@@ -20,6 +20,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -195,7 +196,7 @@ public class SessionTrackerTest {
         /* Background for a long time but correlating a log to first session: should not trigger new session. */
         {
             Log log = newEvent();
-            log.setToffset(firstSessionTime + 20);
+            log.setTimestamp(new Date(firstSessionTime + 20));
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
             mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(firstSid, log.getSid());
@@ -452,7 +453,7 @@ public class SessionTrackerTest {
         /* Past log: correlation will fail and use current session. */
         {
             Log log = newEvent();
-            log.setToffset(123L);
+            log.setTimestamp(new Date(123L));
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
             assertEquals(currentSid, log.getSid());
         }
@@ -461,7 +462,7 @@ public class SessionTrackerTest {
         {
             spendTime(30000);
             Log log = newEvent();
-            log.setToffset(firstSessionTime + 1);
+            log.setTimestamp(new Date(firstSessionTime + 1));
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
             assertEquals(currentSid, log.getSid());
             Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
@@ -483,7 +484,7 @@ public class SessionTrackerTest {
         {
             spendTime(30000);
             Log log = newEvent();
-            log.setToffset(firstSessionTime + 1);
+            log.setTimestamp(new Date(firstSessionTime + 1));
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
             assertEquals(firstSid, log.getSid());
             Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
@@ -495,7 +496,7 @@ public class SessionTrackerTest {
         mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);
         {
             Log log = newEvent();
-            log.setToffset(firstSessionTime + 1);
+            log.setTimestamp(new Date(firstSessionTime + 1));
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
             assertEquals(firstSid, log.getSid());
             Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
@@ -506,7 +507,7 @@ public class SessionTrackerTest {
         /* Failed correlation without an active session will start a new session. */
         {
             Log log = newEvent();
-            log.setToffset(1);
+            log.setTimestamp(new Date(1));
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
             assertNotNull(log.getSid());
             Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");

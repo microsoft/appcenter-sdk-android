@@ -12,6 +12,7 @@ import org.json.JSONStringer;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Date;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog.CHARSET;
@@ -143,7 +144,7 @@ public class ErrorModelTest {
     public void abstractErrorLog() {
         MockErrorLog mockErrorLog = new MockErrorLog();
         compareSelfNullClass(mockErrorLog);
-        mockErrorLog.setToffset(1L);
+        mockErrorLog.setTimestamp(new Date(1L));
         checkNotEquals(mockErrorLog, new MockErrorLog());
     }
 
@@ -153,8 +154,11 @@ public class ErrorModelTest {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
 
+        Date timestamp = new Date();
         ManagedErrorLog errorLog1 = new ManagedErrorLog();
+        errorLog1.setTimestamp(timestamp);
         ManagedErrorLog errorLog2 = new ManagedErrorLog();
+        errorLog2.setTimestamp(timestamp);
 
         compareSelfNullClass(errorLog1);
         checkEquals(errorLog1, errorLog2);
@@ -162,7 +166,6 @@ public class ErrorModelTest {
         {
             errorLog1.setId(UUID.randomUUID());
             checkNotEquals(errorLog1, errorLog2);
-            checkSerialization(errorLog1, serializer);
 
             errorLog2.setId(UUID.randomUUID());
             checkNotEquals(errorLog1, errorLog2);
@@ -173,7 +176,6 @@ public class ErrorModelTest {
         {
             errorLog1.setProcessId(1);
             checkNotEquals(errorLog1, errorLog2);
-            checkSerialization(errorLog1, serializer);
 
             errorLog2.setProcessId(2);
             checkNotEquals(errorLog1, errorLog2);
@@ -184,7 +186,6 @@ public class ErrorModelTest {
         {
             errorLog1.setProcessName("1");
             checkNotEquals(errorLog1, errorLog2);
-            checkSerialization(errorLog1, serializer);
 
             errorLog2.setProcessName("2");
             checkNotEquals(errorLog1, errorLog2);
@@ -195,7 +196,6 @@ public class ErrorModelTest {
         {
             errorLog1.setParentProcessId(1);
             checkNotEquals(errorLog1, errorLog2);
-            checkSerialization(errorLog1, serializer);
 
             errorLog2.setParentProcessId(2);
             checkNotEquals(errorLog1, errorLog2);
@@ -206,7 +206,6 @@ public class ErrorModelTest {
         {
             errorLog1.setParentProcessName("1");
             checkNotEquals(errorLog1, errorLog2);
-            checkSerialization(errorLog1, serializer);
 
             errorLog2.setParentProcessName("2");
             checkNotEquals(errorLog1, errorLog2);
@@ -217,7 +216,6 @@ public class ErrorModelTest {
         {
             errorLog1.setErrorThreadId(1L);
             checkNotEquals(errorLog1, errorLog2);
-            checkSerialization(errorLog1, serializer);
 
             errorLog2.setErrorThreadId(2L);
             checkNotEquals(errorLog1, errorLog2);
@@ -228,7 +226,6 @@ public class ErrorModelTest {
         {
             errorLog1.setErrorThreadName("1");
             checkNotEquals(errorLog1, errorLog2);
-            checkSerialization(errorLog1, serializer);
 
             errorLog2.setErrorThreadName("2");
             checkNotEquals(errorLog1, errorLog2);
@@ -239,7 +236,6 @@ public class ErrorModelTest {
         {
             errorLog1.setFatal(true);
             checkNotEquals(errorLog1, errorLog2);
-            checkSerialization(errorLog1, serializer);
 
             errorLog2.setFatal(false);
             checkNotEquals(errorLog1, errorLog2);
@@ -248,14 +244,14 @@ public class ErrorModelTest {
             checkEquals(errorLog1, errorLog2);
         }
         {
-            errorLog1.setAppLaunchTOffset(1L);
+            errorLog1.setAppLaunchTimestamp(new Date(1L));
             checkNotEquals(errorLog1, errorLog2);
             checkSerialization(errorLog1, serializer);
 
-            errorLog2.setAppLaunchTOffset(2L);
+            errorLog2.setAppLaunchTimestamp(new Date(2L));
             checkNotEquals(errorLog1, errorLog2);
 
-            errorLog2.setAppLaunchTOffset(errorLog1.getAppLaunchTOffset());
+            errorLog2.setAppLaunchTimestamp(errorLog1.getAppLaunchTimestamp());
             checkEquals(errorLog1, errorLog2);
         }
         {
@@ -469,8 +465,11 @@ public class ErrorModelTest {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(ErrorAttachmentLog.TYPE, ErrorAttachmentLogFactory.getInstance());
 
+        Date timestamp = new Date();
         ErrorAttachmentLog attachmentLog1 = new ErrorAttachmentLog();
+        attachmentLog1.setTimestamp(timestamp);
         ErrorAttachmentLog attachmentLog2 = new ErrorAttachmentLog();
+        attachmentLog2.setTimestamp(timestamp);
 
         compareSelfNullClass(attachmentLog1);
         checkEquals(attachmentLog1, attachmentLog2);
@@ -550,6 +549,7 @@ public class ErrorModelTest {
     @Test
     public void deserializeInvalidBase64forErrorAttachment() throws JSONException {
         ErrorAttachmentLog log = new ErrorAttachmentLog();
+        log.setTimestamp(new Date());
         log.setId(UUID.randomUUID());
         log.setErrorId(UUID.randomUUID());
         log.setData(new byte[0]);

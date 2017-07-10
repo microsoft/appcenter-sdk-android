@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Process;
-import android.os.SystemClock;
 
 import com.microsoft.azure.mobile.crashes.ingestion.models.Exception;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
@@ -21,6 +20,8 @@ import com.microsoft.azure.mobile.utils.UUIDUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
@@ -29,6 +30,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,32 +38,41 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({DeviceInfoHelper.class, Process.class, SystemClock.class, Build.class, File.class})
+@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, File.class, Date.class, ErrorLogHelper.class})
 public class ErrorLogHelperTest {
 
     @Before
     public void setUp() {
         mockStatic(DeviceInfoHelper.class);
         mockStatic(Process.class);
-        mockStatic(SystemClock.class);
     }
 
     @Test
-    public void createErrorLog() throws DeviceInfoHelper.DeviceInfoException {
+    public void createErrorLog() throws java.lang.Exception {
 
         /* Dummy coverage of utils class. */
         new ErrorLogHelper();
 
         /* Mock base. */
         Context mockContext = mock(Context.class);
-        when(SystemClock.elapsedRealtime()).thenReturn(1000L);
         when(Process.myPid()).thenReturn(123);
+        Date logTimestamp = new Date(1000L);
+        whenNew(Date.class).withNoArguments().thenReturn(logTimestamp);
+        whenNew(Date.class).withArguments(anyLong()).thenAnswer(new Answer<Date>() {
+
+            @Override
+            public Date answer(InvocationOnMock invocation) throws Throwable {
+                return new Date((Long) invocation.getArguments()[0]);
+            }
+        });
 
         /* Mock device. */
         Device mockDevice = mock(Device.class);
@@ -80,10 +91,11 @@ public class ErrorLogHelperTest {
         Whitebox.setInternalState(Build.class, "SUPPORTED_ABIS", new String[]{"armeabi-v7a", "arm"});
 
         /* Test. */
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new IOException(new TestCrashException())), java.lang.Thread.getAllStackTraces(), 900, true);
+        long launchTimeStamp = 2000;
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new IOException(new TestCrashException())), java.lang.Thread.getAllStackTraces(), launchTimeStamp, true);
         assertNotNull(errorLog);
         assertNotNull(errorLog.getId());
-        assertTrue(System.currentTimeMillis() - errorLog.getToffset() <= 1000);
+        assertEquals(logTimestamp, errorLog.getTimestamp());
         assertEquals(mockDevice, errorLog.getDevice());
         assertEquals(Integer.valueOf(123), errorLog.getProcessId());
         assertEquals("right.process", errorLog.getProcessName());
@@ -93,7 +105,7 @@ public class ErrorLogHelperTest {
         assertEquals((Long) java.lang.Thread.currentThread().getId(), errorLog.getErrorThreadId());
         assertEquals(java.lang.Thread.currentThread().getName(), errorLog.getErrorThreadName());
         assertEquals(Boolean.TRUE, errorLog.getFatal());
-        assertEquals(Long.valueOf(100), errorLog.getAppLaunchTOffset());
+        assertEquals(launchTimeStamp, errorLog.getAppLaunchTimestamp().getTime());
 
         /* Check first exception. */
         Exception topException = errorLog.getException();
@@ -146,12 +158,20 @@ public class ErrorLogHelperTest {
     }
 
     @Test
-    public void createErrorLogFailOver() throws DeviceInfoHelper.DeviceInfoException {
+    public void createErrorLogFailOver() throws java.lang.Exception {
 
         /* Mock base. */
         Context mockContext = mock(Context.class);
-        when(SystemClock.elapsedRealtime()).thenReturn(1000L);
         when(Process.myPid()).thenReturn(123);
+        Date logTimestamp = new Date(1000L);
+        whenNew(Date.class).withNoArguments().thenReturn(logTimestamp);
+        whenNew(Date.class).withArguments(anyLong()).thenAnswer(new Answer<Date>() {
+
+            @Override
+            public Date answer(InvocationOnMock invocation) throws Throwable {
+                return new Date((Long) invocation.getArguments()[0]);
+            }
+        });
 
         /* Mock device. */
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new PackageManager.NameNotFoundException()));
@@ -161,10 +181,11 @@ public class ErrorLogHelperTest {
         Whitebox.setInternalState(Build.class, "CPU_ABI", "armeabi-v7a");
 
         /* Test. */
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new java.lang.Exception(), java.lang.Thread.getAllStackTraces(), 900, true);
+        long launchTimeStamp = 2000;
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new java.lang.Exception(), java.lang.Thread.getAllStackTraces(), launchTimeStamp, true);
         assertNotNull(errorLog);
         assertNotNull(errorLog.getId());
-        assertTrue(System.currentTimeMillis() - errorLog.getToffset() <= 1000);
+        assertEquals(logTimestamp, errorLog.getTimestamp());
         assertNull(errorLog.getDevice());
         assertEquals(Integer.valueOf(123), errorLog.getProcessId());
         assertNull(errorLog.getProcessName());
@@ -174,7 +195,7 @@ public class ErrorLogHelperTest {
         assertEquals((Long) java.lang.Thread.currentThread().getId(), errorLog.getErrorThreadId());
         assertEquals(java.lang.Thread.currentThread().getName(), errorLog.getErrorThreadName());
         assertEquals(Boolean.TRUE, errorLog.getFatal());
-        assertEquals(Long.valueOf(100), errorLog.getAppLaunchTOffset());
+        assertEquals(launchTimeStamp, errorLog.getAppLaunchTimestamp().getTime());
     }
 
     @Test
@@ -182,7 +203,6 @@ public class ErrorLogHelperTest {
 
         /* Mock base. */
         Context mockContext = mock(Context.class);
-        when(SystemClock.elapsedRealtime()).thenReturn(1000L);
         when(Process.myPid()).thenReturn(123);
 
         /* Mock device. */
@@ -212,8 +232,8 @@ public class ErrorLogHelperTest {
         assertEquals(errorLog.getId().toString(), report.getId());
         assertEquals(errorLog.getErrorThreadName(), report.getThreadName());
         assertEquals(throwable, report.getThrowable());
-        assertEquals(errorLog.getToffset() - errorLog.getAppLaunchTOffset(), report.getAppStartTime().getTime());
-        assertEquals(errorLog.getToffset(), report.getAppErrorTime().getTime());
+        assertEquals(errorLog.getAppLaunchTimestamp(), report.getAppStartTime());
+        assertEquals(errorLog.getTimestamp(), report.getAppErrorTime());
         assertEquals(errorLog.getDevice(), report.getDevice());
     }
 
