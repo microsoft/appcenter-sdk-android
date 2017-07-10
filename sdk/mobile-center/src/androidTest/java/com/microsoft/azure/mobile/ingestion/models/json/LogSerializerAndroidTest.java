@@ -155,6 +155,7 @@ public class LogSerializerAndroidTest {
     public void serializeWithInvalidType() throws JSONException {
         LogSerializer serializer = new DefaultLogSerializer();
         CustomPropertiesLog invalidTypeLog = new CustomPropertiesLog();
+        invalidTypeLog.setTimestamp(new Date());
         Map<String, Object> invalidTypeProperties = new HashMap<>();
         invalidTypeProperties.put("nested", new HashMap<String, Object>());
         invalidTypeLog.setProperties(invalidTypeProperties);
