@@ -9,7 +9,7 @@ import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 /**
  * Interface for the crashes listener.
  */
-@SuppressWarnings({"WeakerAccess", "UnusedReturnValue", "SameReturnValue", "UnusedParameters"})
+@SuppressWarnings({"WeakerAccess", "UnusedReturnValue", "SameReturnValue", "UnusedParameters", "EmptyMethod"})
 public interface CrashesListener {
 
     /**
@@ -35,9 +35,8 @@ public interface CrashesListener {
      * Attachments are optional so this method can also return <code>null</code>.
      *
      * @param report The crash report for additional information.
-     * @return {@link Iterable<ErrorAttachmentLog>} instances of ErrorAttachmentLog to be sent as separate logs.
+     * @return instances of {@link ErrorAttachmentLog} to be sent for the specified error report.
      */
-
     @WorkerThread
     Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report);
 

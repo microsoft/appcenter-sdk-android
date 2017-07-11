@@ -10,13 +10,11 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.support.test.espresso.idling.CountingIdlingResource;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
@@ -24,7 +22,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
-import com.microsoft.azure.mobile.ResultCallback;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
 import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
@@ -103,17 +100,8 @@ public class MainActivity extends AppCompatActivity {
         /* Start Mobile center. */
         MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
 
-        /* Print last crash. */
-        Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + Crashes.hasCrashedInLastSession());
-        Crashes.getLastSessionCrashReport(new ResultCallback<ErrorReport>() {
-
-            @Override
-            public void onResult(@Nullable ErrorReport data) {
-                if (data != null) {
-                    Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", data.getThrowable());
-                }
-            }
-        });
+        /* Use some mobile center getters. */
+        GetHelper.testInstallIdAndLastSessionCrash();
 
         /* Populate UI. */
         ((TextView) findViewById(R.id.package_name)).setText(String.format(getString(R.string.sdk_source_format), getPackageName().substring(getPackageName().lastIndexOf(".") + 1)));
@@ -256,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
                 crashesIdlingResource.decrement();
             }
 
+            @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             @Override
             public void onSendingSucceeded(ErrorReport report) {
                 String message = String.format("%s\nCrash ID: %s", getString(R.string.crash_sent_succeeded), report.getId());

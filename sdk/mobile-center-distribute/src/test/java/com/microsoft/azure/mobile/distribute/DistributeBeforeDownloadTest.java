@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 
-import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.http.HttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.ServiceCall;
@@ -85,7 +84,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
@@ -126,7 +125,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.N_MR1);
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
@@ -169,7 +168,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
@@ -210,7 +209,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
@@ -274,7 +273,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Whitebox.setInternalState(mContext.getApplicationInfo(), "nonLocalizedLabel", "hardcoded-app-name");
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
@@ -319,7 +318,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Activity activity = mock(Activity.class);
         Distribute.getInstance().onActivityResumed(activity);
         Distribute.getInstance().onActivityPaused(activity);
@@ -378,7 +377,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog. */
@@ -480,7 +479,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog. */
@@ -535,7 +534,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog. */
@@ -598,7 +597,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         assertNotNull(serviceCallbackRef.get());
         serviceCallbackRef.get().onCallSucceeded("mock");
@@ -715,7 +714,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog. */
@@ -761,7 +760,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog. */

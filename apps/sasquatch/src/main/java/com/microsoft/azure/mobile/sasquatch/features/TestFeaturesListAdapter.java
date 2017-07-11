@@ -47,7 +47,7 @@ public class TestFeaturesListAdapter extends BaseAdapter {
                 rowView = convertView;
             } else {
                 rowView = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_title, parent, false);
-                TextView titleView = ((TextView) rowView.findViewById(R.id.title));
+                TextView titleView = rowView.findViewById(R.id.title);
                 titleView.setText(((TestFeatures.TestFeatureTitle) item).getTitle());
                 rowView.setTag(new ViewHolder(TestFeatures.TestFeatureTitle.class, titleView));
             }
@@ -60,8 +60,8 @@ public class TestFeaturesListAdapter extends BaseAdapter {
                 rowView = convertView;
             } else {
                 rowView = LayoutInflater.from(parent.getContext()).inflate(android.R.layout.simple_list_item_2, parent, false);
-                TextView titleView = ((TextView) rowView.findViewById(android.R.id.text1));
-                TextView descriptionView = ((TextView) rowView.findViewById(android.R.id.text2));
+                TextView titleView = rowView.findViewById(android.R.id.text1);
+                TextView descriptionView = rowView.findViewById(android.R.id.text2);
                 titleView.setText(model.getTitle());
                 descriptionView.setText(model.getDescription());
                 rowView.setTag(new ViewHolder(TestFeatures.TestFeatureModel.class, titleView, descriptionView));

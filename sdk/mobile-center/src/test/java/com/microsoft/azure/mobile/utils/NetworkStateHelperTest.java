@@ -44,7 +44,7 @@ public class NetworkStateHelperTest {
             NetworkInfo networkInfo = mock(NetworkInfo.class);
             when(context.getSystemService(Context.CONNECTIVITY_SERVICE)).thenReturn(connectivityManager);
             when(connectivityManager.getActiveNetworkInfo()).thenReturn(networkInfo);
-            when(networkInfo.getState()).thenReturn(state);
+            when(networkInfo.isConnected()).thenReturn(state == NetworkInfo.State.CONNECTED);
             NetworkStateHelper helper = new NetworkStateHelper(context);
             assertEquals(state == NetworkInfo.State.CONNECTED, helper.isNetworkConnected());
         }
@@ -84,17 +84,21 @@ public class NetworkStateHelperTest {
         helper.addListener(listener);
 
         /* Initial state is down, if state does not change, no callback. */
+        final Intent intent = mock(Intent.class);
         BroadcastReceiver receiver = receiverRef.get();
-        receiver.onReceive(context, mock(Intent.class));
+        receiver.onReceive(context, intent);
         verify(listener, never()).onNetworkStateUpdated(anyBoolean());
 
         /* Change state to up. */
         NetworkInfo networkInfo = mock(NetworkInfo.class);
-        when(networkInfo.getState()).thenReturn(NetworkInfo.State.CONNECTED);
+        when(networkInfo.isConnected()).thenReturn(true);
         when(networkInfo.getTypeName()).thenReturn("MOBILE");
         when(networkInfo.getSubtypeName()).thenReturn("EDGE");
         when(connectivityManager.getActiveNetworkInfo()).thenReturn(networkInfo);
-        receiver.onReceive(context, mock(Intent.class));
+
+        //noinspection deprecation
+        when(intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO)).thenReturn(networkInfo);
+        receiver.onReceive(context, intent);
         verify(listener).onNetworkStateUpdated(true);
         verify(listener, never()).onNetworkStateUpdated(false);
 
@@ -104,20 +108,20 @@ public class NetworkStateHelperTest {
         helper.addListener(listener2);
         when(networkInfo.getTypeName()).thenReturn("WIFI");
         when(networkInfo.getSubtypeName()).thenReturn(null);
-        receiver.onReceive(context, mock(Intent.class));
+        receiver.onReceive(context, intent);
         verify(listener2).onNetworkStateUpdated(false);
         verify(listener2).onNetworkStateUpdated(true);
 
         /* Duplicate WIFI callback. */
-        receiver.onReceive(context, mock(Intent.class));
+        receiver.onReceive(context, intent);
         verifyNoMoreInteractions(listener2);
 
         /* But then WIFI is disconnected. */
         helper.removeListener(listener2);
         NetworkStateHelper.Listener listener3 = mock(NetworkStateHelper.Listener.class);
         helper.addListener(listener3);
-        when(networkInfo.getState()).thenReturn(NetworkInfo.State.DISCONNECTED);
-        receiver.onReceive(context, mock(Intent.class));
+        when(networkInfo.isConnected()).thenReturn(false);
+        receiver.onReceive(context, intent);
         verify(listener3).onNetworkStateUpdated(false);
 
         /* Close and verify interactions. */

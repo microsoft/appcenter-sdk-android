@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.view.View;
 import android.widget.AdapterView;
 
-import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.activities.CrashActivity;
 import com.microsoft.azure.mobile.sasquatch.activities.CustomPropertiesActivity;
@@ -31,7 +30,7 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeature(R.string.title_event, R.string.description_event, EventActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_page, R.string.description_page, PageActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_generate_page_log, R.string.description_generate_page_log, DummyActivity.class));
-        sTestFeatureModels.add(new TestFeatureTitle(Crashes.hasCrashedInLastSession() ? R.string.crashes_title_with_crash : R.string.crashes_title));
+        sTestFeatureModels.add(new TestFeatureTitle(R.string.crashes_title));
         sTestFeatureModels.add(new TestFeature(R.string.title_crashes, R.string.description_crashes, CrashActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_error, R.string.description_error, ManagedErrorActivity.class));
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));

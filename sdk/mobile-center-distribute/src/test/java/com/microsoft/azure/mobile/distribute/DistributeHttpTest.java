@@ -113,6 +113,7 @@ public class DistributeHttpTest extends AbstractDistributeTest {
     private HttpClient.CallTemplate getCallTemplate(String appSecret, String apiToken) throws Exception {
 
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
+        Distribute.getInstance().onStarting(mMobileCenterHandler);
         Distribute.getInstance().onStarted(mContext, appSecret, mock(Channel.class));
         final ServiceCall call = mock(ServiceCall.class);
         final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();

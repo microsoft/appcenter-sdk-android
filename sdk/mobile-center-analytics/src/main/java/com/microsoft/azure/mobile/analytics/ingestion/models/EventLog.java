@@ -38,6 +38,7 @@ public class EventLog extends LogWithProperties {
      *
      * @return the id value
      */
+    @SuppressWarnings("WeakerAccess")
     public UUID getId() {
         return this.id;
     }
@@ -56,6 +57,7 @@ public class EventLog extends LogWithProperties {
      *
      * @return the name value
      */
+    @SuppressWarnings("WeakerAccess")
     public String getName() {
         return this.name;
     }

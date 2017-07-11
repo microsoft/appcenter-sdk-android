@@ -131,6 +131,7 @@ public class CrashesTest {
      * @param titleId Title string resource to find list item.
      * @throws InterruptedException If the current thread is interrupted.
      */
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     private void crashTest(@StringRes int titleId) throws InterruptedException {
 
         /* Crash. */
@@ -144,8 +145,8 @@ public class CrashesTest {
                 .perform(click());
 
         /* Check error report. */
-        assertTrue(Crashes.hasCrashedInLastSession());
-        ErrorReport errorReport = CrashesPrivateHelper.getLastSessionCrashReport();
+        assertTrue(GetHelper.hasCrashedInLastSession());
+        ErrorReport errorReport = GetHelper.getLastSessionCrashReport();
         assertNotNull(errorReport);
         assertNotNull(errorReport.getId());
         assertEquals(mContext.getMainLooper().getThread().getName(), errorReport.getThreadName());

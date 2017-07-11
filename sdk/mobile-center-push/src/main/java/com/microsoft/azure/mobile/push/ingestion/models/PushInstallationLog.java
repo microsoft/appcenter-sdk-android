@@ -14,7 +14,7 @@ public class PushInstallationLog extends AbstractLog {
 
     public static final String TYPE = "push_installation";
 
-    public static final String PUSH_TOKEN = "push_token";
+    private static final String PUSH_TOKEN = "push_token";
 
     /**
      * The PNS handle for this installation.

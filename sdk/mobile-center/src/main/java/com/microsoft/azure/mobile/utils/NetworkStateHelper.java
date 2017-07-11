@@ -90,7 +90,7 @@ public class NetworkStateHelper implements Closeable {
     }
 
     /**
-     * Update network info (carrier info are put in these).
+     * Update network type by polling.
      */
     private void updateNetworkType() {
 
@@ -106,10 +106,17 @@ public class NetworkStateHelper implements Closeable {
             networkInfo = null;
             MobileCenterLog.error(MobileCenter.LOG_TAG, "Could not get network info and thus stuck in disconnected state, please check you declared android.permission.ACCESS_NETWORK_STATE");
         }
+        updateNetworkType(networkInfo);
+    }
+
+    /**
+     * Update network type with the specified update.
+     */
+    private void updateNetworkType(NetworkInfo networkInfo) {
         MobileCenterLog.debug(MobileCenter.LOG_TAG, "Active network info=" + networkInfo);
 
         /* Update network type. null for not connected. */
-        if (networkInfo != null && networkInfo.getState() == NetworkInfo.State.CONNECTED)
+        if (networkInfo != null && networkInfo.isConnected())
             mNetworkType = networkInfo.getTypeName() + networkInfo.getSubtypeName();
         else
             mNetworkType = null;
@@ -179,7 +186,15 @@ public class NetworkStateHelper implements Closeable {
              * We'll simulate a network state down event to the listeners to help with that scenario.
              */
             String previousNetworkType = mNetworkType;
-            updateNetworkType();
+
+            /*
+             * getActiveNetworkInfo has a bug on Android 8
+             * so we need to use the deprecated extra info.
+             * See https://issuetracker.google.com/issues/37137911.
+             */
+            @SuppressWarnings("deprecation")
+            NetworkInfo networkInfo = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
+            updateNetworkType(networkInfo);
             boolean networkTypeChanged = previousNetworkType == null ? mNetworkType != null : !previousNetworkType.equals(mNetworkType);
             if (networkTypeChanged) {
                 boolean connected = isNetworkConnected();

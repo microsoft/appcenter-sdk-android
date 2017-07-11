@@ -12,7 +12,7 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
     @Override
     public void uncaughtException(Thread thread, Throwable exception) {
-        if (!Crashes.isEnabled()) {
+        if (!Crashes.isEnabled().get()) {
             if (mDefaultUncaughtExceptionHandler != null) {
                 mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
             }

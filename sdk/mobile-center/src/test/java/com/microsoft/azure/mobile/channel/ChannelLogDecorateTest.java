@@ -1,6 +1,7 @@
 package com.microsoft.azure.mobile.channel;
 
 import android.content.Context;
+import android.os.Handler;
 
 import com.microsoft.azure.mobile.ingestion.Ingestion;
 import com.microsoft.azure.mobile.ingestion.models.Device;
@@ -37,7 +38,7 @@ public class ChannelLogDecorateTest {
         Device device = mock(Device.class);
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(device);
         mockStatic(IdHelper.class);
-        Channel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mock(Persistence.class), mock(Ingestion.class));
+        Channel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mock(Persistence.class), mock(Ingestion.class), mock(Handler.class));
         channel.addGroup("", 0, 0, 0, null);
 
         /* Test a log that should be decorated. */

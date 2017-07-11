@@ -60,7 +60,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return MobileCenter.isEnabled();
+                    return GetHelper.isMobileCenterEnabled();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_analytics_state_key, R.string.mobile_center_analytics_state_summary_enabled, R.string.mobile_center_analytics_state_summary_disabled, new HasEnabled() {
@@ -72,7 +72,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return Analytics.isEnabled();
+                    return GetHelper.isAnalyticsEnabled();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_crashes_state_key, R.string.mobile_center_crashes_state_summary_enabled, R.string.mobile_center_crashes_state_summary_disabled, new HasEnabled() {
@@ -84,7 +84,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return Crashes.isEnabled();
+                    return GetHelper.isCrashesEnabled();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_distribute_state_key, R.string.mobile_center_distribute_state_summary_enabled, R.string.mobile_center_distribute_state_summary_disabled, new HasEnabled() {
@@ -96,46 +96,42 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return Distribute.isEnabled();
+                    return GetHelper.isDistributeEnabled();
                 }
             });
-            try {
-                initCheckBoxSetting(R.string.mobile_center_push_state_key, R.string.mobile_center_push_state_summary_enabled, R.string.mobile_center_push_state_summary_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.mobile_center_push_state_key, R.string.mobile_center_push_state_summary_enabled, R.string.mobile_center_push_state_summary_disabled, new HasEnabled() {
 
-                    @Override
-                    public void setEnabled(boolean enabled) {
-                        Push.setEnabled(enabled);
-                    }
+                @Override
+                public void setEnabled(boolean enabled) {
+                    Push.setEnabled(enabled);
+                }
 
-                    @Override
-                    public boolean isEnabled() {
-                        return Push.isEnabled();
-                    }
-                });
-                initCheckBoxSetting(R.string.mobile_center_push_firebase_state_key, R.string.mobile_center_push_firebase_summary_enabled, R.string.mobile_center_push_firebase_summary_disabled, new HasEnabled() {
+                @Override
+                public boolean isEnabled() {
+                    return GetHelper.isPushEnabled();
+                }
+            });
+            initCheckBoxSetting(R.string.mobile_center_push_firebase_state_key, R.string.mobile_center_push_firebase_summary_enabled, R.string.mobile_center_push_firebase_summary_disabled, new HasEnabled() {
 
-                    @Override
-                    public void setEnabled(boolean enabled) {
-                        try {
-                            if (enabled) {
-                                Push.enableFirebaseAnalytics(getActivity());
-                            } else {
-                                FirebaseAnalytics.getInstance(getActivity()).setAnalyticsCollectionEnabled(false);
-                            }
-                            MainActivity.sSharedPreferences.edit().putBoolean(FIREBASE_ENABLED_KEY, enabled).apply();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
+                @Override
+                public void setEnabled(boolean enabled) {
+                    try {
+                        if (enabled) {
+                            Push.enableFirebaseAnalytics(getActivity());
+                        } else {
+                            FirebaseAnalytics.getInstance(getActivity()).setAnalyticsCollectionEnabled(false);
                         }
+                        MainActivity.sSharedPreferences.edit().putBoolean(FIREBASE_ENABLED_KEY, enabled).apply();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
                     }
+                }
 
-                    @Override
-                    public boolean isEnabled() {
-                        return isFirebaseEnabled();
-                    }
-                });
-            } catch (Exception e) {
-                getPreferenceScreen().removePreference(findPreference(getString(R.string.push_key)));
-            }
+                @Override
+                public boolean isEnabled() {
+                    return isFirebaseEnabled();
+                }
+            });
             initCheckBoxSetting(R.string.mobile_center_auto_page_tracking_key, R.string.mobile_center_auto_page_tracking_enabled, R.string.mobile_center_auto_page_tracking_disabled, new HasEnabled() {
 
                 @Override
@@ -148,13 +144,13 @@ public class SettingsActivity extends AppCompatActivity {
                     AnalyticsPrivateHelper.setAutoPageTrackingEnabled(enabled);
                 }
             });
-            initClickableSetting(R.string.install_id_key, String.valueOf(MobileCenter.getInstallId()), new Preference.OnPreferenceClickListener() {
+            initClickableSetting(R.string.install_id_key, String.valueOf(GetHelper.getInstallId()), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
                     final EditText input = new EditText(getActivity());
                     input.setInputType(InputType.TYPE_CLASS_TEXT);
-                    input.setText(String.valueOf(MobileCenter.getInstallId()));
+                    input.setText(String.valueOf(GetHelper.getInstallId()));
 
                     new AlertDialog.Builder(getActivity()).setTitle(R.string.install_id_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
@@ -167,7 +163,7 @@ public class SettingsActivity extends AppCompatActivity {
                                     } else {
                                         Toast.makeText(getActivity(), R.string.install_id_invalid, Toast.LENGTH_SHORT).show();
                                     }
-                                    preference.setSummary(String.valueOf(MobileCenter.getInstallId()));
+                                    preference.setSummary(String.valueOf(GetHelper.getInstallId()));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)

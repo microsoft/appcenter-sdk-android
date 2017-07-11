@@ -3,7 +3,6 @@ package com.microsoft.azure.mobile.distribute;
 import android.app.Activity;
 import android.content.Intent;
 
-import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import org.junit.Test;
@@ -34,7 +33,7 @@ public class DistributePlusDownloadReceiverTest extends AbstractDistributeTest {
     public void resumeAfterBeforeStartButBackground() throws Exception {
         Intent clickIntent = mock(Intent.class);
         when(clickIntent.getAction()).thenReturn(ACTION_NOTIFICATION_CLICKED);
-        Distribute.getInstance().onStarted(mContext, "", mock(Channel.class));
+        start();
         Intent startIntent = mock(Intent.class);
         whenNew(Intent.class).withArguments(mContext, DeepLinkActivity.class).thenReturn(startIntent);
         new DownloadManagerReceiver().onReceive(mContext, clickIntent);
@@ -47,7 +46,7 @@ public class DistributePlusDownloadReceiverTest extends AbstractDistributeTest {
         when(StorageHelper.PreferencesStorage.getString(eq(PREFERENCE_KEY_UPDATE_TOKEN))).thenReturn("mock");
         Intent clickIntent = mock(Intent.class);
         when(clickIntent.getAction()).thenReturn(ACTION_NOTIFICATION_CLICKED);
-        Distribute.getInstance().onStarted(mContext, "", mock(Channel.class));
+        start();
         Intent startIntent = mock(Intent.class);
         whenNew(Intent.class).withArguments(mContext, DeepLinkActivity.class).thenReturn(startIntent);
         Distribute.getInstance().onActivityResumed(mock(Activity.class));

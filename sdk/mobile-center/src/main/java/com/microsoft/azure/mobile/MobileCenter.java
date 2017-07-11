@@ -2,9 +2,12 @@ package com.microsoft.azure.mobile;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 import android.util.Log;
 
 import com.microsoft.azure.mobile.channel.Channel;
@@ -22,15 +25,21 @@ import com.microsoft.azure.mobile.utils.IdHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.PrefStorageConstants;
 import com.microsoft.azure.mobile.utils.ShutdownHelper;
+import com.microsoft.azure.mobile.utils.async.DefaultMobileCenterFuture;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
+import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_COUNT;
 import static com.microsoft.azure.mobile.Constants.DEFAULT_TRIGGER_INTERVAL;
@@ -49,6 +58,11 @@ public class MobileCenter {
      */
     @VisibleForTesting
     static final String CORE_GROUP = "group_core";
+
+    /**
+     * Shutdown timeout in millis.
+     */
+    private static final int SHUTDOWN_TIMEOUT = 5000;
 
     /**
      * Shared instance.
@@ -96,7 +110,21 @@ public class MobileCenter {
      */
     private Channel mChannel;
 
-    @VisibleForTesting
+    /**
+     * Background handler thread.
+     */
+    private HandlerThread mHandlerThread;
+
+    /**
+     * Background thread handler.
+     */
+    private Handler mHandler;
+
+    /**
+     * Background thread handler abstraction to shared with services.
+     */
+    private MobileCenterHandler mMobileCenterHandler;
+
     static synchronized MobileCenter getInstance() {
         if (sInstance == null)
             sInstance = new MobileCenter();
@@ -210,11 +238,13 @@ public class MobileCenter {
 
     /**
      * Check whether the SDK is enabled or not as a whole.
+     * This operation is performed in background as it accesses SharedPreferences.
      *
-     * @return true if enabled, false otherwise.
+     * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
+     * @see MobileCenterFuture
      */
-    public static boolean isEnabled() {
-        return checkPrecondition() && getInstance().isInstanceEnabled();
+    public static MobileCenterFuture<Boolean> isEnabled() {
+        return getInstance().isInstanceEnabledAsync();
     }
 
     /**
@@ -223,22 +253,22 @@ public class MobileCenter {
      * all services registered via {@link #start(Application, String, Class[])}.
      *
      * @param enabled true to enable, false to disable.
+     * @return future with null result to monitor when the operation completes.
      */
-    public static void setEnabled(boolean enabled) {
-        if (checkPrecondition())
-            getInstance().setInstanceEnabled(enabled);
+    public static MobileCenterFuture<Void> setEnabled(boolean enabled) {
+        return getInstance().setInstanceEnabledAsync(enabled);
     }
 
     /**
      * Get a unique installation identifier.
      * The identifier is persisted until the application is uninstalled and installed again.
+     * This operation is performed in background as it accesses SharedPreferences and UUID.
      *
-     * @return A unique installation identifier.
+     * @return future with result being the installation identifier.
+     * @see MobileCenterFuture
      */
-    public static UUID getInstallId() {
-        if (checkPrecondition())
-            return IdHelper.getInstallId();
-        return null;
+    public static MobileCenterFuture<UUID> getInstallId() {
+        return getInstance().getInstanceInstallId();
     }
 
     /**
@@ -246,9 +276,10 @@ public class MobileCenter {
      *
      * @return <code>true</code> if the SDK is ready, <code>false</code> otherwise.
      */
-    private static boolean checkPrecondition() {
-        if (getInstance().isInstanceConfigured())
+    private synchronized boolean checkPrecondition() {
+        if (isInstanceConfigured()) {
             return true;
+        }
         MobileCenterLog.error(LOG_TAG, "Mobile Center hasn't been configured. You need to call MobileCenter.start with appSecret or MobileCenter.configure first.");
         return false;
     }
@@ -291,18 +322,22 @@ public class MobileCenter {
      * @param customProperties custom properties object.
      */
     private synchronized void setInstanceCustomProperties(CustomProperties customProperties) {
-        if (!checkPrecondition())
-            return;
         if (customProperties == null) {
-            MobileCenterLog.error(LOG_TAG, "Custom properties may not be null");
+            MobileCenterLog.error(LOG_TAG, "Custom properties may not be null.");
             return;
         }
-        Map<String, Object> properties = customProperties.getProperties();
+        final Map<String, Object> properties = customProperties.getProperties();
         if (properties.size() == 0) {
-            MobileCenterLog.error(LOG_TAG, "Custom properties may not be empty");
+            MobileCenterLog.error(LOG_TAG, "Custom properties may not be empty.");
             return;
         }
-        queueCustomProperties(properties);
+        handlerMobileCenterOperation(new Runnable() {
+
+            @Override
+            public void run() {
+                queueCustomProperties(properties);
+            }
+        }, null);
     }
 
     /**
@@ -323,55 +358,115 @@ public class MobileCenter {
     @SuppressLint("VisibleForTests")
     private synchronized boolean instanceConfigure(Application application, String appSecret) {
 
-        /* Load some global constants. */
-        Constants.loadFromContext(application);
+        /* Check parameters. */
+        if (application == null) {
+            MobileCenterLog.error(LOG_TAG, "application may not be null");
+            return false;
+        }
+        if (appSecret == null || appSecret.isEmpty()) {
+            MobileCenterLog.error(LOG_TAG, "appSecret may not be null or empty");
+            return false;
+        }
+
+        /* Ignore call if already configured. */
+        if (mHandler != null) {
+            MobileCenterLog.warn(LOG_TAG, "Mobile Center may only be configured once.");
+            return false;
+        }
 
         /* Enable a default log level for debuggable applications. */
-        if (!mLogLevelConfigured && Constants.APPLICATION_DEBUGGABLE) {
+        if (!mLogLevelConfigured && (application.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {
             MobileCenterLog.setLogLevel(Log.WARN);
         }
 
-        /* Parse and store parameters. */
-        if (mApplication != null) {
-            MobileCenterLog.warn(LOG_TAG, "Mobile Center may only be configured once");
-            return false;
-        } else if (application == null) {
-            MobileCenterLog.error(LOG_TAG, "application may not be null");
-        } else if (appSecret == null || appSecret.isEmpty()) {
-            MobileCenterLog.error(LOG_TAG, "appSecret may not be null or empty");
-        } else {
+        /* Store state. */
+        mApplication = application;
+        mAppSecret = appSecret;
 
-            /* Store state. */
-            mApplication = application;
-            mAppSecret = appSecret;
+        /* Start looper. */
+        mHandlerThread = new HandlerThread("MobileCenter.Looper");
+        mHandlerThread.start();
+        mHandler = new Handler(mHandlerThread.getLooper());
+        mMobileCenterHandler = new MobileCenterHandler() {
 
-            /* If parameters are valid, init context related resources. */
-            StorageHelper.initialize(application);
+            @Override
+            public void post(@NonNull Runnable runnable, Runnable disabledRunnable) {
+                handlerMobileCenterOperation(runnable, disabledRunnable);
+            }
+        };
 
-            /* Remember state to avoid double call PreferencesStorage. */
-            boolean enabled = isInstanceEnabled();
+        /* The rest of initialization is done in background as we need storage. */
+        mServices = new HashSet<>();
+        mHandler.post(new Runnable() {
 
-            /* Init uncaught exception handler. */
-            mUncaughtExceptionHandler = new UncaughtExceptionHandler();
-            if (enabled)
-                mUncaughtExceptionHandler.register();
-            mServices = new HashSet<>();
+            @Override
+            public void run() {
+                finishConfiguration();
+            }
+        });
+        MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK configured successfully.");
+        return true;
+    }
 
-            /* Init channel. */
-            mLogSerializer = new DefaultLogSerializer();
-            mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
-            mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-            mChannel = new DefaultChannel(application, appSecret, mLogSerializer);
-            mChannel.setEnabled(enabled);
-            mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null);
-            if (mLogUrl != null)
-                mChannel.setLogUrl(mLogUrl);
-            MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK configured successfully.");
-            return true;
+    private synchronized void handlerMobileCenterOperation(final Runnable runnable, final Runnable disabledRunnable) {
+        if (checkPrecondition()) {
+            Runnable wrapperRunnable = new Runnable() {
+
+                @Override
+                public void run() {
+                    if (isInstanceEnabled()) {
+                        runnable.run();
+                    } else {
+                        if (disabledRunnable != null) {
+                            disabledRunnable.run();
+                        } else {
+                            MobileCenterLog.error(LOG_TAG, "Mobile Center SDK is disabled.");
+                        }
+                    }
+                }
+            };
+
+            /*
+             * We can already be in the background thread in case of callbacks,
+             * run now to avoid dead locks with getters.
+             */
+            if (Thread.currentThread() == mHandlerThread) {
+                runnable.run();
+            } else {
+                mHandler.post(wrapperRunnable);
+            }
+        }
+    }
+
+    @WorkerThread
+    private void finishConfiguration() {
+
+        /* Load some global constants. */
+        Constants.loadFromContext(mApplication);
+
+        /* If parameters are valid, init context related resources. */
+        StorageHelper.initialize(mApplication);
+
+        /* Get enabled state. */
+        boolean enabled = isInstanceEnabled();
+
+        /* Init uncaught exception handler. */
+        mUncaughtExceptionHandler = new UncaughtExceptionHandler();
+        if (enabled) {
+            mUncaughtExceptionHandler.register();
         }
 
-        MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK configuration failed.");
-        return false;
+        /* Init channel. */
+        mLogSerializer = new DefaultLogSerializer();
+        mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
+        mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
+        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
+        mChannel.setEnabled(enabled);
+        mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null);
+        if (mLogUrl != null) {
+            mChannel.setLogUrl(mLogUrl);
+        }
+        MobileCenterLog.debug(LOG_TAG, "Mobile Center storage initialized.");
     }
 
     @SafeVarargs
@@ -390,46 +485,63 @@ public class MobileCenter {
         }
 
         /* Start each service and collect info for send start service log. */
-        List<String> startedServices = new ArrayList<>();
+        final Collection<MobileCenterService> startedServices = new ArrayList<>();
         for (Class<? extends MobileCenterService> service : services) {
             if (service == null) {
                 MobileCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
             } else {
                 try {
                     MobileCenterService serviceInstance = (MobileCenterService) service.getMethod("getInstance").invoke(null);
-                    if (startService(serviceInstance)) {
-                        startedServices.add(serviceInstance.getServiceName());
+                    if (mServices.contains(serviceInstance)) {
+                        MobileCenterLog.warn(LOG_TAG, "Mobile Center has already started the service with class name: " + service.getName());
+                    } else {
+
+                        /* Share handler now with service while starting. */
+                        serviceInstance.onStarting(mMobileCenterHandler);
+                        mApplication.registerActivityLifecycleCallbacks(serviceInstance);
+                        mServices.add(serviceInstance);
+                        startedServices.add(serviceInstance);
                     }
                 } catch (Exception e) {
                     MobileCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
                 }
             }
         }
-        if (startedServices.size() > 0)
-            queueStartService(startedServices);
+
+        /* Finish starting in background. */
+        if (startedServices.size() > 0) {
+
+            /* Post to ensure service started after storage initialized. */
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    finishStartServices(startedServices);
+                }
+            });
+        }
     }
 
-    /**
-     * Start a service.
-     *
-     * @param service service to start.
-     */
-    private synchronized boolean startService(@NonNull MobileCenterService service) {
-        if (mServices.contains(service)) {
-            MobileCenterLog.warn(LOG_TAG, "Mobile Center has already started the service with class name: " + service.getClass().getName());
-            return false;
+    @WorkerThread
+    private void finishStartServices(Iterable<MobileCenterService> services) {
+        List<String> serviceNames = new ArrayList<>();
+        for (MobileCenterService service : services) {
+            Map<String, LogFactory> logFactories = service.getLogFactories();
+            if (logFactories != null) {
+                for (Map.Entry<String, LogFactory> logFactory : logFactories.entrySet())
+                    mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
+            }
+            service.onStarted(mApplication, mAppSecret, mChannel);
+            MobileCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
+            serviceNames.add(service.getServiceName());
         }
-        Map<String, LogFactory> logFactories = service.getLogFactories();
-        if (logFactories != null) {
-            for (Map.Entry<String, LogFactory> logFactory : logFactories.entrySet())
-                mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
+
+        /* Queue start service log. */
+        if (isInstanceEnabled()) {
+            StartServiceLog startServiceLog = new StartServiceLog();
+            startServiceLog.setServices(serviceNames);
+            mChannel.enqueue(startServiceLog, CORE_GROUP);
         }
-        mServices.add(service);
-        service.onStarted(mApplication, mAppSecret, mChannel);
-        if (isInstanceEnabled())
-            mApplication.registerActivityLifecycleCallbacks(service);
-        MobileCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
-        return true;
     }
 
     @SafeVarargs
@@ -440,38 +552,56 @@ public class MobileCenter {
     }
 
     /**
-     * Send started services.
-     *
-     * @param services started services.
-     */
-    private synchronized void queueStartService(@NonNull List<String> services) {
-        StartServiceLog startServiceLog = new StartServiceLog();
-        startServiceLog.setServices(services);
-        mChannel.enqueue(startServiceLog, CORE_GROUP);
-    }
-
-    /**
      * Send custom properties.
+     * Unit test requires top level methods when PowerMock.whenNew.
      *
      * @param properties properties to send.
      */
-    private synchronized void queueCustomProperties(@NonNull Map<String, Object> properties) {
+    @WorkerThread
+    private void queueCustomProperties(@NonNull Map<String, Object> properties) {
         CustomPropertiesLog customPropertiesLog = new CustomPropertiesLog();
         customPropertiesLog.setProperties(properties);
         mChannel.enqueue(customPropertiesLog, CORE_GROUP);
     }
 
     /**
-     * Implements {@link #isEnabled()}.
+     * Implements {@link #isEnabled()} at instance level.
      */
-    private synchronized boolean isInstanceEnabled() {
+    private synchronized MobileCenterFuture<Boolean> isInstanceEnabledAsync() {
+        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
+        if (checkPrecondition()) {
+            mMobileCenterHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    future.complete(true);
+                }
+            }, new Runnable() {
+
+                @Override
+                public void run() {
+                    future.complete(false);
+                }
+            });
+        } else {
+            future.complete(false);
+        }
+        return future;
+    }
+
+    /**
+     * This can be called only after storage has been initialized in background.
+     * However after that it can be used from U.I. thread without breaking strict mode.
+     */
+    private boolean isInstanceEnabled() {
         return StorageHelper.PreferencesStorage.getBoolean(PrefStorageConstants.KEY_ENABLED, true);
     }
 
     /**
-     * Implements {@link #setEnabled(boolean)}}.
+     * Implements {@link #setInstanceEnabledAsync(boolean)}} after it's posted in background loop.
      */
-    private synchronized void setInstanceEnabled(boolean enabled) {
+    @WorkerThread
+    private void setInstanceEnabled(boolean enabled) {
 
         /* Update channel state. */
         mChannel.setEnabled(enabled);
@@ -496,15 +626,10 @@ public class MobileCenter {
         /* Apply change to services. */
         for (MobileCenterService service : mServices) {
 
-            /* Add or remove callbacks depending on state change. */
-            if (switchToDisabled)
-                mApplication.unregisterActivityLifecycleCallbacks(service);
-            else if (switchToEnabled)
-                mApplication.registerActivityLifecycleCallbacks(service);
-
             /* Forward status change. */
-            if (service.isInstanceEnabled() != enabled)
+            if (service.isInstanceEnabled() != enabled) {
                 service.setInstanceEnabled(enabled);
+            }
         }
 
         /* Update state now if false, services are checking if enabled while disabling. */
@@ -520,6 +645,51 @@ public class MobileCenter {
         } else {
             MobileCenterLog.info(LOG_TAG, "Mobile Center has already been " + (enabled ? "enabled" : "disabled") + ".");
         }
+    }
+
+    /**
+     * Implements {@link #setEnabled(boolean)}}.
+     */
+    private synchronized MobileCenterFuture<Void> setInstanceEnabledAsync(final boolean enabled) {
+        final DefaultMobileCenterFuture<Void> future = new DefaultMobileCenterFuture<>();
+        if (checkPrecondition()) {
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    setInstanceEnabled(enabled);
+                    future.complete(null);
+                }
+            });
+        } else {
+            future.complete(null);
+        }
+        return future;
+    }
+
+    /**
+     * Implements {@link #getInstallId()}.
+     */
+    private synchronized MobileCenterFuture<UUID> getInstanceInstallId() {
+        final DefaultMobileCenterFuture<UUID> future = new DefaultMobileCenterFuture<>();
+        if (checkPrecondition()) {
+            mMobileCenterHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    future.complete(IdHelper.getInstallId());
+                }
+            }, new Runnable() {
+
+                @Override
+                public void run() {
+                    future.complete(null);
+                }
+            });
+        } else {
+            future.complete(null);
+        }
+        return future;
     }
 
     @VisibleForTesting
@@ -548,13 +718,36 @@ public class MobileCenter {
 
         private Thread.UncaughtExceptionHandler mDefaultUncaughtExceptionHandler;
 
+        /**
+         * This is to avoid lint warning.
+         */
+        public UncaughtExceptionHandler() {
+        }
+
         @Override
         public void uncaughtException(Thread thread, Throwable exception) {
-            if (isEnabled()) {
+            if (isInstanceEnabled()) {
 
                 /* Wait channel to finish saving other logs in background. */
-                if (mChannel != null)
-                    mChannel.shutdown();
+                final Semaphore semaphore = new Semaphore(0);
+                mHandler.post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        if (mChannel != null) {
+                            mChannel.shutdown();
+                        }
+                        MobileCenterLog.debug(LOG_TAG, "Channel completed shutdown.");
+                        semaphore.release();
+                    }
+                });
+                try {
+                    if (!semaphore.tryAcquire(SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS)) {
+                        MobileCenterLog.error(LOG_TAG, "Timeout waiting for looper tasks to complete.");
+                    }
+                } catch (InterruptedException e) {
+                    MobileCenterLog.warn(LOG_TAG, "Interrupted while waiting looper to flush.", e);
+                }
             }
             if (mDefaultUncaughtExceptionHandler != null) {
                 mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);

@@ -13,29 +13,25 @@ import java.io.File;
 public class Constants {
 
     /**
+     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
+     */
+    public static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
+    /**
+     * Number of metrics queue items which will trigger synchronization.
+     */
+    static final int DEFAULT_TRIGGER_COUNT = 50;
+    /**
+     * Maximum number of requests being sent for the group.
+     */
+    static final int DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
+    /**
      * Path where crash logs and temporary files are stored.
      */
     public static String FILES_PATH = null;
-
     /**
      * Flag indicates whether the host application is debuggable or not.
      */
     public static boolean APPLICATION_DEBUGGABLE = false;
-
-    /**
-     * Number of metrics queue items which will trigger synchronization.
-     */
-    public static final int DEFAULT_TRIGGER_COUNT = 50;
-
-    /**
-     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
-     */
-    public static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
-    
-    /**
-     * Maximum number of requests being sent for the group.
-     */
-    public static final int DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
 
     /**
      * Initializes constants from the given context. The context is used to set

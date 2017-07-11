@@ -11,7 +11,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -61,7 +60,7 @@ public class ErrorLogHelperAndroidTest {
     }
 
     @Test
-    public void getStoredFile() throws IOException {
+    public void getStoredFile() throws Exception {
         File[] testFiles = new File[4];
 
         /* Get all error logs stored in the file system when no logs exist. */
@@ -73,13 +72,17 @@ public class ErrorLogHelperAndroidTest {
         long date = 1000000;
         for (int i = 0; i < 3; i++) {
             File file = new File(mErrorDirectory, new UUID(0, i).toString() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
-            //noinspection ResultOfMethodCallIgnored
-            file.setLastModified(date - i * 3600);
+
+            /*
+             * file.setLastModified does not work on most devices or emulators and returns false.
+             * So we can only sleep at least 1 second between each to make sure the time is different...
+             */
             StorageHelper.InternalStorage.write(file, "contents");
             testFiles[i] = file;
+            Thread.sleep(1000);
         }
 
-        assertEquals(testFiles[0], ErrorLogHelper.getLastErrorLogFile());
+        assertEquals(testFiles[2], ErrorLogHelper.getLastErrorLogFile());
 
         testFiles[3] = new File(mErrorDirectory, new UUID(0, 3).toString() + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         StorageHelper.InternalStorage.write(testFiles[3], "contents");

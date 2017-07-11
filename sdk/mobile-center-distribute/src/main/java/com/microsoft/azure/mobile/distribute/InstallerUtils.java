@@ -70,11 +70,12 @@ class InstallerUtils {
      */
     @SuppressWarnings("deprecation")
     static boolean isUnknownSourcesEnabled(@NonNull Context context) {
-        ContentResolver contentResolver = context.getContentResolver();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            return INSTALL_NON_MARKET_APPS_ENABLED.equals(Settings.Global.getString(contentResolver, Settings.Global.INSTALL_NON_MARKET_APPS));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return context.getPackageManager().canRequestPackageInstalls();
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return INSTALL_NON_MARKET_APPS_ENABLED.equals(Settings.Global.getString(context.getContentResolver(), Settings.Global.INSTALL_NON_MARKET_APPS));
         } else {
-            return INSTALL_NON_MARKET_APPS_ENABLED.equals(Settings.Secure.getString(contentResolver, Settings.Secure.INSTALL_NON_MARKET_APPS));
+            return INSTALL_NON_MARKET_APPS_ENABLED.equals(Settings.Secure.getString(context.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS));
         }
     }
 }
