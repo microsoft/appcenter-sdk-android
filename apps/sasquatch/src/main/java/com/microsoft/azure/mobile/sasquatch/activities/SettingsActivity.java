@@ -60,7 +60,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return GetHelper.isMobileCenterEnabled();
+                    return MobileCenter.isEnabled().get();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_analytics_state_key, R.string.mobile_center_analytics_state_summary_enabled, R.string.mobile_center_analytics_state_summary_disabled, new HasEnabled() {
@@ -72,7 +72,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return GetHelper.isAnalyticsEnabled();
+                    return Analytics.isEnabled().get();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_crashes_state_key, R.string.mobile_center_crashes_state_summary_enabled, R.string.mobile_center_crashes_state_summary_disabled, new HasEnabled() {
@@ -84,7 +84,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return GetHelper.isCrashesEnabled();
+                    return Crashes.isEnabled().get();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_distribute_state_key, R.string.mobile_center_distribute_state_summary_enabled, R.string.mobile_center_distribute_state_summary_disabled, new HasEnabled() {
@@ -96,7 +96,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return GetHelper.isDistributeEnabled();
+                    return Distribute.isEnabled().get();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_push_state_key, R.string.mobile_center_push_state_summary_enabled, R.string.mobile_center_push_state_summary_disabled, new HasEnabled() {
@@ -108,7 +108,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return GetHelper.isPushEnabled();
+                    return Push.isEnabled().get();
                 }
             });
             initCheckBoxSetting(R.string.mobile_center_push_firebase_state_key, R.string.mobile_center_push_firebase_summary_enabled, R.string.mobile_center_push_firebase_summary_disabled, new HasEnabled() {
@@ -144,13 +144,13 @@ public class SettingsActivity extends AppCompatActivity {
                     AnalyticsPrivateHelper.setAutoPageTrackingEnabled(enabled);
                 }
             });
-            initClickableSetting(R.string.install_id_key, String.valueOf(GetHelper.getInstallId()), new Preference.OnPreferenceClickListener() {
+            initClickableSetting(R.string.install_id_key, String.valueOf(MobileCenter.getInstallId().get()), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
                     final EditText input = new EditText(getActivity());
                     input.setInputType(InputType.TYPE_CLASS_TEXT);
-                    input.setText(String.valueOf(GetHelper.getInstallId()));
+                    input.setText(String.valueOf(MobileCenter.getInstallId().get()));
 
                     new AlertDialog.Builder(getActivity()).setTitle(R.string.install_id_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
@@ -163,7 +163,7 @@ public class SettingsActivity extends AppCompatActivity {
                                     } else {
                                         Toast.makeText(getActivity(), R.string.install_id_invalid, Toast.LENGTH_SHORT).show();
                                     }
-                                    preference.setSummary(String.valueOf(GetHelper.getInstallId()));
+                                    preference.setSummary(String.valueOf(MobileCenter.getInstallId().get()));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)
