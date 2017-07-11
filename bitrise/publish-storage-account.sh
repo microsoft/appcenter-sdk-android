@@ -21,4 +21,4 @@ cp $BINARY_FILE_FILTER $ARCHIVE
 zip -r $ZIP_FILE $ARCHIVE
 
 # Upload file
-azure storage blob upload $ZIP_FILE sdk
+$1azure storage blob upload $ZIP_FILE sdk
