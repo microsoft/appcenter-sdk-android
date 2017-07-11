@@ -23,7 +23,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -42,6 +41,9 @@ public class UnknownSourcesDetectionTest {
     @Mock
     private PackageManager mPackageManager;
 
+    @Mock
+    private ApplicationInfo mApplicationInfo;
+
     private static void mockApiLevel(int apiLevel) {
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", apiLevel);
     }
@@ -51,6 +53,7 @@ public class UnknownSourcesDetectionTest {
         mockStatic(Settings.Global.class);
         mockStatic(Settings.Secure.class);
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
+        when(mContext.getApplicationInfo()).thenReturn(mApplicationInfo);
     }
 
     @Test
@@ -75,18 +78,17 @@ public class UnknownSourcesDetectionTest {
         }
 
         /* Test from Android 8 targeting that Android version. */
-        ApplicationInfo applicationInfo = mock(ApplicationInfo.class);
-        when(mContext.getApplicationInfo()).thenReturn(applicationInfo);
+        when(mContext.getApplicationInfo()).thenReturn(mApplicationInfo);
         for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= BuildConfig.TARGET_SDK_VERSION; apiLevel++) {
             mockApiLevel(apiLevel);
-            Whitebox.setInternalState(applicationInfo, "targetSdkVersion", apiLevel);
+            Whitebox.setInternalState(mApplicationInfo, "targetSdkVersion", apiLevel);
             assertTrue(InstallerUtils.isUnknownSourcesEnabled(mContext));
             verify(mPackageManager).canRequestPackageInstalls();
             reset(mPackageManager);
         }
 
         /* Test from Android 8 targeting older versions: always true. */
-        Whitebox.setInternalState(applicationInfo, "targetSdkVersion", Build.VERSION_CODES.N_MR1);
+        Whitebox.setInternalState(mApplicationInfo, "targetSdkVersion", Build.VERSION_CODES.N_MR1);
         for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= BuildConfig.TARGET_SDK_VERSION; apiLevel++) {
             mockApiLevel(apiLevel);
             assertTrue(InstallerUtils.isUnknownSourcesEnabled(mContext));
@@ -116,6 +118,7 @@ public class UnknownSourcesDetectionTest {
         }
         for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= BuildConfig.TARGET_SDK_VERSION; apiLevel++) {
             mockApiLevel(apiLevel);
+            Whitebox.setInternalState(mApplicationInfo, "targetSdkVersion", apiLevel);
             assertFalse(InstallerUtils.isUnknownSourcesEnabled(mContext));
             verify(mPackageManager).canRequestPackageInstalls();
             reset(mPackageManager);
@@ -144,6 +147,7 @@ public class UnknownSourcesDetectionTest {
         }
         for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= BuildConfig.TARGET_SDK_VERSION; apiLevel++) {
             mockApiLevel(apiLevel);
+            Whitebox.setInternalState(mApplicationInfo, "targetSdkVersion", apiLevel);
             assertFalse(InstallerUtils.isUnknownSourcesEnabled(mContext));
             verify(mPackageManager).canRequestPackageInstalls();
             reset(mPackageManager);
