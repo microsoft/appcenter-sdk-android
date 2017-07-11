@@ -78,7 +78,6 @@ public class UnknownSourcesDetectionTest {
         }
 
         /* Test from Android 8 targeting that Android version. */
-        when(mContext.getApplicationInfo()).thenReturn(mApplicationInfo);
         for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= BuildConfig.TARGET_SDK_VERSION; apiLevel++) {
             mockApiLevel(apiLevel);
             Whitebox.setInternalState(mApplicationInfo, "targetSdkVersion", apiLevel);
