@@ -74,7 +74,7 @@ public class UnknownSourcesDetectionTest {
             verify(mPackageManager, never()).canRequestPackageInstalls();
         }
 
-        /* Test from Android 0 targeting that Android version. */
+        /* Test from Android 8 targeting that Android version. */
         ApplicationInfo applicationInfo = mock(ApplicationInfo.class);
         when(mContext.getApplicationInfo()).thenReturn(applicationInfo);
         for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= BuildConfig.TARGET_SDK_VERSION; apiLevel++) {
@@ -85,7 +85,7 @@ public class UnknownSourcesDetectionTest {
             reset(mPackageManager);
         }
 
-        /* Test from Android 0 targeting older versions: always true. */
+        /* Test from Android 8 targeting older versions: always true. */
         Whitebox.setInternalState(applicationInfo, "targetSdkVersion", Build.VERSION_CODES.N_MR1);
         for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= BuildConfig.TARGET_SDK_VERSION; apiLevel++) {
             mockApiLevel(apiLevel);
