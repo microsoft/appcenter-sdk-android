@@ -448,7 +448,7 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Get initialization timestamp.
      *
-     * @return initialization timestamp expressed using {@link System#currentTimeMillis()}}.
+     * @return initialization timestamp expressed using {@link System#currentTimeMillis()}.
      */
     @VisibleForTesting
     synchronized long getInitializeTimestamp() {
