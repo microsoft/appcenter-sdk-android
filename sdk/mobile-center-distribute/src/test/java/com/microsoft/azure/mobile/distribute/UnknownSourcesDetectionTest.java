@@ -3,6 +3,7 @@ package com.microsoft.azure.mobile.distribute;
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.Settings;
@@ -22,6 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -71,11 +73,24 @@ public class UnknownSourcesDetectionTest {
             assertFalse(InstallerUtils.isUnknownSourcesEnabled(mContext));
             verify(mPackageManager, never()).canRequestPackageInstalls();
         }
+
+        /* Test from Android 0 targeting that Android version. */
+        ApplicationInfo applicationInfo = mock(ApplicationInfo.class);
+        when(mContext.getApplicationInfo()).thenReturn(applicationInfo);
         for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= BuildConfig.TARGET_SDK_VERSION; apiLevel++) {
             mockApiLevel(apiLevel);
+            Whitebox.setInternalState(applicationInfo, "targetSdkVersion", apiLevel);
             assertTrue(InstallerUtils.isUnknownSourcesEnabled(mContext));
             verify(mPackageManager).canRequestPackageInstalls();
             reset(mPackageManager);
+        }
+
+        /* Test from Android 0 targeting older versions: always true. */
+        Whitebox.setInternalState(applicationInfo, "targetSdkVersion", Build.VERSION_CODES.N_MR1);
+        for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= BuildConfig.TARGET_SDK_VERSION; apiLevel++) {
+            mockApiLevel(apiLevel);
+            assertTrue(InstallerUtils.isUnknownSourcesEnabled(mContext));
+            verify(mPackageManager, never()).canRequestPackageInstalls();
         }
     }
 
