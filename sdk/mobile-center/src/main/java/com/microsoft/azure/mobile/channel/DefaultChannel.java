@@ -527,7 +527,7 @@ public class DefaultChannel implements Channel {
             log.setDevice(mDevice);
         }
 
-        /* Set an absolute timestamp, we'll convert to relative just before sending. Don't do it if the service already set a timestamp.*/
+        /* Set date to current if not explicitly set in the past by a module (such as a crash). */
         if (log.getTimestamp() == null)
             log.setTimestamp(new Date());
 
