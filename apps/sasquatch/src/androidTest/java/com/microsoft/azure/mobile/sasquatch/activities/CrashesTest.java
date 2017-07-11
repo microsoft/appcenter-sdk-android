@@ -66,6 +66,23 @@ public class CrashesTest {
 
     private Context mContext;
 
+    @SuppressWarnings("rawtypes")
+    private static Matcher<Object> withCrashTitle(@StringRes final int titleId) {
+        return new BoundedMatcher<Object, CrashActivity.Crash>(CrashActivity.Crash.class) {
+
+            @Override
+            public boolean matchesSafely(CrashActivity.Crash map) {
+                return map.title == titleId;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("with item title from resource id: ");
+                description.appendValue(titleId);
+            }
+        };
+    }
+
     @Before
     public void setUp() throws Exception {
         mContext = getInstrumentation().getTargetContext();
@@ -145,8 +162,8 @@ public class CrashesTest {
                 .perform(click());
 
         /* Check error report. */
-        assertTrue(GetHelper.hasCrashedInLastSession());
-        ErrorReport errorReport = GetHelper.getLastSessionCrashReport();
+        assertTrue(Crashes.hasCrashedInLastSession().get());
+        ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
         assertNotNull(errorReport);
         assertNotNull(errorReport.getId());
         assertEquals(mContext.getMainLooper().getThread().getName(), errorReport.getThreadName());
@@ -181,23 +198,6 @@ public class CrashesTest {
     private ViewInteraction onCrash(@StringRes int titleId) {
         return onData(allOf(instanceOf(CrashActivity.Crash.class), withCrashTitle(titleId)))
                 .perform();
-    }
-
-    @SuppressWarnings("rawtypes")
-    private static Matcher<Object> withCrashTitle(@StringRes final int titleId) {
-        return new BoundedMatcher<Object, CrashActivity.Crash>(CrashActivity.Crash.class) {
-
-            @Override
-            public boolean matchesSafely(CrashActivity.Crash map) {
-                return map.title == titleId;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("with item title from resource id: ");
-                description.appendValue(titleId);
-            }
-        };
     }
 
     private class CrashFailureHandler implements FailureHandler {
