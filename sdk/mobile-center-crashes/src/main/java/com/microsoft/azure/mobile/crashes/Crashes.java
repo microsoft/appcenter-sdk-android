@@ -140,8 +140,14 @@ public class Crashes extends AbstractMobileCenterService {
      */
     private ErrorReport mLastSessionErrorReport;
 
+    /**
+     * Flag to remember whether we already saved uncaught exception or not.
+     */
     private boolean mSavedUncaughtException;
 
+    /**
+     * Init.
+     */
     private Crashes() {
         mFactories = new HashMap<>();
         mFactories.put(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
@@ -726,10 +732,22 @@ public class Crashes extends AbstractMobileCenterService {
      * @throws IOException   if an error occurred while accessing the file system.
      */
     UUID saveUncaughtException(Thread thread, Throwable throwable, com.microsoft.azure.mobile.crashes.ingestion.models.Exception modelException) throws JSONException, IOException {
+
+        /* Ignore call if Crash is disabled. */
+        if (!Crashes.isEnabled().get()) {
+            return null;
+        }
+
+        /*
+         * Save only 1 crash. This is needed for example in Xamarin
+         * where we save as a Xamarin crash before Java handler is called.
+         */
         if (mSavedUncaughtException) {
             return null;
         }
         mSavedUncaughtException = true;
+
+        /* Save error log. */
         ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, modelException, Thread.getAllStackTraces(), mInitializeTimestamp, true);
         File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
         UUID errorLogId = errorLog.getId();

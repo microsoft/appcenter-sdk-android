@@ -12,17 +12,11 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
     @Override
     public void uncaughtException(Thread thread, Throwable exception) {
-        if (!Crashes.isEnabled().get()) {
-            if (mDefaultUncaughtExceptionHandler != null) {
-                mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
-            }
+        Crashes.getInstance().saveUncaughtException(thread, exception);
+        if (mDefaultUncaughtExceptionHandler != null) {
+            mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
         } else {
-            Crashes.getInstance().saveUncaughtException(thread, exception);
-            if (mDefaultUncaughtExceptionHandler != null) {
-                mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
-            } else {
-                ShutdownHelper.shutdown(10);
-            }
+            ShutdownHelper.shutdown(10);
         }
     }
 
