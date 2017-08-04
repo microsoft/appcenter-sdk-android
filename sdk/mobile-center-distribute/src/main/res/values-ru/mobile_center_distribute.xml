@@ -2,7 +2,7 @@
 <resources>
     <string name="mobile_center_distribute_update_dialog_title">Доступно обновление</string>
     <string name="mobile_center_distribute_update_dialog_message_optional">%1$s %2$s (%3$d) доступно для загрузки и установки.</string>
-    <string name="mobile_center_distribute_update_dialog_message_mandatory">Разработчики этого приложения требуют обновить его до %1$s %2$s (%3$d).</string>
+    <string name="mobile_center_distribute_update_dialog_message_mandatory">Вышло обязательное обновление. Вам необходимо обновиться до %1$s %2$s (%3$d).</string>
     <string name="mobile_center_distribute_update_dialog_download">Загрузить</string>
     <string name="mobile_center_distribute_update_dialog_postpone">Спросить завтра</string>
     <string name="mobile_center_distribute_update_dialog_view_release_notes">Просмотреть примечания</string>
