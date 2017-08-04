@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mobile_center_distribute_update_dialog_title">Доступно обновление</string>
+    <string name="mobile_center_distribute_update_dialog_message_optional">%1$s %2$s (%3$d) доступно для загрузки и установки.</string>
+    <string name="mobile_center_distribute_update_dialog_message_mandatory">Вышло обязательное обновление. Вам необходимо обновиться до %1$s %2$s (%3$d).</string>
+    <string name="mobile_center_distribute_update_dialog_download">Загрузить</string>
+    <string name="mobile_center_distribute_update_dialog_postpone">Спросить завтра</string>
+    <string name="mobile_center_distribute_update_dialog_view_release_notes">Просмотреть примечания</string>
+    <string name="mobile_center_distribute_dialog_actioned_on_disabled_toast">Mobile Center Distribute был отключен</string>
+    <string name="mobile_center_distribute_unknown_sources_dialog_message">Для обеспечения безопасности ваше устройство настроено на блокировку установки приложений, полученных из неизвестных источников.</string>
+    <string name="mobile_center_distribute_unknown_sources_dialog_settings">Настройки</string>
+    <string name="mobile_center_distribute_downloading_mandatory_update">Загрузка обновления</string>
+    <string name="mobile_center_distribute_download_progress_number_format">%1$d MB из %2$d MB</string>
+    <string name="mobile_center_distribute_install_ready_title">Обновление загружено</string>
+    <string name="mobile_center_distribute_install_ready_message">%1$s %2$s (%3$d) загружено и готово для установки.</string>
+    <string name="mobile_center_distribute_install">Установить</string>
+    <string name="mobile_center_distribute_notification_category">Обновления</string>
+</resources>
