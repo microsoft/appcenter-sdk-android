@@ -68,13 +68,15 @@ import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_INSTALLING;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
-import static com.microsoft.azure.mobile.distribute.DistributeConstants.GET_LATEST_RELEASE_PATH_FORMAT;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.HEADER_API_TOKEN;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.NOTIFICATION_CHANNEL_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
@@ -135,14 +137,19 @@ public class Distribute extends AbstractMobileCenterService {
     private boolean mBrowserOpenedOrAborted;
 
     /**
-     * In memory token if we receive deep link intent before onStart.
-     */
-    private String mBeforeStartUpdateToken;
-
-    /**
      * In memory request identifier if we receive deep link intent before onStart.
      */
     private String mBeforeStartRequestId;
+
+    /**
+     * In memory distribution group if we receive deep link intent before onStart.
+     */
+    private String mBeforeStartDistributionGroupId;
+
+    /**
+     * In memory token if we receive deep link intent before onStart.
+     */
+    private String mBeforeStartUpdateToken;
 
     /**
      * Current API call identifier to check latest release from server, used for state check.
@@ -538,11 +545,12 @@ public class Distribute extends AbstractMobileCenterService {
             }
 
             /* If we received the update token before Mobile Center was started/enabled, process it now. */
-            if (mBeforeStartUpdateToken != null) {
+            if (mBeforeStartRequestId != null) {
                 MobileCenterLog.debug(LOG_TAG, "Processing update token we kept in memory before onStarted");
-                storeUpdateToken(mBeforeStartUpdateToken, mBeforeStartRequestId);
-                mBeforeStartUpdateToken = null;
+                storeRedirectionParameters(mBeforeStartRequestId, mBeforeStartDistributionGroupId, mBeforeStartUpdateToken);
                 mBeforeStartRequestId = null;
+                mBeforeStartDistributionGroupId = null;
+                mBeforeStartUpdateToken = null;
                 return;
             }
 
@@ -641,21 +649,28 @@ public class Distribute extends AbstractMobileCenterService {
                 return;
             }
 
-            /* Check if we have previous stored the update token. */
+            /*
+             * Check if we have previously stored the redirection parameters,
+             * note that distribution group is missing in previous SDK releases.
+             */
             String updateToken = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN);
-            if (updateToken != null) {
+            String distributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
+            if (updateToken != null || distributionGroupId != null) {
 
-                /* Decrypt token. */
-                CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(updateToken);
-                String newEncryptedData = decryptedData.getNewEncryptedData();
+                /* Decrypt token if any. */
+                if (updateToken != null) {
+                    CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(updateToken);
+                    String newEncryptedData = decryptedData.getNewEncryptedData();
 
-                /* Store new encrypted value if updated. */
-                if (newEncryptedData != null) {
-                    PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, newEncryptedData);
+                    /* Store new encrypted value if updated. */
+                    if (newEncryptedData != null) {
+                        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, newEncryptedData);
+                    }
+                    updateToken = decryptedData.getDecryptedData();
                 }
 
                 /* Check latest release. */
-                getLatestReleaseDetails(decryptedData.getDecryptedData());
+                getLatestReleaseDetails(distributionGroupId, updateToken);
                 return;
             }
 
@@ -710,39 +725,53 @@ public class Distribute extends AbstractMobileCenterService {
     /*
      * Store update token and possibly trigger application update check.
      */
-    synchronized void storeUpdateToken(@NonNull String updateToken, @NonNull String requestId) {
+    synchronized void storeRedirectionParameters(@NonNull String requestId, @NonNull String distributionGroupId, String updateToken) {
 
         /* Keep token for later if we are not started and enabled yet. */
         if (mContext == null) {
             MobileCenterLog.debug(LOG_TAG, "Update token received before onStart, keep it in memory.");
-            mBeforeStartUpdateToken = updateToken;
             mBeforeStartRequestId = requestId;
+            mBeforeStartUpdateToken = updateToken;
+            mBeforeStartDistributionGroupId = distributionGroupId;
         } else if (requestId.equals(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
-            String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(updateToken);
-            PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, encryptedToken);
+            if (updateToken != null) {
+                String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(updateToken);
+                PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, encryptedToken);
+            } else {
+                PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+            }
+            PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
+            MobileCenterLog.debug(LOG_TAG, "Stored redirection parameters.");
             PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
-            MobileCenterLog.debug(LOG_TAG, "Stored update token.");
             cancelPreviousTasks();
-            getLatestReleaseDetails(updateToken);
+            getLatestReleaseDetails(distributionGroupId, updateToken);
         } else {
-            MobileCenterLog.warn(LOG_TAG, "Ignoring update token as requestId is invalid.");
+            MobileCenterLog.warn(LOG_TAG, "Ignoring redirection parameters as requestId is invalid.");
         }
     }
 
     /**
      * Get latest release details from server.
      *
-     * @param updateToken token to secure API call.
+     * @param distributionGroupId distribution group id.
+     * @param updateToken         token to secure API call.
      */
     @VisibleForTesting
-    synchronized void getLatestReleaseDetails(@NonNull String updateToken) {
+    synchronized void getLatestReleaseDetails(String distributionGroupId, String updateToken) {
         MobileCenterLog.debug(LOG_TAG, "Get latest release details...");
         HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
         HttpClient httpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
-        String url = mApiUrl + String.format(GET_LATEST_RELEASE_PATH_FORMAT, mAppSecret, computeReleaseHash(mPackageInfo));
+        String url = mApiUrl;
+        if (updateToken == null) {
+            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, distributionGroupId);
+        } else {
+            url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, computeReleaseHash(mPackageInfo));
+        }
         Map<String, String> headers = new HashMap<>();
-        headers.put(HEADER_API_TOKEN, updateToken);
+        if (updateToken != null) {
+            headers.put(HEADER_API_TOKEN, updateToken);
+        }
         final Object releaseCallId = mCheckReleaseCallId = new Object();
         mCheckReleaseApiCall = httpClient.callAsync(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
 
@@ -830,6 +859,7 @@ public class Distribute extends AbstractMobileCenterService {
                     MobileCenterLog.info(LOG_TAG, "No release available to the current user.");
                 } else {
                     MobileCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
+                    PreferencesStorage.remove(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
                     PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
                 }
             }

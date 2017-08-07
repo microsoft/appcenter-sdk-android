@@ -6,6 +6,7 @@ import android.os.Bundle;
 
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.EXTRA_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.EXTRA_REQUEST_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.EXTRA_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.LOG_TAG;
@@ -21,13 +22,17 @@ public class DeepLinkActivity extends Activity {
         /* Check intent. */
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
-        String updateToken = intent.getStringExtra(EXTRA_UPDATE_TOKEN);
         String requestId = intent.getStringExtra(EXTRA_REQUEST_ID);
+        String distributionGroupId = intent.getStringExtra(EXTRA_DISTRIBUTION_GROUP_ID);
+        String updateToken = intent.getStringExtra(EXTRA_UPDATE_TOKEN);
         MobileCenterLog.debug(LOG_TAG, getLocalClassName() + ".getIntent()=" + intent);
+        MobileCenterLog.debug(LOG_TAG, "Intent requestId=" + requestId);
+        MobileCenterLog.debug(LOG_TAG, "Intent distributionGroupId=" + distributionGroupId);
+        MobileCenterLog.debug(LOG_TAG, "Intent updateToken passed=" + (updateToken != null));
 
-        /* Store update token if the parameters are correct. */
-        if (updateToken != null && requestId != null) {
-            Distribute.getInstance().storeUpdateToken(updateToken, requestId);
+        /* Store redirection parameters if both required values were passed. */
+        if (requestId != null && distributionGroupId != null) {
+            Distribute.getInstance().storeRedirectionParameters(requestId, distributionGroupId, updateToken);
         }
 
         /*

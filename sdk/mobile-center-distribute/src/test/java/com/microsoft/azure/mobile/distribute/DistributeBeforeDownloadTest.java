@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
@@ -62,8 +63,9 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void moreRecentWithIncompatibleMinApiLevel() throws Exception {
 
-        /* Mock we already have token. */
+        /* Mock we already have redirection parameters. */
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.JELLY_BEAN_MR2);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
@@ -103,8 +105,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void olderVersionCode() throws Exception {
 
-        /* Mock we already have token. */
-        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        /* Mock we already have public group, no token. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
@@ -116,7 +118,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
             }
         });
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(5);
@@ -147,7 +148,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void sameVersionCodeSameHash() throws Exception {
 
-        /* Mock we already have token. */
+        /* Mock we already have token and no group. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
@@ -187,8 +188,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void moreRecentVersionCode() throws Exception {
 
-        /* Mock we already have token. */
-        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        /* Mock we already have public group, no token. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
@@ -200,7 +201,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
             }
         });
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
@@ -247,7 +247,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void sameVersionDifferentHashWithHardcodedAppName() throws Exception {
 
-        /* Mock we already have token. */
+        /* Mock we already have redirection parameters. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
@@ -287,7 +288,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void dialogActivityStateChanges() throws Exception {
 
-        /* Mock we already have token. */
+        /* Mock we already have redirection parameters. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
@@ -359,7 +361,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void postponeDialog() throws Exception {
 
-        /* Mock we already have token. */
+        /* Mock we already have redirection parameters. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
@@ -461,7 +464,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void disableBeforePostponeDialog() throws Exception {
 
-        /* Mock we already have token. */
+        /* Mock we already have redirection parameters. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
@@ -514,7 +518,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @PrepareForTest(AsyncTaskUtils.class)
     public void disableBeforeDownload() throws Exception {
 
-        /* Mock we already have token. */
+        /* Mock we already have redirection parameters. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
@@ -573,7 +578,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Mock some storage calls. */
         mockSomeStorage();
 
-        /* Mock we already have token. */
+        /* Mock we already have redirection parameters. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
@@ -690,7 +696,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Mock some storage calls. */
         mockSomeStorage();
 
-        /* Mock we already have token. */
+        /* Mock we already have redirection parameters. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
@@ -740,7 +747,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void releaseNotes() throws Exception {
 
-        /* Mock we already have token. */
+        /* Mock we already have redirection parameters. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);

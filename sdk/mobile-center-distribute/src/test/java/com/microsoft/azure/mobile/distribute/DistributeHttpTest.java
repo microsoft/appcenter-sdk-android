@@ -40,7 +40,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class DistributeHttpTest extends AbstractDistributeTest {
 
     @Test
-    public void onBeforeCalling() throws Exception {
+    public void onBeforeCallingWithToken() throws Exception {
 
         /* Mock instances. */
         String urlFormat = "http://mock/path/%s/path/file";
@@ -76,6 +76,34 @@ public class DistributeHttpTest extends AbstractDistributeTest {
         /* Verify app secret is in log. */
         verifyStatic();
         MobileCenterLog.verbose(anyString(), contains(obfuscatedToken));
+    }
+
+    @Test
+    public void onBeforeCallingWithoutToken() throws Exception {
+
+        /* Mock instances. */
+        String urlFormat = "http://mock/path/%s/path/file";
+        String appSecret = UUID.randomUUID().toString();
+        String obfuscatedSecret = HttpUtils.hideSecret(appSecret);
+        URL url = new URL(String.format(urlFormat, appSecret));
+        String obfuscatedUrlString = String.format(urlFormat, obfuscatedSecret);
+        Map<String, String> headers = new HashMap<>();
+        HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret, null);
+        when(MobileCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
+        mockStatic(MobileCenterLog.class);
+
+        /* Call onBeforeCalling with parameters. */
+        callTemplate.onBeforeCalling(url, headers);
+
+        /* Verify url log. */
+        verifyStatic();
+        MobileCenterLog.verbose(anyString(), contains(obfuscatedUrlString));
+
+        /* Verify header log. */
+        for (Map.Entry<String, String> header : headers.entrySet()) {
+            verifyStatic();
+            MobileCenterLog.verbose(anyString(), contains(header.getValue()));
+        }
     }
 
     @Test
@@ -129,7 +157,7 @@ public class DistributeHttpTest extends AbstractDistributeTest {
                 return call;
             }
         });
-        Distribute.getInstance().getLatestReleaseDetails(apiToken);
+        Distribute.getInstance().getLatestReleaseDetails("mockGroup", apiToken);
         return callTemplate.get();
     }
 }

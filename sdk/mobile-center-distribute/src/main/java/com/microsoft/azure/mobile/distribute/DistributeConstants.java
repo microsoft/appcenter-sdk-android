@@ -31,6 +31,11 @@ final class DistributeConstants {
     static final String EXTRA_REQUEST_ID = "request_id";
 
     /**
+     * Used for deep link intent from browser, string field for distribution group identifier.
+     */
+    static final String EXTRA_DISTRIBUTION_GROUP_ID = "distribution_group_id";
+
+    /**
      * Base URL used to open browser to check install and get API token to check latest release.
      */
     static final String DEFAULT_INSTALL_URL = "https://install.mobile.azure.com";
@@ -47,9 +52,14 @@ final class DistributeConstants {
     static final String UPDATE_SETUP_PATH_FORMAT = "/apps/%s/update-setup/";
 
     /**
-     * Check latest release API URL path. Contains the app secret variable to replace.
+     * Check latest private release API URL path. Contains the app secret variable to replace.
      */
-    static final String GET_LATEST_RELEASE_PATH_FORMAT = "/sdk/apps/%s/releases/latest?release_hash=%s";
+    static final String GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT = "/sdk/apps/%s/releases/latest?release_hash=%s";
+
+    /**
+     * Check latest public release API URL path. Contains the app secret variable to replace.
+     */
+    static final String GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT = "/sdk/apps/%s/distribution_groups/%s/releases/latest";
 
     /**
      * API parameter for release hash.
@@ -165,6 +175,11 @@ final class DistributeConstants {
      * Preference key to store token.
      */
     static final String PREFERENCE_KEY_UPDATE_TOKEN = PREFERENCE_PREFIX + EXTRA_UPDATE_TOKEN;
+
+    /**
+     * Preference key to store distribution group identifier.
+     */
+    static final String PREFERENCE_KEY_DISTRIBUTION_GROUP_ID = PREFERENCE_PREFIX + EXTRA_DISTRIBUTION_GROUP_ID;
 
     /**
      * Preference key to store release details.
