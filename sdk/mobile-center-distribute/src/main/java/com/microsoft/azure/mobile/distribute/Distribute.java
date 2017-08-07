@@ -544,7 +544,7 @@ public class Distribute extends AbstractMobileCenterService {
                 return;
             }
 
-            /* If we received the update token before Mobile Center was started/enabled, process it now. */
+            /* If we received the redirection parameters before Mobile Center was started/enabled, process them now. */
             if (mBeforeStartRequestId != null) {
                 MobileCenterLog.debug(LOG_TAG, "Processing update token we kept in memory before onStarted");
                 storeRedirectionParameters(mBeforeStartRequestId, mBeforeStartDistributionGroupId, mBeforeStartUpdateToken);
@@ -727,9 +727,9 @@ public class Distribute extends AbstractMobileCenterService {
      */
     synchronized void storeRedirectionParameters(@NonNull String requestId, @NonNull String distributionGroupId, String updateToken) {
 
-        /* Keep token for later if we are not started and enabled yet. */
+        /* Keep redirection parameters for later if we are not started and enabled yet. */
         if (mContext == null) {
-            MobileCenterLog.debug(LOG_TAG, "Update token received before onStart, keep it in memory.");
+            MobileCenterLog.debug(LOG_TAG, "Redirection parameters received before onStart, keep them in memory.");
             mBeforeStartRequestId = requestId;
             mBeforeStartUpdateToken = updateToken;
             mBeforeStartDistributionGroupId = distributionGroupId;
