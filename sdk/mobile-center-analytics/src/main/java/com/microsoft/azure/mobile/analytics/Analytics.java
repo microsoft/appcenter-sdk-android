@@ -317,12 +317,12 @@ public class Analytics extends AbstractMobileCenterService {
                 continue;
             }
             if (key.length() > MAX_PROPERTY_ITEM_LENGTH) {
-                message = String.format("%s '%s' : property '%s' : property key length cannot be longer than %s characters. Property key '%s' will be truncated.", logType, logName, key, MAX_PROPERTY_ITEM_LENGTH, key);
+                message = String.format("%s '%s' : property '%s' : property key length cannot be longer than %s characters. Property key will be truncated.", logType, logName, key, MAX_PROPERTY_ITEM_LENGTH);
                 MobileCenterLog.warn(Analytics.LOG_TAG, message);
                 key = key.substring(0, MAX_PROPERTY_ITEM_LENGTH);
             }
             if (value.length() > MAX_PROPERTY_ITEM_LENGTH) {
-                message = String.format("%s '%s' : property '%s' : property value cannot be longer than %s characters. Property '%s' will be truncated.", logType, logName, key, MAX_PROPERTY_ITEM_LENGTH, value);
+                message = String.format("%s '%s' : property '%s' : property value cannot be longer than %s characters. Property value will be truncated.", logType, logName, key, MAX_PROPERTY_ITEM_LENGTH);
                 MobileCenterLog.warn(Analytics.LOG_TAG, message);
                 value = value.substring(0, MAX_PROPERTY_ITEM_LENGTH);
             }
