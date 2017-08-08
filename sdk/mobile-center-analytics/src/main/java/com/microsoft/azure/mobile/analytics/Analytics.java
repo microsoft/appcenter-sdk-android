@@ -50,6 +50,17 @@ public class Analytics extends AbstractMobileCenterService {
     private static final String ACTIVITY_SUFFIX = "Activity";
 
     /**
+     * Max number of properties.
+     */
+    private static final int MAX_PROPERTY_COUNT = 5;
+
+    /**
+     * Max length of properties.
+     */
+    @VisibleForTesting
+    static final int MAX_PROPERTY_ITEM_LENGTH = 64;
+
+    /**
      * Shared instance.
      */
     private static Analytics sInstance = null;
@@ -277,36 +288,36 @@ public class Analytics extends AbstractMobileCenterService {
         if (properties == null)
             return null;
         String message;
-        final int maxPropertiesCount = 5;
-        final int maxPropertyItemLength = 64;
         Map<String, String> result = new HashMap<>();
         for (Map.Entry<String, String> property : properties.entrySet()) {
-            if (result.size() >= maxPropertiesCount) {
-                message = String.format("%s '%s' : properties cannot contain more than %s items. Skipping other properties.", logType, logName, maxPropertiesCount);
+            String key = property.getKey();
+            String value = property.getValue();
+            if (result.size() >= MAX_PROPERTY_COUNT) {
+                message = String.format("%s '%s' : properties cannot contain more than %s items. Skipping other properties.", logType, logName, MAX_PROPERTY_COUNT);
                 MobileCenterLog.warn(Analytics.LOG_TAG, message);
                 break;
             }
-            if (property.getKey() == null || property.getKey().isEmpty()) {
+            if (key == null || key.isEmpty()) {
                 message = String.format("%s '%s' : a property key cannot be null or empty. Property will be skipped.", logType, logName);
                 MobileCenterLog.warn(Analytics.LOG_TAG, message);
                 continue;
             }
-            if (property.getKey().length() > maxPropertyItemLength) {
-                message = String.format("%s '%s' : property '%s' : property key length cannot be longer than %s characters. Property '%s' will be skipped.", logType, logName, property.getKey(), maxPropertyItemLength, property.getKey());
+            if (value == null) {
+                message = String.format("%s '%s' : property '%s' : property value cannot be null. Property '%s' will be skipped.", logType, logName, key, key);
                 MobileCenterLog.warn(Analytics.LOG_TAG, message);
                 continue;
             }
-            if (property.getValue() == null) {
-                message = String.format("%s '%s' : property '%s' : property value cannot be null. Property '%s' will be skipped.", logType, logName, property.getKey(), property.getKey());
+            if (key.length() > MAX_PROPERTY_ITEM_LENGTH) {
+                message = String.format("%s '%s' : property '%s' : property key length cannot be longer than %s characters. Property key '%s' will be truncated.", logType, logName, key, MAX_PROPERTY_ITEM_LENGTH, key);
                 MobileCenterLog.warn(Analytics.LOG_TAG, message);
-                continue;
+                key = key.substring(0, MAX_PROPERTY_ITEM_LENGTH);
             }
-            if (property.getValue().length() > maxPropertyItemLength) {
-                message = String.format("%s '%s' : property '%s' : property value cannot be longer than %s characters. Property '%s' will be skipped.", logType, logName, property.getKey(), maxPropertyItemLength, property.getKey());
+            if (value.length() > MAX_PROPERTY_ITEM_LENGTH) {
+                message = String.format("%s '%s' : property '%s' : property value cannot be longer than %s characters. Property '%s' will be truncated.", logType, logName, key, MAX_PROPERTY_ITEM_LENGTH, value);
                 MobileCenterLog.warn(Analytics.LOG_TAG, message);
-                continue;
+                value = value.substring(0, MAX_PROPERTY_ITEM_LENGTH);
             }
-            result.put(property.getKey(), property.getValue());
+            result.put(key, value);
         }
         return result;
     }
