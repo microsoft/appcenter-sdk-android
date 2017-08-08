@@ -56,26 +56,25 @@ public class DistributeHttpTest extends AbstractDistributeTest {
         when(MobileCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
         mockStatic(MobileCenterLog.class);
 
-        /* Call onBeforeCalling with parameters. */
+        /* Put api token to header. */
+        headers.put(HEADER_API_TOKEN, apiToken);
+
+         /* Call onBeforeCalling with parameters. */
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify url log. */
         verifyStatic();
         MobileCenterLog.verbose(anyString(), contains(obfuscatedUrlString));
 
-        /* Verify header log. */
+        /* Verify header logs. */
         for (Map.Entry<String, String> header : headers.entrySet()) {
             verifyStatic();
-            MobileCenterLog.verbose(anyString(), contains(header.getValue()));
+            if (header.getKey().equals(HEADER_API_TOKEN)) {
+                MobileCenterLog.verbose(anyString(), contains(obfuscatedToken));
+            } else {
+                MobileCenterLog.verbose(anyString(), contains(header.getValue()));
+            }
         }
-
-        /* Put api token to header. */
-        headers.put(HEADER_API_TOKEN, apiToken);
-        callTemplate.onBeforeCalling(url, headers);
-
-        /* Verify app secret is in log. */
-        verifyStatic();
-        MobileCenterLog.verbose(anyString(), contains(obfuscatedToken));
     }
 
     @Test

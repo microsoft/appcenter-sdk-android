@@ -142,7 +142,7 @@ public class Distribute extends AbstractMobileCenterService {
     private String mBeforeStartRequestId;
 
     /**
-     * In memory distribution group if we receive deep link intent before onStart.
+     * In memory distribution group identifier if we receive deep link intent before onStart.
      */
     private String mBeforeStartDistributionGroupId;
 
@@ -411,7 +411,7 @@ public class Distribute extends AbstractMobileCenterService {
             });
         } else {
 
-            /* Clean all state on disabling, cancel everything. Keep token though. */
+            /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
             mBrowserOpenedOrAborted = false;
             mWorkflowCompleted = false;
             cancelPreviousTasks();
@@ -650,8 +650,15 @@ public class Distribute extends AbstractMobileCenterService {
             }
 
             /*
-             * Check if we have previously stored the redirection parameters,
-             * note that distribution group is missing in previous SDK releases.
+             * Check if we have previously stored the redirection parameters.
+             * Note that distribution group was not stored in previous SDK releases
+             * so we test for the presence of either group or token for compatibility.
+             *
+             * Later we will likely switch to just testing the presence of a group in the first if,
+             * especially if we decide to tie private in-app updates to a specific group. That is
+             * also why we already store the group for future use even for private group updates.
+             *
+             * TODO previous SDK releases as of now means <= 0.11.1, edit this comment block before release.
              */
             String updateToken = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
@@ -762,11 +769,12 @@ public class Distribute extends AbstractMobileCenterService {
         HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
         HttpClient httpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
+        String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
-            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, distributionGroupId);
+            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, distributionGroupId, releaseHash);
         } else {
-            url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, computeReleaseHash(mPackageInfo));
+            url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash);
         }
         Map<String, String> headers = new HashMap<>();
         if (updateToken != null) {

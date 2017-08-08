@@ -331,11 +331,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Call is still in progress. If we restart app, nothing happens we still wait. */
         restartResumeLauncher(mActivity);
-        Distribute.getInstance().onActivityPaused(mActivity);
-        Distribute.getInstance().onActivityStopped(mActivity);
-        Distribute.getInstance().onActivityDestroyed(mActivity);
-        Distribute.getInstance().onActivityCreated(mActivity, mock(Bundle.class));
-        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify behavior not changed. */
         verifyStatic();
@@ -452,11 +447,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Call is still in progress. If we restart app, nothing happens we still wait. */
         restartResumeLauncher(mActivity);
-        Distribute.getInstance().onActivityPaused(mActivity);
-        Distribute.getInstance().onActivityStopped(mActivity);
-        Distribute.getInstance().onActivityDestroyed(mActivity);
-        Distribute.getInstance().onActivityCreated(mActivity, mock(Bundle.class));
-        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify behavior not changed. */
         verifyStatic();
