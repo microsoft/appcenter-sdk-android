@@ -55,6 +55,12 @@ public class Analytics extends AbstractMobileCenterService {
     private static final int MAX_PROPERTY_COUNT = 5;
 
     /**
+     * Max length of event/page name.
+     */
+    @VisibleForTesting
+    static final int MAX_NAME_LENGTH = 256;
+
+    /**
      * Max length of properties.
      */
     @VisibleForTesting
@@ -195,8 +201,9 @@ public class Analytics extends AbstractMobileCenterService {
      * Track a custom page with name and optional properties.
      * The name parameter can not be null or empty. Maximum allowed length = 256.
      * The properties parameter maximum item count = 5.
-     * The properties keys/names can not be null or empty, maximum allowed key length = 64.
+     * The properties keys can not be null or empty, maximum allowed key length = 64.
      * The properties values can not be null, maximum allowed value length = 64.
+     * Any length of name/keys/values that are longer than each limit will be truncated.
      * <p>
      * TODO the backend does not support that service yet, will be public method later.
      *
@@ -206,7 +213,8 @@ public class Analytics extends AbstractMobileCenterService {
     @SuppressWarnings("WeakerAccess")
     protected static void trackPage(String name, Map<String, String> properties) {
         final String logType = "Page";
-        if (validateName(name, logType)) {
+        name = validateName(name, logType);
+        if (name != null) {
             Map<String, String> validatedProperties = validateProperties(properties, name, logType);
             getInstance().trackPageAsync(name, validatedProperties);
         }
@@ -226,8 +234,9 @@ public class Analytics extends AbstractMobileCenterService {
      * Track a custom event with name and optional properties.
      * The name parameter can not be null or empty. Maximum allowed length = 256.
      * The properties parameter maximum item count = 5.
-     * The properties keys/names can not be null or empty, maximum allowed key length = 64.
+     * The properties keys can not be null or empty, maximum allowed key length = 64.
      * The properties values can not be null, maximum allowed value length = 64.
+     * Any length of name/keys/values that are longer than each limit will be truncated.
      *
      * @param name       An event name.
      * @param properties Optional properties.
@@ -235,7 +244,8 @@ public class Analytics extends AbstractMobileCenterService {
     @SuppressWarnings("WeakerAccess")
     public static void trackEvent(String name, Map<String, String> properties) {
         final String logType = "Event";
-        if (validateName(name, logType)) {
+        name = validateName(name, logType);
+        if (name != null) {
             Map<String, String> validatedProperties = validateProperties(properties, name, logType);
             getInstance().trackEventAsync(name, validatedProperties);
         }
@@ -261,19 +271,18 @@ public class Analytics extends AbstractMobileCenterService {
      *
      * @param name    Log name to validate.
      * @param logType Log type.
-     * @return <code>true</code> if validation succeeds, otherwise <code>false</code>.
+     * @return <code>null</code> if validation failed, otherwise a valid name within the length limit will be returned.
      */
-    private static boolean validateName(String name, String logType) {
-        final int maxNameLength = 256;
+    private static String validateName(String name, String logType) {
         if (name == null || name.isEmpty()) {
             MobileCenterLog.error(Analytics.LOG_TAG, logType + " name cannot be null or empty.");
-            return false;
+            return null;
         }
-        if (name.length() > maxNameLength) {
-            MobileCenterLog.error(Analytics.LOG_TAG, String.format("%s '%s' : name length cannot be longer than %s characters.", logType, name, maxNameLength));
-            return false;
+        if (name.length() > MAX_NAME_LENGTH) {
+            MobileCenterLog.error(Analytics.LOG_TAG, String.format("%s '%s' : name length cannot be longer than %s characters. Name will be truncated.", logType, name, MAX_NAME_LENGTH));
+            name = name.substring(0, MAX_NAME_LENGTH);
         }
-        return true;
+        return name;
     }
 
     /**
