@@ -258,18 +258,28 @@ public class AnalyticsTest {
         Analytics.trackEvent(" ", null);
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
         reset(channel);
-        Analytics.trackEvent(generateString(257, '*'), null);
-        verify(channel, never()).enqueue(any(Log.class), anyString());
+        final String maxName = generateString(Analytics.MAX_NAME_LENGTH, '*');
+        Analytics.trackEvent(maxName + "*", null);
+        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    return eventLog.getName().equals(maxName) && eventLog.getProperties() == null;
+                }
+                return false;
+            }
+        }), anyString());
         reset(channel);
-        Analytics.trackEvent(generateString(256, '*'), null);
+        Analytics.trackEvent(maxName, null);
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
         reset(channel);
         Analytics.trackEvent("eventName", new HashMap<String, String>() {{
             put(null, null);
             put("", null);
-            put(generateString(65, '*'), null);
+            put(generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
             put("1", null);
-            put("2", generateString(65, '*'));
         }});
         verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -300,6 +310,26 @@ public class AnalyticsTest {
                 return false;
             }
         }), anyString());
+        reset(channel);
+        final String longerMapItem = generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
+        Analytics.trackEvent("eventName", new HashMap<String, String>() {{
+            put(longerMapItem, longerMapItem);
+        }});
+        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    if (eventLog.getProperties().size() == 1) {
+                        Map.Entry<String, String> entry = eventLog.getProperties().entrySet().iterator().next();
+                        String truncatedMapItem = generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH, '*');
+                        return entry.getKey().length() == Analytics.MAX_PROPERTY_ITEM_LENGTH && entry.getValue().length() == Analytics.MAX_PROPERTY_ITEM_LENGTH;
+                    }
+                }
+                return false;
+            }
+        }), anyString());
     }
 
     @Test
@@ -317,18 +347,28 @@ public class AnalyticsTest {
         Analytics.trackPage(" ", null);
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
         reset(channel);
-        Analytics.trackPage(generateString(257, '*'), null);
-        verify(channel, never()).enqueue(any(Log.class), anyString());
+        final String maxName = generateString(Analytics.MAX_NAME_LENGTH, '*');
+        Analytics.trackPage(maxName + "*", null);
+        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof PageLog) {
+                    PageLog pageLog = (PageLog) item;
+                    return pageLog.getName().equals(maxName) && pageLog.getProperties() == null;
+                }
+                return false;
+            }
+        }), anyString());
         reset(channel);
-        Analytics.trackPage(generateString(256, '*'), null);
+        Analytics.trackPage(maxName, null);
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
         reset(channel);
         Analytics.trackPage("pageName", new HashMap<String, String>() {{
             put(null, null);
             put("", null);
-            put(generateString(65, '*'), null);
+            put(generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
             put("1", null);
-            put("2", generateString(65, '*'));
         }});
         verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -355,6 +395,26 @@ public class AnalyticsTest {
                 if (item instanceof PageLog) {
                     PageLog pageLog = (PageLog) item;
                     return pageLog.getProperties().size() == 5;
+                }
+                return false;
+            }
+        }), anyString());
+        reset(channel);
+        final String longerMapItem = generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
+        Analytics.trackPage("pageName", new HashMap<String, String>() {{
+            put(longerMapItem, longerMapItem);
+        }});
+        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof PageLog) {
+                    PageLog pageLog = (PageLog) item;
+                    if (pageLog.getProperties().size() == 1) {
+                        Map.Entry<String, String> entry = pageLog.getProperties().entrySet().iterator().next();
+                        String truncatedMapItem = generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH, '*');
+                        return entry.getKey().length() == Analytics.MAX_PROPERTY_ITEM_LENGTH && entry.getValue().length() == Analytics.MAX_PROPERTY_ITEM_LENGTH;
+                    }
                 }
                 return false;
             }
