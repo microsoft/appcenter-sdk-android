@@ -279,7 +279,7 @@ public class Analytics extends AbstractMobileCenterService {
             return null;
         }
         if (name.length() > MAX_NAME_LENGTH) {
-            MobileCenterLog.error(Analytics.LOG_TAG, String.format("%s '%s' : name length cannot be longer than %s characters. Name will be truncated.", logType, name, MAX_NAME_LENGTH));
+            MobileCenterLog.warn(Analytics.LOG_TAG, String.format("%s '%s' : name length cannot be longer than %s characters. Name will be truncated.", logType, name, MAX_NAME_LENGTH));
             name = name.substring(0, MAX_NAME_LENGTH);
         }
         return name;
