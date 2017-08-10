@@ -1,21 +1,24 @@
 package com.microsoft.azure.mobile.crashes;
 
+import android.annotation.SuppressLint;
 import android.app.Application;
-import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
+import com.microsoft.azure.mobile.Constants;
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.MobileCenterPrivateHelper;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.crashes.ingestion.models.Exception;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
-import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.test.TestUtils.TAG;
@@ -27,15 +30,18 @@ import static org.mockito.Mockito.mock;
 
 public class WrapperSdkExceptionManagerAndroidTest {
 
+    @SuppressLint("StaticFieldLeak")
+    private static Application sApplication;
+
     @BeforeClass
     public static void setUpClass() {
-        MobileCenterLog.setLogLevel(android.util.Log.VERBOSE);
-        Context context = InstrumentationRegistry.getContext();
-        MobileCenter.configure((Application) context.getApplicationContext(), "dummy");
+        sApplication = (Application) InstrumentationRegistry.getContext().getApplicationContext();
+        StorageHelper.initialize(sApplication);
+        Constants.loadFromContext(sApplication);
     }
 
     @Before
-    public void cleanup() {
+    public void setUp() throws java.lang.Exception {
         android.util.Log.i(TAG, "Cleanup");
         StorageHelper.PreferencesStorage.clear();
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
@@ -43,8 +49,31 @@ public class WrapperSdkExceptionManagerAndroidTest {
         }
     }
 
+    private void startFresh() throws java.lang.Exception {
+
+        /* Configure new instance. */
+        MobileCenterPrivateHelper.unsetInstance();
+        Crashes.unsetInstance();
+        MobileCenter.setLogLevel(android.util.Log.VERBOSE);
+        MobileCenter.configure(sApplication, "a");
+
+        /* Replace channel. */
+        Method method = MobileCenter.class.getDeclaredMethod("getInstance");
+        method.setAccessible(true);
+        MobileCenter mobileCenter = (MobileCenter) method.invoke(null);
+        method = MobileCenter.class.getDeclaredMethod("setChannel", Channel.class);
+        method.setAccessible(true);
+        method.invoke(mobileCenter, mock(Channel.class));
+
+        /* Start crashes. */
+        MobileCenter.start(Crashes.class);
+
+        /* Wait for start. */
+        Assert.assertTrue(Crashes.isEnabled().get());
+    }
+
     @Test
-    public void saveWrapperException() {
+    public void saveWrapperException() throws java.lang.Exception {
 
         class ErrorData {
             private byte[] data;
@@ -65,8 +94,7 @@ public class WrapperSdkExceptionManagerAndroidTest {
         for (ErrorData error : errors) {
 
             /* Reset crash state as only 1 crash is saved per process life time. */
-            Crashes.unsetInstance();
-            Crashes.getInstance().onStarted(InstrumentationRegistry.getContext(), "", mock(Channel.class));
+            startFresh();
 
             /* Save crash. */
             error.id = WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), error.data);

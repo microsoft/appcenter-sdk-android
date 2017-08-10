@@ -50,6 +50,23 @@ public class Analytics extends AbstractMobileCenterService {
     private static final String ACTIVITY_SUFFIX = "Activity";
 
     /**
+     * Max number of properties.
+     */
+    private static final int MAX_PROPERTY_COUNT = 5;
+
+    /**
+     * Max length of event/page name.
+     */
+    @VisibleForTesting
+    static final int MAX_NAME_LENGTH = 256;
+
+    /**
+     * Max length of properties.
+     */
+    @VisibleForTesting
+    static final int MAX_PROPERTY_ITEM_LENGTH = 64;
+
+    /**
      * Shared instance.
      */
     private static Analytics sInstance = null;
@@ -184,8 +201,9 @@ public class Analytics extends AbstractMobileCenterService {
      * Track a custom page with name and optional properties.
      * The name parameter can not be null or empty. Maximum allowed length = 256.
      * The properties parameter maximum item count = 5.
-     * The properties keys/names can not be null or empty, maximum allowed key length = 64.
+     * The properties keys can not be null or empty, maximum allowed key length = 64.
      * The properties values can not be null, maximum allowed value length = 64.
+     * Any length of name/keys/values that are longer than each limit will be truncated.
      * <p>
      * TODO the backend does not support that service yet, will be public method later.
      *
@@ -195,7 +213,8 @@ public class Analytics extends AbstractMobileCenterService {
     @SuppressWarnings("WeakerAccess")
     protected static void trackPage(String name, Map<String, String> properties) {
         final String logType = "Page";
-        if (validateName(name, logType)) {
+        name = validateName(name, logType);
+        if (name != null) {
             Map<String, String> validatedProperties = validateProperties(properties, name, logType);
             getInstance().trackPageAsync(name, validatedProperties);
         }
@@ -215,8 +234,9 @@ public class Analytics extends AbstractMobileCenterService {
      * Track a custom event with name and optional properties.
      * The name parameter can not be null or empty. Maximum allowed length = 256.
      * The properties parameter maximum item count = 5.
-     * The properties keys/names can not be null or empty, maximum allowed key length = 64.
+     * The properties keys can not be null or empty, maximum allowed key length = 64.
      * The properties values can not be null, maximum allowed value length = 64.
+     * Any length of name/keys/values that are longer than each limit will be truncated.
      *
      * @param name       An event name.
      * @param properties Optional properties.
@@ -224,7 +244,8 @@ public class Analytics extends AbstractMobileCenterService {
     @SuppressWarnings("WeakerAccess")
     public static void trackEvent(String name, Map<String, String> properties) {
         final String logType = "Event";
-        if (validateName(name, logType)) {
+        name = validateName(name, logType);
+        if (name != null) {
             Map<String, String> validatedProperties = validateProperties(properties, name, logType);
             getInstance().trackEventAsync(name, validatedProperties);
         }
@@ -250,19 +271,18 @@ public class Analytics extends AbstractMobileCenterService {
      *
      * @param name    Log name to validate.
      * @param logType Log type.
-     * @return <code>true</code> if validation succeeds, otherwise <code>false</code>.
+     * @return <code>null</code> if validation failed, otherwise a valid name within the length limit will be returned.
      */
-    private static boolean validateName(String name, String logType) {
-        final int maxNameLength = 256;
+    private static String validateName(String name, String logType) {
         if (name == null || name.isEmpty()) {
             MobileCenterLog.error(Analytics.LOG_TAG, logType + " name cannot be null or empty.");
-            return false;
+            return null;
         }
-        if (name.length() > maxNameLength) {
-            MobileCenterLog.error(Analytics.LOG_TAG, String.format("%s '%s' : name length cannot be longer than %s characters.", logType, name, maxNameLength));
-            return false;
+        if (name.length() > MAX_NAME_LENGTH) {
+            MobileCenterLog.warn(Analytics.LOG_TAG, String.format("%s '%s' : name length cannot be longer than %s characters. Name will be truncated.", logType, name, MAX_NAME_LENGTH));
+            name = name.substring(0, MAX_NAME_LENGTH);
         }
-        return true;
+        return name;
     }
 
     /**
@@ -277,36 +297,36 @@ public class Analytics extends AbstractMobileCenterService {
         if (properties == null)
             return null;
         String message;
-        final int maxPropertiesCount = 5;
-        final int maxPropertyItemLength = 64;
         Map<String, String> result = new HashMap<>();
         for (Map.Entry<String, String> property : properties.entrySet()) {
-            if (result.size() >= maxPropertiesCount) {
-                message = String.format("%s '%s' : properties cannot contain more than %s items. Skipping other properties.", logType, logName, maxPropertiesCount);
+            String key = property.getKey();
+            String value = property.getValue();
+            if (result.size() >= MAX_PROPERTY_COUNT) {
+                message = String.format("%s '%s' : properties cannot contain more than %s items. Skipping other properties.", logType, logName, MAX_PROPERTY_COUNT);
                 MobileCenterLog.warn(Analytics.LOG_TAG, message);
                 break;
             }
-            if (property.getKey() == null || property.getKey().isEmpty()) {
+            if (key == null || key.isEmpty()) {
                 message = String.format("%s '%s' : a property key cannot be null or empty. Property will be skipped.", logType, logName);
                 MobileCenterLog.warn(Analytics.LOG_TAG, message);
                 continue;
             }
-            if (property.getKey().length() > maxPropertyItemLength) {
-                message = String.format("%s '%s' : property '%s' : property key length cannot be longer than %s characters. Property '%s' will be skipped.", logType, logName, property.getKey(), maxPropertyItemLength, property.getKey());
+            if (value == null) {
+                message = String.format("%s '%s' : property '%s' : property value cannot be null. Property '%s' will be skipped.", logType, logName, key, key);
                 MobileCenterLog.warn(Analytics.LOG_TAG, message);
                 continue;
             }
-            if (property.getValue() == null) {
-                message = String.format("%s '%s' : property '%s' : property value cannot be null. Property '%s' will be skipped.", logType, logName, property.getKey(), property.getKey());
+            if (key.length() > MAX_PROPERTY_ITEM_LENGTH) {
+                message = String.format("%s '%s' : property '%s' : property key length cannot be longer than %s characters. Property key will be truncated.", logType, logName, key, MAX_PROPERTY_ITEM_LENGTH);
                 MobileCenterLog.warn(Analytics.LOG_TAG, message);
-                continue;
+                key = key.substring(0, MAX_PROPERTY_ITEM_LENGTH);
             }
-            if (property.getValue().length() > maxPropertyItemLength) {
-                message = String.format("%s '%s' : property '%s' : property value cannot be longer than %s characters. Property '%s' will be skipped.", logType, logName, property.getKey(), maxPropertyItemLength, property.getKey());
+            if (value.length() > MAX_PROPERTY_ITEM_LENGTH) {
+                message = String.format("%s '%s' : property '%s' : property value cannot be longer than %s characters. Property value will be truncated.", logType, logName, key, MAX_PROPERTY_ITEM_LENGTH);
                 MobileCenterLog.warn(Analytics.LOG_TAG, message);
-                continue;
+                value = value.substring(0, MAX_PROPERTY_ITEM_LENGTH);
             }
-            result.put(property.getKey(), property.getValue());
+            result.put(key, value);
         }
         return result;
     }

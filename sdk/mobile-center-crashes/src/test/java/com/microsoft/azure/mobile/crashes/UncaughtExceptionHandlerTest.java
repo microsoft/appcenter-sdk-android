@@ -160,6 +160,12 @@ public class UncaughtExceptionHandlerTest {
     }
 
     @Test
+    public void handleExceptionAndPassOnExplicitlySetDontIgnore() {
+        mExceptionHandler.setIgnoreDefaultExceptionHandler(false);
+        handleExceptionAndPassOn();
+    }
+
+    @Test
     public void handleExceptionAndIgnoreDefaultHandler() {
 
         /* Register crash handler */
@@ -176,37 +182,6 @@ public class UncaughtExceptionHandlerTest {
         ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Exception.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean());
         verifyStatic();
         System.exit(10);
-    }
-
-    @Test
-    public void passDefaultHandler() {
-        /* Verify that when crashes is disabled, an exception is instantly passed on */
-        when(Crashes.isEnabled().get()).thenReturn(false);
-
-        mExceptionHandler.register();
-        mExceptionHandler.setIgnoreDefaultExceptionHandler(false);
-
-        final Thread thread = Thread.currentThread();
-        final RuntimeException exception = new RuntimeException();
-        mExceptionHandler.uncaughtException(thread, exception);
-        verify(mDefaultExceptionHandler).uncaughtException(thread, exception);
-
-        PowerMockito.verifyNoMoreInteractions(ErrorLogHelper.class);
-    }
-
-    @Test
-    public void crashesDisabledNoDefaultHandler() {
-        /* Verify that when crashes is disabled, an exception is instantly passed on */
-        when(Crashes.isEnabled().get()).thenReturn(false);
-
-        mExceptionHandler.register();
-        mExceptionHandler.setIgnoreDefaultExceptionHandler(true);
-
-        final Thread thread = Thread.currentThread();
-        final RuntimeException exception = new RuntimeException();
-        mExceptionHandler.uncaughtException(thread, exception);
-        verifyNoMoreInteractions(mDefaultExceptionHandler);
-        PowerMockito.verifyNoMoreInteractions(ErrorLogHelper.class);
     }
 
     @Test
