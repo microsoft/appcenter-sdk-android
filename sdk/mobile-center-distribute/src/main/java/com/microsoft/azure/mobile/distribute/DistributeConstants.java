@@ -59,7 +59,7 @@ final class DistributeConstants {
     /**
      * Check latest public release API URL path. Contains the app secret variable to replace.
      */
-    static final String GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT = "/sdk/apps/%s/distribution_groups/%s/releases/latest?release_hash=%s";
+    static final String GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT = "/public/sdk/apps/%s/distribution_groups/%s/releases/latest?release_hash=%s";
 
     /**
      * API parameter for release hash.
