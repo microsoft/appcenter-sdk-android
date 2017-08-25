@@ -33,6 +33,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
@@ -76,7 +77,8 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
     @Before
     public void setUpDialog() throws Exception {
 
-        /* Mock we already have token. */
+        /* Mock we already have redirection parameters. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);

@@ -42,6 +42,7 @@ import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETE
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_REDIRECT_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_RELEASE_HASH;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_REQUEST_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
@@ -101,6 +102,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
          * (if package name and signature matches an APK on Google Play you can upgrade to
          * Google Play version without losing data.
          */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
@@ -129,7 +131,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void storeTokenBeforeStart() throws Exception {
+    public void storePrivateRedirectionBeforeStart() throws Exception {
 
         /* Setup mock. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
@@ -137,7 +139,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
 
         /* Store token before start, start in background, no storage access. */
-        Distribute.getInstance().storeUpdateToken("some token", "r");
+        Distribute.getInstance().storeRedirectionParameters("r", "g", "some token");
         start();
         verifyStatic(never());
         PreferencesStorage.putString(anyString(), anyString());
@@ -149,6 +151,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
         verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
+        verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
@@ -156,6 +160,38 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void storePublicRedirectionBeforeStart() throws Exception {
+
+        /* Setup mock. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+
+        /* Store token before start, start in background, no storage access. */
+        Distribute.getInstance().storeRedirectionParameters("r", "g", null);
+        start();
+        verifyStatic(never());
+        PreferencesStorage.putString(anyString(), anyString());
+        verifyStatic(never());
+        PreferencesStorage.remove(anyString());
+
+        /* Unlock the processing by going into foreground. */
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        HashMap<String, String> headers = new HashMap<>();
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
@@ -215,7 +251,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void happyPathUntilHangingCall() throws Exception {
+    public void happyPathUntilHangingCallWithToken() throws Exception {
 
         /* Setup mock. */
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
@@ -247,11 +283,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
         /* Store token. */
-        Distribute.getInstance().storeUpdateToken("some token", requestId.toString());
+        Distribute.getInstance().storeRedirectionParameters(requestId.toString(), "g", "some token");
 
         /* Verify behavior. */
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
         verifyStatic();
@@ -276,6 +314,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
         verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
+        verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
@@ -291,11 +331,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Call is still in progress. If we restart app, nothing happens we still wait. */
         restartResumeLauncher(mActivity);
-        Distribute.getInstance().onActivityPaused(mActivity);
-        Distribute.getInstance().onActivityStopped(mActivity);
-        Distribute.getInstance().onActivityDestroyed(mActivity);
-        Distribute.getInstance().onActivityCreated(mActivity, mock(Bundle.class));
-        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify behavior not changed. */
         verifyStatic();
@@ -303,12 +338,142 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
         verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
+        verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
+            }
+        }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* If process is restarted, a new call will be made. Need to mock storage for that. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("g");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verify(httpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
+            }
+        }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void happyPathUntilHangingCallWithoutToken() throws Exception {
+
+        /* Setup mock. */
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        UUID requestId = UUID.randomUUID();
+        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+
+        /* Start and resume: open browser. */
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verifyStatic();
+        String url = DistributeConstants.DEFAULT_INSTALL_URL;
+        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
+        url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
+        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        BrowserUtils.openBrowser(url, mActivity);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
+
+        /* If browser already opened, activity changed must not recall it. */
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verifyStatic();
+        BrowserUtils.openBrowser(url, mActivity);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
+
+        /* Store token. */
+        Distribute.getInstance().storeRedirectionParameters(requestId.toString(), "g", null);
+
+        /* Verify behavior. */
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        HashMap<String, String> headers = new HashMap<>();
+        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
+            }
+        }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* If call already made, activity changed must not recall it. */
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Verify behavior. */
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
+            }
+        }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Call is still in progress. If we restart app, nothing happens we still wait. */
+        restartResumeLauncher(mActivity);
+
+        /* Verify behavior not changed. */
+        verifyStatic();
+        BrowserUtils.openBrowser(url, mActivity);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
+            }
+        }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* If process is restarted, a new call will be made. Need to mock storage for that. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("g");
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verify(httpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -344,7 +509,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
         /* Store token. */
-        Distribute.getInstance().storeUpdateToken("some token", requestId.toString());
+        Distribute.getInstance().storeRedirectionParameters(requestId.toString(), "g", "some token");
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
@@ -400,7 +565,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         assertFalse(Distribute.isEnabled().get());
 
         /* Store token. */
-        Distribute.getInstance().storeUpdateToken("some token", requestId.toString());
+        Distribute.getInstance().storeRedirectionParameters(requestId.toString(), "g", "some token");
 
         /* Verify behavior. */
         verifyStatic(never());
@@ -417,7 +582,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         assertTrue(Distribute.isEnabled().get());
 
         /* Store token. */
-        Distribute.getInstance().storeUpdateToken("some token", requestId.toString());
+        Distribute.getInstance().storeRedirectionParameters(requestId.toString(), "g", "some token");
 
         /* Verify behavior. */
         verifyStatic(never());

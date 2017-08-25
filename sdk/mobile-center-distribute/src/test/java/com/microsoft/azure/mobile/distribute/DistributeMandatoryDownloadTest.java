@@ -54,6 +54,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDownloadTest {
 
     @Mock
+    @SuppressWarnings("deprecation")
     private ProgressDialog mProgressDialog;
 
     @Mock
@@ -63,6 +64,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
     public void setUpDownload() throws Exception {
 
         /* Mock some dialog methods. */
+        //noinspection deprecation
         whenNew(ProgressDialog.class).withAnyArguments().thenReturn(mProgressDialog);
         doAnswer(new Answer<Void>() {
 
@@ -172,7 +174,9 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         waitCheckDownloadTask();
 
         /* On restart progress is restored. */
+        //noinspection deprecation
         mProgressDialog = mock(ProgressDialog.class);
+        //noinspection deprecation
         whenNew(ProgressDialog.class).withAnyArguments().thenReturn(mProgressDialog);
         restartProcessAndSdk();
 

@@ -14,7 +14,6 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
@@ -35,10 +34,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
@@ -426,8 +425,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(details);
 
         /* Mock update token. */
-        PowerMockito.when(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-
+        when(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         return details;
     }
 
@@ -453,7 +451,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
             }
         }).when(StorageHelper.PreferencesStorage.class);
         StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        PowerMockito.when(StorageHelper.PreferencesStorage.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt()))
+        when(StorageHelper.PreferencesStorage.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt()))
                 .thenAnswer(new Answer<Integer>() {
 
                     @Override

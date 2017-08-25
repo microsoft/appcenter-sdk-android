@@ -66,12 +66,20 @@ public class DeepLinkActivityTest {
     }
 
     @Test
+    public void missingDistributionGroupId() {
+        Intent intent = mock(Intent.class);
+        when(intent.getStringExtra(DistributeConstants.EXTRA_REQUEST_ID)).thenReturn("mock");
+        invalidIntent(intent);
+    }
+
+    @Test
     public void validAndNoTaskRoot() {
 
         /* Build valid intent. */
         Intent intent = mock(Intent.class);
-        when(intent.getStringExtra(DistributeConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
-        when(intent.getStringExtra(DistributeConstants.EXTRA_REQUEST_ID)).thenReturn("mock2");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_REQUEST_ID)).thenReturn("mock1");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_DISTRIBUTION_GROUP_ID)).thenReturn("mock2");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock3");
         when(intent.getFlags()).thenReturn(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
 
         /* Start activity. */
@@ -82,7 +90,7 @@ public class DeepLinkActivityTest {
         /* Verify interactions. */
         verify(activity, never()).startActivity(any(Intent.class));
         verify(activity).finish();
-        verify(mDistribute).storeUpdateToken("mock1", "mock2");
+        verify(mDistribute).storeRedirectionParameters("mock1", "mock2", "mock3");
     }
 
     @Test
@@ -90,8 +98,8 @@ public class DeepLinkActivityTest {
 
         /* Build valid intent. */
         Intent intent = mock(Intent.class);
-        when(intent.getStringExtra(DistributeConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
-        when(intent.getStringExtra(DistributeConstants.EXTRA_REQUEST_ID)).thenReturn("mock2");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_REQUEST_ID)).thenReturn("mock1");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_DISTRIBUTION_GROUP_ID)).thenReturn("mock2");
         when(intent.getFlags()).thenReturn(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
 
         /* Start activity. */
@@ -104,7 +112,7 @@ public class DeepLinkActivityTest {
         /* Verify interactions. */
         verify(activity, never()).startActivity(any(Intent.class));
         verify(activity).finish();
-        verify(mDistribute).storeUpdateToken("mock1", "mock2");
+        verify(mDistribute).storeRedirectionParameters("mock1", "mock2", null);
     }
 
     @Test
@@ -112,8 +120,8 @@ public class DeepLinkActivityTest {
 
         /* Build valid intent. */
         Intent intent = mock(Intent.class);
-        when(intent.getStringExtra(DistributeConstants.EXTRA_UPDATE_TOKEN)).thenReturn("mock1");
-        when(intent.getStringExtra(DistributeConstants.EXTRA_REQUEST_ID)).thenReturn("mock2");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_REQUEST_ID)).thenReturn("mock1");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_DISTRIBUTION_GROUP_ID)).thenReturn("mock2");
         when(intent.getFlags()).thenReturn(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
 
         /* Start activity. */
@@ -130,6 +138,6 @@ public class DeepLinkActivityTest {
         /* Verify interactions. */
         verify(activity).startActivity(launcherIntent);
         verify(activity).finish();
-        verify(mDistribute).storeUpdateToken("mock1", "mock2");
+        verify(mDistribute).storeRedirectionParameters("mock1", "mock2", null);
     }
 }
