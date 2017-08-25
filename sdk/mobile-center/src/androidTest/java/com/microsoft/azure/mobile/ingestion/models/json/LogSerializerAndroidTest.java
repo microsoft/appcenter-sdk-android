@@ -68,6 +68,7 @@ public class LogSerializerAndroidTest {
         log.setServices(services);
         UUID sid = UUIDUtils.randomUUID();
         log.setSid(sid);
+        log.setTimestamp(new Date());
 
         /* Verify serialize and deserialize. */
         LogSerializer serializer = new DefaultLogSerializer();
@@ -89,6 +90,7 @@ public class LogSerializerAndroidTest {
         log.setProperties(properties);
         UUID sid = UUIDUtils.randomUUID();
         log.setSid(sid);
+        log.setTimestamp(new Date());
 
         /* Verify serialize and deserialize. */
         LogSerializer serializer = new DefaultLogSerializer();
@@ -104,7 +106,7 @@ public class LogSerializerAndroidTest {
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         serializer.deserializeLog("{" +
                 "\"type\": \"custom_properties\"," +
-                "\"toffset\":0" +
+                "\"timestamp\": \"2017-07-08T00:32:58.123Z\"" +
                 "}");
     }
 
@@ -114,7 +116,7 @@ public class LogSerializerAndroidTest {
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         serializer.deserializeLog("{" +
                 "\"type\": \"custom_properties\"," +
-                "\"toffset\":0," +
+                "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
                 "\"properties\":[{\"name\":\"test\",\"type\":\"unknown\",\"value\":42}]" +
                 "}");
     }
@@ -125,7 +127,7 @@ public class LogSerializerAndroidTest {
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         serializer.deserializeLog("{" +
                 "\"type\": \"custom_properties\"," +
-                "\"toffset\":0," +
+                "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
                 "\"properties\":[{\"name\":\"test\",\"type\":\"date_time\",\"value\":\"today\"}]" +
                 "}");
     }
@@ -136,7 +138,7 @@ public class LogSerializerAndroidTest {
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         serializer.deserializeLog("{" +
                 "\"type\": \"custom_properties\"," +
-                "\"toffset\":0," +
+                "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
                 "\"properties\":[{\"name\":\"test\",\"type\":\"number\",\"value\":false}]" +
                 "}");
     }
@@ -145,6 +147,7 @@ public class LogSerializerAndroidTest {
     public void serializeWithoutProperties() throws JSONException {
         LogSerializer serializer = new DefaultLogSerializer();
         CustomPropertiesLog invalidTypeLog = new CustomPropertiesLog();
+        invalidTypeLog.setTimestamp(new Date());
         serializer.serializeLog(invalidTypeLog);
     }
 
@@ -152,6 +155,7 @@ public class LogSerializerAndroidTest {
     public void serializeWithInvalidType() throws JSONException {
         LogSerializer serializer = new DefaultLogSerializer();
         CustomPropertiesLog invalidTypeLog = new CustomPropertiesLog();
+        invalidTypeLog.setTimestamp(new Date());
         Map<String, Object> invalidTypeProperties = new HashMap<>();
         invalidTypeProperties.put("nested", new HashMap<String, Object>());
         invalidTypeLog.setProperties(invalidTypeProperties);

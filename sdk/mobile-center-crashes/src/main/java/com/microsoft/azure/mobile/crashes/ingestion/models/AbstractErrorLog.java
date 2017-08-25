@@ -1,12 +1,14 @@
 package com.microsoft.azure.mobile.crashes.ingestion.models;
 
 import com.microsoft.azure.mobile.ingestion.models.AbstractLog;
+import com.microsoft.azure.mobile.ingestion.models.json.JSONDateUtils;
 import com.microsoft.azure.mobile.ingestion.models.json.JSONUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+import java.util.Date;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.ingestion.models.CommonProperties.ID;
@@ -30,7 +32,7 @@ public abstract class AbstractErrorLog extends AbstractLog {
 
     private static final String FATAL = "fatal";
 
-    private static final String APP_LAUNCH_TOFFSET = "app_launch_toffset";
+    private static final String APP_LAUNCH_TIMESTAMP = "app_launch_timestamp";
 
     private static final String ARCHITECTURE = "architecture";
 
@@ -75,10 +77,9 @@ public abstract class AbstractErrorLog extends AbstractLog {
     private Boolean fatal;
 
     /**
-     * Corresponds to the number of milliseconds elapsed between the time the
-     * error occurred and the app was launched.
+     * Timestamp when the app was launched.
      */
-    private Long appLaunchTOffset;
+    private Date appLaunchTimestamp;
 
     /**
      * CPU architecture.
@@ -153,6 +154,7 @@ public abstract class AbstractErrorLog extends AbstractLog {
      *
      * @param parentProcessId the parentProcessId value to set
      */
+    @SuppressWarnings("WeakerAccess")
     public void setParentProcessId(Integer parentProcessId) {
         this.parentProcessId = parentProcessId;
     }
@@ -171,6 +173,7 @@ public abstract class AbstractErrorLog extends AbstractLog {
      *
      * @param parentProcessName the parentProcessName value to set
      */
+    @SuppressWarnings("WeakerAccess")
     public void setParentProcessName(String parentProcessName) {
         this.parentProcessName = parentProcessName;
     }
@@ -230,21 +233,21 @@ public abstract class AbstractErrorLog extends AbstractLog {
     }
 
     /**
-     * Get the appLaunchTOffset value.
+     * Get the appLaunchTimestamp value.
      *
-     * @return the appLaunchTOffset value
+     * @return the appLaunchTimestamp value
      */
-    public Long getAppLaunchTOffset() {
-        return this.appLaunchTOffset;
+    public Date getAppLaunchTimestamp() {
+        return this.appLaunchTimestamp;
     }
 
     /**
-     * Set the appLaunchTOffset value.
+     * Set the appLaunchTimestamp value.
      *
-     * @param appLaunchTOffset the appLaunchTOffset value to set
+     * @param appLaunchTimestamp the appLaunchTimestamp value to set
      */
-    public void setAppLaunchTOffset(Long appLaunchTOffset) {
-        this.appLaunchTOffset = appLaunchTOffset;
+    public void setAppLaunchTimestamp(Date appLaunchTimestamp) {
+        this.appLaunchTimestamp = appLaunchTimestamp;
     }
 
     /**
@@ -276,7 +279,7 @@ public abstract class AbstractErrorLog extends AbstractLog {
         setErrorThreadId(JSONUtils.readLong(object, ERROR_THREAD_ID));
         setErrorThreadName(object.optString(ERROR_THREAD_NAME, null));
         setFatal(JSONUtils.readBoolean(object, FATAL));
-        setAppLaunchTOffset(JSONUtils.readLong(object, APP_LAUNCH_TOFFSET));
+        setAppLaunchTimestamp(JSONDateUtils.toDate(object.getString(APP_LAUNCH_TIMESTAMP)));
         setArchitecture(object.optString(ARCHITECTURE, null));
     }
 
@@ -291,7 +294,7 @@ public abstract class AbstractErrorLog extends AbstractLog {
         JSONUtils.write(writer, ERROR_THREAD_ID, getErrorThreadId());
         JSONUtils.write(writer, ERROR_THREAD_NAME, getErrorThreadName());
         JSONUtils.write(writer, FATAL, getFatal());
-        JSONUtils.write(writer, APP_LAUNCH_TOFFSET, getAppLaunchTOffset());
+        JSONUtils.write(writer, APP_LAUNCH_TIMESTAMP, JSONDateUtils.toString(getAppLaunchTimestamp()));
         JSONUtils.write(writer, ARCHITECTURE, getArchitecture());
     }
 
@@ -318,7 +321,7 @@ public abstract class AbstractErrorLog extends AbstractLog {
         if (errorThreadName != null ? !errorThreadName.equals(that.errorThreadName) : that.errorThreadName != null)
             return false;
         if (fatal != null ? !fatal.equals(that.fatal) : that.fatal != null) return false;
-        if (appLaunchTOffset != null ? !appLaunchTOffset.equals(that.appLaunchTOffset) : that.appLaunchTOffset != null)
+        if (appLaunchTimestamp != null ? !appLaunchTimestamp.equals(that.appLaunchTimestamp) : that.appLaunchTimestamp != null)
             return false;
         return architecture != null ? architecture.equals(that.architecture) : that.architecture == null;
     }
@@ -334,7 +337,7 @@ public abstract class AbstractErrorLog extends AbstractLog {
         result = 31 * result + (errorThreadId != null ? errorThreadId.hashCode() : 0);
         result = 31 * result + (errorThreadName != null ? errorThreadName.hashCode() : 0);
         result = 31 * result + (fatal != null ? fatal.hashCode() : 0);
-        result = 31 * result + (appLaunchTOffset != null ? appLaunchTOffset.hashCode() : 0);
+        result = 31 * result + (appLaunchTimestamp != null ? appLaunchTimestamp.hashCode() : 0);
         result = 31 * result + (architecture != null ? architecture.hashCode() : 0);
         return result;
     }
