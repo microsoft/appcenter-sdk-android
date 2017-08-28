@@ -159,7 +159,7 @@ public class DefaultHttpClient implements HttpClient {
             MobileCenterLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + response);
 
             /* Generate exception on failure. */
-            if (status != 200)
+            if (status != HttpURLConnection.HTTP_OK)
                 throw new HttpException(status, response);
             return response;
         } finally {
