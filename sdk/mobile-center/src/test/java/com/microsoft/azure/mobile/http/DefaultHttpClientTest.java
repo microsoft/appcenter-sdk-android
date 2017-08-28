@@ -232,6 +232,42 @@ public class DefaultHttpClientTest {
     }
 
     @Test
+    public void get2xx() throws Exception {
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock/get";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(outputStream);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream("OK".getBytes());
+        when(urlConnection.getInputStream()).thenReturn(inputStream);
+
+        /* Configure API client. */
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        Map<String, String> headers = new HashMap<>();
+        mockCall();
+
+        for (int statusCode = 200; statusCode < 300; statusCode++) {
+
+            /* Configure status code. */
+            when(urlConnection.getResponseCode()).thenReturn(statusCode);
+
+            /* Test calling code. */
+            ServiceCallback serviceCallback = mock(ServiceCallback.class);
+            httpClient.callAsync(urlString, METHOD_GET, headers, null, serviceCallback);
+            verify(serviceCallback).onCallSucceeded("OK");
+            verifyNoMoreInteractions(serviceCallback);
+
+            /* Reset response stream. */
+            inputStream.reset();
+        }
+        httpClient.close();
+    }
+
+    @Test
     public void get200WithoutCallTemplate() throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
