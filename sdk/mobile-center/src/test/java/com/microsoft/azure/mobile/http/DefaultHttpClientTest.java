@@ -122,6 +122,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
+        verify(urlConnection).setRequestMethod("POST");
         verify(urlConnection).setDoOutput(true);
         verify(urlConnection).disconnect();
         verify(callTemplate).onBeforeCalling(eq(url), any(Map.class));
@@ -174,6 +175,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
+        verify(urlConnection).setRequestMethod("POST");
         verify(urlConnection, never()).setDoOutput(true);
         verify(urlConnection).disconnect();
         httpClient.close();
@@ -220,6 +222,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
+        verify(urlConnection).setRequestMethod("GET");
         verify(urlConnection, never()).setDoOutput(true);
         verify(urlConnection).disconnect();
         verify(inputStream).close();
@@ -262,6 +265,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
+        verify(urlConnection).setRequestMethod("GET");
         verify(urlConnection, never()).setDoOutput(true);
         verify(urlConnection).disconnect();
         httpClient.close();
