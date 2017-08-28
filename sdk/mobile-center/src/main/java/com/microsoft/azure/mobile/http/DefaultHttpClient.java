@@ -21,14 +21,9 @@ import static java.lang.Math.max;
 
 public class DefaultHttpClient implements HttpClient {
 
-    /**
-     * Application secret HTTP Header.
-     */
-    public static final String APP_SECRET = "App-Secret";
-
     public static final String METHOD_GET = "GET";
 
-    public static final String METHOD_POST = "METHOD_POST";
+    public static final String METHOD_POST = "POST";
 
     /**
      * Thread stats tag for Mobile Center HTTP calls.
@@ -86,7 +81,8 @@ public class DefaultHttpClient implements HttpClient {
          */
         StringBuilder builder = new StringBuilder(max(urlConnection.getContentLength(), DEFAULT_STRING_BUILDER_CAPACITY));
         InputStream stream;
-        if (urlConnection.getResponseCode() < 400)
+        int status = urlConnection.getResponseCode();
+        if (status >= 200 && status < 400)
             stream = urlConnection.getInputStream();
         else
             stream = urlConnection.getErrorStream();
@@ -127,6 +123,7 @@ public class DefaultHttpClient implements HttpClient {
             /* Configure connection timeouts. */
             urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
             urlConnection.setReadTimeout(READ_TIMEOUT);
+            urlConnection.setRequestMethod(method);
 
             /* Set headers. */
             urlConnection.setRequestProperty(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
@@ -157,10 +154,13 @@ public class DefaultHttpClient implements HttpClient {
             String response = dump(urlConnection);
             MobileCenterLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + response);
 
+            /* Accept all 2xx codes. */
+            if (status >= 200 && status < 300) {
+                return response;
+            }
+
             /* Generate exception on failure. */
-            if (status != 200)
-                throw new HttpException(status, response);
-            return response;
+            throw new HttpException(status, response);
         } finally {
 
             /* Release connection. */
