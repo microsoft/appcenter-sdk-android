@@ -26,7 +26,6 @@ import java.util.UUID;
 
 import static android.util.Log.VERBOSE;
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
-import static com.microsoft.azure.mobile.http.DefaultHttpClient.APP_SECRET;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_POST;
 
 public class IngestionHttp implements Ingestion {
@@ -48,6 +47,12 @@ public class IngestionHttp implements Ingestion {
      */
     @VisibleForTesting
     static final String INSTALL_ID = "Install-ID";
+
+    /**
+     * Application secret HTTP Header.
+     */
+    @VisibleForTesting
+    static final String APP_SECRET = "App-Secret";
 
     /**
      * Log serializer.

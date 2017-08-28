@@ -21,11 +21,6 @@ import static java.lang.Math.max;
 
 public class DefaultHttpClient implements HttpClient {
 
-    /**
-     * Application secret HTTP Header.
-     */
-    public static final String APP_SECRET = "App-Secret";
-
     public static final String METHOD_GET = "GET";
 
     public static final String METHOD_POST = "POST";
