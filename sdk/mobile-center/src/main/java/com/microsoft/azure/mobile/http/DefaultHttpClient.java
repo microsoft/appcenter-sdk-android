@@ -28,7 +28,7 @@ public class DefaultHttpClient implements HttpClient {
 
     public static final String METHOD_GET = "GET";
 
-    public static final String METHOD_POST = "METHOD_POST";
+    public static final String METHOD_POST = "POST";
 
     /**
      * Thread stats tag for Mobile Center HTTP calls.
@@ -127,6 +127,7 @@ public class DefaultHttpClient implements HttpClient {
             /* Configure connection timeouts. */
             urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
             urlConnection.setReadTimeout(READ_TIMEOUT);
+            urlConnection.setRequestMethod(method);
 
             /* Set headers. */
             urlConnection.setRequestProperty(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
