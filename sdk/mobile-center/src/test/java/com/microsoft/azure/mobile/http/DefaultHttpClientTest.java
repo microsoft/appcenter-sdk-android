@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -122,6 +123,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
+        verify(urlConnection).setRequestMethod("POST");
         verify(urlConnection).setDoOutput(true);
         verify(urlConnection).disconnect();
         verify(callTemplate).onBeforeCalling(eq(url), any(Map.class));
@@ -174,6 +176,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
+        verify(urlConnection).setRequestMethod("POST");
         verify(urlConnection, never()).setDoOutput(true);
         verify(urlConnection).disconnect();
         httpClient.close();
@@ -220,12 +223,75 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
+        verify(urlConnection).setRequestMethod("GET");
         verify(urlConnection, never()).setDoOutput(true);
         verify(urlConnection).disconnect();
         verify(inputStream).close();
         verify(callTemplate).onBeforeCalling(eq(url), any(Map.class));
         verify(callTemplate, never()).buildRequestBody();
         httpClient.close();
+    }
+
+    @Test
+    public void get2xx() throws Exception {
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock/get";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(outputStream);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream("OK".getBytes());
+        when(urlConnection.getInputStream()).thenReturn(inputStream);
+
+        /* Configure API client. */
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        Map<String, String> headers = new HashMap<>();
+        mockCall();
+
+        for (int statusCode = 200; statusCode < 300; statusCode++) {
+
+            /* Configure status code. */
+            when(urlConnection.getResponseCode()).thenReturn(statusCode);
+
+            /* Test calling code. */
+            ServiceCallback serviceCallback = mock(ServiceCallback.class);
+            httpClient.callAsync(urlString, METHOD_GET, headers, null, serviceCallback);
+            verify(serviceCallback).onCallSucceeded("OK");
+            verifyNoMoreInteractions(serviceCallback);
+
+            /* Reset response stream. */
+            inputStream.reset();
+        }
+        httpClient.close();
+    }
+
+    @Test
+    public void get100() throws Exception {
+
+        /* Configure mock HTTP. */
+        URL url = mock(URL.class);
+        whenNew(URL.class).withAnyArguments().thenReturn(url);
+        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(100);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(buffer);
+        when(urlConnection.getErrorStream()).thenReturn(new ByteArrayInputStream("Continue".getBytes()));
+
+        /* Configure API client. */
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+
+        /* Test calling code. */
+        Map<String, String> headers = new HashMap<>();
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        mockCall();
+        httpClient.callAsync("", METHOD_POST, headers, null, serviceCallback);
+        verify(serviceCallback).onCallFailed(new HttpException(100, "Continue"));
+        verifyNoMoreInteractions(serviceCallback);
+        verify(urlConnection).disconnect();
     }
 
     @Test
@@ -262,6 +328,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
+        verify(urlConnection).setRequestMethod("GET");
         verify(urlConnection, never()).setDoOutput(true);
         verify(urlConnection).disconnect();
         httpClient.close();

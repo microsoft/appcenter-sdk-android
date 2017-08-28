@@ -24,6 +24,7 @@ import org.mockito.stubbing.Answer;
 import java.io.IOException;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -34,7 +35,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyList;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
@@ -58,7 +58,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Log log = mock(Log.class);
         channel.enqueue(log, TEST_GROUP);
         verify(log, never()).setDevice(any(Device.class));
-        verify(log, never()).setToffset(anyLong());
+        verify(log, never()).setTimestamp(any(Date.class));
         verify(persistence, never()).putLog(TEST_GROUP, log);
 
         /* Trying remove group that not registered. */

@@ -11,7 +11,6 @@ import com.microsoft.azure.mobile.http.HttpClientRetryer;
 import com.microsoft.azure.mobile.http.HttpUtils;
 import com.microsoft.azure.mobile.http.ServiceCall;
 import com.microsoft.azure.mobile.http.ServiceCallback;
-import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.LogContainer;
 import com.microsoft.azure.mobile.ingestion.models.json.LogSerializer;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
@@ -22,13 +21,11 @@ import org.json.JSONException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static android.util.Log.VERBOSE;
 import static com.microsoft.azure.mobile.MobileCenter.LOG_TAG;
-import static com.microsoft.azure.mobile.http.DefaultHttpClient.APP_SECRET;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_POST;
 
 public class IngestionHttp implements Ingestion {
@@ -50,6 +47,12 @@ public class IngestionHttp implements Ingestion {
      */
     @VisibleForTesting
     static final String INSTALL_ID = "Install-ID";
+
+    /**
+     * Application secret HTTP Header.
+     */
+    @VisibleForTesting
+    static final String APP_SECRET = "App-Secret";
 
     /**
      * Log serializer.
@@ -122,28 +125,8 @@ public class IngestionHttp implements Ingestion {
         @Override
         public String buildRequestBody() throws JSONException {
 
-            /* Timestamps need to be as accurate as possible so we convert absolute time to relative now. Save times. */
-            List<Log> logs = mLogContainer.getLogs();
-            int size = logs.size();
-            long[] absoluteTimes = new long[size];
-            for (int i = 0; i < size; i++) {
-                Log log = logs.get(i);
-                long toffset = log.getToffset();
-                absoluteTimes[i] = toffset;
-                log.setToffset(System.currentTimeMillis() - toffset);
-            }
-
             /* Serialize payload. */
-            String payload;
-            try {
-                payload = mLogSerializer.serializeContainer(mLogContainer);
-            } finally {
-
-                /* Restore original times, could be retried later. */
-                for (int i = 0; i < size; i++)
-                    logs.get(i).setToffset(absoluteTimes[i]);
-            }
-            return payload;
+            return mLogSerializer.serializeContainer(mLogContainer);
         }
 
         @Override

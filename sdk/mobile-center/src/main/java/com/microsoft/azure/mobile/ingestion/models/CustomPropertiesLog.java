@@ -1,5 +1,6 @@
 package com.microsoft.azure.mobile.ingestion.models;
 
+import com.microsoft.azure.mobile.ingestion.models.json.JSONDateUtils;
 import com.microsoft.azure.mobile.ingestion.models.json.JSONUtils;
 
 import org.json.JSONArray;
@@ -7,14 +8,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 
 /**
  * The custom properties log model.
@@ -44,20 +40,80 @@ public class CustomPropertiesLog extends AbstractLog {
 
     private static final String PROPERTY_TYPE_STRING = "string";
 
-    private static final ThreadLocal<DateFormat> DATETIME_FORMAT = new ThreadLocal<DateFormat>() {
-
-        @Override
-        protected DateFormat initialValue() {
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
-            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-            return dateFormat;
-        }
-    };
-
     /**
      * Properties key/value pairs.
      */
     private Map<String, Object> properties;
+
+    private static Map<String, Object> readProperties(JSONObject object) throws JSONException {
+        JSONArray jArray = object.getJSONArray(PROPERTIES);
+        Map<String, Object> properties = new HashMap<>();
+        for (int i = 0; i < jArray.length(); i++) {
+            JSONObject jProperty = jArray.getJSONObject(i);
+            String key = jProperty.getString(PROPERTY_NAME);
+            Object value = readPropertyValue(jProperty);
+            properties.put(key, value);
+        }
+        return properties;
+    }
+
+    @SuppressWarnings("IfCanBeSwitch")
+    private static Object readPropertyValue(JSONObject object) throws JSONException {
+        String type = object.getString(PROPERTY_TYPE);
+        Object value;
+        if (type.equals(PROPERTY_TYPE_CLEAR)) {
+            value = null;
+        } else if (type.equals(PROPERTY_TYPE_BOOLEAN)) {
+            value = object.getBoolean(PROPERTY_VALUE);
+        } else if (type.equals(PROPERTY_TYPE_NUMBER)) {
+            value = object.get(PROPERTY_VALUE);
+            if (!(value instanceof Number)) {
+                throw new JSONException("Invalid value type");
+            }
+        } else if (type.equals(PROPERTY_TYPE_DATETIME)) {
+            value = JSONDateUtils.toDate(object.getString(PROPERTY_VALUE));
+        } else if (type.equals(PROPERTY_TYPE_STRING)) {
+            value = object.getString(PROPERTY_VALUE);
+        } else {
+            throw new JSONException("Invalid value type");
+        }
+        return value;
+    }
+
+    private static void writeProperties(JSONStringer writer, Map<String, Object> properties) throws JSONException {
+        if (properties != null) {
+            writer.key(PROPERTIES).array();
+            for (Map.Entry<String, Object> property : properties.entrySet()) {
+                writer.object();
+                JSONUtils.write(writer, PROPERTY_NAME, property.getKey());
+                writePropertyValue(writer, property.getValue());
+                writer.endObject();
+            }
+            writer.endArray();
+        } else {
+            throw new JSONException("Properties cannot be null");
+        }
+    }
+
+    private static void writePropertyValue(JSONStringer writer, Object value) throws JSONException {
+        if (value == null) {
+            JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_CLEAR);
+        } else if (value instanceof Boolean) {
+            JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_BOOLEAN);
+            JSONUtils.write(writer, PROPERTY_VALUE, value);
+        } else if (value instanceof Number) {
+            JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_NUMBER);
+            JSONUtils.write(writer, PROPERTY_VALUE, value);
+        } else if (value instanceof Date) {
+            JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_DATETIME);
+            JSONUtils.write(writer, PROPERTY_VALUE, JSONDateUtils.toString((Date) value));
+        } else if (value instanceof String) {
+            JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_STRING);
+            JSONUtils.write(writer, PROPERTY_VALUE, value);
+        } else {
+            throw new JSONException("Invalid value type");
+        }
+    }
 
     @Override
     public String getType() {
@@ -110,79 +166,5 @@ public class CustomPropertiesLog extends AbstractLog {
         int result = super.hashCode();
         result = 31 * result + (properties != null ? properties.hashCode() : 0);
         return result;
-    }
-
-    private static Map<String, Object> readProperties(JSONObject object) throws JSONException {
-        JSONArray jArray = object.getJSONArray(PROPERTIES);
-        Map<String, Object> properties = new HashMap<>();
-        for (int i = 0; i < jArray.length(); i++) {
-            JSONObject jProperty = jArray.getJSONObject(i);
-            String key = jProperty.getString(PROPERTY_NAME);
-            Object value = readPropertyValue(jProperty);
-            properties.put(key, value);
-        }
-        return properties;
-    }
-
-    @SuppressWarnings("IfCanBeSwitch")
-    private static Object readPropertyValue(JSONObject object) throws JSONException {
-        String type = object.getString(PROPERTY_TYPE);
-        Object value;
-        if (type.equals(PROPERTY_TYPE_CLEAR)) {
-            value = null;
-        } else if (type.equals(PROPERTY_TYPE_BOOLEAN)) {
-            value = object.getBoolean(PROPERTY_VALUE);
-        } else if (type.equals(PROPERTY_TYPE_NUMBER)) {
-            value = object.get(PROPERTY_VALUE);
-            if (!(value instanceof Number)) {
-                throw new JSONException("Invalid value type");
-            }
-        } else if (type.equals(PROPERTY_TYPE_DATETIME)) {
-            try {
-                value = DATETIME_FORMAT.get().parse(object.getString(PROPERTY_VALUE));
-            } catch (ParseException exception) {
-                throw new JSONException("Cannot parse date");
-            }
-        } else if (type.equals(PROPERTY_TYPE_STRING)) {
-            value = object.getString(PROPERTY_VALUE);
-        } else {
-            throw new JSONException("Invalid value type");
-        }
-        return value;
-    }
-
-    private static void writeProperties(JSONStringer writer, Map<String, Object> properties) throws JSONException {
-        if (properties != null) {
-            writer.key(PROPERTIES).array();
-            for (Map.Entry<String, Object> property : properties.entrySet()) {
-                writer.object();
-                JSONUtils.write(writer, PROPERTY_NAME, property.getKey());
-                writePropertyValue(writer, property.getValue());
-                writer.endObject();
-            }
-            writer.endArray();
-        } else {
-            throw new JSONException("Properties cannot be null");
-        }
-    }
-
-    private static void writePropertyValue(JSONStringer writer, Object value) throws JSONException {
-        if (value == null) {
-            JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_CLEAR);
-        } else if (value instanceof Boolean) {
-            JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_BOOLEAN);
-            JSONUtils.write(writer, PROPERTY_VALUE, value);
-        } else if (value instanceof Number) {
-            JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_NUMBER);
-            JSONUtils.write(writer, PROPERTY_VALUE, value);
-        } else if (value instanceof Date) {
-            JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_DATETIME);
-            JSONUtils.write(writer, PROPERTY_VALUE, DATETIME_FORMAT.get().format((Date) value));
-        } else if (value instanceof String) {
-            JSONUtils.write(writer, PROPERTY_TYPE, PROPERTY_TYPE_STRING);
-            JSONUtils.write(writer, PROPERTY_VALUE, value);
-        } else {
-            throw new JSONException("Invalid value type");
-        }
     }
 }

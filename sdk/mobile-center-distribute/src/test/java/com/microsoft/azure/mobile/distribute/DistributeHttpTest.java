@@ -40,7 +40,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class DistributeHttpTest extends AbstractDistributeTest {
 
     @Test
-    public void onBeforeCalling() throws Exception {
+    public void onBeforeCallingWithToken() throws Exception {
 
         /* Mock instances. */
         String urlFormat = "http://mock/path/%s/path/file";
@@ -56,6 +56,41 @@ public class DistributeHttpTest extends AbstractDistributeTest {
         when(MobileCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
         mockStatic(MobileCenterLog.class);
 
+        /* Put api token to header. */
+        headers.put(HEADER_API_TOKEN, apiToken);
+
+         /* Call onBeforeCalling with parameters. */
+        callTemplate.onBeforeCalling(url, headers);
+
+        /* Verify url log. */
+        verifyStatic();
+        MobileCenterLog.verbose(anyString(), contains(obfuscatedUrlString));
+
+        /* Verify header logs. */
+        for (Map.Entry<String, String> header : headers.entrySet()) {
+            verifyStatic();
+            if (header.getKey().equals(HEADER_API_TOKEN)) {
+                MobileCenterLog.verbose(anyString(), contains(obfuscatedToken));
+            } else {
+                MobileCenterLog.verbose(anyString(), contains(header.getValue()));
+            }
+        }
+    }
+
+    @Test
+    public void onBeforeCallingWithoutToken() throws Exception {
+
+        /* Mock instances. */
+        String urlFormat = "http://mock/path/%s/path/file";
+        String appSecret = UUID.randomUUID().toString();
+        String obfuscatedSecret = HttpUtils.hideSecret(appSecret);
+        URL url = new URL(String.format(urlFormat, appSecret));
+        String obfuscatedUrlString = String.format(urlFormat, obfuscatedSecret);
+        Map<String, String> headers = new HashMap<>();
+        HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret, null);
+        when(MobileCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
+        mockStatic(MobileCenterLog.class);
+
         /* Call onBeforeCalling with parameters. */
         callTemplate.onBeforeCalling(url, headers);
 
@@ -68,14 +103,6 @@ public class DistributeHttpTest extends AbstractDistributeTest {
             verifyStatic();
             MobileCenterLog.verbose(anyString(), contains(header.getValue()));
         }
-
-        /* Put api token to header. */
-        headers.put(HEADER_API_TOKEN, apiToken);
-        callTemplate.onBeforeCalling(url, headers);
-
-        /* Verify app secret is in log. */
-        verifyStatic();
-        MobileCenterLog.verbose(anyString(), contains(obfuscatedToken));
     }
 
     @Test
@@ -129,7 +156,7 @@ public class DistributeHttpTest extends AbstractDistributeTest {
                 return call;
             }
         });
-        Distribute.getInstance().getLatestReleaseDetails(apiToken);
+        Distribute.getInstance().getLatestReleaseDetails("mockGroup", apiToken);
         return callTemplate.get();
     }
 }

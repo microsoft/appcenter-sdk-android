@@ -19,6 +19,7 @@ import org.json.JSONException;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -47,16 +48,20 @@ public class AnalyticsSerializerTest {
         device.setAppBuild("42");
         List<Log> logs = new ArrayList<>();
         {
-            logs.add(new StartSessionLog());
+            StartSessionLog startSessionLog = new StartSessionLog();
+            startSessionLog.setTimestamp(new Date());
+            logs.add(startSessionLog);
         }
         expectedContainer.setLogs(logs);
         {
             PageLog pageLog = new PageLog();
+            pageLog.setTimestamp(new Date());
             pageLog.setName("home");
             logs.add(pageLog);
         }
         {
             PageLog pageLog = new PageLog();
+            pageLog.setTimestamp(new Date());
             pageLog.setName("settings");
             pageLog.setProperties(new HashMap<String, String>() {{
                 put("from", "home_menu");
@@ -66,12 +71,14 @@ public class AnalyticsSerializerTest {
         }
         {
             EventLog eventLog = new EventLog();
+            eventLog.setTimestamp(new Date());
             eventLog.setId(UUIDUtils.randomUUID());
             eventLog.setName("subscribe");
             logs.add(eventLog);
         }
         {
             EventLog eventLog = new EventLog();
+            eventLog.setTimestamp(new Date());
             eventLog.setId(UUIDUtils.randomUUID());
             eventLog.setName("click");
             eventLog.setProperties(new HashMap<String, String>() {{

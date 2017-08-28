@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.microsoft.azure.mobile.http.DefaultHttpClient.APP_SECRET;
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_POST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -61,18 +60,11 @@ public class IngestionHttpTest {
         /* Build some payload. */
         LogContainer container = new LogContainer();
         Log log = mock(Log.class);
-        long logAbsoluteTime = 123L;
-        when(log.getToffset()).thenReturn(logAbsoluteTime);
         List<Log> logs = new ArrayList<>();
         logs.add(log);
         container.setLogs(logs);
         LogSerializer serializer = mock(LogSerializer.class);
         when(serializer.serializeContainer(any(LogContainer.class))).thenReturn("mockPayload");
-
-        /* Stable time. */
-        mockStatic(System.class);
-        long now = 456L;
-        when(System.currentTimeMillis()).thenReturn(now);
 
         /* Configure mock HTTP. */
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
@@ -98,15 +90,11 @@ public class IngestionHttpTest {
 
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
-        expectedHeaders.put(APP_SECRET, appSecret);
+        expectedHeaders.put(IngestionHttp.APP_SECRET, appSecret);
         expectedHeaders.put(IngestionHttp.INSTALL_ID, installId.toString());
         verify(httpClient).callAsync(eq("http://mock" + IngestionHttp.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
         assertEquals("mockPayload", callTemplate.get().buildRequestBody());
-
-        /* Verify toffset manipulation. */
-        verify(log).setToffset(now - logAbsoluteTime);
-        verify(log).setToffset(logAbsoluteTime);
 
         /* Verify close. */
         ingestionHttp.close();
@@ -119,19 +107,12 @@ public class IngestionHttpTest {
         /* Build some payload. */
         LogContainer container = new LogContainer();
         Log log = mock(Log.class);
-        long logAbsoluteTime = 123L;
-        when(log.getToffset()).thenReturn(logAbsoluteTime);
         List<Log> logs = new ArrayList<>();
         logs.add(log);
         container.setLogs(logs);
         LogSerializer serializer = mock(LogSerializer.class);
         JSONException exception = new JSONException("mock");
         when(serializer.serializeContainer(any(LogContainer.class))).thenThrow(exception);
-
-        /* Stable time. */
-        mockStatic(System.class);
-        long now = 456L;
-        when(System.currentTimeMillis()).thenReturn(now);
 
         /* Configure mock HTTP. */
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
@@ -157,7 +138,7 @@ public class IngestionHttpTest {
 
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
-        expectedHeaders.put(APP_SECRET, appSecret);
+        expectedHeaders.put(IngestionHttp.APP_SECRET, appSecret);
         expectedHeaders.put(IngestionHttp.INSTALL_ID, installId.toString());
         verify(httpClient).callAsync(eq("http://mock/logs?api_version=1.0.0-preview20160914"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
@@ -167,10 +148,6 @@ public class IngestionHttpTest {
             Assert.fail("Expected json exception");
         } catch (JSONException ignored) {
         }
-
-        /* Verify toffset manipulation. */
-        verify(log).setToffset(now - logAbsoluteTime);
-        verify(log).setToffset(logAbsoluteTime);
 
         /* Verify close. */
         ingestionHttp.close();
@@ -204,7 +181,7 @@ public class IngestionHttpTest {
         }
 
         /* Put app secret to header. */
-        headers.put(APP_SECRET, appSecret);
+        headers.put(IngestionHttp.APP_SECRET, appSecret);
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify app secret is in log. */

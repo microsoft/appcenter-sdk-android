@@ -105,8 +105,8 @@ public class CrashesTest {
         assertEquals(errorLog.getId().toString(), report.getId());
         assertEquals(errorLog.getErrorThreadName(), report.getThreadName());
         assertEquals(CrashesTest.EXCEPTION, report.getThrowable());
-        assertEquals(errorLog.getToffset() - errorLog.getAppLaunchTOffset(), report.getAppStartTime().getTime());
-        assertEquals(errorLog.getToffset(), report.getAppErrorTime().getTime());
+        assertEquals(errorLog.getAppLaunchTimestamp(), report.getAppStartTime());
+        assertEquals(errorLog.getTimestamp(), report.getAppErrorTime());
         assertEquals(errorLog.getDevice(), report.getDevice());
     }
 
@@ -909,15 +909,15 @@ public class CrashesTest {
 
     @Test
     public void crashInLastSession() throws JSONException, IOException, ClassNotFoundException {
-        final int tOffset = 10;
-        final long appLaunchTOffset = 100L;
 
         final ManagedErrorLog errorLog = new ManagedErrorLog();
         errorLog.setId(UUIDUtils.randomUUID());
         errorLog.setErrorThreadName(Thread.currentThread().getName());
-        errorLog.setToffset(tOffset);
+        Date logTimestamp = new Date(10);
+        errorLog.setTimestamp(logTimestamp);
 
-        errorLog.setAppLaunchTOffset(appLaunchTOffset);
+        Date appLaunchTimestamp = new Date(100L);
+        errorLog.setAppLaunchTimestamp(appLaunchTimestamp);
         errorLog.setDevice(mock(Device.class));
 
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -971,8 +971,8 @@ public class CrashesTest {
         assertNotNull(result);
         assertEquals(errorLog.getId().toString(), result.getId());
         assertEquals(errorLog.getErrorThreadName(), result.getThreadName());
-        assertEquals(new Date(tOffset - appLaunchTOffset), result.getAppStartTime());
-        assertEquals(new Date(tOffset), result.getAppErrorTime());
+        assertEquals(appLaunchTimestamp, result.getAppStartTime());
+        assertEquals(logTimestamp, result.getAppErrorTime());
         assertNotNull(result.getDevice());
         assertEquals(throwable, result.getThrowable());
     }

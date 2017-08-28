@@ -1,5 +1,6 @@
 package com.microsoft.azure.mobile.ingestion.models;
 
+import java.util.Date;
 import java.util.UUID;
 
 public interface Log extends Model {
@@ -12,18 +13,18 @@ public interface Log extends Model {
     String getType();
 
     /**
-     * Get the toffset value.
+     * Get the timestamp value.
      *
-     * @return the toffset value
+     * @return the timestamp value
      */
-    long getToffset();
+    Date getTimestamp();
 
     /**
-     * Set the toffset value.
+     * Set the timestamp value.
      *
-     * @param toffset the toffset value to set
+     * @param timestamp the timestamp value to set
      */
-    void setToffset(long toffset);
+    void setTimestamp(Date timestamp);
 
     /**
      * Get the sid value.
