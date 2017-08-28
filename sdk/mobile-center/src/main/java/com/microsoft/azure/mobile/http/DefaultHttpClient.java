@@ -81,7 +81,8 @@ public class DefaultHttpClient implements HttpClient {
          */
         StringBuilder builder = new StringBuilder(max(urlConnection.getContentLength(), DEFAULT_STRING_BUILDER_CAPACITY));
         InputStream stream;
-        if (urlConnection.getResponseCode() < 400)
+        int status = urlConnection.getResponseCode();
+        if (status >= 200 && status < 400)
             stream = urlConnection.getInputStream();
         else
             stream = urlConnection.getErrorStream();
@@ -153,12 +154,13 @@ public class DefaultHttpClient implements HttpClient {
             String response = dump(urlConnection);
             MobileCenterLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + response);
 
-            /* Generate exception on failure. */
-            boolean successful = status >= 200 && status < 300;
-            if (!successful) {
-                throw new HttpException(status, response);
+            /* Accept all 2xx codes. */
+            if (status >= 200 && status < 300) {
+                return response;
             }
-            return response;
+
+            /* Generate exception on failure. */
+            throw new HttpException(status, response);
         } finally {
 
             /* Release connection. */

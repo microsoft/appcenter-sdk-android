@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -265,6 +266,32 @@ public class DefaultHttpClientTest {
             inputStream.reset();
         }
         httpClient.close();
+    }
+
+    @Test
+    public void get100() throws Exception {
+
+        /* Configure mock HTTP. */
+        URL url = mock(URL.class);
+        whenNew(URL.class).withAnyArguments().thenReturn(url);
+        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(100);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(buffer);
+        when(urlConnection.getErrorStream()).thenReturn(new ByteArrayInputStream("Continue".getBytes()));
+
+        /* Configure API client. */
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+
+        /* Test calling code. */
+        Map<String, String> headers = new HashMap<>();
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        mockCall();
+        httpClient.callAsync("", METHOD_POST, headers, null, serviceCallback);
+        verify(serviceCallback).onCallFailed(new HttpException(100, "Continue"));
+        verifyNoMoreInteractions(serviceCallback);
+        verify(urlConnection).disconnect();
     }
 
     @Test
