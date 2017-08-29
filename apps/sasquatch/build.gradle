@@ -22,7 +22,7 @@ android {
 }
 
 dependencies {
-    def version = "0.11.2"
+    def version = "0.12.0"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     projectDependencyCompile project(':sdk:mobile-center-analytics')
     projectDependencyCompile project(':sdk:mobile-center-crashes')
