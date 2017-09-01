@@ -651,14 +651,12 @@ public class Distribute extends AbstractMobileCenterService {
 
             /*
              * Check if we have previously stored the redirection parameters.
-             * Note that distribution group was not stored in previous SDK releases
+             * Note that distribution group was not stored in previous SDK versions < 0.12.0
              * so we test for the presence of either group or token for compatibility.
              *
              * Later we will likely switch to just testing the presence of a group in the first if,
              * especially if we decide to tie private in-app updates to a specific group. That is
              * also why we already store the group for future use even for private group updates.
-             *
-             * TODO previous SDK releases as of now means <= 0.11.1, edit this comment block before release.
              */
             String updateToken = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
