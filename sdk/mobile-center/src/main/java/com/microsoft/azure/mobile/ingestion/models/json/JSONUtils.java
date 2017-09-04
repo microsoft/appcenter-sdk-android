@@ -22,27 +22,31 @@ public final class JSONUtils {
     }
 
     public static Integer readInteger(JSONObject object, String key) throws JSONException {
-        if (object.has(key))
+        if (object.has(key)) {
             return object.getInt(key);
+        }
         return null;
     }
 
     public static Long readLong(JSONObject object, String key) throws JSONException {
-        if (object.has(key))
+        if (object.has(key)) {
             return object.getLong(key);
+        }
         return null;
     }
 
     public static Boolean readBoolean(JSONObject object, String key) throws JSONException {
-        if (object.has(key))
+        if (object.has(key)) {
             return object.getBoolean(key);
+        }
         return null;
     }
 
     public static Map<String, String> readMap(JSONObject object, String key) throws JSONException {
         JSONObject jProperties = object.optJSONObject(key);
-        if (jProperties == null)
+        if (jProperties == null) {
             return null;
+        }
         Map<String, String> properties = new HashMap<>(jProperties.length());
         Iterator<String> subKeys = jProperties.keys();
         while (subKeys.hasNext()) {
@@ -54,8 +58,9 @@ public final class JSONUtils {
 
     public static <M extends Model> List<M> readArray(JSONObject object, String key, ModelFactory<M> factory) throws JSONException {
         JSONArray jArray = object.optJSONArray(key);
-        if (jArray == null)
+        if (jArray == null) {
             return null;
+        }
         List<M> array = factory.createList(jArray.length());
         for (int i = 0; i < jArray.length(); i++) {
             JSONObject jModel = jArray.getJSONObject(i);
@@ -68,8 +73,9 @@ public final class JSONUtils {
 
     public static List<String> readStringArray(JSONObject object, String key) throws JSONException {
         JSONArray jArray = object.optJSONArray(key);
-        if (jArray == null)
+        if (jArray == null) {
             return null;
+        }
         List<String> array = new ArrayList<>(jArray.length());
         for (int i = 0; i < jArray.length(); i++) {
             array.add(jArray.getString(i));
@@ -78,15 +84,17 @@ public final class JSONUtils {
     }
 
     public static void write(JSONStringer writer, String key, Object value) throws JSONException {
-        if (value != null)
+        if (value != null) {
             writer.key(key).value(value);
+        }
     }
 
     public static void writeMap(JSONStringer writer, String key, Map<String, String> value) throws JSONException {
         if (value != null) {
             writer.key(key).object();
-            for (Map.Entry<String, String> property : value.entrySet())
+            for (Map.Entry<String, String> property : value.entrySet()) {
                 writer.key(property.getKey()).value(property.getValue());
+            }
             writer.endObject();
         }
     }

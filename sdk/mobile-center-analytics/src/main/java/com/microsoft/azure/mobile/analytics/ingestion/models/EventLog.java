@@ -88,13 +88,19 @@ public class EventLog extends LogWithProperties {
     @Override
     @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         EventLog eventLog = (EventLog) o;
-
-        if (id != null ? !id.equals(eventLog.id) : eventLog.id != null) return false;
+        if (id != null ? !id.equals(eventLog.id) : eventLog.id != null) {
+            return false;
+        }
         return name != null ? name.equals(eventLog.name) : eventLog.name == null;
     }
 

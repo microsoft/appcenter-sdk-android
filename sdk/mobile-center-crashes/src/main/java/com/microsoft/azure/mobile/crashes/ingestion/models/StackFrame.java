@@ -135,17 +135,22 @@ public class StackFrame implements Model {
     @Override
     @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         StackFrame that = (StackFrame) o;
-
-        if (className != null ? !className.equals(that.className) : that.className != null)
+        if (className != null ? !className.equals(that.className) : that.className != null) {
             return false;
-        if (methodName != null ? !methodName.equals(that.methodName) : that.methodName != null)
+        }
+        if (methodName != null ? !methodName.equals(that.methodName) : that.methodName != null) {
             return false;
-        if (lineNumber != null ? !lineNumber.equals(that.lineNumber) : that.lineNumber != null)
+        }
+        if (lineNumber != null ? !lineNumber.equals(that.lineNumber) : that.lineNumber != null) {
             return false;
+        }
         return fileName != null ? fileName.equals(that.fileName) : that.fileName == null;
     }
 

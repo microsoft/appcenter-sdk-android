@@ -44,8 +44,9 @@ public class HttpException extends IOException {
 
     @NonNull
     private static String getDetailMessage(int status, @NonNull String payload) {
-        if (TextUtils.isEmpty(payload))
+        if (TextUtils.isEmpty(payload)) {
             return String.valueOf(status);
+        }
         return status + " - " + payload;
     }
 
@@ -72,11 +73,13 @@ public class HttpException extends IOException {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         HttpException that = (HttpException) o;
-
         return statusCode == that.statusCode && payload.equals(that.payload);
     }
 

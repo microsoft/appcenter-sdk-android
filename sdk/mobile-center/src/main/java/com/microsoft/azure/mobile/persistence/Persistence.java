@@ -80,8 +80,9 @@ public abstract class Persistence implements Closeable {
      * @return The log serializer instance.
      */
     LogSerializer getLogSerializer() {
-        if (mLogSerializer == null)
+        if (mLogSerializer == null) {
             throw new IllegalStateException("logSerializer not configured");
+        }
         return mLogSerializer;
     }
 

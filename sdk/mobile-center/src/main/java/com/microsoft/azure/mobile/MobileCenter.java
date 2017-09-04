@@ -126,8 +126,9 @@ public class MobileCenter {
     private MobileCenterHandler mMobileCenterHandler;
 
     static synchronized MobileCenter getInstance() {
-        if (sInstance == null)
+        if (sInstance == null) {
             sInstance = new MobileCenter();
+        }
         return sInstance;
     }
 
@@ -291,8 +292,9 @@ public class MobileCenter {
      */
     private synchronized void setInstanceWrapperSdk(WrapperSdk wrapperSdk) {
         DeviceInfoHelper.setWrapperSdk(wrapperSdk);
-        if (mChannel != null)
+        if (mChannel != null) {
             mChannel.invalidateDeviceCache();
+        }
     }
 
     /**
@@ -312,8 +314,9 @@ public class MobileCenter {
      */
     private synchronized void setInstanceLogUrl(String logUrl) {
         mLogUrl = logUrl;
-        if (mChannel != null)
+        if (mChannel != null) {
             mChannel.setLogUrl(logUrl);
+        }
     }
 
     /**
@@ -528,8 +531,9 @@ public class MobileCenter {
         for (MobileCenterService service : services) {
             Map<String, LogFactory> logFactories = service.getLogFactories();
             if (logFactories != null) {
-                for (Map.Entry<String, LogFactory> logFactory : logFactories.entrySet())
+                for (Map.Entry<String, LogFactory> logFactory : logFactories.entrySet()) {
                     mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
+                }
             }
             service.onStarted(mApplication, mAppSecret, mChannel);
             MobileCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
@@ -547,8 +551,9 @@ public class MobileCenter {
     @SafeVarargs
     private final synchronized void configureAndStartServices(Application application, String appSecret, Class<? extends MobileCenterService>... services) {
         boolean configuredSuccessfully = instanceConfigure(application, appSecret);
-        if (configuredSuccessfully)
+        if (configuredSuccessfully) {
             startServices(services);
+        }
     }
 
     /**

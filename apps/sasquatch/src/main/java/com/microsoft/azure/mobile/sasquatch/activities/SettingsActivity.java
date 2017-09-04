@@ -336,10 +336,11 @@ public class SettingsActivity extends AppCompatActivity {
 
         private void setKeyValue(String key, String value) {
             SharedPreferences.Editor editor = MainActivity.sSharedPreferences.edit();
-            if (value == null)
+            if (value == null) {
                 editor.remove(key);
-            else
+            } else {
                 editor.putString(key, value);
+            }
             editor.apply();
         }
 

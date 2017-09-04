@@ -100,14 +100,19 @@ public class ManagedErrorLog extends AbstractErrorLog {
     @Override
     @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
-        ManagedErrorLog that = (ManagedErrorLog) o;
-
-        if (exception != null ? !exception.equals(that.exception) : that.exception != null)
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        ManagedErrorLog that = (ManagedErrorLog) o;
+        if (exception != null ? !exception.equals(that.exception) : that.exception != null) {
+            return false;
+        }
         return threads != null ? threads.equals(that.threads) : that.threads == null;
     }
 
