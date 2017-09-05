@@ -68,9 +68,9 @@ subprojects {
         provided "com.android.support:support-annotations:${ext.supportLibVersion}"
         javadocDeps "com.android.support:support-annotations:${ext.supportLibVersion}"
 
-        testCompile 'org.powermock:powermock-api-mockito:1.6.6'
-        testCompile 'org.powermock:powermock-module-junit4:1.6.6'
-        testCompile 'org.powermock:powermock-module-junit4-rule-agent:1.6.6'
+        testCompile 'org.powermock:powermock-api-mockito:1.6.5'
+        testCompile 'org.powermock:powermock-module-junit4:1.6.5'
+        testCompile 'org.powermock:powermock-module-junit4-rule-agent:1.6.5'
         testCompile project(':test')
 
         androidTestCompile 'com.crittercism.dexmaker:dexmaker-dx:1.4'
