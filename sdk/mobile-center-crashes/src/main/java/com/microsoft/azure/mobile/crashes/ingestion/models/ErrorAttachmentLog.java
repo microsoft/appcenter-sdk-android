@@ -226,18 +226,28 @@ public class ErrorAttachmentLog extends AbstractLog {
     @SuppressWarnings("SimplifiableIfStatement")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         ErrorAttachmentLog that = (ErrorAttachmentLog) o;
-
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (errorId != null ? !errorId.equals(that.errorId) : that.errorId != null) return false;
-        if (contentType != null ? !contentType.equals(that.contentType) : that.contentType != null)
+        if (id != null ? !id.equals(that.id) : that.id != null) {
             return false;
-        if (fileName != null ? !fileName.equals(that.fileName) : that.fileName != null)
+        }
+        if (errorId != null ? !errorId.equals(that.errorId) : that.errorId != null) {
             return false;
+        }
+        if (contentType != null ? !contentType.equals(that.contentType) : that.contentType != null) {
+            return false;
+        }
+        if (fileName != null ? !fileName.equals(that.fileName) : that.fileName != null) {
+            return false;
+        }
         return Arrays.equals(data, that.data);
 
     }

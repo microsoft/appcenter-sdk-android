@@ -113,8 +113,9 @@ public abstract class AbstractLog implements Log {
 
     @Override
     public void read(JSONObject object) throws JSONException {
-        if (!object.getString(TYPE).equals(getType()))
+        if (!object.getString(TYPE).equals(getType())) {
             throw new JSONException("Invalid type");
+        }
         setTimestamp(JSONDateUtils.toDate(object.getString(TIMESTAMP)));
         if (object.has(SID)) {
             setSid(UUID.fromString(object.getString(SID)));
@@ -129,14 +130,19 @@ public abstract class AbstractLog implements Log {
     @Override
     @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        AbstractLog that = (AbstractLog) o;
-
-        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null)
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
-        if (sid != null ? !sid.equals(that.sid) : that.sid != null) return false;
+        }
+        AbstractLog that = (AbstractLog) o;
+        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) {
+            return false;
+        }
+        if (sid != null ? !sid.equals(that.sid) : that.sid != null) {
+            return false;
+        }
         return device != null ? device.equals(that.device) : that.device == null;
     }
 

@@ -60,8 +60,9 @@ public abstract class LogActivity extends AppCompatActivity {
             CharSequence key = ((TextView) childAt.findViewById(R.id.key)).getText();
             CharSequence value = ((TextView) childAt.findViewById(R.id.value)).getText();
             if (!TextUtils.isEmpty(key) && !TextUtils.isEmpty(value)) {
-                if (properties == null)
+                if (properties == null) {
                     properties = new HashMap<>();
+                }
                 properties.put(key.toString(), value.toString());
             }
         }

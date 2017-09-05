@@ -75,8 +75,9 @@ public class NetworkStateHelper implements Closeable {
      * @return shared instance.
      */
     public static NetworkStateHelper getSharedInstance(Context context) {
-        if (sSharedInstance == null)
+        if (sSharedInstance == null) {
             sSharedInstance = new NetworkStateHelper(context);
+        }
         return sSharedInstance;
     }
 
@@ -116,10 +117,11 @@ public class NetworkStateHelper implements Closeable {
         MobileCenterLog.debug(MobileCenter.LOG_TAG, "Active network info=" + networkInfo);
 
         /* Update network type. null for not connected. */
-        if (networkInfo != null && networkInfo.isConnected())
+        if (networkInfo != null && networkInfo.isConnected()) {
             mNetworkType = networkInfo.getTypeName() + networkInfo.getSubtypeName();
-        else
+        } else {
             mNetworkType = null;
+        }
     }
 
     /**
@@ -128,8 +130,9 @@ public class NetworkStateHelper implements Closeable {
      * @param connected whether the network is connected or not.
      */
     private void notifyNetworkStateUpdated(boolean connected) {
-        for (Listener listener : mListeners)
+        for (Listener listener : mListeners) {
             listener.onNetworkStateUpdated(connected);
+        }
     }
 
     @Override
@@ -198,8 +201,9 @@ public class NetworkStateHelper implements Closeable {
             boolean networkTypeChanged = previousNetworkType == null ? mNetworkType != null : !previousNetworkType.equals(mNetworkType);
             if (networkTypeChanged) {
                 boolean connected = isNetworkConnected();
-                if (connected && previousNetworkType != null)
+                if (connected && previousNetworkType != null) {
                     notifyNetworkStateUpdated(false);
+                }
                 notifyNetworkStateUpdated(connected);
             }
         }

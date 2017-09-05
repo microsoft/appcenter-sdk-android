@@ -82,16 +82,18 @@ public class DefaultHttpClient implements HttpClient {
         StringBuilder builder = new StringBuilder(max(urlConnection.getContentLength(), DEFAULT_STRING_BUILDER_CAPACITY));
         InputStream stream;
         int status = urlConnection.getResponseCode();
-        if (status >= 200 && status < 400)
+        if (status >= 200 && status < 400) {
             stream = urlConnection.getInputStream();
-        else
+        } else {
             stream = urlConnection.getErrorStream();
+        }
         try {
             InputStreamReader in = new InputStreamReader(stream, CHARSET_NAME);
             char[] buffer = new char[READ_BUFFER_SIZE];
             int len;
-            while ((len = in.read(buffer)) > 0)
+            while ((len = in.read(buffer)) > 0) {
                 builder.append(buffer, 0, len);
+            }
             return builder.toString();
         } finally {
             stream.close();
@@ -132,8 +134,9 @@ public class DefaultHttpClient implements HttpClient {
             }
 
             /* Before send. */
-            if (callTemplate != null)
+            if (callTemplate != null) {
                 callTemplate.onBeforeCalling(url, headers);
+            }
 
             /* Build payload. */
             if (method.equals(METHOD_POST) && callTemplate != null) {
@@ -193,8 +196,9 @@ public class DefaultHttpClient implements HttpClient {
 
             @Override
             public void cancel() {
-                if (!call.isCancelled())
+                if (!call.isCancelled()) {
                     call.cancel(true);
+                }
             }
         };
     }
@@ -237,10 +241,11 @@ public class DefaultHttpClient implements HttpClient {
 
         @Override
         protected void onPostExecute(Object result) {
-            if (result instanceof Exception)
+            if (result instanceof Exception) {
                 mServiceCallback.onCallFailed((Exception) result);
-            else
+            } else {
                 mServiceCallback.onCallSucceeded(result.toString());
+            }
         }
     }
 }

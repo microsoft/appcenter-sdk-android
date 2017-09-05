@@ -59,23 +59,28 @@ public class HttpUtils {
         }
 
         /* Check for a generic exception to retry. */
-        for (Class<?> type : RECOVERABLE_EXCEPTIONS)
-            if (type.isAssignableFrom(t.getClass()))
+        for (Class<?> type : RECOVERABLE_EXCEPTIONS) {
+            if (type.isAssignableFrom(t.getClass())) {
                 return true;
+            }
+        }
 
         /* Check the cause. */
         Throwable cause = t.getCause();
         if (cause != null) {
-            for (Class<?> type : RECOVERABLE_EXCEPTIONS)
-                if (type.isAssignableFrom(cause.getClass()))
+            for (Class<?> type : RECOVERABLE_EXCEPTIONS) {
+                if (type.isAssignableFrom(cause.getClass())) {
                     return true;
+                }
+            }
         }
 
         /* Check corner cases. */
         if (t instanceof SSLException) {
             String message = t.getMessage();
-            if (message != null && CONNECTION_ISSUE_PATTERN.matcher(message.toLowerCase(Locale.US)).find())
+            if (message != null && CONNECTION_ISSUE_PATTERN.matcher(message.toLowerCase(Locale.US)).find()) {
                 return true;
+            }
         }
         return false;
     }

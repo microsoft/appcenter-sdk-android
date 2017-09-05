@@ -186,21 +186,28 @@ public class WrapperSdk implements Model {
     @Override
     @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         WrapperSdk that = (WrapperSdk) o;
-
-        if (wrapperSdkVersion != null ? !wrapperSdkVersion.equals(that.wrapperSdkVersion) : that.wrapperSdkVersion != null)
+        if (wrapperSdkVersion != null ? !wrapperSdkVersion.equals(that.wrapperSdkVersion) : that.wrapperSdkVersion != null) {
             return false;
-        if (wrapperSdkName != null ? !wrapperSdkName.equals(that.wrapperSdkName) : that.wrapperSdkName != null)
+        }
+        if (wrapperSdkName != null ? !wrapperSdkName.equals(that.wrapperSdkName) : that.wrapperSdkName != null) {
             return false;
-        if (wrapperRuntimeVersion != null ? !wrapperRuntimeVersion.equals(that.wrapperRuntimeVersion) : that.wrapperRuntimeVersion != null)
+        }
+        if (wrapperRuntimeVersion != null ? !wrapperRuntimeVersion.equals(that.wrapperRuntimeVersion) : that.wrapperRuntimeVersion != null) {
             return false;
-        if (liveUpdateReleaseLabel != null ? !liveUpdateReleaseLabel.equals(that.liveUpdateReleaseLabel) : that.liveUpdateReleaseLabel != null)
+        }
+        if (liveUpdateReleaseLabel != null ? !liveUpdateReleaseLabel.equals(that.liveUpdateReleaseLabel) : that.liveUpdateReleaseLabel != null) {
             return false;
-        if (liveUpdateDeploymentKey != null ? !liveUpdateDeploymentKey.equals(that.liveUpdateDeploymentKey) : that.liveUpdateDeploymentKey != null)
+        }
+        if (liveUpdateDeploymentKey != null ? !liveUpdateDeploymentKey.equals(that.liveUpdateDeploymentKey) : that.liveUpdateDeploymentKey != null) {
             return false;
+        }
         return liveUpdatePackageHash != null ? liveUpdatePackageHash.equals(that.liveUpdatePackageHash) : that.liveUpdatePackageHash == null;
     }
 

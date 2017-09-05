@@ -38,8 +38,9 @@ public class DefaultLogSerializer implements LogSerializer {
     private Log readLog(JSONObject object) throws JSONException {
         String type = object.getString(TYPE);
         LogFactory logFactory = mLogFactories.get(type);
-        if (logFactory == null)
+        if (logFactory == null) {
             throw new JSONException("Unknown log type: " + type);
+        }
         Log log = logFactory.create();
         log.read(object);
         return log;
@@ -72,14 +73,16 @@ public class DefaultLogSerializer implements LogSerializer {
                 MobileCenterLog.error(MobileCenter.LOG_TAG, "Failed to setup pretty json, falling back to default one", e);
             }
         }
-        if (writer == null)
+        if (writer == null) {
             writer = new JSONStringer();
+        }
 
         /* Start writing JSON. */
         writer.object();
         writer.key(LOGS).array();
-        for (Log log : logContainer.getLogs())
+        for (Log log : logContainer.getLogs()) {
             writeLog(writer, log);
+        }
         writer.endArray();
         writer.endObject();
         return writer.toString();

@@ -52,8 +52,9 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
     @Override
     public synchronized void close() throws IOException {
         mNetworkStateHelper.removeListener(this);
-        for (Call call : mCalls)
+        for (Call call : mCalls) {
             pauseCall(call);
+        }
         mCalls.clear();
         super.close();
     }
@@ -65,11 +66,13 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
         } else {
             MobileCenterLog.debug(LOG_TAG, "Network is down. Pausing " + mCalls.size() + " network call(s).");
         }
-        for (Call call : mCalls)
-            if (connected)
+        for (Call call : mCalls) {
+            if (connected) {
                 call.run();
-            else
+            } else {
                 pauseCall(call);
+            }
+        }
     }
 
     private synchronized void callRunAsync(Call call) {
@@ -82,8 +85,9 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
     }
 
     private synchronized void pauseCall(Call call) {
-        if (call.mServiceCall != null)
+        if (call.mServiceCall != null) {
             call.mServiceCall.cancel();
+        }
     }
 
     /**

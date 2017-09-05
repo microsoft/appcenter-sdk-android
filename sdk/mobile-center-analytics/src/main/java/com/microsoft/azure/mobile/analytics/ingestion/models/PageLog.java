@@ -57,12 +57,16 @@ public class PageLog extends LogWithProperties {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         PageLog pageLog = (PageLog) o;
-
         return name != null ? name.equals(pageLog.name) : pageLog.name == null;
     }
 

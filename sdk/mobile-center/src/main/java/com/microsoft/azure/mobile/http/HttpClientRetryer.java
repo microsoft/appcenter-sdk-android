@@ -94,12 +94,14 @@ public class HttpClientRetryer extends HttpClientDecorator {
                 long delay = RETRY_INTERVALS[mRetryCount++] / 2;
                 delay += mRandom.nextInt((int) delay);
                 String message = "Try #" + mRetryCount + " failed and will be retried in " + delay + " ms";
-                if (e instanceof UnknownHostException)
+                if (e instanceof UnknownHostException) {
                     message += " (UnknownHostException)";
+                }
                 MobileCenterLog.warn(MobileCenter.LOG_TAG, message, e);
                 mHandler.postDelayed(this, delay);
-            } else
+            } else {
                 mServiceCallback.onCallFailed(e);
+            }
         }
     }
 }

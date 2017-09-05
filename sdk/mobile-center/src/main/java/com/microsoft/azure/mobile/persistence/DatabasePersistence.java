@@ -162,8 +162,9 @@ public class DatabasePersistence extends Persistence {
         /* Delete from pending state. */
         for (Iterator<String> iterator = mPendingDbIdentifiersGroups.keySet().iterator(); iterator.hasNext(); ) {
             String key = iterator.next();
-            if (key.startsWith(group))
+            if (key.startsWith(group)) {
                 iterator.remove();
+            }
         }
     }
 

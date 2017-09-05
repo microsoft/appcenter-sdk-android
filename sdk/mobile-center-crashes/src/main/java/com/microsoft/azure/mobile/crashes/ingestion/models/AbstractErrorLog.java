@@ -301,28 +301,43 @@ public abstract class AbstractErrorLog extends AbstractLog {
     @Override
     @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         AbstractErrorLog that = (AbstractErrorLog) o;
-
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (processId != null ? !processId.equals(that.processId) : that.processId != null)
+        if (id != null ? !id.equals(that.id) : that.id != null) {
             return false;
-        if (processName != null ? !processName.equals(that.processName) : that.processName != null)
+        }
+        if (processId != null ? !processId.equals(that.processId) : that.processId != null) {
             return false;
-        if (parentProcessId != null ? !parentProcessId.equals(that.parentProcessId) : that.parentProcessId != null)
+        }
+        if (processName != null ? !processName.equals(that.processName) : that.processName != null) {
             return false;
-        if (parentProcessName != null ? !parentProcessName.equals(that.parentProcessName) : that.parentProcessName != null)
+        }
+        if (parentProcessId != null ? !parentProcessId.equals(that.parentProcessId) : that.parentProcessId != null) {
             return false;
-        if (errorThreadId != null ? !errorThreadId.equals(that.errorThreadId) : that.errorThreadId != null)
+        }
+        if (parentProcessName != null ? !parentProcessName.equals(that.parentProcessName) : that.parentProcessName != null) {
             return false;
-        if (errorThreadName != null ? !errorThreadName.equals(that.errorThreadName) : that.errorThreadName != null)
+        }
+        if (errorThreadId != null ? !errorThreadId.equals(that.errorThreadId) : that.errorThreadId != null) {
             return false;
-        if (fatal != null ? !fatal.equals(that.fatal) : that.fatal != null) return false;
-        if (appLaunchTimestamp != null ? !appLaunchTimestamp.equals(that.appLaunchTimestamp) : that.appLaunchTimestamp != null)
+        }
+        if (errorThreadName != null ? !errorThreadName.equals(that.errorThreadName) : that.errorThreadName != null) {
             return false;
+        }
+        if (fatal != null ? !fatal.equals(that.fatal) : that.fatal != null) {
+            return false;
+        }
+        if (appLaunchTimestamp != null ? !appLaunchTimestamp.equals(that.appLaunchTimestamp) : that.appLaunchTimestamp != null) {
+            return false;
+        }
         return architecture != null ? architecture.equals(that.architecture) : that.architecture == null;
     }
 
