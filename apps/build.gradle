@@ -50,13 +50,13 @@ def copyApkToProjectBuildTask(variantName) {
 
 task assembleDebug() {
     doLast {
-        copyApkToProjectBuildTask('Debug');
+        copyApkToProjectBuildTask('Debug')
     }
 }
 
 task assembleRelease() {
     doLast {
-        copyApkToProjectBuildTask('Release');
+        copyApkToProjectBuildTask('Release')
     }
 }
 
