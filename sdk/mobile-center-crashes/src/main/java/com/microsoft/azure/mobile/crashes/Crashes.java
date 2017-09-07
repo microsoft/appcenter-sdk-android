@@ -319,30 +319,6 @@ public class Crashes extends AbstractMobileCenterService {
         return mFactories;
     }
 
-    /**
-     * Track an exception.
-     * TODO the backend does not support that service yet, will be public method later.
-     *
-     * @param exception An exception.
-     */
-    @SuppressWarnings("WeakerAccess")
-    protected synchronized void trackException(@NonNull final com.microsoft.azure.mobile.crashes.ingestion.models.Exception exception) {
-        post(new Runnable() {
-
-            @Override
-            public void run() {
-                ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(
-                        mContext,
-                        Thread.currentThread(),
-                        exception,
-                        Thread.getAllStackTraces(),
-                        getInitializeTimestamp(),
-                        false);
-                mChannel.enqueue(errorLog, ERROR_GROUP);
-            }
-        });
-    }
-
     @Override
     protected String getGroupName() {
         return ERROR_GROUP;
@@ -375,30 +351,28 @@ public class Crashes extends AbstractMobileCenterService {
                     public void run() {
                         if (log instanceof ManagedErrorLog) {
                             ManagedErrorLog errorLog = (ManagedErrorLog) log;
-                            if (errorLog.getFatal()) {
-                                final ErrorReport report = buildErrorReport(errorLog);
-                                UUID id = errorLog.getId();
-                                if (report != null) {
+                            final ErrorReport report = buildErrorReport(errorLog);
+                            UUID id = errorLog.getId();
+                            if (report != null) {
 
-                                    /* Clean up before calling callbacks if requested. */
-                                    if (callbackProcessor.shouldDeleteThrowable()) {
-                                        removeStoredThrowable(id);
-                                    }
-
-                                    /* Call back. */
-                                    HandlerUtils.runOnUiThread(new Runnable() {
-
-                                        @Override
-                                        public void run() {
-                                            callbackProcessor.onCallBack(report);
-                                        }
-                                    });
-                                } else {
-                                    MobileCenterLog.warn(LOG_TAG, "Cannot find crash report for the error log: " + id);
+                                /* Clean up before calling callbacks if requested. */
+                                if (callbackProcessor.shouldDeleteThrowable()) {
+                                    removeStoredThrowable(id);
                                 }
+
+                                /* Call back. */
+                                HandlerUtils.runOnUiThread(new Runnable() {
+
+                                    @Override
+                                    public void run() {
+                                        callbackProcessor.onCallBack(report);
+                                    }
+                                });
+                            } else {
+                                MobileCenterLog.warn(LOG_TAG, "Cannot find crash report for the error log: " + id);
                             }
                         } else {
-                            if (!(log instanceof ErrorAttachmentLog)) {
+                            if (!(log instanceof ErrorAttachmentLog) && !(log instanceof HandledErrorLog)) {
                                 MobileCenterLog.warn(LOG_TAG, "A different type of log comes to crashes: " + log.getClass().getName());
                             }
                         }
@@ -467,22 +441,42 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Send an exception.
+     * Send an handled exception.
      *
-     * @param throwable An exception.
+     * @param throwable An handled exception.
      */
     private synchronized void queueException(@NonNull final Throwable throwable) {
+        queueException(new GetExceptionModel() {
+
+            @Override
+            public com.microsoft.azure.mobile.crashes.ingestion.models.Exception getException() {
+                return ErrorLogHelper.getModelExceptionFromThrowable(throwable);
+            }
+        });
+    }
+
+    /**
+     * Send an handled exception (used by wrapper SDKs).
+     *
+     * @param modelException An handled exception already in JSON model form.
+     */
+    synchronized void queueException(@NonNull final com.microsoft.azure.mobile.crashes.ingestion.models.Exception modelException) {
+        queueException(new GetExceptionModel() {
+
+            @Override
+            public com.microsoft.azure.mobile.crashes.ingestion.models.Exception getException() {
+                return modelException;
+            }
+        });
+    }
+
+    private synchronized void queueException(@NonNull final GetExceptionModel getExceptionModel) {
         post(new Runnable() {
 
             @Override
             public void run() {
-                ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(
-                        mContext,
-                        Thread.currentThread(),
-                        throwable,
-                        Thread.getAllStackTraces(),
-                        getInitializeTimestamp(),
-                        false);
+                HandledErrorLog errorLog = new HandledErrorLog();
+                errorLog.setException(getExceptionModel.getException());
                 mChannel.enqueue(errorLog, ERROR_GROUP);
             }
         });
@@ -782,6 +776,20 @@ public class Crashes extends AbstractMobileCenterService {
             MobileCenterLog.debug(Crashes.LOG_TAG, "Saved empty Throwable file in " + throwableFile);
         }
         return errorLogId;
+    }
+
+    /**
+     * Interface to use a template method to build exception model since it's a complex operation
+     * and should be called only after all enabled checks have been done.
+     */
+    private interface GetExceptionModel {
+
+        /**
+         * Get model exception.
+         *
+         * @return model exception.
+         */
+        com.microsoft.azure.mobile.crashes.ingestion.models.Exception getException();
     }
 
     /**

@@ -118,5 +118,14 @@ public class WrapperSdkExceptionManager {
         String filename = errorId.toString() + DATA_FILE_EXTENSION;
         return new File(errorStorageDirectory, filename);
     }
+
+    /**
+     * Send an handled exception (used by wrapper SDKs).
+     *
+     * @param modelException An handled exception already in JSON model form.
+     */
+    public static void trackException(com.microsoft.azure.mobile.crashes.ingestion.models.Exception modelException) {
+        Crashes.getInstance().queueException(modelException);
+    }
 }
 

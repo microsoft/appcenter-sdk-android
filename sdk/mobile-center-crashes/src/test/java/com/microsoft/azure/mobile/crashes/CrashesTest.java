@@ -620,12 +620,11 @@ public class CrashesTest {
 
             @Override
             public boolean matches(Object item) {
-                return item instanceof ManagedErrorLog && EXCEPTION.getMessage().equals(((ManagedErrorLog) item).getException().getMessage());
+                return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage());
             }
         }), eq(crashes.getGroupName()));
 
-        ManagedErrorLog mockLog = mock(ManagedErrorLog.class);
-        when(mockLog.getFatal()).thenReturn(false);
+        HandledErrorLog mockLog = mock(HandledErrorLog.class);
         CrashesListener mockListener = mock(CrashesListener.class);
         crashes.setInstanceListener(mockListener);
 
@@ -661,16 +660,16 @@ public class CrashesTest {
         Crashes crashes = Crashes.getInstance();
         Channel mockChannel = mock(Channel.class);
 
-        Crashes.getInstance().trackException(exception);
+        WrapperSdkExceptionManager.trackException(exception);
         verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
         crashes.onStarting(mMobileCenterHandler);
         crashes.onStarted(mock(Context.class), "", mockChannel);
-        Crashes.getInstance().trackException(exception);
+        WrapperSdkExceptionManager.trackException(exception);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
             public boolean matches(Object item) {
-                return item instanceof ManagedErrorLog && exception.equals(((ManagedErrorLog) item).getException());
+                return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException());
             }
         }), eq(crashes.getGroupName()));
     }
