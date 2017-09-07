@@ -1,6 +1,7 @@
 package com.microsoft.azure.mobile.crashes.ingestion.models;
 
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ErrorAttachmentLogFactory;
+import com.microsoft.azure.mobile.crashes.ingestion.models.json.HandledErrorLogFactory;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.azure.mobile.ingestion.models.Log;
 import com.microsoft.azure.mobile.ingestion.models.json.DefaultLogSerializer;
@@ -27,15 +28,15 @@ import static org.junit.Assert.assertTrue;
 @SuppressWarnings("unused")
 public class ErrorModelTest {
 
-    private static void checkSerialization(Log errorLog, LogSerializer serializer) throws JSONException {
-        String payload = serializer.serializeLog(errorLog);
+    private static void checkSerialization(Log log, LogSerializer serializer) throws JSONException {
+        String payload = serializer.serializeLog(log);
         Log deserializedLog = serializer.deserializeLog(payload);
-        checkEquals(errorLog, deserializedLog);
+        checkEquals(log, deserializedLog);
     }
 
-    private static void checkSerializationThrowsException(Log errorLog, LogSerializer serializer, Class expectedException){
+    private static void checkSerializationThrowsException(Log log, LogSerializer serializer, Class expectedException) {
         try {
-            checkSerialization(errorLog, serializer);
+            checkSerialization(log, serializer);
         } catch (java.lang.Exception ex) {
             checkEquals(ex.getClass(), expectedException);
             return;
@@ -457,6 +458,43 @@ public class ErrorModelTest {
                 }
             }
         }
+        checkSerialization(errorLog1, serializer);
+    }
+
+    @Test
+    public void handledErrorLog() throws JSONException {
+        LogSerializer serializer = new DefaultLogSerializer();
+        serializer.addLogFactory(HandledErrorLog.TYPE, HandledErrorLogFactory.getInstance());
+
+        HandledErrorLog errorLog1 = new HandledErrorLog();
+        compareSelfNullClass(errorLog1);
+
+        Date timestamp = new Date();
+        errorLog1.setTimestamp(timestamp);
+        HandledErrorLog errorLog2 = new HandledErrorLog();
+        checkNotEquals(errorLog1, errorLog2);
+
+        errorLog2.setTimestamp(timestamp);
+        checkEquals(errorLog1, errorLog2);
+
+        checkSerialization(errorLog1, serializer);
+
+        {
+            Exception exception1 = new Exception();
+            exception1.setMessage("1");
+            Exception exception2 = new Exception();
+            exception2.setMessage("2");
+
+            errorLog1.setException(exception1);
+            checkNotEquals(errorLog1, errorLog2);
+
+            errorLog2.setException(exception2);
+            checkNotEquals(errorLog1, errorLog2);
+
+            errorLog2.setException(exception1);
+            checkEquals(errorLog1, errorLog2);
+        }
+
         checkSerialization(errorLog1, serializer);
     }
 
