@@ -476,6 +476,7 @@ public class Crashes extends AbstractMobileCenterService {
             @Override
             public void run() {
                 HandledErrorLog errorLog = new HandledErrorLog();
+                errorLog.setId(UUID.randomUUID());
                 errorLog.setException(getExceptionModel.getException());
                 mChannel.enqueue(errorLog, ERROR_GROUP);
             }

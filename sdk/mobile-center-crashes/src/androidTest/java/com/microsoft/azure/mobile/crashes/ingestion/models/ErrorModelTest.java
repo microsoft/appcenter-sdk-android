@@ -476,9 +476,17 @@ public class ErrorModelTest {
 
         errorLog2.setTimestamp(timestamp);
         checkEquals(errorLog1, errorLog2);
+        {
+            errorLog1.setId(UUID.randomUUID());
+            checkNotEquals(errorLog1, errorLog2);
 
+            errorLog2.setId(UUID.randomUUID());
+            checkNotEquals(errorLog1, errorLog2);
+
+            errorLog2.setId(errorLog1.getId());
+            checkEquals(errorLog1, errorLog2);
+        }
         checkSerialization(errorLog1, serializer);
-
         {
             Exception exception1 = new Exception();
             exception1.setMessage("1");
@@ -494,7 +502,6 @@ public class ErrorModelTest {
             errorLog2.setException(exception1);
             checkEquals(errorLog1, errorLog2);
         }
-
         checkSerialization(errorLog1, serializer);
     }
 
