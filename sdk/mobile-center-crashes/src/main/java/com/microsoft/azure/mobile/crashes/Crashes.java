@@ -371,10 +371,8 @@ public class Crashes extends AbstractMobileCenterService {
                             } else {
                                 MobileCenterLog.warn(LOG_TAG, "Cannot find crash report for the error log: " + id);
                             }
-                        } else {
-                            if (!(log instanceof ErrorAttachmentLog) && !(log instanceof HandledErrorLog)) {
-                                MobileCenterLog.warn(LOG_TAG, "A different type of log comes to crashes: " + log.getClass().getName());
-                            }
+                        } else if (!(log instanceof ErrorAttachmentLog) && !(log instanceof HandledErrorLog)) {
+                            MobileCenterLog.warn(LOG_TAG, "A different type of log comes to crashes: " + log.getClass().getName());
                         }
                     }
                 });
@@ -446,10 +444,10 @@ public class Crashes extends AbstractMobileCenterService {
      * @param throwable An handled exception.
      */
     private synchronized void queueException(@NonNull final Throwable throwable) {
-        queueException(new GetExceptionModel() {
+        queueException(new ExceptionModelBuilder() {
 
             @Override
-            public com.microsoft.azure.mobile.crashes.ingestion.models.Exception getException() {
+            public com.microsoft.azure.mobile.crashes.ingestion.models.Exception buildExceptionModel() {
                 return ErrorLogHelper.getModelExceptionFromThrowable(throwable);
             }
         });
@@ -461,23 +459,23 @@ public class Crashes extends AbstractMobileCenterService {
      * @param modelException An handled exception already in JSON model form.
      */
     synchronized void queueException(@NonNull final com.microsoft.azure.mobile.crashes.ingestion.models.Exception modelException) {
-        queueException(new GetExceptionModel() {
+        queueException(new ExceptionModelBuilder() {
 
             @Override
-            public com.microsoft.azure.mobile.crashes.ingestion.models.Exception getException() {
+            public com.microsoft.azure.mobile.crashes.ingestion.models.Exception buildExceptionModel() {
                 return modelException;
             }
         });
     }
 
-    private synchronized void queueException(@NonNull final GetExceptionModel getExceptionModel) {
+    private synchronized void queueException(@NonNull final ExceptionModelBuilder exceptionModelBuilder) {
         post(new Runnable() {
 
             @Override
             public void run() {
                 HandledErrorLog errorLog = new HandledErrorLog();
                 errorLog.setId(UUID.randomUUID());
-                errorLog.setException(getExceptionModel.getException());
+                errorLog.setException(exceptionModelBuilder.buildExceptionModel());
                 mChannel.enqueue(errorLog, ERROR_GROUP);
             }
         });
@@ -783,14 +781,14 @@ public class Crashes extends AbstractMobileCenterService {
      * Interface to use a template method to build exception model since it's a complex operation
      * and should be called only after all enabled checks have been done.
      */
-    private interface GetExceptionModel {
+    private interface ExceptionModelBuilder {
 
         /**
          * Get model exception.
          *
          * @return model exception.
          */
-        com.microsoft.azure.mobile.crashes.ingestion.models.Exception getException();
+        com.microsoft.azure.mobile.crashes.ingestion.models.Exception buildExceptionModel();
     }
 
     /**

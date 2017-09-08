@@ -111,7 +111,6 @@ public class HandledErrorLog extends AbstractLog {
 
         if (id != null ? !id.equals(errorLog.id) : errorLog.id != null) return false;
         return exception != null ? exception.equals(errorLog.exception) : errorLog.exception == null;
-
     }
 
     @Override
