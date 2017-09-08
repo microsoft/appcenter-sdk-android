@@ -26,7 +26,7 @@ public class HandledErrorLog extends AbstractLog {
     private static final String EXCEPTION = "exception";
 
     /**
-     * Unique identifier for this event.
+     * Unique identifier for this error.
      */
     private UUID id;
 
