@@ -9,9 +9,11 @@ import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.MobileCenterHandler;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog;
+import com.microsoft.azure.mobile.crashes.ingestion.models.HandledErrorLog;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.ingestion.models.StackFrame;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ErrorAttachmentLogFactory;
+import com.microsoft.azure.mobile.crashes.ingestion.models.json.HandledErrorLogFactory;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.model.TestCrashException;
@@ -206,6 +208,7 @@ public class CrashesTest {
         Map<String, LogFactory> factories = instance.getLogFactories();
         assertNotNull(factories);
         assertTrue(factories.remove(ManagedErrorLog.TYPE) instanceof ManagedErrorLogFactory);
+        assertTrue(factories.remove(HandledErrorLog.TYPE) instanceof HandledErrorLogFactory);
         assertTrue(factories.remove(ErrorAttachmentLog.TYPE) instanceof ErrorAttachmentLogFactory);
         assertTrue(factories.isEmpty());
         assertEquals(1, instance.getTriggerCount());
@@ -617,12 +620,11 @@ public class CrashesTest {
 
             @Override
             public boolean matches(Object item) {
-                return item instanceof ManagedErrorLog && EXCEPTION.getMessage().equals(((ManagedErrorLog) item).getException().getMessage());
+                return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage());
             }
         }), eq(crashes.getGroupName()));
 
-        ManagedErrorLog mockLog = mock(ManagedErrorLog.class);
-        when(mockLog.getFatal()).thenReturn(false);
+        HandledErrorLog mockLog = mock(HandledErrorLog.class);
         CrashesListener mockListener = mock(CrashesListener.class);
         crashes.setInstanceListener(mockListener);
 
@@ -658,16 +660,16 @@ public class CrashesTest {
         Crashes crashes = Crashes.getInstance();
         Channel mockChannel = mock(Channel.class);
 
-        Crashes.getInstance().trackException(exception);
+        WrapperSdkExceptionManager.trackException(exception);
         verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
         crashes.onStarting(mMobileCenterHandler);
         crashes.onStarted(mock(Context.class), "", mockChannel);
-        Crashes.getInstance().trackException(exception);
+        WrapperSdkExceptionManager.trackException(exception);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
             public boolean matches(Object item) {
-                return item instanceof ManagedErrorLog && exception.equals(((ManagedErrorLog) item).getException());
+                return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException());
             }
         }), eq(crashes.getGroupName()));
     }
