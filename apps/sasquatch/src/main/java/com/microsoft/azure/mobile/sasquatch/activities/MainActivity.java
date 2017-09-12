@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* Start Mobile center. */
-        RealUserMeasurements.setRumKey("d3632912-f521-4cce-9b13-51b826f9a0fb");
+        RealUserMeasurements.setRumKey("d3632912f5214cce9b1351b826f9a0fb");
         MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class, RealUserMeasurements.class);
 
         /* Use some mobile center getters. */

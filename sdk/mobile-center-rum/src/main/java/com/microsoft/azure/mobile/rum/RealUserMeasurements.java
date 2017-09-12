@@ -49,9 +49,9 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     private static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
-     * Maximum length for the tag parameter.
+     * Rum key length.
      */
-    private static final int MAX_TAG_LENGTH = 200;
+    private static final int RUM_KEY_LENGTH = 32;
 
     /**
      * JSON configuration file name.
@@ -72,11 +72,6 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
      * Flag to support https.
      */
     private static final int FLAG_HTTPS = 1;
-
-    /**
-     * Flag to support http.
-     */
-    private static final int FLAG_HTTP = 2;
 
     /**
      * Flag to use the 17k image to test.
@@ -104,15 +99,30 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     @SuppressLint("StaticFieldLeak")
     private static RealUserMeasurements sInstance;
 
+    /**
+     * Application context.
+     */
     private Context mContext;
 
-    private String mRumKey = "";
+    /**
+     * Rum key.
+     */
+    private String mRumKey;
 
-    private HttpClientNetworkStateHandler mHttpClient;
-
+    /**
+     * Rum configuration.
+     */
     private JSONObject mConfig;
 
+    /**
+     * Tests to run.
+     */
     private Collection<TestUrl> mTestUrls;
+
+    /**
+     * HTTP client.
+     */
+    private HttpClientNetworkStateHandler mHttpClient;
 
     /**
      * Get shared instance.
@@ -151,16 +161,20 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
 
+    /**
+     * Implements {@link #setRumKey(String)} at instance level.
+     */
     private synchronized void setInstanceRumKey(String rumKey) {
         if (rumKey == null) {
-            mRumKey = "";
-        } else {
-            rumKey = rumKey.trim();
-            if (rumKey.length() > MAX_TAG_LENGTH) {
-                rumKey = rumKey.substring(0, MAX_TAG_LENGTH);
-            }
-            mRumKey = rumKey;
+            MobileCenterLog.error(LOG_TAG, "Rum key is invalid.");
+            return;
         }
+        rumKey = rumKey.trim();
+        if (rumKey.length() != RUM_KEY_LENGTH) {
+            MobileCenterLog.error(LOG_TAG, "Rum key is invalid.");
+            return;
+        }
+        mRumKey = rumKey;
     }
 
     @Override
@@ -177,6 +191,12 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
+
+            /* Check rum key. */
+            if (mRumKey == null) {
+                MobileCenterLog.error(LOG_TAG, "Rum key must be configured before start.");
+                return;
+            }
 
             /* Configure HTTP client with no retries but handling network state. */
             NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
