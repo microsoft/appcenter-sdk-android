@@ -66,10 +66,30 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     /**
      * TestUrl image path.
      */
-    private static final String TEST_IMAGE = "17k.gif";
+    private static final String SEVENTEENK_IMAGE = "17k.gif";
 
     /**
-     * Report query string format.
+     * Flag to support https.
+     */
+    private static final int FLAG_HTTPS = 1;
+
+    /**
+     * Flag to support http.
+     */
+    private static final int FLAG_HTTP = 2;
+
+    /**
+     * Flag to use the 17k image to test.
+     */
+    private static final int FLAG_SEVENTEENK = 12;
+
+    /**
+     * Test url format.
+     */
+    private static final String TEST_URL_FORMAT = "http%s://%s/apc/%s?%s";
+
+    /**
+     * Report url format.
      */
     private static final String REPORT_URL_FORMAT = "https://%s?MonitorID=atm&rid=%s&w3c=false&prot=https&v=2017061301&tag=%s&DATA=%s";
 
@@ -185,11 +205,22 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                 JSONArray endpoints = mConfig.getJSONArray("e");
                 for (int i = 0; i < endpoints.length(); i++) {
                     JSONObject endpoint = endpoints.getJSONObject(i);
-                    String url = "https://" + endpoint.getString("e") + "/apc/";
-                    String requestId = UUIDUtils.randomUUID().toString();
-                    mTestUrls.add(new TestUrl(url + WARM_UP_IMAGE + "?" + requestId, requestId, WARM_UP_IMAGE, "cold"));
-                    requestId = UUIDUtils.randomUUID().toString();
-                    mTestUrls.add(new TestUrl(url + TEST_IMAGE + "?" + requestId, requestId, TEST_IMAGE, "warm"));
+                    if (endpoint.getInt("w") <= 0) {
+                        continue;
+                    }
+                    String protocolSuffix = "";
+                    int measurementType = endpoint.getInt("m");
+                    if ((measurementType & FLAG_HTTPS) > 0) {
+                        protocolSuffix = "s";
+                    }
+                    String requestId = endpoint.getString("e");
+                    String probeId = UUIDUtils.randomUUID().toString();
+                    String testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, requestId, WARM_UP_IMAGE, probeId);
+                    mTestUrls.add(new TestUrl(testUrl, requestId, WARM_UP_IMAGE, "cold"));
+                    String testImage = (measurementType & FLAG_SEVENTEENK) > 0 ? SEVENTEENK_IMAGE : WARM_UP_IMAGE;
+                    probeId = UUIDUtils.randomUUID().toString();
+                    testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, requestId, testImage, probeId);
+                    mTestUrls.add(new TestUrl(testUrl, requestId, testImage, "warm"));
                 }
             } catch (IOException | JSONException e) {
                 MobileCenterLog.error(LOG_TAG, "Could not read configuration file.", e);
