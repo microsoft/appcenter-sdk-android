@@ -37,6 +37,7 @@ import com.microsoft.azure.mobile.ingestion.models.LogWithProperties;
 import com.microsoft.azure.mobile.push.Push;
 import com.microsoft.azure.mobile.push.PushListener;
 import com.microsoft.azure.mobile.push.PushNotification;
+import com.microsoft.azure.mobile.rum.RealUserMeasurements;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.SasquatchDistributeListener;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
@@ -101,7 +102,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* Start Mobile center. */
-        MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
+        RealUserMeasurements.setRumKey("d3632912-f521-4cce-9b13-51b826f9a0fb");
+        MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class, RealUserMeasurements.class);
 
         /* Use some mobile center getters. */
         MobileCenter.getInstallId().thenAccept(new MobileCenterConsumer<UUID>() {
@@ -133,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
         /* Populate UI. */
         ((TextView) findViewById(R.id.package_name)).setText(String.format(getString(R.string.sdk_source_format), getPackageName().substring(getPackageName().lastIndexOf(".") + 1)));
         TestFeatures.initialize(this);
-        ListView listView = (ListView) findViewById(R.id.list);
+        ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
     }

@@ -155,7 +155,14 @@ public class DefaultHttpClient implements HttpClient {
             /* Read response. */
             int status = urlConnection.getResponseCode();
             String response = dump(urlConnection);
-            MobileCenterLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + response);
+            String contentType = urlConnection.getHeaderField("Content-Type");
+            String logPayload;
+            if (contentType == null || contentType.startsWith("text/") || contentType.startsWith("application/")) {
+                logPayload = response;
+            } else {
+                logPayload = "<binary>";
+            }
+            MobileCenterLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + logPayload);
 
             /* Accept all 2xx codes. */
             if (status >= 200 && status < 300) {

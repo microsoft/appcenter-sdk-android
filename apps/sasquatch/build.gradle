@@ -28,6 +28,7 @@ dependencies {
     projectDependencyCompile project(':sdk:mobile-center-crashes')
     projectDependencyCompile project(':sdk:mobile-center-distribute')
     projectDependencyCompile project(':sdk:mobile-center-push')
+    projectDependencyCompile project(':sdk:mobile-center-rum')
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-analytics:${version}"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-crashes:${version}"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-distribute:${version}"

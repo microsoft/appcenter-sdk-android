@@ -1,0 +1,43 @@
+﻿{
+  "n": 3,
+  "e": [
+    {
+      "e": "msedge-anycast-a-ring",
+      "w": 20,
+      "m": 1
+    },
+    {
+      "e": "msedge-anycast-b-ring",
+      "w": 20,
+      "m": 1
+    },
+    {
+      "e": "acdc-direct.office.com",
+      "w": 20,
+      "m": 1
+    },
+    {
+      "e": "gtm-dyn-direct.office365.com",
+      "w": 20,
+      "m": 1
+    },
+    {
+      "e": "atm",
+      "w": 20,
+      "m": 1
+    },
+    {
+      "e": "outlook.office365.com",
+      "w": 20,
+      "m": 1
+    },
+    {
+      "e": "outlook.office.com",
+      "w": 20,
+      "m": 1
+    }
+  ],
+  "r": [
+    "fp.msedge.net/r.gif"
+  ]
+}

@@ -3,12 +3,13 @@ package com.microsoft.azure.mobile.rum;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
+import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.http.DefaultHttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
-import com.microsoft.azure.mobile.http.HttpClientRetryer;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.NetworkStateHelper;
@@ -22,10 +23,13 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
 
@@ -67,7 +71,12 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     /**
      * Report query string format.
      */
-    private static String REPORT_URL_FORMAT = "https://%s?MonitorID=atm&rid=%s&w3c=false&prot=https&v=2017061301&tag=%s&DATA=%s";
+    private static final String REPORT_URL_FORMAT = "https://%s?MonitorID=atm&rid=%s&w3c=false&prot=https&v=2017061301&tag=%s&DATA=%s";
+
+    /**
+     * Additional headers.
+     */
+    private static final Map<String, String> HEADERS = Collections.emptyMap();
 
     /**
      * Shared instance.
@@ -136,8 +145,8 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
-        super.onStarted(context, appSecret, channel);
         mContext = context;
+        super.onStarted(context, appSecret, channel);
     }
 
     /**
@@ -149,10 +158,9 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
 
-            /* Configure HTTP client. */
-            HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
+            /* Configure HTTP client with no retries but handling network state. */
             NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
-            mHttpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
+            mHttpClient = new HttpClientNetworkStateHandler(new DefaultHttpClient(), networkStateHelper);
 
             /* Read JSON configuration. */
             mTestUrls = new ArrayList<>();
@@ -180,6 +188,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                     String url = "https://" + endpoint.getString("e") + "/apc/";
                     String requestId = UUIDUtils.randomUUID().toString();
                     mTestUrls.add(new TestUrl(url + WARM_UP_IMAGE + "?" + requestId, requestId, WARM_UP_IMAGE, "cold"));
+                    requestId = UUIDUtils.randomUUID().toString();
                     mTestUrls.add(new TestUrl(url + TEST_IMAGE + "?" + requestId, requestId, TEST_IMAGE, "warm"));
                 }
             } catch (IOException | JSONException e) {
@@ -191,11 +200,17 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
         }
     }
 
+    /**
+     * Test urls one by one.
+     */
     private void testUrl(final Iterator<TestUrl> iterator) {
+
+        /* Iterate over next test url. */
         if (iterator.hasNext()) {
             final long startTime = System.currentTimeMillis();
             final TestUrl testUrl = iterator.next();
-            mHttpClient.callAsync(testUrl.url, METHOD_GET, Collections.<String, String>emptyMap(), null, new ServiceCallback() {
+            MobileCenterLog.verbose(LOG_TAG, "Calling " + testUrl.url);
+            mHttpClient.callAsync(testUrl.url, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
                 @Override
                 public void onCallSucceeded(String payload) {
@@ -205,14 +220,18 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
 
                 @Override
                 public void onCallFailed(Exception e) {
-                    // TODO ignore failures later
-                    onCallSucceeded(null);
+                    MobileCenterLog.error(LOG_TAG, testUrl.url + " call failed", e);
+                    testUrl(iterator);
                 }
             });
-        } else {
+        }
 
-            /* Generate report. */
+        /* Or report results after last one. */
+        else {
             try {
+
+                /* Generate report. */
+                String reportId = UUIDUtils.randomUUID().toString();
                 JSONArray results = new JSONArray();
                 for (TestUrl testUrl : mTestUrls) {
                     if (testUrl.result != null) {
@@ -225,9 +244,15 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                         results.put(result);
                     }
                 }
-                JSONArray reportUrls = mConfig.getJSONArray("r");
                 String reportJson = results.toString();
-                String reportId = UUIDUtils.randomUUID().toString();
+                if (MobileCenter.getLogLevel() <= Log.VERBOSE) {
+                    MobileCenterLog.verbose(LOG_TAG, "Report payload=" + results.toString(2));
+                }
+
+                /* There can be more than 1 report URL, parse them. */
+                JSONArray reportUrls = mConfig.getJSONArray("r");
+
+                /* Report 1 by 1. */
                 report(reportUrls, reportJson, reportId, 0);
             } catch (JSONException e) {
                 MobileCenterLog.error(LOG_TAG, "Failed to generate report.", e);
@@ -235,25 +260,39 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
         }
     }
 
-    private void report(JSONArray reportUrls, String reportJson, String reportId, int reportUrlIndex) {
+    /**
+     * Report the results to 1 endpoint at a time.
+     */
+    private void report(final JSONArray reportUrls, final String reportJson, final String reportId, final int reportUrlIndex) {
         if (reportUrlIndex < reportUrls.length()) {
             try {
-                String reportUrl = String.format(REPORT_URL_FORMAT, reportUrls.getString(reportUrlIndex), reportId, mRumKey, reportJson);
-                mHttpClient.callAsync(reportUrl, METHOD_GET, Collections.<String, String>emptyMap(), null, new ServiceCallback() {
+                String reportUrl = reportUrls.getString(reportUrlIndex);
+                String parameters = URLEncoder.encode(reportJson, "UTF-8");
+                reportUrl = String.format(REPORT_URL_FORMAT, reportUrl, reportId, mRumKey, parameters);
+                MobileCenterLog.verbose(LOG_TAG, "Calling " + reportUrl);
+                mHttpClient.callAsync(reportUrl, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
                     @Override
                     public void onCallSucceeded(String payload) {
                         MobileCenterLog.info(LOG_TAG, "Measurements reported.");
+                        reportNextUrl();
                     }
 
                     @Override
                     public void onCallFailed(Exception e) {
                         MobileCenterLog.error(LOG_TAG, "Failed to report measurements.", e);
+                        reportNextUrl();
+                    }
+
+                    private void reportNextUrl() {
+                        report(reportUrls, reportJson, reportId, reportUrlIndex + 1);
                     }
                 });
-            } catch (JSONException e) {
+            } catch (JSONException | UnsupportedEncodingException e) {
                 MobileCenterLog.error(LOG_TAG, "Failed to generate report.", e);
             }
+        } else {
+            MobileCenterLog.info(LOG_TAG, "Measurements reported to all report endpoints.");
         }
     }
 
@@ -272,16 +311,34 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
         return LOG_TAG;
     }
 
+    /**
+     * Test description.
+     */
     private class TestUrl {
 
+        /**
+         * Test url.
+         */
         final String url;
 
+        /**
+         * Request identifier.
+         */
         final String requestId;
 
+        /**
+         * What image is tested.
+         */
         final String object;
 
+        /**
+         * Is it cold or warm test?.
+         */
         final String conn;
 
+        /**
+         * Time it took to call the url in ms.
+         */
         Long result;
 
         TestUrl(String url, String requestId, String object, String conn) {
