@@ -234,12 +234,28 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                         protocolSuffix = "s";
                     }
                     String requestId = endpoint.getString("e");
+
+                    /* Handle backward compatibility with FPv1. */
+                    String baseUrl = requestId;
+                    if (!requestId.contains(".")) {
+                        baseUrl += ".clo.footprintdns.com";
+                    }
+
+                    /* Port this Javascript behavior regarding url and requestId. */
+                    else if (requestId.startsWith("*") && requestId.length() > 2) {
+                        String domain = requestId.substring(2);
+                        String uuid = UUIDUtils.randomUUID().toString();
+                        baseUrl = uuid + "." + domain;
+                        requestId = domain.equals("clo.footprintdns.com") ? uuid : domain;
+                    }
+
+                    /* Generate test urls. */
                     String probeId = UUIDUtils.randomUUID().toString();
-                    String testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, requestId, WARM_UP_IMAGE, probeId);
+                    String testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, baseUrl, WARM_UP_IMAGE, probeId);
                     mTestUrls.add(new TestUrl(testUrl, requestId, WARM_UP_IMAGE, "cold"));
                     String testImage = (measurementType & FLAG_SEVENTEENK) > 0 ? SEVENTEENK_IMAGE : WARM_UP_IMAGE;
                     probeId = UUIDUtils.randomUUID().toString();
-                    testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, requestId, testImage, probeId);
+                    testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, baseUrl, testImage, probeId);
                     mTestUrls.add(new TestUrl(testUrl, requestId, testImage, "warm"));
                 }
             } catch (IOException | JSONException e) {
