@@ -29,7 +29,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.Random;
 
 import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_GET;
 
@@ -221,13 +224,51 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                     stream.close();
                 }
 
-                /* For each URL. */
+                /* Implement weighted random. */
                 JSONArray endpoints = mConfig.getJSONArray("e");
+                int totalWeight = 0;
+                List<JSONObject> weightedEndpoints = new ArrayList<>(endpoints.length());
                 for (int i = 0; i < endpoints.length(); i++) {
                     JSONObject endpoint = endpoints.getJSONObject(i);
-                    if (endpoint.getInt("w") <= 0) {
-                        continue;
+                    int weight = endpoint.getInt("w");
+                    if (weight > 0) {
+                        totalWeight += weight;
+                        endpoint.put("cumulatedWeight", totalWeight);
+                        weightedEndpoints.add(endpoint);
                     }
+                }
+
+                /* Select n endpoints randomly. */
+                Random random = new Random();
+                int testCount = Math.min(mConfig.getInt("n"), weightedEndpoints.size());
+                for (int n = 0; n < testCount; n++) {
+
+                    /* Select random endpoint. */
+                    double randomWeight = Math.floor(random.nextDouble() * totalWeight);
+                    JSONObject endpoint = null;
+                    ListIterator<JSONObject> iterator = weightedEndpoints.listIterator();
+                    while (iterator.hasNext()) {
+                        JSONObject weightedEndpoint = iterator.next();
+                        int cumulatedWeight = weightedEndpoint.getInt("cumulatedWeight");
+                        if (endpoint == null) {
+                            if (randomWeight <= cumulatedWeight) {
+                                endpoint = weightedEndpoint;
+                                iterator.remove();
+                            }
+                        }
+
+                        /* Update subsequent endpoints cumulated weights since we removed an element. */
+                        else {
+                            cumulatedWeight -= endpoint.getInt("w");
+                            weightedEndpoint.put("cumulatedWeight", cumulatedWeight);
+                        }
+                    }
+
+                    /* Update total weight since we removed the picked endpoint. */
+                    //noinspection ConstantConditions
+                    totalWeight -= endpoint.getInt("w");
+
+                    /* Use endpoint to generate test urls. */
                     String protocolSuffix = "";
                     int measurementType = endpoint.getInt("m");
                     if ((measurementType & FLAG_HTTPS) > 0) {
