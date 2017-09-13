@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
 
         /* Start Mobile center. */
         RealUserMeasurements.setRumKey("d3632912f5214cce9b1351b826f9a0fb");
+        RealUserMeasurements.setConfigurationUrl("https://gist.githubusercontent.com/guperrot/353d39917c7f9d333cbe867c4815a7a6/raw");
         MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class, RealUserMeasurements.class);
 
         /* Use some mobile center getters. */

@@ -20,9 +20,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -57,9 +54,14 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     private static final int RUM_KEY_LENGTH = 32;
 
     /**
+     * Rum configuration endpoint.
+     */
+    private static final String CONFIGURATION_ENDPOINT = "https://rumconfig.trafficmanager.net";
+
+    /**
      * JSON configuration file name.
      */
-    private static final String CONFIGURATION_FILE_NAME = "rumconfig.json";
+    private static final String CONFIGURATION_FILE_NAME = "rumConfig.js";
 
     /**
      * Warm up image path.
@@ -113,6 +115,11 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     private String mRumKey;
 
     /**
+     * Configuration URL.
+     */
+    private String mConfigurationUrl = CONFIGURATION_ENDPOINT;
+
+    /**
      * Rum configuration.
      */
     private JSONObject mConfig;
@@ -142,6 +149,10 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
 
     public static void setRumKey(String rumKey) {
         getInstance().setInstanceRumKey(rumKey);
+    }
+
+    public static void setConfigurationUrl(String url) {
+        getInstance().setInstanceConfigurationUrl(url);
     }
 
     /**
@@ -180,6 +191,10 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
         mRumKey = rumKey;
     }
 
+    private void setInstanceConfigurationUrl(String url) {
+        mConfigurationUrl = url;
+    }
+
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         mContext = context;
@@ -205,106 +220,107 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
             NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
             mHttpClient = new HttpClientNetworkStateHandler(new DefaultHttpClient(), networkStateHelper);
 
-            /* Read JSON configuration. */
-            mTestUrls = new ArrayList<>();
-            try {
-                InputStream stream = mContext.getAssets().open(CONFIGURATION_FILE_NAME);
-                StringBuilder builder = new StringBuilder();
-                //noinspection TryFinallyCanBeTryWithResources
-                try {
-                    InputStreamReader in = new InputStreamReader(stream, "UTF-8");
-                    char[] buffer = new char[1024];
-                    int len;
-                    while ((len = in.read(buffer)) > 0) {
-                        builder.append(buffer, 0, len);
-                    }
-                    String json = builder.toString();
-                    mConfig = new JSONObject(json);
-                } finally {
-                    stream.close();
-                }
+            /* Get configuration. */
+            mHttpClient.callAsync(mConfigurationUrl + "/" + CONFIGURATION_FILE_NAME, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
-                /* Implement weighted random. */
-                JSONArray endpoints = mConfig.getJSONArray("e");
-                int totalWeight = 0;
-                List<JSONObject> weightedEndpoints = new ArrayList<>(endpoints.length());
-                for (int i = 0; i < endpoints.length(); i++) {
-                    JSONObject endpoint = endpoints.getJSONObject(i);
-                    int weight = endpoint.getInt("w");
-                    if (weight > 0) {
-                        totalWeight += weight;
-                        endpoint.put("cumulatedWeight", totalWeight);
-                        weightedEndpoints.add(endpoint);
-                    }
-                }
+                @Override
+                public void onCallSucceeded(String payload) {
 
-                /* Select n endpoints randomly. */
-                Random random = new Random();
-                int testCount = Math.min(mConfig.getInt("n"), weightedEndpoints.size());
-                for (int n = 0; n < testCount; n++) {
+                    /* Read JSON configuration and start testing. */
+                    try {
 
-                    /* Select random endpoint. */
-                    double randomWeight = Math.floor(random.nextDouble() * totalWeight);
-                    JSONObject endpoint = null;
-                    ListIterator<JSONObject> iterator = weightedEndpoints.listIterator();
-                    while (iterator.hasNext()) {
-                        JSONObject weightedEndpoint = iterator.next();
-                        int cumulatedWeight = weightedEndpoint.getInt("cumulatedWeight");
-                        if (endpoint == null) {
-                            if (randomWeight <= cumulatedWeight) {
-                                endpoint = weightedEndpoint;
-                                iterator.remove();
+                        /* Parse configuration. */
+                        mConfig = new JSONObject(payload);
+
+                        /* Implement weighted random. */
+                        JSONArray endpoints = mConfig.getJSONArray("e");
+                        int totalWeight = 0;
+                        List<JSONObject> weightedEndpoints = new ArrayList<>(endpoints.length());
+                        for (int i = 0; i < endpoints.length(); i++) {
+                            JSONObject endpoint = endpoints.getJSONObject(i);
+                            int weight = endpoint.getInt("w");
+                            if (weight > 0) {
+                                totalWeight += weight;
+                                endpoint.put("cumulatedWeight", totalWeight);
+                                weightedEndpoints.add(endpoint);
                             }
                         }
 
-                        /* Update subsequent endpoints cumulated weights since we removed an element. */
-                        else {
-                            cumulatedWeight -= endpoint.getInt("w");
-                            weightedEndpoint.put("cumulatedWeight", cumulatedWeight);
+                        /* Select n endpoints randomly. */
+                        mTestUrls = new ArrayList<>();
+                        Random random = new Random();
+                        int testCount = Math.min(mConfig.getInt("n"), weightedEndpoints.size());
+                        for (int n = 0; n < testCount; n++) {
+
+                            /* Select random endpoint. */
+                            double randomWeight = Math.floor(random.nextDouble() * totalWeight);
+                            JSONObject endpoint = null;
+                            ListIterator<JSONObject> iterator = weightedEndpoints.listIterator();
+                            while (iterator.hasNext()) {
+                                JSONObject weightedEndpoint = iterator.next();
+                                int cumulatedWeight = weightedEndpoint.getInt("cumulatedWeight");
+                                if (endpoint == null) {
+                                    if (randomWeight <= cumulatedWeight) {
+                                        endpoint = weightedEndpoint;
+                                        iterator.remove();
+                                    }
+                                }
+
+                                /* Update subsequent endpoints cumulated weights since we removed an element. */
+                                else {
+                                    cumulatedWeight -= endpoint.getInt("w");
+                                    weightedEndpoint.put("cumulatedWeight", cumulatedWeight);
+                                }
+                            }
+
+                            /* Update total weight since we removed the picked endpoint. */
+                            //noinspection ConstantConditions
+                            totalWeight -= endpoint.getInt("w");
+
+                            /* Use endpoint to generate test urls. */
+                            String protocolSuffix = "";
+                            int measurementType = endpoint.getInt("m");
+                            if ((measurementType & FLAG_HTTPS) > 0) {
+                                protocolSuffix = "s";
+                            }
+                            String requestId = endpoint.getString("e");
+
+                            /* Handle backward compatibility with FPv1. */
+                            String baseUrl = requestId;
+                            if (!requestId.contains(".")) {
+                                baseUrl += ".clo.footprintdns.com";
+                            }
+
+                            /* Port this Javascript behavior regarding url and requestId. */
+                            else if (requestId.startsWith("*") && requestId.length() > 2) {
+                                String domain = requestId.substring(2);
+                                String uuid = UUIDUtils.randomUUID().toString();
+                                baseUrl = uuid + "." + domain;
+                                requestId = domain.equals("clo.footprintdns.com") ? uuid : domain;
+                            }
+
+                            /* Generate test urls. */
+                            String probeId = UUIDUtils.randomUUID().toString();
+                            String testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, baseUrl, WARM_UP_IMAGE, probeId);
+                            mTestUrls.add(new TestUrl(testUrl, requestId, WARM_UP_IMAGE, "cold"));
+                            String testImage = (measurementType & FLAG_SEVENTEENK) > 0 ? SEVENTEENK_IMAGE : WARM_UP_IMAGE;
+                            probeId = UUIDUtils.randomUUID().toString();
+                            testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, baseUrl, testImage, probeId);
+                            mTestUrls.add(new TestUrl(testUrl, requestId, testImage, "warm"));
                         }
+
+                        /* Run tests. */
+                        testUrl(mTestUrls.iterator());
+                    } catch (JSONException e) {
+                        MobileCenterLog.error(LOG_TAG, "Could not read configuration file.", e);
                     }
-
-                    /* Update total weight since we removed the picked endpoint. */
-                    //noinspection ConstantConditions
-                    totalWeight -= endpoint.getInt("w");
-
-                    /* Use endpoint to generate test urls. */
-                    String protocolSuffix = "";
-                    int measurementType = endpoint.getInt("m");
-                    if ((measurementType & FLAG_HTTPS) > 0) {
-                        protocolSuffix = "s";
-                    }
-                    String requestId = endpoint.getString("e");
-
-                    /* Handle backward compatibility with FPv1. */
-                    String baseUrl = requestId;
-                    if (!requestId.contains(".")) {
-                        baseUrl += ".clo.footprintdns.com";
-                    }
-
-                    /* Port this Javascript behavior regarding url and requestId. */
-                    else if (requestId.startsWith("*") && requestId.length() > 2) {
-                        String domain = requestId.substring(2);
-                        String uuid = UUIDUtils.randomUUID().toString();
-                        baseUrl = uuid + "." + domain;
-                        requestId = domain.equals("clo.footprintdns.com") ? uuid : domain;
-                    }
-
-                    /* Generate test urls. */
-                    String probeId = UUIDUtils.randomUUID().toString();
-                    String testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, baseUrl, WARM_UP_IMAGE, probeId);
-                    mTestUrls.add(new TestUrl(testUrl, requestId, WARM_UP_IMAGE, "cold"));
-                    String testImage = (measurementType & FLAG_SEVENTEENK) > 0 ? SEVENTEENK_IMAGE : WARM_UP_IMAGE;
-                    probeId = UUIDUtils.randomUUID().toString();
-                    testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, baseUrl, testImage, probeId);
-                    mTestUrls.add(new TestUrl(testUrl, requestId, testImage, "warm"));
                 }
-            } catch (IOException | JSONException e) {
-                MobileCenterLog.error(LOG_TAG, "Could not read configuration file.", e);
-            }
 
-            /* Schedule tests. */
-            testUrl(mTestUrls.iterator());
+                @Override
+                public void onCallFailed(Exception e) {
+                    MobileCenterLog.error(LOG_TAG, "Could not get configuration file.", e);
+                }
+            });
         }
     }
 
