@@ -438,7 +438,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     /**
      * Test description.
      */
-    private class TestUrl {
+    private static class TestUrl {
 
         /**
          * Test url.
