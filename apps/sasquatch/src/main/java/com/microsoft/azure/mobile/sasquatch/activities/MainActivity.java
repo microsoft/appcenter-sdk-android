@@ -23,6 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.MobileCenterService;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
 import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
@@ -37,7 +38,6 @@ import com.microsoft.azure.mobile.ingestion.models.LogWithProperties;
 import com.microsoft.azure.mobile.push.Push;
 import com.microsoft.azure.mobile.push.PushListener;
 import com.microsoft.azure.mobile.push.PushNotification;
-import com.microsoft.azure.mobile.rum.RealUserMeasurements;
 import com.microsoft.azure.mobile.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.SasquatchDistributeListener;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
@@ -102,9 +102,22 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* Start Mobile center. */
-        RealUserMeasurements.setRumKey("d3632912f5214cce9b1351b826f9a0fb");
-        RealUserMeasurements.setConfigurationUrl("https://gist.githubusercontent.com/guperrot/353d39917c7f9d333cbe867c4815a7a6/raw");
-        MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class, RealUserMeasurements.class);
+        MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
+
+        /* If rum available, use it. */
+        try {
+            @SuppressWarnings("unchecked")
+            Class<? extends MobileCenterService> rum = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.rum.RealUserMeasurements");
+            rum.getMethod("setRumKey", String.class).invoke(null, getString(R.string.rum_key));
+
+            /* Temporary URL as the official endpoint does not exist yet. */
+            rum.getMethod("setConfigurationUrl", String.class).invoke(null, "https://gist.githubusercontent.com/guperrot/353d39917c7f9d333cbe867c4815a7a6/raw");
+
+            /* Start rum. */
+            MobileCenter.start(rum);
+        } catch (Exception e) {
+            MobileCenterLog.error(LOG_TAG, "Rum cannot be used.", e);
+        }
 
         /* Use some mobile center getters. */
         MobileCenter.getInstallId().thenAccept(new MobileCenterConsumer<UUID>() {
