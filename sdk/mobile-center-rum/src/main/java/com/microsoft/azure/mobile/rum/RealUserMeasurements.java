@@ -56,12 +56,12 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     /**
      * Rum configuration endpoint.
      */
-    private static final String CONFIGURATION_ENDPOINT = "https://rumconfig.trafficmanager.net";
+    private static final String CONFIGURATION_ENDPOINT = "http://www.atmrum.net/conf/v1/atm";
 
     /**
      * JSON configuration file name.
      */
-    private static final String CONFIGURATION_FILE_NAME = "rumConfig.js";
+    private static final String CONFIGURATION_FILE_NAME = "fpconfig.min.json";
 
     /**
      * Warm up image path.
@@ -89,9 +89,9 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     private static final String TEST_URL_FORMAT = "http%s://%s/apc/%s?%s";
 
     /**
-     * Report url format.
+     * Report url format. TODO https
      */
-    private static final String REPORT_URL_FORMAT = "https://%s?MonitorID=atm&rid=%s&w3c=false&prot=https&v=2017061301&tag=%s&DATA=%s";
+    private static final String REPORT_URL_FORMAT = "http://%s?MonitorID=atm&rid=%s&w3c=false&prot=https&v=2017061301&tag=%s&DATA=%s";
 
     /**
      * Additional headers.
@@ -113,11 +113,6 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
      * Rum key.
      */
     private String mRumKey;
-
-    /**
-     * Configuration URL.
-     */
-    private String mConfigurationUrl = CONFIGURATION_ENDPOINT;
 
     /**
      * Rum configuration.
@@ -147,12 +142,9 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
         return sInstance;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static void setRumKey(String rumKey) {
         getInstance().setInstanceRumKey(rumKey);
-    }
-
-    public static void setConfigurationUrl(String url) {
-        getInstance().setInstanceConfigurationUrl(url);
     }
 
     /**
@@ -176,6 +168,13 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     }
 
     /**
+     * All unique identifiers used in Rum don't have dashes...
+     */
+    private static String rumUniqueId() {
+        return UUIDUtils.randomUUID().toString().replace("-", "");
+    }
+
+    /**
      * Implements {@link #setRumKey(String)} at instance level.
      */
     private synchronized void setInstanceRumKey(String rumKey) {
@@ -189,10 +188,6 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
             return;
         }
         mRumKey = rumKey;
-    }
-
-    private void setInstanceConfigurationUrl(String url) {
-        mConfigurationUrl = url;
     }
 
     @Override
@@ -221,7 +216,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
             mHttpClient = new HttpClientNetworkStateHandler(new DefaultHttpClient(), networkStateHelper);
 
             /* Get configuration. */
-            mHttpClient.callAsync(mConfigurationUrl + "/" + CONFIGURATION_FILE_NAME, METHOD_GET, HEADERS, null, new ServiceCallback() {
+            mHttpClient.callAsync(CONFIGURATION_ENDPOINT + "/" + CONFIGURATION_FILE_NAME, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
                 @Override
                 public void onCallSucceeded(String payload) {
@@ -291,20 +286,20 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                                 baseUrl += ".clo.footprintdns.com";
                             }
 
-                            /* Port this Javascript behavior regarding url and requestId. */
+                            /* Handle wildcard sub-domain testing. */
                             else if (requestId.startsWith("*") && requestId.length() > 2) {
                                 String domain = requestId.substring(2);
-                                String uuid = UUIDUtils.randomUUID().toString();
+                                String uuid = rumUniqueId();
                                 baseUrl = uuid + "." + domain;
                                 requestId = domain.equals("clo.footprintdns.com") ? uuid : domain;
                             }
 
                             /* Generate test urls. */
-                            String probeId = UUIDUtils.randomUUID().toString();
+                            String probeId = rumUniqueId();
                             String testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, baseUrl, WARM_UP_IMAGE, probeId);
                             mTestUrls.add(new TestUrl(testUrl, requestId, WARM_UP_IMAGE, "cold"));
                             String testImage = (measurementType & FLAG_SEVENTEENK) > 0 ? SEVENTEENK_IMAGE : WARM_UP_IMAGE;
-                            probeId = UUIDUtils.randomUUID().toString();
+                            probeId = rumUniqueId();
                             testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, baseUrl, testImage, probeId);
                             mTestUrls.add(new TestUrl(testUrl, requestId, testImage, "warm"));
                         }
@@ -322,6 +317,8 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                 }
             });
         }
+
+        // TODO handle disable: should interrupt http calls and reset state
     }
 
     /**
@@ -355,7 +352,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
             try {
 
                 /* Generate report. */
-                String reportId = UUIDUtils.randomUUID().toString();
+                String reportId = rumUniqueId();
                 JSONArray results = new JSONArray();
                 for (TestUrl testUrl : mTestUrls) {
                     if (testUrl.result != null) {
