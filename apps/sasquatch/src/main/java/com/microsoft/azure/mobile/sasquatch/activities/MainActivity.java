@@ -112,8 +112,7 @@ public class MainActivity extends AppCompatActivity {
 
             /* Start rum. */
             MobileCenter.start(rum);
-        } catch (Exception e) {
-            MobileCenterLog.error(LOG_TAG, "Rum cannot be used.", e);
+        } catch (Exception ignore) {
         }
 
         /* Use some mobile center getters. */

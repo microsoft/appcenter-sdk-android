@@ -9,6 +9,7 @@ import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.http.DefaultHttpClient;
+import com.microsoft.azure.mobile.http.HttpClient;
 import com.microsoft.azure.mobile.http.HttpClientNetworkStateHandler;
 import com.microsoft.azure.mobile.http.ServiceCallback;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
@@ -20,6 +21,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -115,19 +117,19 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     private String mRumKey;
 
     /**
+     * HTTP client.
+     */
+    private HttpClientNetworkStateHandler mHttpClient;
+
+    /**
      * Rum configuration.
      */
-    private JSONObject mConfig;
+    private JSONObject mConfiguration;
 
     /**
      * Tests to run.
      */
     private Collection<TestUrl> mTestUrls;
-
-    /**
-     * HTTP client.
-     */
-    private HttpClientNetworkStateHandler mHttpClient;
 
     /**
      * Get shared instance.
@@ -213,102 +215,18 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
 
             /* Configure HTTP client with no retries but handling network state. */
             NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
-            mHttpClient = new HttpClientNetworkStateHandler(new DefaultHttpClient(), networkStateHelper);
+            final HttpClient httpClient = mHttpClient = new HttpClientNetworkStateHandler(new DefaultHttpClient(), networkStateHelper);
 
             /* Get configuration. */
-            mHttpClient.callAsync(CONFIGURATION_ENDPOINT + "/" + CONFIGURATION_FILE_NAME, METHOD_GET, HEADERS, null, new ServiceCallback() {
+            String url = CONFIGURATION_ENDPOINT + "/" + CONFIGURATION_FILE_NAME;
+            MobileCenterLog.verbose(LOG_TAG, "Calling " + url);
+            httpClient.callAsync(url, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
                 @Override
                 public void onCallSucceeded(String payload) {
 
                     /* Read JSON configuration and start testing. */
-                    try {
-
-                        /* Parse configuration. */
-                        mConfig = new JSONObject(payload);
-
-                        /* Implement weighted random. */
-                        JSONArray endpoints = mConfig.getJSONArray("e");
-                        int totalWeight = 0;
-                        List<JSONObject> weightedEndpoints = new ArrayList<>(endpoints.length());
-                        for (int i = 0; i < endpoints.length(); i++) {
-                            JSONObject endpoint = endpoints.getJSONObject(i);
-                            int weight = endpoint.getInt("w");
-                            if (weight > 0) {
-                                totalWeight += weight;
-                                endpoint.put("cumulatedWeight", totalWeight);
-                                weightedEndpoints.add(endpoint);
-                            }
-                        }
-
-                        /* Select n endpoints randomly. */
-                        mTestUrls = new ArrayList<>();
-                        Random random = new Random();
-                        int testCount = Math.min(mConfig.getInt("n"), weightedEndpoints.size());
-                        for (int n = 0; n < testCount; n++) {
-
-                            /* Select random endpoint. */
-                            double randomWeight = Math.floor(random.nextDouble() * totalWeight);
-                            JSONObject endpoint = null;
-                            ListIterator<JSONObject> iterator = weightedEndpoints.listIterator();
-                            while (iterator.hasNext()) {
-                                JSONObject weightedEndpoint = iterator.next();
-                                int cumulatedWeight = weightedEndpoint.getInt("cumulatedWeight");
-                                if (endpoint == null) {
-                                    if (randomWeight <= cumulatedWeight) {
-                                        endpoint = weightedEndpoint;
-                                        iterator.remove();
-                                    }
-                                }
-
-                                /* Update subsequent endpoints cumulated weights since we removed an element. */
-                                else {
-                                    cumulatedWeight -= endpoint.getInt("w");
-                                    weightedEndpoint.put("cumulatedWeight", cumulatedWeight);
-                                }
-                            }
-
-                            /* Update total weight since we removed the picked endpoint. */
-                            //noinspection ConstantConditions
-                            totalWeight -= endpoint.getInt("w");
-
-                            /* Use endpoint to generate test urls. */
-                            String protocolSuffix = "";
-                            int measurementType = endpoint.getInt("m");
-                            if ((measurementType & FLAG_HTTPS) > 0) {
-                                protocolSuffix = "s";
-                            }
-                            String requestId = endpoint.getString("e");
-
-                            /* Handle backward compatibility with FPv1. */
-                            String baseUrl = requestId;
-                            if (!requestId.contains(".")) {
-                                baseUrl += ".clo.footprintdns.com";
-                            }
-
-                            /* Handle wildcard sub-domain testing. */
-                            else if (requestId.startsWith("*") && requestId.length() > 2) {
-                                String domain = requestId.substring(2);
-                                String uuid = rumUniqueId();
-                                baseUrl = uuid + "." + domain;
-                                requestId = domain.equals("clo.footprintdns.com") ? uuid : domain;
-                            }
-
-                            /* Generate test urls. */
-                            String probeId = rumUniqueId();
-                            String testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, baseUrl, WARM_UP_IMAGE, probeId);
-                            mTestUrls.add(new TestUrl(testUrl, requestId, WARM_UP_IMAGE, "cold"));
-                            String testImage = (measurementType & FLAG_SEVENTEENK) > 0 ? SEVENTEENK_IMAGE : WARM_UP_IMAGE;
-                            probeId = rumUniqueId();
-                            testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, baseUrl, testImage, probeId);
-                            mTestUrls.add(new TestUrl(testUrl, requestId, testImage, "warm"));
-                        }
-
-                        /* Run tests. */
-                        testUrl(mTestUrls.iterator());
-                    } catch (JSONException e) {
-                        MobileCenterLog.error(LOG_TAG, "Could not read configuration file.", e);
-                    }
+                    handleRemoteConfiguration(httpClient, payload);
                 }
 
                 @Override
@@ -318,13 +236,126 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
             });
         }
 
-        // TODO handle disable: should interrupt http calls and reset state
+        /* On disabling, cancel everything. */
+        else if (mHttpClient != null) {
+            try {
+                mHttpClient.close();
+            } catch (IOException e) {
+                MobileCenterLog.error(LOG_TAG, "Failed to close http client.", e);
+            }
+            mHttpClient = null;
+            mConfiguration = null;
+            mTestUrls = null;
+        }
+    }
+
+    /**
+     * After getting the remote configuration, schedule test runs.
+     */
+    private synchronized void handleRemoteConfiguration(HttpClient httpClient, String configurationPayload) {
+
+        /* Check if a disable happened while we were waiting the remote configuration. */
+        if (httpClient != mHttpClient) {
+            return;
+        }
+        try {
+
+            /* Parse configuration. */
+            mConfiguration = new JSONObject(configurationPayload);
+
+            /* Implement weighted random. */
+            JSONArray endpoints = mConfiguration.getJSONArray("e");
+            int totalWeight = 0;
+            List<JSONObject> weightedEndpoints = new ArrayList<>(endpoints.length());
+            for (int i = 0; i < endpoints.length(); i++) {
+                JSONObject endpoint = endpoints.getJSONObject(i);
+                int weight = endpoint.getInt("w");
+                if (weight > 0) {
+                    totalWeight += weight;
+                    endpoint.put("cumulatedWeight", totalWeight);
+                    weightedEndpoints.add(endpoint);
+                }
+            }
+
+            /* Select n endpoints randomly. */
+            mTestUrls = new ArrayList<>();
+            Random random = new Random();
+            int testCount = Math.min(mConfiguration.getInt("n"), weightedEndpoints.size());
+            for (int n = 0; n < testCount; n++) {
+
+                /* Select random endpoint. */
+                double randomWeight = Math.floor(random.nextDouble() * totalWeight);
+                JSONObject endpoint = null;
+                ListIterator<JSONObject> iterator = weightedEndpoints.listIterator();
+                while (iterator.hasNext()) {
+                    JSONObject weightedEndpoint = iterator.next();
+                    int cumulatedWeight = weightedEndpoint.getInt("cumulatedWeight");
+                    if (endpoint == null) {
+                        if (randomWeight <= cumulatedWeight) {
+                            endpoint = weightedEndpoint;
+                            iterator.remove();
+                        }
+                    }
+
+                    /* Update subsequent endpoints cumulated weights since we removed an element. */
+                    else {
+                        cumulatedWeight -= endpoint.getInt("w");
+                        weightedEndpoint.put("cumulatedWeight", cumulatedWeight);
+                    }
+                }
+
+                /* Update total weight since we removed the picked endpoint. */
+                //noinspection ConstantConditions
+                totalWeight -= endpoint.getInt("w");
+
+                /* Use endpoint to generate test urls. */
+                String protocolSuffix = "";
+                int measurementType = endpoint.getInt("m");
+                if ((measurementType & FLAG_HTTPS) > 0) {
+                    protocolSuffix = "s";
+                }
+                String requestId = endpoint.getString("e");
+
+                /* Handle backward compatibility with FPv1. */
+                String baseUrl = requestId;
+                if (!requestId.contains(".")) {
+                    baseUrl += ".clo.footprintdns.com";
+                }
+
+                /* Handle wildcard sub-domain testing. */
+                else if (requestId.startsWith("*") && requestId.length() > 2) {
+                    String domain = requestId.substring(2);
+                    String uuid = rumUniqueId();
+                    baseUrl = uuid + "." + domain;
+                    requestId = domain.equals("clo.footprintdns.com") ? uuid : domain;
+                }
+
+                /* Generate test urls. */
+                String probeId = rumUniqueId();
+                String testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, baseUrl, WARM_UP_IMAGE, probeId);
+                mTestUrls.add(new TestUrl(testUrl, requestId, WARM_UP_IMAGE, "cold"));
+                String testImage = (measurementType & FLAG_SEVENTEENK) > 0 ? SEVENTEENK_IMAGE : WARM_UP_IMAGE;
+                probeId = rumUniqueId();
+                testUrl = String.format(TEST_URL_FORMAT, protocolSuffix, baseUrl, testImage, probeId);
+                mTestUrls.add(new TestUrl(testUrl, requestId, testImage, "warm"));
+            }
+
+            /* Run tests. */
+            testUrl(httpClient, mTestUrls.iterator());
+        } catch (JSONException e) {
+            MobileCenterLog.error(LOG_TAG, "Could not read configuration file.", e);
+        }
     }
 
     /**
      * Test urls one by one.
      */
-    private void testUrl(final Iterator<TestUrl> iterator) {
+    private synchronized void testUrl(final HttpClient httpClient, final Iterator<TestUrl> iterator) {
+
+        /* Check if a disable happened while we were waiting for a call result. */
+        if (httpClient != mHttpClient) {
+            return;
+        }
 
         /* Iterate over next test url. */
         if (iterator.hasNext()) {
@@ -336,13 +367,13 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                 @Override
                 public void onCallSucceeded(String payload) {
                     testUrl.result = System.currentTimeMillis() - startTime;
-                    testUrl(iterator);
+                    testUrl(httpClient, iterator);
                 }
 
                 @Override
                 public void onCallFailed(Exception e) {
                     MobileCenterLog.error(LOG_TAG, testUrl.url + " call failed", e);
-                    testUrl(iterator);
+                    testUrl(httpClient, iterator);
                 }
             });
         }
@@ -371,10 +402,10 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                 }
 
                 /* There can be more than 1 report URL, parse them. */
-                JSONArray reportUrls = mConfig.getJSONArray("r");
+                JSONArray reportUrls = mConfiguration.getJSONArray("r");
 
                 /* Report 1 by 1. */
-                report(reportUrls, reportJson, reportId, 0);
+                report(httpClient, reportUrls, reportJson, reportId, 0);
             } catch (JSONException e) {
                 MobileCenterLog.error(LOG_TAG, "Failed to generate report.", e);
             }
@@ -384,7 +415,14 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     /**
      * Report the results to 1 endpoint at a time.
      */
-    private void report(final JSONArray reportUrls, final String reportJson, final String reportId, final int reportUrlIndex) {
+    private synchronized void report(final HttpClient httpClient, final JSONArray reportUrls, final String reportJson, final String reportId, final int reportUrlIndex) {
+
+        /* Check if a disable happened while we were waiting for a call result. */
+        if (httpClient != mHttpClient) {
+            return;
+        }
+
+        /* Check if we still have urls to report to. */
         if (reportUrlIndex < reportUrls.length()) {
             try {
                 String reportUrl = reportUrls.getString(reportUrlIndex);
@@ -406,7 +444,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                     }
 
                     private void reportNextUrl() {
-                        report(reportUrls, reportJson, reportId, reportUrlIndex + 1);
+                        report(httpClient, reportUrls, reportJson, reportId, reportUrlIndex + 1);
                     }
                 });
             } catch (JSONException | UnsupportedEncodingException e) {
