@@ -207,8 +207,11 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
 
+            /* Snapshot run key for the run to avoid race conditions, we ignore updates. */
+            final String rumKey = mRumKey;
+
             /* Check rum key. */
-            if (mRumKey == null) {
+            if (rumKey == null) {
                 MobileCenterLog.error(LOG_TAG, "Rum key must be configured before start.");
                 return;
             }
@@ -226,7 +229,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                 public void onCallSucceeded(String payload) {
 
                     /* Read JSON configuration and start testing. */
-                    handleRemoteConfiguration(httpClient, payload);
+                    handleRemoteConfiguration(httpClient, rumKey, payload);
                 }
 
                 @Override
@@ -252,7 +255,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     /**
      * After getting the remote configuration, schedule test runs.
      */
-    private synchronized void handleRemoteConfiguration(HttpClient httpClient, String configurationPayload) {
+    private synchronized void handleRemoteConfiguration(HttpClient httpClient, String rumKey, String configurationPayload) {
 
         /* Check if a disable happened while we were waiting the remote configuration. */
         if (httpClient != mHttpClient) {
@@ -341,7 +344,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
             }
 
             /* Run tests. */
-            testUrl(httpClient, mTestUrls.iterator());
+            testUrl(httpClient, rumKey, mTestUrls.iterator());
         } catch (JSONException e) {
             MobileCenterLog.error(LOG_TAG, "Could not read configuration file.", e);
         }
@@ -350,7 +353,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     /**
      * Test urls one by one.
      */
-    private synchronized void testUrl(final HttpClient httpClient, final Iterator<TestUrl> iterator) {
+    private synchronized void testUrl(final HttpClient httpClient, final String rumKey, final Iterator<TestUrl> iterator) {
 
         /* Check if a disable happened while we were waiting for a call result. */
         if (httpClient != mHttpClient) {
@@ -367,13 +370,13 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                 @Override
                 public void onCallSucceeded(String payload) {
                     testUrl.result = System.currentTimeMillis() - startTime;
-                    testUrl(httpClient, iterator);
+                    testUrl(httpClient, rumKey, iterator);
                 }
 
                 @Override
                 public void onCallFailed(Exception e) {
                     MobileCenterLog.error(LOG_TAG, testUrl.url + " call failed", e);
-                    testUrl(httpClient, iterator);
+                    testUrl(httpClient, rumKey, iterator);
                 }
             });
         }
@@ -405,7 +408,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                 JSONArray reportUrls = mConfiguration.getJSONArray("r");
 
                 /* Report 1 by 1. */
-                report(httpClient, reportUrls, reportJson, reportId, 0);
+                report(httpClient, rumKey, reportUrls, reportJson, reportId, 0);
             } catch (JSONException e) {
                 MobileCenterLog.error(LOG_TAG, "Failed to generate report.", e);
             }
@@ -415,7 +418,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     /**
      * Report the results to 1 endpoint at a time.
      */
-    private synchronized void report(final HttpClient httpClient, final JSONArray reportUrls, final String reportJson, final String reportId, final int reportUrlIndex) {
+    private synchronized void report(final HttpClient httpClient, final String rumKey, final JSONArray reportUrls, final String reportJson, final String reportId, final int reportUrlIndex) {
 
         /* Check if a disable happened while we were waiting for a call result. */
         if (httpClient != mHttpClient) {
@@ -427,7 +430,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
             try {
                 String reportUrl = reportUrls.getString(reportUrlIndex);
                 String parameters = URLEncoder.encode(reportJson, "UTF-8");
-                reportUrl = String.format(REPORT_URL_FORMAT, reportUrl, reportId, mRumKey, parameters);
+                reportUrl = String.format(REPORT_URL_FORMAT, reportUrl, reportId, rumKey, parameters);
                 MobileCenterLog.verbose(LOG_TAG, "Calling " + reportUrl);
                 mHttpClient.callAsync(reportUrl, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
@@ -444,7 +447,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                     }
 
                     private void reportNextUrl() {
-                        report(httpClient, reportUrls, reportJson, reportId, reportUrlIndex + 1);
+                        report(httpClient, rumKey, reportUrls, reportJson, reportId, reportUrlIndex + 1);
                     }
                 });
             } catch (JSONException | UnsupportedEncodingException e) {
@@ -500,6 +503,9 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
          */
         Long result;
 
+        /**
+         * Init.
+         */
         TestUrl(String url, String requestId, String object, String conn) {
             this.url = url;
             this.requestId = requestId;
