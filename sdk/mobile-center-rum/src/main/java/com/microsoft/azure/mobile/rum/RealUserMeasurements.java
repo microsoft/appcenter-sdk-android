@@ -56,14 +56,11 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     private static final int RUM_KEY_LENGTH = 32;
 
     /**
-     * Rum configuration endpoint.
+     * Rum configuration endpoints.
      */
-    private static final String CONFIGURATION_ENDPOINT = "http://www.atmrum.net/conf/v1/atm";
-
-    /**
-     * JSON configuration file name.
-     */
-    private static final String CONFIGURATION_FILE_NAME = "fpconfig.min.json";
+    private static final String[] CONFIGURATION_ENDPOINTS = {
+            "https://www.atmrum.net/conf/v1/atm/fpconfig.min.json",
+    };
 
     /**
      * Warm up image path.
@@ -218,25 +215,10 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
 
             /* Configure HTTP client with no retries but handling network state. */
             NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
-            final HttpClient httpClient = mHttpClient = new HttpClientNetworkStateHandler(new DefaultHttpClient(), networkStateHelper);
+            mHttpClient = new HttpClientNetworkStateHandler(new DefaultHttpClient(), networkStateHelper);
 
             /* Get configuration. */
-            String url = CONFIGURATION_ENDPOINT + "/" + CONFIGURATION_FILE_NAME;
-            MobileCenterLog.verbose(LOG_TAG, "Calling " + url);
-            httpClient.callAsync(url, METHOD_GET, HEADERS, null, new ServiceCallback() {
-
-                @Override
-                public void onCallSucceeded(String payload) {
-
-                    /* Read JSON configuration and start testing. */
-                    handleRemoteConfiguration(httpClient, rumKey, payload);
-                }
-
-                @Override
-                public void onCallFailed(Exception e) {
-                    MobileCenterLog.error(LOG_TAG, "Could not get configuration file.", e);
-                }
-            });
+            getConfiguration(0, rumKey, mHttpClient);
         }
 
         /* On disabling, cancel everything. */
@@ -250,6 +232,40 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
             mConfiguration = null;
             mTestUrls = null;
         }
+    }
+
+    /**
+     * Get configuration.
+     */
+    private synchronized void getConfiguration(final int configurationUrlIndex, final String rumKey, final HttpClient httpClient) {
+
+        /* Check if a disable happened while we were waiting the remote configuration. */
+        if (httpClient != mHttpClient) {
+            return;
+        }
+        if (configurationUrlIndex >= CONFIGURATION_ENDPOINTS.length) {
+            MobileCenterLog.error(LOG_TAG, "Could not get configuration file from any of the endpoints.");
+            return;
+        }
+        final String url = CONFIGURATION_ENDPOINTS[configurationUrlIndex];
+        MobileCenterLog.verbose(LOG_TAG, "Calling " + url);
+        httpClient.callAsync(url, METHOD_GET, HEADERS, null, new ServiceCallback() {
+
+            @Override
+            public void onCallSucceeded(String payload) {
+
+                /* Read JSON configuration and start testing. */
+                handleRemoteConfiguration(httpClient, rumKey, payload);
+            }
+
+            @Override
+            public void onCallFailed(Exception e) {
+
+                /* Log error and try the next configuration endpoint. */
+                MobileCenterLog.error(LOG_TAG, "Could not get configuration file at " + url, e);
+                getConfiguration(configurationUrlIndex + 1, rumKey, httpClient);
+            }
+        });
     }
 
     /**
