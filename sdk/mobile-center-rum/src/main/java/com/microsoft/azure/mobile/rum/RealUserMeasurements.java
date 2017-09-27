@@ -88,9 +88,9 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     private static final String TEST_URL_FORMAT = "http%s://%s/apc/%s?%s";
 
     /**
-     * Report url format. TODO https
+     * Report url format.
      */
-    private static final String REPORT_URL_FORMAT = "http://%s?MonitorID=atm&rid=%s&w3c=false&prot=https&v=2017061301&tag=%s&DATA=%s";
+    private static final String REPORT_URL_FORMAT = "https://%s?MonitorID=atm-mc&rid=%s&w3c=false&prot=https&v=2017061301&tag=%s&DATA=%s";
 
     /**
      * Additional headers.
@@ -423,7 +423,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                 /* There can be more than 1 report URL, parse them. */
                 JSONArray reportUrls = mConfiguration.getJSONArray("r");
 
-                /* Report 1 by 1. */
+                /* Report. */
                 report(httpClient, rumKey, reportUrls, reportJson, reportId, 0);
             } catch (JSONException e) {
                 MobileCenterLog.error(LOG_TAG, "Failed to generate report.", e);
@@ -432,7 +432,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     }
 
     /**
-     * Report the results to 1 endpoint at a time.
+     * Report the results to 1 endpoint at a time, stopping at the first one that succeeds.
      */
     private synchronized void report(final HttpClient httpClient, final String rumKey, final JSONArray reportUrls, final String reportJson, final String reportId, final int reportUrlIndex) {
 
@@ -447,18 +447,18 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                 String reportUrl = reportUrls.getString(reportUrlIndex);
                 String parameters = URLEncoder.encode(reportJson, "UTF-8");
                 reportUrl = String.format(REPORT_URL_FORMAT, reportUrl, reportId, rumKey, parameters);
-                MobileCenterLog.verbose(LOG_TAG, "Calling " + reportUrl);
-                mHttpClient.callAsync(reportUrl, METHOD_GET, HEADERS, null, new ServiceCallback() {
+                final String finalReportUrl = reportUrl;
+                MobileCenterLog.verbose(LOG_TAG, "Calling " + finalReportUrl);
+                mHttpClient.callAsync(finalReportUrl, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
                     @Override
                     public void onCallSucceeded(String payload) {
-                        MobileCenterLog.info(LOG_TAG, "Measurements reported.");
-                        reportNextUrl();
+                        MobileCenterLog.info(LOG_TAG, "Measurements reported successfully.");
                     }
 
                     @Override
                     public void onCallFailed(Exception e) {
-                        MobileCenterLog.error(LOG_TAG, "Failed to report measurements.", e);
+                        MobileCenterLog.error(LOG_TAG, "Failed to report measurements at " + finalReportUrl, e);
                         reportNextUrl();
                     }
 
@@ -470,7 +470,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                 MobileCenterLog.error(LOG_TAG, "Failed to generate report.", e);
             }
         } else {
-            MobileCenterLog.info(LOG_TAG, "Measurements reported to all report endpoints.");
+            MobileCenterLog.error(LOG_TAG, "Measurements report failed on all report endpoints.");
         }
     }
 
