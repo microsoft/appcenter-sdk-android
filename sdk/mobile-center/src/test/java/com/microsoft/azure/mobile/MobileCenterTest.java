@@ -726,6 +726,11 @@ public class MobileCenterTest {
     }
 
     @Test
+    public void getSdkVersionTest() {
+        assertEquals(BuildConfig.VERSION_NAME, MobileCenter.getSdkVersion());
+    }
+
+    @Test
     public void setCustomPropertiesTest() throws Exception {
 
         /* Configure mocking. */

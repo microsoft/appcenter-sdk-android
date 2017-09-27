@@ -26,6 +26,8 @@ It is super easy to use Mobile Center. Have a look at our [get started documenta
 
 We are looking forward to your contributions via pull requests.
 
+Please note that the test app named **Sasquatch** requires a **google-services.json** to compile. This file is git ignored as it contains secrets. You have to provide your own **google-services.json** file in the **app/sasquatch** folder if you want to build. This requires having your own Firebase Project.
+
 ### 2.1 Code of Conduct
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
