@@ -183,6 +183,16 @@ public class MobileCenter {
     }
 
     /**
+     * Get the current version of MobileCenter SDK.
+     *
+     * @return The current version of MobileCenter SDK.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static String getSdkVersion() {
+        return com.microsoft.azure.mobile.BuildConfig.VERSION_NAME;
+    }
+
+    /**
      * Set the custom properties.
      *
      * @param customProperties custom properties object.
