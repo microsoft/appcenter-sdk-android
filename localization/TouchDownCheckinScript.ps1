@@ -23,7 +23,7 @@ $ProjectInfo = "mobile-center-sdks-loc-file-list.csv"
 $Guid = [GUID]::NewGuid()
 $TempLocBranch = "TouchDownCheckin_" +  $Guid
 $repoPath = $SrcRoot
-$DefaultRepoBranch = "localization"
+$DefaultRepoBranch = "develop"
 $teamId = "269" #ID for Android
 $git = "git"
 
