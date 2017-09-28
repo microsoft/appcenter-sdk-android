@@ -150,7 +150,7 @@ $fileBinary
 --$boundary--
 "@
 
-    Invoke-RestMethod -Uri "http://tdbuild/api/teams/$teamId/LocalizableFiles" -Method Put -UseDefaultCredentials -ContentType "multipart/form-data; boundary=$boundary" -Body $body -OutFile $outFilePath
+    Invoke-RestMethod -Uri "http://tdbuild/api/teams/$teamId/LocalizableFiles/ParserId/246" -Method Put -UseDefaultCredentials -ContentType "multipart/form-data; boundary=$boundary" -Body $body -OutFile $outFilePath
 }
 
 Function binplace ($UnzipFileTo,$relativeFilePath,$TargetPath,$LanguageSet)
