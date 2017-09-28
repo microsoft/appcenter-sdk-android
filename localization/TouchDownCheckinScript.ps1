@@ -153,7 +153,7 @@ $fileBinary
     Invoke-RestMethod -Uri "http://tdbuild/api/teams/$teamId/LocalizableFiles/ParserId/246" -Method Put -UseDefaultCredentials -ContentType "multipart/form-data; boundary=$boundary" -Body $body -OutFile $outFilePath
 }
 
-Function binplace ($UnzipFileTo,$relativeFilePath,$TargetPath,$LanguageSet)
+Function BinPlace ($UnzipFileTo,$relativeFilePath,$TargetPath,$LanguageSet)
 {
     $Langs = $LanguageSet.split(";")
     
@@ -165,7 +165,6 @@ Function binplace ($UnzipFileTo,$relativeFilePath,$TargetPath,$LanguageSet)
         $Culture = $OCulture.LSBUILD
 
         $LocalizedFile = $UnzipFileTo + "\" + $OCulture.LSBUILD + $relativeFilePath
-        #$TargetPathDir = $TargetPath.Substring(0,$TargetPath.LastIndexOf("\"))
         $TargetPathDir = $TargetPath + "\" + $OCulture.LSBUILD
         
         if(!(Test-Path -Path $TargetPathDir)){
@@ -195,7 +194,6 @@ Function AddFiletoRepo ($TargetPath,$LanguageSet)
 
         write-host $Argument
 
-        #Start-Process $git $Argument -WorkingDirectory $repoPath
         ProcessStart $git $Argument $repoPath
     }
 }
@@ -227,7 +225,7 @@ Function RefreshTDFiles
 
         Unzip $outFilePath $UnzipFolderLocation
 
-        binplace $UnzipFolderLocation $relativeFilePath $TargetPath $LanguageSet
+        BinPlace $UnzipFolderLocation $relativeFilePath $TargetPath $LanguageSet
 
         AddFiletoRepo $TargetPath $LanguageSet
     }
