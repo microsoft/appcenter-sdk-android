@@ -45,3 +45,7 @@ captures/
 
 # Google credentials files
 google-services.json
+
+# Localization
+localization/*.zip
+localization/unzip/
