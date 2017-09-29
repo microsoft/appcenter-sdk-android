@@ -1,4 +1,4 @@
-﻿param([String]$SrcRoot="undefined")
+﻿param([String]$SrcRoot="undefined",[String]$AuthToken="")
 
 # This script will upload the files which need to be localized to the Touchdown servers and they will automatically be translated by Bing translate
 
@@ -67,12 +67,20 @@ Function InitializeRepoForCheckin
 Function CheckinFilesIntoRepo
 {
     #Commit the changes
-    $Argument = 'commit  -m "Latest localized files from touchdown"'
+    $Argument = 'commit -m "Latest localized files from touchdown"'
     ProcessStart $git $Argument $repoPath
 
-    #Push the Changes to the  git server you still need to merge the changes
-    $Argument = "push -u origin " + $TempLocBranch
-    ProcessStart $git $Argument $repoPath
+    #Push the Changes to the git server you still need to merge the changes
+    if ($AuthToken -eq "") {
+        #Unauthorized
+        $Argument = "push origin " + $TempLocBranch
+        ProcessStart $git $Argument $repoPath
+    }
+    else {
+        #Authorized
+        $Argument = "-c http.extraheader=`"Authorization: Bearer " + $AuthToken + "`" push origin " + $TempLocBranch
+        ProcessStart $git $Argument $repoPath
+    }
 }
 
 Class Cl_Culture 
