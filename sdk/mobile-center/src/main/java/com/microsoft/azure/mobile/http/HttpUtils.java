@@ -12,6 +12,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
 
 /**
  * HTTP utilities.
@@ -32,7 +33,8 @@ public class HttpUtils {
             InterruptedIOException.class,
             SocketException.class,
             UnknownHostException.class,
-            RejectedExecutionException.class
+            RejectedExecutionException.class,
+            SSLHandshakeException.class
     };
     /**
      * Some transient exceptions can only be detected by interpreting the message...
