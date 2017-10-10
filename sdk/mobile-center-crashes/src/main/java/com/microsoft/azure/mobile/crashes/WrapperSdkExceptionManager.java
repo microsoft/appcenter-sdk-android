@@ -153,9 +153,10 @@ public class WrapperSdkExceptionManager {
      * To use when automatic processing is disabled.
      *
      * @param filteredReportIds report identifiers to process, every crash not part of the original list are discarded.
+     * @return asynchronous result: true if ALWAYS_SEND was previously set, false otherwise.
      */
-    public static void sendCrashReportsOrAwaitUserConfirmation(Collection<String> filteredReportIds) {
-        Crashes.getInstance().sendCrashReportsOrAwaitUserConfirmation(filteredReportIds);
+    public static MobileCenterFuture<Boolean> sendCrashReportsOrAwaitUserConfirmation(Collection<String> filteredReportIds) {
+        return Crashes.getInstance().sendCrashReportsOrAwaitUserConfirmation(filteredReportIds);
     }
 
     /**

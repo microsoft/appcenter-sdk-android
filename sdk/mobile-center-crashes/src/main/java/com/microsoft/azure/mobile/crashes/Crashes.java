@@ -549,31 +549,50 @@ public class Crashes extends AbstractMobileCenterService {
         if (mAutomaticProcessing) {
 
             /* Proceed to check if user confirmation is needed. */
-            processUserConfirmation();
+            sendCrashReportsOrAwaitUserConfirmation();
         }
 
     }
 
-    private void processUserConfirmation() {
+    /**
+     * Check user confirmation or send logs now.
+     */
+    private boolean sendCrashReportsOrAwaitUserConfirmation() {
 
         /* Handle user confirmation in UI thread. */
+        final boolean alwaysSend = StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false);
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
             public void run() {
-                boolean shouldAwaitUserConfirmation = true;
-                if (mUnprocessedErrorReports.size() > 0 &&
-                        (StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false)
-                                || !(shouldAwaitUserConfirmation = mCrashesListener.shouldAwaitUserConfirmation()))) {
-                    if (!shouldAwaitUserConfirmation) {
-                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldAwaitUserConfirmation returned false, continue sending logs");
-                    } else {
-                        MobileCenterLog.debug(LOG_TAG, "The flag for user confirmation is set to ALWAYS_SEND, continue sending logs");
+
+                /* If we still have crashes to send after filtering. */
+                if (mUnprocessedErrorReports.size() > 0) {
+
+                    /* Check for always send: this bypasses user confirmation callback. */
+                    if (alwaysSend) {
+                        MobileCenterLog.debug(LOG_TAG, "The flag for user confirmation is set to ALWAYS_SEND, will send logs.");
+                        handleUserConfirmation(SEND);
+                        return;
                     }
-                    handleUserConfirmation(SEND);
+
+                    /* For disabled automatic processing, we don't call listener. */
+                    if (!mAutomaticProcessing) {
+                        MobileCenterLog.debug(LOG_TAG, "Automatic processing disabled, will wait for explicit user confirmation.");
+                        return;
+                    }
+
+                    /* Check via listener if should wait for user confirmation. */
+                    if (!mCrashesListener.shouldAwaitUserConfirmation()) {
+                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldAwaitUserConfirmation returned false, will send logs.");
+                        handleUserConfirmation(SEND);
+                    } else {
+                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldAwaitUserConfirmation returned true, wait sending logs.");
+                    }
                 }
             }
         });
+        return alwaysSend;
     }
 
     private void removeAllStoredErrorLogFiles(UUID id) {
@@ -672,11 +691,11 @@ public class Crashes extends AbstractMobileCenterService {
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
                         mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
 
-                        /* Get attachments from callback. */
-                        Iterable<ErrorAttachmentLog> attachments = mCrashesListener.getErrorAttachments(errorLogReport.report);
-
-                        /* And send them. */
-                        sendErrorAttachment(errorLogReport.log.getId(), attachments);
+                        /* Get attachments from callback in automatic processing. */
+                        if (mAutomaticProcessing) {
+                            Iterable<ErrorAttachmentLog> attachments = mCrashesListener.getErrorAttachments(errorLogReport.report);
+                            sendErrorAttachment(errorLogReport.log.getId(), attachments);
+                        }
 
                         /* Clean up an error log file and map entry. */
                         unprocessedIterator.remove();
@@ -819,8 +838,9 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Used when automatic processing is disabled: resume sending or ask for user confirmation.
      */
-    void sendCrashReportsOrAwaitUserConfirmation(final Collection<String> filteredReportIds) {
-        post(new Runnable() {
+    MobileCenterFuture<Boolean> sendCrashReportsOrAwaitUserConfirmation(final Collection<String> filteredReportIds) {
+        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
+        postAsyncGetter(new Runnable() {
 
             @Override
             public void run() {
@@ -841,9 +861,10 @@ public class Crashes extends AbstractMobileCenterService {
                 }
 
                 /* Proceed to check if user confirmation is needed. */
-                processUserConfirmation();
+                future.complete(sendCrashReportsOrAwaitUserConfirmation());
             }
-        });
+        }, future, false);
+        return future;
     }
 
     /**

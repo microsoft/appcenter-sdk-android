@@ -1056,15 +1056,21 @@ public class CrashesTest {
         verifyZeroInteractions(listener);
 
         /* Send only the first. */
-        WrapperSdkExceptionManager.sendCrashReportsOrAwaitUserConfirmation(Collections.singletonList(report1.getId()));
+        assertFalse(WrapperSdkExceptionManager.sendCrashReportsOrAwaitUserConfirmation(Collections.singletonList(report1.getId())).get());
 
         /* We used manual process function, listener not called. */
-        verify(listener, never()).shouldProcess(any(ErrorReport.class));
+        verifyZeroInteractions(listener);
 
-        /* However it's still used after that step. */
-        verify(listener).shouldAwaitUserConfirmation();
+        /* No log sent until manual user confirmation in that mode (we are not in always send). */
+        verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
 
-        /* 1 log sent. */
+        /* Confirm with always send. */
+        Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
+        verifyStatic();
+        StorageHelper.PreferencesStorage.putBoolean(Crashes.PREF_KEY_ALWAYS_SEND, true);
+        when(StorageHelper.PreferencesStorage.getBoolean(eq(Crashes.PREF_KEY_ALWAYS_SEND), anyBoolean())).thenReturn(true);
+
+        /* 1 log sent. Other one is filtered. */
         verify(mockChannel).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
 
         /* We can send attachments via wrapper instead of using listener (both work but irrelevant to test with listener). */
@@ -1082,6 +1088,25 @@ public class CrashesTest {
         when(mockAttachment.isValid()).thenReturn(true);
         WrapperSdkExceptionManager.sendErrorAttachments("not-a-uuid", Collections.singletonList(mockAttachment));
         verify(mockChannel, never()).enqueue(eq(mockAttachment), eq(crashes.getGroupName()));
+
+        /* We used manual process function, listener not called and our mock channel does not send events. */
+        verifyZeroInteractions(listener);
+
+        /* Reset instance to test another tine with always send. */
+        Crashes.unsetInstance();
+        crashes = Crashes.getInstance();
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report1).thenReturn(report2);
+        WrapperSdkExceptionManager.setAutomaticProcessing(false);
+        crashes.setLogSerializer(logSerializer);
+        crashes.onStarting(mMobileCenterHandler);
+        mockChannel = mock(Channel.class);
+        crashes.onStarted(mockContext, "", mockChannel);
+        assertTrue(Crashes.isEnabled().get());
+        verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
+
+        /* Get crash reports, check always sent was returned and sent without confirmation. */
+        assertTrue(WrapperSdkExceptionManager.sendCrashReportsOrAwaitUserConfirmation(Collections.singletonList(report2.getId())).get());
+        verify(mockChannel).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
     }
 
     @Test
@@ -1131,7 +1156,7 @@ public class CrashesTest {
         assertEquals(report2, iterator.next());
 
         /* Send nothing using null. */
-        WrapperSdkExceptionManager.sendCrashReportsOrAwaitUserConfirmation(null);
+        assertFalse(WrapperSdkExceptionManager.sendCrashReportsOrAwaitUserConfirmation(null).get());
 
         /* No log sent. */
         verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
