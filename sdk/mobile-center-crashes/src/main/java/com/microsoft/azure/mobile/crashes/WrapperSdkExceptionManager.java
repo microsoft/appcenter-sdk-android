@@ -133,7 +133,10 @@ public class WrapperSdkExceptionManager {
     }
 
     /**
-     * Disable automatic processing of crashes.
+     * Set whether automatic processing is enabled or not.
+     * Default is enabled.
+     *
+     * @param automaticProcessing true to enable, false otherwise.
      */
     public static void setAutomaticProcessing(boolean automaticProcessing) {
         Crashes.getInstance().setAutomaticProcessing(automaticProcessing);
