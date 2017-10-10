@@ -8,6 +8,7 @@ import java.util.Date;
  * Error report class.
  */
 public class ErrorReport {
+
     /**
      * UUID for crash report.
      */
