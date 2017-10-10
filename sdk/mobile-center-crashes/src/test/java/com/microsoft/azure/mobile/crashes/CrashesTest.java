@@ -1056,7 +1056,7 @@ public class CrashesTest {
         verifyZeroInteractions(listener);
 
         /* Send only the first. */
-        WrapperSdkExceptionManager.sendCrashReportsOrAwaitUserConfirmation(Collections.singletonList(report1));
+        WrapperSdkExceptionManager.sendCrashReportsOrAwaitUserConfirmation(Collections.singletonList(report1.getId()));
 
         /* We used manual process function, listener not called. */
         verify(listener, never()).shouldProcess(any(ErrorReport.class));

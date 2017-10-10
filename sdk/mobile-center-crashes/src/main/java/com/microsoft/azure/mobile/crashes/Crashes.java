@@ -819,7 +819,7 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Used when automatic processing is disabled: resume sending or ask for user confirmation.
      */
-    void sendCrashReportsOrAwaitUserConfirmation(final Collection<ErrorReport> filteredReports) {
+    void sendCrashReportsOrAwaitUserConfirmation(final Collection<String> filteredReportIds) {
         post(new Runnable() {
 
             @Override
@@ -830,10 +830,11 @@ public class Crashes extends AbstractMobileCenterService {
                 while (iterator.hasNext()) {
                     Map.Entry<UUID, ErrorLogReport> entry = iterator.next();
                     UUID id = entry.getKey();
-                    if (filteredReports != null && filteredReports.contains(entry.getValue().report)) {
-                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + id.toString());
+                    String idString = entry.getValue().report.getId();
+                    if (filteredReportIds != null && filteredReportIds.contains(idString)) {
+                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + idString);
                     } else {
-                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
+                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + idString);
                         removeAllStoredErrorLogFiles(id);
                         iterator.remove();
                     }

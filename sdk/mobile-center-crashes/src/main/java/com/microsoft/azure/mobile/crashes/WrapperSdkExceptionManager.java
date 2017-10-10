@@ -152,10 +152,10 @@ public class WrapperSdkExceptionManager {
      * Resume processing of crash reports with the filtered list from {@link #getUnprocessedErrorReports()}.
      * To use when automatic processing is disabled.
      *
-     * @param filteredReports reports to process, every process not part of the original list are discarded.
+     * @param filteredReportIds report identifiers to process, every crash not part of the original list are discarded.
      */
-    public static void sendCrashReportsOrAwaitUserConfirmation(Collection<ErrorReport> filteredReports) {
-        Crashes.getInstance().sendCrashReportsOrAwaitUserConfirmation(filteredReports);
+    public static void sendCrashReportsOrAwaitUserConfirmation(Collection<String> filteredReportIds) {
+        Crashes.getInstance().sendCrashReportsOrAwaitUserConfirmation(filteredReportIds);
     }
 
     /**
