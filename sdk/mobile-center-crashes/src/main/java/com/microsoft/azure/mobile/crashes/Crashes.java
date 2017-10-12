@@ -555,7 +555,9 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Check user confirmation or send logs now.
+     * Send crashes or wait for user confirmation (either via callback or explicit call in manual processing).
+     *
+     * @return true if always send was persisted, false otherwise.
      */
     private boolean sendCrashReportsOrAwaitUserConfirmation() {
 
@@ -810,14 +812,14 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Set automatic processing flag.
+     * Implementation of {@link WrapperSdkExceptionManager#setAutomaticProcessing(boolean)}.
      */
     void setAutomaticProcessing(boolean automaticProcessing) {
         mAutomaticProcessing = automaticProcessing;
     }
 
     /**
-     * Get unprocessed error reports, used when automatic processing is disabled.
+     * Implementation of {@link WrapperSdkExceptionManager#getUnprocessedErrorReports()}.
      */
     MobileCenterFuture<Collection<ErrorReport>> getUnprocessedErrorReports() {
         final DefaultMobileCenterFuture<Collection<ErrorReport>> future = new DefaultMobileCenterFuture<>();
@@ -836,7 +838,7 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Used when automatic processing is disabled: resume sending or ask for user confirmation.
+     * Implementation of {@link WrapperSdkExceptionManager#sendCrashReportsOrAwaitUserConfirmation(Collection)}.
      */
     MobileCenterFuture<Boolean> sendCrashReportsOrAwaitUserConfirmation(final Collection<String> filteredReportIds) {
         final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
@@ -868,7 +870,7 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Used when automatic processing is disabled to send error attachments.
+     * Implementation of {@link WrapperSdkExceptionManager#sendErrorAttachments(String, Iterable)}.
      */
     void sendErrorAttachments(final String errorReportId, final Iterable<ErrorAttachmentLog> attachments) {
         post(new Runnable() {
