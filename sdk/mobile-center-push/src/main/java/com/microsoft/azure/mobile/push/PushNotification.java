@@ -1,5 +1,6 @@
 package com.microsoft.azure.mobile.push;
 
+import android.content.Intent;
 import android.support.annotation.NonNull;
 
 import java.util.Map;
@@ -32,6 +33,12 @@ public class PushNotification {
         mTitle = title;
         mMessage = message;
         mCustomData = customData;
+    }
+
+    public PushNotification(Intent pushIntent) {
+        mTitle = PushIntentUtils.getTitle(pushIntent);
+        mMessage = PushIntentUtils.getMessage(pushIntent);
+        mCustomData = PushIntentUtils.getCustomData(pushIntent);
     }
 
     /**

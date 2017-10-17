@@ -16,7 +16,6 @@ import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
@@ -30,7 +29,6 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 import java.util.UUID;
 
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.APP_SECRET_KEY;
-import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.FIREBASE_ENABLED_KEY;
 import static com.microsoft.azure.mobile.sasquatch.activities.MainActivity.LOG_URL_KEY;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -111,27 +109,7 @@ public class SettingsActivity extends AppCompatActivity {
                     return Push.isEnabled().get();
                 }
             });
-            initCheckBoxSetting(R.string.mobile_center_push_firebase_state_key, R.string.mobile_center_push_firebase_summary_enabled, R.string.mobile_center_push_firebase_summary_disabled, new HasEnabled() {
 
-                @Override
-                public void setEnabled(boolean enabled) {
-                    try {
-                        if (enabled) {
-                            Push.enableFirebaseAnalytics(getActivity());
-                        } else {
-                            FirebaseAnalytics.getInstance(getActivity()).setAnalyticsCollectionEnabled(false);
-                        }
-                        MainActivity.sSharedPreferences.edit().putBoolean(FIREBASE_ENABLED_KEY, enabled).apply();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-
-                @Override
-                public boolean isEnabled() {
-                    return isFirebaseEnabled();
-                }
-            });
             initCheckBoxSetting(R.string.mobile_center_auto_page_tracking_key, R.string.mobile_center_auto_page_tracking_enabled, R.string.mobile_center_auto_page_tracking_disabled, new HasEnabled() {
 
                 @Override
@@ -342,10 +320,6 @@ public class SettingsActivity extends AppCompatActivity {
                 editor.putString(key, value);
             }
             editor.apply();
-        }
-
-        private boolean isFirebaseEnabled() {
-            return MainActivity.sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false);
         }
 
         private interface HasEnabled {

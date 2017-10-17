@@ -2,6 +2,7 @@ package com.microsoft.azure.mobile.push;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -9,8 +10,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
 
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.messaging.RemoteMessage;
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
@@ -35,6 +34,7 @@ public class Push extends AbstractMobileCenterService {
     @VisibleForTesting
     static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
 
+    // TODO also need to filter out keys that start with gcm
     /**
      * Intent extras not part of custom data.
      */
@@ -64,11 +64,6 @@ public class Push extends AbstractMobileCenterService {
     private static final String PUSH_GROUP = "group_push";
 
     /**
-     * Firebase analytics flag.
-     */
-    private static boolean sFirebaseAnalyticsEnabled;
-
-    /**
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
@@ -96,6 +91,11 @@ public class Push extends AbstractMobileCenterService {
     private Activity mActivity;
 
     /**
+     * Current context.
+     */
+    private Context mContext;
+
+    /**
      * Init.
      */
     private Push() {
@@ -119,7 +119,6 @@ public class Push extends AbstractMobileCenterService {
     @VisibleForTesting
     static synchronized void unsetInstance() {
         sInstance = null;
-        sFirebaseAnalyticsEnabled = false;
     }
 
     /**
@@ -164,29 +163,6 @@ public class Push extends AbstractMobileCenterService {
     }
 
     /**
-     * Enable firebase analytics collection.
-     *
-     * @param context the context to retrieve FirebaseAnalytics instance.
-     */
-    @SuppressWarnings("WeakerAccess")
-    public static void enableFirebaseAnalytics(@NonNull Context context) {
-        MobileCenterLog.debug(LOG_TAG, "Enabling firebase analytics collection.");
-        setFirebaseAnalyticsEnabled(context, true);
-    }
-
-    /**
-     * Enable or disable firebase analytics collection.
-     *
-     * @param context the context to retrieve FirebaseAnalytics instance.
-     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
-     */
-    @SuppressWarnings("MissingPermission")
-    private static void setFirebaseAnalyticsEnabled(@NonNull Context context, boolean enabled) {
-        FirebaseAnalyticsUtils.setEnabled(context, enabled);
-        sFirebaseAnalyticsEnabled = enabled;
-    }
-
-    /**
      * Enqueue a push installation log.
      *
      * @param pushToken the push token value
@@ -197,6 +173,7 @@ public class Push extends AbstractMobileCenterService {
         mChannel.enqueue(log, PUSH_GROUP);
     }
 
+    //TODO what is this
     /**
      * Handle push token update success.
      *
@@ -220,14 +197,34 @@ public class Push extends AbstractMobileCenterService {
      */
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
-        if (enabled) {
+        if (!enabled) {
+            /* Nothing to do when disabling. */
+            return;
+        }
+        if (FirebaseUtils.isFirebaseAvailable()) {
+            /* First, try to use Firebase if it's available. */
             try {
-                String token = FirebaseInstanceId.getInstance().getToken();
+                String token = FirebaseUtils.getToken();
                 if (token != null) {
                     enqueuePushInstallationLog(token);
                 }
             } catch (IllegalStateException e) {
-                MobileCenterLog.error(LOG_TAG, "Failed to get firebase push token.", e);
+                MobileCenterLog.error(LOG_TAG, "Failed to get Firebase push token.", e);
+            }
+        }
+        else {
+            /* Firebase is not available, so use Mobile Center logic. */
+            Intent registrationIntent = new Intent("com.google.android.c2dm.intent.REGISTER");
+            //TODO handle case when context is null
+            String senderId = mContext.getString(R.string.gcm_defaultSenderId);
+            registrationIntent.putExtra("sender", senderId);
+            registrationIntent.setPackage("com.google.android.gsf");
+            registrationIntent.putExtra("app", PendingIntent.getBroadcast(mContext, 0, new Intent(), 0));
+            try {
+                mContext.startService(registrationIntent);
+            } catch (RuntimeException e) {
+            /* Abort if the GCM service can't be accessed. */
+                //TODO log error message
             }
         }
     }
@@ -260,10 +257,7 @@ public class Push extends AbstractMobileCenterService {
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         super.onStarted(context, appSecret, channel);
-        if (!sFirebaseAnalyticsEnabled) {
-            MobileCenterLog.debug(LOG_TAG, "Disabling firebase analytics collection by default.");
-            setFirebaseAnalyticsEnabled(context, false);
-        }
+        mContext = context;
     }
 
     /**
@@ -358,33 +352,33 @@ public class Push extends AbstractMobileCenterService {
     /**
      * Called when push message received in foreground.
      *
-     * @param remoteMessage push message details.
+     * @param pushIntent intent from push.
      */
-    void onMessageReceived(final RemoteMessage remoteMessage) {
-        MobileCenterLog.info(LOG_TAG, "Received push message in foreground id=" + remoteMessage.getMessageId());
+    void onMessageReceived(final Intent pushIntent) {
+        String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
+        final PushNotification notification = new PushNotification(pushIntent);
+        MobileCenterLog.info(LOG_TAG, "Received push message in foreground id=" + messageId);
         postOnUiThread(new Runnable() {
 
             @Override
             public void run() {
-                handleOnMessageReceived(remoteMessage);
+                handleOnMessageReceived(notification);
             }
         });
+    }
+
+    //TODO synchronized?
+    public boolean isInBackground() {
+        return mActivity == null;
     }
 
     /**
      * Top level method needed for synchronized code coverage.
      */
     @UiThread
-    private synchronized void handleOnMessageReceived(RemoteMessage remoteMessage) {
+    private synchronized void handleOnMessageReceived(PushNotification pushNotification) {
         if (mInstanceListener != null) {
-            String title = null;
-            String message = null;
-            RemoteMessage.Notification notification = remoteMessage.getNotification();
-            if (notification != null) {
-                title = notification.getTitle();
-                message = notification.getBody();
-            }
-            PushNotification pushNotification = new PushNotification(title, message, remoteMessage.getData());
+            //TODO need this? : RemoteMessage.Notification notification = remoteMessage.getNotification();
             mInstanceListener.onPushNotificationReceived(mActivity, pushNotification);
         }
     }

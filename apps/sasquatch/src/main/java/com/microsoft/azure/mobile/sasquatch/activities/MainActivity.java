@@ -95,11 +95,6 @@ public class MainActivity extends AppCompatActivity {
             Distribute.setApiUrl(apiUrl);
         }
 
-        /* Enable Firebase analytics if we enabled the setting previously. */
-        if (sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false)) {
-            Push.enableFirebaseAnalytics(this);
-        }
-
         /* Start Mobile center. */
         MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
 

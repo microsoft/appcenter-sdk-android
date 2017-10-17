@@ -41,9 +41,6 @@
             android:dependency="@string/mobile_center_state_key"
             android:key="@string/mobile_center_push_state_key"
             android:title="@string/mobile_center_push_state_title"/>
-        <CheckBoxPreference
-            android:key="@string/mobile_center_push_firebase_state_key"
-            android:title="@string/mobile_center_push_firebase_state_title"/>
     </PreferenceCategory>
 
     <PreferenceCategory
