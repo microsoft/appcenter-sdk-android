@@ -6,9 +6,12 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Build;
 
 import java.util.Map;
@@ -22,8 +25,6 @@ public class PushNotifier {
     public static void handleNotification(Context context, Intent pushIntent)
             throws RuntimeException {
         //TODO is this needed? : context = context.getApplicationContext();
-        /* Get icon identifiers from AndroidManifest.xml */
-        //Bundle appMetaData = EngagementUtils.getMetaData(context);
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
 
         /* Generate notification identifier using the hash of the Google message id. */
@@ -61,22 +62,35 @@ public class PushNotifier {
         String iconString = PushIntentUtils.getIcon(pushIntent);
         if (iconString != null) {
             //TODO handle case when format is wrong
+            //TODO Invalid icon case: use launcher icon
+            //TODO make sure to prioritize drawable over mipmap if it exists in both
             builder.setSmallIcon(Integer.parseInt(iconString));
         }
 
         /* Set sound. */
         String soundString = PushIntentUtils.getSound(pushIntent);
         if (soundString != null) {
-            //TODO set sound
+            if (soundString.equals("default")) {
+                builder.setDefaults(Notification.DEFAULT_SOUND);
+            }
+            else {
+                Resources resources = context.getResources();
+                int id = resources.getIdentifier(soundString, "raw", context.getPackageName());
+                //TODO handle case when resource is not found
+                Uri soundUri = new Uri.Builder()
+                        .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+                        .authority(resources.getResourcePackageName(id))
+                        .appendPath(resources.getResourceTypeName(id))
+                        .appendPath(resources.getResourceEntryName(id))
+                        .build();
+                builder.setSound(soundUri);
+            }
         }
 
         /* Texts */
         builder.setContentTitle(notificationTitle).
                 setContentText(notificationMessage).
                 setWhen(System.currentTimeMillis());
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            builder.setShowWhen(true);
-        }
 
         /* Click action. */
         builder.setContentIntent(contentIntent);
@@ -105,6 +119,7 @@ public class PushNotifier {
         else {
             notification = builder.getNotification();
         }
+        notification.flags |= Notification.FLAG_AUTO_CANCEL;
         notificationManager.notify(notificationId, notification);
     }
 
@@ -124,7 +139,6 @@ public class PushNotifier {
         name = "Miscellaneous";
         int priority = NotificationManager.IMPORTANCE_DEFAULT;
         NotificationChannel channel = new NotificationChannel(id, name, priority);
-        channel.enableVibration(false);
         return channel;
     }
 }
