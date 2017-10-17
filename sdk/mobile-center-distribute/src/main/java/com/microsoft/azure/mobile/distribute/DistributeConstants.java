@@ -36,6 +36,11 @@ final class DistributeConstants {
     static final String EXTRA_DISTRIBUTION_GROUP_ID = "distribution_group_id";
 
     /**
+     * Used for deep link intent from browser, string field for update setup failed identifier.
+     */
+    static final String EXTRA_UPDATE_SETUP_FAILED = "update_setup_failed";
+
+    /**
      * Base URL used to open browser to check install and get API token to check latest release.
      */
     static final String DEFAULT_INSTALL_URL = "https://install.mobile.azure.com";
@@ -85,6 +90,16 @@ final class DistributeConstants {
      * API parameter value for this platform.
      */
     static final String PARAMETER_PLATFORM_VALUE = "Android";
+
+    /**
+     * API parameter for setup failure redirect key.
+     */
+    static final String PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY = "enable_failure_redirect";
+
+    /**
+     * API parameter value for setup failure redirect key.
+     */
+    static final String PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY_VALUE = "true";
 
     /**
      * Header used to pass token when checking latest release.
@@ -200,6 +215,16 @@ final class DistributeConstants {
      * Preference key to hold the time when user chose "ask me in a day".
      */
     static final String PREFERENCE_KEY_POSTPONE_TIME = PREFERENCE_PREFIX + "postpone_time";
+
+    /**
+     * Preference key for update setup failure package hash.
+     */
+    static final String PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY = PREFERENCE_PREFIX + "update_setup_failed_package_hash";
+
+    /**
+     * Preference key for update setup failure error message.
+     */
+    static final String PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY = PREFERENCE_PREFIX + "update_setup_failed_message";
 
     @VisibleForTesting
     DistributeConstants() {

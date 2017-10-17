@@ -76,6 +76,7 @@ import static com.microsoft.azure.mobile.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.NOTIFICATION_CHANNEL_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.EXTRA_UPDATE_SETUP_FAILED;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
@@ -84,6 +85,8 @@ import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFEREN
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.SERVICE_NAME;
 import static com.microsoft.azure.mobile.distribute.DistributeUtils.computeReleaseHash;
 import static com.microsoft.azure.mobile.distribute.DistributeUtils.getStoredDownloadState;
@@ -190,6 +193,11 @@ public class Distribute extends AbstractMobileCenterService {
      * Mandatory download completed in app notification.
      */
     private Dialog mCompletedDownloadDialog;
+
+    /**
+     * Update setup failed dialog.
+     */
+    private Dialog mUpdateSetupFailedDialog;
 
     /**
      * Last activity that did show a dialog.
@@ -501,6 +509,7 @@ public class Distribute extends AbstractMobileCenterService {
         mUnknownSourcesDialog = null;
         mProgressDialog = null;
         mCompletedDownloadDialog = null;
+        mUpdateSetupFailedDialog = null;
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
         mReleaseDetails = null;
@@ -542,6 +551,21 @@ public class Distribute extends AbstractMobileCenterService {
                 MobileCenterLog.info(LOG_TAG, "Not checking in app updates as installed from a store.");
                 mWorkflowCompleted = true;
                 return;
+            }
+
+            // If failed to enable in-app updates on the same app build before, don't go any further.
+            // Only if the app build is different (different package hash), try enabling in-app updates again.
+            String releaseHash = DistributeUtils.computeReleaseHash(this.mPackageInfo);
+            String updateSetupFailedPackageHash = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+            if (updateSetupFailedPackageHash != null) {
+                if (releaseHash.equals(updateSetupFailedPackageHash)) {
+                    MobileCenterLog.info(LOG_TAG, "Skipping in-app updates setup, because it already failed on this release before.");
+                    return;
+                } else {
+                    MobileCenterLog.info(LOG_TAG, "Re-attempting in-app updates setup and cleaning up failure info from storage.");
+                    PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+                    PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+                }
             }
 
             /* If we received the redirection parameters before Mobile Center was started/enabled, process them now. */
@@ -643,6 +667,16 @@ public class Distribute extends AbstractMobileCenterService {
                 }
             }
 
+            // If the in-app updates setup failed, and user ignores the failure, store the error
+            // message and also store the package hash that the failure occurred on. The setup
+            // will only be re-attempted the next time the app gets updated (and package hash changes).
+            String updateSetupFailedMessage = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+            if (updateSetupFailedMessage != null){
+                MobileCenterLog.debug(LOG_TAG, "In-app updates setup failure detected.");
+                showUpdateSetupFailedDialog(updateSetupFailedMessage);
+                return;
+            }
+
             /* Nothing more to do for now if we are already calling API to check release. */
             if (mCheckReleaseCallId != null) {
                 MobileCenterLog.verbose(LOG_TAG, "Already checking or checked latest release.");
@@ -719,12 +753,21 @@ public class Distribute extends AbstractMobileCenterService {
         mCheckReleaseApiCall = null;
         mCheckReleaseCallId = null;
         mUpdateDialog = null;
+        mUpdateSetupFailedDialog = null;
         mUnknownSourcesDialog = null;
         hideProgressDialog();
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
         mReleaseDetails = null;
         mWorkflowCompleted = true;
+    }
+
+    /*
+     * Store update update setup failure message used later to show in setup failure dialog for user.
+     */
+    synchronized void storeUpdateSetupFailedParameter(@NonNull String updateSetupFailed) {
+        MobileCenterLog.debug(LOG_TAG, "Stored update setup failed parameter.");
+        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, updateSetupFailed);
     }
 
     /*
@@ -1128,6 +1171,51 @@ public class Distribute extends AbstractMobileCenterService {
         mUnknownSourcesDialog = dialogBuilder.create();
         showAndRememberDialogActivity(mUnknownSourcesDialog);
     }
+
+    /**
+     * Show update setupp failed dialog.
+     */
+    @UiThread
+    private synchronized void showUpdateSetupFailedDialog(final String errorMessage) {
+        /* Check if we need to replace dialog. */
+        if (!shouldRefreshDialog(mUpdateSetupFailedDialog)){
+            return;
+        }
+        MobileCenterLog.debug(LOG_TAG, "Show update setup failed dialog.");
+
+        if (mForegroundActivity != null) {
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
+            dialogBuilder.setCancelable(false);
+            dialogBuilder.setTitle(R.string.mobile_center_distribute_update_failed_dialog_title);
+            dialogBuilder.setMessage(errorMessage);
+            dialogBuilder.setPositiveButton(R.string.mobile_center_distribute_update_failed_dialog_ignore, new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY, DistributeUtils.computeReleaseHash(mPackageInfo));
+                }
+            });
+            dialogBuilder.setNegativeButton(R.string.mobile_center_distribute_update_failed_dialog_reinstall, new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    String url = mInstallUrl;
+                    // Add a flag to the install url to indicate that the update setup failed, to show a help page
+                    url += "?" + EXTRA_UPDATE_SETUP_FAILED + "=" + "true";
+                    BrowserUtils.openBrowser(url, mForegroundActivity);
+
+                    // Clear the update setup failure info from storage, to re-attempt setup on reinstall
+                    PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+                }
+            });
+            mUpdateSetupFailedDialog = dialogBuilder.create();
+            showAndRememberDialogActivity(mUpdateSetupFailedDialog);
+
+            // Don't show this dialog again
+            PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+        }
+    }
+
 
     /**
      * Navigate to security settings or application settings on Android O.
