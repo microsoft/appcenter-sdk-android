@@ -65,10 +65,10 @@ public class PushNotifier {
 //           }
 
         /* Texts */
-        builder.setContentTitle(notificationTitle);
-        builder.setContentText(notificationMessage);
-        builder.setTicker(notificationTitle);
-        builder.setWhen(System.currentTimeMillis());
+        builder.setContentTitle(notificationTitle).
+                setTicker(notificationTitle).
+                setContentText(notificationMessage).
+                setWhen(System.currentTimeMillis());
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             builder.setShowWhen(true);
         }

@@ -19,34 +19,12 @@ import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Push notifications interface.
  */
 public class Push extends AbstractMobileCenterService {
-
-    /**
-     * Google message identifier extra intent key.
-     */
-    @VisibleForTesting
-    static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
-
-    // TODO also need to filter out keys that start with gcm
-    /**
-     * Intent extras not part of custom data.
-     */
-    @VisibleForTesting
-    static final Set<String> EXTRA_STANDARD_KEYS = new HashSet<String>() {
-        {
-            add(EXTRA_GOOGLE_MESSAGE_ID);
-            add("google.sent_time");
-            add("collapse_key");
-            add("from");
-        }
-    };
 
     /**
      * Name of the service.
@@ -173,7 +151,6 @@ public class Push extends AbstractMobileCenterService {
         mChannel.enqueue(log, PUSH_GROUP);
     }
 
-    //TODO what is this
     /**
      * Handle push token update success.
      *
@@ -330,20 +307,13 @@ public class Push extends AbstractMobileCenterService {
         if (mInstanceListener != null) {
             Bundle extras = intent.getExtras();
             if (extras != null) {
-                String googleMessageId = extras.getString(EXTRA_GOOGLE_MESSAGE_ID);
+                String googleMessageId = PushIntentUtils.getGoogleMessageId(intent);
                 if (googleMessageId != null && !googleMessageId.equals(mLastGoogleMessageId)) {
+                    PushNotification notification = new PushNotification(intent);
                     MobileCenterLog.info(LOG_TAG, "Clicked push message from background id=" + googleMessageId);
                     mLastGoogleMessageId = googleMessageId;
-                    Map<String, String> customData = new HashMap<>();
-                    Map<String, Object> allData = new HashMap<>();
-                    for (String extra : extras.keySet()) {
-                        allData.put(extra, extras.get(extra));
-                        if (!EXTRA_STANDARD_KEYS.contains(extra)) {
-                            customData.put(extra, extras.getString(extra));
-                        }
-                    }
-                    MobileCenterLog.debug(LOG_TAG, "Push intent extra=" + allData);
-                    mInstanceListener.onPushNotificationReceived(mActivity, new PushNotification(null, null, customData));
+                    MobileCenterLog.debug(LOG_TAG, "Push intent extras=" + extras);
+                    mInstanceListener.onPushNotificationReceived(mActivity, notification);
                 }
             }
         }
@@ -367,8 +337,10 @@ public class Push extends AbstractMobileCenterService {
         });
     }
 
-    //TODO synchronized?
-    public boolean isInBackground() {
+    /**
+     * Returns true if the app is in the background, false if the app is in the foreground.
+     */
+    boolean isInBackground() {
         return mActivity == null;
     }
 
