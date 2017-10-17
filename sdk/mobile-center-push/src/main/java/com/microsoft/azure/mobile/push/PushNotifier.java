@@ -24,8 +24,6 @@ public class PushNotifier {
         //TODO is this needed? : context = context.getApplicationContext();
         /* Get icon identifiers from AndroidManifest.xml */
         //Bundle appMetaData = EngagementUtils.getMetaData(context);
-        //mNotificationIcon = getIcon(appMetaData, METADATA_NOTIFICATION_ICON);
-        int notificationIcon = 0; //TODO get notification icon?
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
 
         /* Generate notification identifier using the hash of the Google message id. */
@@ -47,26 +45,33 @@ public class PushNotifier {
         /* Get text. */
         String notificationTitle = PushIntentUtils.getTitle(pushIntent);
         String notificationMessage = PushIntentUtils.getMessage(pushIntent);
-        Notification notification;
-
-        /* Use builder starting Android 3.0. */
         Notification.Builder builder = new Notification.Builder(context);
 
-        /* Icon for ticker and content icon */
-        builder.setSmallIcon(notificationIcon);
-//
-//            /*
-//             * Large icon, handled only since API Level 11 (needs down scaling if too large because it's
-//             * cropped otherwise by the system).
-//             */
-//            Bitmap notificationImage = content.getNotificationImage();
-//            if (notificationImage != null) {
-//                builder.setLargeIcon(scaleBitmapForLargeIcon(mContext, notificationImage));
-//           }
+        /* Set color. */
+        String colorString = PushIntentUtils.getColor(pushIntent);
+        if (colorString != null) {
+            //TODO handle case when format is wrong
+            /* Remove '#'. */
+            colorString = colorString.substring(1);
+            int colorVal = Integer.parseInt(colorString, 16);
+            builder.setColor(colorVal);
+        }
+
+        /* Set icon. */
+        String iconString = PushIntentUtils.getIcon(pushIntent);
+        if (iconString != null) {
+            //TODO handle case when format is wrong
+            builder.setSmallIcon(Integer.parseInt(iconString));
+        }
+
+        /* Set sound. */
+        String soundString = PushIntentUtils.getSound(pushIntent);
+        if (soundString != null) {
+            //TODO set sound
+        }
 
         /* Texts */
         builder.setContentTitle(notificationTitle).
-                setTicker(notificationTitle).
                 setContentText(notificationMessage).
                 setWhen(System.currentTimeMillis());
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
@@ -91,15 +96,15 @@ public class PushNotifier {
                 builder.setChannelId(channel.getId());
             }
         }
+        Notification notification;
 
-        /* Build method again depends on versions. */
+        /* Build method depends on versions. */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             notification = builder.build();
         }
         else {
             notification = builder.getNotification();
         }
-        //TODO color, icon, sound - see what firebase does.
         notificationManager.notify(notificationId, notification);
     }
 

@@ -11,13 +11,14 @@ import java.util.Set;
 
 public class PushIntentUtils {
     //TODO double check these
-    static final String EXTRA_TITLE = "gcm.notification.title";
-    static final String EXTRA_MESSAGE = "gcm.notification.message";
-    static final String EXTRA_COLOR = "gcm.notification.color";
-    static final String EXTRA_SOUND = "gcm.notification.sound";
-    static final String EXTRA_ICON = "gcm.notification.icon";
+    static final String EXTRA_GCM_PREFIX = "gcm.notification.";
+    static final String EXTRA_TITLE = EXTRA_GCM_PREFIX + "title";
+    static final String EXTRA_MESSAGE = EXTRA_GCM_PREFIX + "message";
+    static final String EXTRA_COLOR =  EXTRA_GCM_PREFIX + "color";
+    static final String EXTRA_SOUND = EXTRA_GCM_PREFIX + "sound";
+    static final String EXTRA_CUSTOM_SOUND = EXTRA_GCM_PREFIX + "sound2";
+    static final String EXTRA_ICON = EXTRA_GCM_PREFIX + "icon";
 
-    static final String EXTRA_IGNORE_PREFIX = "gcm.notification";
 
     /**
      * Google message identifier extra intent key.
@@ -45,7 +46,7 @@ public class PushIntentUtils {
         intentKeys.removeAll(EXTRA_STANDARD_KEYS);
         Map<String, String> customData = new HashMap<>();
         for (String key : intentKeys) {
-            if (key.startsWith(EXTRA_IGNORE_PREFIX)) {
+            if (key.startsWith(EXTRA_GCM_PREFIX)) {
                 continue;
             }
             customData.put(key, intentExtras.getString(key));
@@ -65,14 +66,21 @@ public class PushIntentUtils {
         return pushIntent.getStringExtra(EXTRA_GOOGLE_MESSAGE_ID);
     }
 
+    //Null means no sound
     public static String getSound(Intent pushIntent) {
-        return pushIntent.getStringExtra(EXTRA_SOUND);
+        String sound = pushIntent.getStringExtra(EXTRA_CUSTOM_SOUND);
+        if (sound == null) {
+            sound = pushIntent.getStringExtra(EXTRA_SOUND);
+        }
+        return sound;
     }
 
+    //Null means no color
     public static String getColor(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_COLOR);
     }
 
+    // Null means no icon
     public static String getIcon(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_ICON);
     }
