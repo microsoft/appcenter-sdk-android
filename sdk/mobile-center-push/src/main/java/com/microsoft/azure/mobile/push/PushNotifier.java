@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 
-import java.lang.reflect.Method;
 import java.util.Map;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
@@ -27,7 +26,7 @@ public class PushNotifier {
         //Bundle appMetaData = EngagementUtils.getMetaData(context);
         //mNotificationIcon = getIcon(appMetaData, METADATA_NOTIFICATION_ICON);
         int notificationIcon = 0; //TODO get notification icon?
-        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
 
         /* Generate notification identifier using the hash of the Google message id. */
         int notificationId = PushIntentUtils.getGoogleMessageId(pushIntent).hashCode();
@@ -50,26 +49,11 @@ public class PushNotifier {
         String notificationMessage = PushIntentUtils.getMessage(pushIntent);
         Notification notification;
 
-        /* Build notification. */
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
-            /* Android 2.3. */
-            notification = new Notification(notificationIcon, notificationTitle,
-                    System.currentTimeMillis());
-            try {
-                Method setLatestEventInfo = notification.getClass().getMethod("setLatestEventInfo",
-                        Context.class, CharSequence.class, CharSequence.class, PendingIntent.class);
-                setLatestEventInfo.invoke(notification, context, notificationTitle,
-                        notificationMessage, contentIntent);
-            }
-            catch (Exception ignored) {
-            }
-        }
-        else {
-            /* Use builder starting Android 3.0. */
-            Notification.Builder builder = new Notification.Builder(context);
+        /* Use builder starting Android 3.0. */
+        Notification.Builder builder = new Notification.Builder(context);
 
-            /* Icon for ticker and content icon */
-            builder.setSmallIcon(notificationIcon);
+        /* Icon for ticker and content icon */
+        builder.setSmallIcon(notificationIcon);
 //
 //            /*
 //             * Large icon, handled only since API Level 11 (needs down scaling if too large because it's
@@ -78,45 +62,45 @@ public class PushNotifier {
 //            Bitmap notificationImage = content.getNotificationImage();
 //            if (notificationImage != null) {
 //                builder.setLargeIcon(scaleBitmapForLargeIcon(mContext, notificationImage));
-//            }
+//           }
 
-            /* Texts */
-            builder.setContentTitle(notificationTitle);
-            builder.setContentText(notificationMessage);
-            builder.setTicker(notificationTitle);
-            builder.setWhen(System.currentTimeMillis());
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                builder.setShowWhen(true);
-            }
+        /* Texts */
+        builder.setContentTitle(notificationTitle);
+        builder.setContentText(notificationMessage);
+        builder.setTicker(notificationTitle);
+        builder.setWhen(System.currentTimeMillis());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            builder.setShowWhen(true);
+        }
 
-            /* Click action. */
-            builder.setContentIntent(contentIntent);
+        /* Click action. */
+        builder.setContentIntent(contentIntent);
 
-            /* Manage notification channel on Android O. */
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                    && context.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.O) {
+        /* Manage notification channel on Android O. */
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && context.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.O) {
 
-                /* Get channel. */
-                NotificationChannel channel = getNotificationChannel();
-                if (channel != null) {
-                    /* Create or update channel. */
-                    mNotificationManager.createNotificationChannel(channel);
+            /* Get channel. */
+            NotificationChannel channel = getNotificationChannel();
+            if (channel != null) {
 
-                    /* And associate to notification. */
-                    builder.setChannelId(channel.getId());
-                }
-            }
+                /* Create or update channel. */
+                notificationManager.createNotificationChannel(channel);
 
-            /* Build method again depends on versions. */
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                notification = builder.build();
-            }
-            else {
-                notification = builder.getNotification();
+                /* And associate to notification. */
+                builder.setChannelId(channel.getId());
             }
         }
+
+        /* Build method again depends on versions. */
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            notification = builder.build();
+        }
+        else {
+            notification = builder.getNotification();
+        }
         //TODO color, icon, sound - see what firebase does.
-        mNotificationManager.notify(notificationId, notification);
+        notificationManager.notify(notificationId, notification);
     }
 
     @TargetApi(Build.VERSION_CODES.O)
