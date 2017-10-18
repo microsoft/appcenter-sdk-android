@@ -26,7 +26,7 @@ public class PushNotifier {
     static final String DEFAULT_CHANNEL_ID = "fcm_fallback_notification_channel";
     static final String DEFAULT_CHANNEL_NAME = "Miscellaneous";
 
-    /*
+    /**
      * Meta-data keys for notification overrides.
      */
     static final String META_CHANNEL_ID_KEY = "com.google.firebase.messaging.default_notification_channel_id";
@@ -48,7 +48,7 @@ public class PushNotifier {
                     PackageManager.GET_META_DATA).metaData;
         }
         catch (Exception e) {
-            /**
+            /*
              * NameNotFoundException or in some rare scenario an undocumented "RuntimeException: Package
              * manager has died.", probably caused by a system app process crash.
              */
@@ -88,57 +88,13 @@ public class PushNotifier {
         Notification.Builder builder = new Notification.Builder(mContext);
 
         /* Set color. */
-        String colorString = PushIntentUtils.getColor(pushIntent);
-        if (colorString != null) {
-            //TODO handle case when format is wrong
-            /* Remove '#'. */
-            colorString = colorString.substring(1);
-            int colorVal = Integer.parseInt(colorString, 16);
-            builder.setColor(colorVal);
-        }
-        else if (mDefaultColorId != 0) {
-            int colorVal = mContext.getColor(mDefaultColorId);
-            //TODO handle case when color is invalid?
-            builder.setColor(colorVal);
-        }
+        setColor(pushIntent, builder);
 
         /* Set icon. */
-        //TODO handle exceptions here?
-        int iconResourceId = 0;
-        String iconString = PushIntentUtils.getIcon(pushIntent);
-        if (iconString != null) {
-            iconResourceId = mContext.getResources().getIdentifier(iconString, "drawable", mContext.getPackageName());
-            if (iconResourceId == 0) {
-                iconResourceId = mContext.getResources().getIdentifier(iconString, "mipmap", mContext.getPackageName());
-            }
-        }
-        if (iconResourceId == 0 && mDefaultIconId != 0) {
-            iconResourceId = mDefaultIconId;
-        }
-        if (iconResourceId == 0) {
-            iconResourceId = mContext.getApplicationInfo().icon;
-        }
-        builder.setSmallIcon(iconResourceId);
+        setIcon(pushIntent, builder);
 
         /* Set sound. */
-        String soundString = PushIntentUtils.getSound(pushIntent);
-        if (soundString != null) {
-            if (soundString.equals("default")) {
-                builder.setDefaults(Notification.DEFAULT_SOUND);
-            }
-            else {
-                Resources resources = mContext.getResources();
-                int id = resources.getIdentifier(soundString, "raw", mContext.getPackageName());
-                //TODO handle case when resource is not found
-                Uri soundUri = new Uri.Builder()
-                        .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
-                        .authority(resources.getResourcePackageName(id))
-                        .appendPath(resources.getResourceTypeName(id))
-                        .appendPath(resources.getResourceEntryName(id))
-                        .build();
-                builder.setSound(soundUri);
-            }
-        }
+        setSound(pushIntent, builder);
 
         /* Texts */
         builder.setContentTitle(notificationTitle).
@@ -155,14 +111,12 @@ public class PushNotifier {
             /* Get channel. */
             NotificationChannel channel = new NotificationChannel(mChannelId,
                     DEFAULT_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-            if (channel != null) {
 
-                /* Create or update channel. */
-                notificationManager.createNotificationChannel(channel);
+            /* Create or update channel. */
+            notificationManager.createNotificationChannel(channel);
 
-                /* And associate to notification. */
-                builder.setChannelId(channel.getId());
-            }
+            /* And associate to notification. */
+            builder.setChannelId(channel.getId());
         }
         Notification notification;
 
@@ -176,4 +130,82 @@ public class PushNotifier {
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
         notificationManager.notify(notificationId, notification);
     }
+
+    @SuppressLint("NewApi")
+    @SuppressWarnings("deprecation")
+    private void setColor(Intent pushIntent, Notification.Builder builder) {
+        String colorString = PushIntentUtils.getColor(pushIntent);
+        if (colorString == null) {
+            if (mDefaultColorId != 0) {
+                int colorVal = mContext.getColor(mDefaultColorId);
+                //TODO handle case when color is invalid?
+                builder.setColor(colorVal);
+            }
+            return;
+        }
+
+        /* If the color string is invalid, return without setting anything. */
+        //TODO is that the correct behavior? or should the color id be used?
+        if (colorString.length() != 7 || !colorString.startsWith("#")) {
+            //TODO log some warning message?
+            return;
+        }
+        try {
+            colorString = colorString.substring(1);
+            builder.setColor(Integer.parseInt(colorString, 16));
+        }
+        catch (NumberFormatException e) {
+            //TODO log a message or something and return
+        }
+    }
+
+    @SuppressLint("NewApi")
+    @SuppressWarnings("deprecation")
+    private void setSound(Intent pushIntent, Notification.Builder builder) {
+
+        /* Custom sound takes precedence over 'use default sound.' */
+        String customSound = PushIntentUtils.getCustomSound(pushIntent);
+        if (customSound != null) {
+            Resources resources = mContext.getResources();
+            int id = resources.getIdentifier(customSound, "raw", mContext.getPackageName());
+            if (id == 0) {
+                //TODO log a message
+                //TODO use default? or nothing?
+                return;
+            }
+            Uri soundUri = new Uri.Builder()
+                    .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+                    .authority(resources.getResourcePackageName(id))
+                    .appendPath(resources.getResourceTypeName(id))
+                    .appendPath(resources.getResourceEntryName(id))
+                    .build();
+            builder.setSound(soundUri);
+        }
+        else if (PushIntentUtils.useDefaultSound(pushIntent)) {
+            builder.setDefaults(Notification.DEFAULT_SOUND);
+        }
+    }
+
+    @SuppressLint("NewApi")
+    @SuppressWarnings("deprecation")
+    private void setIcon(Intent pushIntent, Notification.Builder builder) {
+        int iconResourceId = 0;
+        String iconString = PushIntentUtils.getIcon(pushIntent);
+        if (iconString != null) {
+            iconResourceId = mContext.getResources().getIdentifier(iconString, "drawable", mContext.getPackageName());
+            if (iconResourceId == 0) {
+                iconResourceId = mContext.getResources().getIdentifier(iconString, "mipmap", mContext.getPackageName());
+            }
+        }
+        if (iconResourceId == 0 && mDefaultIconId != 0) {
+            iconResourceId = mDefaultIconId;
+        }
+        //TODO what happens if mDefaultIconId is not a valid id?
+        if (iconResourceId == 0) {
+            iconResourceId = mContext.getApplicationInfo().icon;
+        }
+        builder.setSmallIcon(iconResourceId);
+    }
 }
+
+
