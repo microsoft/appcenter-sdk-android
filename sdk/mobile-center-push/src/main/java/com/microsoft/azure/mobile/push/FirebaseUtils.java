@@ -1,5 +1,7 @@
 package com.microsoft.azure.mobile.push;
+
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class FirebaseUtils {
 
@@ -24,7 +26,14 @@ public class FirebaseUtils {
         }
         try {
             Object firebaseInstanceId = mFirebaseClass.getMethod("getInstance").invoke(null);
-            return (String) mFirebaseClass.getMethod("getToken").invoke(firebaseInstanceId);
+            if (firebaseInstanceId == null) {
+                return null;
+            }
+            Method getTokenMethod = firebaseInstanceId.getClass().getMethod("getToken", null);
+            if (getTokenMethod == null) {
+                return null;
+            }
+            return (String)getTokenMethod.invoke(firebaseInstanceId);
         } catch (IllegalAccessException e) {
             /* Do nothing if something went wrong; null will be returned. */
         } catch (InvocationTargetException e) {

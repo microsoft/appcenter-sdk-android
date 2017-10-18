@@ -364,11 +364,11 @@ public class PushTest {
         when(activity.getIntent()).thenReturn(intent);
         Bundle extras = mock(Bundle.class);
         when(intent.getExtras()).thenReturn(extras);
-        when(extras.getString(Push.EXTRA_GOOGLE_MESSAGE_ID)).thenReturn("reserved value by google");
+        //when(extras.getString(Push.EXTRA_GOOGLE_MESSAGE_ID)).thenReturn("reserved value by google");
         final Map<String, String> extraMap = new HashMap<>();
-        for (String key : Push.EXTRA_STANDARD_KEYS) {
-            extraMap.put(key, "reserved value by google");
-        }
+        //for (String key : Push.EXTRA_STANDARD_KEYS) {
+        //    extraMap.put(key, "reserved value by google");
+       // }
         Map<String, String> customMap = new HashMap<>();
         customMap.put("custom", "data");
         customMap.put("b", "c");
@@ -401,7 +401,7 @@ public class PushTest {
         push.onActivityPaused(activity);
         activity = mock(Activity.class);
         when(activity.getIntent()).thenReturn(intent);
-        when(extras.getString(Push.EXTRA_GOOGLE_MESSAGE_ID)).thenReturn("new id");
+        //when(extras.getString(Push.EXTRA_GOOGLE_MESSAGE_ID)).thenReturn("new id");
         Push.setEnabled(false);
         push.onActivityResumed(activity);
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
@@ -454,7 +454,7 @@ public class PushTest {
         when(activity.getIntent()).thenReturn(intent);
         Bundle extras = mock(Bundle.class);
         when(intent.getExtras()).thenReturn(extras);
-        when(extras.getString(Push.EXTRA_GOOGLE_MESSAGE_ID)).thenReturn("some id");
+        //when(extras.getString(Push.EXTRA_GOOGLE_MESSAGE_ID)).thenReturn("some id");
         when(extras.keySet()).thenReturn(Collections.<String>emptySet());
 
         /* Disable while posting the command to the U.I. thread. */
@@ -490,11 +490,11 @@ public class PushTest {
         Intent intent = mock(Intent.class);
         Bundle extras = mock(Bundle.class);
         when(intent.getExtras()).thenReturn(extras);
-        when(extras.getString(Push.EXTRA_GOOGLE_MESSAGE_ID)).thenReturn("reserved value by google");
+        //when(extras.getString(Push.EXTRA_GOOGLE_MESSAGE_ID)).thenReturn("reserved value by google");
         final Map<String, String> extraMap = new HashMap<>();
-        for (String key : Push.EXTRA_STANDARD_KEYS) {
-            extraMap.put(key, "reserved value by google");
-        }
+        //for (String key : Push.EXTRA_STANDARD_KEYS) {
+        //    extraMap.put(key, "reserved value by google");
+        //}
         Map<String, String> customMap = new HashMap<>();
         customMap.put("custom", "data");
         customMap.put("b", "c");

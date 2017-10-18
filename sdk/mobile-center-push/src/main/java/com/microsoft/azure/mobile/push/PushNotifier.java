@@ -33,26 +33,12 @@ public class PushNotifier {
     static final String META_DEFAULT_COLOR_KEY = "com.google.firebase.messaging.default_notification_color";
     static final String META_DEFAULT_ICON_KEY = "com.google.firebase.messaging.default_notification_icon";
 
-    private static PushNotifier sInstance;
-
     private Context mContext;
     private String mChannelId;
     private int mDefaultColorId;
     private int mDefaultIconId;
 
-    private synchronized static PushNotifier getInstance(Context context) {
-        if (sInstance == null) {
-            sInstance = new PushNotifier(context);
-        }
-        return sInstance;
-    }
-
-    public synchronized static void handleNotification(Context context, Intent pushIntent) {
-        getInstance(context).instanceHandleNotification(pushIntent);
-    }
-
-    //TODO what if the methods are called later with a different context? is that possible?
-    private PushNotifier(Context context) {
+    public PushNotifier(Context context) {
         //TODO is this line necessary? : mContext = context.getApplicationContext();
         mContext = context;
         /* Get meta data. */
@@ -76,7 +62,7 @@ public class PushNotifier {
 
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
-    private void instanceHandleNotification(Intent pushIntent)
+    public void handleNotification(Intent pushIntent)
             throws RuntimeException {
         NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(NOTIFICATION_SERVICE);
 

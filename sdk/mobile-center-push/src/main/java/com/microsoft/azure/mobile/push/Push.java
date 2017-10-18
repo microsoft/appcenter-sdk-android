@@ -74,6 +74,12 @@ public class Push extends AbstractMobileCenterService {
     private Context mContext;
 
     /**
+     * Push notifier.
+     */
+    private PushNotifier mPushNotifier;
+
+
+    /**
      * Init.
      */
     private Push() {
@@ -200,7 +206,7 @@ public class Push extends AbstractMobileCenterService {
             try {
                 mContext.startService(registrationIntent);
             } catch (RuntimeException e) {
-            /* Abort if the GCM service can't be accessed. */
+                /* Abort if the GCM service can't be accessed. */
                 //TODO log error message
             }
         }
@@ -235,6 +241,7 @@ public class Push extends AbstractMobileCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         super.onStarted(context, appSecret, channel);
         mContext = context;
+        mPushNotifier = new PushNotifier(mContext);
     }
 
     /**
@@ -325,23 +332,23 @@ public class Push extends AbstractMobileCenterService {
      * @param pushIntent intent from push.
      */
     void onMessageReceived(final Intent pushIntent) {
-        String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
-        final PushNotification notification = new PushNotification(pushIntent);
-        MobileCenterLog.info(LOG_TAG, "Received push message in foreground id=" + messageId);
-        postOnUiThread(new Runnable() {
+        if (mActivity != null) {
+            String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
+            final PushNotification notification = new PushNotification(pushIntent);
+            MobileCenterLog.info(LOG_TAG, "Received push message in foreground id=" + messageId);
+            postOnUiThread(new Runnable() {
 
-            @Override
-            public void run() {
-                handleOnMessageReceived(notification);
-            }
-        });
-    }
-
-    /**
-     * Returns true if the app is in the background, false if the app is in the foreground.
-     */
-    boolean isInBackground() {
-        return mActivity == null;
+                @Override
+                public void run() {
+                    handleOnMessageReceived(notification);
+                }
+            });
+            return;
+        }
+        if (!FirebaseUtils.isFirebaseAvailable()) {
+            //TODO if mPushNotifier is null then cache and replay at onstart push
+            mPushNotifier.handleNotification(pushIntent);
+        }
     }
 
     /**
@@ -350,7 +357,6 @@ public class Push extends AbstractMobileCenterService {
     @UiThread
     private synchronized void handleOnMessageReceived(PushNotification pushNotification) {
         if (mInstanceListener != null) {
-            //TODO need this? : RemoteMessage.Notification notification = remoteMessage.getNotification();
             mInstanceListener.onPushNotificationReceived(mActivity, pushNotification);
         }
     }

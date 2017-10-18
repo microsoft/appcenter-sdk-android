@@ -30,15 +30,9 @@ public class PushReceiver extends BroadcastReceiver {
             Push.getInstance().onTokenRefresh(registrationId);
         }
 
-        //TODO if context is null then cache and replay at onstart push
         /* Received message action. */
         else if (INTENT_ACTION_RECEIVE.equals(action)) {
-            if (Push.getInstance().isInBackground() && !FirebaseUtils.isFirebaseAvailable()) {
-                PushNotifier.handleNotification(context, intent);
-            }
-            else if (!Push.getInstance().isInBackground()) {
-                Push.getInstance().onMessageReceived(intent);
-            }
+            Push.getInstance().onMessageReceived(intent);
         }
     }
 }
