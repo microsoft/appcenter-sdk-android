@@ -97,9 +97,9 @@ final class DistributeConstants {
     static final String PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY = "enable_failure_redirect";
 
     /**
-     * API parameter value for setup failure redirect key.
+     * API parameter for update setup failed key.
      */
-    static final String PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY_VALUE = "true";
+    static final String PARAMETER_UPDATE_SETUP_FAILED = "update_setup_failed";
 
     /**
      * Header used to pass token when checking latest release.

@@ -77,6 +77,7 @@ import static com.microsoft.azure.mobile.distribute.DistributeConstants.MEBIBYTE
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.NOTIFICATION_CHANNEL_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.EXTRA_UPDATE_SETUP_FAILED;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_UPDATE_SETUP_FAILED;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
@@ -671,7 +672,7 @@ public class Distribute extends AbstractMobileCenterService {
             // message and also store the package hash that the failure occurred on. The setup
             // will only be re-attempted the next time the app gets updated (and package hash changes).
             String updateSetupFailedMessage = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-            if (updateSetupFailedMessage != null){
+            if (updateSetupFailedMessage != null) {
                 MobileCenterLog.debug(LOG_TAG, "In-app updates setup failure detected.");
                 showUpdateSetupFailedDialog(updateSetupFailedMessage);
                 return;
@@ -762,7 +763,7 @@ public class Distribute extends AbstractMobileCenterService {
         mWorkflowCompleted = true;
     }
 
-    /*
+    /**
      * Store update update setup failure message used later to show in setup failure dialog for user.
      */
     synchronized void storeUpdateSetupFailedParameter(@NonNull String updateSetupFailed) {
@@ -770,7 +771,7 @@ public class Distribute extends AbstractMobileCenterService {
         PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, updateSetupFailed);
     }
 
-    /*
+    /**
      * Store update token and possibly trigger application update check.
      */
     synchronized void storeRedirectionParameters(@NonNull String requestId, @NonNull String distributionGroupId, String updateToken) {
@@ -1177,8 +1178,9 @@ public class Distribute extends AbstractMobileCenterService {
      */
     @UiThread
     private synchronized void showUpdateSetupFailedDialog(final String errorMessage) {
+
         /* Check if we need to replace dialog. */
-        if (!shouldRefreshDialog(mUpdateSetupFailedDialog)){
+        if (!shouldRefreshDialog(mUpdateSetupFailedDialog)) {
             return;
         }
         MobileCenterLog.debug(LOG_TAG, "Show update setup failed dialog.");
@@ -1199,19 +1201,20 @@ public class Distribute extends AbstractMobileCenterService {
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
+
+                    /* Add a flag to the install url to indicate that the update setup failed, to show a help page. */
                     String url = mInstallUrl;
-                    // Add a flag to the install url to indicate that the update setup failed, to show a help page
-                    url += "?" + EXTRA_UPDATE_SETUP_FAILED + "=" + "true";
+                    url += "?" + PARAMETER_UPDATE_SETUP_FAILED + "=" + "true";
                     BrowserUtils.openBrowser(url, mForegroundActivity);
 
-                    // Clear the update setup failure info from storage, to re-attempt setup on reinstall
+                    /* Clear the update setup failure info from storage, to re-attempt setup on reinstall. */
                     PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
                 }
             });
             mUpdateSetupFailedDialog = dialogBuilder.create();
             showAndRememberDialogActivity(mUpdateSetupFailedDialog);
 
-            // Don't show this dialog again
+            /* Don't show this dialog again. */
             PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
         }
     }
