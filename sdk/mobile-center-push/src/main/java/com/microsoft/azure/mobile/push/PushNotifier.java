@@ -1,7 +1,6 @@
 package com.microsoft.azure.mobile.push;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -13,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 
 import java.util.Map;
 
@@ -20,23 +20,72 @@ import static android.content.Context.NOTIFICATION_SERVICE;
 
 public class PushNotifier {
 
-    /* Default channel. */
+    /**
+     * Default channel.
+     */
     static final String DEFAULT_CHANNEL_ID = "fcm_fallback_notification_channel";
     static final String DEFAULT_CHANNEL_NAME = "Miscellaneous";
 
+    /*
+     * Meta-data keys for notification overrides.
+     */
+    static final String META_CHANNEL_ID_KEY = "com.google.firebase.messaging.default_notification_channel_id";
+    static final String META_DEFAULT_COLOR_KEY = "com.google.firebase.messaging.default_notification_color";
+    static final String META_DEFAULT_ICON_KEY = "com.google.firebase.messaging.default_notification_icon";
+
+    private static PushNotifier sInstance;
+
+    private Context mContext;
+    private String mChannelId;
+    private int mDefaultColorId;
+    private int mDefaultIconId;
+
+    private synchronized static PushNotifier getInstance(Context context) {
+        if (sInstance == null) {
+            sInstance = new PushNotifier(context);
+        }
+        return sInstance;
+    }
+
+    public synchronized static void handleNotification(Context context, Intent pushIntent) {
+        getInstance(context).instanceHandleNotification(pushIntent);
+    }
+
+    //TODO what if the methods are called later with a different context? is that possible?
+    private PushNotifier(Context context) {
+        //TODO is this line necessary? : mContext = context.getApplicationContext();
+        mContext = context;
+        /* Get meta data. */
+        Bundle metaData = null;
+        try {
+            metaData = context.getPackageManager().getApplicationInfo(context.getPackageName(),
+                    PackageManager.GET_META_DATA).metaData;
+        }
+        catch (Exception e) {
+            /**
+             * NameNotFoundException or in some rare scenario an undocumented "RuntimeException: Package
+             * manager has died.", probably caused by a system app process crash.
+             */
+        }
+        if (metaData != null) {
+            mChannelId = metaData.getString(META_CHANNEL_ID_KEY, DEFAULT_CHANNEL_ID);
+            mDefaultColorId = metaData.getInt(META_DEFAULT_COLOR_KEY);
+            mDefaultIconId = metaData.getInt(META_DEFAULT_ICON_KEY);
+        }
+    }
+
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
-    public static void handleNotification(Context context, Intent pushIntent)
+    private void instanceHandleNotification(Intent pushIntent)
             throws RuntimeException {
-        //TODO is this needed? : context = context.getApplicationContext();
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(NOTIFICATION_SERVICE);
 
         /* Generate notification identifier using the hash of the Google message id. */
         int notificationId = PushIntentUtils.getGoogleMessageId(pushIntent).hashCode();
 
         /* Click action. */
-        PackageManager packageManager = context.getPackageManager();
-        Intent actionIntent = packageManager.getLaunchIntentForPackage(context.getPackageName());
+        PackageManager packageManager = mContext.getPackageManager();
+        Intent actionIntent = packageManager.getLaunchIntentForPackage(mContext.getPackageName());
         actionIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Map<String, String> customData = PushIntentUtils.getCustomData(pushIntent);
         for (String key : customData.keySet()) {
@@ -44,13 +93,13 @@ public class PushNotifier {
         }
 
         /* Reuse notification id for simplicity. */
-        PendingIntent contentIntent = PendingIntent.getActivity(context, notificationId,
+        PendingIntent contentIntent = PendingIntent.getActivity(mContext, notificationId,
                 actionIntent, 0);
 
         /* Get text. */
         String notificationTitle = PushIntentUtils.getTitle(pushIntent);
         String notificationMessage = PushIntentUtils.getMessage(pushIntent);
-        Notification.Builder builder = new Notification.Builder(context);
+        Notification.Builder builder = new Notification.Builder(mContext);
 
         /* Set color. */
         String colorString = PushIntentUtils.getColor(pushIntent);
@@ -61,15 +110,29 @@ public class PushNotifier {
             int colorVal = Integer.parseInt(colorString, 16);
             builder.setColor(colorVal);
         }
+        else if (mDefaultColorId != 0) {
+            int colorVal = mContext.getColor(mDefaultColorId);
+            //TODO handle case when color is invalid?
+            builder.setColor(colorVal);
+        }
 
         /* Set icon. */
+        //TODO handle exceptions here?
+        int iconResourceId = 0;
         String iconString = PushIntentUtils.getIcon(pushIntent);
         if (iconString != null) {
-            //TODO handle case when format is wrong
-            //TODO Invalid icon case: use launcher icon
-            //TODO make sure to prioritize drawable over mipmap if it exists in both
-            builder.setSmallIcon(Integer.parseInt(iconString));
+            iconResourceId = mContext.getResources().getIdentifier(iconString, "drawable", mContext.getPackageName());
+            if (iconResourceId == 0) {
+                iconResourceId = mContext.getResources().getIdentifier(iconString, "mipmap", mContext.getPackageName());
+            }
         }
+        if (iconResourceId == 0 && mDefaultIconId != 0) {
+            iconResourceId = mDefaultIconId;
+        }
+        if (iconResourceId == 0) {
+            iconResourceId = mContext.getApplicationInfo().icon;
+        }
+        builder.setSmallIcon(iconResourceId);
 
         /* Set sound. */
         String soundString = PushIntentUtils.getSound(pushIntent);
@@ -78,8 +141,8 @@ public class PushNotifier {
                 builder.setDefaults(Notification.DEFAULT_SOUND);
             }
             else {
-                Resources resources = context.getResources();
-                int id = resources.getIdentifier(soundString, "raw", context.getPackageName());
+                Resources resources = mContext.getResources();
+                int id = resources.getIdentifier(soundString, "raw", mContext.getPackageName());
                 //TODO handle case when resource is not found
                 Uri soundUri = new Uri.Builder()
                         .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
@@ -101,10 +164,11 @@ public class PushNotifier {
 
         /* Manage notification channel on Android O. */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                && context.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.O) {
+                && mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.O) {
 
             /* Get channel. */
-            NotificationChannel channel = getNotificationChannel();
+            NotificationChannel channel = new NotificationChannel(mChannelId,
+                    DEFAULT_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
             if (channel != null) {
 
                 /* Create or update channel. */
@@ -125,14 +189,5 @@ public class PushNotifier {
         }
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
         notificationManager.notify(notificationId, notification);
-    }
-
-    @TargetApi(Build.VERSION_CODES.O)
-    @SuppressWarnings("WeakerAccess")
-    private static NotificationChannel getNotificationChannel()
-    {
-        NotificationChannel channel = new NotificationChannel(DEFAULT_CHANNEL_ID,
-                DEFAULT_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-        return channel;
     }
 }
