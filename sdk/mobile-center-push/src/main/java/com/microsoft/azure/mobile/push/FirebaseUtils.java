@@ -29,7 +29,7 @@ public class FirebaseUtils {
             if (firebaseInstanceId == null) {
                 return null;
             }
-            Method getTokenMethod = firebaseInstanceId.getClass().getMethod("getToken", null);
+            Method getTokenMethod = firebaseInstanceId.getClass().getMethod("getToken");
             if (getTokenMethod == null) {
                 return null;
             }

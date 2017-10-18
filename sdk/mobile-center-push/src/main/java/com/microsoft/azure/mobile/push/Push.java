@@ -18,7 +18,9 @@ import com.microsoft.azure.mobile.push.ingestion.models.json.PushInstallationLog
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,6 +55,11 @@ public class Push extends AbstractMobileCenterService {
     private final Map<String, LogFactory> mFactories;
 
     /**
+     * Push intents that were received but unable to be played because context wasn't available.
+     */
+    private final List<Intent> mUnplayedPushIntents;
+
+    /**
      * Push listener.
      */
     private PushListener mInstanceListener;
@@ -84,6 +91,7 @@ public class Push extends AbstractMobileCenterService {
      */
     private Push() {
         mFactories = new HashMap<>();
+        mUnplayedPushIntents = new ArrayList<>();
         mFactories.put(PushInstallationLog.TYPE, new PushInstallationLogFactory());
     }
 
@@ -242,6 +250,12 @@ public class Push extends AbstractMobileCenterService {
         super.onStarted(context, appSecret, channel);
         mContext = context;
         mPushNotifier = new PushNotifier(mContext);
+
+        /* Handle intents that were received before mPushNotifier was created. */
+        for (Intent pushIntent : mUnplayedPushIntents) {
+            mPushNotifier.handleNotification(pushIntent);
+        }
+        mUnplayedPushIntents.clear();
     }
 
     /**
@@ -346,7 +360,12 @@ public class Push extends AbstractMobileCenterService {
             return;
         }
         if (!FirebaseUtils.isFirebaseAvailable()) {
-            //TODO if mPushNotifier is null then cache and replay at onstart push
+
+            /* If mPushNotifier is unavailable, save the intent and handle it later. */
+            if (mPushNotifier == null) {
+                mUnplayedPushIntents.add(pushIntent);
+                return;
+            }
             mPushNotifier.handleNotification(pushIntent);
         }
     }
