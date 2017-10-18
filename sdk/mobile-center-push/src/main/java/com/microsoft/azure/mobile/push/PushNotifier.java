@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,8 +31,8 @@ public class PushNotifier {
      * Meta-data keys for notification overrides.
      */
     static final String META_CHANNEL_ID_KEY = "com.google.firebase.messaging.default_notification_channel_id";
-    static final String META_DEFAULT_COLOR_KEY = "com.google.firebase.messaging.default_notification_color";
-    static final String META_DEFAULT_ICON_KEY = "com.google.firebase.messaging.default_notification_icon";
+    static final String META_DEFAULT_COLOR_ID_KEY = "com.google.firebase.messaging.default_notification_color";
+    static final String META_DEFAULT_ICON_ID_KEY = "com.google.firebase.messaging.default_notification_icon";
 
     private Context mContext;
     private String mChannelId;
@@ -55,8 +56,8 @@ public class PushNotifier {
         }
         if (metaData != null) {
             mChannelId = metaData.getString(META_CHANNEL_ID_KEY, DEFAULT_CHANNEL_ID);
-            mDefaultColorId = metaData.getInt(META_DEFAULT_COLOR_KEY);
-            mDefaultIconId = metaData.getInt(META_DEFAULT_ICON_KEY);
+            mDefaultIconId = metaData.getInt(META_DEFAULT_ICON_ID_KEY);
+            mDefaultColor = metaData.getInt(META_DEFAULT_COLOR_ID_KEY);
         }
     }
 
@@ -135,27 +136,22 @@ public class PushNotifier {
     @SuppressWarnings("deprecation")
     private void setColor(Intent pushIntent, Notification.Builder builder) {
         String colorString = PushIntentUtils.getColor(pushIntent);
-        if (colorString == null) {
-            if (mDefaultColorId != 0) {
-                int colorVal = mContext.getColor(mDefaultColorId);
-                //TODO handle case when color is invalid?
-                builder.setColor(colorVal);
+        if (colorString != null) {
+            try {
+                builder.setColor(Color.parseColor(colorString));
+                return;
             }
-            return;
+            catch (IllegalArgumentException e) {
+                /* Do nothing. */
+            }
         }
-
-        /* If the color string is invalid, return without setting anything. */
-        //TODO is that the correct behavior? or should the color id be used?
-        if (colorString.length() != 7 || !colorString.startsWith("#")) {
-            //TODO log some warning message?
-            return;
-        }
-        try {
-            colorString = colorString.substring(1);
-            builder.setColor(Integer.parseInt(colorString, 16));
-        }
-        catch (NumberFormatException e) {
-            //TODO log a message or something and return
+        if (mDefaultColorId != 0) {
+            try {
+                builder.setColor(mContext.getColor(mDefaultColorId));
+            }
+            catch (Resources.NotFoundException e) {
+                //TODO log message
+            }
         }
     }
 
@@ -167,6 +163,7 @@ public class PushNotifier {
         String customSound = PushIntentUtils.getCustomSound(pushIntent);
         if (customSound != null) {
             Resources resources = mContext.getResources();
+            //TODO is it okay that extension isn't in the filename?
             int id = resources.getIdentifier(customSound, "raw", mContext.getPackageName());
             if (id == 0) {
                 //TODO log a message
