@@ -10,23 +10,19 @@ import java.util.Map;
 import java.util.Set;
 
 public class PushIntentUtils {
-    //TODO double check these
+
+    /**
+     * Intent keys.
+     */
     static final String EXTRA_GCM_PREFIX = "gcm.notification.";
     static final String EXTRA_TITLE = EXTRA_GCM_PREFIX + "title";
-    static final String EXTRA_MESSAGE = EXTRA_GCM_PREFIX + "message";
+    static final String EXTRA_MESSAGE = EXTRA_GCM_PREFIX + "body";
     static final String EXTRA_COLOR =  EXTRA_GCM_PREFIX + "color";
     static final String EXTRA_SOUND = EXTRA_GCM_PREFIX + "sound";
     static final String EXTRA_CUSTOM_SOUND = EXTRA_GCM_PREFIX + "sound2";
     static final String EXTRA_ICON = EXTRA_GCM_PREFIX + "icon";
-
-
-    /**
-     * Google message identifier extra intent key.
-     */
-    @VisibleForTesting
     static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
 
-    // TODO also need to filter out keys that start with gcm
     /**
      * Intent extras not part of custom data.
      */

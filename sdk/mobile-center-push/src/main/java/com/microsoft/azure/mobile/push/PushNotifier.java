@@ -20,6 +20,10 @@ import static android.content.Context.NOTIFICATION_SERVICE;
 
 public class PushNotifier {
 
+    /* Default channel. */
+    static final String DEFAULT_CHANNEL_ID = "fcm_fallback_notification_channel";
+    static final String DEFAULT_CHANNEL_NAME = "Miscellaneous";
+
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
     public static void handleNotification(Context context, Intent pushIntent)
@@ -127,18 +131,8 @@ public class PushNotifier {
     @SuppressWarnings("WeakerAccess")
     private static NotificationChannel getNotificationChannel()
     {
-        /*
-         * We can't vibrate with no sound anymore and we need 1 channel for each combination. Only the
-         * name can be updated after creating a channel, even if deleting channel. Other updates are
-         * simply ignored by Android. Only user has control on options after the channel is created
-         * once.
-         */
-        //TODO use getexistingchannel to see what firebase does
-        String id = "azme";
-        String name;
-        name = "Miscellaneous";
-        int priority = NotificationManager.IMPORTANCE_DEFAULT;
-        NotificationChannel channel = new NotificationChannel(id, name, priority);
+        NotificationChannel channel = new NotificationChannel(DEFAULT_CHANNEL_ID,
+                DEFAULT_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
         return channel;
     }
 }
