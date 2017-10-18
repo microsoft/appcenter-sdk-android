@@ -52,6 +52,7 @@ import com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage
 import org.json.JSONException;
 
 import java.lang.ref.WeakReference;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.util.Date;
@@ -1204,7 +1205,11 @@ public class Distribute extends AbstractMobileCenterService {
 
                     /* Add a flag to the install url to indicate that the update setup failed, to show a help page. */
                     String url = mInstallUrl;
-                    url += "?" + PARAMETER_UPDATE_SETUP_FAILED + "=" + "true";
+                    try {
+                        url = BrowserUtils.appendUri(url, PARAMETER_UPDATE_SETUP_FAILED + "=" + "true");
+                    } catch (URISyntaxException e) {
+                        MobileCenterLog.error(LOG_TAG, "Could not append query parameter to url.", e);
+                    }
                     BrowserUtils.openBrowser(url, mForegroundActivity);
 
                     /* Clear the update setup failure info from storage, to re-attempt setup on reinstall. */
