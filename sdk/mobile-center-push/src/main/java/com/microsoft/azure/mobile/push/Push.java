@@ -185,7 +185,7 @@ public class Push extends AbstractMobileCenterService {
      *
      * @param pushToken the push token value.
      */
-    synchronized void onTokenRefresh(@NonNull final String pushToken) {
+    synchronized void onTokenRefresh(final String pushToken) {
         if (pushToken != null) {
             MobileCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
             post(new Runnable() {
