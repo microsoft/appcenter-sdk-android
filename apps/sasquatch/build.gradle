@@ -37,6 +37,13 @@ dependencies {
     androidTestCompile "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
     androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.2'
     compile 'com.android.support.test.espresso:espresso-idling-resource:2.2.2'
+
+    // TODO add a variant for this
+
+//    /* Need add explicit core dependency to avoid error on transform classes with dex task */
+//    def firebaseVersion = "11.0.2"
+//    compile "com.google.firebase:firebase-core:${firebaseVersion}"
+//    compile "com.google.firebase:firebase-messaging:${firebaseVersion}"
 }
 
-apply plugin: 'com.google.gms.google-services'
+//apply plugin: 'com.google.gms.google-services'

@@ -85,6 +85,10 @@ public class Push extends AbstractMobileCenterService {
      */
     private PushNotifier mPushNotifier;
 
+    /**
+     * Sender ID.
+     */
+    private String mSenderId;
 
     /**
      * Init.
@@ -155,6 +159,17 @@ public class Push extends AbstractMobileCenterService {
     }
 
     /**
+     * TODO add documentation
+     */
+    public static void setSenderId(String senderId) {
+        getInstance().instanceSetSenderId(senderId);
+    }
+
+    private synchronized void instanceSetSenderId(String senderId) {
+        mSenderId = senderId;
+    }
+
+    /**
      * Enqueue a push installation log.
      *
      * @param pushToken the push token value
@@ -171,14 +186,16 @@ public class Push extends AbstractMobileCenterService {
      * @param pushToken the push token value.
      */
     synchronized void onTokenRefresh(@NonNull final String pushToken) {
-        MobileCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
-        post(new Runnable() {
+        if (pushToken != null) {
+            MobileCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
+            post(new Runnable() {
 
-            @Override
-            public void run() {
-                enqueuePushInstallationLog(pushToken);
-            }
-        });
+                @Override
+                public void run() {
+                    enqueuePushInstallationLog(pushToken);
+                }
+            });
+        }
     }
 
     /**
@@ -203,20 +220,8 @@ public class Push extends AbstractMobileCenterService {
                 MobileCenterLog.error(LOG_TAG, "Failed to get Firebase push token.", e);
             }
         }
-        else {
-            /* Firebase is not available, so use Mobile Center logic. */
-            Intent registrationIntent = new Intent("com.google.android.c2dm.intent.REGISTER");
-            //TODO handle case when context is null
-            String senderId = mContext.getString(R.string.gcm_defaultSenderId);
-            registrationIntent.putExtra("sender", senderId);
-            registrationIntent.setPackage("com.google.android.gsf");
-            registrationIntent.putExtra("app", PendingIntent.getBroadcast(mContext, 0, new Intent(), 0));
-            try {
-                mContext.startService(registrationIntent);
-            } catch (RuntimeException e) {
-                /* Abort if the GCM service can't be accessed. */
-                //TODO log error message
-            }
+        if (mContext != null) {
+            registerPushToken();
         }
     }
 
@@ -249,6 +254,7 @@ public class Push extends AbstractMobileCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         super.onStarted(context, appSecret, channel);
         mContext = context;
+        registerPushToken();
         mPushNotifier = new PushNotifier(mContext);
 
         /* Handle intents that were received before mPushNotifier was created. */
@@ -367,6 +373,20 @@ public class Push extends AbstractMobileCenterService {
                 return;
             }
             mPushNotifier.handleNotification(pushIntent);
+        }
+    }
+
+    private synchronized void registerPushToken() {
+        Intent registrationIntent = new Intent("com.google.android.c2dm.intent.REGISTER");
+        registrationIntent.putExtra("sender", mSenderId);
+        registrationIntent.setPackage("com.google.android.gsf");
+        registrationIntent.putExtra("app", PendingIntent.getBroadcast(mContext, 0, new Intent(), 0));
+        try {
+            mContext.startService(registrationIntent);
+        } catch (RuntimeException e) {
+
+                /* Abort if the GCM service can't be accessed. */
+            MobileCenterLog.warn(LOG_TAG, "Failed to register push token", e);
         }
     }
 

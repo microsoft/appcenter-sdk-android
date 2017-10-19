@@ -57,7 +57,8 @@ public class MainActivity extends AppCompatActivity {
     public static final String LOG_TAG = "MobileCenterSasquatch";
     static final String APP_SECRET_KEY = "appSecret";
     static final String LOG_URL_KEY = "logUrl";
-    static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
+    static final String SENDER_ID = "177539951155";
+
     @VisibleForTesting
     static final CountingIdlingResource analyticsIdlingResource = new CountingIdlingResource("analytics");
     @VisibleForTesting
@@ -94,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
         }
+        Push.setSenderId(SENDER_ID);
 
         /* Start Mobile center. */
         MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
