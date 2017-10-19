@@ -66,8 +66,9 @@ public class PushIntentUtils {
         return pushIntent.getStringExtra(EXTRA_CUSTOM_SOUND);
     }
 
-    public static boolean useDefaultSound(Intent pushIntent) {
-        return pushIntent.getStringExtra(EXTRA_SOUND) != null;
+    public static boolean useAnySound(Intent pushIntent) {
+        return pushIntent.getStringExtra(EXTRA_SOUND) != null ||
+                pushIntent.getStringExtra(EXTRA_CUSTOM_SOUND) != null;
     }
 
     //Null means no color

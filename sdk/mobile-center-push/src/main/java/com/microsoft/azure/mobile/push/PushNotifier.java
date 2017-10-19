@@ -15,6 +15,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
+
 import java.util.Map;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
@@ -57,7 +59,7 @@ public class PushNotifier {
         if (metaData != null) {
             mChannelId = metaData.getString(META_CHANNEL_ID_KEY, DEFAULT_CHANNEL_ID);
             mDefaultIconId = metaData.getInt(META_DEFAULT_ICON_ID_KEY);
-            mDefaultColor = metaData.getInt(META_DEFAULT_COLOR_ID_KEY);
+            mDefaultColorId = metaData.getInt(META_DEFAULT_COLOR_ID_KEY);
         }
     }
 
@@ -142,7 +144,8 @@ public class PushNotifier {
                 return;
             }
             catch (IllegalArgumentException e) {
-                /* Do nothing. */
+                MobileCenterLog.warn(Push.getInstance().getLoggerTag(),
+                        "Provided color resource not found; falling back to default.");
             }
         }
         if (mDefaultColorId != 0) {
@@ -150,7 +153,8 @@ public class PushNotifier {
                 builder.setColor(mContext.getColor(mDefaultColorId));
             }
             catch (Resources.NotFoundException e) {
-                //TODO log message
+                MobileCenterLog.warn(Push.getInstance().getLoggerTag(),
+                        "Default color resource not found.");
             }
         }
     }
@@ -158,18 +162,17 @@ public class PushNotifier {
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
     private void setSound(Intent pushIntent, Notification.Builder builder) {
-
-        /* Custom sound takes precedence over 'use default sound.' */
+        if (!PushIntentUtils.useAnySound(pushIntent)) {
+            return;
+        }
         String customSound = PushIntentUtils.getCustomSound(pushIntent);
-        if (customSound != null) {
+        if (customSound == null) {
+            builder.setDefaults(Notification.DEFAULT_SOUND);
+            return;
+        }
+        try {
             Resources resources = mContext.getResources();
-            //TODO is it okay that extension isn't in the filename?
             int id = resources.getIdentifier(customSound, "raw", mContext.getPackageName());
-            if (id == 0) {
-                //TODO log a message
-                //TODO use default? or nothing?
-                return;
-            }
             Uri soundUri = new Uri.Builder()
                     .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
                     .authority(resources.getResourcePackageName(id))
@@ -178,7 +181,9 @@ public class PushNotifier {
                     .build();
             builder.setSound(soundUri);
         }
-        else if (PushIntentUtils.useDefaultSound(pushIntent)) {
+        catch (Resources.NotFoundException e) {
+            MobileCenterLog.warn(Push.getInstance().getLoggerTag(),
+                    "Sound file '" + customSound + "' not found; falling back to default.");
             builder.setDefaults(Notification.DEFAULT_SOUND);
         }
     }
@@ -197,7 +202,6 @@ public class PushNotifier {
         if (iconResourceId == 0 && mDefaultIconId != 0) {
             iconResourceId = mDefaultIconId;
         }
-        //TODO what happens if mDefaultIconId is not a valid id?
         if (iconResourceId == 0) {
             iconResourceId = mContext.getApplicationInfo().icon;
         }
