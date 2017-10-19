@@ -2,7 +2,6 @@ package com.microsoft.azure.mobile.push;
 
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class FirebaseUtils {
@@ -22,30 +21,10 @@ public class FirebaseUtils {
         return mFirebaseClass != null;
     }
 
-    public static String getToken() throws IllegalStateException {
-        if (!isFirebaseAvailable()) {
-            return null;
-        }
-        String warningMessage = "Something went wrong when getting Firebase token";
-        try {
-            Object firebaseInstanceId = mFirebaseClass.getMethod("getInstance").invoke(null);
-            if (firebaseInstanceId == null) {
-                MobileCenterLog.warn(Push.getInstance().getLoggerTag(), warningMessage);
-                return null;
-            }
-            Method getTokenMethod = firebaseInstanceId.getClass().getMethod("getToken");
-            if (getTokenMethod == null) {
-                MobileCenterLog.warn(Push.getInstance().getLoggerTag(), warningMessage);
-                return null;
-            }
-            return (String)getTokenMethod.invoke(firebaseInstanceId);
-        } catch (IllegalAccessException e) {
-            MobileCenterLog.warn(Push.getInstance().getLoggerTag(), warningMessage);
-        } catch (InvocationTargetException e) {
-            MobileCenterLog.warn(Push.getInstance().getLoggerTag(), warningMessage);
-        } catch (NoSuchMethodException e) {
-            MobileCenterLog.warn(Push.getInstance().getLoggerTag(), warningMessage);
-        }
-        return null;
+    /* Caller of this method needs to try/catch Exception. */
+    public static String getToken() throws Exception {
+        Object firebaseInstanceId = mFirebaseClass.getMethod("getInstance").invoke(null);
+        Method getTokenMethod = firebaseInstanceId.getClass().getMethod("getToken");
+        return (String)getTokenMethod.invoke(firebaseInstanceId);
     }
 }
