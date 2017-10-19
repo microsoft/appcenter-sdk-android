@@ -13,7 +13,6 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
@@ -26,42 +25,14 @@ public class PushNotifier {
     /**
      * Default channel.
      */
-    static final String DEFAULT_CHANNEL_ID = "fcm_fallback_notification_channel";
-    static final String DEFAULT_CHANNEL_NAME = "Miscellaneous";
-
-    /**
-     * Meta-data keys for notification overrides.
-     */
-    static final String META_CHANNEL_ID_KEY = "com.google.firebase.messaging.default_notification_channel_id";
-    static final String META_DEFAULT_COLOR_ID_KEY = "com.google.firebase.messaging.default_notification_color";
-    static final String META_DEFAULT_ICON_ID_KEY = "com.google.firebase.messaging.default_notification_icon";
+    static final String CHANNEL_ID = "app_center_push";
+    static final String CHANNEL_NAME = "Push";
 
     private Context mContext;
-    private String mChannelId;
-    private int mDefaultColorId;
-    private int mDefaultIconId;
 
     public PushNotifier(Context context) {
         //TODO is this line necessary? : mContext = context.getApplicationContext();
         mContext = context;
-
-        /* Get meta data. */
-        Bundle metaData = null;
-        try {
-            metaData = context.getPackageManager().getApplicationInfo(context.getPackageName(),
-                    PackageManager.GET_META_DATA).metaData;
-        }
-        catch (Exception e) {
-            /*
-             * NameNotFoundException or in some rare scenario an undocumented "RuntimeException: Package
-             * manager has died.", probably caused by a system app process crash.
-             */
-        }
-        if (metaData != null) {
-            mChannelId = metaData.getString(META_CHANNEL_ID_KEY, DEFAULT_CHANNEL_ID);
-            mDefaultIconId = metaData.getInt(META_DEFAULT_ICON_ID_KEY);
-            mDefaultColorId = metaData.getInt(META_DEFAULT_COLOR_ID_KEY);
-        }
     }
 
     @SuppressLint("NewApi")
@@ -113,8 +84,8 @@ public class PushNotifier {
                 && mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.O) {
 
             /* Get channel. */
-            NotificationChannel channel = new NotificationChannel(mChannelId,
-                    DEFAULT_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+                    CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
 
             /* Create or update channel. */
             notificationManager.createNotificationChannel(channel);
@@ -139,24 +110,16 @@ public class PushNotifier {
     @SuppressWarnings("deprecation")
     private void setColor(Intent pushIntent, Notification.Builder builder) {
         String colorString = PushIntentUtils.getColor(pushIntent);
-        if (colorString != null) {
-            try {
-                builder.setColor(Color.parseColor(colorString));
-                return;
-            }
-            catch (IllegalArgumentException e) {
-                MobileCenterLog.warn(Push.getInstance().getLoggerTag(),
-                        "Provided color resource not found; falling back to default.");
-            }
+        if (colorString == null) {
+            return;
         }
-        if (mDefaultColorId != 0) {
-            try {
-                builder.setColor(mContext.getColor(mDefaultColorId));
-            }
-            catch (Resources.NotFoundException e) {
-                MobileCenterLog.warn(Push.getInstance().getLoggerTag(),
-                        "Default color resource not found.");
-            }
+        try {
+            builder.setColor(Color.parseColor(colorString));
+            return;
+        }
+        catch (IllegalArgumentException e) {
+            MobileCenterLog.warn(Push.getInstance().getLoggerTag(),
+                    "Provided color resource not found.");
         }
     }
 
@@ -192,21 +155,28 @@ public class PushNotifier {
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
     private void setIcon(Intent pushIntent, Notification.Builder builder) {
-        int iconResourceId = 0;
         String iconString = PushIntentUtils.getIcon(pushIntent);
         if (iconString != null) {
-            iconResourceId = mContext.getResources().getIdentifier(iconString, "drawable", mContext.getPackageName());
-            if (iconResourceId == 0) {
-                iconResourceId = mContext.getResources().getIdentifier(iconString, "mipmap", mContext.getPackageName());
+            Resources resources = mContext.getResources();
+            String packageName = mContext.getPackageName();
+            int iconResourceId = resources.getIdentifier(iconString, "drawable", packageName);
+            if (iconResourceId != 0) {
+                MobileCenterLog.debug(Push.getInstance().getLoggerTag(),
+                        "Found icon resource in 'drawable'.");
+                builder.setSmallIcon(iconResourceId);
+                return;
+            }
+            iconResourceId = resources.getIdentifier(iconString, "mipmap", packageName);
+            if (iconResourceId != 0) {
+                MobileCenterLog.debug(Push.getInstance().getLoggerTag(),
+                        "Found icon resource in 'mipmap'.");
+                builder.setSmallIcon(iconResourceId);
+                return;
             }
         }
-        if (iconResourceId == 0 && mDefaultIconId != 0) {
-            iconResourceId = mDefaultIconId;
-        }
-        if (iconResourceId == 0) {
-            iconResourceId = mContext.getApplicationInfo().icon;
-        }
-        builder.setSmallIcon(iconResourceId);
+        MobileCenterLog.debug(Push.getInstance().getLoggerTag(),
+                "Using application icon as notification icon.");
+        builder.setSmallIcon(mContext.getApplicationInfo().icon);
     }
 }
 
