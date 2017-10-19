@@ -34,7 +34,7 @@ public class Push extends AbstractMobileCenterService {
     private static final String SERVICE_NAME = "Push";
 
     /**
-     * TAG used in logging for Analytics.
+     * TAG used in logging for Push.
      */
     private static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
 
