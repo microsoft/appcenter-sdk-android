@@ -44,6 +44,7 @@ public class PushNotifier {
     public PushNotifier(Context context) {
         //TODO is this line necessary? : mContext = context.getApplicationContext();
         mContext = context;
+
         /* Get meta data. */
         Bundle metaData = null;
         try {
