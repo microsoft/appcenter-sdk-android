@@ -1457,7 +1457,7 @@ public class Distribute extends AbstractMobileCenterService {
             builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
         } else {
 
-            /* noinspection deprecation. */
+            //noinspection deprecation
             builder = new Notification.Builder(mContext);
         }
         builder.setTicker(mContext.getString(R.string.mobile_center_distribute_install_ready_title))
