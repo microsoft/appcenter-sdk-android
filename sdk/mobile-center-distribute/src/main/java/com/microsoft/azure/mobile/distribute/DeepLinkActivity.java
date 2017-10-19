@@ -36,10 +36,10 @@ public class DeepLinkActivity extends Activity {
         /* Store redirection parameters if both required values were passed. */
         if (requestId != null && distributionGroupId != null) {
             Distribute.getInstance().storeRedirectionParameters(requestId, distributionGroupId, updateToken);
-        } else if (updateSetupFailed != null) {
+        } else if (requestId != null && updateSetupFailed != null) {
 
             /* Otherwise just store error message to show update failure dialog in future. */
-            Distribute.getInstance().storeUpdateSetupFailedParameter(updateSetupFailed);
+            Distribute.getInstance().storeUpdateSetupFailedParameter(requestId, updateSetupFailed);
         }
 
         /*
