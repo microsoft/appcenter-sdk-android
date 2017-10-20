@@ -87,6 +87,16 @@ class PushIntentUtils {
     }
 
     /**
+     * Sets the Google Message ID for an intent.
+     *
+     * @param messageId The message ID to set.
+     * @param pushIntent The push intent.
+     */
+    static void setGoogleMessageId(String messageId, Intent pushIntent) {
+        pushIntent.putExtra(EXTRA_GOOGLE_MESSAGE_ID, messageId);
+    }
+
+    /**
      * Gets the name of the custom sound specified by the push intent.
      *
      * @param pushIntent The push intent.

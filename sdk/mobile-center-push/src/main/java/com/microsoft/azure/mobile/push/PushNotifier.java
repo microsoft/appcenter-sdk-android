@@ -53,6 +53,10 @@ class PushNotifier {
             actionIntent.putExtra(key, customData.get(key));
         }
 
+        /* Set the message ID in the intent. */
+        String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
+        PushIntentUtils.setGoogleMessageId(messageId, actionIntent);
+
         /* Get text. */
         String notificationTitle = PushIntentUtils.getTitle(pushIntent);
         String notificationMessage = PushIntentUtils.getMessage(pushIntent);
