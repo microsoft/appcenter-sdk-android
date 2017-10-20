@@ -207,7 +207,7 @@ public class Push extends AbstractMobileCenterService {
     protected synchronized void applyEnabledState(boolean enabled) {
         if (!enabled) {
 
-            /* Nothing to do when disabling. */
+            /* Nothing to do when diabling. */
             return;
         }
         registerPushToken();
@@ -335,32 +335,42 @@ public class Push extends AbstractMobileCenterService {
      * @param pushIntent intent from push.
      */
     void onMessageReceived(Context context, final Intent pushIntent) {
-        if (mActivity != null) {
-            String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
-            final PushNotification notification = new PushNotification(pushIntent);
-            MobileCenterLog.info(LOG_TAG, "Received push message in foreground id=" + messageId);
-            postOnUiThread(new Runnable() {
+        if (!FirebaseUtils.isFirebaseAvailable()) {
+            if (mActivity != null) {
+                String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
+                final PushNotification notification = new PushNotification(pushIntent);
+                MobileCenterLog.info(LOG_TAG, "Received push message in foreground id=" + messageId);
+                postOnUiThread(new Runnable() {
 
-                @Override
-                public void run() {
-                    handleOnMessageReceived(notification);
-                }
-            });
-            return;
+                    @Override
+                    public void run() {
+                        handleOnMessageReceived(notification);
+                    }
+                });
+                return;
+            }
+            PushNotifier.handleNotification(context, pushIntent);
         }
-        PushNotifier.handleNotification(context, pushIntent);
     }
 
     private synchronized void registerPushToken() {
-        try {
-            String token = FirebaseUtils.getToken();
-            onTokenRefresh(token);
-            return;
+
+        /*
+         * Check if Firebase is available first to avoid logging the "falling back" warning if
+         * the app was never supposed to use Firebase in the first place.
+         */
+        if (FirebaseUtils.isFirebaseAvailable()) {
+            try {
+                String token = FirebaseUtils.getToken();
+                onTokenRefresh(token);
+                return;
+            }
+            catch (Exception e) {
+                MobileCenterLog.warn(LOG_TAG,
+                        "Failed to get push token with Firebase; falling back to custom logic.");
+            }
         }
-        catch (Exception e) {
-            MobileCenterLog.warn(LOG_TAG,
-                    "Failed to get push token with Firebase; falling back to custom logic.");
-        }
+
         if (mContext != null) {
             Intent registrationIntent = new Intent("com.google.android.c2dm.intent.REGISTER");
             registrationIntent.putExtra("sender", mSenderId);
