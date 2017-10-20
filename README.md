@@ -20,13 +20,12 @@ The Mobile Center SDK uses a modular architecture so you can use any or all of t
 4. **Mobile Center Push**: Mobile Center Push enables you to send push notifications to users of your app from the Mobile Center portal. To do that, the Mobile Center SDK and portal integrate with [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging/). You can also segment your user base based on a set of properties and send them targeted notifications.
 
 ## 1. Get started
+
 It is super easy to use Mobile Center. Have a look at our [get started documentation](https://docs.microsoft.com/en-us/mobile-center/sdk/getting-started/android) and onboard your app within minutes. Our [detailed documentation](https://docs.microsoft.com/en-us/mobile-center/sdk/) is available as well.
 
 ## 2. Contributing
 
 We are looking forward to your contributions via pull requests.
-
-Please note that the test app named **Sasquatch** requires a **google-services.json** to compile. This file is git ignored as it contains secrets. You have to provide your own **google-services.json** file in the **app/sasquatch** folder if you want to build. This requires having your own Firebase Project.
 
 ### 2.1 Code of Conduct
 
@@ -43,4 +42,5 @@ You must sign a [Contributor License Agreement](https://cla.microsoft.com/) befo
 If you have further questions, want to provide feedback or you are running into issues, log in to the [Mobile Center portal](https://mobile.azure.com) and use the blue Intercom button on the bottom right to start a conversation with us.
 
 ### 3.2 Twitter
+
 We're on Twitter as [@mobilecenter](https://www.twitter.com/mobilecenter).

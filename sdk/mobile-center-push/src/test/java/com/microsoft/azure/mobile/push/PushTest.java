@@ -5,8 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.messaging.RemoteMessage;
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.MobileCenterHandler;
 import com.microsoft.azure.mobile.channel.Channel;
@@ -63,7 +61,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
         MobileCenterLog.class,
         MobileCenter.class,
         StorageHelper.PreferencesStorage.class,
-        FirebaseInstanceId.class,
+//        FirebaseInstanceId.class,
 //        FirebaseAnalyticsUtils.class,
         HandlerUtils.class
 })
@@ -76,8 +74,8 @@ public class PushTest {
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
-    @Mock
-    private FirebaseInstanceId mFirebaseInstanceId;
+//    @Mock
+//    private FirebaseInstanceId mFirebaseInstanceId;
 
     @Mock
     private MobileCenterHandler mMobileCenterHandler;
@@ -124,8 +122,8 @@ public class PushTest {
         StorageHelper.PreferencesStorage.putBoolean(eq(PUSH_ENABLED_KEY), anyBoolean());
 
         /* Mock Firebase instance. */
-        mockStatic(FirebaseInstanceId.class);
-        when(FirebaseInstanceId.getInstance()).thenReturn(mFirebaseInstanceId);
+//        mockStatic(FirebaseInstanceId.class);
+//        when(FirebaseInstanceId.getInstance()).thenReturn(mFirebaseInstanceId);
 //        mockStatic(FirebaseAnalyticsUtils.class);
 
         /* Mock handler. */
@@ -171,11 +169,11 @@ public class PushTest {
         String testToken = "TEST";
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
+//        when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
         start(mock(Context.class), push, channel);
         verify(channel).removeGroup(eq(push.getGroupName()));
         assertTrue(Push.isEnabled().get());
-        verify(mFirebaseInstanceId).getToken();
+//        verify(mFirebaseInstanceId).getToken();
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
 
         /* Enable while already enabled. */
@@ -183,7 +181,7 @@ public class PushTest {
         assertTrue(Push.isEnabled().get());
 
         /* Verify behavior happened only once. */
-        verify(mFirebaseInstanceId).getToken();
+//        verify(mFirebaseInstanceId).getToken();
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
 
         /* Disable. */
@@ -207,7 +205,7 @@ public class PushTest {
         push.onTokenRefresh(testToken);
 
         /* Verify behavior happened only once. */
-        verify(mFirebaseInstanceId).getToken();
+//        verify(mFirebaseInstanceId).getToken();
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
 
         /* Make sure no logging when posting check activity intent commands. */
@@ -244,7 +242,7 @@ public class PushTest {
         Channel channel = mock(Channel.class);
         start(mock(Context.class), push, channel);
         assertTrue(Push.isEnabled().get());
-        verify(mFirebaseInstanceId).getToken();
+//        verify(mFirebaseInstanceId).getToken();
         verify(channel, never()).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
 
         /* Refresh. */
@@ -252,7 +250,7 @@ public class PushTest {
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
 
         /* Only once. */
-        verify(mFirebaseInstanceId).getToken();
+//        verify(mFirebaseInstanceId).getToken();
     }
 
     @Test
@@ -268,11 +266,11 @@ public class PushTest {
         push.onActivityResumed(activity);
 
         /* Mock some message. */
-        RemoteMessage message = mock(RemoteMessage.class);
-        RemoteMessage.Notification notification = mock(RemoteMessage.Notification.class);
-        when(message.getNotification()).thenReturn(notification);
-        when(notification.getTitle()).thenReturn("some title");
-        when(notification.getBody()).thenReturn("some message");
+//        RemoteMessage message = mock(RemoteMessage.class);
+//        RemoteMessage.Notification notification = mock(RemoteMessage.Notification.class);
+//        when(message.getNotification()).thenReturn(notification);
+//        when(notification.getTitle()).thenReturn("some title");
+//        when(notification.getBody()).thenReturn("some message");
 //        PushMessagingService service = new PushMessagingService();
 //        service.onMessageReceived(message);
         ArgumentCaptor<PushNotification> captor = ArgumentCaptor.forClass(PushNotification.class);
@@ -303,8 +301,8 @@ public class PushTest {
         Map<String, String> data = new HashMap<>();
         data.put("a", "b");
         data.put("c", "d");
-        when(message.getNotification()).thenReturn(null);
-        when(message.getData()).thenReturn(data);
+//        when(message.getNotification()).thenReturn(null);
+//        when(message.getData()).thenReturn(data);
         //service.onMessageReceived(message);
         verify(pushListener, times(2)).onPushNotificationReceived(eq(activity), captor.capture());
         pushNotification = captor.getValue();
@@ -533,7 +531,7 @@ public class PushTest {
     @Test
     public void failToInit() {
         IllegalStateException exception = new IllegalStateException();
-        when(FirebaseInstanceId.getInstance()).thenThrow(exception);
+//        when(FirebaseInstanceId.getInstance()).thenThrow(exception);
         Context contextMock = mock(Context.class);
         start(contextMock, Push.getInstance(), mock(Channel.class));
         assertTrue(Push.isEnabled().get());

@@ -5,14 +5,34 @@
 evaluationDependsOn(':apps')
 
 android {
+
+    flavorDimensions "dependency", "pushLibrary"
+
     productFlavors {
         projectDependency {
+            dimension "dependency"
             applicationIdSuffix ".project"
         }
         jcenterDependency {
+            dimension "dependency"
             applicationIdSuffix ".jcenter"
         }
+        vanilla {
+            dimension "pushLibrary"
+        }
+        firebase {
+            dimension "pushLibrary"
+        }
     }
+
+    /* TODO remove that filter once we update the jcenter demo to include the no firebase push sdk. */
+    variantFilter { variant ->
+        def names = variant.flavors*.name
+        if (names.contains("jcenterDependency") && names.contains("vanilla")) {
+            setIgnore(true)
+        }
+    }
+
     buildTypes {
         releaseProguard {
             minifyEnabled true
@@ -22,28 +42,35 @@ android {
 }
 
 dependencies {
-    def version = "0.12.0"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
+
     projectDependencyCompile project(':sdk:mobile-center-analytics')
     projectDependencyCompile project(':sdk:mobile-center-crashes')
     projectDependencyCompile project(':sdk:mobile-center-distribute')
     projectDependencyCompile project(':sdk:mobile-center-push')
+
+    def version = "0.12.0"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-analytics:${version}"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-crashes:${version}"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-distribute:${version}"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-push:${version}"
 
+    def firebaseVersion = "11.0.2"
+    firebaseCompile "com.google.firebase:firebase-core:${firebaseVersion}"
+    firebaseCompile "com.google.firebase:firebase-messaging:${firebaseVersion}"
+
     /* Force usage this version of support annotations to avoid conflict. */
     androidTestCompile "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
     androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.2'
     compile 'com.android.support.test.espresso:espresso-idling-resource:2.2.2'
-
-    // TODO add a variant for this
-
-//    /* Need add explicit core dependency to avoid error on transform classes with dex task */
-//    def firebaseVersion = "11.0.2"
-//    compile "com.google.firebase:firebase-core:${firebaseVersion}"
-//    compile "com.google.firebase:firebase-messaging:${firebaseVersion}"
 }
 
-//apply plugin: 'com.google.gms.google-services'
+/*
+ * This will also bypass google-services.json if executing assembleDebug wildcard task.
+ * This is needed to build from Mobile Center build as we don't commit google-services.json and
+ * Mobile Center build cannot detect our gradle tasks so we make it execute assembleDebug with a
+ * work around. We are interested in only a vanilla build variant (no Firebase) for such builds.
+ */
+if (getGradle().getStartParameter().getTaskRequests().toString().contains("Firebase")) {
+    apply plugin: 'com.google.gms.google-services'
+}
