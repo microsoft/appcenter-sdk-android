@@ -28,60 +28,52 @@ public class PushNotifier {
     static final String CHANNEL_ID = "app_center_push";
     static final String CHANNEL_NAME = "Push";
 
-    private Context mContext;
-
-    public PushNotifier(Context context) {
-        //TODO is this line necessary? : mContext = context.getApplicationContext();
-        mContext = context;
-    }
-
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
-    public void handleNotification(Intent pushIntent)
+    public static void handleNotification(Context context, Intent pushIntent)
             throws RuntimeException {
-        NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(NOTIFICATION_SERVICE);
+        context = context.getApplicationContext();
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
 
         /* Generate notification identifier using the hash of the Google message id. */
         int notificationId = PushIntentUtils.getGoogleMessageId(pushIntent).hashCode();
 
         /* Click action. */
-        PackageManager packageManager = mContext.getPackageManager();
-        Intent actionIntent = packageManager.getLaunchIntentForPackage(mContext.getPackageName());
+        PackageManager packageManager = context.getPackageManager();
+        Intent actionIntent = packageManager.getLaunchIntentForPackage(context.getPackageName());
         actionIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Map<String, String> customData = PushIntentUtils.getCustomData(pushIntent);
         for (String key : customData.keySet()) {
             actionIntent.putExtra(key, customData.get(key));
         }
 
-        /* Reuse notification id for simplicity. */
-        PendingIntent contentIntent = PendingIntent.getActivity(mContext, notificationId,
-                actionIntent, 0);
-
         /* Get text. */
         String notificationTitle = PushIntentUtils.getTitle(pushIntent);
         String notificationMessage = PushIntentUtils.getMessage(pushIntent);
-        Notification.Builder builder = new Notification.Builder(mContext);
+        Notification.Builder builder = new Notification.Builder(context);
 
         /* Set color. */
         setColor(pushIntent, builder);
 
         /* Set icon. */
-        setIcon(pushIntent, builder);
+        setIcon(context, pushIntent, builder);
 
         /* Set sound. */
-        setSound(pushIntent, builder);
+        setSound(context, pushIntent, builder);
 
         /* Texts */
         builder.setContentTitle(notificationTitle).
                 setContentText(notificationMessage).
                 setWhen(System.currentTimeMillis());
 
-        /* Click action. */
+        /* Click action. Reuse notification id for simplicity. */
+        PendingIntent contentIntent = PendingIntent.getActivity(context, notificationId,
+                actionIntent, 0);
         builder.setContentIntent(contentIntent);
 
         /* Manage notification channel on Android O. */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                && mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.O) {
+                && context.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.O) {
 
             /* Get channel. */
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
@@ -108,24 +100,23 @@ public class PushNotifier {
 
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
-    private void setColor(Intent pushIntent, Notification.Builder builder) {
+    private static void setColor(Intent pushIntent, Notification.Builder builder) {
         String colorString = PushIntentUtils.getColor(pushIntent);
         if (colorString == null) {
             return;
         }
         try {
             builder.setColor(Color.parseColor(colorString));
-            return;
         }
         catch (IllegalArgumentException e) {
             MobileCenterLog.warn(Push.getInstance().getLoggerTag(),
-                    "Provided color resource not found.");
+                    "Invalid color string.");
         }
     }
 
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
-    private void setSound(Intent pushIntent, Notification.Builder builder) {
+    private static void setSound(Context context, Intent pushIntent, Notification.Builder builder) {
         if (!PushIntentUtils.useAnySound(pushIntent)) {
             return;
         }
@@ -135,8 +126,8 @@ public class PushNotifier {
             return;
         }
         try {
-            Resources resources = mContext.getResources();
-            int id = resources.getIdentifier(customSound, "raw", mContext.getPackageName());
+            Resources resources = context.getResources();
+            int id = resources.getIdentifier(customSound, "raw", context.getPackageName());
             Uri soundUri = new Uri.Builder()
                     .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
                     .authority(resources.getResourcePackageName(id))
@@ -154,11 +145,11 @@ public class PushNotifier {
 
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
-    private void setIcon(Intent pushIntent, Notification.Builder builder) {
+    private static void setIcon(Context context, Intent pushIntent, Notification.Builder builder) {
         String iconString = PushIntentUtils.getIcon(pushIntent);
         if (iconString != null) {
-            Resources resources = mContext.getResources();
-            String packageName = mContext.getPackageName();
+            Resources resources = context.getResources();
+            String packageName = context.getPackageName();
             int iconResourceId = resources.getIdentifier(iconString, "drawable", packageName);
             if (iconResourceId != 0) {
                 MobileCenterLog.debug(Push.getInstance().getLoggerTag(),
@@ -176,7 +167,7 @@ public class PushNotifier {
         }
         MobileCenterLog.debug(Push.getInstance().getLoggerTag(),
                 "Using application icon as notification icon.");
-        builder.setSmallIcon(mContext.getApplicationInfo().icon);
+        builder.setSmallIcon(context.getApplicationInfo().icon);
     }
 }
 

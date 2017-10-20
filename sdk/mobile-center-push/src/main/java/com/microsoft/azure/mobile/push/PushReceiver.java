@@ -32,7 +32,7 @@ public class PushReceiver extends BroadcastReceiver {
 
         /* Received message action. */
         else if (INTENT_ACTION_RECEIVE.equals(action)) {
-            Push.getInstance().onMessageReceived(intent);
+            Push.getInstance().onMessageReceived(context, intent);
         }
     }
 }
