@@ -370,7 +370,6 @@ public class Push extends AbstractMobileCenterService {
                         "Failed to get push token with Firebase; falling back to custom logic.");
             }
         }
-
         if (mContext != null) {
             Intent registrationIntent = new Intent("com.google.android.c2dm.intent.REGISTER");
             registrationIntent.putExtra("sender", mSenderId);
