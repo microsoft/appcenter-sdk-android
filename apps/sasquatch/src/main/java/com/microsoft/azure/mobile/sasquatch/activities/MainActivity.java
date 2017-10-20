@@ -95,7 +95,11 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
         }
-        Push.setSenderId(SENDER_ID);
+        try {
+            Push.class.getMethod("setSenderId", String.class).invoke(null, SENDER_ID);
+        } catch (Exception e) {
+            MobileCenterLog.error(LOG_TAG, "Push.setSenderdId method not available.");
+        }
 
         /* Start Mobile center. */
         MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
@@ -130,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
         /* Populate UI. */
         ((TextView) findViewById(R.id.package_name)).setText(String.format(getString(R.string.sdk_source_format), getPackageName().substring(getPackageName().lastIndexOf(".") + 1)));
         TestFeatures.initialize(this);
-        ListView listView = (ListView) findViewById(R.id.list);
+        ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
     }

@@ -36,7 +36,7 @@ def copyApkToProjectBuildTask(variantName) {
         applicationVariant.each { variant ->
 
             // Copy only one APK to current project
-            if (variant.name.contains(variantName) && variant.name.contains('projectDependency')) {
+            if (variant.name.contains(variantName) && variant.name.contains('projectDependency') && variant.name.contains('Vanilla')) {
                 variant.outputs.outputFile.each { File file ->
                     copy {
                         from "${file.absolutePath}"
