@@ -1129,7 +1129,7 @@ public class Distribute extends AbstractMobileCenterService {
     /**
      * Store failed package info hash in preferences.
      */
-    private synchronized void storeUpdateSetupFailedPackageHash(Dialog dialog) {
+    private synchronized void storeUpdateSetupFailedPackageHash(DialogInterface dialog) {
         if (mUpdateSetupFailedDialog == dialog) {
             PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY, DistributeUtils.computeReleaseHash(mPackageInfo));
         } else {
@@ -1140,9 +1140,8 @@ public class Distribute extends AbstractMobileCenterService {
     /**
      * Redirect user to install url page in browser and clear current failed package hash from preferences.
      */
-    private synchronized void handleUpdateFailedDialogReinstallAction(Dialog dialog) {
+    private synchronized void handleUpdateFailedDialogReinstallAction(DialogInterface dialog) {
         if (mUpdateSetupFailedDialog == dialog) {
-
             /* Add a flag to the install url to indicate that the update setup failed, to show a help page. */
             String url = mInstallUrl;
             try {
@@ -1235,14 +1234,14 @@ public class Distribute extends AbstractMobileCenterService {
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    storeUpdateSetupFailedPackageHash(mUpdateSetupFailedDialog);
+                    storeUpdateSetupFailedPackageHash(dialog);
                 }
             });
             dialogBuilder.setNegativeButton(R.string.mobile_center_distribute_update_failed_dialog_reinstall, new DialogInterface.OnClickListener() {
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    handleUpdateFailedDialogReinstallAction(mUpdateSetupFailedDialog);
+                    handleUpdateFailedDialogReinstallAction(dialog);
                 }
             });
             mUpdateSetupFailedDialog = dialogBuilder.create();
