@@ -24,7 +24,6 @@ import com.microsoft.azure.mobile.utils.crypto.CryptoUtils;
 
 import org.json.JSONException;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.internal.matchers.Any;
@@ -34,7 +33,6 @@ import org.mockito.stubbing.Answer;
 import org.mockito.verification.VerificationMode;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.net.URISyntaxException;
 import java.util.HashMap;

@@ -1142,6 +1142,7 @@ public class Distribute extends AbstractMobileCenterService {
      */
     private synchronized void handleUpdateFailedDialogReinstallAction(DialogInterface dialog) {
         if (mUpdateSetupFailedDialog == dialog) {
+
             /* Add a flag to the install url to indicate that the update setup failed, to show a help page. */
             String url = mInstallUrl;
             try {
