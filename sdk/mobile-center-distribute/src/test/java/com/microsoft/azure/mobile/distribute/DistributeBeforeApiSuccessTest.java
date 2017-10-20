@@ -3,8 +3,10 @@ package com.microsoft.azure.mobile.distribute;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
@@ -21,13 +23,17 @@ import com.microsoft.azure.mobile.utils.crypto.CryptoUtils;
 
 import org.json.JSONException;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.internal.matchers.Any;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mockito.verification.VerificationMode;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -47,6 +53,8 @@ import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFEREN
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.UPDATE_SETUP_PATH_FORMAT;
 import static com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
@@ -60,6 +68,7 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -125,10 +134,67 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void doNothingIfUpdateSetupFailedMessageExist() throws Exception {
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
+        testDistributeInactive();
+    }
+
+    @Test
+    @PrepareForTest(DistributeUtils.class)
+    public void doNothingIfReleaseHashEqualsToFailedPackageHash() throws Exception {
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY)).thenReturn("some_hash");
+        mockStatic(DistributeUtils.class);
+
+        /* Mock the computeReleaseHash to some_hash value. */
+        PowerMockito.when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("some_hash");
+        testDistributeInactive();
+    }
+
+    @Test
+    @PrepareForTest(DistributeUtils.class)
+    public void continueIfReleaseHashNotEqualsToFailedPackageHash() throws Exception {
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY)).thenReturn("some_hash");
+        mockStatic(DistributeUtils.class);
+
+        /* Mock the computeReleaseHash to other_hash value. */
+        PowerMockito.when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("other_hash");
+
+        /* Trigger call. */
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+        verifyStatic();
+    }
+
+    @Test
     @SuppressWarnings("WrongConstant")
     public void doNothingIfGetPackageInfoFails() throws Exception {
         when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenThrow(new PackageManager.NameNotFoundException());
         testDistributeInactive();
+    }
+
+    @Test
+    public void storeUpdateSetupFailedParameterBeforeStart() throws Exception {
+
+        /* Setup mock. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
+        start();
+        Distribute.getInstance().storeUpdateSetupFailedParameter("r", "error_message");
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, "error_message");
+    }
+
+    @Test
+    public void storeUpdateSetupFailedParameterWithIncorrectRequestIdBeforeStart() throws Exception {
+
+        /* Setup mock. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
+        start();
+        Distribute.getInstance().storeUpdateSetupFailedParameter("r2", "error_message");
+        verifyStatic(never());
+        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, "error_message");
     }
 
     @Test
@@ -249,6 +315,59 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         assertTrue(latch.await(0, TimeUnit.MILLISECONDS));
         verifyStatic(never());
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
+    }
+
+    @Test
+    public void handleFailedUpdateSetupDialogReinstallOption() throws URISyntaxException {
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
+
+        /* Trigger call. */
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Verify dialog. */
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        verify(mDialogBuilder).setCancelable(false);
+        verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_failed_dialog_title);
+        verify(mDialogBuilder).setMessage("failed_message");
+        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_failed_dialog_reinstall), clickListener.capture());
+        when(mDialog.isShowing()).thenReturn(false);
+        when(mDialogBuilder.create()).thenReturn(mDialog);
+        verify(mDialog).show();
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+
+        /* Click. */
+        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+    }
+
+    @Test
+    @PrepareForTest(DistributeUtils.class)
+    public void handleFailedUpdateSetupDialogIgnoreOption() throws URISyntaxException {
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
+        mockStatic(DistributeUtils.class);
+        PowerMockito.when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("some_hash");
+
+        /* Trigger call. */
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Verify dialog. */
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        verify(mDialogBuilder).setCancelable(false);
+        verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_failed_dialog_title);
+        verify(mDialogBuilder).setMessage("failed_message");
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_failed_dialog_ignore), clickListener.capture());
+        when(mDialog.isShowing()).thenReturn(false);
+        when(mDialogBuilder.create()).thenReturn(mDialog);
+        verify(mDialog).show();
+
+        /* Click. */
+        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY, "some_hash");
     }
 
     @Test
