@@ -35,6 +35,11 @@ public class PushNotification {
         mCustomData = customData;
     }
 
+    /**
+     * Init from an intent.
+     *
+     * @param pushIntent the intent that triggered the Push.
+     */
     public PushNotification(Intent pushIntent) {
         mTitle = PushIntentUtils.getTitle(pushIntent);
         mMessage = PushIntentUtils.getMessage(pushIntent);

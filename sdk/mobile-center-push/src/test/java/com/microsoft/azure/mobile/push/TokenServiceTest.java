@@ -1,6 +1,6 @@
 package com.microsoft.azure.mobile.push;
 
-import com.google.firebase.iid.FirebaseInstanceId;
+//import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -14,7 +14,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @SuppressWarnings("unused")
 @PrepareForTest({
         Push.class,
-        FirebaseInstanceId.class
+        //FirebaseInstanceId.class
 })
 public class TokenServiceTest {
 
@@ -24,16 +24,16 @@ public class TokenServiceTest {
     @Mock
     Push mPush;
 
-    @Mock
-    FirebaseInstanceId mFirebaseInstanceId;
+//    @Mock
+//    FirebaseInstanceId mFirebaseInstanceId;
 
     @Before
     public void setUp() throws Exception {
         mockStatic(Push.class);
         when(Push.getInstance()).thenReturn(mPush);
 
-        mockStatic(FirebaseInstanceId.class);
-        when(FirebaseInstanceId.getInstance()).thenReturn(mFirebaseInstanceId);
+//        mockStatic(FirebaseInstanceId.class);
+//        when(FirebaseInstanceId.getInstance()).thenReturn(mFirebaseInstanceId);
     }
 
 //    @Test

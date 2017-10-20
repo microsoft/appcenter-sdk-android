@@ -4,7 +4,8 @@ import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
 import java.lang.reflect.Method;
 
-public class FirebaseUtils {
+
+class FirebaseUtils {
 
     private static Class mFirebaseClass = null;
 
@@ -21,8 +22,16 @@ public class FirebaseUtils {
         return mFirebaseClass != null;
     }
 
+
     /* Caller of this method needs to try/catch Exception. */
-    public static String getToken() throws Exception {
+
+    /**
+     * Uses reflection to get the registration token via Firebase.
+     *
+     * @return The Firebase token
+     * @throws Exception several exceptions can occur; be sure to try/catch this.
+     */
+     static String getToken() throws Exception {
         Object firebaseInstanceId = mFirebaseClass.getMethod("getInstance").invoke(null);
         Method getTokenMethod = firebaseInstanceId.getClass().getMethod("getToken");
         return (String)getTokenMethod.invoke(firebaseInstanceId);

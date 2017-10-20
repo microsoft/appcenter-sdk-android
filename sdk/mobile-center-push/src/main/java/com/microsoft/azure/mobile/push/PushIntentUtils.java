@@ -9,25 +9,25 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class PushIntentUtils {
+class PushIntentUtils {
 
     /**
      * Intent keys.
      */
-    static final String EXTRA_GCM_PREFIX = "gcm.notification.";
-    static final String EXTRA_TITLE = EXTRA_GCM_PREFIX + "title";
-    static final String EXTRA_MESSAGE = EXTRA_GCM_PREFIX + "body";
-    static final String EXTRA_COLOR =  EXTRA_GCM_PREFIX + "color";
-    static final String EXTRA_SOUND = EXTRA_GCM_PREFIX + "sound";
-    static final String EXTRA_CUSTOM_SOUND = EXTRA_GCM_PREFIX + "sound2";
-    static final String EXTRA_ICON = EXTRA_GCM_PREFIX + "icon";
-    static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
+    private static final String EXTRA_GCM_PREFIX = "gcm.notification.";
+    private static final String EXTRA_TITLE = EXTRA_GCM_PREFIX + "title";
+    private static final String EXTRA_MESSAGE = EXTRA_GCM_PREFIX + "body";
+    private static final String EXTRA_COLOR =  EXTRA_GCM_PREFIX + "color";
+    private static final String EXTRA_SOUND = EXTRA_GCM_PREFIX + "sound";
+    private static final String EXTRA_CUSTOM_SOUND = EXTRA_GCM_PREFIX + "sound2";
+    private static final String EXTRA_ICON = EXTRA_GCM_PREFIX + "icon";
+    private static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
 
     /**
      * Intent extras not part of custom data.
      */
     @VisibleForTesting
-    static final Set<String> EXTRA_STANDARD_KEYS = new HashSet<String>() {
+    private static final Set<String> EXTRA_STANDARD_KEYS = new HashSet<String>() {
         {
             add(EXTRA_GOOGLE_MESSAGE_ID);
             add("google.sent_time");
@@ -36,7 +36,13 @@ public class PushIntentUtils {
         }
     };
 
-    public static Map<String, String> getCustomData(Intent pushIntent) {
+    /**
+     * Gets the custom data from the push intent.
+     *
+     * @param pushIntent The push intent.
+     * @return A map of the custom data entries. Returns an empty map if none exist.
+     */
+     static Map<String, String> getCustomData(Intent pushIntent) {
         Bundle intentExtras = pushIntent.getExtras();
         Set<String> intentKeys = intentExtras.keySet();
         intentKeys.removeAll(EXTRA_STANDARD_KEYS);
@@ -50,34 +56,74 @@ public class PushIntentUtils {
         return customData;
     }
 
-    public static String getTitle(Intent pushIntent) {
+    /**
+     * Gets the title of the push from an intent.
+     *
+     * @param pushIntent The push intent.
+     * @return The title.
+     */
+     static String getTitle(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_TITLE);
     }
 
-    public static String getMessage(Intent pushIntent) {
+    /**
+     * Gets the message of the push from an intent.
+     *
+     * @param pushIntent The push intent.
+     * @return The message.
+     */
+     static String getMessage(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_MESSAGE);
     }
 
-    public static String getGoogleMessageId(Intent pushIntent) {
+    /**
+     * Gets the Google Message ID of the push from an intent.
+     *
+     * @param pushIntent The push intent.
+     * @return The message ID.
+     */
+    static String getGoogleMessageId(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_GOOGLE_MESSAGE_ID);
     }
 
-    public static String getCustomSound(Intent pushIntent) {
+    /**
+     * Gets the name of the custom sound specified by the push intent.
+     *
+     * @param pushIntent The push intent.
+     * @return The name of the custom sound, or null if there is none set.
+     */
+     static String getCustomSound(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_CUSTOM_SOUND);
     }
 
-    public static boolean useAnySound(Intent pushIntent) {
+    /**
+     * Returns whether a sound should be played by the notification.
+     *
+     * @param pushIntent The push intent.
+     * @return 'true' if a sound should be played, 'false' otherwise.
+     */
+     static boolean useAnySound(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_SOUND) != null ||
                 pushIntent.getStringExtra(EXTRA_CUSTOM_SOUND) != null;
     }
 
-    //Null means no color
-    public static String getColor(Intent pushIntent) {
+    /**
+     * Returns the color resource ID that was set in the intent.
+     *
+     * @param pushIntent The push intent.
+     * @return The color id as a string, null if none was set.
+     */
+     static String getColor(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_COLOR);
     }
 
-    // Null means no icon
-    public static String getIcon(Intent pushIntent) {
+    /**
+     * Returns the icon resource ID that was set in the intent.
+     *
+     * @param pushIntent The push intent.
+     * @return The icon ID as a string, null if none was set.
+     */
+     static String getIcon(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_ICON);
     }
 }

@@ -20,7 +20,7 @@ import java.util.Map;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 
-public class PushNotifier {
+class PushNotifier {
 
     /**
      * Default channel.
@@ -28,9 +28,15 @@ public class PushNotifier {
     static final String CHANNEL_ID = "app_center_push";
     static final String CHANNEL_NAME = "Push";
 
+    /**
+     * Builds a push notification using the given context and intent.
+     *
+     * @param context The current context.
+     * @param pushIntent The intent that is associated with the push.
+     */
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
-    public static void handleNotification(Context context, Intent pushIntent)
+    static void handleNotification(Context context, Intent pushIntent)
             throws RuntimeException {
         context = context.getApplicationContext();
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
@@ -98,6 +104,12 @@ public class PushNotifier {
         notificationManager.notify(notificationId, notification);
     }
 
+    /**
+     * Sets the color in the notification builder if the property is set in the intent.
+     *
+     * @param pushIntent The push intent.
+     * @param builder The builder to modify.
+     */
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
     private static void setColor(Intent pushIntent, Notification.Builder builder) {
@@ -114,6 +126,13 @@ public class PushNotifier {
         }
     }
 
+
+    /**
+     * Sets the sound in the notification builder if the property is set in the intent.
+     *
+     * @param pushIntent The push intent.
+     * @param builder The builder to modify.
+     */
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
     private static void setSound(Context context, Intent pushIntent, Notification.Builder builder) {
@@ -143,6 +162,14 @@ public class PushNotifier {
         }
     }
 
+
+    /**
+     * Sets the icon for the notification builder if the property is set in the intent, if no custom
+     * icon is provided as an extra, the app icon is used.
+     *
+     * @param pushIntent The push intent.
+     * @param builder The builder to modify.
+     */
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
     private static void setIcon(Context context, Intent pushIntent, Notification.Builder builder) {

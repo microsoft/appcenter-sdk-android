@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 
 public class PushReceiver extends BroadcastReceiver {
+
     /**
      * Action when we receive token.
      */

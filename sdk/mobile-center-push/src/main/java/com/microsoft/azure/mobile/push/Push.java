@@ -79,6 +79,11 @@ public class Push extends AbstractMobileCenterService {
     private String mSenderId;
 
     /**
+     * Indicates whether the push token must be registered in OnStart.
+     */
+    private boolean mTokenNeedsRegistration;
+
+    /**
      * Init.
      */
     private Push() {
@@ -146,12 +151,20 @@ public class Push extends AbstractMobileCenterService {
     }
 
     /**
-     * TODO add documentation
+     * If you do not use the Google Services plugin, you must set the
+     * Sender ID of your project before starting the Push service.
+     *
+     * @param senderId sender ID of your project.
      */
     public static void setSenderId(String senderId) {
         getInstance().instanceSetSenderId(senderId);
     }
 
+    /**
+     * Sets the sender ID. Must be called prior to starting the Push service.
+     *
+     * @param senderId sender ID of your project.
+     */
     private synchronized void instanceSetSenderId(String senderId) {
         mSenderId = senderId;
     }
@@ -197,17 +210,7 @@ public class Push extends AbstractMobileCenterService {
             /* Nothing to do when disabling. */
             return;
         }
-        try {
-            String token = FirebaseUtils.getToken();
-            onTokenRefresh(token);
-        }
-        catch (Exception e) {
-                MobileCenterLog.warn(LOG_TAG,
-                        "Failed to get push token with Firebase; falling back to custom logic.");
-        }
-        if (mContext != null) {
-            registerPushToken();
-        }
+        registerPushToken();
     }
 
     @Override
@@ -239,7 +242,9 @@ public class Push extends AbstractMobileCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         super.onStarted(context, appSecret, channel);
         mContext = context;
-        registerPushToken();
+        if (mTokenNeedsRegistration) {
+            registerPushToken();
+        }
     }
 
     /**
@@ -347,16 +352,30 @@ public class Push extends AbstractMobileCenterService {
     }
 
     private synchronized void registerPushToken() {
-        Intent registrationIntent = new Intent("com.google.android.c2dm.intent.REGISTER");
-        registrationIntent.putExtra("sender", mSenderId);
-        registrationIntent.setPackage("com.google.android.gsf");
-        registrationIntent.putExtra("app", PendingIntent.getBroadcast(mContext, 0, new Intent(), 0));
         try {
-            mContext.startService(registrationIntent);
-        } catch (RuntimeException e) {
+            String token = FirebaseUtils.getToken();
+            onTokenRefresh(token);
+            return;
+        }
+        catch (Exception e) {
+            MobileCenterLog.warn(LOG_TAG,
+                    "Failed to get push token with Firebase; falling back to custom logic.");
+        }
+        if (mContext != null) {
+            Intent registrationIntent = new Intent("com.google.android.c2dm.intent.REGISTER");
+            registrationIntent.putExtra("sender", mSenderId);
+            registrationIntent.setPackage("com.google.android.gsf");
+            registrationIntent.putExtra("app", PendingIntent.getBroadcast(mContext, 0, new Intent(), 0));
+            try {
+                mContext.startService(registrationIntent);
+            } catch (RuntimeException e) {
 
                 /* Abort if the GCM service can't be accessed. */
-            MobileCenterLog.warn(LOG_TAG, "Failed to register push token", e);
+                MobileCenterLog.warn(LOG_TAG, "Failed to register push token", e);
+            }
+        }
+        else {
+            mTokenNeedsRegistration = true;
         }
     }
 
