@@ -42,7 +42,13 @@ class PushNotifier {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
 
         /* Generate notification identifier using the hash of the Google message id. */
-        int notificationId = PushIntentUtils.getGoogleMessageId(pushIntent).hashCode();
+        String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
+        if (messageId == null) {
+            MobileCenterLog.error(Push.getInstance().getLoggerTag(), "Push notification did not" +
+                    "contain Google message ID; aborting notification processing.");
+            return;
+        }
+        int notificationId = messageId.hashCode();
 
         /* Click action. */
         PackageManager packageManager = context.getPackageManager();
@@ -54,7 +60,6 @@ class PushNotifier {
         }
 
         /* Set the message ID in the intent. */
-        String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
         PushIntentUtils.setGoogleMessageId(messageId, actionIntent);
 
         /* Get text. */
