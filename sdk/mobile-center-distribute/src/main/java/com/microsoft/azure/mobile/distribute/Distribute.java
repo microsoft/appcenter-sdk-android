@@ -1226,33 +1226,30 @@ public class Distribute extends AbstractMobileCenterService {
             return;
         }
         MobileCenterLog.debug(LOG_TAG, "Show update setup failed dialog.");
-        if (mForegroundActivity != null) {
-            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
-            dialogBuilder.setCancelable(false);
-            dialogBuilder.setTitle(R.string.mobile_center_distribute_update_failed_dialog_title);
-            dialogBuilder.setMessage(errorMessage);
-            dialogBuilder.setPositiveButton(R.string.mobile_center_distribute_update_failed_dialog_ignore, new DialogInterface.OnClickListener() {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
+        dialogBuilder.setCancelable(false);
+        dialogBuilder.setTitle(R.string.mobile_center_distribute_update_failed_dialog_title);
+        dialogBuilder.setMessage(errorMessage);
+        dialogBuilder.setPositiveButton(R.string.mobile_center_distribute_update_failed_dialog_ignore, new DialogInterface.OnClickListener() {
 
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    storeUpdateSetupFailedPackageHash(dialog);
-                }
-            });
-            dialogBuilder.setNegativeButton(R.string.mobile_center_distribute_update_failed_dialog_reinstall, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                storeUpdateSetupFailedPackageHash(dialog);
+            }
+        });
+        dialogBuilder.setNegativeButton(R.string.mobile_center_distribute_update_failed_dialog_reinstall, new DialogInterface.OnClickListener() {
 
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    handleUpdateFailedDialogReinstallAction(dialog);
-                }
-            });
-            mUpdateSetupFailedDialog = dialogBuilder.create();
-            showAndRememberDialogActivity(mUpdateSetupFailedDialog);
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                handleUpdateFailedDialogReinstallAction(dialog);
+            }
+        });
+        mUpdateSetupFailedDialog = dialogBuilder.create();
+        showAndRememberDialogActivity(mUpdateSetupFailedDialog);
 
-            /* Don't show this dialog again. */
-            PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-        }
+        /* Don't show this dialog again. */
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
     }
-
 
     /**
      * Navigate to security settings or application settings on Android O.
