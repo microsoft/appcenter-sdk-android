@@ -2,3 +2,7 @@
 # Make sure they are always set, even if the default proguard config changes.
 -dontskipnonpubliclibraryclasses
 -verbose
+-keep class com.google.firebase.iid.FirebaseInstanceId {
+    ** getInstance();
+    ** getToken();
+}

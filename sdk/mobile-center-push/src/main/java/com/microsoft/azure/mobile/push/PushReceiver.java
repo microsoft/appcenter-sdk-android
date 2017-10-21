@@ -3,23 +3,27 @@ package com.microsoft.azure.mobile.push;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.support.annotation.VisibleForTesting;
 
 public class PushReceiver extends BroadcastReceiver {
 
     /**
      * Action when we receive token.
      */
-    private static final String INTENT_ACTION_REGISTRATION = "com.google.android.c2dm.intent.REGISTRATION";
+    @VisibleForTesting
+    static final String INTENT_ACTION_REGISTRATION = "com.google.android.c2dm.intent.REGISTRATION";
 
     /**
      * Token key in intent result.
      */
-    private static final String INTENT_EXTRA_REGISTRATION = "registration_id";
+    @VisibleForTesting
+    static final String INTENT_EXTRA_REGISTRATION = "registration_id";
 
     /**
      *  Action when we receive a push.
      */
-    public static final String INTENT_ACTION_RECEIVE = "com.google.android.c2dm.intent.RECEIVE";
+    @VisibleForTesting
+    static final String INTENT_ACTION_RECEIVE = "com.google.android.c2dm.intent.RECEIVE";
 
     @Override
     public void onReceive(Context context, Intent intent) {
