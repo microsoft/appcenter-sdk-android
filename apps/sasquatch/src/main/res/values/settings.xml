@@ -46,6 +46,14 @@
     <string name="mobile_center_push_state_summary_enabled">Push is enabled</string>
     <string name="mobile_center_push_state_summary_disabled">Push is disabled</string>
 
+    <string name="real_user_measurements_key">mobile_center_rum</string>
+    <string name="real_user_measurements_title">Real User Measurements</string>
+
+    <string name="mobile_center_rum_state_key">mobile_center_rum_state_key</string>
+    <string name="mobile_center_rum_state_title">RUM state</string>
+    <string name="mobile_center_rum_state_summary_enabled">RUM is enabled</string>
+    <string name="mobile_center_rum_state_summary_disabled">RUM is disabled</string>
+
     <string name="application_info_key">application_info</string>
     <string name="application_info_title">Application Information</string>
 
