@@ -1,5 +1,6 @@
 codecov:
   bot: xabldint
 
-ignore:
-  - "sdk/*-rum"
+coverage:
+  ignore:
+    - "sdk/*-rum"
