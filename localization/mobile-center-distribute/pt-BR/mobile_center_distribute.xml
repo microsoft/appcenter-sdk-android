@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="mobile_center_distribute_update_dialog_title">Atualização do aplicativo disponível</string>
+  <string name="mobile_center_distribute_update_dialog_message_optional">%1$s %2$s (%3$d) está disponível para download e instalação.</string>
+  <string name="mobile_center_distribute_update_dialog_message_mandatory">Os desenvolvedores desse aplicativo exigem a atualização para %1$s %2$s (%3$d).</string>
+  <string name="mobile_center_distribute_update_dialog_download">Baixar</string>
+  <string name="mobile_center_distribute_update_dialog_postpone">Pergunte-me em um dia</string>
+  <string name="mobile_center_distribute_update_dialog_view_release_notes">Exibir notas de versão</string>
+  <string name="mobile_center_distribute_dialog_actioned_on_disabled_toast">A distribuição foi desabilitada</string>
+  <string name="mobile_center_distribute_unknown_sources_dialog_message">Por motivos de segurança, seu dispositivo é definido para bloquear a instalação de aplicativos obtidos de fontes desconhecidas.</string>
+  <string name="mobile_center_distribute_unknown_sources_dialog_settings">Configurações</string>
+  <string name="mobile_center_distribute_downloading_mandatory_update">Baixando atualização</string>
+  <string name="mobile_center_distribute_download_progress_number_format">%1$d MB de %2$d MB</string>
+  <string name="mobile_center_distribute_install_ready_title">A atualização do aplicativo foi baixada</string>
+  <string name="mobile_center_distribute_install_ready_message">%1$s %2$s (%3$d) foi baixado e está pronto para ser instalado.</string>
+  <string name="mobile_center_distribute_install">Instalar</string>
+  <string name="mobile_center_distribute_notification_category">Atualizações do aplicativo</string>
+</resources>
