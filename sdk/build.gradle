@@ -204,12 +204,15 @@ task coverageReport(type: JacocoReport, dependsOn: subprojects.coverageReport) {
         html.enabled = true
     }
 
+    // TODO cover Rum later once it will be official
+    def coveredProjects = subprojects.coverageReport.findAll { !it.project.name.endsWith("rum") }
+
     //noinspection GroovyAssignabilityCheck
-    sourceDirectories = files(subprojects.coverageReport.sourceDirectories)
+    sourceDirectories = files(coveredProjects.sourceDirectories)
     //noinspection GroovyAssignabilityCheck
-    classDirectories = files(subprojects.coverageReport.classDirectories)
+    classDirectories = files(coveredProjects.classDirectories)
     //noinspection GroovyAssignabilityCheck
-    executionData = files(subprojects.coverageReport.executionData)
+    executionData = files(coveredProjects.executionData)
 }
 
 task javadoc(type: Javadoc, dependsOn: subprojects.javadoc) {
