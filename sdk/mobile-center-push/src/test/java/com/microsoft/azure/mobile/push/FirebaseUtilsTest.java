@@ -22,7 +22,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(FirebaseInstanceId.class)
-public class FirebaseUtilsTest {
+public class  FirebaseUtilsTest {
 
     @Before
     public void setUp() {

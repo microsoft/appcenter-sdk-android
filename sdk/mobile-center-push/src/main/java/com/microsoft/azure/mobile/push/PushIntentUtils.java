@@ -14,14 +14,29 @@ class PushIntentUtils {
     /**
      * Intent keys.
      */
-    private static final String EXTRA_GCM_PREFIX = "gcm.notification.";
-    private static final String EXTRA_TITLE = EXTRA_GCM_PREFIX + "title";
-    private static final String EXTRA_MESSAGE = EXTRA_GCM_PREFIX + "body";
-    private static final String EXTRA_COLOR =  EXTRA_GCM_PREFIX + "color";
-    private static final String EXTRA_SOUND = EXTRA_GCM_PREFIX + "sound";
-    private static final String EXTRA_CUSTOM_SOUND = EXTRA_GCM_PREFIX + "sound2";
-    private static final String EXTRA_ICON = EXTRA_GCM_PREFIX + "icon";
-    private static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
+    @VisibleForTesting
+    static final String EXTRA_GCM_PREFIX = "gcm.notification.";
+
+    @VisibleForTesting
+    static final String EXTRA_TITLE = EXTRA_GCM_PREFIX + "title";
+
+    @VisibleForTesting
+    static final String EXTRA_MESSAGE = EXTRA_GCM_PREFIX + "body";
+
+    @VisibleForTesting
+    static final String EXTRA_COLOR =  EXTRA_GCM_PREFIX + "color";
+
+    @VisibleForTesting
+    static final String EXTRA_SOUND = EXTRA_GCM_PREFIX + "sound";
+
+    @VisibleForTesting
+    static final String EXTRA_CUSTOM_SOUND = EXTRA_GCM_PREFIX + "sound2";
+
+    @VisibleForTesting
+    static final String EXTRA_ICON = EXTRA_GCM_PREFIX + "icon";
+
+    @VisibleForTesting
+    static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
 
     /**
      * Intent extras not part of custom data.
