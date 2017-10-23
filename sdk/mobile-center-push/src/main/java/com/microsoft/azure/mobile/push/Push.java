@@ -74,14 +74,14 @@ public class Push extends AbstractMobileCenterService {
     private Context mContext;
 
     /**
-     * Sender ID.
+     * Sender ID. Used only when Firebase SDK not available to register for push.
      */
     private String mSenderId;
 
     /**
-     * Indicates whether the push token must be registered in OnStart.
+     * Indicates whether the push token must be registered in foreground.
      */
-    private boolean mTokenNeedsRegistration;
+    private boolean mTokenNeedsRegistrationInForeground;
 
     /**
      * Init.
@@ -205,12 +205,9 @@ public class Push extends AbstractMobileCenterService {
      */
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
-        if (!enabled) {
-
-            /* Nothing to do when diabling. */
-            return;
+        if (enabled) {
+            registerPushToken();
         }
-        registerPushToken();
     }
 
     @Override
@@ -240,11 +237,8 @@ public class Push extends AbstractMobileCenterService {
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
-        super.onStarted(context, appSecret, channel);
         mContext = context;
-        if (mTokenNeedsRegistration) {
-            registerPushToken();
-        }
+        super.onStarted(context, appSecret, channel);
     }
 
     /**
@@ -270,8 +264,12 @@ public class Push extends AbstractMobileCenterService {
     }
 
     @Override
-    public void onActivityResumed(Activity activity) {
+    public synchronized void onActivityResumed(Activity activity) {
         checkPushInActivityIntent(activity);
+        if (mTokenNeedsRegistrationInForeground) {
+            mTokenNeedsRegistrationInForeground = false;
+            registerPushToken();
+        }
     }
 
     @Override
@@ -334,7 +332,7 @@ public class Push extends AbstractMobileCenterService {
      *
      * @param pushIntent intent from push.
      */
-    void onMessageReceived(Context context, final Intent pushIntent) {
+    synchronized void onMessageReceived(Context context, final Intent pushIntent) {
         if (!FirebaseUtils.isFirebaseAvailable()) {
             if (mActivity != null) {
                 String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
@@ -353,38 +351,39 @@ public class Push extends AbstractMobileCenterService {
         }
     }
 
+    /**
+     * Register application for push.
+     */
     private synchronized void registerPushToken() {
-
-        /*
-         * Check if Firebase is available first to avoid logging the "falling back" warning if
-         * the app was never supposed to use Firebase in the first place.
-         */
-        if (FirebaseUtils.isFirebaseAvailable()) {
-            try {
-                String token = FirebaseUtils.getToken();
-                onTokenRefresh(token);
-                return;
-            }
-            catch (Exception e) {
-                MobileCenterLog.warn(LOG_TAG,
-                        "Failed to get push token with Firebase; falling back to custom logic.");
-            }
+        try {
+            onTokenRefresh(FirebaseUtils.getToken());
+            MobileCenterLog.info(LOG_TAG, "Firebase SDK is available, using Firebase SDK registration.");
+        } catch (Exception e) {
+            MobileCenterLog.info(LOG_TAG, "Firebase SDK is not available, using built in registration.");
+            MobileCenterLog.debug(LOG_TAG, "Firebase SDK unavailability cause:", e);
+            registerPushTokenWithoutFirebase();
         }
-        if (mContext != null) {
-            Intent registrationIntent = new Intent("com.google.android.c2dm.intent.REGISTER");
-            registrationIntent.putExtra("sender", mSenderId);
-            registrationIntent.setPackage("com.google.android.gsf");
-            registrationIntent.putExtra("app", PendingIntent.getBroadcast(mContext, 0, new Intent(), 0));
-            try {
-                mContext.startService(registrationIntent);
-            } catch (RuntimeException e) {
+    }
 
-                /* Abort if the GCM service can't be accessed. */
-                MobileCenterLog.warn(LOG_TAG, "Failed to register push token", e);
-            }
+    /**
+     * Register application for push without Firebase.
+     */
+    private synchronized void registerPushTokenWithoutFirebase() {
+        if (mSenderId == null) {
+            MobileCenterLog.error(LOG_TAG, "Push.setSenderId was not called, aborting registration.");
+            return;
         }
-        else {
-            mTokenNeedsRegistration = true;
+        Intent registrationIntent = new Intent("com.google.android.c2dm.intent.REGISTER");
+        registrationIntent.setPackage("com.google.android.gsf");
+        registrationIntent.putExtra("sender", mSenderId);
+        registrationIntent.putExtra("app", PendingIntent.getBroadcast(mContext, 0, new Intent(), 0));
+        try {
+            mContext.startService(registrationIntent);
+        } catch (IllegalStateException e) {
+            MobileCenterLog.info(LOG_TAG, "Cannot register in background, will wait to be in foreground");
+            mTokenNeedsRegistrationInForeground = true;
+        } catch (RuntimeException e) {
+            MobileCenterLog.error(LOG_TAG, "Failed to register push token", e);
         }
     }
 

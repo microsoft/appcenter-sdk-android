@@ -1,42 +1,48 @@
 package com.microsoft.azure.mobile.push;
 
-import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import android.support.annotation.VisibleForTesting;
 
 import java.lang.reflect.Method;
 
+/**
+ * Utilities to manipulate Firebase Push SDK via reflection.
+ */
+final class FirebaseUtils {
 
-class FirebaseUtils {
-
-    /* The Firebase Instance Id instance. Available iff remote messaging is available through
-     * Firebase.
-     */
-    private static Object mFirebaseIdInstance = null;
-
-    static {
-        try {
-            mFirebaseIdInstance = Class.forName("com.google.firebase.iid.FirebaseInstanceId")
-                    .getMethod("getInstance").invoke(null);
-        }
-        catch (Exception e) {
-            MobileCenterLog.debug(Push.getInstance().getLoggerTag(),
-                    "Firebase not found; using custom logic for Push.");
-        }
+    @VisibleForTesting
+    FirebaseUtils() {
     }
-
-    static boolean isFirebaseAvailable() {
-        return mFirebaseIdInstance != null;
-    }
-
-    /* Caller of this method needs to try/catch Exception. */
 
     /**
-     * Uses reflection to get the registration token via Firebase.
-     *
-     * @return The Firebase token
-     * @throws Exception several exceptions can occur; be sure to try/catch this.
+     * Get firebase instance.
      */
-     static String getToken() throws Exception {
-        Method getTokenMethod = mFirebaseIdInstance.getClass().getMethod("getToken");
-        return (String)getTokenMethod.invoke(mFirebaseIdInstance);
+    private static Object getFirebaseIdInstance() throws Exception {
+        return Class.forName("com.google.firebase.iid.FirebaseInstanceId").getMethod("getInstance").invoke(null);
+    }
+
+    /**
+     * Check if Firebase Push SDK is available in this application.
+     *
+     * @return true if Firebase Push SDK initialized, false otherwise.
+     */
+    static boolean isFirebaseAvailable() {
+        try {
+            getFirebaseIdInstance();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Get the registration token via Firebase SDK.
+     *
+     * @return the Firebase token or null if registration is initiated but pending.
+     * @throws Exception if any error occurs like Firebase SDK not available or not initialized.
+     */
+    static String getToken() throws Exception {
+        Object firebaseIdInstance = getFirebaseIdInstance();
+        Method getTokenMethod = firebaseIdInstance.getClass().getMethod("getToken");
+        return (String) getTokenMethod.invoke(firebaseIdInstance);
     }
 }
