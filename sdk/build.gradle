@@ -96,8 +96,7 @@ subprojects {
             html.enabled = true
         }
 
-        // TODO Restore Rum code coverage once official
-        def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/rum/**']
+        def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*']
         def debugTree = fileTree(dir: "${buildDir}/intermediates/classes/debug", excludes: fileFilter)
         def mainSrc = "${project.projectDir}/src/main/java"
 
