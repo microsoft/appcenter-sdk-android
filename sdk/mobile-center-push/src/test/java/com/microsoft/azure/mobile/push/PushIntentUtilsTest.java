@@ -20,6 +20,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static com.microsoft.azure.mobile.test.TestUtils.checkStringMapEquals;
 
 @RunWith(PowerMockRunner.class)
 public class PushIntentUtilsTest {
@@ -60,10 +61,7 @@ public class PushIntentUtilsTest {
         Intent pushIntent = mock(Intent.class);
         when(pushIntent.getExtras()).thenReturn(mockBundle);
         Map<String, String> retrievedCustomData = PushIntentUtils.getCustomData(pushIntent);
-        assertEquals(customData.keySet().size(), retrievedCustomData.keySet().size());
-        for (String key : customData.keySet()) {
-            assertEquals(customData.get(key), retrievedCustomData.get(key));
-        }
+        checkStringMapEquals(customData, retrievedCustomData);
     }
 
     @Test
