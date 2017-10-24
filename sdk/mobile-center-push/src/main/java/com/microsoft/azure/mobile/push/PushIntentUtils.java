@@ -42,7 +42,7 @@ class PushIntentUtils {
      * Intent extras not part of custom data.
      */
     @VisibleForTesting
-    private static final Set<String> EXTRA_STANDARD_KEYS = new HashSet<String>() {
+    static final Set<String> EXTRA_STANDARD_KEYS = new HashSet<String>() {
         {
             add(EXTRA_GOOGLE_MESSAGE_ID);
             add("google.sent_time");
@@ -133,10 +133,10 @@ class PushIntentUtils {
     }
 
     /**
-     * Returns the color resource ID that was set in the intent.
+     * Returns the color string that was set in the intent.
      *
      * @param pushIntent The push intent.
-     * @return The color id as a string, null if none was set.
+     * @return The color a string, null if none was set.
      */
      static String getColor(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_COLOR);
