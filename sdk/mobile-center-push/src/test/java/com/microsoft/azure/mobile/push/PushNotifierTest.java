@@ -14,15 +14,19 @@ import android.net.Uri;
 import android.os.Build;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.mockito.exceptions.misusing.CannotVerifyStubOnlyMock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
@@ -36,9 +40,11 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({PushIntentUtils.class, PushNotifier.class, Context.class})
+@PrepareForTest({PushIntentUtils.class, PushNotifier.class})
 public class PushNotifierTest {
+
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     private String mDummyGoogleMessageId = "messageId";
     private Context mContextMock;
@@ -50,6 +56,7 @@ public class PushNotifierTest {
 
     @Before
     public void setUp() throws Exception {
+        setVersionSdkInt(Build.VERSION_CODES.O);
         mockStatic(PushIntentUtils.class);
         when(PushIntentUtils.getMessage(any(Intent.class))).thenReturn("message");
         when(PushIntentUtils.getGoogleMessageId(any(Intent.class))).thenReturn(mDummyGoogleMessageId);
@@ -58,10 +65,8 @@ public class PushNotifierTest {
         mContextMock = mock(Context.class);
         mNotificationManagerMock = mock(NotificationManager.class);
         mNotificationMock = mock(Notification.class);
-
-
         mNotificationBuilderMock = mock(Notification.Builder.class);
-        whenNew(Notification.Builder.class).withArguments(mContextMock).thenReturn(mNotificationBuilderMock);
+
         when(mNotificationBuilderMock.setContentTitle(anyString())).thenReturn(mNotificationBuilderMock);
         when(mNotificationBuilderMock.setContentText(anyString())).thenReturn(mNotificationBuilderMock);
         when(mNotificationBuilderMock.setWhen(anyLong())).thenReturn(mNotificationBuilderMock);
@@ -69,6 +74,8 @@ public class PushNotifierTest {
             when(mNotificationBuilderMock.build()).thenReturn(mNotificationMock);
         }
         when(mNotificationBuilderMock.getNotification()).thenReturn(mNotificationMock);
+        whenNew(Notification.Builder.class).withArguments(mContextMock).thenReturn(mNotificationBuilderMock);
+
         PackageManager packageManagerMock = mock(PackageManager.class);
         mActionIntentMock = mock(Intent.class);
         when(packageManagerMock.getLaunchIntentForPackage(anyString())).thenReturn(mActionIntentMock);
@@ -78,13 +85,34 @@ public class PushNotifierTest {
 
         ApplicationInfo applicationInfo = new ApplicationInfo();
         applicationInfo.icon = mIconId;
+        applicationInfo.targetSdkVersion = Build.VERSION_CODES.O;
         when(mContextMock.getApplicationInfo()).thenReturn(applicationInfo);
+    }
+
+    @Test
+    public void coverInit() {
+        assertNotNull(new PushNotifier());
     }
 
     @Test
     public void handlePushWithNoMessageId() throws Exception {
         when(PushIntentUtils.getGoogleMessageId(any(Intent.class))).thenReturn(null);
+        PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mNotificationManagerMock, never()).notify(anyInt(), any(Notification.class));
+    }
+
+    @Test
+    public void handlePushJellybean() throws Exception {
+        setVersionSdkInt(Build.VERSION_CODES.JELLY_BEAN);
+        PushNotifier.handleNotification(mContextMock, new Intent());
+        verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
+    }
+
+    @Test
+    public void handlePushIceCreamSandwich() throws Exception {
+        setVersionSdkInt(Build.VERSION_CODES.ICE_CREAM_SANDWICH);
+        PushNotifier.handleNotification(mContextMock, new Intent());
+        verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
     }
 
     @SuppressLint("InlinedApi")
@@ -206,5 +234,17 @@ public class PushNotifierTest {
         PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mNotificationBuilderMock).setDefaults(Notification.DEFAULT_SOUND);
         verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
+    }
+
+    /**
+     * Adapted from https://stackoverflow.com/questions/40300469/mock-build-version-with-mockito
+     */
+    static void setVersionSdkInt(int versionSdkInt) throws Exception {
+        Field field = Build.VERSION.class.getField("SDK_INT");
+        field.setAccessible(true);
+        Field modifiersField = Field.class.getDeclaredField("modifiers");
+        modifiersField.setAccessible(true);
+        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+        field.set(null, versionSdkInt);
     }
 }
