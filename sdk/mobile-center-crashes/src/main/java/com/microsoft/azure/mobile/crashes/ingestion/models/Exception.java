@@ -190,20 +190,28 @@ public class Exception implements Model {
     @Override
     @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Exception exception = (Exception) o;
-
-        if (type != null ? !type.equals(exception.type) : exception.type != null) return false;
-        if (message != null ? !message.equals(exception.message) : exception.message != null)
+        if (type != null ? !type.equals(exception.type) : exception.type != null) {
             return false;
-        if (stackTrace != null ? !stackTrace.equals(exception.stackTrace) : exception.stackTrace != null)
+        }
+        if (message != null ? !message.equals(exception.message) : exception.message != null) {
             return false;
-        if (frames != null ? !frames.equals(exception.frames) : exception.frames != null)
+        }
+        if (stackTrace != null ? !stackTrace.equals(exception.stackTrace) : exception.stackTrace != null) {
             return false;
-        if (innerExceptions != null ? !innerExceptions.equals(exception.innerExceptions) : exception.innerExceptions != null)
+        }
+        if (frames != null ? !frames.equals(exception.frames) : exception.frames != null) {
             return false;
+        }
+        if (innerExceptions != null ? !innerExceptions.equals(exception.innerExceptions) : exception.innerExceptions != null) {
+            return false;
+        }
         return wrapperSdkName != null ? wrapperSdkName.equals(exception.wrapperSdkName) : exception.wrapperSdkName == null;
     }
 

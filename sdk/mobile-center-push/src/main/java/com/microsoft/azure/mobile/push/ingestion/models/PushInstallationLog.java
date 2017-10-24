@@ -58,12 +58,16 @@ public class PushInstallationLog extends AbstractLog {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         PushInstallationLog pushInstallationLog = (PushInstallationLog) o;
-
         return pushToken != null ? pushToken.equals(pushInstallationLog.pushToken) : pushInstallationLog.pushToken == null;
     }
 

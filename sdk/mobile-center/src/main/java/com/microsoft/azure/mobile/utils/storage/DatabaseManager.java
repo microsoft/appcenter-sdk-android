@@ -131,14 +131,15 @@ public class DatabaseManager implements Closeable {
                 for (Map.Entry<String, Object> col : mSchema.valueSet()) {
                     sql.append(", `").append(col.getKey()).append("` ");
                     Object val = col.getValue();
-                    if (val instanceof Double || val instanceof Float)
+                    if (val instanceof Double || val instanceof Float) {
                         sql.append("REAL");
-                    else if (val instanceof Number || val instanceof Boolean)
+                    } else if (val instanceof Number || val instanceof Boolean) {
                         sql.append("INTEGER");
-                    else if (val instanceof byte[])
+                    } else if (val instanceof byte[]) {
                         sql.append("BLOB");
-                    else
+                    } else {
                         sql.append("TEXT");
+                    }
                 }
                 sql.append(");");
                 db.execSQL(sql.toString());
@@ -162,29 +163,31 @@ public class DatabaseManager implements Closeable {
     private static ContentValues buildValues(Cursor cursor, ContentValues schema) {
         ContentValues values = new ContentValues();
         for (int i = 0; i < cursor.getColumnCount(); i++) {
-            if (cursor.isNull(i))
+            if (cursor.isNull(i)) {
                 continue;
+            }
             String key = cursor.getColumnName(i);
-            if (key.equals(PRIMARY_KEY))
+            if (key.equals(PRIMARY_KEY)) {
                 values.put(key, cursor.getLong(i));
-            else {
+            } else {
                 Object specimen = schema.get(key);
-                if (specimen instanceof byte[])
+                if (specimen instanceof byte[]) {
                     values.put(key, cursor.getBlob(i));
-                else if (specimen instanceof Double)
+                } else if (specimen instanceof Double) {
                     values.put(key, cursor.getDouble(i));
-                else if (specimen instanceof Float)
+                } else if (specimen instanceof Float) {
                     values.put(key, cursor.getFloat(i));
-                else if (specimen instanceof Integer)
+                } else if (specimen instanceof Integer) {
                     values.put(key, cursor.getInt(i));
-                else if (specimen instanceof Long)
+                } else if (specimen instanceof Long) {
                     values.put(key, cursor.getLong(i));
-                else if (specimen instanceof Short)
+                } else if (specimen instanceof Short) {
                     values.put(key, cursor.getShort(i));
-                else if (specimen instanceof Boolean)
+                } else if (specimen instanceof Boolean) {
                     values.put(key, cursor.getInt(i) == 1);
-                else
+                } else {
                     values.put(key, cursor.getString(i));
+                }
             }
         }
         return values;
@@ -242,8 +245,9 @@ public class DatabaseManager implements Closeable {
 
         /* Updates the values in in-memory database if the identifier exists there. */
         ContentValues existValues = mIMDB.get(id);
-        if (existValues == null)
+        if (existValues == null) {
             return false;
+        }
         existValues.putAll(values);
         return true;
     }
@@ -263,8 +267,9 @@ public class DatabaseManager implements Closeable {
      * @param idList The list of database identifiers.
      */
     public void delete(@NonNull List<Long> idList) {
-        if (idList.size() <= 0)
+        if (idList.size() <= 0) {
             return;
+        }
 
         /* Try SQLite. */
         if (mIMDB == null) {
@@ -277,8 +282,9 @@ public class DatabaseManager implements Closeable {
 
         /* Deletes the values from in-memory database. */
         else {
-            for (Long id : idList)
+            for (Long id : idList) {
                 mIMDB.remove(id);
+            }
         }
     }
 
@@ -308,8 +314,9 @@ public class DatabaseManager implements Closeable {
             for (Iterator<Map.Entry<Long, ContentValues>> iterator = mIMDB.entrySet().iterator(); iterator.hasNext(); ) {
                 Map.Entry<Long, ContentValues> entry = iterator.next();
                 Object object = entry.getValue().get(key);
-                if (object != null && object.equals(value))
+                if (object != null && object.equals(value)) {
                     iterator.remove();
+                }
             }
         }
     }
@@ -353,8 +360,9 @@ public class DatabaseManager implements Closeable {
         } else {
             for (ContentValues values : mIMDB.values()) {
                 Object object = values.get(key);
-                if (object != null && object.equals(value))
+                if (object != null && object.equals(value)) {
                     return values;
+                }
             }
         }
 
@@ -447,9 +455,9 @@ public class DatabaseManager implements Closeable {
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.setTables(mTable);
         String[] selectionArgs;
-        if (key == null)
+        if (key == null) {
             selectionArgs = null;
-        else if (value == null) {
+        } else if (value == null) {
             builder.appendWhere(key + " IS NULL");
             selectionArgs = null;
         } else {
@@ -498,8 +506,9 @@ public class DatabaseManager implements Closeable {
         };
 
         /* Trigger error listener. */
-        if (mErrorListener != null)
+        if (mErrorListener != null) {
             mErrorListener.onError(operation, exception);
+        }
     }
 
     /**
@@ -554,13 +563,14 @@ public class DatabaseManager implements Closeable {
         public void close() {
 
             /* Close cursor. */
-            if (cursor != null)
+            if (cursor != null) {
                 try {
                     cursor.close();
                     cursor = null;
                 } catch (RuntimeException e) {
                     switchToInMemory("scan.close", e);
                 }
+            }
         }
 
         @Override
@@ -607,8 +617,9 @@ public class DatabaseManager implements Closeable {
                         @Override
                         public ContentValues next() {
                             /* Check next. */
-                            if (!hasNext())
+                            if (!hasNext()) {
                                 throw new NoSuchElementException();
+                            }
                             hasNext = null;
 
                             /* Build object. */
@@ -657,8 +668,9 @@ public class DatabaseManager implements Closeable {
 
                 @Override
                 public ContentValues next() {
-                    if (!hasNext())
+                    if (!hasNext()) {
                         throw new NoSuchElementException();
+                    }
                     advanced = false;
                     return next;
                 }
@@ -673,16 +685,18 @@ public class DatabaseManager implements Closeable {
         public int getCount() {
             if (mIMDB == null) {
                 try {
-                    if (cursor == null)
+                    if (cursor == null) {
                         cursor = getCursor(key, value);
+                    }
                     return cursor.getCount();
                 } catch (RuntimeException e) {
                     switchToInMemory("scan.count", e);
                 }
             }
             int count = 0;
-            for (Iterator<ContentValues> iterator = iterator(); iterator.hasNext(); iterator.next())
+            for (Iterator<ContentValues> iterator = iterator(); iterator.hasNext(); iterator.next()) {
                 count++;
+            }
             return count;
         }
     }

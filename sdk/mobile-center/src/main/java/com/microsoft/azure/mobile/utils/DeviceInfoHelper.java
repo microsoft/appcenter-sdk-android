@@ -63,11 +63,13 @@ public class DeviceInfoHelper {
         try {
             TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
             String networkCountryIso = telephonyManager.getNetworkCountryIso();
-            if (!TextUtils.isEmpty(networkCountryIso))
+            if (!TextUtils.isEmpty(networkCountryIso)) {
                 device.setCarrierCountry(networkCountryIso);
+            }
             String networkOperatorName = telephonyManager.getNetworkOperatorName();
-            if (!TextUtils.isEmpty(networkOperatorName))
+            if (!TextUtils.isEmpty(networkOperatorName)) {
                 device.setCarrierName(networkOperatorName);
+            }
         } catch (Exception e) {
             MobileCenterLog.error(MobileCenter.LOG_TAG, "Cannot retrieve carrier info", e);
         }

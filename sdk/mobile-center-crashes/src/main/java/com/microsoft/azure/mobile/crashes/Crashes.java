@@ -10,8 +10,10 @@ import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.Constants;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog;
+import com.microsoft.azure.mobile.crashes.ingestion.models.HandledErrorLog;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ErrorAttachmentLogFactory;
+import com.microsoft.azure.mobile.crashes.ingestion.models.json.HandledErrorLogFactory;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.model.TestCrashException;
@@ -30,6 +32,9 @@ import org.json.JSONException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -145,11 +150,17 @@ public class Crashes extends AbstractMobileCenterService {
     private boolean mSavedUncaughtException;
 
     /**
+     * Automatic processing flag (automatic is the default).
+     */
+    private boolean mAutomaticProcessing = true;
+
+    /**
      * Init.
      */
     private Crashes() {
         mFactories = new HashMap<>();
         mFactories.put(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
+        mFactories.put(HandledErrorLog.TYPE, HandledErrorLogFactory.getInstance());
         mFactories.put(ErrorAttachmentLog.TYPE, ErrorAttachmentLogFactory.getInstance());
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
@@ -207,10 +218,11 @@ public class Crashes extends AbstractMobileCenterService {
      * Generates crash for test purpose.
      */
     public static void generateTestCrash() {
-        if (Constants.APPLICATION_DEBUGGABLE)
+        if (Constants.APPLICATION_DEBUGGABLE) {
             throw new TestCrashException();
-        else
+        } else {
             MobileCenterLog.warn(LOG_TAG, "The application is not debuggable so SDK won't generate test crash");
+        }
     }
 
     /**
@@ -315,30 +327,6 @@ public class Crashes extends AbstractMobileCenterService {
         return mFactories;
     }
 
-    /**
-     * Track an exception.
-     * TODO the backend does not support that service yet, will be public method later.
-     *
-     * @param exception An exception.
-     */
-    @SuppressWarnings("WeakerAccess")
-    protected synchronized void trackException(@NonNull final com.microsoft.azure.mobile.crashes.ingestion.models.Exception exception) {
-        post(new Runnable() {
-
-            @Override
-            public void run() {
-                ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(
-                        mContext,
-                        Thread.currentThread(),
-                        exception,
-                        Thread.getAllStackTraces(),
-                        getInitializeTimestamp(),
-                        false);
-                mChannel.enqueue(errorLog, ERROR_GROUP);
-            }
-        });
-    }
-
     @Override
     protected String getGroupName() {
         return ERROR_GROUP;
@@ -371,31 +359,28 @@ public class Crashes extends AbstractMobileCenterService {
                     public void run() {
                         if (log instanceof ManagedErrorLog) {
                             ManagedErrorLog errorLog = (ManagedErrorLog) log;
-                            if (errorLog.getFatal()) {
-                                final ErrorReport report = buildErrorReport(errorLog);
-                                UUID id = errorLog.getId();
-                                if (report != null) {
+                            final ErrorReport report = buildErrorReport(errorLog);
+                            UUID id = errorLog.getId();
+                            if (report != null) {
 
-                                    /* Clean up before calling callbacks if requested. */
-                                    if (callbackProcessor.shouldDeleteThrowable()) {
-                                        removeStoredThrowable(id);
+                                /* Clean up before calling callbacks if requested. */
+                                if (callbackProcessor.shouldDeleteThrowable()) {
+                                    removeStoredThrowable(id);
+                                }
+
+                                /* Call back. */
+                                HandlerUtils.runOnUiThread(new Runnable() {
+
+                                    @Override
+                                    public void run() {
+                                        callbackProcessor.onCallBack(report);
                                     }
-
-                                    /* Call back. */
-                                    HandlerUtils.runOnUiThread(new Runnable() {
-
-                                        @Override
-                                        public void run() {
-                                            callbackProcessor.onCallBack(report);
-                                        }
-                                    });
-                                } else
-                                    MobileCenterLog.warn(LOG_TAG, "Cannot find crash report for the error log: " + id);
+                                });
+                            } else {
+                                MobileCenterLog.warn(LOG_TAG, "Cannot find crash report for the error log: " + id);
                             }
-                        } else {
-                            if (!(log instanceof ErrorAttachmentLog)) {
-                                MobileCenterLog.warn(LOG_TAG, "A different type of log comes to crashes: " + log.getClass().getName());
-                            }
+                        } else if (!(log instanceof ErrorAttachmentLog) && !(log instanceof HandledErrorLog)) {
+                            MobileCenterLog.warn(LOG_TAG, "A different type of log comes to crashes: " + log.getClass().getName());
                         }
                     }
                 });
@@ -462,22 +447,43 @@ public class Crashes extends AbstractMobileCenterService {
     }
 
     /**
-     * Send an exception.
+     * Send an handled exception.
      *
-     * @param throwable An exception.
+     * @param throwable An handled exception.
      */
     private synchronized void queueException(@NonNull final Throwable throwable) {
+        queueException(new ExceptionModelBuilder() {
+
+            @Override
+            public com.microsoft.azure.mobile.crashes.ingestion.models.Exception buildExceptionModel() {
+                return ErrorLogHelper.getModelExceptionFromThrowable(throwable);
+            }
+        });
+    }
+
+    /**
+     * Send an handled exception (used by wrapper SDKs).
+     *
+     * @param modelException An handled exception already in JSON model form.
+     */
+    synchronized void queueException(@NonNull final com.microsoft.azure.mobile.crashes.ingestion.models.Exception modelException) {
+        queueException(new ExceptionModelBuilder() {
+
+            @Override
+            public com.microsoft.azure.mobile.crashes.ingestion.models.Exception buildExceptionModel() {
+                return modelException;
+            }
+        });
+    }
+
+    private synchronized void queueException(@NonNull final ExceptionModelBuilder exceptionModelBuilder) {
         post(new Runnable() {
 
             @Override
             public void run() {
-                ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(
-                        mContext,
-                        Thread.currentThread(),
-                        throwable,
-                        Thread.getAllStackTraces(),
-                        getInitializeTimestamp(),
-                        false);
+                HandledErrorLog errorLog = new HandledErrorLog();
+                errorLog.setId(UUID.randomUUID());
+                errorLog.setException(exceptionModelBuilder.buildExceptionModel());
                 mChannel.enqueue(errorLog, ERROR_GROUP);
             }
         });
@@ -498,9 +504,9 @@ public class Crashes extends AbstractMobileCenterService {
             if (logFile != null) {
                 MobileCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
                 String logFileContents = StorageHelper.InternalStorage.read(logFile);
-                if (logFileContents == null)
+                if (logFileContents == null) {
                     MobileCenterLog.error(LOG_TAG, "Error reading last session error log.");
-                else {
+                } else {
                     try {
                         ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logFileContents);
                         mLastSessionErrorReport = buildErrorReport(log);
@@ -513,29 +519,21 @@ public class Crashes extends AbstractMobileCenterService {
         }
     }
 
-    private boolean shouldStopProcessingPendingErrors() {
-        if (!isInstanceEnabled()) {
-            MobileCenterLog.info(LOG_TAG, "Crashes service is disabled while processing errors. Cancel processing all pending errors.");
-            return true;
-        }
-        return false;
-    }
-
     private void processPendingErrors() {
         for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
-            if (shouldStopProcessingPendingErrors())
-                return;
             MobileCenterLog.debug(LOG_TAG, "Process pending error file: " + logFile);
             String logfileContents = StorageHelper.InternalStorage.read(logFile);
-            if (logfileContents != null)
+            if (logfileContents != null) {
                 try {
                     ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logfileContents);
                     UUID id = log.getId();
                     ErrorReport report = buildErrorReport(log);
                     if (report == null) {
                         removeAllStoredErrorLogFiles(id);
-                    } else if (mCrashesListener.shouldProcess(report)) {
-                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + id.toString());
+                    } else if (!mAutomaticProcessing || mCrashesListener.shouldProcess(report)) {
+                        if (!mAutomaticProcessing) {
+                            MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + id.toString());
+                        }
                         mUnprocessedErrorReports.put(id, mErrorReportCache.get(id));
                     } else {
                         MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
@@ -544,33 +542,59 @@ public class Crashes extends AbstractMobileCenterService {
                 } catch (JSONException e) {
                     MobileCenterLog.error(LOG_TAG, "Error parsing error log", e);
                 }
+            }
         }
 
-        if (shouldStopProcessingPendingErrors())
-            return;
+        /* If automatic processing is enabled. */
+        if (mAutomaticProcessing) {
 
-        processUserConfirmation();
+            /* Proceed to check if user confirmation is needed. */
+            sendCrashReportsOrAwaitUserConfirmation();
+        }
+
     }
 
-    private void processUserConfirmation() {
+    /**
+     * Send crashes or wait for user confirmation (either via callback or explicit call in manual processing).
+     *
+     * @return true if always send was persisted, false otherwise.
+     */
+    private boolean sendCrashReportsOrAwaitUserConfirmation() {
 
         /* Handle user confirmation in UI thread. */
+        final boolean alwaysSend = StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false);
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
             public void run() {
-                boolean shouldAwaitUserConfirmation = true;
-                if (mUnprocessedErrorReports.size() > 0 &&
-                        (StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false)
-                                || !(shouldAwaitUserConfirmation = mCrashesListener.shouldAwaitUserConfirmation()))) {
-                    if (!shouldAwaitUserConfirmation)
-                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldAwaitUserConfirmation returned false, continue sending logs");
-                    else
-                        MobileCenterLog.debug(LOG_TAG, "The flag for user confirmation is set to ALWAYS_SEND, continue sending logs");
-                    handleUserConfirmation(SEND);
+
+                /* If we still have crashes to send after filtering. */
+                if (mUnprocessedErrorReports.size() > 0) {
+
+                    /* Check for always send: this bypasses user confirmation callback. */
+                    if (alwaysSend) {
+                        MobileCenterLog.debug(LOG_TAG, "The flag for user confirmation is set to ALWAYS_SEND, will send logs.");
+                        handleUserConfirmation(SEND);
+                        return;
+                    }
+
+                    /* For disabled automatic processing, we don't call listener. */
+                    if (!mAutomaticProcessing) {
+                        MobileCenterLog.debug(LOG_TAG, "Automatic processing disabled, will wait for explicit user confirmation.");
+                        return;
+                    }
+
+                    /* Check via listener if should wait for user confirmation. */
+                    if (!mCrashesListener.shouldAwaitUserConfirmation()) {
+                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldAwaitUserConfirmation returned false, will send logs.");
+                        handleUserConfirmation(SEND);
+                    } else {
+                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldAwaitUserConfirmation returned true, wait sending logs.");
+                    }
                 }
             }
         });
+        return alwaysSend;
     }
 
     private void removeAllStoredErrorLogFiles(UUID id) {
@@ -640,6 +664,8 @@ public class Crashes extends AbstractMobileCenterService {
 
             @Override
             public void run() {
+
+                /* If we don't send. */
                 if (userConfirmation == DONT_SEND) {
 
                     /* Clean up all pending error log and throwable files. */
@@ -648,22 +674,30 @@ public class Crashes extends AbstractMobileCenterService {
                         iterator.remove();
                         removeAllStoredErrorLogFiles(id);
                     }
-                } else {
+                }
 
+                /* We send the crash. */
+                else {
+
+                    /* Always send: we remember. */
                     if (userConfirmation == ALWAYS_SEND) {
                         StorageHelper.PreferencesStorage.putBoolean(PREF_KEY_ALWAYS_SEND, true);
                     }
 
+                    /* Send every pending report. */
                     Iterator<Map.Entry<UUID, ErrorLogReport>> unprocessedIterator = mUnprocessedErrorReports.entrySet().iterator();
                     while (unprocessedIterator.hasNext()) {
-                        if (shouldStopProcessingPendingErrors())
-                            break;
+
+                        /* Send report. */
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
                         mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
 
-                        Iterable<ErrorAttachmentLog> attachments = mCrashesListener.getErrorAttachments(errorLogReport.report);
-                        handleErrorAttachmentLogs(attachments, errorLogReport);
+                        /* Get attachments from callback in automatic processing. */
+                        if (mAutomaticProcessing) {
+                            Iterable<ErrorAttachmentLog> attachments = mCrashesListener.getErrorAttachments(errorLogReport.report);
+                            sendErrorAttachment(errorLogReport.log.getId(), attachments);
+                        }
 
                         /* Clean up an error log file and map entry. */
                         unprocessedIterator.remove();
@@ -674,15 +708,18 @@ public class Crashes extends AbstractMobileCenterService {
         });
     }
 
-    private void handleErrorAttachmentLogs(Iterable<ErrorAttachmentLog> attachments, ErrorLogReport errorLogReport) {
+    /**
+     * Send error attachment logs through channel.
+     */
+    private void sendErrorAttachment(UUID errorId, Iterable<ErrorAttachmentLog> attachments) {
         if (attachments == null) {
-            MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachments returned null, no additional information will be attached to log: " + errorLogReport.log.getId().toString());
+            MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachments returned null, no additional information will be attached to log: " + errorId.toString());
         } else {
             int totalErrorAttachments = 0;
             for (ErrorAttachmentLog attachment : attachments) {
                 if (attachment != null) {
                     attachment.setId(UUID.randomUUID());
-                    attachment.setErrorId(errorLogReport.log.getId());
+                    attachment.setErrorId(errorId);
                     if (attachment.isValid()) {
                         ++totalErrorAttachments;
                         mChannel.enqueue(attachment, ERROR_GROUP);
@@ -772,6 +809,102 @@ public class Crashes extends AbstractMobileCenterService {
             MobileCenterLog.debug(Crashes.LOG_TAG, "Saved empty Throwable file in " + throwableFile);
         }
         return errorLogId;
+    }
+
+    /**
+     * Implementation of {@link WrapperSdkExceptionManager#setAutomaticProcessing(boolean)}.
+     */
+    void setAutomaticProcessing(boolean automaticProcessing) {
+        mAutomaticProcessing = automaticProcessing;
+    }
+
+    /**
+     * Implementation of {@link WrapperSdkExceptionManager#getUnprocessedErrorReports()}.
+     */
+    MobileCenterFuture<Collection<ErrorReport>> getUnprocessedErrorReports() {
+        final DefaultMobileCenterFuture<Collection<ErrorReport>> future = new DefaultMobileCenterFuture<>();
+        postAsyncGetter(new Runnable() {
+
+            @Override
+            public void run() {
+                Collection<ErrorReport> reports = new ArrayList<>(mUnprocessedErrorReports.size());
+                for (ErrorLogReport entry : mUnprocessedErrorReports.values()) {
+                    reports.add(entry.report);
+                }
+                future.complete(reports);
+            }
+        }, future, Collections.<ErrorReport>emptyList());
+        return future;
+    }
+
+    /**
+     * Implementation of {@link WrapperSdkExceptionManager#sendCrashReportsOrAwaitUserConfirmation(Collection)}.
+     */
+    MobileCenterFuture<Boolean> sendCrashReportsOrAwaitUserConfirmation(final Collection<String> filteredReportIds) {
+        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
+        postAsyncGetter(new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* Apply the filtering. */
+                Iterator<Map.Entry<UUID, ErrorLogReport>> iterator = mUnprocessedErrorReports.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    Map.Entry<UUID, ErrorLogReport> entry = iterator.next();
+                    UUID id = entry.getKey();
+                    String idString = entry.getValue().report.getId();
+                    if (filteredReportIds != null && filteredReportIds.contains(idString)) {
+                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + idString);
+                    } else {
+                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + idString);
+                        removeAllStoredErrorLogFiles(id);
+                        iterator.remove();
+                    }
+                }
+
+                /* Proceed to check if user confirmation is needed. */
+                future.complete(sendCrashReportsOrAwaitUserConfirmation());
+            }
+        }, future, false);
+        return future;
+    }
+
+    /**
+     * Implementation of {@link WrapperSdkExceptionManager#sendErrorAttachments(String, Iterable)}.
+     */
+    void sendErrorAttachments(final String errorReportId, final Iterable<ErrorAttachmentLog> attachments) {
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* Check error identifier format. */
+                UUID errorId;
+                try {
+                    errorId = UUID.fromString(errorReportId);
+                } catch (RuntimeException e) {
+                    MobileCenterLog.error(LOG_TAG, "Error report identifier has an invalid format for sending attachments.");
+                    return;
+                }
+
+                /* Send them. */
+                sendErrorAttachment(errorId, attachments);
+            }
+        });
+    }
+
+    /**
+     * Interface to use a template method to build exception model since it's a complex operation
+     * and should be called only after all enabled checks have been done.
+     */
+    private interface ExceptionModelBuilder {
+
+        /**
+         * Get model exception.
+         *
+         * @return model exception.
+         */
+        com.microsoft.azure.mobile.crashes.ingestion.models.Exception buildExceptionModel();
     }
 
     /**

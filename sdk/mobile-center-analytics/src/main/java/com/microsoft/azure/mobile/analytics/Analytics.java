@@ -260,10 +260,11 @@ public class Analytics extends AbstractMobileCenterService {
     private static String generatePageName(Class<?> activityClass) {
         String name = activityClass.getSimpleName();
         String suffix = ACTIVITY_SUFFIX;
-        if (name.endsWith(suffix) && name.length() > suffix.length())
+        if (name.endsWith(suffix) && name.length() > suffix.length()) {
             return name.substring(0, name.length() - suffix.length());
-        else
+        } else {
             return name;
+        }
     }
 
     /**
@@ -294,8 +295,9 @@ public class Analytics extends AbstractMobileCenterService {
      * @return valid properties collection with maximum size of 5.
      */
     private static Map<String, String> validateProperties(Map<String, String> properties, String logName, String logType) {
-        if (properties == null)
+        if (properties == null) {
             return null;
+        }
         String message;
         Map<String, String> result = new HashMap<>();
         for (Map.Entry<String, String> property : properties.entrySet()) {

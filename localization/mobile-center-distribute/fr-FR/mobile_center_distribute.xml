@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="mobile_center_distribute_update_dialog_title">Mise à jour d\'application disponible</string>
+  <string name="mobile_center_distribute_update_dialog_message_optional">%1$s %2$s (%3$d) est prêt à être téléchargé et installé.</string>
+  <string name="mobile_center_distribute_update_dialog_message_mandatory">Les développeurs de cette application vous demandent d\'effectuer une mise à jour vers %1$s %2$s (%3$d).</string>
+  <string name="mobile_center_distribute_update_dialog_download">Télécharger</string>
+  <string name="mobile_center_distribute_update_dialog_postpone">Me le demander dans un jour</string>
+  <string name="mobile_center_distribute_update_dialog_view_release_notes">Afficher les notes de publication</string>
+  <string name="mobile_center_distribute_dialog_actioned_on_disabled_toast">La distribution a été désactivée</string>
+  <string name="mobile_center_distribute_unknown_sources_dialog_message">Par mesure de sécurité, votre appareil est configuré pour bloquer l\'installation d\'applications obtenues à partir de sources inconnues.</string>
+  <string name="mobile_center_distribute_unknown_sources_dialog_settings">Paramètres</string>
+  <string name="mobile_center_distribute_downloading_mandatory_update">Téléchargement de la mise à jour</string>
+  <string name="mobile_center_distribute_download_progress_number_format">%1$d Mo sur %2$d Mo</string>
+  <string name="mobile_center_distribute_install_ready_title">Mise à jour d\'application téléchargée</string>
+  <string name="mobile_center_distribute_install_ready_message">%1$s %2$s (%3$d) a été téléchargé et est prêt à être installé.</string>
+  <string name="mobile_center_distribute_install">Installer</string>
+  <string name="mobile_center_distribute_notification_category">Mises à jour d\'application</string>
+</resources>

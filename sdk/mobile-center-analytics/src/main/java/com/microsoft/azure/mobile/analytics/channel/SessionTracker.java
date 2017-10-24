@@ -128,8 +128,9 @@ public class SessionTracker implements Channel.Listener {
         Date timestamp = log.getTimestamp();
         if (timestamp != null) {
             Map.Entry<Long, UUID> pastSession = mSessions.lowerEntry(timestamp.getTime());
-            if (pastSession != null)
+            if (pastSession != null) {
                 log.setSid(pastSession.getValue());
+            }
         }
 
         /* If the log is not correlated to a past session. */
@@ -165,13 +166,15 @@ public class SessionTracker implements Channel.Listener {
             mSessions.put(System.currentTimeMillis(), mSid);
 
             /* Remove oldest session if we reached maximum storage capacity. */
-            if (mSessions.size() > STORAGE_MAX_SESSIONS)
+            if (mSessions.size() > STORAGE_MAX_SESSIONS) {
                 mSessions.pollFirstEntry();
+            }
 
             /* Persist sessions. */
             Set<String> sessionStorage = new HashSet<>();
-            for (Map.Entry<Long, UUID> session : mSessions.entrySet())
+            for (Map.Entry<Long, UUID> session : mSessions.entrySet()) {
                 sessionStorage.add(session.getKey() + STORAGE_KEY_VALUE_SEPARATOR + session.getValue());
+            }
             StorageHelper.PreferencesStorage.putStringSet(STORAGE_KEY, sessionStorage);
 
             /*

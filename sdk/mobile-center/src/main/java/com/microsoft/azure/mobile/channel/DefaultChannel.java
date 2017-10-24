@@ -205,16 +205,19 @@ public class DefaultChannel implements Channel {
      */
     @Override
     public synchronized void setEnabled(boolean enabled) {
-        if (mEnabled == enabled)
+        if (mEnabled == enabled) {
             return;
+        }
         if (enabled) {
             mEnabled = true;
             mDiscardLogs = false;
             mCurrentState++;
-            for (String groupName : mGroupStates.keySet())
+            for (String groupName : mGroupStates.keySet()) {
                 checkPendingLogs(groupName);
-        } else
+            }
+        } else {
             suspend(true, new CancellationException());
+        }
     }
 
     @Override
@@ -258,8 +261,9 @@ public class DefaultChannel implements Channel {
                 if (deleteLogs) {
                     GroupListener groupListener = groupState.mListener;
                     if (groupListener != null) {
-                        for (Log log : removedLogsForBatchId)
+                        for (Log log : removedLogsForBatchId) {
                             groupListener.onFailure(log, exception);
+                        }
                     }
                 }
             }
@@ -444,8 +448,9 @@ public class DefaultChannel implements Channel {
             List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
             GroupListener groupListener = groupState.mListener;
             if (groupListener != null) {
-                for (Log log : removedLogsForBatchId)
+                for (Log log : removedLogsForBatchId) {
                     groupListener.onSuccess(log);
+                }
             }
             checkPendingLogs(groupName);
         }
@@ -472,8 +477,9 @@ public class DefaultChannel implements Channel {
             } else {
                 GroupListener groupListener = groupState.mListener;
                 if (groupListener != null) {
-                    for (Log log : removedLogsForBatchId)
+                    for (Log log : removedLogsForBatchId) {
                         groupListener.onFailure(log, e);
+                    }
                 }
             }
             suspend(!recoverableError, e);
@@ -507,8 +513,9 @@ public class DefaultChannel implements Channel {
         }
 
         /* Call listeners so that they can decorate the log. */
-        for (Listener listener : mListeners)
+        for (Listener listener : mListeners) {
             listener.onEnqueuingLog(log, groupName);
+        }
 
         /* Attach device properties to every log if its not already attached by a service. */
         if (log.getDevice() == null) {
@@ -528,8 +535,9 @@ public class DefaultChannel implements Channel {
         }
 
         /* Set date to current if not explicitly set in the past by a module (such as a crash). */
-        if (log.getTimestamp() == null)
+        if (log.getTimestamp() == null) {
             log.setTimestamp(new Date());
+        }
 
         /* Persist log. */
         try {
@@ -557,9 +565,9 @@ public class DefaultChannel implements Channel {
         GroupState groupState = mGroupStates.get(groupName);
         long pendingLogCount = groupState.mPendingLogCount;
         MobileCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupName + ") pendingLogCount=" + pendingLogCount);
-        if (pendingLogCount >= groupState.mMaxLogsPerBatch)
+        if (pendingLogCount >= groupState.mMaxLogsPerBatch) {
             triggerIngestion(groupName);
-        else if (pendingLogCount > 0 && !groupState.mScheduled) {
+        } else if (pendingLogCount > 0 && !groupState.mScheduled) {
             groupState.mScheduled = true;
             mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
         }

@@ -63,12 +63,16 @@ public class StartServiceLog extends AbstractLog {
     @Override
     @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         StartServiceLog that = (StartServiceLog) o;
-
         return services != null ? services.equals(that.services) : that.services == null;
     }
 

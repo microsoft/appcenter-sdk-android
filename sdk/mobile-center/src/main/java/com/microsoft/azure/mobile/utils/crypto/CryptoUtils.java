@@ -154,13 +154,14 @@ public class CryptoUtils {
 
         /* Load Android secure key store if available. */
         KeyStore keyStore = null;
-        if (apiLevel >= Build.VERSION_CODES.KITKAT)
+        if (apiLevel >= Build.VERSION_CODES.KITKAT) {
             try {
                 keyStore = KeyStore.getInstance(ANDROID_KEY_STORE);
                 keyStore.load(null);
             } catch (Exception e) {
                 MobileCenterLog.error(LOG_TAG, "Cannot use secure keystore on this device.");
             }
+        }
         mKeyStore = keyStore;
 
         /* We have to use AES to be compliant but it's available only after Android M. */
@@ -197,8 +198,9 @@ public class CryptoUtils {
      * @return unique instance.
      */
     public static CryptoUtils getInstance(@NonNull Context context) {
-        if (sInstance == null)
+        if (sInstance == null) {
             sInstance = new CryptoUtils(context);
+        }
         return sInstance;
     }
 
@@ -245,8 +247,9 @@ public class CryptoUtils {
      */
     @Nullable
     private KeyStore.Entry getKeyStoreEntry(@NonNull CryptoHandlerEntry handlerEntry) throws Exception {
-        if (mKeyStore == null)
+        if (mKeyStore == null) {
             return null;
+        }
         String alias = getAlias(handlerEntry.mCryptoHandler, handlerEntry.mAliasIndex);
         return mKeyStore.getEntry(alias, null);
     }
@@ -259,8 +262,9 @@ public class CryptoUtils {
      */
     @Nullable
     public String encrypt(@Nullable String data) {
-        if (data == null)
+        if (data == null) {
             return null;
+        }
         try {
 
             /* Get preferred crypto handler. */
@@ -316,8 +320,9 @@ public class CryptoUtils {
     public DecryptedData decrypt(@Nullable String data) {
 
         /* Handle null for convenience. */
-        if (data == null)
+        if (data == null) {
             return new DecryptedData(null, null);
+        }
 
         /* Guess what algorithm was used in case the data was encrypted using an old SDK or old firmware. */
         String[] dataSplit = data.split(ALGORITHM_DATA_SEPARATOR);

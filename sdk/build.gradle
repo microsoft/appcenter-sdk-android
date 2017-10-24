@@ -6,7 +6,7 @@ allprojects {
     apply plugin: 'jacoco'
 
     jacoco {
-        toolVersion '0.7.7.201606060606'
+        toolVersion '0.7.9'
     }
 
     //noinspection GroovyAssignabilityCheck
@@ -75,8 +75,8 @@ subprojects {
 
         androidTestCompile 'com.crittercism.dexmaker:dexmaker-dx:1.4'
         androidTestCompile 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
-        androidTestCompile 'com.android.support.test:runner:0.5'
-        androidTestCompile 'com.android.support.test:rules:0.5'
+        androidTestCompile 'com.android.support.test:runner:1.0.1'
+        androidTestCompile 'com.android.support.test:rules:1.0.1'
         androidTestCompile project(':test')
     }
 

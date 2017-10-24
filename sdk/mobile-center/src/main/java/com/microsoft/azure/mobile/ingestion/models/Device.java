@@ -460,39 +460,61 @@ public class Device extends WrapperSdk {
     @Override
     @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         Device device = (Device) o;
-
-        if (sdkName != null ? !sdkName.equals(device.sdkName) : device.sdkName != null)
+        if (sdkName != null ? !sdkName.equals(device.sdkName) : device.sdkName != null) {
             return false;
-        if (sdkVersion != null ? !sdkVersion.equals(device.sdkVersion) : device.sdkVersion != null)
+        }
+        if (sdkVersion != null ? !sdkVersion.equals(device.sdkVersion) : device.sdkVersion != null) {
             return false;
-        if (model != null ? !model.equals(device.model) : device.model != null) return false;
-        if (oemName != null ? !oemName.equals(device.oemName) : device.oemName != null)
+        }
+        if (model != null ? !model.equals(device.model) : device.model != null) {
             return false;
-        if (osName != null ? !osName.equals(device.osName) : device.osName != null) return false;
-        if (osVersion != null ? !osVersion.equals(device.osVersion) : device.osVersion != null)
+        }
+        if (oemName != null ? !oemName.equals(device.oemName) : device.oemName != null) {
             return false;
-        if (osBuild != null ? !osBuild.equals(device.osBuild) : device.osBuild != null)
+        }
+        if (osName != null ? !osName.equals(device.osName) : device.osName != null) {
             return false;
-        if (osApiLevel != null ? !osApiLevel.equals(device.osApiLevel) : device.osApiLevel != null)
+        }
+        if (osVersion != null ? !osVersion.equals(device.osVersion) : device.osVersion != null) {
             return false;
-        if (locale != null ? !locale.equals(device.locale) : device.locale != null) return false;
-        if (timeZoneOffset != null ? !timeZoneOffset.equals(device.timeZoneOffset) : device.timeZoneOffset != null)
+        }
+        if (osBuild != null ? !osBuild.equals(device.osBuild) : device.osBuild != null) {
             return false;
-        if (screenSize != null ? !screenSize.equals(device.screenSize) : device.screenSize != null)
+        }
+        if (osApiLevel != null ? !osApiLevel.equals(device.osApiLevel) : device.osApiLevel != null) {
             return false;
-        if (appVersion != null ? !appVersion.equals(device.appVersion) : device.appVersion != null)
+        }
+        if (locale != null ? !locale.equals(device.locale) : device.locale != null) {
             return false;
-        if (carrierName != null ? !carrierName.equals(device.carrierName) : device.carrierName != null)
+        }
+        if (timeZoneOffset != null ? !timeZoneOffset.equals(device.timeZoneOffset) : device.timeZoneOffset != null) {
             return false;
-        if (carrierCountry != null ? !carrierCountry.equals(device.carrierCountry) : device.carrierCountry != null)
+        }
+        if (screenSize != null ? !screenSize.equals(device.screenSize) : device.screenSize != null) {
             return false;
-        if (appBuild != null ? !appBuild.equals(device.appBuild) : device.appBuild != null)
+        }
+        if (appVersion != null ? !appVersion.equals(device.appVersion) : device.appVersion != null) {
             return false;
+        }
+        if (carrierName != null ? !carrierName.equals(device.carrierName) : device.carrierName != null) {
+            return false;
+        }
+        if (carrierCountry != null ? !carrierCountry.equals(device.carrierCountry) : device.carrierCountry != null) {
+            return false;
+        }
+        if (appBuild != null ? !appBuild.equals(device.appBuild) : device.appBuild != null) {
+            return false;
+        }
         return appNamespace != null ? appNamespace.equals(device.appNamespace) : device.appNamespace == null;
     }
 

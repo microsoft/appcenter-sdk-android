@@ -9,9 +9,11 @@ import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.MobileCenterHandler;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog;
+import com.microsoft.azure.mobile.crashes.ingestion.models.HandledErrorLog;
 import com.microsoft.azure.mobile.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.azure.mobile.crashes.ingestion.models.StackFrame;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ErrorAttachmentLogFactory;
+import com.microsoft.azure.mobile.crashes.ingestion.models.json.HandledErrorLogFactory;
 import com.microsoft.azure.mobile.crashes.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.model.TestCrashException;
@@ -44,14 +46,16 @@ import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
-import org.powermock.reflect.Whitebox;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -206,6 +210,7 @@ public class CrashesTest {
         Map<String, LogFactory> factories = instance.getLogFactories();
         assertNotNull(factories);
         assertTrue(factories.remove(ManagedErrorLog.TYPE) instanceof ManagedErrorLogFactory);
+        assertTrue(factories.remove(HandledErrorLog.TYPE) instanceof HandledErrorLogFactory);
         assertTrue(factories.remove(ErrorAttachmentLog.TYPE) instanceof ErrorAttachmentLogFactory);
         assertTrue(factories.isEmpty());
         assertEquals(1, instance.getTriggerCount());
@@ -438,109 +443,6 @@ public class CrashesTest {
     }
 
     @Test
-    public void disabledDuringProcessPendingErrors() throws IOException, ClassNotFoundException, JSONException {
-        ErrorReport errorReport = ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, EXCEPTION);
-
-        File errorStorageDirectory = mock(File.class);
-        Whitebox.setInternalState(errorStorageDirectory, "path", "/");
-        when(errorStorageDirectory.listFiles()).thenReturn(new File[0]);
-        CrashesListener listener = mock(CrashesListener.class);
-        when(listener.shouldProcess(errorReport)).thenReturn(true);
-        LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mErrorLog);
-        Channel channel = mock(Channel.class);
-
-        mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class), mock(File.class)}).thenReturn(new File[]{mock(File.class)});
-        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory);
-        File throwableFile = mock(File.class);
-        when(throwableFile.length()).thenReturn(1L);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(throwableFile);
-        when(ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, EXCEPTION)).thenReturn(errorReport);
-
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(EXCEPTION);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenAnswer(new Answer<String>() {
-            @Override
-            public String answer(InvocationOnMock invocation) throws Throwable {
-                Crashes.setEnabled(false);
-                return "";
-            }
-        });
-
-        /* Disabled while Crashes service is processing pending errors. */
-        Crashes crashes = Crashes.getInstance();
-        crashes.setLogSerializer(logSerializer);
-        crashes.setInstanceListener(listener);
-        crashes.onStarting(mMobileCenterHandler);
-        crashes.onStarted(mock(Context.class), "", channel);
-
-        verify(channel, never()).enqueue(any(Log.class), anyString());
-        verify(listener).shouldProcess(errorReport);
-        verifyNoMoreInteractions(listener);
-
-        /* Disabled right before handling user confirmation. */
-        Crashes.setEnabled(true);
-        Crashes.unsetInstance();
-        crashes = Crashes.getInstance();
-        crashes.setLogSerializer(logSerializer);
-        crashes.setInstanceListener(listener);
-        crashes.onStarting(mMobileCenterHandler);
-        crashes.onStarted(mock(Context.class), "", channel);
-
-        verify(channel, never()).enqueue(any(Log.class), anyString());
-        verify(listener, times(2)).shouldProcess(errorReport);
-        verifyNoMoreInteractions(listener);
-    }
-
-    @Test
-    public void disabledDuringHandleUserConfirmation() throws IOException, ClassNotFoundException, JSONException {
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0, true);
-        ErrorReport errorReport1 = ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, EXCEPTION);
-        ErrorReport errorReport2 = ErrorLogHelper.getErrorReportFromErrorLog(errorLog, EXCEPTION);
-
-        File errorStorageDirectory = mock(File.class);
-        Whitebox.setInternalState(errorStorageDirectory, "path", "/");
-        when(errorStorageDirectory.listFiles()).thenReturn(new File[0]);
-        CrashesListener listener = mock(CrashesListener.class);
-        when(listener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
-        LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mErrorLog).thenReturn(errorLog);
-        Channel channel = mock(Channel.class);
-        doAnswer(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Crashes.setEnabled(false);
-                return null;
-            }
-        }).when(channel).enqueue(any(Log.class), anyString());
-
-        mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class), mock(File.class)});
-        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory);
-        File throwableFile = mock(File.class);
-        when(throwableFile.length()).thenReturn(1L);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(throwableFile);
-        when(ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, EXCEPTION)).thenReturn(errorReport1);
-        when(ErrorLogHelper.getErrorReportFromErrorLog(errorLog, EXCEPTION)).thenReturn(errorReport2);
-
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(EXCEPTION);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
-
-        Crashes crashes = Crashes.getInstance();
-        crashes.setLogSerializer(logSerializer);
-        crashes.setInstanceListener(listener);
-        crashes.onStarting(mMobileCenterHandler);
-        crashes.onStarted(mock(Context.class), "", channel);
-
-        verify(listener, times(2)).shouldProcess(any(ErrorReport.class));
-        verify(listener).shouldAwaitUserConfirmation();
-        verify(channel).enqueue(any(Log.class), anyString());
-
-        verify(listener).getErrorAttachments(any(ErrorReport.class));
-        verifyNoMoreInteractions(listener);
-    }
-
-    @Test
     public void noQueueingWhenDisabled() {
         when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(false);
         Channel channel = mock(Channel.class);
@@ -617,12 +519,11 @@ public class CrashesTest {
 
             @Override
             public boolean matches(Object item) {
-                return item instanceof ManagedErrorLog && EXCEPTION.getMessage().equals(((ManagedErrorLog) item).getException().getMessage());
+                return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage());
             }
         }), eq(crashes.getGroupName()));
 
-        ManagedErrorLog mockLog = mock(ManagedErrorLog.class);
-        when(mockLog.getFatal()).thenReturn(false);
+        HandledErrorLog mockLog = mock(HandledErrorLog.class);
         CrashesListener mockListener = mock(CrashesListener.class);
         crashes.setInstanceListener(mockListener);
 
@@ -658,16 +559,16 @@ public class CrashesTest {
         Crashes crashes = Crashes.getInstance();
         Channel mockChannel = mock(Channel.class);
 
-        Crashes.getInstance().trackException(exception);
+        WrapperSdkExceptionManager.trackException(exception);
         verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
         crashes.onStarting(mMobileCenterHandler);
         crashes.onStarted(mock(Context.class), "", mockChannel);
-        Crashes.getInstance().trackException(exception);
+        WrapperSdkExceptionManager.trackException(exception);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
             public boolean matches(Object item) {
-                return item instanceof ManagedErrorLog && exception.equals(((ManagedErrorLog) item).getException());
+                return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException());
             }
         }), eq(crashes.getGroupName()));
     }
@@ -1099,5 +1000,165 @@ public class CrashesTest {
         String expectedMessage = "A limit of " + MAX_ATTACHMENT_PER_CRASH + " attachments per error report might be enforced by server.";
         PowerMockito.verifyStatic();
         MobileCenterLog.warn(Crashes.LOG_TAG, expectedMessage);
+    }
+
+    @Test
+    public void manualProcessing() throws Exception {
+
+        /* Setup mock for a crash in disk. */
+        Context mockContext = mock(Context.class);
+        Channel mockChannel = mock(Channel.class);
+        ErrorReport report1 = new ErrorReport();
+        report1.setId(UUIDUtils.randomUUID().toString());
+        ErrorReport report2 = new ErrorReport();
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class), mock(File.class)});
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report1).thenReturn(report2);
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+
+            @Override
+            public ManagedErrorLog answer(InvocationOnMock invocation) throws Throwable {
+                ManagedErrorLog log = mock(ManagedErrorLog.class);
+                when(log.getId()).thenReturn(UUID.randomUUID());
+                return log;
+            }
+        });
+        Crashes crashes = Crashes.getInstance();
+        crashes.setLogSerializer(logSerializer);
+
+        /* Create listener for user confirmation. */
+        CrashesListener listener = mock(CrashesListener.class);
+        Crashes.setListener(listener);
+
+        /* Set manual processing. */
+        WrapperSdkExceptionManager.setAutomaticProcessing(false);
+
+        /* Start crashes. */
+        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarted(mockContext, "", mockChannel);
+
+        /* No log queued. */
+        verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
+
+        /* Get crash reports. */
+        Collection<ErrorReport> reports = WrapperSdkExceptionManager.getUnprocessedErrorReports().get();
+        assertNotNull(reports);
+        assertEquals(2, reports.size());
+        Iterator<ErrorReport> iterator = reports.iterator();
+        assertEquals(report1, iterator.next());
+        assertEquals(report2, iterator.next());
+
+        /* Listener not called yet on anything on manual processing. */
+        verifyZeroInteractions(listener);
+
+        /* Send only the first. */
+        assertFalse(WrapperSdkExceptionManager.sendCrashReportsOrAwaitUserConfirmation(Collections.singletonList(report1.getId())).get());
+
+        /* We used manual process function, listener not called. */
+        verifyZeroInteractions(listener);
+
+        /* No log sent until manual user confirmation in that mode (we are not in always send). */
+        verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
+
+        /* Confirm with always send. */
+        Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
+        verifyStatic();
+        StorageHelper.PreferencesStorage.putBoolean(Crashes.PREF_KEY_ALWAYS_SEND, true);
+        when(StorageHelper.PreferencesStorage.getBoolean(eq(Crashes.PREF_KEY_ALWAYS_SEND), anyBoolean())).thenReturn(true);
+
+        /* 1 log sent. Other one is filtered. */
+        verify(mockChannel).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
+
+        /* We can send attachments via wrapper instead of using listener (both work but irrelevant to test with listener). */
+        ErrorAttachmentLog mockAttachment = mock(ErrorAttachmentLog.class);
+        when(mockAttachment.getId()).thenReturn(UUID.randomUUID());
+        when(mockAttachment.getData()).thenReturn(new byte[0]);
+        when(mockAttachment.isValid()).thenReturn(true);
+        WrapperSdkExceptionManager.sendErrorAttachments(report1.getId(), Collections.singletonList(mockAttachment));
+        verify(mockChannel).enqueue(eq(mockAttachment), eq(crashes.getGroupName()));
+
+        /* Send attachment with invalid UUID format for report identifier. */
+        mockAttachment = mock(ErrorAttachmentLog.class);
+        when(mockAttachment.getId()).thenReturn(UUID.randomUUID());
+        when(mockAttachment.getData()).thenReturn(new byte[0]);
+        when(mockAttachment.isValid()).thenReturn(true);
+        WrapperSdkExceptionManager.sendErrorAttachments("not-a-uuid", Collections.singletonList(mockAttachment));
+        verify(mockChannel, never()).enqueue(eq(mockAttachment), eq(crashes.getGroupName()));
+
+        /* We used manual process function, listener not called and our mock channel does not send events. */
+        verifyZeroInteractions(listener);
+
+        /* Reset instance to test another tine with always send. */
+        Crashes.unsetInstance();
+        crashes = Crashes.getInstance();
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report1).thenReturn(report2);
+        WrapperSdkExceptionManager.setAutomaticProcessing(false);
+        crashes.setLogSerializer(logSerializer);
+        crashes.onStarting(mMobileCenterHandler);
+        mockChannel = mock(Channel.class);
+        crashes.onStarted(mockContext, "", mockChannel);
+        assertTrue(Crashes.isEnabled().get());
+        verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
+
+        /* Get crash reports, check always sent was returned and sent without confirmation. */
+        assertTrue(WrapperSdkExceptionManager.sendCrashReportsOrAwaitUserConfirmation(Collections.singletonList(report2.getId())).get());
+        verify(mockChannel).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
+    }
+
+    @Test
+    public void manuallyReportNullList() throws Exception {
+
+        /* Setup mock for a crash in disk. */
+        Context mockContext = mock(Context.class);
+        Channel mockChannel = mock(Channel.class);
+        ErrorReport report1 = new ErrorReport();
+        report1.setId(UUIDUtils.randomUUID().toString());
+        ErrorReport report2 = new ErrorReport();
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class), mock(File.class)});
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report1).thenReturn(report2);
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+
+            @Override
+            public ManagedErrorLog answer(InvocationOnMock invocation) throws Throwable {
+                ManagedErrorLog log = mock(ManagedErrorLog.class);
+                when(log.getId()).thenReturn(UUID.randomUUID());
+                return log;
+            }
+        });
+        Crashes crashes = Crashes.getInstance();
+        crashes.setLogSerializer(logSerializer);
+
+        /* Set manual processing. */
+        WrapperSdkExceptionManager.setAutomaticProcessing(false);
+
+        /* Start crashes. */
+        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarted(mockContext, "", mockChannel);
+
+        /* No log queued. */
+        verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
+
+        /* Get crash reports. */
+        Collection<ErrorReport> reports = WrapperSdkExceptionManager.getUnprocessedErrorReports().get();
+        assertNotNull(reports);
+        assertEquals(2, reports.size());
+        Iterator<ErrorReport> iterator = reports.iterator();
+        assertEquals(report1, iterator.next());
+        assertEquals(report2, iterator.next());
+
+        /* Send nothing using null. */
+        assertFalse(WrapperSdkExceptionManager.sendCrashReportsOrAwaitUserConfirmation(null).get());
+
+        /* No log sent. */
+        verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
     }
 }

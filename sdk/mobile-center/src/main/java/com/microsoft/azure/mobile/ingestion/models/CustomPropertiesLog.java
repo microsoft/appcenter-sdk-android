@@ -152,12 +152,16 @@ public class CustomPropertiesLog extends AbstractLog {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
         CustomPropertiesLog that = (CustomPropertiesLog) o;
-
         return properties != null ? properties.equals(that.properties) : that.properties == null;
     }
 

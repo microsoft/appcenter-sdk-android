@@ -179,12 +179,14 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
             channel.removeGroup(groupName);
 
             /* Add a group to the channel if the service is enabled */
-            if (enabled)
+            if (enabled) {
                 channel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
+            }
 
             /* Otherwise, clear all persisted logs for the service. */
-            else
+            else {
                 channel.clear(groupName);
+            }
         }
         mChannel = channel;
         if (enabled) {

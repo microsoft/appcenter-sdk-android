@@ -32,11 +32,13 @@ public class LogContainer {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         LogContainer container = (LogContainer) o;
-
         return logs != null ? logs.equals(container.logs) : container.logs == null;
     }
 

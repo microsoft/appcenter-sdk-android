@@ -3,12 +3,16 @@ package com.microsoft.azure.mobile.crashes;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.azure.mobile.crashes.ingestion.models.ErrorAttachmentLog;
+import com.microsoft.azure.mobile.crashes.model.ErrorReport;
 import com.microsoft.azure.mobile.crashes.utils.ErrorLogHelper;
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
+import com.microsoft.azure.mobile.utils.async.MobileCenterFuture;
 import com.microsoft.azure.mobile.utils.storage.StorageHelper;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -117,6 +121,55 @@ public class WrapperSdkExceptionManager {
         File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
         String filename = errorId.toString() + DATA_FILE_EXTENSION;
         return new File(errorStorageDirectory, filename);
+    }
+
+    /**
+     * Send an handled exception (used by wrapper SDKs).
+     *
+     * @param modelException An handled exception already in JSON model form.
+     */
+    public static void trackException(com.microsoft.azure.mobile.crashes.ingestion.models.Exception modelException) {
+        Crashes.getInstance().queueException(modelException);
+    }
+
+    /**
+     * Set whether automatic processing is enabled or not.
+     * Default is enabled.
+     *
+     * @param automaticProcessing true to enable, false otherwise.
+     */
+    public static void setAutomaticProcessing(boolean automaticProcessing) {
+        Crashes.getInstance().setAutomaticProcessing(automaticProcessing);
+    }
+
+    /**
+     * Get unprocessed error reports when automatic processing is disabled.
+     *
+     * @return unprocessed error reports as an async future.
+     */
+    public static MobileCenterFuture<Collection<ErrorReport>> getUnprocessedErrorReports() {
+        return Crashes.getInstance().getUnprocessedErrorReports();
+    }
+
+    /**
+     * Resume processing of crash reports with the filtered list from {@link #getUnprocessedErrorReports()}.
+     * To use when automatic processing is disabled.
+     *
+     * @param filteredReportIds report identifiers to process, every crash not part of the original list are discarded.
+     * @return asynchronous result: true if ALWAYS_SEND was previously set, false otherwise.
+     */
+    public static MobileCenterFuture<Boolean> sendCrashReportsOrAwaitUserConfirmation(Collection<String> filteredReportIds) {
+        return Crashes.getInstance().sendCrashReportsOrAwaitUserConfirmation(filteredReportIds);
+    }
+
+    /**
+     * Send error attachments when automatic processing is disabled.
+     *
+     * @param errorReportId The crash report identifier for additional information.
+     * @param attachments   instances of {@link ErrorAttachmentLog} to be sent for the specified error report.
+     */
+    public static void sendErrorAttachments(String errorReportId, Iterable<ErrorAttachmentLog> attachments) {
+        Crashes.getInstance().sendErrorAttachments(errorReportId, attachments);
     }
 }
 
