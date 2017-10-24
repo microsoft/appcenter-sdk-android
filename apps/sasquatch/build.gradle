@@ -55,9 +55,8 @@ dependencies {
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-distribute:${version}"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-push:${version}"
 
-    def firebaseVersion = "11.0.2"
-    firebaseCompile "com.google.firebase:firebase-core:${firebaseVersion}"
-    firebaseCompile "com.google.firebase:firebase-messaging:${firebaseVersion}"
+    firebaseCompile "com.google.firebase:firebase-core:${rootProject.ext.firebaseLibVersion}"
+    firebaseCompile "com.google.firebase:firebase-messaging:${rootProject.ext.firebaseLibVersion}"
 
     /* Force usage this version of support annotations to avoid conflict. */
     androidTestCompile "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
