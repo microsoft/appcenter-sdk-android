@@ -9,6 +9,7 @@ import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.EXTRA_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.EXTRA_REQUEST_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.EXTRA_UPDATE_TOKEN;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.EXTRA_UPDATE_SETUP_FAILED;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.LOG_TAG;
 
 /**
@@ -25,14 +26,20 @@ public class DeepLinkActivity extends Activity {
         String requestId = intent.getStringExtra(EXTRA_REQUEST_ID);
         String distributionGroupId = intent.getStringExtra(EXTRA_DISTRIBUTION_GROUP_ID);
         String updateToken = intent.getStringExtra(EXTRA_UPDATE_TOKEN);
+        String updateSetupFailed = intent.getStringExtra(EXTRA_UPDATE_SETUP_FAILED);
         MobileCenterLog.debug(LOG_TAG, getLocalClassName() + ".getIntent()=" + intent);
         MobileCenterLog.debug(LOG_TAG, "Intent requestId=" + requestId);
         MobileCenterLog.debug(LOG_TAG, "Intent distributionGroupId=" + distributionGroupId);
         MobileCenterLog.debug(LOG_TAG, "Intent updateToken passed=" + (updateToken != null));
+        MobileCenterLog.debug(LOG_TAG, "Intent updateSetupFailed passed=" + (updateSetupFailed != null));
 
         /* Store redirection parameters if both required values were passed. */
         if (requestId != null && distributionGroupId != null) {
             Distribute.getInstance().storeRedirectionParameters(requestId, distributionGroupId, updateToken);
+        } else if (requestId != null && updateSetupFailed != null) {
+
+            /* Otherwise just store error message to show update failure dialog in future. */
+            Distribute.getInstance().storeUpdateSetupFailedParameter(requestId, updateSetupFailed);
         }
 
         /*

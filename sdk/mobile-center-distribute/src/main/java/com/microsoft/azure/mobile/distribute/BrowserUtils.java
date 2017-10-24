@@ -12,6 +12,8 @@ import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.azure.mobile.utils.MobileCenterLog;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.LOG_TAG;
@@ -100,5 +102,26 @@ class BrowserUtils {
                 activity.startActivity(intent);
             }
         }
+    }
+
+    /**
+     * Append a query parameter to an existing URI.
+     *
+     * @param uri         initial uri.
+     * @param appendQuery parameter to append.
+     *
+     * @return uri string with appended query item.
+     */
+    static String appendUri(@NonNull String uri, @NonNull String appendQuery) throws URISyntaxException {
+        URI oldUri = new URI(uri);
+        String newQuery = oldUri.getQuery();
+        if (newQuery == null) {
+            newQuery = appendQuery;
+        } else {
+            newQuery += "&" + appendQuery;
+        }
+        URI newUri = new URI(oldUri.getScheme(), oldUri.getAuthority(),
+                oldUri.getPath(), newQuery, oldUri.getFragment());
+        return newUri.toString();
     }
 }

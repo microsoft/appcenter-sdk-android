@@ -12,11 +12,13 @@ import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
 
+import java.net.URISyntaxException;
 import java.util.Collections;
 
 import static com.microsoft.azure.mobile.distribute.BrowserUtils.GOOGLE_CHROME_URL_SCHEME;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertNotNull;
+import static junit.framework.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.argThat;
@@ -45,6 +47,20 @@ public class BrowserUtilsTest {
     @Test
     public void init() {
         assertNotNull(new BrowserUtils());
+    }
+
+    @Test
+    public void appendQueryToUriWithNoQuery() throws URISyntaxException {
+        String url = "http://mock";
+        url = BrowserUtils.appendUri(url, "x=y");
+        assertEquals(url, "http://mock?x=y");
+    }
+
+    @Test
+    public void appendQueryToUriWithExistingQuery() throws URISyntaxException {
+        String url = "http://mock?a=b";
+        url = BrowserUtils.appendUri(url, "x=y");
+        assertEquals(url, "http://mock?a=b&x=y");
     }
 
     @Test

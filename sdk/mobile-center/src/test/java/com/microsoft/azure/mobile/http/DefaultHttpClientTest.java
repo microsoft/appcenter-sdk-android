@@ -4,11 +4,13 @@ import android.net.TrafficStats;
 
 import com.microsoft.azure.mobile.MobileCenter;
 import com.microsoft.azure.mobile.utils.HandlerUtils;
+import com.microsoft.azure.mobile.utils.MobileCenterLog;
 import com.microsoft.azure.mobile.utils.UUIDUtils;
 
 import org.json.JSONException;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -21,7 +23,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -35,6 +36,9 @@ import static com.microsoft.azure.mobile.http.DefaultHttpClient.METHOD_POST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyMapOf;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.any;
@@ -332,6 +336,114 @@ public class DefaultHttpClientTest {
         verify(urlConnection, never()).setDoOutput(true);
         verify(urlConnection).disconnect();
         httpClient.close();
+    }
+
+    private void testPayloadLogging(final String payload, String mimeType) throws Exception {
+
+        /* Set log level to verbose to test shorter app secret as well. */
+        MobileCenter.setLogLevel(VERBOSE);
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock/get";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(200);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(buffer);
+        ByteArrayInputStream inputStream = spy(new ByteArrayInputStream(payload.getBytes()));
+        when(urlConnection.getInputStream()).thenReturn(inputStream);
+        when(urlConnection.getHeaderField("Content-Type")).thenReturn(mimeType);
+
+        /* Configure API client. */
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+
+        /* Test calling code. */
+        Map<String, String> headers = new HashMap<>();
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        mockCall();
+        httpClient.callAsync(urlString, METHOD_GET, headers, callTemplate, serviceCallback);
+        verify(serviceCallback).onCallSucceeded(payload);
+        verifyNoMoreInteractions(serviceCallback);
+        verify(urlConnection).setRequestMethod("GET");
+        verify(urlConnection, never()).setDoOutput(true);
+        verify(urlConnection).disconnect();
+        verify(inputStream).close();
+        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
+        verify(callTemplate, never()).buildRequestBody();
+        httpClient.close();
+
+        /* Test binary placeholder used in logging code instead of real payload. */
+        verifyStatic();
+        MobileCenterLog.info(anyString(), argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().contains(payload);
+            }
+        }));
+    }
+
+    @Test
+    public void get200text() throws Exception {
+        testPayloadLogging("Some text", "text/plain");
+    }
+
+    @Test
+    public void get200json() throws Exception {
+        testPayloadLogging("{}", "application/json");
+    }
+
+    @Test
+    public void get200image() throws Exception {
+
+        /* Set log level to verbose to test shorter app secret as well. */
+        MobileCenter.setLogLevel(VERBOSE);
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock/get";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(200);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(buffer);
+        ByteArrayInputStream inputStream = spy(new ByteArrayInputStream("fake binary".getBytes()));
+        when(urlConnection.getInputStream()).thenReturn(inputStream);
+        when(urlConnection.getHeaderField("Content-Type")).thenReturn("image/png");
+
+        /* Configure API client. */
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+
+        /* Test calling code. */
+        Map<String, String> headers = new HashMap<>();
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        mockCall();
+        httpClient.callAsync(urlString, METHOD_GET, headers, callTemplate, serviceCallback);
+        verify(serviceCallback).onCallSucceeded("fake binary");
+        verifyNoMoreInteractions(serviceCallback);
+        verify(urlConnection).setRequestMethod("GET");
+        verify(urlConnection, never()).setDoOutput(true);
+        verify(urlConnection).disconnect();
+        verify(inputStream).close();
+        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
+        verify(callTemplate, never()).buildRequestBody();
+        httpClient.close();
+
+        /* Test binary placeholder used in logging code instead of real payload. */
+        verifyStatic();
+        MobileCenterLog.info(anyString(), argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                String logMessage = argument.toString();
+                return logMessage.contains("<binary>") && !logMessage.contains("fake binary");
+            }
+        }));
     }
 
     @Test

@@ -22,12 +22,13 @@ android {
 }
 
 dependencies {
-    def version = "0.12.0"
+    def version = "0.13.0"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     projectDependencyCompile project(':sdk:mobile-center-analytics')
     projectDependencyCompile project(':sdk:mobile-center-crashes')
     projectDependencyCompile project(':sdk:mobile-center-distribute')
     projectDependencyCompile project(':sdk:mobile-center-push')
+    projectDependencyCompile project(':sdk:mobile-center-rum')
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-analytics:${version}"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-crashes:${version}"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-distribute:${version}"
