@@ -8,4 +8,5 @@ ext {
     compileSdkVersion = 26
     buildToolsVersion = '26.0.1'
     supportLibVersion = '26.0.2'
+    firebaseLibVersion = '11.0.2'
 }
