@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
 /**
  * Utilities to manipulate Firebase Push SDK via reflection.
  */
-final class FirebaseUtils {
+class FirebaseUtils {
 
     @VisibleForTesting
     FirebaseUtils() {
