@@ -53,6 +53,7 @@ public class PushNotifierTest {
     private Notification.Builder mNotificationBuilderMock;
     private int mIconId = 29;
     private Intent mActionIntentMock;
+    private ApplicationInfo mApplicationInfoMock;
 
     @Before
     public void setUp() throws Exception {
@@ -83,10 +84,10 @@ public class PushNotifierTest {
         when(mContextMock.getApplicationContext()).thenReturn(mContextMock);
         when(mContextMock.getSystemService(NOTIFICATION_SERVICE)).thenReturn(mNotificationManagerMock);
 
-        ApplicationInfo applicationInfo = new ApplicationInfo();
-        applicationInfo.icon = mIconId;
-        applicationInfo.targetSdkVersion = Build.VERSION_CODES.O;
-        when(mContextMock.getApplicationInfo()).thenReturn(applicationInfo);
+        mApplicationInfoMock = new ApplicationInfo();
+        mApplicationInfoMock.icon = mIconId;
+        mApplicationInfoMock.targetSdkVersion = Build.VERSION_CODES.O;
+        when(mContextMock.getApplicationInfo()).thenReturn(mApplicationInfoMock);
     }
 
     @Test
@@ -111,6 +112,13 @@ public class PushNotifierTest {
     @Test
     public void handlePushIceCreamSandwich() throws Exception {
         setVersionSdkInt(Build.VERSION_CODES.ICE_CREAM_SANDWICH);
+        PushNotifier.handleNotification(mContextMock, new Intent());
+        verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
+    }
+
+    @Test
+    public void handlePushTargetN() throws Exception {
+        mApplicationInfoMock.targetSdkVersion = Build.VERSION_CODES.N;
         PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
     }
