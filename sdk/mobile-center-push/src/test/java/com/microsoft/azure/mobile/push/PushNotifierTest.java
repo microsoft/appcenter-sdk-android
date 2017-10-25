@@ -16,7 +16,6 @@ import android.os.Build;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.exceptions.misusing.CannotVerifyStubOnlyMock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
@@ -152,6 +151,7 @@ public class PushNotifierTest {
         when(resourcesMock.getIdentifier(eq(iconString), eq("mipmap"), anyString())).thenReturn(resourceId + 1);
         when(PushIntentUtils.getIcon(any(Intent.class))).thenReturn(iconString);
         PushNotifier.handleNotification(mContextMock, new Intent());
+        //noinspection ResourceType
         verify(mNotificationBuilderMock).setSmallIcon(resourceId);
         verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
     }
@@ -166,6 +166,7 @@ public class PushNotifierTest {
         when(resourcesMock.getIdentifier(eq(iconString), eq("mipmap"), anyString())).thenReturn(resourceId);
         when(PushIntentUtils.getIcon(any(Intent.class))).thenReturn(iconString);
         PushNotifier.handleNotification(mContextMock, new Intent());
+        //noinspection ResourceType
         verify(mNotificationBuilderMock).setSmallIcon(resourceId);
         verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
     }
@@ -179,6 +180,7 @@ public class PushNotifierTest {
         when(resourcesMock.getIdentifier(eq(iconString), eq("mipmap"), anyString())).thenReturn(0);
         when(PushIntentUtils.getIcon(any(Intent.class))).thenReturn(iconString);
         PushNotifier.handleNotification(mContextMock, new Intent());
+        //noinspection ResourceType
         verify(mNotificationBuilderMock).setSmallIcon(mIconId);
         verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
     }
