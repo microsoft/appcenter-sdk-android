@@ -8,14 +8,9 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.lang.reflect.InvocationTargetException;
-
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -39,12 +34,6 @@ public class FirebaseUtilsTest {
         IllegalStateException exception = new IllegalStateException("Not init.");
         when(FirebaseInstanceId.getInstance()).thenThrow(exception);
         assertFalse(FirebaseUtils.isFirebaseAvailable());
-        try {
-            FirebaseUtils.getToken();
-            fail("Should have thrown exception");
-        } catch (InvocationTargetException e) {
-            assertSame(exception, e.getTargetException());
-        }
     }
 
     @Test
@@ -53,6 +42,5 @@ public class FirebaseUtilsTest {
         when(FirebaseInstanceId.getInstance()).thenReturn(instanceId);
         when(instanceId.getToken()).thenReturn("token");
         assertTrue(FirebaseUtils.isFirebaseAvailable());
-        assertEquals("token", FirebaseUtils.getToken());
     }
 }
