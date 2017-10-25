@@ -38,7 +38,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "deprecation"})
 @PrepareForTest({PushIntentUtils.class, PushNotifier.class})
 public class PushNotifierTest {
 
