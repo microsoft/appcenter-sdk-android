@@ -1,4 +1,4 @@
-package com.microsoft.azure.mobile.test;
+package com.microsoft.appcenter.test;
 
 import org.junit.After;
 

@@ -22,7 +22,7 @@ subprojects {
 
     def ext = rootProject.ext
 
-    ext.sdkName = 'mobilecenter.android'
+    ext.sdkName = 'appcenter.android'
 
     android {
         buildToolsVersion ext.buildToolsVersion
