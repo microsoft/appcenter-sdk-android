@@ -220,7 +220,7 @@ public class CrashesTest {
             unsetInstance(MobileCenter.class);
             unsetInstance(Crashes.class);
             Intent intent = new Intent();
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | IntentCompat.FLAG_ACTIVITY_CLEAR_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             mActivityTestRule.launchActivity(intent);
         }
 
