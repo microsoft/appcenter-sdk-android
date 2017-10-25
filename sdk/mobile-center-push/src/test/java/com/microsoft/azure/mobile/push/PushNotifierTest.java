@@ -249,7 +249,7 @@ public class PushNotifierTest {
     /**
      * Adapted from https://stackoverflow.com/questions/40300469/mock-build-version-with-mockito
      */
-    static void setVersionSdkInt(int versionSdkInt) throws Exception {
+    private static void setVersionSdkInt(int versionSdkInt) throws Exception {
         Field field = Build.VERSION.class.getField("SDK_INT");
         field.setAccessible(true);
         Field modifiersField = Field.class.getDeclaredField("modifiers");
