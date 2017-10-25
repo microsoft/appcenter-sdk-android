@@ -6,7 +6,6 @@ subprojects {
     apply plugin: 'com.android.application'
 
     android {
-        buildToolsVersion rootProject.ext.buildToolsVersion
 
         buildTypes {
             release {
