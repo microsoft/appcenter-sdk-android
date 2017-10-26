@@ -22,7 +22,7 @@ $ProjectInfo = "appcenter-sdks-loc-file-list.csv"
 
 $TempLocBranch = "translatedFiles"
 $repoPath = $SrcRoot
-$DefaultRepoBranch = "develop"
+$DefaultRepoBranch = "refactor"
 $teamId = "269" #ID for Android
 $git = "git"
 
@@ -50,19 +50,19 @@ Function ProcessStart($AppToRun,$Argument,$WorkingDir)
 
 Function InitializeRepoForCheckin
 {
-    $Argument = "checkout " + $DefaultRepoBranch 
+    $Argument = "checkout" + $DefaultRepoBranch 
     ProcessStart $git $Argument $repoPath
 
     $Argument = "reset --hard HEAD"
     ProcessStart $git $Argument $repoPath
 
-    $Argument = "pull origin " + $DefaultRepoBranch
+    $Argument = "pull vsts " + $DefaultRepoBranch
     ProcessStart $git $Argument $repoPath
 
-    $Argument = "branch -D " + $TempLocBranch
+    $Argument = "branch -D" + $TempLocBranch
     ProcessStart $git $Argument
 
-    $Argument = "checkout -b " + $TempLocBranch
+    $Argument = "checkout -b" + $TempLocBranch
     ProcessStart $git $Argument $repoPath
 }
 
@@ -75,11 +75,11 @@ Function CheckinFilesIntoRepo
     #Push the Changes to the git server you still need to merge the changes
     if ($AuthToken -eq "") {
         #Unauthorized
-        $Argument = "push origin " + $TempLocBranch
+        $Argument = "push vsts " + $TempLocBranch
     }
     else {
         #Authorized
-        $Argument = "-c http.extraheader=`"Authorization: Bearer " + $AuthToken + "`" push origin " + $TempLocBranch
+        $Argument = "-c http.extraheader=`"Authorization: Bearer " + $AuthToken + "`" push vsts " + $TempLocBranch
     }
     
     ProcessStart $git $Argument $repoPath
@@ -172,16 +172,22 @@ Function BinPlace ($UnzipFileTo,$relativeFilePath,$TargetPath,$LanguageSet)
     foreach($Language in $Langs)
     {
         $OCulture = GetCulture $CultureSettingFile $Language
-        $Culture = $OCulture.LSBUILD
-
         $LocalizedFile = $UnzipFileTo + "\" + $OCulture.LSBUILD + $relativeFilePath
-        $TargetPathDir = $TargetPath + "\" + $OCulture.LSBUILD
+        $LocDir = ""
+
+        # Chinese (zh) regions use a different directory structure
+        if ($OCulture.Culture -eq "zh") {
+            $LocDir = $TargetPath + $OCulture.Culture + "-r" + $Language.split("-")[1]
+        } else {
+            $LocDir = $TargetPath + $OCulture.Culture
+        }
         
-        if(!(Test-Path -Path $TargetPathDir)){
-            New-Item -Path $TargetPathDir -ItemType directory
+        if(!(Test-Path -Path $LocDir)){
+            New-Item -Path $LocDir -ItemType directory
         }
 
-        $targetFile = $TargetPath + "\" + $OCulture.LSBUILD + $relativeFilePath
+        $targetFile = $LocDir + $relativeFilePath
+
         write-host "Loc File:   $LocalizedFile"
         write-host "TargetPath: $targetFile"
         write-host "Copying Loc file to TargetPath"
@@ -197,10 +203,13 @@ Function AddFiletoRepo ($TargetPath,$LanguageSet)
     foreach($Language in $Langs)
     {
         $OCulture = GetCulture $CultureSettingFile $Language
+        if ($OCulture.Culture -eq "zh") {
+            $LocDir = $TargetPath + $OCulture.Culture + "-r" + $Language.split("-")[1]
+        } else {
+            $LocDir = $TargetPath + $OCulture.Culture
+        }
 
-        #We pull out here the culture that might be used during the string expansion.
-        $Culture = $OCulture.Culture
-        $Argument = "add " + $TargetPath
+        $Argument = "add " + $LocDir
 
         write-host $Argument
 
@@ -241,6 +250,9 @@ Function RefreshTDFiles
     }
 
     CheckinFilesIntoRepo
+
+    # Remove temporary files after they have been dropped in resources.
+    Remove-Item "localization\appcenter-distribute -recurse"
 }
 
 RefreshTDFiles
