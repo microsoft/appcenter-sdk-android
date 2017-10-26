@@ -21,7 +21,7 @@ import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.microsoft.appcenter.MobileCenter.LOG_TAG;
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
 public class DefaultChannel implements Channel {
 
@@ -85,9 +85,9 @@ public class DefaultChannel implements Channel {
     private final Ingestion mIngestion;
 
     /**
-     * Mobile Center core handler.
+     * App Center core handler.
      */
-    private final Handler mMobileCenterHandler;
+    private final Handler mAppCenterHandler;
 
     /**
      * Is channel enabled?
@@ -118,8 +118,8 @@ public class DefaultChannel implements Channel {
      * @param appSecret     The application secret.
      * @param logSerializer The log serializer.
      */
-    public DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler mobileCenterHandler) {
-        this(context, appSecret, buildDefaultPersistence(logSerializer), new IngestionHttp(context, logSerializer), mobileCenterHandler);
+    public DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler) {
+        this(context, appSecret, buildDefaultPersistence(logSerializer), new IngestionHttp(context, logSerializer), appCenterHandler);
     }
 
     /**
@@ -129,10 +129,10 @@ public class DefaultChannel implements Channel {
      * @param appSecret           The application secret.
      * @param persistence         Persistence object for dependency injection.
      * @param ingestion           Ingestion object for dependency injection.
-     * @param mobileCenterHandler Mobile Center looper thread handler.
+     * @param appCenterHandler    App Center looper thread handler.
      */
     @VisibleForTesting
-    DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull Persistence persistence, @NonNull Ingestion ingestion, @NonNull Handler mobileCenterHandler) {
+    DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull Persistence persistence, @NonNull Ingestion ingestion, @NonNull Handler appCenterHandler) {
         mContext = context;
         mAppSecret = appSecret;
         mInstallId = IdHelper.getInstallId();
@@ -141,7 +141,7 @@ public class DefaultChannel implements Channel {
         mListeners = new HashSet<>();
         mPersistence = persistence;
         mIngestion = ingestion;
-        mMobileCenterHandler = mobileCenterHandler;
+        mAppCenterHandler = appCenterHandler;
         mEnabled = true;
     }
 
@@ -172,7 +172,7 @@ public class DefaultChannel implements Channel {
     public synchronized void addGroup(final String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
 
         /* Init group. */
-        MobileCenterLog.debug(LOG_TAG, "addGroup(" + groupName + ")");
+        AppCenterLog.debug(LOG_TAG, "addGroup(" + groupName + ")");
         final GroupState groupState = new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener);
         mGroupStates.put(groupName, groupState);
 
@@ -271,7 +271,7 @@ public class DefaultChannel implements Channel {
         try {
             mIngestion.close();
         } catch (IOException e) {
-            MobileCenterLog.error(LOG_TAG, "Failed to close ingestion", e);
+            AppCenterLog.error(LOG_TAG, "Failed to close ingestion", e);
         }
         if (deleteLogs) {
             for (GroupState groupState : mGroupStates.values()) {
@@ -324,12 +324,12 @@ public class DefaultChannel implements Channel {
             return;
         }
         final GroupState groupState = mGroupStates.get(groupName);
-        MobileCenterLog.debug(LOG_TAG, "triggerIngestion(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
+        AppCenterLog.debug(LOG_TAG, "triggerIngestion(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
         cancelTimer(groupState);
 
         /* Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending. */
         if (groupState.mSendingBatches.size() == groupState.mMaxParallelBatches) {
-            MobileCenterLog.debug(LOG_TAG, "Already sending " + groupState.mMaxParallelBatches + " batches of analytics data to the server.");
+            AppCenterLog.debug(LOG_TAG, "Already sending " + groupState.mMaxParallelBatches + " batches of analytics data to the server.");
             return;
         }
 
@@ -350,7 +350,7 @@ public class DefaultChannel implements Channel {
 
         /* Decrement counter. */
         groupState.mPendingLogCount -= batch.size();
-        MobileCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
+        AppCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
 
         /* Remember this batch. */
         groupState.mSendingBatches.put(batchId, batch);
@@ -396,7 +396,7 @@ public class DefaultChannel implements Channel {
 
                 @Override
                 public void onCallSucceeded(String payload) {
-                    mMobileCenterHandler.post(new Runnable() {
+                    mAppCenterHandler.post(new Runnable() {
 
                         @Override
                         public void run() {
@@ -407,7 +407,7 @@ public class DefaultChannel implements Channel {
 
                 @Override
                 public void onCallFailed(final Exception e) {
-                    mMobileCenterHandler.post(new Runnable() {
+                    mAppCenterHandler.post(new Runnable() {
 
                         @Override
                         public void run() {
@@ -418,7 +418,7 @@ public class DefaultChannel implements Channel {
             });
 
             /* Check for more pending logs. */
-            mMobileCenterHandler.post(new Runnable() {
+            mAppCenterHandler.post(new Runnable() {
 
                 @Override
                 public void run() {
@@ -469,7 +469,7 @@ public class DefaultChannel implements Channel {
     private synchronized void handleSendingFailure(@NonNull final GroupState groupState, int currentState, @NonNull final String batchId, @NonNull final Exception e) {
         if (checkStateDidNotChange(groupState, currentState)) {
             String groupName = groupState.mName;
-            MobileCenterLog.error(LOG_TAG, "Sending logs groupName=" + groupName + " id=" + batchId + " failed", e);
+            AppCenterLog.error(LOG_TAG, "Sending logs groupName=" + groupName + " id=" + batchId + " failed", e);
             List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
             boolean recoverableError = HttpUtils.isRecoverableError(e);
             if (recoverableError) {
@@ -498,13 +498,13 @@ public class DefaultChannel implements Channel {
         /* Check group name is registered. */
         final GroupState groupState = mGroupStates.get(groupName);
         if (groupState == null) {
-            MobileCenterLog.error(LOG_TAG, "Invalid group name:" + groupName);
+            AppCenterLog.error(LOG_TAG, "Invalid group name:" + groupName);
             return;
         }
 
         /* Check if disabled with discarding logs. */
         if (mDiscardLogs) {
-            MobileCenterLog.warn(LOG_TAG, "Channel is disabled, log are discarded.");
+            AppCenterLog.warn(LOG_TAG, "Channel is disabled, log are discarded.");
             if (groupState.mListener != null) {
                 groupState.mListener.onBeforeSending(log);
                 groupState.mListener.onFailure(log, new CancellationException());
@@ -525,7 +525,7 @@ public class DefaultChannel implements Channel {
                 try {
                     mDevice = DeviceInfoHelper.getDeviceInfo(mContext);
                 } catch (DeviceInfoHelper.DeviceInfoException e) {
-                    MobileCenterLog.error(LOG_TAG, "Device log cannot be generated", e);
+                    AppCenterLog.error(LOG_TAG, "Device log cannot be generated", e);
                     return;
                 }
             }
@@ -545,14 +545,14 @@ public class DefaultChannel implements Channel {
             /* Increment counters and schedule ingestion if we are enabled. */
             mPersistence.putLog(groupName, log);
             groupState.mPendingLogCount++;
-            MobileCenterLog.debug(LOG_TAG, "enqueue(" + groupState.mName + ") pendingLogCount=" + groupState.mPendingLogCount);
+            AppCenterLog.debug(LOG_TAG, "enqueue(" + groupState.mName + ") pendingLogCount=" + groupState.mPendingLogCount);
             if (mEnabled) {
                 checkPendingLogs(groupState.mName);
             } else {
-                MobileCenterLog.warn(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
+                AppCenterLog.warn(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
             }
         } catch (Persistence.PersistenceException e) {
-            MobileCenterLog.error(LOG_TAG, "Error persisting log with exception: " + e.toString());
+            AppCenterLog.error(LOG_TAG, "Error persisting log with exception: " + e.toString());
         }
     }
 
@@ -564,7 +564,7 @@ public class DefaultChannel implements Channel {
     private synchronized void checkPendingLogs(@NonNull String groupName) {
         GroupState groupState = mGroupStates.get(groupName);
         long pendingLogCount = groupState.mPendingLogCount;
-        MobileCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupName + ") pendingLogCount=" + pendingLogCount);
+        AppCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupName + ") pendingLogCount=" + pendingLogCount);
         if (pendingLogCount >= groupState.mMaxLogsPerBatch) {
             triggerIngestion(groupName);
         } else if (pendingLogCount > 0 && !groupState.mScheduled) {
@@ -642,7 +642,7 @@ public class DefaultChannel implements Channel {
             @Override
             public void run() {
                 mScheduled = false;
-                mMobileCenterHandler.post(new Runnable() {
+                mAppCenterHandler.post(new Runnable() {
 
                     @Override
                     public void run() {

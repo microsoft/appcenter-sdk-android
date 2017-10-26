@@ -4,8 +4,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.MobileCenter;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.net.UnknownHostException;
 import java.util.Map;
@@ -97,7 +97,7 @@ public class HttpClientRetryer extends HttpClientDecorator {
                 if (e instanceof UnknownHostException) {
                     message += " (UnknownHostException)";
                 }
-                MobileCenterLog.warn(MobileCenter.LOG_TAG, message, e);
+                AppCenterLog.warn(AppCenter.LOG_TAG, message, e);
                 mHandler.postDelayed(this, delay);
             } else {
                 mServiceCallback.onCallFailed(e);

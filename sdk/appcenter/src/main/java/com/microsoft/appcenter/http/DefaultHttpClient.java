@@ -5,7 +5,7 @@ import android.os.AsyncTask;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +16,7 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 
-import static com.microsoft.appcenter.MobileCenter.LOG_TAG;
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static java.lang.Math.max;
 
 public class DefaultHttpClient implements HttpClient {
@@ -26,7 +26,7 @@ public class DefaultHttpClient implements HttpClient {
     public static final String METHOD_POST = "POST";
 
     /**
-     * Thread stats tag for Mobile Center HTTP calls.
+     * Thread stats tag for App Center HTTP calls.
      */
     private static final int THREAD_STATS_TAG = 0xD83DDC19;
 
@@ -141,7 +141,7 @@ public class DefaultHttpClient implements HttpClient {
             /* Build payload. */
             if (method.equals(METHOD_POST) && callTemplate != null) {
                 String payload = callTemplate.buildRequestBody();
-                MobileCenterLog.verbose(LOG_TAG, payload);
+                AppCenterLog.verbose(LOG_TAG, payload);
 
                 /* Send payload through the wire. */
                 byte[] binaryPayload = payload.getBytes(CHARSET_NAME);
@@ -162,7 +162,7 @@ public class DefaultHttpClient implements HttpClient {
             } else {
                 logPayload = "<binary>";
             }
-            MobileCenterLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + logPayload);
+            AppCenterLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + logPayload);
 
             /* Accept all 2xx codes. */
             if (status >= 200 && status < 300) {
