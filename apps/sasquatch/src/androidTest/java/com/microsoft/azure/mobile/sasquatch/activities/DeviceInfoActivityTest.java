@@ -12,11 +12,11 @@ import org.junit.Test;
 
 import static android.support.test.espresso.Espresso.onData;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
-import static android.support.test.espresso.core.deps.guava.base.Preconditions.checkNotNull;
 import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.allOf;
+import static org.junit.Assert.assertNotNull;
 
 @SuppressWarnings("unused")
 public class DeviceInfoActivityTest {
@@ -49,13 +49,13 @@ public class DeviceInfoActivityTest {
     }
 
     private static Matcher<Object> withInfoTitle(String expectedTitle) {
-        checkNotNull(expectedTitle);
+        assertNotNull(expectedTitle);
         return withInfoTitle(equalTo(expectedTitle));
     }
 
     @SuppressWarnings("rawtypes")
     private static Matcher<Object> withInfoTitle(final Matcher<String> itemTitleMatcher) {
-        checkNotNull(itemTitleMatcher);
+        assertNotNull(itemTitleMatcher);
         return new BoundedMatcher<Object, DeviceInfoActivity.DeviceInfoDisplayModel>(DeviceInfoActivity.DeviceInfoDisplayModel.class) {
             @Override
             public boolean matchesSafely(DeviceInfoActivity.DeviceInfoDisplayModel map) {

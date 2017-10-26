@@ -5,24 +5,32 @@
 evaluationDependsOn(':apps')
 
 android {
+
+    flavorDimensions "dependency"
+
     productFlavors {
         projectDependency {
+            dimension "dependency"
             applicationIdSuffix ".project"
         }
         jcenterDependency {
+            dimension "dependency"
             applicationIdSuffix ".jcenter"
         }
     }
+
     buildTypes {
         releaseProguard {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            matchingFallbacks = ['release']
         }
     }
 }
 
 dependencies {
     def version = "0.13.0"
+    compile "com.android.support:support-v4:${rootProject.ext.supportLibVersion}"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     projectDependencyCompile project(':sdk:mobile-center-analytics')
     projectDependencyCompile project(':sdk:mobile-center-crashes')
@@ -36,8 +44,8 @@ dependencies {
 
     /* Force usage this version of support annotations to avoid conflict. */
     androidTestCompile "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
-    androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.2'
-    compile 'com.android.support.test.espresso:espresso-idling-resource:2.2.2'
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.1'
+    compile 'com.android.support.test.espresso:espresso-idling-resource:3.0.1'
 }
 
 apply plugin: 'com.google.gms.google-services'
