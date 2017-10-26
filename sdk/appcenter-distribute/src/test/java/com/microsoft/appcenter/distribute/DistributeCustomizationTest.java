@@ -62,7 +62,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify the default update dialog is built. */
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
 
         /* Set Distribute listener and customize it. */
         DistributeListener listener = mock(DistributeListener.class);
@@ -76,7 +76,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         verify(listener).onReleaseAvailable(mActivity, details);
 
         /* Verify the default update dialog is built. The count includes previous call. */
-        verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
+        verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
 
         /* Resume activity again to invoke update request. */
         Distribute.getInstance().onActivityResumed(mActivity);
@@ -85,7 +85,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         verify(listener).onReleaseAvailable(mActivity, details);
 
         /* Verify the default update dialog is NOT built. The count includes previous call. */
-        verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
+        verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
     }
 
     @Test

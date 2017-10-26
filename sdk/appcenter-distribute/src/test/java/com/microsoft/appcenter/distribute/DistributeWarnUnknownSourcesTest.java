@@ -121,7 +121,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
         /* Click on first dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), clickListener.capture());
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
         when(mDialog.isShowing()).thenReturn(false);
 
@@ -270,7 +270,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         Intent intent = mock(Intent.class);
         whenNew(Intent.class).withArguments(Settings.ACTION_SECURITY_SETTINGS).thenReturn(intent);
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_unknown_sources_dialog_settings), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_unknown_sources_dialog_settings), clickListener.capture());
         clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
         when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
 
@@ -299,7 +299,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         Intent intentManageUnknownAppSources = mock(Intent.class);
         whenNew(Intent.class).withArguments(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).thenReturn(intentManageUnknownAppSources);
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_unknown_sources_dialog_settings), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_unknown_sources_dialog_settings), clickListener.capture());
 
         /* Verify behaviour on old version. */
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", BuildConfig.MIN_SDK_VERSION);
@@ -323,7 +323,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         Intent intent = mock(Intent.class);
         whenNew(Intent.class).withArguments(Settings.ACTION_SECURITY_SETTINGS).thenReturn(intent);
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_unknown_sources_dialog_settings), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_unknown_sources_dialog_settings), clickListener.capture());
         clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
         when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
 
@@ -359,7 +359,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         whenNew(Intent.class).withArguments(Settings.ACTION_SECURITY_SETTINGS).thenReturn(intent);
         doThrow(new ActivityNotFoundException()).when(mFirstActivity).startActivity(intent);
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_unknown_sources_dialog_settings), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_unknown_sources_dialog_settings), clickListener.capture());
         clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
         when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
 
@@ -390,7 +390,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         whenNew(Intent.class).withArguments(Settings.ACTION_SECURITY_SETTINGS).thenReturn(intent);
         doThrow(new ActivityNotFoundException()).when(mFirstActivity).startActivity(intent);
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_unknown_sources_dialog_settings), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_unknown_sources_dialog_settings), clickListener.capture());
         clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
         when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
 

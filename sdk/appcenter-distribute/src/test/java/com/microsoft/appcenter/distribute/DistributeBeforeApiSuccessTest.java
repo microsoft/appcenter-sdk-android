@@ -131,7 +131,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Verify dialog. */
         verify(mDialogBuilder).setCancelable(false);
-        verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_failed_dialog_title);
+        verify(mDialogBuilder).setTitle(R.string.appcenter_distribute_update_failed_dialog_title);
         verify(mDialogBuilder).setMessage("failed_message");
         verify(mDialog).show();
         verifyStatic();
@@ -336,7 +336,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     public void disableBeforeHandleUpdateSetupFailureDialogIgnoreAction() throws Exception {
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
         showUpdateSetupFailedDialog(clickListener);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_failed_dialog_ignore), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_update_failed_dialog_ignore), clickListener.capture());
 
         /* Disable. */
         Distribute.setEnabled(false);
@@ -350,7 +350,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     public void disableBeforeHandleUpdateSetupFailureDialogReinstallAction() throws Exception {
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
         showUpdateSetupFailedDialog(clickListener);
-        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_failed_dialog_reinstall), clickListener.capture());
+        verify(mDialogBuilder).setNegativeButton(eq(R.string.appcenter_distribute_update_failed_dialog_reinstall), clickListener.capture());
 
         /* Disable. */
         Distribute.setEnabled(false);
@@ -364,7 +364,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     public void handleFailedUpdateSetupDialogReinstallAction() throws URISyntaxException {
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
         showUpdateSetupFailedDialog(clickListener);
-        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_failed_dialog_reinstall), clickListener.capture());
+        verify(mDialogBuilder).setNegativeButton(eq(R.string.appcenter_distribute_update_failed_dialog_reinstall), clickListener.capture());
 
         /* Click. */
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
@@ -379,7 +379,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
         showUpdateSetupFailedDialog(clickListener);
         when(BrowserUtils.appendUri(anyString(), anyString())).thenThrow(new URISyntaxException("Ex", "Reason"));
-        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_failed_dialog_reinstall), clickListener.capture());
+        verify(mDialogBuilder).setNegativeButton(eq(R.string.appcenter_distribute_update_failed_dialog_reinstall), clickListener.capture());
 
         /* Click. */
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
@@ -404,9 +404,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Verify dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
         verify(mDialogBuilder).setCancelable(false);
-        verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_failed_dialog_title);
+        verify(mDialogBuilder).setTitle(R.string.appcenter_distribute_update_failed_dialog_title);
         verify(mDialogBuilder).setMessage("failed_message");
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_failed_dialog_ignore), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_update_failed_dialog_ignore), clickListener.capture());
         verify(mDialog).show();
 
         /* Click. */

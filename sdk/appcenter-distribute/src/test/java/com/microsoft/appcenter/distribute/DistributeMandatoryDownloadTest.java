@@ -205,7 +205,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
 
         /* Check dialog shown. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_install), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_install), clickListener.capture());
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
         waitCheckDownloadTask();
         verify(mContext, times(2)).startActivity(installIntent);
@@ -215,7 +215,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
 
         /* Pause/resume leave existing dialog intact. */
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_install), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_install), clickListener.capture());
 
         /* If we restart the app process, it will display install U.I. again skipping dialog. */
         restartProcessAndSdk();
@@ -232,7 +232,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         verify(mDownloadManager).remove(DOWNLOAD_ID);
 
         /* Check no more dialog displayed. */
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_install), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_install), clickListener.capture());
 
         /* And that we don't prompt install anymore. */
         verify(mContext, times(3)).startActivity(installIntent);
@@ -259,7 +259,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
 
         /* Verify install dialog shown. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_install), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_install), clickListener.capture());
 
         /* Disable SDK. */
         Distribute.setEnabled(false);

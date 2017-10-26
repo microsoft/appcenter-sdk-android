@@ -54,7 +54,7 @@ public class SettingsActivity extends AppCompatActivity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.settings);
-            initCheckBoxSetting(R.string.mobile_center_state_key, R.string.mobile_center_state_summary_enabled, R.string.mobile_center_state_summary_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.appcenter_state_key, R.string.appcenter_state_summary_enabled, R.string.appcenter_state_summary_disabled, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
@@ -66,7 +66,7 @@ public class SettingsActivity extends AppCompatActivity {
                     return MobileCenter.isEnabled().get();
                 }
             });
-            initCheckBoxSetting(R.string.mobile_center_analytics_state_key, R.string.mobile_center_analytics_state_summary_enabled, R.string.mobile_center_analytics_state_summary_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.appcenter_analytics_state_key, R.string.appcenter_analytics_state_summary_enabled, R.string.appcenter_analytics_state_summary_disabled, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
@@ -78,7 +78,7 @@ public class SettingsActivity extends AppCompatActivity {
                     return Analytics.isEnabled().get();
                 }
             });
-            initCheckBoxSetting(R.string.mobile_center_crashes_state_key, R.string.mobile_center_crashes_state_summary_enabled, R.string.mobile_center_crashes_state_summary_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.appcenter_crashes_state_key, R.string.appcenter_crashes_state_summary_enabled, R.string.appcenter_crashes_state_summary_disabled, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
@@ -90,7 +90,7 @@ public class SettingsActivity extends AppCompatActivity {
                     return Crashes.isEnabled().get();
                 }
             });
-            initCheckBoxSetting(R.string.mobile_center_distribute_state_key, R.string.mobile_center_distribute_state_summary_enabled, R.string.mobile_center_distribute_state_summary_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.appcenter_distribute_state_key, R.string.appcenter_distribute_state_summary_enabled, R.string.appcenter_distribute_state_summary_disabled, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
@@ -102,7 +102,7 @@ public class SettingsActivity extends AppCompatActivity {
                     return Distribute.isEnabled().get();
                 }
             });
-            initCheckBoxSetting(R.string.mobile_center_push_state_key, R.string.mobile_center_push_state_summary_enabled, R.string.mobile_center_push_state_summary_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.appcenter_push_state_key, R.string.appcenter_push_state_summary_enabled, R.string.appcenter_push_state_summary_disabled, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
@@ -119,7 +119,7 @@ public class SettingsActivity extends AppCompatActivity {
                 Class<? extends MobileCenterService> rum = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.appcenter.rum.RealUserMeasurements");
                 final Method isEnabled = rum.getMethod("isEnabled");
                 final Method setEnabled = rum.getMethod("setEnabled", boolean.class);
-                initCheckBoxSetting(R.string.mobile_center_rum_state_key, R.string.mobile_center_rum_state_summary_enabled, R.string.mobile_center_rum_state_summary_disabled, new HasEnabled() {
+                initCheckBoxSetting(R.string.appcenter_rum_state_key, R.string.appcenter_rum_state_summary_enabled, R.string.appcenter_rum_state_summary_disabled, new HasEnabled() {
 
                     @Override
                     public void setEnabled(boolean enabled) {
@@ -143,7 +143,7 @@ public class SettingsActivity extends AppCompatActivity {
             } catch (Exception e) {
                 getPreferenceScreen().removePreference(findPreference(getString(R.string.real_user_measurements_key)));
             }
-            initCheckBoxSetting(R.string.mobile_center_push_firebase_state_key, R.string.mobile_center_push_firebase_summary_enabled, R.string.mobile_center_push_firebase_summary_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.appcenter_push_firebase_state_key, R.string.appcenter_push_firebase_summary_enabled, R.string.appcenter_push_firebase_summary_disabled, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
@@ -164,7 +164,7 @@ public class SettingsActivity extends AppCompatActivity {
                     return isFirebaseEnabled();
                 }
             });
-            initCheckBoxSetting(R.string.mobile_center_auto_page_tracking_key, R.string.mobile_center_auto_page_tracking_enabled, R.string.mobile_center_auto_page_tracking_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.appcenter_auto_page_tracking_key, R.string.appcenter_auto_page_tracking_enabled, R.string.appcenter_auto_page_tracking_disabled, new HasEnabled() {
 
                 @Override
                 public boolean isEnabled() {

@@ -1073,17 +1073,17 @@ public class Distribute extends AbstractMobileCenterService {
             }
             MobileCenterLog.debug(LOG_TAG, "Show default update dialog.");
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
-            dialogBuilder.setTitle(R.string.mobile_center_distribute_update_dialog_title);
+            dialogBuilder.setTitle(R.string.appcenter_distribute_update_dialog_title);
             final ReleaseDetails releaseDetails = mReleaseDetails;
             String message;
             if (releaseDetails.isMandatoryUpdate()) {
-                message = mContext.getString(R.string.mobile_center_distribute_update_dialog_message_mandatory);
+                message = mContext.getString(R.string.appcenter_distribute_update_dialog_message_mandatory);
             } else {
-                message = mContext.getString(R.string.mobile_center_distribute_update_dialog_message_optional);
+                message = mContext.getString(R.string.appcenter_distribute_update_dialog_message_optional);
             }
             message = formatAppNameAndVersion(message);
             dialogBuilder.setMessage(message);
-            dialogBuilder.setPositiveButton(R.string.mobile_center_distribute_update_dialog_download, new DialogInterface.OnClickListener() {
+            dialogBuilder.setPositiveButton(R.string.appcenter_distribute_update_dialog_download, new DialogInterface.OnClickListener() {
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -1092,7 +1092,7 @@ public class Distribute extends AbstractMobileCenterService {
             });
             dialogBuilder.setCancelable(false);
             if (!releaseDetails.isMandatoryUpdate()) {
-                dialogBuilder.setNegativeButton(R.string.mobile_center_distribute_update_dialog_postpone, new DialogInterface.OnClickListener() {
+                dialogBuilder.setNegativeButton(R.string.appcenter_distribute_update_dialog_postpone, new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -1101,7 +1101,7 @@ public class Distribute extends AbstractMobileCenterService {
                 });
             }
             if (releaseDetails.getReleaseNotes() != null && releaseDetails.getReleaseNotesUrl() != null) {
-                dialogBuilder.setNeutralButton(R.string.mobile_center_distribute_update_dialog_view_release_notes, new DialogInterface.OnClickListener() {
+                dialogBuilder.setNeutralButton(R.string.appcenter_distribute_update_dialog_view_release_notes, new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -1181,7 +1181,7 @@ public class Distribute extends AbstractMobileCenterService {
          * Also for buttons and texts we try do to the same as the system dialog on standard devices.
          */
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
-        dialogBuilder.setMessage(R.string.mobile_center_distribute_unknown_sources_dialog_message);
+        dialogBuilder.setMessage(R.string.appcenter_distribute_unknown_sources_dialog_message);
         final ReleaseDetails releaseDetails = mReleaseDetails;
         if (releaseDetails.isMandatoryUpdate()) {
             dialogBuilder.setCancelable(false);
@@ -1203,7 +1203,7 @@ public class Distribute extends AbstractMobileCenterService {
         }
 
         /* We use generic OK button as we can't promise we can navigate to settings. */
-        dialogBuilder.setPositiveButton(R.string.mobile_center_distribute_unknown_sources_dialog_settings, new DialogInterface.OnClickListener() {
+        dialogBuilder.setPositiveButton(R.string.appcenter_distribute_unknown_sources_dialog_settings, new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -1227,16 +1227,16 @@ public class Distribute extends AbstractMobileCenterService {
         MobileCenterLog.debug(LOG_TAG, "Show update setup failed dialog.");
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
         dialogBuilder.setCancelable(false);
-        dialogBuilder.setTitle(R.string.mobile_center_distribute_update_failed_dialog_title);
+        dialogBuilder.setTitle(R.string.appcenter_distribute_update_failed_dialog_title);
         dialogBuilder.setMessage(errorMessage);
-        dialogBuilder.setPositiveButton(R.string.mobile_center_distribute_update_failed_dialog_ignore, new DialogInterface.OnClickListener() {
+        dialogBuilder.setPositiveButton(R.string.appcenter_distribute_update_failed_dialog_ignore, new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 storeUpdateSetupFailedPackageHash(dialog);
             }
         });
-        dialogBuilder.setNegativeButton(R.string.mobile_center_distribute_update_failed_dialog_reinstall, new DialogInterface.OnClickListener() {
+        dialogBuilder.setNegativeButton(R.string.appcenter_distribute_update_failed_dialog_reinstall, new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -1338,7 +1338,7 @@ public class Distribute extends AbstractMobileCenterService {
      * that will likely never happen but we guard for it.
      */
     private void showDisabledToast() {
-        Toast.makeText(mContext, R.string.mobile_center_distribute_dialog_actioned_on_disabled_toast, Toast.LENGTH_SHORT).show();
+        Toast.makeText(mContext, R.string.appcenter_distribute_dialog_actioned_on_disabled_toast, Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -1447,7 +1447,7 @@ public class Distribute extends AbstractMobileCenterService {
 
             /* Create or update notification channel (mandatory on Android 8 target). */
             NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
-                    mContext.getString(R.string.mobile_center_distribute_notification_category),
+                    mContext.getString(R.string.appcenter_distribute_notification_category),
                     NotificationManager.IMPORTANCE_DEFAULT);
             notificationManager.createNotificationChannel(channel);
             builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
@@ -1456,8 +1456,8 @@ public class Distribute extends AbstractMobileCenterService {
             //noinspection deprecation
             builder = new Notification.Builder(mContext);
         }
-        builder.setTicker(mContext.getString(R.string.mobile_center_distribute_install_ready_title))
-                .setContentTitle(mContext.getString(R.string.mobile_center_distribute_install_ready_title))
+        builder.setTicker(mContext.getString(R.string.appcenter_distribute_install_ready_title))
+                .setContentTitle(mContext.getString(R.string.appcenter_distribute_install_ready_title))
                 .setContentText(getInstallReadyMessage())
                 .setSmallIcon(mContext.getApplicationInfo().icon)
                 .setContentIntent(PendingIntent.getActivities(mContext, 0, new Intent[]{intent}, 0));
@@ -1501,7 +1501,7 @@ public class Distribute extends AbstractMobileCenterService {
     @SuppressWarnings("deprecation")
     private void showDownloadProgress() {
         mProgressDialog = new ProgressDialog(mForegroundActivity);
-        mProgressDialog.setTitle(R.string.mobile_center_distribute_downloading_mandatory_update);
+        mProgressDialog.setTitle(R.string.appcenter_distribute_downloading_mandatory_update);
         mProgressDialog.setCancelable(false);
         mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         mProgressDialog.setIndeterminate(true);
@@ -1547,7 +1547,7 @@ public class Distribute extends AbstractMobileCenterService {
 
                     /* Configure the progress dialog determinate style. */
                     mProgressDialog.setProgressPercentFormat(NumberFormat.getPercentInstance());
-                    mProgressDialog.setProgressNumberFormat(mForegroundActivity.getString(R.string.mobile_center_distribute_download_progress_number_format));
+                    mProgressDialog.setProgressNumberFormat(mForegroundActivity.getString(R.string.appcenter_distribute_download_progress_number_format));
                     mProgressDialog.setIndeterminate(false);
                     mProgressDialog.setMax((int) (downloadProgress.getTotalSize() / MEBIBYTE_IN_BYTES));
                 }
@@ -1573,9 +1573,9 @@ public class Distribute extends AbstractMobileCenterService {
             final ReleaseDetails releaseDetails = mReleaseDetails;
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
             dialogBuilder.setCancelable(false);
-            dialogBuilder.setTitle(R.string.mobile_center_distribute_install_ready_title);
+            dialogBuilder.setTitle(R.string.appcenter_distribute_install_ready_title);
             dialogBuilder.setMessage(getInstallReadyMessage());
-            dialogBuilder.setPositiveButton(R.string.mobile_center_distribute_install, new DialogInterface.OnClickListener() {
+            dialogBuilder.setPositiveButton(R.string.appcenter_distribute_install, new DialogInterface.OnClickListener() {
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -1591,7 +1591,7 @@ public class Distribute extends AbstractMobileCenterService {
      * Get text for app is ready to be installed.
      */
     private String getInstallReadyMessage() {
-        return formatAppNameAndVersion(mContext.getString(R.string.mobile_center_distribute_install_ready_message));
+        return formatAppNameAndVersion(mContext.getString(R.string.appcenter_distribute_install_ready_message));
     }
 
     /**

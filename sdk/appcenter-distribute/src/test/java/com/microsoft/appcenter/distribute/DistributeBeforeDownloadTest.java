@@ -214,7 +214,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify dialog. */
-        verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_dialog_title);
+        verify(mDialogBuilder).setTitle(R.string.appcenter_distribute_update_dialog_title);
         verify(mDialogBuilder).setMessage("unit-test-app7.07");
         verify(mDialogBuilder).create();
         verify(mDialog).show();
@@ -279,7 +279,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify dialog. */
-        verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_dialog_title);
+        verify(mDialogBuilder).setTitle(R.string.appcenter_distribute_update_dialog_title);
         verify(mDialogBuilder).setMessage("hardcoded-app-name1.2.36");
         verify(mDialogBuilder).create();
         verify(mDialog).show();
@@ -385,7 +385,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_dialog_postpone), clickListener.capture());
+        verify(mDialogBuilder).setNegativeButton(eq(R.string.appcenter_distribute_update_dialog_postpone), clickListener.capture());
         verify(mDialog).show();
 
         /* Postpone it. */
@@ -434,7 +434,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Postpone again. */
         clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder, times(2)).setNegativeButton(eq(R.string.mobile_center_distribute_update_dialog_postpone), clickListener.capture());
+        verify(mDialogBuilder, times(2)).setNegativeButton(eq(R.string.appcenter_distribute_update_dialog_postpone), clickListener.capture());
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
 
         /* Check postpone again. */
@@ -488,7 +488,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_dialog_postpone), clickListener.capture());
+        verify(mDialogBuilder).setNegativeButton(eq(R.string.appcenter_distribute_update_dialog_postpone), clickListener.capture());
         verify(mDialog).show();
 
         /* Disable. */
@@ -544,7 +544,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), clickListener.capture());
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), clickListener.capture());
         verify(mDialog).show();
 
         /* Disable. */
@@ -617,13 +617,13 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify dialog. */
         verify(mDialogBuilder, never()).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
 
         /* Verify dialog restored offline even if process restarts. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
+        verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
         verify(mDialogBuilder, never()).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
         verify(httpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         assertNotNull(serviceCallbackRef.get());
@@ -642,7 +642,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify call is made and that we restored again mandatory update dialog in the mean time. */
         verify(httpClient, times(3)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-        verify(mDialogBuilder, times(3)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
+        verify(mDialogBuilder, times(3)).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
         verify(mDialogBuilder, never()).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
 
         /* Then detect new release in background. */
@@ -661,7 +661,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mDialogBuilder, times(4)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
+        verify(mDialogBuilder, times(4)).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
         verify(mDialogBuilder).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
 
         /* And still check again for further update. */
@@ -681,7 +681,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Dialog shown only after new call made in that scenario. */
         serviceCallbackRef.get().onCallSucceeded("mock");
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder, times(5)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), clickListener.capture());
+        verify(mDialogBuilder, times(5)).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), clickListener.capture());
         verify(mDialogBuilder, times(2)).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
 
         /* If we finally click on download, no call cancel since already successful. */
@@ -726,7 +726,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify dialog. */
         serviceCallbackRef.get().onCallSucceeded("mock");
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
 
         /* Restart offline. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
@@ -736,7 +736,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Verify dialog restored and call scheduled. */
         verify(httpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.mobile_center_distribute_update_dialog_download), clickListener.capture());
+        verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), clickListener.capture());
 
         /* We are offline and call is scheduled, clicking download must cancel pending call. */
         when(InstallerUtils.isUnknownSourcesEnabled(mContext)).thenReturn(true);
@@ -772,14 +772,14 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog. */
-        verify(mDialogBuilder, never()).setNeutralButton(eq(R.string.mobile_center_distribute_update_dialog_view_release_notes), any(DialogInterface.OnClickListener.class));
+        verify(mDialogBuilder, never()).setNeutralButton(eq(R.string.appcenter_distribute_update_dialog_view_release_notes), any(DialogInterface.OnClickListener.class));
         verify(mDialog).show();
 
         /* Release notes but somehow no URL. */
         when(releaseDetails.getReleaseNotes()).thenReturn("Fix a bug");
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mDialogBuilder, never()).setNeutralButton(eq(R.string.mobile_center_distribute_update_dialog_view_release_notes), any(DialogInterface.OnClickListener.class));
+        verify(mDialogBuilder, never()).setNeutralButton(eq(R.string.appcenter_distribute_update_dialog_view_release_notes), any(DialogInterface.OnClickListener.class));
         verify(mDialog, times(2)).show();
 
         /* Release notes URL this time. */
@@ -790,7 +790,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mActivity);
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setNeutralButton(eq(R.string.mobile_center_distribute_update_dialog_view_release_notes), clickListener.capture());
+        verify(mDialogBuilder).setNeutralButton(eq(R.string.appcenter_distribute_update_dialog_view_release_notes), clickListener.capture());
         verify(mDialog, times(3)).show();
 
         /* Click and check navigation. */
@@ -804,7 +804,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Going back should restore dialog. */
         Distribute.getInstance().onActivityResumed(mActivity);
         clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder, times(2)).setNeutralButton(eq(R.string.mobile_center_distribute_update_dialog_view_release_notes), clickListener.capture());
+        verify(mDialogBuilder, times(2)).setNeutralButton(eq(R.string.appcenter_distribute_update_dialog_view_release_notes), clickListener.capture());
         verify(mDialog, times(4)).show();
 
         /* Do the same test and simulate failed navigation. */
