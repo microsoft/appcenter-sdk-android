@@ -4,6 +4,7 @@ import org.junit.After;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -35,6 +36,13 @@ public final class TestUtils {
         assertNotEquals(o, o.getClass());
     }
 
+    public static void checkStringMapEquals(Map<String, String> expected, Map<String, String> actual) {
+
+        assertEquals(expected.keySet().size(), actual.keySet().size());
+        for (String key : expected.keySet()) {
+            assertEquals(expected.get(key), actual.get(key));
+        }
+    }
     /**
      * Use this method as a last resort alternative when Whitebox.setInternalState fails
      * on static final variable and you are using the PowerMockRule (or just mockito).

@@ -7,7 +7,7 @@ import com.google.firebase.iid.FirebaseInstanceId;
 /**
  * Utilities to manipulate Firebase Push SDK.
  */
-final class FirebaseUtils {
+class FirebaseUtils {
 
     @VisibleForTesting
     FirebaseUtils() {

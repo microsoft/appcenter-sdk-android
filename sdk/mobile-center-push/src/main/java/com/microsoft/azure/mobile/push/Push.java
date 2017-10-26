@@ -314,16 +314,13 @@ public class Push extends AbstractMobileCenterService {
      */
     private synchronized void checkPushInIntent(Intent intent) {
         if (mInstanceListener != null) {
-            Bundle extras = intent.getExtras();
-            if (extras != null) {
-                String googleMessageId = PushIntentUtils.getGoogleMessageId(intent);
-                if (googleMessageId != null && !googleMessageId.equals(mLastGoogleMessageId)) {
-                    PushNotification notification = new PushNotification(intent);
-                    MobileCenterLog.info(LOG_TAG, "Clicked push message from background id=" + googleMessageId);
-                    mLastGoogleMessageId = googleMessageId;
-                    MobileCenterLog.debug(LOG_TAG, "Push intent extras=" + extras);
-                    mInstanceListener.onPushNotificationReceived(mActivity, notification);
-                }
+            String googleMessageId = PushIntentUtils.getGoogleMessageId(intent);
+            if (googleMessageId != null && !googleMessageId.equals(mLastGoogleMessageId)) {
+                PushNotification notification = new PushNotification(intent);
+                MobileCenterLog.info(LOG_TAG, "Clicked push message from background id=" + googleMessageId);
+                mLastGoogleMessageId = googleMessageId;
+                MobileCenterLog.debug(LOG_TAG, "Push intent extras=" + intent.getExtras());
+                mInstanceListener.onPushNotificationReceived(mActivity, notification);
             }
         }
     }
@@ -334,22 +331,21 @@ public class Push extends AbstractMobileCenterService {
      * @param pushIntent intent from push.
      */
     synchronized void onMessageReceived(Context context, final Intent pushIntent) {
-        if (!FirebaseUtils.isFirebaseAvailable()) {
-            if (mActivity != null) {
-                String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
-                final PushNotification notification = new PushNotification(pushIntent);
-                MobileCenterLog.info(LOG_TAG, "Received push message in foreground id=" + messageId);
-                postOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        handleOnMessageReceived(notification);
-                    }
-                });
-                return;
+        if (mActivity == null) {
+            if (!FirebaseUtils.isFirebaseAvailable()) {
+                PushNotifier.handleNotification(context, pushIntent);
             }
-            PushNotifier.handleNotification(context, pushIntent);
+            return;
         }
+        String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
+        final PushNotification notification = new PushNotification(pushIntent);
+        MobileCenterLog.info(LOG_TAG, "Received push message in foreground id=" + messageId);
+        postOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                handleOnMessageReceived(notification);
+            }
+        });
     }
 
     /**

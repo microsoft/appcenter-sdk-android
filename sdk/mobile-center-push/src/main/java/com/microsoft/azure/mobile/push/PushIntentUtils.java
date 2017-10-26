@@ -14,20 +14,35 @@ class PushIntentUtils {
     /**
      * Intent keys.
      */
-    private static final String EXTRA_GCM_PREFIX = "gcm.notification.";
-    private static final String EXTRA_TITLE = EXTRA_GCM_PREFIX + "title";
-    private static final String EXTRA_MESSAGE = EXTRA_GCM_PREFIX + "body";
-    private static final String EXTRA_COLOR =  EXTRA_GCM_PREFIX + "color";
-    private static final String EXTRA_SOUND = EXTRA_GCM_PREFIX + "sound";
-    private static final String EXTRA_CUSTOM_SOUND = EXTRA_GCM_PREFIX + "sound2";
-    private static final String EXTRA_ICON = EXTRA_GCM_PREFIX + "icon";
-    private static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
+    @VisibleForTesting
+    static final String EXTRA_GCM_PREFIX = "gcm.notification.";
+
+    @VisibleForTesting
+    static final String EXTRA_TITLE = EXTRA_GCM_PREFIX + "title";
+
+    @VisibleForTesting
+    static final String EXTRA_MESSAGE = EXTRA_GCM_PREFIX + "body";
+
+    @VisibleForTesting
+    static final String EXTRA_COLOR =  EXTRA_GCM_PREFIX + "color";
+
+    @VisibleForTesting
+    static final String EXTRA_SOUND = EXTRA_GCM_PREFIX + "sound";
+
+    @VisibleForTesting
+    static final String EXTRA_CUSTOM_SOUND = EXTRA_GCM_PREFIX + "sound2";
+
+    @VisibleForTesting
+    static final String EXTRA_ICON = EXTRA_GCM_PREFIX + "icon";
+
+    @VisibleForTesting
+    static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
 
     /**
      * Intent extras not part of custom data.
      */
     @VisibleForTesting
-    private static final Set<String> EXTRA_STANDARD_KEYS = new HashSet<String>() {
+    static final Set<String> EXTRA_STANDARD_KEYS = new HashSet<String>() {
         {
             add(EXTRA_GOOGLE_MESSAGE_ID);
             add("google.sent_time");
@@ -118,10 +133,10 @@ class PushIntentUtils {
     }
 
     /**
-     * Returns the color resource ID that was set in the intent.
+     * Returns the color string that was set in the intent.
      *
      * @param pushIntent The push intent.
-     * @return The color id as a string, null if none was set.
+     * @return The color a string, null if none was set.
      */
      static String getColor(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_COLOR);

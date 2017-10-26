@@ -123,15 +123,8 @@ class PushNotifier {
     @SuppressWarnings("deprecation")
     private static void setColor(Intent pushIntent, Notification.Builder builder) {
         String colorString = PushIntentUtils.getColor(pushIntent);
-        if (colorString == null) {
-            return;
-        }
-        try {
+        if (colorString != null) {
             builder.setColor(Color.parseColor(colorString));
-        }
-        catch (IllegalArgumentException e) {
-            MobileCenterLog.warn(Push.getInstance().getLoggerTag(),
-                    "Invalid color string.");
         }
     }
 
