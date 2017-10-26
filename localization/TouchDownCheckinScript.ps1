@@ -252,7 +252,7 @@ Function RefreshTDFiles
     CheckinFilesIntoRepo
 
     # Remove temporary files after they have been dropped in resources.
-    Remove-Item "localization\appcenter-distribute -recurse"
+    Remove-Item "appcenter-distribute -recurse"
 }
 
 RefreshTDFiles
