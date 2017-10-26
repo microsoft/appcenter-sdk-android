@@ -27,7 +27,7 @@ public abstract class LogActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log);
         mLayoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mList = (ViewGroup) findViewById(R.id.list);
+        mList = findViewById(R.id.list);
         addProperty();
     }
 

@@ -6,7 +6,6 @@ subprojects {
     apply plugin: 'com.android.application'
 
     android {
-        buildToolsVersion rootProject.ext.buildToolsVersion
 
         buildTypes {
             release {
@@ -30,33 +29,26 @@ subprojects {
     }
 }
 
-// Task to copy an APK from sub projects to current project.
-def copyApkToProjectBuildTask(variantName) {
-    subprojects.android.applicationVariants.each { applicationVariant ->
-        applicationVariant.each { variant ->
-
-            // Copy only one APK to current project
-            if (variant.name.contains(variantName) && variant.name.contains('projectDependency')) {
-                variant.outputs.outputFile.each { File file ->
-                    copy {
-                        from "${file.absolutePath}"
-                        into "${buildDir}/outputs/apk/"
-                    }
-                }
-            }
+// Task to copy a specific APK from sub projects to current project, for Mobile Center build to find it.
+def copyApkToProjectBuildTask(buildType) {
+    def variant = 'projectDependency'
+    subprojects.each { project ->
+        copy {
+            from "${project.buildDir}/outputs/apk/${variant}/${buildType}/${project.name}-${variant}-${buildType}.apk"
+            into "${buildDir}/outputs/apk/"
         }
     }
 }
 
 task assembleDebug() {
     doLast {
-        copyApkToProjectBuildTask('Debug')
+        copyApkToProjectBuildTask('debug')
     }
 }
 
 task assembleRelease() {
     doLast {
-        copyApkToProjectBuildTask('Release')
+        copyApkToProjectBuildTask('release')
     }
 }
 

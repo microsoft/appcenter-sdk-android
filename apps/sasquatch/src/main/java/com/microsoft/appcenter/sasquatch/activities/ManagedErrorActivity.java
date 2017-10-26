@@ -51,7 +51,7 @@ public class ManagedErrorActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
 
-        ListView listView = (ListView) findViewById(R.id.list);
+        ListView listView = findViewById(R.id.list);
         listView.setAdapter(new ArrayAdapter<Class<? extends Throwable>>(this, android.R.layout.simple_list_item_1, sSupportedThrowables) {
             @SuppressWarnings("ConstantConditions")
             @NonNull
