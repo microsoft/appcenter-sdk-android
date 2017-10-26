@@ -51,7 +51,7 @@ public class CrashActivity extends AppCompatActivity {
                 @Override
                 @SuppressWarnings("ResultOfMethodCallIgnored")
                 public void run() {
-                    ListView view = (ListView) findViewById(R.id.list);
+                    ListView view = findViewById(R.id.list);
                     view.setAdapter(new ArrayAdapter<>(CrashActivity.this, android.R.layout.simple_list_item_2, sCrashes));
                 }
             }),
@@ -128,7 +128,7 @@ public class CrashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
 
-        ListView listView = (ListView) findViewById(R.id.list);
+        ListView listView = findViewById(R.id.list);
         listView.setAdapter(new ArrayAdapter<Crash>(this, android.R.layout.simple_list_item_2, android.R.id.text1, sCrashes) {
 
             @SuppressWarnings("ConstantConditions")

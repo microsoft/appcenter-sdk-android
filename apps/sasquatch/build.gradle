@@ -37,19 +37,23 @@ android {
         releaseProguard {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            matchingFallbacks = ['release']
         }
     }
 }
 
 dependencies {
+
+    compile "com.android.support:support-v4:${rootProject.ext.supportLibVersion}"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
 
     projectDependencyCompile project(':sdk:mobile-center-analytics')
     projectDependencyCompile project(':sdk:mobile-center-crashes')
     projectDependencyCompile project(':sdk:mobile-center-distribute')
     projectDependencyCompile project(':sdk:mobile-center-push')
+    projectDependencyCompile project(':sdk:mobile-center-rum')
 
-    def version = "0.12.0"
+    def version = "0.13.0"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-analytics:${version}"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-crashes:${version}"
     jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-distribute:${version}"
@@ -60,8 +64,8 @@ dependencies {
 
     /* Force usage this version of support annotations to avoid conflict. */
     androidTestCompile "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
-    androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.2'
-    compile 'com.android.support.test.espresso:espresso-idling-resource:2.2.2'
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.1'
+    compile 'com.android.support.test.espresso:espresso-idling-resource:3.0.1'
 }
 
 /*

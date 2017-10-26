@@ -1,12 +1,11 @@
 // Version constants
 
 ext {
-    versionCode = 26
-    versionName = '0.13.0'
+    versionCode = 27
+    versionName = '0.13.1'
     minSdkVersion = 15
     targetSdkVersion = 26
     compileSdkVersion = 26
-    buildToolsVersion = '26.0.1'
-    supportLibVersion = '26.0.2'
+    supportLibVersion = '27.0.0'
     firebaseLibVersion = '11.0.2'
 }
