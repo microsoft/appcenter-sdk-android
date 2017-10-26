@@ -3,5 +3,7 @@ evaluationDependsOn(':sdk')
 
 dependencies {
     compile project(':sdk:mobile-center')
-    provided "com.google.firebase:firebase-messaging:${rootProject.ext.firebaseLibVersion}"
+    def fcm = "com.google.firebase:firebase-messaging:${rootProject.ext.firebaseLibVersion}"
+    provided fcm
+    testCompile fcm
 }
