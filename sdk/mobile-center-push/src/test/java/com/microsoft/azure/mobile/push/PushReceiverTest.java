@@ -23,7 +23,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class PushReceiverTest {
 
     @Mock
-    Push mPush;
+    private Push mPush;
 
     @Before
     public void setUp() throws Exception {

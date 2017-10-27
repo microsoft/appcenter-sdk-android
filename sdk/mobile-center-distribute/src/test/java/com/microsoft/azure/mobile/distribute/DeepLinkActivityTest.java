@@ -11,6 +11,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -70,6 +71,27 @@ public class DeepLinkActivityTest {
         Intent intent = mock(Intent.class);
         when(intent.getStringExtra(DistributeConstants.EXTRA_REQUEST_ID)).thenReturn("mock");
         invalidIntent(intent);
+    }
+
+    @Test
+    public void vaidWithUpdateSetupFailedAndNoTaskRoot() {
+
+         /* Build valid intent. */
+        Intent intent = mock(Intent.class);
+        when(intent.getStringExtra(DistributeConstants.EXTRA_REQUEST_ID)).thenReturn("mock1");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_UPDATE_SETUP_FAILED)).thenReturn("mock2");
+        when(intent.getFlags()).thenReturn(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
+
+        /* Start activity. */
+        DeepLinkActivity activity = spy(new DeepLinkActivity());
+        when(activity.getIntent()).thenReturn(intent);
+        activity.onCreate(null);
+
+         /* Verify interactions. */
+        verify(activity, never()).startActivity(any(Intent.class));
+        verify(mDistribute, never()).storeRedirectionParameters(anyString(), anyString(), anyString());
+        verify(activity).finish();
+        verify(mDistribute).storeUpdateSetupFailedParameter("mock1", "mock2");
     }
 
     @Test

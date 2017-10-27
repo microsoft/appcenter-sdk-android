@@ -5,6 +5,7 @@ include ':sdk:mobile-center-crashes'
 include ':sdk:mobile-center-analytics'
 include ':sdk:mobile-center-distribute'
 include ':sdk:mobile-center-push'
+include ':sdk:mobile-center-rum'
 
 // common test code
 include ':test'

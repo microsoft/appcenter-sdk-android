@@ -14,8 +14,7 @@ class PushIntentUtils {
     /**
      * Intent keys.
      */
-    @VisibleForTesting
-    static final String EXTRA_GCM_PREFIX = "gcm.notification.";
+    private static final String EXTRA_GCM_PREFIX = "gcm.notification.";
 
     @VisibleForTesting
     static final String EXTRA_TITLE = EXTRA_GCM_PREFIX + "title";
@@ -24,7 +23,7 @@ class PushIntentUtils {
     static final String EXTRA_MESSAGE = EXTRA_GCM_PREFIX + "body";
 
     @VisibleForTesting
-    static final String EXTRA_COLOR =  EXTRA_GCM_PREFIX + "color";
+    static final String EXTRA_COLOR = EXTRA_GCM_PREFIX + "color";
 
     @VisibleForTesting
     static final String EXTRA_SOUND = EXTRA_GCM_PREFIX + "sound";
@@ -57,16 +56,18 @@ class PushIntentUtils {
      * @param pushIntent The push intent.
      * @return A map of the custom data entries. Returns an empty map if none exist.
      */
-     static Map<String, String> getCustomData(Intent pushIntent) {
-        Bundle intentExtras = pushIntent.getExtras();
-        Set<String> intentKeys = intentExtras.keySet();
-        intentKeys.removeAll(EXTRA_STANDARD_KEYS);
+    static Map<String, String> getCustomData(Intent pushIntent) {
         Map<String, String> customData = new HashMap<>();
-        for (String key : intentKeys) {
-            if (key.startsWith(EXTRA_GCM_PREFIX)) {
-                continue;
+        Bundle intentExtras = pushIntent.getExtras();
+        if (intentExtras != null) {
+            Set<String> intentKeys = intentExtras.keySet();
+            intentKeys.removeAll(EXTRA_STANDARD_KEYS);
+            for (String key : intentKeys) {
+                if (key.startsWith(EXTRA_GCM_PREFIX)) {
+                    continue;
+                }
+                customData.put(key, intentExtras.getString(key));
             }
-            customData.put(key, intentExtras.getString(key));
         }
         return customData;
     }
@@ -77,7 +78,7 @@ class PushIntentUtils {
      * @param pushIntent The push intent.
      * @return The title.
      */
-     static String getTitle(Intent pushIntent) {
+    static String getTitle(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_TITLE);
     }
 
@@ -87,7 +88,7 @@ class PushIntentUtils {
      * @param pushIntent The push intent.
      * @return The message.
      */
-     static String getMessage(Intent pushIntent) {
+    static String getMessage(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_MESSAGE);
     }
 
@@ -104,7 +105,7 @@ class PushIntentUtils {
     /**
      * Sets the Google Message ID for an intent.
      *
-     * @param messageId The message ID to set.
+     * @param messageId  The message ID to set.
      * @param pushIntent The push intent.
      */
     static void setGoogleMessageId(String messageId, Intent pushIntent) {
@@ -117,7 +118,7 @@ class PushIntentUtils {
      * @param pushIntent The push intent.
      * @return The name of the custom sound, or null if there is none set.
      */
-     static String getCustomSound(Intent pushIntent) {
+    static String getCustomSound(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_CUSTOM_SOUND);
     }
 
@@ -127,7 +128,7 @@ class PushIntentUtils {
      * @param pushIntent The push intent.
      * @return 'true' if a sound should be played, 'false' otherwise.
      */
-     static boolean useAnySound(Intent pushIntent) {
+    static boolean useAnySound(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_SOUND) != null ||
                 pushIntent.getStringExtra(EXTRA_CUSTOM_SOUND) != null;
     }
@@ -138,7 +139,7 @@ class PushIntentUtils {
      * @param pushIntent The push intent.
      * @return The color a string, null if none was set.
      */
-     static String getColor(Intent pushIntent) {
+    static String getColor(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_COLOR);
     }
 
@@ -148,7 +149,7 @@ class PushIntentUtils {
      * @param pushIntent The push intent.
      * @return The icon ID as a string, null if none was set.
      */
-     static String getIcon(Intent pushIntent) {
+    static String getIcon(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_ICON);
     }
 }

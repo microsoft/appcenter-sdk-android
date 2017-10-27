@@ -28,16 +28,15 @@ public class TokenServiceTest {
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
-    Push mPush;
+    private Push mPush;
 
     @Mock
-    FirebaseInstanceId mFirebaseInstanceId;
+    private FirebaseInstanceId mFirebaseInstanceId;
 
     @Before
     public void setUp() throws Exception {
         mockStatic(Push.class);
         when(Push.getInstance()).thenReturn(mPush);
-
         mockStatic(FirebaseInstanceId.class);
         when(FirebaseInstanceId.getInstance()).thenReturn(mFirebaseInstanceId);
     }
@@ -48,11 +47,9 @@ public class TokenServiceTest {
         when(mFirebaseInstanceId.getToken()).thenReturn(null);
         service.onTokenRefresh();
         verify(mPush, never()).onTokenRefresh(anyString());
-
         String testToken = "TEST";
         when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
         service.onTokenRefresh();
         verify(mPush).onTokenRefresh(eq(testToken));
     }
-
 }

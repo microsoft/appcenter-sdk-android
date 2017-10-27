@@ -10,7 +10,6 @@ import android.support.test.espresso.ViewInteraction;
 import android.support.test.espresso.matcher.BoundedMatcher;
 import android.support.test.rule.ActivityTestRule;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.IntentCompat;
 import android.view.View;
 
 import com.microsoft.azure.mobile.Constants;
@@ -220,7 +219,7 @@ public class CrashesTest {
             unsetInstance(MobileCenter.class);
             unsetInstance(Crashes.class);
             Intent intent = new Intent();
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | IntentCompat.FLAG_ACTIVITY_CLEAR_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             mActivityTestRule.launchActivity(intent);
         }
 

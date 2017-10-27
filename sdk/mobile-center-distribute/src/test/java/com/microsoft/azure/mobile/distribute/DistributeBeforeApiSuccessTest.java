@@ -1,10 +1,13 @@
 package com.microsoft.azure.mobile.distribute;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
@@ -21,13 +24,16 @@ import com.microsoft.azure.mobile.utils.crypto.CryptoUtils;
 
 import org.json.JSONException;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mockito.verification.VerificationMode;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -37,6 +43,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_PLATFORM;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_PLATFORM_VALUE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PARAMETER_REDIRECT_ID;
@@ -46,6 +53,8 @@ import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFEREN
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
+import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.azure.mobile.distribute.DistributeConstants.UPDATE_SETUP_PATH_FORMAT;
 import static com.microsoft.azure.mobile.utils.storage.StorageHelper.PreferencesStorage;
@@ -70,7 +79,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 /**
  * Cover scenarios that are happening before we see an API call success for latest release.
  */
-@PrepareForTest(ErrorDetails.class)
+@PrepareForTest({ErrorDetails.class, DistributeUtils.class})
 public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     /**
@@ -111,6 +120,24 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verify(httpClient, never()).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
+    private void showUpdateSetupFailedDialog(ArgumentCaptor<DialogInterface.OnClickListener> clickListener){
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
+        when(mDialog.isShowing()).thenReturn(false);
+        when(mDialogBuilder.create()).thenReturn(mDialog);
+
+        /* Trigger call. */
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Verify dialog. */
+        verify(mDialogBuilder).setCancelable(false);
+        verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_failed_dialog_title);
+        verify(mDialogBuilder).setMessage("failed_message");
+        verify(mDialog).show();
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+    }
+
     @Test
     public void doNothingIfDebug() throws Exception {
         Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
@@ -124,10 +151,65 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void doNothingIfUpdateSetupFailedMessageExist() throws Exception {
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
+        testDistributeInactive();
+    }
+
+    @Test
+    public void doNothingIfReleaseHashEqualsToFailedPackageHash() throws Exception {
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY)).thenReturn("some_hash");
+        mockStatic(DistributeUtils.class);
+
+        /* Mock the computeReleaseHash to some_hash value. */
+        PowerMockito.when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("some_hash");
+        testDistributeInactive();
+    }
+
+    @Test
+    public void continueIfReleaseHashNotEqualsToFailedPackageHash() throws Exception {
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY)).thenReturn("some_hash");
+        mockStatic(DistributeUtils.class);
+
+        /* Mock the computeReleaseHash to other_hash value. */
+        PowerMockito.when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("other_hash");
+
+        /* Trigger call. */
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+    }
+
+    @Test
     @SuppressWarnings("WrongConstant")
     public void doNothingIfGetPackageInfoFails() throws Exception {
         when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenThrow(new PackageManager.NameNotFoundException());
         testDistributeInactive();
+    }
+
+    @Test
+    public void storeUpdateSetupFailedParameterBeforeStart() throws Exception {
+
+        /* Setup mock. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
+        start();
+        Distribute.getInstance().storeUpdateSetupFailedParameter("r", "error_message");
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, "error_message");
+    }
+
+    @Test
+    public void storeUpdateSetupFailedParameterWithIncorrectRequestIdBeforeStart() throws Exception {
+
+        /* Setup mock. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
+        start();
+        Distribute.getInstance().storeUpdateSetupFailedParameter("r2", "error_message");
+        verifyStatic(never());
+        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, "error_message");
     }
 
     @Test
@@ -251,6 +333,107 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void disableBeforeHandleUpdateSetupFailureDialogIgnoreAction() throws Exception {
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        showUpdateSetupFailedDialog(clickListener);
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_failed_dialog_ignore), clickListener.capture());
+
+        /* Disable. */
+        Distribute.setEnabled(false);
+        clickListener.getValue().onClick(mock(Dialog.class), DialogInterface.BUTTON_POSITIVE);
+
+        /* Since we were disabled, no action but toast to explain what happened. */
+        verify(mToast).show();
+    }
+
+    @Test
+    public void disableBeforeHandleUpdateSetupFailureDialogReinstallAction() throws Exception {
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        showUpdateSetupFailedDialog(clickListener);
+        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_failed_dialog_reinstall), clickListener.capture());
+
+        /* Disable. */
+        Distribute.setEnabled(false);
+        clickListener.getValue().onClick(mock(Dialog.class), DialogInterface.BUTTON_NEGATIVE);
+
+        /* Since we were disabled, no action but toast to explain what happened. */
+        verify(mToast).show();
+    }
+
+    @Test
+    public void handleFailedUpdateSetupDialogReinstallAction() throws URISyntaxException {
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        showUpdateSetupFailedDialog(clickListener);
+        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_failed_dialog_reinstall), clickListener.capture());
+
+        /* Click. */
+        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
+        verifyStatic();
+        BrowserUtils.appendUri(anyString(), anyString());
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+    }
+
+    @Test
+    public void handleFailedUpdateSetupDialogReinstallActionWithException() throws URISyntaxException {
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        showUpdateSetupFailedDialog(clickListener);
+        when(BrowserUtils.appendUri(anyString(), anyString())).thenThrow(new URISyntaxException("Ex", "Reason"));
+        verify(mDialogBuilder).setNegativeButton(eq(R.string.mobile_center_distribute_update_failed_dialog_reinstall), clickListener.capture());
+
+        /* Click. */
+        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEGATIVE);
+        verifyStatic();
+        BrowserUtils.appendUri(anyString(), anyString());
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+    }
+
+    @Test
+    public void handleFailedUpdateSetupDialogIgnoreAction() throws URISyntaxException {
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
+        when(mDialog.isShowing()).thenReturn(false);
+        when(mDialogBuilder.create()).thenReturn(mDialog);
+        mockStatic(DistributeUtils.class);
+        PowerMockito.when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("some_hash");
+
+        /* Trigger call. */
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Verify dialog. */
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        verify(mDialogBuilder).setCancelable(false);
+        verify(mDialogBuilder).setTitle(R.string.mobile_center_distribute_update_failed_dialog_title);
+        verify(mDialogBuilder).setMessage("failed_message");
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.mobile_center_distribute_update_failed_dialog_ignore), clickListener.capture());
+        verify(mDialog).show();
+
+        /* Click. */
+        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY, "some_hash");
+    }
+
+    @Test
+    public void verifyFailedUpdateSetupDialogIsAlreadyShownInSameActivity() throws Exception {
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
+
+        /* Trigger call. */
+        start();
+        Activity activity = mock(Activity.class);
+        Distribute.getInstance().onActivityResumed(activity);
+        Distribute.getInstance().onActivityPaused(activity);
+
+        /* Go foreground. */
+        Distribute.getInstance().onActivityResumed(activity);
+
+        /* Verify dialog now shown. */
+        verify(mDialogBuilder).create();
+        verify(mDialog).show();
+    }
+
+    @Test
     public void happyPathUntilHangingCallWithToken() throws Exception {
 
         /* Setup mock. */
@@ -270,6 +453,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
@@ -387,6 +571,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
@@ -504,6 +689,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
@@ -556,6 +742,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());

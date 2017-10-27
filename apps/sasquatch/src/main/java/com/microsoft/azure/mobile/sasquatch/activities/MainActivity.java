@@ -23,6 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.azure.mobile.MobileCenter;
+import com.microsoft.azure.mobile.MobileCenterService;
 import com.microsoft.azure.mobile.analytics.Analytics;
 import com.microsoft.azure.mobile.analytics.AnalyticsPrivateHelper;
 import com.microsoft.azure.mobile.analytics.channel.AnalyticsListener;
@@ -103,6 +104,17 @@ public class MainActivity extends AppCompatActivity {
 
         /* Start Mobile center. */
         MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
+
+        /* If rum available, use it. */
+        try {
+            @SuppressWarnings("unchecked")
+            Class<? extends MobileCenterService> rum = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.azure.mobile.rum.RealUserMeasurements");
+            rum.getMethod("setRumKey", String.class).invoke(null, getString(R.string.rum_key));
+
+            /* Start rum. */
+            MobileCenter.start(rum);
+        } catch (Exception ignore) {
+        }
 
         /* Use some mobile center getters. */
         MobileCenter.getInstallId().thenAccept(new MobileCenterConsumer<UUID>() {
