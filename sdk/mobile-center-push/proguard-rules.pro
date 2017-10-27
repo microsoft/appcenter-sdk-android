@@ -4,7 +4,3 @@
 -verbose
 -dontwarn com.google.firebase.iid.FirebaseInstanceId
 -dontwarn com.google.firebase.iid.FirebaseInstanceIdService
--keep class com.google.firebase.iid.FirebaseInstanceId {
-    ** getInstance();
-    ** getToken();
-}
