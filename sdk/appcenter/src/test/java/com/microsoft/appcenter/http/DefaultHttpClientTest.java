@@ -2,9 +2,9 @@ package com.microsoft.appcenter.http;
 
 import android.net.TrafficStats;
 
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
@@ -95,7 +95,7 @@ public class DefaultHttpClientTest {
     public void post200() throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
-        MobileCenter.setLogLevel(VERBOSE);
+        AppCenter.setLogLevel(VERBOSE);
 
         /* Configure mock HTTP. */
         String urlString = "http://mock/logs?api_version=1.0.0-preview20160914";
@@ -150,7 +150,7 @@ public class DefaultHttpClientTest {
     public void post200WithoutCallTemplate() throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
-        MobileCenter.setLogLevel(VERBOSE);
+        AppCenter.setLogLevel(VERBOSE);
 
         /* Configure mock HTTP. */
         String urlString = "http://mock/logs?api_version=1.0.0-preview20160914";
@@ -195,7 +195,7 @@ public class DefaultHttpClientTest {
     public void get200() throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
-        MobileCenter.setLogLevel(VERBOSE);
+        AppCenter.setLogLevel(VERBOSE);
 
         /* Configure mock HTTP. */
         String urlString = "http://mock/get";
@@ -302,7 +302,7 @@ public class DefaultHttpClientTest {
     public void get200WithoutCallTemplate() throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
-        MobileCenter.setLogLevel(VERBOSE);
+        AppCenter.setLogLevel(VERBOSE);
 
         /* Configure mock HTTP. */
         String urlString = "http://mock/get";
@@ -341,7 +341,7 @@ public class DefaultHttpClientTest {
     private void testPayloadLogging(final String payload, String mimeType) throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
-        MobileCenter.setLogLevel(VERBOSE);
+        AppCenter.setLogLevel(VERBOSE);
 
         /* Configure mock HTTP. */
         String urlString = "http://mock/get";
@@ -377,7 +377,7 @@ public class DefaultHttpClientTest {
 
         /* Test binary placeholder used in logging code instead of real payload. */
         verifyStatic();
-        MobileCenterLog.info(anyString(), argThat(new ArgumentMatcher<String>() {
+        AppCenterLog.info(anyString(), argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -400,7 +400,7 @@ public class DefaultHttpClientTest {
     public void get200image() throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
-        MobileCenter.setLogLevel(VERBOSE);
+        AppCenter.setLogLevel(VERBOSE);
 
         /* Configure mock HTTP. */
         String urlString = "http://mock/get";
@@ -436,7 +436,7 @@ public class DefaultHttpClientTest {
 
         /* Test binary placeholder used in logging code instead of real payload. */
         verifyStatic();
-        MobileCenterLog.info(anyString(), argThat(new ArgumentMatcher<String>() {
+        AppCenterLog.info(anyString(), argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -450,7 +450,7 @@ public class DefaultHttpClientTest {
     public void error503() throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
-        MobileCenter.setLogLevel(android.util.Log.INFO);
+        AppCenter.setLogLevel(android.util.Log.INFO);
 
         /* Configure mock HTTP. */
         URL url = mock(URL.class);

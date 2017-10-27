@@ -5,7 +5,7 @@ import android.app.Application;
 import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.appcenter.Constants;
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.MobileCenterPrivateHelper;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
@@ -13,7 +13,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.async.MobileCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.After;
@@ -86,17 +86,17 @@ public class CrashesAndroidTest {
         /* Configure new instance. */
         MobileCenterPrivateHelper.unsetInstance();
         Crashes.unsetInstance();
-        MobileCenter.setLogLevel(android.util.Log.VERBOSE);
-        MobileCenter.configure(sApplication, "a");
+        AppCenter.setLogLevel(android.util.Log.VERBOSE);
+        AppCenter.configure(sApplication, "a");
 
         /* Clean logs. */
-        MobileCenter.setEnabled(false);
-        MobileCenter.setEnabled(true).get();
+        AppCenter.setEnabled(false);
+        AppCenter.setEnabled(true).get();
 
         /* Replace channel. */
         Method method = MobileCenter.class.getDeclaredMethod("getInstance");
         method.setAccessible(true);
-        MobileCenter mobileCenter = (MobileCenter) method.invoke(null);
+        AppCenter appCenter = (MobileCenter) method.invoke(null);
         method = MobileCenter.class.getDeclaredMethod("setChannel", Channel.class);
         method.setAccessible(true);
         method.invoke(mobileCenter, mChannel);
@@ -105,7 +105,7 @@ public class CrashesAndroidTest {
         Crashes.setListener(listener);
 
         /* Start crashes. */
-        MobileCenter.start(Crashes.class);
+        AppCenter.start(Crashes.class);
 
         /* Wait for start. */
         assertTrue(Crashes.isEnabled().get());
@@ -159,8 +159,8 @@ public class CrashesAndroidTest {
 
             @Override
             public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
-                assertNotNull(MobileCenter.getInstallId().get());
-                return MobileCenter.isEnabled().get() && Crashes.isEnabled().get();
+                assertNotNull(AppCenter.getInstallId().get());
+                return AppCenter.isEnabled().get() && Crashes.isEnabled().get();
             }
         });
         when(crashesListener.shouldAwaitUserConfirmation()).thenReturn(true);
@@ -186,7 +186,7 @@ public class CrashesAndroidTest {
         startFresh(crashesListener);
 
         /* Check last session error report. */
-        Crashes.getLastSessionCrashReport().thenAccept(new MobileCenterConsumer<ErrorReport>() {
+        Crashes.getLastSessionCrashReport().thenAccept(new AppCenterConsumer<ErrorReport>() {
 
             @Override
             public void accept(ErrorReport errorReport) {

@@ -2,7 +2,7 @@ package com.microsoft.appcenter.utils;
 
 import android.util.Log;
 
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -24,21 +24,21 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(Log.class)
-public class MobileCenterLogTest {
+public class AppCenterLogTest {
 
     private static void callLogs() {
-        MobileCenterLog.logAssert("my-tag", "error with my-tag");
-        MobileCenterLog.logAssert("my-tag", "error with my-tag with exception", new Exception());
-        MobileCenterLog.error("my-tag", "error with my-tag");
-        MobileCenterLog.error("my-tag", "error with my-tag with exception", new Exception());
-        MobileCenterLog.warn("my-tag", "warn with my-tag");
-        MobileCenterLog.warn("my-tag", "warn with my-tag with exception", new Exception());
-        MobileCenterLog.info("my-tag", "info with my-tag");
-        MobileCenterLog.info("my-tag", "info with my-tag with exception", new Exception());
-        MobileCenterLog.debug("my-tag", "debug with my-tag");
-        MobileCenterLog.debug("my-tag", "debug with my-tag with exception", new Exception());
-        MobileCenterLog.verbose("my-tag", "verbose with my-tag");
-        MobileCenterLog.verbose("my-tag", "verbose with my-tag with exception", new Exception());
+        AppCenterLog.logAssert("my-tag", "error with my-tag");
+        AppCenterLog.logAssert("my-tag", "error with my-tag with exception", new Exception());
+        AppCenterLog.error("my-tag", "error with my-tag");
+        AppCenterLog.error("my-tag", "error with my-tag with exception", new Exception());
+        AppCenterLog.warn("my-tag", "warn with my-tag");
+        AppCenterLog.warn("my-tag", "warn with my-tag with exception", new Exception());
+        AppCenterLog.info("my-tag", "info with my-tag");
+        AppCenterLog.info("my-tag", "info with my-tag with exception", new Exception());
+        AppCenterLog.debug("my-tag", "debug with my-tag");
+        AppCenterLog.debug("my-tag", "debug with my-tag with exception", new Exception());
+        AppCenterLog.verbose("my-tag", "verbose with my-tag");
+        AppCenterLog.verbose("my-tag", "verbose with my-tag with exception", new Exception());
     }
 
     private static void verifyAssert(VerificationMode verificationMode) {
@@ -88,8 +88,8 @@ public class MobileCenterLogTest {
     public static void setUpBeforeClass() {
 
         /* Default initial state can be tested only once in the entire test suite... */
-        assertEquals(Log.ASSERT, MobileCenter.getLogLevel());
-        assertEquals(MobileCenter.getLogLevel(), MobileCenterLog.getLogLevel());
+        assertEquals(Log.ASSERT, AppCenter.getLogLevel());
+        assertEquals(AppCenter.getLogLevel(), AppCenterLog.getLogLevel());
     }
 
     @Before
@@ -100,8 +100,8 @@ public class MobileCenterLogTest {
 
     @Test
     public void none() {
-        MobileCenter.setLogLevel(MobileCenterLog.NONE);
-        assertEquals(MobileCenter.getLogLevel(), MobileCenterLog.getLogLevel());
+        AppCenter.setLogLevel(AppCenterLog.NONE);
+        assertEquals(AppCenter.getLogLevel(), AppCenterLog.getLogLevel());
         callLogs();
         verifyVerbose(never());
         verifyDebug(never());
@@ -113,8 +113,8 @@ public class MobileCenterLogTest {
 
     @Test
     public void assertLevel() {
-        MobileCenter.setLogLevel(Log.ASSERT);
-        assertEquals(MobileCenter.getLogLevel(), MobileCenterLog.getLogLevel());
+        AppCenter.setLogLevel(Log.ASSERT);
+        assertEquals(AppCenter.getLogLevel(), AppCenterLog.getLogLevel());
         callLogs();
         verifyVerbose(never());
         verifyDebug(never());
@@ -126,8 +126,8 @@ public class MobileCenterLogTest {
 
     @Test
     public void error() {
-        MobileCenter.setLogLevel(Log.ERROR);
-        assertEquals(MobileCenter.getLogLevel(), MobileCenterLog.getLogLevel());
+        AppCenter.setLogLevel(Log.ERROR);
+        assertEquals(AppCenter.getLogLevel(), AppCenterLog.getLogLevel());
         callLogs();
         verifyVerbose(never());
         verifyDebug(never());
@@ -139,8 +139,8 @@ public class MobileCenterLogTest {
 
     @Test
     public void warn() {
-        MobileCenter.setLogLevel(Log.WARN);
-        assertEquals(MobileCenter.getLogLevel(), MobileCenterLog.getLogLevel());
+        AppCenter.setLogLevel(Log.WARN);
+        assertEquals(AppCenter.getLogLevel(), AppCenterLog.getLogLevel());
         callLogs();
         verifyVerbose(never());
         verifyDebug(never());
@@ -152,8 +152,8 @@ public class MobileCenterLogTest {
 
     @Test
     public void info() {
-        MobileCenter.setLogLevel(Log.INFO);
-        assertEquals(MobileCenter.getLogLevel(), MobileCenterLog.getLogLevel());
+        AppCenter.setLogLevel(Log.INFO);
+        assertEquals(AppCenter.getLogLevel(), AppCenterLog.getLogLevel());
         callLogs();
         verifyVerbose(never());
         verifyDebug(never());
@@ -165,8 +165,8 @@ public class MobileCenterLogTest {
 
     @Test
     public void debug() {
-        MobileCenter.setLogLevel(Log.DEBUG);
-        assertEquals(MobileCenter.getLogLevel(), MobileCenterLog.getLogLevel());
+        AppCenter.setLogLevel(Log.DEBUG);
+        assertEquals(AppCenter.getLogLevel(), AppCenterLog.getLogLevel());
         callLogs();
         verifyVerbose(never());
         verifyDebug(times(1));
@@ -178,8 +178,8 @@ public class MobileCenterLogTest {
 
     @Test
     public void verbose() {
-        MobileCenter.setLogLevel(Log.VERBOSE);
-        assertEquals(MobileCenter.getLogLevel(), MobileCenterLog.getLogLevel());
+        AppCenter.setLogLevel(Log.VERBOSE);
+        assertEquals(AppCenter.getLogLevel(), AppCenterLog.getLogLevel());
         callLogs();
         verifyVerbose(times(1));
         verifyDebug(times(1));

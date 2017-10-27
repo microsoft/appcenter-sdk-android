@@ -1,7 +1,7 @@
 package com.microsoft.appcenter;
 
 /**
- * Thrown when {@link MobileCenter} received a cancellation sending request to the server.
+ * Thrown when {@link AppCenter} received a cancellation sending request to the server.
  */
 public class CancellationException extends Exception {
 

@@ -15,7 +15,7 @@ import java.util.Map;
  * Service specification.
  */
 @SuppressWarnings("WeakerAccess")
-public interface MobileCenterService extends Application.ActivityLifecycleCallbacks {
+public interface AppCenterService extends Application.ActivityLifecycleCallbacks {
 
     /**
      * Check whether this service is enabled or not.
@@ -48,11 +48,11 @@ public interface MobileCenterService extends Application.ActivityLifecycleCallba
 
     /**
      * Called when this service is starting. Storage is not accessible until {@link #onStarted} is called.
-     * This is called from the same thread as the caller of {@link MobileCenter#start(Class[])}).
+     * This is called from the same thread as the caller of {@link AppCenter#start(Class[])}).
      *
      * @param handler background thread handler.
      */
-    void onStarting(@NonNull MobileCenterHandler handler);
+    void onStarting(@NonNull AppCenterHandler handler);
 
     /**
      * Called when the service is started (disregarding if enabled or disabled).

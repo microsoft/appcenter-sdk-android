@@ -14,7 +14,7 @@ import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.junit.After;
 import org.junit.Test;
@@ -808,13 +808,13 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialog, times(4)).show();
 
         /* Do the same test and simulate failed navigation. */
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
         ActivityNotFoundException exception = new ActivityNotFoundException();
         doThrow(exception).when(mActivity).startActivity(intent);
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEUTRAL);
         verify(mActivity, times(2)).startActivity(intent);
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), eq(exception));
+        AppCenterLog.error(anyString(), anyString(), eq(exception));
     }
 
     /**

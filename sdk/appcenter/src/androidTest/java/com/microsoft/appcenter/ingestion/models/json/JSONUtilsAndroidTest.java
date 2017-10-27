@@ -4,7 +4,7 @@ import android.util.Log;
 
 import com.microsoft.appcenter.AndroidTestUtils;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -155,7 +155,7 @@ public class JSONUtilsAndroidTest {
         LogContainer mockContainer = mock(LogContainer.class);
 
         /* Set log level to VERBOSE to instantiate JSONStringer for pretty JSON string. */
-        MobileCenterLog.setLogLevel(Log.VERBOSE);
+        AppCenterLog.setLogLevel(Log.VERBOSE);
         LogSerializer serializer = new DefaultLogSerializer();
         String json = serializer.serializeContainer(mockContainer);
 
@@ -163,7 +163,7 @@ public class JSONUtilsAndroidTest {
         json = json.replace("\n", "").replace(" ", "");
 
         /* Set log level to ERROR to instantiate JSONStringer without indentations. */
-        MobileCenterLog.setLogLevel(Log.ERROR);
+        AppCenterLog.setLogLevel(Log.ERROR);
 
         /* Verify. */
         assertEquals(json, serializer.serializeContainer(mockContainer));

@@ -19,7 +19,7 @@ import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.async.MobileCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 
 import org.json.JSONException;
@@ -319,7 +319,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Disable and test async behavior of setEnabled. */
         final CountDownLatch latch = new CountDownLatch(1);
-        Distribute.setEnabled(false).thenAccept(new MobileCenterConsumer<Void>() {
+        Distribute.setEnabled(false).thenAccept(new AppCenterConsumer<Void>() {
 
             @Override
             public void accept(Void aVoid) {

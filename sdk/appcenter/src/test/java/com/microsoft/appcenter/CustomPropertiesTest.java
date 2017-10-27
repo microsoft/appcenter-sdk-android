@@ -1,6 +1,6 @@
 package com.microsoft.appcenter;
 
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -21,7 +21,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings({"unused", "ConstantConditions"})
 @PrepareForTest({
-        MobileCenterLog.class
+        AppCenterLog.class
 })
 public class CustomPropertiesTest {
 
@@ -30,7 +30,7 @@ public class CustomPropertiesTest {
 
     @Before
     public void setUp() throws Exception {
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
     }
 
     @Test
@@ -51,7 +51,7 @@ public class CustomPropertiesTest {
         properties.clear(nullKey);
         assertEquals(0, properties.getProperties().size());
         verifyStatic(times(5));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
 
         /* Invalid key. */
         String invalidKey = "!";
@@ -62,7 +62,7 @@ public class CustomPropertiesTest {
         properties.clear(invalidKey);
         assertEquals(0, properties.getProperties().size());
         verifyStatic(times(10));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
 
         /* Too long key. */
         String tooLongKey = generateString(CustomProperties.MAX_PROPERTY_KEY_LENGTH + 1, 'a');
@@ -73,7 +73,7 @@ public class CustomPropertiesTest {
         properties.clear(tooLongKey);
         assertEquals(0, properties.getProperties().size());
         verifyStatic(times(15));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
 
         /* Normal keys. */
         properties.set("t1", string);
@@ -83,7 +83,7 @@ public class CustomPropertiesTest {
         properties.clear("t5");
         assertEquals(5, properties.getProperties().size());
         verifyStatic(times(15));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
 
         /* Normal max length keys. */
         String maxLengthKey = generateString(CustomProperties.MAX_PROPERTY_KEY_LENGTH - 1, 'a');
@@ -94,7 +94,7 @@ public class CustomPropertiesTest {
         properties.clear(maxLengthKey + "5");
         assertEquals(10, properties.getProperties().size());
         verifyStatic(times(15));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
 
         /* Already contains keys. */
         properties.set("t1", string);
@@ -104,9 +104,9 @@ public class CustomPropertiesTest {
         properties.clear("t5");
         assertEquals(10, properties.getProperties().size());
         verifyStatic(times(15));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
         verifyStatic(times(5));
-        MobileCenterLog.warn(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString());
     }
 
     @Test
@@ -120,28 +120,28 @@ public class CustomPropertiesTest {
         properties.set(key, nullValue);
         assertEquals(0, properties.getProperties().size());
         verifyStatic(times(1));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
 
         /* Too long value. */
         String tooLongValue = generateString(CustomProperties.MAX_PROPERTY_KEY_LENGTH + 1, 'a');
         properties.set(key, tooLongValue);
         assertEquals(0, properties.getProperties().size());
         verifyStatic(times(2));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
 
         /* Normal value. */
         String normalValue = "test";
         properties.set(key, normalValue);
         assertEquals(1, properties.getProperties().size());
         verifyStatic(times(2));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
 
         /* Normal value with max length. */
         String maxLengthValue = generateString(CustomProperties.MAX_PROPERTY_KEY_LENGTH, 'a');
         properties.set(key + "1", maxLengthValue);
         assertEquals(2, properties.getProperties().size());
         verifyStatic(times(2));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
     @Test
@@ -155,14 +155,14 @@ public class CustomPropertiesTest {
         properties.set(key, nullValue);
         assertEquals(0, properties.getProperties().size());
         verifyStatic(times(1));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
 
         /* Normal value. */
         Date normalValue = new Date(0);
         properties.set(key, normalValue);
         assertEquals(1, properties.getProperties().size());
         verifyStatic(times(1));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
     @Test
@@ -176,14 +176,14 @@ public class CustomPropertiesTest {
         properties.set(key, nullValue);
         assertEquals(0, properties.getProperties().size());
         verifyStatic(times(1));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
 
         /* Normal value. */
         Number normalValue = 0;
         properties.set(key, normalValue);
         assertEquals(1, properties.getProperties().size());
         verifyStatic(times(1));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
     @Test
@@ -197,7 +197,7 @@ public class CustomPropertiesTest {
         properties.set(key, normalValue);
         assertEquals(1, properties.getProperties().size());
         verifyStatic(never());
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
     @Test
@@ -208,7 +208,7 @@ public class CustomPropertiesTest {
         properties.clear(key);
         assertEquals(1, properties.getProperties().size());
         verifyStatic(never());
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
     @Test
@@ -223,12 +223,12 @@ public class CustomPropertiesTest {
         properties.set("over1", "value");
         assertEquals(CustomProperties.MAX_PROPERTIES_COUNT, properties.getProperties().size());
         verifyStatic(times(1));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
 
         /* Add extra property 2. */
         properties.set("over2", "value");
         assertEquals(CustomProperties.MAX_PROPERTIES_COUNT, properties.getProperties().size());
         verifyStatic(times(2));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 }

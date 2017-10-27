@@ -6,8 +6,8 @@ import android.support.annotation.VisibleForTesting;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
-import com.microsoft.appcenter.utils.MobileCenterLog;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.io.File;
@@ -51,11 +51,11 @@ public class WrapperSdkExceptionManager {
                 sWrapperExceptionDataContainer.put(errorId.toString(), rawSerializedException);
                 File dataFile = getFile(errorId);
                 StorageHelper.InternalStorage.writeObject(dataFile, rawSerializedException);
-                MobileCenterLog.debug(Crashes.LOG_TAG, "Saved raw wrapper exception data into " + dataFile);
+                AppCenterLog.debug(Crashes.LOG_TAG, "Saved raw wrapper exception data into " + dataFile);
             }
             return errorId;
         } catch (Exception e) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Failed to save wrapper exception data to file", e);
+            AppCenterLog.error(Crashes.LOG_TAG, "Failed to save wrapper exception data to file", e);
             return null;
         }
     }
@@ -67,14 +67,14 @@ public class WrapperSdkExceptionManager {
      */
     public static void deleteWrapperExceptionData(UUID errorId) {
         if (errorId == null) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Failed to delete wrapper exception data: null errorId");
+            AppCenterLog.error(Crashes.LOG_TAG, "Failed to delete wrapper exception data: null errorId");
             return;
         }
         File dataFile = getFile(errorId);
         if (dataFile.exists()) {
             byte[] loadResult = loadWrapperExceptionData(errorId);
             if (loadResult == null) {
-                MobileCenterLog.error(Crashes.LOG_TAG, "Failed to delete wrapper exception data: data not found");
+                AppCenterLog.error(Crashes.LOG_TAG, "Failed to delete wrapper exception data: data not found");
             }
             StorageHelper.InternalStorage.delete(dataFile);
         }
@@ -88,7 +88,7 @@ public class WrapperSdkExceptionManager {
      */
     public static byte[] loadWrapperExceptionData(UUID errorId) {
         if (errorId == null) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Failed to load wrapper exception data: null errorId");
+            AppCenterLog.error(Crashes.LOG_TAG, "Failed to load wrapper exception data: null errorId");
             return null;
         }
 
@@ -106,7 +106,7 @@ public class WrapperSdkExceptionManager {
             }
             return dataBytes;
         } catch (ClassNotFoundException | IOException e) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Cannot access wrapper exception data file " + dataFile.getName(), e);
+            AppCenterLog.error(Crashes.LOG_TAG, "Cannot access wrapper exception data file " + dataFile.getName(), e);
         }
         return null;
     }
@@ -147,7 +147,7 @@ public class WrapperSdkExceptionManager {
      *
      * @return unprocessed error reports as an async future.
      */
-    public static MobileCenterFuture<Collection<ErrorReport>> getUnprocessedErrorReports() {
+    public static AppCenterFuture<Collection<ErrorReport>> getUnprocessedErrorReports() {
         return Crashes.getInstance().getUnprocessedErrorReports();
     }
 
@@ -158,7 +158,7 @@ public class WrapperSdkExceptionManager {
      * @param filteredReportIds report identifiers to process, every crash not part of the original list are discarded.
      * @return asynchronous result: true if ALWAYS_SEND was previously set, false otherwise.
      */
-    public static MobileCenterFuture<Boolean> sendCrashReportsOrAwaitUserConfirmation(Collection<String> filteredReportIds) {
+    public static AppCenterFuture<Boolean> sendCrashReportsOrAwaitUserConfirmation(Collection<String> filteredReportIds) {
         return Crashes.getInstance().sendCrashReportsOrAwaitUserConfirmation(filteredReportIds);
     }
 

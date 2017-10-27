@@ -9,7 +9,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 
 import java.io.Closeable;
 import java.util.HashSet;
@@ -105,7 +105,7 @@ public class NetworkStateHelper implements Closeable {
              * Can fail with either SecurityException or even NullPointerException on "corrupted" devices.
              */
             networkInfo = null;
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Could not get network info and thus stuck in disconnected state, please check you declared android.permission.ACCESS_NETWORK_STATE");
+            AppCenterLog.error(AppCenter.LOG_TAG, "Could not get network info and thus stuck in disconnected state, please check you declared android.permission.ACCESS_NETWORK_STATE");
         }
         updateNetworkType(networkInfo);
     }
@@ -114,7 +114,7 @@ public class NetworkStateHelper implements Closeable {
      * Update network type with the specified update.
      */
     private void updateNetworkType(NetworkInfo networkInfo) {
-        MobileCenterLog.debug(MobileCenter.LOG_TAG, "Active network info=" + networkInfo);
+        AppCenterLog.debug(AppCenter.LOG_TAG, "Active network info=" + networkInfo);
 
         /* Update network type. null for not connected. */
         if (networkInfo != null && networkInfo.isConnected()) {

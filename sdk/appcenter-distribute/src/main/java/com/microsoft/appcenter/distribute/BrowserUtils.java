@@ -10,7 +10,7 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -51,11 +51,11 @@ class BrowserUtils {
         } catch (ActivityNotFoundException e) {
 
             /* Fall back using a browser but we don't want a chooser U.I. to pop. */
-            MobileCenterLog.debug(LOG_TAG, "Google Chrome not found, pick another one.");
+            AppCenterLog.debug(LOG_TAG, "Google Chrome not found, pick another one.");
             intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             List<ResolveInfo> browsers = activity.getPackageManager().queryIntentActivities(intent, 0);
             if (browsers.isEmpty()) {
-                MobileCenterLog.error(LOG_TAG, "No browser found on device, abort login.");
+                AppCenterLog.error(LOG_TAG, "No browser found on device, abort login.");
             } else {
 
                 /*
@@ -70,7 +70,7 @@ class BrowserUtils {
                     ActivityInfo activityInfo = defaultBrowser.activityInfo;
                     defaultBrowserPackageName = activityInfo.packageName;
                     defaultBrowserClassName = activityInfo.name;
-                    MobileCenterLog.debug(LOG_TAG, "Default browser seems to be " + defaultBrowserPackageName + "/" + defaultBrowserClassName);
+                    AppCenterLog.debug(LOG_TAG, "Default browser seems to be " + defaultBrowserPackageName + "/" + defaultBrowserClassName);
                 }
                 String selectedPackageName = null;
                 String selectedClassName = null;
@@ -79,17 +79,17 @@ class BrowserUtils {
                     if (activityInfo.packageName.equals(defaultBrowserPackageName) && activityInfo.name.equals(defaultBrowserClassName)) {
                         selectedPackageName = defaultBrowserPackageName;
                         selectedClassName = defaultBrowserClassName;
-                        MobileCenterLog.debug(LOG_TAG, "And its not the picker.");
+                        AppCenterLog.debug(LOG_TAG, "And its not the picker.");
                         break;
                     }
                 }
                 if (defaultBrowser != null && selectedPackageName == null) {
-                    MobileCenterLog.debug(LOG_TAG, "Default browser is actually a picker...");
+                    AppCenterLog.debug(LOG_TAG, "Default browser is actually a picker...");
                 }
 
                 /* If no default browser found, pick first one we can find. */
                 if (selectedPackageName == null) {
-                    MobileCenterLog.debug(LOG_TAG, "Picking first browser in list.");
+                    AppCenterLog.debug(LOG_TAG, "Picking first browser in list.");
                     ResolveInfo browser = browsers.iterator().next();
                     ActivityInfo activityInfo = browser.activityInfo;
                     selectedPackageName = activityInfo.packageName;
@@ -97,7 +97,7 @@ class BrowserUtils {
                 }
 
                 /* Launch generic browser. */
-                MobileCenterLog.debug(LOG_TAG, "Launch browser=" + selectedPackageName + "/" + selectedClassName);
+                AppCenterLog.debug(LOG_TAG, "Launch browser=" + selectedPackageName + "/" + selectedClassName);
                 intent.setClassName(selectedPackageName, selectedClassName);
                 activity.startActivity(intent);
             }

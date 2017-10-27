@@ -22,7 +22,7 @@ import android.widget.Spinner;
 import android.widget.TimePicker;
 
 import com.microsoft.appcenter.CustomProperties;
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.sasquatch.R;
 
 import java.text.DateFormat;
@@ -73,7 +73,7 @@ public class CustomPropertiesActivity extends AppCompatActivity {
         for (CustomPropertyFragment property : mProperties) {
             property.set(customProperties);
         }
-        MobileCenter.setCustomProperties(customProperties);
+        AppCenter.setCustomProperties(customProperties);
     }
 
     public static class CustomPropertyFragment extends Fragment

@@ -3,7 +3,7 @@ package com.microsoft.appcenter;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.File;
 
@@ -60,7 +60,7 @@ public class Constants {
                 File file = context.getFilesDir();
                 Constants.FILES_PATH = file.getAbsolutePath();
             } catch (Exception e) {
-                MobileCenterLog.error(MobileCenter.LOG_TAG, "Exception thrown when accessing the application filesystem", e);
+                AppCenterLog.error(AppCenter.LOG_TAG, "Exception thrown when accessing the application filesystem", e);
             }
         }
     }

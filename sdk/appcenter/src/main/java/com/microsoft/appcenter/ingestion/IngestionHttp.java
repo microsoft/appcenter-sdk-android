@@ -13,7 +13,7 @@ import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import org.json.JSONException;
@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static android.util.Log.VERBOSE;
-import static com.microsoft.appcenter.MobileCenter.LOG_TAG;
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 
 public class IngestionHttp implements Ingestion {
@@ -131,10 +131,10 @@ public class IngestionHttp implements Ingestion {
 
         @Override
         public void onBeforeCalling(URL url, Map<String, String> headers) {
-            if (MobileCenterLog.getLogLevel() <= VERBOSE) {
+            if (AppCenterLog.getLogLevel() <= VERBOSE) {
 
                 /* Log url. */
-                MobileCenterLog.verbose(LOG_TAG, "Calling " + url + "...");
+                AppCenterLog.verbose(LOG_TAG, "Calling " + url + "...");
 
                 /* Log headers. */
                 Map<String, String> logHeaders = new HashMap<>(headers);
@@ -142,7 +142,7 @@ public class IngestionHttp implements Ingestion {
                 if (appSecret != null) {
                     logHeaders.put(APP_SECRET, HttpUtils.hideSecret(appSecret));
                 }
-                MobileCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
+                AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
             }
         }
     }

@@ -13,7 +13,7 @@ import com.microsoft.appcenter.sasquatch.activities.DummyActivity;
 import com.microsoft.appcenter.sasquatch.activities.EventActivity;
 import com.microsoft.appcenter.sasquatch.activities.ManagedErrorActivity;
 import com.microsoft.appcenter.sasquatch.activities.PageActivity;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ public final class TestFeatures {
                 sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
             }
         } catch (Exception e) {
-            MobileCenterLog.info("MobileCenterSasquatch", "CustomProperties not yet available in this flavor.");
+            AppCenterLog.info("MobileCenterSasquatch", "CustomProperties not yet available in this flavor.");
         }
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
     }

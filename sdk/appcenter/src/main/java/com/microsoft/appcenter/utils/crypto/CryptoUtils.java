@@ -9,7 +9,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.util.Base64;
 
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -23,7 +23,7 @@ import java.util.Map;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 
-import static com.microsoft.appcenter.MobileCenter.LOG_TAG;
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALGORITHM_DATA_SEPARATOR;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALIAS_SEPARATOR;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ANDROID_KEY_STORE;
@@ -159,7 +159,7 @@ public class CryptoUtils {
                 keyStore = KeyStore.getInstance(ANDROID_KEY_STORE);
                 keyStore.load(null);
             } catch (Exception e) {
-                MobileCenterLog.error(LOG_TAG, "Cannot use secure keystore on this device.");
+                AppCenterLog.error(LOG_TAG, "Cannot use secure keystore on this device.");
             }
         }
         mKeyStore = keyStore;
@@ -169,7 +169,7 @@ public class CryptoUtils {
             try {
                 registerHandler(new CryptoAesHandler());
             } catch (Exception e) {
-                MobileCenterLog.error(LOG_TAG, "Cannot use modern encryption on this device.");
+                AppCenterLog.error(LOG_TAG, "Cannot use modern encryption on this device.");
             }
         }
 
@@ -182,7 +182,7 @@ public class CryptoUtils {
             try {
                 registerHandler(new CryptoRsaHandler());
             } catch (Exception e) {
-                MobileCenterLog.error(LOG_TAG, "Cannot use old encryption on this device.");
+                AppCenterLog.error(LOG_TAG, "Cannot use old encryption on this device.");
             }
         }
 
@@ -228,12 +228,12 @@ public class CryptoUtils {
 
         /* If it's the first time we use the preferred handler, create the alias. */
         if (mCryptoHandlers.isEmpty() && !mKeyStore.containsAlias(alias)) {
-            MobileCenterLog.debug(LOG_TAG, "Creating alias: " + alias);
+            AppCenterLog.debug(LOG_TAG, "Creating alias: " + alias);
             handler.generateKey(mCryptoFactory, alias, mContext);
         }
 
         /* Register the handler. */
-        MobileCenterLog.debug(LOG_TAG, "Using " + alias);
+        AppCenterLog.debug(LOG_TAG, "Using " + alias);
         mCryptoHandlers.put(handler.getAlgorithm(), new CryptoHandlerEntry(index, handler));
     }
 
@@ -285,18 +285,18 @@ public class CryptoUtils {
             } catch (InvalidKeyException e) {
 
                 /* When key expires, switch to another alias. */
-                MobileCenterLog.debug(LOG_TAG, "Alias expired: " + handlerEntry.mAliasIndex);
+                AppCenterLog.debug(LOG_TAG, "Alias expired: " + handlerEntry.mAliasIndex);
                 handlerEntry.mAliasIndex ^= 1;
                 String newAlias = getAlias(handler, handlerEntry.mAliasIndex);
 
                 /* If this is the second time we switch, we delete the previous key. */
                 if (mKeyStore.containsAlias(newAlias)) {
-                    MobileCenterLog.debug(LOG_TAG, "Deleting alias: " + newAlias);
+                    AppCenterLog.debug(LOG_TAG, "Deleting alias: " + newAlias);
                     mKeyStore.deleteEntry(newAlias);
                 }
 
                 /* Generate new key. */
-                MobileCenterLog.debug(LOG_TAG, "Creating alias: " + newAlias);
+                AppCenterLog.debug(LOG_TAG, "Creating alias: " + newAlias);
                 handler.generateKey(mCryptoFactory, newAlias, mContext);
 
                 /* And encrypt using that new key. */
@@ -305,7 +305,7 @@ public class CryptoUtils {
         } catch (Exception e) {
 
             /* Return data as is. */
-            MobileCenterLog.error(LOG_TAG, "Failed to encrypt data.");
+            AppCenterLog.error(LOG_TAG, "Failed to encrypt data.");
             return data;
         }
     }
@@ -343,7 +343,7 @@ public class CryptoUtils {
         } catch (Exception e) {
 
             /* Return data as is. */
-            MobileCenterLog.error(LOG_TAG, "Failed to decrypt data.");
+            AppCenterLog.error(LOG_TAG, "Failed to decrypt data.");
             return new DecryptedData(data, null);
         }
     }

@@ -17,7 +17,7 @@ import com.microsoft.appcenter.crashes.ingestion.models.StackFrame;
 import com.microsoft.appcenter.crashes.ingestion.models.Thread;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
@@ -86,7 +86,7 @@ public class ErrorLogHelper {
         try {
             errorLog.setDevice(DeviceInfoHelper.getDeviceInfo(context));
         } catch (DeviceInfoHelper.DeviceInfoException e) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Could not attach device properties snapshot to error log, will attach at sending time", e);
+            AppCenterLog.error(Crashes.LOG_TAG, "Could not attach device properties snapshot to error log, will attach at sending time", e);
         }
 
         /* Process information. Parent one is not available on Android. */
@@ -178,7 +178,7 @@ public class ErrorLogHelper {
     public static void removeStoredThrowableFile(@NonNull UUID id) {
         File file = getStoredThrowableFile(id);
         if (file != null) {
-            MobileCenterLog.info(Crashes.LOG_TAG, "Deleting throwable file " + file.getName());
+            AppCenterLog.info(Crashes.LOG_TAG, "Deleting throwable file " + file.getName());
             StorageHelper.InternalStorage.delete(file);
         }
     }
@@ -191,7 +191,7 @@ public class ErrorLogHelper {
     public static void removeStoredErrorLogFile(@NonNull UUID id) {
         File file = getStoredErrorLogFile(id);
         if (file != null) {
-            MobileCenterLog.info(Crashes.LOG_TAG, "Deleting error log file " + file.getName());
+            AppCenterLog.info(Crashes.LOG_TAG, "Deleting error log file " + file.getName());
             StorageHelper.InternalStorage.delete(file);
         }
     }
@@ -252,7 +252,7 @@ public class ErrorLogHelper {
             System.arraycopy(stackTrace, 0, stackTraceTruncated, 0, FRAME_LIMIT_HALF);
             System.arraycopy(stackTrace, stackTrace.length - FRAME_LIMIT_HALF, stackTraceTruncated, FRAME_LIMIT_HALF, FRAME_LIMIT_HALF);
             throwable.setStackTrace(stackTraceTruncated);
-            MobileCenterLog.warn(Crashes.LOG_TAG, "Crash frames truncated from " + stackTrace.length + " to " + stackTraceTruncated.length + " frames.");
+            AppCenterLog.warn(Crashes.LOG_TAG, "Crash frames truncated from " + stackTrace.length + " to " + stackTraceTruncated.length + " frames.");
             stackTrace = stackTraceTruncated;
         }
         return getModelFramesFromStackTrace(stackTrace);

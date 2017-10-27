@@ -2,7 +2,7 @@ package com.microsoft.appcenter.crashes;
 
 import android.content.Context;
 
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.MobileCenterHandler;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
@@ -10,8 +10,8 @@ import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.MobileCenterLog;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
@@ -51,7 +51,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest({MobileCenter.class, WrapperSdkExceptionManager.class, MobileCenterLog.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, HandlerUtils.class})
+@PrepareForTest({MobileCenter.class, WrapperSdkExceptionManager.class, AppCenterLog.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, HandlerUtils.class})
 public class WrapperSdkExceptionManagerTest {
 
     private static final String CRASHES_ENABLED_KEY = KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
@@ -68,7 +68,7 @@ public class WrapperSdkExceptionManagerTest {
         mockStatic(MobileCenter.class);
         mockStatic(StorageHelper.PreferencesStorage.class);
         mockStatic(StorageHelper.InternalStorage.class);
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
         ManagedErrorLog errorLogMock = mock(ManagedErrorLog.class);
@@ -77,8 +77,8 @@ public class WrapperSdkExceptionManagerTest {
                 .thenReturn(errorLogMock);
 
         @SuppressWarnings("unchecked")
-        MobileCenterFuture<Boolean> future = (MobileCenterFuture<Boolean>) mock(MobileCenterFuture.class);
-        when(MobileCenter.isEnabled()).thenReturn(future);
+        AppCenterFuture<Boolean> future = (AppCenterFuture<Boolean>) mock(AppCenterFuture.class);
+        when(AppCenter.isEnabled()).thenReturn(future);
         when(future.get()).thenReturn(true);
         when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
 
@@ -123,7 +123,7 @@ public class WrapperSdkExceptionManagerTest {
         verifyStatic(never());
         StorageHelper.InternalStorage.delete(any(File.class));
         verifyStatic();
-        MobileCenterLog.error(eq(Crashes.LOG_TAG), anyString());
+        AppCenterLog.error(eq(Crashes.LOG_TAG), anyString());
     }
 
     @Test
@@ -134,7 +134,7 @@ public class WrapperSdkExceptionManagerTest {
         verifyStatic(never());
         StorageHelper.InternalStorage.delete(any(File.class));
         verifyStatic(never());
-        MobileCenterLog.error(eq(Crashes.LOG_TAG), anyString());
+        AppCenterLog.error(eq(Crashes.LOG_TAG), anyString());
     }
 
     @Test
@@ -148,7 +148,7 @@ public class WrapperSdkExceptionManagerTest {
         verifyStatic();
         StorageHelper.InternalStorage.delete(any(File.class));
         verifyStatic();
-        MobileCenterLog.error(eq(Crashes.LOG_TAG), anyString());
+        AppCenterLog.error(eq(Crashes.LOG_TAG), anyString());
     }
 
     @Test
@@ -185,7 +185,7 @@ public class WrapperSdkExceptionManagerTest {
         byte[] data = new byte[]{'d'};
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), data);
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
+        AppCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -199,7 +199,7 @@ public class WrapperSdkExceptionManagerTest {
 
         /* No more error. */
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
+        AppCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -215,7 +215,7 @@ public class WrapperSdkExceptionManagerTest {
         Crashes.getInstance().setLogSerializer(logSerializer);
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), new byte[]{'d'});
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
+        AppCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -228,7 +228,7 @@ public class WrapperSdkExceptionManagerTest {
 
         /* No more error. */
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
+        AppCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -246,7 +246,7 @@ public class WrapperSdkExceptionManagerTest {
         Crashes.getInstance().setLogSerializer(logSerializer);
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), new byte[]{'d'});
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
+        AppCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -259,7 +259,7 @@ public class WrapperSdkExceptionManagerTest {
 
         /* No more error. */
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
+        AppCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -278,7 +278,7 @@ public class WrapperSdkExceptionManagerTest {
         Crashes.getInstance().setLogSerializer(logSerializer);
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), data);
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
+        AppCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -291,7 +291,7 @@ public class WrapperSdkExceptionManagerTest {
 
         /* No more error. */
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
+        AppCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
 
             @Override
             public boolean matches(Object argument) {

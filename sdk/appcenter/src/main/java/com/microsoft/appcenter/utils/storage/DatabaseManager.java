@@ -13,8 +13,8 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
-import com.microsoft.appcenter.MobileCenter;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -603,7 +603,7 @@ public class DatabaseManager implements Closeable {
                                     try {
                                         cursor.close();
                                     } catch (RuntimeException e1) {
-                                        MobileCenterLog.warn(MobileCenter.LOG_TAG, "Closing cursor failed", e1);
+                                        AppCenterLog.warn(AppCenter.LOG_TAG, "Closing cursor failed", e1);
                                     }
                                     cursor = null;
 

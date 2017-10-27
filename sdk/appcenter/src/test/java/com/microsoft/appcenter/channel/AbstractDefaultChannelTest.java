@@ -10,7 +10,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.Before;
@@ -32,7 +32,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("WeakerAccess")
-@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, MobileCenterLog.class, HandlerUtils.class})
+@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, AppCenterLog.class, HandlerUtils.class})
 public class AbstractDefaultChannelTest {
 
     static final String TEST_GROUP = "group_test";
@@ -95,7 +95,7 @@ public class AbstractDefaultChannelTest {
 
     @Before
     public void setUp() throws Exception {
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
         mockStatic(IdHelper.class, new Returns(UUIDUtils.randomUUID()));
         mockStatic(DeviceInfoHelper.class);
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mock(Device.class));

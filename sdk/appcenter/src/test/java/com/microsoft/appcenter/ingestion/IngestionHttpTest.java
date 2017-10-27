@@ -10,7 +10,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
@@ -48,7 +48,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({IngestionHttp.class, MobileCenterLog.class})
+@PrepareForTest({IngestionHttp.class, AppCenterLog.class})
 public class IngestionHttpTest {
 
     @Rule
@@ -164,20 +164,20 @@ public class IngestionHttpTest {
         Map<String, String> headers = new HashMap<>();
         headers.put("Another-Header", "Another-Value");
         HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret);
-        MobileCenterLog.setLogLevel(android.util.Log.VERBOSE);
-        mockStatic(MobileCenterLog.class);
+        AppCenterLog.setLogLevel(android.util.Log.VERBOSE);
+        mockStatic(AppCenterLog.class);
 
         /* Call onBeforeCalling with parameters. */
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify url log. */
         verifyStatic();
-        MobileCenterLog.verbose(anyString(), contains(url.toString()));
+        AppCenterLog.verbose(anyString(), contains(url.toString()));
 
         /* Verify header log. */
         for (Map.Entry<String, String> header : headers.entrySet()) {
             verifyStatic();
-            MobileCenterLog.verbose(anyString(), contains(header.getValue()));
+            AppCenterLog.verbose(anyString(), contains(header.getValue()));
         }
 
         /* Put app secret to header. */
@@ -186,7 +186,7 @@ public class IngestionHttpTest {
 
         /* Verify app secret is in log. */
         verifyStatic();
-        MobileCenterLog.verbose(anyString(), contains(obfuscatedSecret));
+        AppCenterLog.verbose(anyString(), contains(obfuscatedSecret));
     }
 
     @Test
@@ -198,14 +198,14 @@ public class IngestionHttpTest {
         HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret);
 
         /* Change log level. */
-        MobileCenterLog.setLogLevel(android.util.Log.WARN);
+        AppCenterLog.setLogLevel(android.util.Log.WARN);
 
         /* Call onBeforeCalling with parameters. */
         callTemplate.onBeforeCalling(mock(URL.class), mock(Map.class));
 
         /* Verify. */
         verifyStatic(never());
-        MobileCenterLog.verbose(anyString(), anyString());
+        AppCenterLog.verbose(anyString(), anyString());
     }
 
     private HttpClient.CallTemplate getCallTemplate(String appSecret) throws Exception {

@@ -5,7 +5,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 
 import com.microsoft.appcenter.Constants;
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.MobileCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
@@ -23,11 +23,11 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.async.MobileCenterConsumer;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import junit.framework.Assert;
@@ -85,7 +85,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
-@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, Crashes.class, HandlerUtils.class, Looper.class})
+@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, AppCenterLog.class, MobileCenter.class, Crashes.class, HandlerUtils.class, Looper.class})
 public class CrashesTest {
 
     @SuppressWarnings("ThrowableInstanceNeverThrown")
@@ -121,14 +121,14 @@ public class CrashesTest {
         mockStatic(SystemClock.class);
         mockStatic(StorageHelper.InternalStorage.class);
         mockStatic(StorageHelper.PreferencesStorage.class);
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
         when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
 
         mockStatic(MobileCenter.class);
 
         @SuppressWarnings("unchecked")
-        MobileCenterFuture<Boolean> future = (MobileCenterFuture<Boolean>) mock(MobileCenterFuture.class);
-        when(MobileCenter.isEnabled()).thenReturn(future);
+        AppCenterFuture<Boolean> future = (AppCenterFuture<Boolean>) mock(AppCenterFuture.class);
+        when(AppCenter.isEnabled()).thenReturn(future);
         when(future.get()).thenReturn(true);
 
         when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
@@ -201,7 +201,7 @@ public class CrashesTest {
         Crashes.notifyUserConfirmation(Crashes.SEND);
         Crashes.trackException(EXCEPTION);
         verifyStatic(times(2));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
     @Test
@@ -492,7 +492,7 @@ public class CrashesTest {
         verify(mockChannel, never()).enqueue(any(Log.class), anyString());
 
         verifyStatic();
-        MobileCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(jsonException));
+        AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(jsonException));
     }
 
     @Test(expected = TestCrashException.class)
@@ -624,12 +624,12 @@ public class CrashesTest {
 
         listener.onBeforeSending(mErrorLog);
         verifyStatic();
-        MobileCenterLog.warn(eq(Crashes.LOG_TAG), anyString());
+        AppCenterLog.warn(eq(Crashes.LOG_TAG), anyString());
         Mockito.verifyNoMoreInteractions(mockListener);
 
         listener.onSuccess(mock(Log.class));
         verifyStatic();
-        MobileCenterLog.warn(eq(Crashes.LOG_TAG), contains(Log.class.getName()));
+        AppCenterLog.warn(eq(Crashes.LOG_TAG), contains(Log.class.getName()));
         Mockito.verifyNoMoreInteractions(mockListener);
     }
 
@@ -741,9 +741,9 @@ public class CrashesTest {
         assertNull(report);
 
         verifyStatic();
-        MobileCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(classNotFoundException));
+        AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(classNotFoundException));
         verifyStatic();
-        MobileCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(ioException));
+        AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(ioException));
     }
 
     @Test
@@ -805,7 +805,7 @@ public class CrashesTest {
         assertFalse(Crashes.hasCrashedInLastSession().get());
         assertNull(Crashes.getLastSessionCrashReport().get());
         verifyStatic(never());
-        MobileCenterLog.debug(anyString(), anyString());
+        AppCenterLog.debug(anyString(), anyString());
     }
 
     @Test
@@ -850,7 +850,7 @@ public class CrashesTest {
         assertFalse(Crashes.hasCrashedInLastSession().get());
 
         @SuppressWarnings("unchecked")
-        MobileCenterConsumer<ErrorReport> beforeCallback = (MobileCenterConsumer<ErrorReport>) mock(MobileCenterConsumer.class);
+        AppCenterConsumer<ErrorReport> beforeCallback = (AppCenterConsumer<ErrorReport>) mock(AppCenterConsumer.class);
         Crashes.getLastSessionCrashReport().thenAccept(beforeCallback);
         verify(beforeCallback).accept(null);
 
@@ -861,8 +861,8 @@ public class CrashesTest {
 
         /* Test with 2 callbacks and check result is the same for both callbacks. */
         @SuppressWarnings("unchecked")
-        MobileCenterConsumer<ErrorReport> afterCallback = (MobileCenterConsumer<ErrorReport>) mock(MobileCenterConsumer.class);
-        MobileCenterFuture<ErrorReport> future = Crashes.getLastSessionCrashReport();
+        AppCenterConsumer<ErrorReport> afterCallback = (AppCenterConsumer<ErrorReport>) mock(AppCenterConsumer.class);
+        AppCenterFuture<ErrorReport> future = Crashes.getLastSessionCrashReport();
         future.thenAccept(afterCallback);
         future.thenAccept(afterCallback);
         ArgumentCaptor<ErrorReport> errorReportCaptor = ArgumentCaptor.forClass(ErrorReport.class);
@@ -929,7 +929,7 @@ public class CrashesTest {
          * And loading that same file for exposing it in getLastErrorReport.
          */
         verifyStatic(times(2));
-        MobileCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(jsonException));
+        AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(jsonException));
     }
 
     @Test
@@ -950,7 +950,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
 
         @SuppressWarnings("unchecked")
-        MobileCenterConsumer<ErrorReport> callback = (MobileCenterConsumer<ErrorReport>) mock(MobileCenterConsumer.class);
+        AppCenterConsumer<ErrorReport> callback = (AppCenterConsumer<ErrorReport>) mock(AppCenterConsumer.class);
 
         /* Call twice for multiple callbacks before initialize. */
         Crashes.getLastSessionCrashReport().thenAccept(callback);
@@ -999,7 +999,7 @@ public class CrashesTest {
 
         String expectedMessage = "A limit of " + MAX_ATTACHMENT_PER_CRASH + " attachments per error report might be enforced by server.";
         PowerMockito.verifyStatic();
-        MobileCenterLog.warn(Crashes.LOG_TAG, expectedMessage);
+        AppCenterLog.warn(Crashes.LOG_TAG, expectedMessage);
     }
 
     @Test

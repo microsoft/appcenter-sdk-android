@@ -8,11 +8,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Implementation of {@link MobileCenterFuture}.
+ * Implementation of {@link AppCenterFuture}.
  *
  * @param <T> result type.
  */
-public class DefaultMobileCenterFuture<T> implements MobileCenterFuture<T> {
+public class DefaultAppCenterFuture<T> implements AppCenterFuture<T> {
 
     /**
      * Lock used to wait or monitor result.
@@ -27,7 +27,7 @@ public class DefaultMobileCenterFuture<T> implements MobileCenterFuture<T> {
     /**
      * Callbacks from thenAccept waiting for result.
      */
-    private Collection<MobileCenterConsumer<T>> mConsumers;
+    private Collection<AppCenterConsumer<T>> mConsumers;
 
     @Override
     public T get() {
@@ -52,7 +52,7 @@ public class DefaultMobileCenterFuture<T> implements MobileCenterFuture<T> {
     }
 
     @Override
-    public synchronized void thenAccept(final MobileCenterConsumer<T> function) {
+    public synchronized void thenAccept(final AppCenterConsumer<T> function) {
         if (isDone()) {
             HandlerUtils.runOnUiThread(new Runnable() {
 
@@ -85,7 +85,7 @@ public class DefaultMobileCenterFuture<T> implements MobileCenterFuture<T> {
                     public void run() {
 
                         /* No need to synchronize anymore as consumers cannot be modified anymore. */
-                        for (MobileCenterConsumer<T> function : mConsumers) {
+                        for (AppCenterConsumer<T> function : mConsumers) {
                             function.accept(value);
                         }
                         mConsumers = null;

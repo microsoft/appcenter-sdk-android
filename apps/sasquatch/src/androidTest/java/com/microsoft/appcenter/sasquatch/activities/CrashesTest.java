@@ -13,7 +13,7 @@ import android.support.v4.app.ActivityCompat;
 import android.view.View;
 
 import com.microsoft.appcenter.Constants;
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesPrivateHelper;
 import com.microsoft.appcenter.crashes.model.ErrorReport;

@@ -5,7 +5,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
@@ -41,7 +41,7 @@ class DownloadTask extends AsyncTask<Void, Void, Void> {
 
         /* Download file. */
         Uri downloadUrl = mReleaseDetails.getDownloadUrl();
-        MobileCenterLog.debug(LOG_TAG, "Start downloading new release, url=" + downloadUrl);
+        AppCenterLog.debug(LOG_TAG, "Start downloading new release, url=" + downloadUrl);
         DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
         DownloadManager.Request request = new DownloadManager.Request(downloadUrl);
 

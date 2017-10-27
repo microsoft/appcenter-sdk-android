@@ -3,6 +3,6 @@
 -dontskipnonpubliclibraryclasses
 -verbose
 
--keepclasseswithmembers class * implements com.microsoft.appcenter.MobileCenterService {
+-keepclasseswithmembers class * implements com.microsoft.appcenter.AppCenterService {
     public static ** getInstance();
 }

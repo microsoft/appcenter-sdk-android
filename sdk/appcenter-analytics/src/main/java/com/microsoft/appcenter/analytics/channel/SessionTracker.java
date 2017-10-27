@@ -8,7 +8,7 @@ import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
@@ -102,11 +102,11 @@ public class SessionTracker implements Channel.Listener {
                     UUID sid = UUID.fromString(split[1]);
                     mSessions.put(time, sid);
                 } catch (RuntimeException e) {
-                    MobileCenterLog.warn(Analytics.LOG_TAG, "Ignore invalid session in store: " + session, e);
+                    AppCenterLog.warn(Analytics.LOG_TAG, "Ignore invalid session in store: " + session, e);
                 }
             }
         }
-        MobileCenterLog.debug(Analytics.LOG_TAG, "Loaded stored sessions: " + mSessions);
+        AppCenterLog.debug(Analytics.LOG_TAG, "Loaded stored sessions: " + mSessions);
     }
 
     @Override
@@ -196,7 +196,7 @@ public class SessionTracker implements Channel.Listener {
     public void onActivityResumed() {
 
         /* Record resume time for session timeout management. */
-        MobileCenterLog.debug(Analytics.LOG_TAG, "onActivityResumed");
+        AppCenterLog.debug(Analytics.LOG_TAG, "onActivityResumed");
         mLastResumedTime = SystemClock.elapsedRealtime();
         sendStartSessionIfNeeded();
     }
@@ -207,7 +207,7 @@ public class SessionTracker implements Channel.Listener {
     public void onActivityPaused() {
 
         /* Record pause time for session timeout management. */
-        MobileCenterLog.debug(Analytics.LOG_TAG, "onActivityPaused");
+        AppCenterLog.debug(Analytics.LOG_TAG, "onActivityPaused");
         mLastPausedTime = SystemClock.elapsedRealtime();
     }
 
@@ -246,7 +246,7 @@ public class SessionTracker implements Channel.Listener {
         /* Normal case: we saw both resume and paused events, compare all times. */
         boolean isBackgroundForLong = mLastPausedTime >= mLastResumedTime && now - mLastPausedTime >= SESSION_TIMEOUT;
         boolean wasBackgroundForLong = mLastResumedTime - Math.max(mLastPausedTime, mLastQueuedLogTime) >= SESSION_TIMEOUT;
-        MobileCenterLog.debug(Analytics.LOG_TAG, "noLogSentForLong=" + noLogSentForLong + " isBackgroundForLong=" + isBackgroundForLong + " wasBackgroundForLong=" + wasBackgroundForLong);
+        AppCenterLog.debug(Analytics.LOG_TAG, "noLogSentForLong=" + noLogSentForLong + " isBackgroundForLong=" + isBackgroundForLong + " wasBackgroundForLong=" + wasBackgroundForLong);
         return noLogSentForLong && (isBackgroundForLong || wasBackgroundForLong);
     }
 }

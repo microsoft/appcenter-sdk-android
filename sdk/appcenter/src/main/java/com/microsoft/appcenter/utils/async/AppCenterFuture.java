@@ -4,7 +4,7 @@ package com.microsoft.appcenter.utils.async;
  * Tiny subset of CompletableFuture usable on Java 7.
  * Does not throw any exception.
  */
-public interface MobileCenterFuture<T> {
+public interface AppCenterFuture<T> {
 
     /**
      * Waits if necessary for the computation to complete, and then
@@ -20,7 +20,7 @@ public interface MobileCenterFuture<T> {
      *
      * @param function the action to perform upon completion.
      */
-    void thenAccept(MobileCenterConsumer<T> function);
+    void thenAccept(AppCenterConsumer<T> function);
 
     /**
      * Returns true if completed.

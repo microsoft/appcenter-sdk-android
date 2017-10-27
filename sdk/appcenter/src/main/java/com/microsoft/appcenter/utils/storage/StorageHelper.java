@@ -10,8 +10,8 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
-import com.microsoft.appcenter.MobileCenter;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -342,7 +342,7 @@ public class StorageHelper {
                 }
                 return contents.toString();
             } catch (IOException e) {
-                MobileCenterLog.error(MobileCenter.LOG_TAG, "Could not read file " + file.getAbsolutePath(), e);
+                AppCenterLog.error(AppCenter.LOG_TAG, "Could not read file " + file.getAbsolutePath(), e);
             }
             return null;
         }

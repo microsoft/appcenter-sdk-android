@@ -3,7 +3,7 @@ package com.microsoft.appcenter;
 
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
@@ -43,7 +43,7 @@ public class InstantiationTest {
     }
 
     @Test
-    public void mobileCenterLog() {
-        new MobileCenterLog();
+    public void appCenterLog() {
+        new AppCenterLog();
     }
 }

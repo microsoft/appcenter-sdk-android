@@ -2,7 +2,7 @@ package com.microsoft.appcenter.utils;
 
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 
 import java.util.Random;
 import java.util.UUID;
@@ -57,7 +57,7 @@ public class UUIDUtils {
     private static synchronized void initFailOver(SecurityException e) {
         if (sRandom == null) {
             sRandom = new Random();
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "UUID.randomUUID failed, using Random as fallback", e);
+            AppCenterLog.error(AppCenter.LOG_TAG, "UUID.randomUUID failed, using Random as fallback", e);
         }
     }
 

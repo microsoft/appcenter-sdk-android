@@ -2,10 +2,10 @@ package com.microsoft.appcenter.ingestion.models.json;
 
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -64,13 +64,13 @@ public class DefaultLogSerializer implements LogSerializer {
 
         /* Init JSON serializer, in verbose: try to make it pretty. */
         JSONStringer writer = null;
-        if (MobileCenterLog.getLogLevel() <= android.util.Log.VERBOSE) {
+        if (AppCenterLog.getLogLevel() <= android.util.Log.VERBOSE) {
             try {
                 Constructor<JSONStringer> constructor = JSONStringer.class.getDeclaredConstructor(int.class);
                 constructor.setAccessible(true);
                 writer = constructor.newInstance(2);
             } catch (Exception e) {
-                MobileCenterLog.error(MobileCenter.LOG_TAG, "Failed to setup pretty json, falling back to default one", e);
+                AppCenterLog.error(AppCenter.LOG_TAG, "Failed to setup pretty json, falling back to default one", e);
             }
         }
         if (writer == null) {

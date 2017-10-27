@@ -42,7 +42,7 @@ public final class AndroidTestUtils {
     @NonNull
     private static Device generateMockDevice() {
         Device device = new Device();
-        device.setSdkName("mobilecenter.android");
+        device.setSdkName("mobilecenter.android"); //TODO change?
         device.setSdkVersion(String.format(Locale.ENGLISH, "%d.%d.%d", (RANDOM.nextInt(5) + 1), RANDOM.nextInt(10), RANDOM.nextInt(100)));
         device.setModel("S5");
         device.setOemName("HTC");

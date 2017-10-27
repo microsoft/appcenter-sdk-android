@@ -92,7 +92,7 @@ public class NetworkStateHelperTest {
         /* Change state to up. */
         NetworkInfo networkInfo = mock(NetworkInfo.class);
         when(networkInfo.isConnected()).thenReturn(true);
-        when(networkInfo.getTypeName()).thenReturn("MOBILE");
+        when(networkInfo.getTypeName()).thenReturn("MOBILE"); //TODO change?
         when(networkInfo.getSubtypeName()).thenReturn("EDGE");
         when(connectivityManager.getActiveNetworkInfo()).thenReturn(networkInfo);
 

@@ -11,13 +11,13 @@ import android.support.annotation.VisibleForTesting;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.RemoteMessage;
-import com.microsoft.appcenter.AbstractMobileCenterService;
+import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
-import com.microsoft.appcenter.utils.MobileCenterLog;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * Push notifications interface.
  */
-public class Push extends AbstractMobileCenterService {
+public class Push extends AbstractAppCenterService {
 
     /**
      * Google message identifier extra intent key.
@@ -56,7 +56,7 @@ public class Push extends AbstractMobileCenterService {
     /**
      * TAG used in logging for Analytics.
      */
-    private static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
+    private static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
      * Constant marking event of the push group.
@@ -126,9 +126,9 @@ public class Push extends AbstractMobileCenterService {
      * Check whether Push service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see MobileCenterFuture
+     * @see AppCenterFuture
      */
-    public static MobileCenterFuture<Boolean> isEnabled() {
+    public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
 
@@ -138,7 +138,7 @@ public class Push extends AbstractMobileCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    public static MobileCenterFuture<Void> setEnabled(boolean enabled) {
+    public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
 
@@ -170,7 +170,7 @@ public class Push extends AbstractMobileCenterService {
      */
     @SuppressWarnings("WeakerAccess")
     public static void enableFirebaseAnalytics(@NonNull Context context) {
-        MobileCenterLog.debug(LOG_TAG, "Enabling firebase analytics collection.");
+        AppCenterLog.debug(LOG_TAG, "Enabling firebase analytics collection.");
         setFirebaseAnalyticsEnabled(context, true);
     }
 
@@ -203,7 +203,7 @@ public class Push extends AbstractMobileCenterService {
      * @param pushToken the push token value.
      */
     synchronized void onTokenRefresh(@NonNull final String pushToken) {
-        MobileCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
+        AppCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
         post(new Runnable() {
 
             @Override
@@ -227,7 +227,7 @@ public class Push extends AbstractMobileCenterService {
                     enqueuePushInstallationLog(token);
                 }
             } catch (IllegalStateException e) {
-                MobileCenterLog.error(LOG_TAG, "Failed to get firebase push token.", e);
+                AppCenterLog.error(LOG_TAG, "Failed to get firebase push token.", e);
             }
         }
     }
@@ -261,7 +261,7 @@ public class Push extends AbstractMobileCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         super.onStarted(context, appSecret, channel);
         if (!sFirebaseAnalyticsEnabled) {
-            MobileCenterLog.debug(LOG_TAG, "Disabling firebase analytics collection by default.");
+            AppCenterLog.debug(LOG_TAG, "Disabling firebase analytics collection by default.");
             setFirebaseAnalyticsEnabled(context, false);
         }
     }
@@ -310,11 +310,11 @@ public class Push extends AbstractMobileCenterService {
 
     private void checkPushInActivityIntent(final Activity activity, final Intent intent) {
         if (activity == null) {
-            MobileCenterLog.error(LOG_TAG, "Push.checkLaunchedFromNotification: activity may not be null");
+            AppCenterLog.error(LOG_TAG, "Push.checkLaunchedFromNotification: activity may not be null");
             return;
         }
         if (intent == null) {
-            MobileCenterLog.error(LOG_TAG, "Push.checkLaunchedFromNotification: intent may not be null");
+            AppCenterLog.error(LOG_TAG, "Push.checkLaunchedFromNotification: intent may not be null");
             return;
         }
         postOnUiThread(new Runnable() {
@@ -338,7 +338,7 @@ public class Push extends AbstractMobileCenterService {
             if (extras != null) {
                 String googleMessageId = extras.getString(EXTRA_GOOGLE_MESSAGE_ID);
                 if (googleMessageId != null && !googleMessageId.equals(mLastGoogleMessageId)) {
-                    MobileCenterLog.info(LOG_TAG, "Clicked push message from background id=" + googleMessageId);
+                    AppCenterLog.info(LOG_TAG, "Clicked push message from background id=" + googleMessageId);
                     mLastGoogleMessageId = googleMessageId;
                     Map<String, String> customData = new HashMap<>();
                     Map<String, Object> allData = new HashMap<>();
@@ -348,7 +348,7 @@ public class Push extends AbstractMobileCenterService {
                             customData.put(extra, extras.getString(extra));
                         }
                     }
-                    MobileCenterLog.debug(LOG_TAG, "Push intent extra=" + allData);
+                    AppCenterLog.debug(LOG_TAG, "Push intent extra=" + allData);
                     mInstanceListener.onPushNotificationReceived(mActivity, new PushNotification(null, null, customData));
                 }
             }
@@ -361,7 +361,7 @@ public class Push extends AbstractMobileCenterService {
      * @param remoteMessage push message details.
      */
     void onMessageReceived(final RemoteMessage remoteMessage) {
-        MobileCenterLog.info(LOG_TAG, "Received push message in foreground id=" + remoteMessage.getMessageId());
+        AppCenterLog.info(LOG_TAG, "Received push message in foreground id=" + remoteMessage.getMessageId());
         postOnUiThread(new Runnable() {
 
             @Override

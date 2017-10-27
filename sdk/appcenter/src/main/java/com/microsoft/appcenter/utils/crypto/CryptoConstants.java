@@ -16,9 +16,9 @@ class CryptoConstants {
     static final String ANDROID_KEY_STORE = "AndroidKeyStore";
 
     /**
-     * Keystore alias prefix to use for Mobile Center SDK.
+     * Keystore alias prefix to use for App Center SDK.
      */
-    static final String KEYSTORE_ALIAS_PREFIX = "mobile.center";
+    static final String KEYSTORE_ALIAS_PREFIX = "mobile.center"; //TODO change?
 
     /**
      * Keystore alias separator.

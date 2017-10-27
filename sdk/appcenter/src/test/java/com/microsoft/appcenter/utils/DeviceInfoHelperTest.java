@@ -12,7 +12,7 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 import com.microsoft.appcenter.BuildConfig;
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
 
@@ -45,7 +45,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Build.class, MobileCenterLog.class, TextUtils.class})
+@PrepareForTest({Build.class, AppCenterLog.class, TextUtils.class})
 public class DeviceInfoHelperTest {
 
     @Before
@@ -210,7 +210,7 @@ public class DeviceInfoHelperTest {
         Context contextMock = mock(Context.class);
         PackageManager packageManagerMock = mock(PackageManager.class);
         WindowManager windowManagerMock = mock(WindowManager.class);
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
 
         /* Delegates to mock instances. */
         when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
@@ -225,7 +225,7 @@ public class DeviceInfoHelperTest {
         assertNull(device.getCarrierCountry());
         assertNull(device.getCarrierName());
         verifyStatic();
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString(), any(Exception.class));
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(Exception.class));
     }
 
     @Test
@@ -258,7 +258,7 @@ public class DeviceInfoHelperTest {
         /* Mocking instances. */
         Context contextMock = mock(Context.class);
         PackageManager packageManagerMock = mock(PackageManager.class);
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
 
         /* Delegates to mock instances. */
         when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
@@ -271,6 +271,6 @@ public class DeviceInfoHelperTest {
         Device device = DeviceInfoHelper.getDeviceInfo(contextMock);
         assertNull(device.getScreenSize());
         verifyStatic();
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString(), any(Exception.class));
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(Exception.class));
     }
 }

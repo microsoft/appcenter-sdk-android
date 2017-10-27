@@ -29,7 +29,7 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 import android.widget.Toast;
 
-import com.microsoft.appcenter.AbstractMobileCenterService;
+import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
@@ -41,10 +41,10 @@ import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
-import com.microsoft.appcenter.utils.async.MobileCenterConsumer;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 import com.microsoft.appcenter.utils.storage.StorageHelper.PreferencesStorage;
@@ -97,7 +97,7 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 /**
  * Distribute service.
  */
-public class Distribute extends AbstractMobileCenterService {
+public class Distribute extends AbstractAppCenterService {
 
     /**
      * Shared instance.
@@ -266,9 +266,9 @@ public class Distribute extends AbstractMobileCenterService {
      * Check whether Distribute service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see MobileCenterFuture
+     * @see AppCenterFuture
      */
-    public static MobileCenterFuture<Boolean> isEnabled() {
+    public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
 
@@ -278,7 +278,7 @@ public class Distribute extends AbstractMobileCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    public static MobileCenterFuture<Void> setEnabled(boolean enabled) {
+    public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
 
@@ -345,7 +345,7 @@ public class Distribute extends AbstractMobileCenterService {
         try {
             mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
         } catch (PackageManager.NameNotFoundException e) {
-            MobileCenterLog.error(LOG_TAG, "Could not get self package info.", e);
+            AppCenterLog.error(LOG_TAG, "Could not get self package info.", e);
         }
 
         /*
@@ -361,7 +361,7 @@ public class Distribute extends AbstractMobileCenterService {
      */
     synchronized ReleaseDetails startFromBackground(Context context) {
         if (mAppSecret == null) {
-            MobileCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
+            AppCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
             mContext = context;
             StorageHelper.initialize(mContext);
             mReleaseDetails = DistributeUtils.loadCachedReleaseDetails();
@@ -384,7 +384,7 @@ public class Distribute extends AbstractMobileCenterService {
 
         /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
         if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
-            MobileCenterLog.info(LOG_TAG, "Launcher activity restarted.");
+            AppCenterLog.info(LOG_TAG, "Launcher activity restarted.");
             if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
                 mWorkflowCompleted = false;
                 mBrowserOpenedOrAborted = false;
@@ -441,20 +441,20 @@ public class Distribute extends AbstractMobileCenterService {
          * We need to check if it is enabled and we also need to run download code in U.I. thread
          * so post the command using the async method to achieve both goals at once.
          */
-        isInstanceEnabledAsync().thenAccept(new MobileCenterConsumer<Boolean>() {
+        isInstanceEnabledAsync().thenAccept(new AppCenterConsumer<Boolean>() {
 
             @Override
             public void accept(Boolean enabled) {
                 if (!enabled) {
-                    MobileCenterLog.error(LOG_TAG, "Distribute is disabled");
+                    AppCenterLog.error(LOG_TAG, "Distribute is disabled");
                     return;
                 }
                 if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE) {
-                    MobileCenterLog.error(LOG_TAG, "Cannot handler user update action at this time.");
+                    AppCenterLog.error(LOG_TAG, "Cannot handler user update action at this time.");
                     return;
                 }
                 if (mUsingDefaultUpdateDialog) {
-                    MobileCenterLog.error(LOG_TAG, "Cannot handler user update action when using default dialog.");
+                    AppCenterLog.error(LOG_TAG, "Cannot handler user update action when using default dialog.");
                     return;
                 }
                 switch (updateAction) {
@@ -465,14 +465,14 @@ public class Distribute extends AbstractMobileCenterService {
 
                     case UpdateAction.POSTPONE:
                         if (mReleaseDetails.isMandatoryUpdate()) {
-                            MobileCenterLog.error(LOG_TAG, "Cannot postpone a mandatory update.");
+                            AppCenterLog.error(LOG_TAG, "Cannot postpone a mandatory update.");
                             return;
                         }
                         postponeRelease(mReleaseDetails);
                         break;
 
                     default:
-                        MobileCenterLog.error(LOG_TAG, "Invalid update action: " + updateAction);
+                        AppCenterLog.error(LOG_TAG, "Invalid update action: " + updateAction);
                 }
             }
         });
@@ -527,7 +527,7 @@ public class Distribute extends AbstractMobileCenterService {
         mCheckedDownload = false;
         long downloadId = DistributeUtils.getStoredDownloadId();
         if (downloadId >= 0) {
-            MobileCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
+            AppCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
             removeDownload(downloadId);
         }
         PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
@@ -544,14 +544,14 @@ public class Distribute extends AbstractMobileCenterService {
 
             /* Don't go any further it this is a debug app. */
             if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {
-                MobileCenterLog.info(LOG_TAG, "Not checking in app updates in debug.");
+                AppCenterLog.info(LOG_TAG, "Not checking in app updates in debug.");
                 mWorkflowCompleted = true;
                 return;
             }
 
             /* Don't go any further if the app was installed from an app store. */
             if (InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext)) {
-                MobileCenterLog.info(LOG_TAG, "Not checking in app updates as installed from a store.");
+                AppCenterLog.info(LOG_TAG, "Not checking in app updates as installed from a store.");
                 mWorkflowCompleted = true;
                 return;
             }
@@ -564,10 +564,10 @@ public class Distribute extends AbstractMobileCenterService {
             String updateSetupFailedPackageHash = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
             if (updateSetupFailedPackageHash != null) {
                 if (releaseHash.equals(updateSetupFailedPackageHash)) {
-                    MobileCenterLog.info(LOG_TAG, "Skipping in-app updates setup, because it already failed on this release before.");
+                    AppCenterLog.info(LOG_TAG, "Skipping in-app updates setup, because it already failed on this release before.");
                     return;
                 } else {
-                    MobileCenterLog.info(LOG_TAG, "Re-attempting in-app updates setup and cleaning up failure info from storage.");
+                    AppCenterLog.info(LOG_TAG, "Re-attempting in-app updates setup and cleaning up failure info from storage.");
                     PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
                     PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
                 }
@@ -575,7 +575,7 @@ public class Distribute extends AbstractMobileCenterService {
 
             /* If we received the redirection parameters before Mobile Center was started/enabled, process them now. */
             if (mBeforeStartRequestId != null) {
-                MobileCenterLog.debug(LOG_TAG, "Processing update token we kept in memory before onStarted");
+                AppCenterLog.debug(LOG_TAG, "Processing update token we kept in memory before onStarted");
                 storeRedirectionParameters(mBeforeStartRequestId, mBeforeStartDistributionGroupId, mBeforeStartUpdateToken);
                 mBeforeStartRequestId = null;
                 mBeforeStartDistributionGroupId = null;
@@ -601,7 +601,7 @@ public class Distribute extends AbstractMobileCenterService {
 
                 /* Discard release if application updated. Then immediately check release. */
                 if (mPackageInfo.lastUpdateTime > StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_TIME)) {
-                    MobileCenterLog.debug(LOG_TAG, "Discarding previous download as application updated.");
+                    AppCenterLog.debug(LOG_TAG, "Discarding previous download as application updated.");
                     cancelPreviousTasks();
                 }
 
@@ -679,14 +679,14 @@ public class Distribute extends AbstractMobileCenterService {
              */
             String updateSetupFailedMessage = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
             if (updateSetupFailedMessage != null) {
-                MobileCenterLog.debug(LOG_TAG, "In-app updates setup failure detected.");
+                AppCenterLog.debug(LOG_TAG, "In-app updates setup failure detected.");
                 showUpdateSetupFailedDialog(updateSetupFailedMessage);
                 return;
             }
 
             /* Nothing more to do for now if we are already calling API to check release. */
             if (mCheckReleaseCallId != null) {
-                MobileCenterLog.verbose(LOG_TAG, "Already checking or checked latest release.");
+                AppCenterLog.verbose(LOG_TAG, "Already checking or checked latest release.");
                 return;
             }
 
@@ -744,7 +744,7 @@ public class Distribute extends AbstractMobileCenterService {
      */
     private synchronized void cancelNotification() {
         if (getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
-            MobileCenterLog.debug(LOG_TAG, "Delete notification");
+            AppCenterLog.debug(LOG_TAG, "Delete notification");
             NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.cancel(DistributeUtils.getNotificationId());
         }
@@ -774,7 +774,7 @@ public class Distribute extends AbstractMobileCenterService {
      */
     synchronized void storeUpdateSetupFailedParameter(@NonNull String requestId, @NonNull String updateSetupFailed) {
         if (requestId.equals(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
-            MobileCenterLog.debug(LOG_TAG, "Stored update setup failed parameter.");
+            AppCenterLog.debug(LOG_TAG, "Stored update setup failed parameter.");
             PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, updateSetupFailed);
         }
     }
@@ -786,7 +786,7 @@ public class Distribute extends AbstractMobileCenterService {
 
         /* Keep redirection parameters for later if we are not started and enabled yet. */
         if (mContext == null) {
-            MobileCenterLog.debug(LOG_TAG, "Redirection parameters received before onStart, keep them in memory.");
+            AppCenterLog.debug(LOG_TAG, "Redirection parameters received before onStart, keep them in memory.");
             mBeforeStartRequestId = requestId;
             mBeforeStartUpdateToken = updateToken;
             mBeforeStartDistributionGroupId = distributionGroupId;
@@ -798,12 +798,12 @@ public class Distribute extends AbstractMobileCenterService {
                 PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
             }
             PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
-            MobileCenterLog.debug(LOG_TAG, "Stored redirection parameters.");
+            AppCenterLog.debug(LOG_TAG, "Stored redirection parameters.");
             PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
             cancelPreviousTasks();
             getLatestReleaseDetails(distributionGroupId, updateToken);
         } else {
-            MobileCenterLog.warn(LOG_TAG, "Ignoring redirection parameters as requestId is invalid.");
+            AppCenterLog.warn(LOG_TAG, "Ignoring redirection parameters as requestId is invalid.");
         }
     }
 
@@ -815,7 +815,7 @@ public class Distribute extends AbstractMobileCenterService {
      */
     @VisibleForTesting
     synchronized void getLatestReleaseDetails(String distributionGroupId, String updateToken) {
-        MobileCenterLog.debug(LOG_TAG, "Get latest release details...");
+        AppCenterLog.debug(LOG_TAG, "Get latest release details...");
         HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
         HttpClient httpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
@@ -842,11 +842,11 @@ public class Distribute extends AbstractMobileCenterService {
 
             @Override
             public void onBeforeCalling(URL url, Map<String, String> headers) {
-                if (MobileCenterLog.getLogLevel() <= VERBOSE) {
+                if (AppCenterLog.getLogLevel() <= VERBOSE) {
 
                     /* Log url. */
                     String urlString = url.toString().replaceAll(mAppSecret, HttpUtils.hideSecret(mAppSecret));
-                    MobileCenterLog.verbose(LOG_TAG, "Calling " + urlString + "...");
+                    AppCenterLog.verbose(LOG_TAG, "Calling " + urlString + "...");
 
                     /* Log headers. */
                     Map<String, String> logHeaders = new HashMap<>(headers);
@@ -854,7 +854,7 @@ public class Distribute extends AbstractMobileCenterService {
                     if (apiToken != null) {
                         logHeaders.put(HEADER_API_TOKEN, HttpUtils.hideSecret(apiToken));
                     }
-                    MobileCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
+                    AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
                 }
             }
         }, new ServiceCallback() {
@@ -910,13 +910,13 @@ public class Distribute extends AbstractMobileCenterService {
                         ErrorDetails errorDetails = ErrorDetails.parse(httpException.getPayload());
                         code = errorDetails.getCode();
                     } catch (JSONException je) {
-                        MobileCenterLog.verbose(LOG_TAG, "Cannot read the error as JSON", je);
+                        AppCenterLog.verbose(LOG_TAG, "Cannot read the error as JSON", je);
                     }
                 }
                 if (ErrorDetails.NO_RELEASES_FOR_USER_CODE.equals(code)) {
-                    MobileCenterLog.info(LOG_TAG, "No release available to the current user.");
+                    AppCenterLog.info(LOG_TAG, "No release available to the current user.");
                 } else {
-                    MobileCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
+                    AppCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
                     PreferencesStorage.remove(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
                     PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
                 }
@@ -937,7 +937,7 @@ public class Distribute extends AbstractMobileCenterService {
             if (Build.VERSION.SDK_INT >= releaseDetails.getMinApiLevel()) {
 
                 /* Check version code is equals or higher and hash is different. */
-                MobileCenterLog.debug(LOG_TAG, "Check if latest release is more recent.");
+                AppCenterLog.debug(LOG_TAG, "Check if latest release is more recent.");
                 if (isMoreRecent(releaseDetails) && canUpdateNow(releaseDetails)) {
 
                     /* Update cache. */
@@ -946,17 +946,17 @@ public class Distribute extends AbstractMobileCenterService {
                     /* If previous release is mandatory and still processing, don't do anything right now. */
                     if (mReleaseDetails != null && mReleaseDetails.isMandatoryUpdate()) {
                         if (mReleaseDetails.getId() != releaseDetails.getId()) {
-                            MobileCenterLog.debug(LOG_TAG, "Latest release is more recent than the previous mandatory.");
+                            AppCenterLog.debug(LOG_TAG, "Latest release is more recent than the previous mandatory.");
                             PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
                         } else {
-                            MobileCenterLog.debug(LOG_TAG, "The latest release is mandatory and already being processed.");
+                            AppCenterLog.debug(LOG_TAG, "The latest release is mandatory and already being processed.");
                         }
                         return;
                     }
 
                     /* Show update dialog. */
                     mReleaseDetails = releaseDetails;
-                    MobileCenterLog.debug(LOG_TAG, "Latest release is more recent.");
+                    AppCenterLog.debug(LOG_TAG, "Latest release is more recent.");
                     PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
                     if (mForegroundActivity != null) {
                         showUpdateDialog();
@@ -964,7 +964,7 @@ public class Distribute extends AbstractMobileCenterService {
                     return;
                 }
             } else {
-                MobileCenterLog.info(LOG_TAG, "This device is not compatible with the latest release.");
+                AppCenterLog.info(LOG_TAG, "This device is not compatible with the latest release.");
             }
 
             /* If update dialog was not shown or scheduled, complete workflow. */
@@ -985,7 +985,7 @@ public class Distribute extends AbstractMobileCenterService {
         } else {
             moreRecent = releaseDetails.getVersion() > mPackageInfo.versionCode;
         }
-        MobileCenterLog.debug(LOG_TAG, "Latest release more recent=" + moreRecent);
+        AppCenterLog.debug(LOG_TAG, "Latest release more recent=" + moreRecent);
         return moreRecent;
     }
 
@@ -997,19 +997,19 @@ public class Distribute extends AbstractMobileCenterService {
      */
     private boolean canUpdateNow(ReleaseDetails releaseDetails) {
         if (releaseDetails.isMandatoryUpdate()) {
-            MobileCenterLog.debug(LOG_TAG, "Release is mandatory, ignoring any postpone action.");
+            AppCenterLog.debug(LOG_TAG, "Release is mandatory, ignoring any postpone action.");
             return true;
         }
         long now = System.currentTimeMillis();
         long postponedTime = PreferencesStorage.getLong(PREFERENCE_KEY_POSTPONE_TIME, 0);
         if (now < postponedTime) {
-            MobileCenterLog.debug(LOG_TAG, "User clock has been changed in past, cleaning postpone state and showing dialog");
+            AppCenterLog.debug(LOG_TAG, "User clock has been changed in past, cleaning postpone state and showing dialog");
             PreferencesStorage.remove(PREFERENCE_KEY_POSTPONE_TIME);
             return true;
         }
         long postponedUntil = postponedTime + POSTPONE_TIME_THRESHOLD;
         if (now < postponedUntil) {
-            MobileCenterLog.debug(LOG_TAG, "Optional updates are postponed until " + new Date(postponedUntil));
+            AppCenterLog.debug(LOG_TAG, "Optional updates are postponed until " + new Date(postponedUntil));
             return false;
         }
         return true;
@@ -1029,7 +1029,7 @@ public class Distribute extends AbstractMobileCenterService {
             /* Nothing to if resuming same activity with dialog already displayed. */
             if (dialog.isShowing()) {
                 if (mForegroundActivity == mLastActivityWithDialog.get()) {
-                    MobileCenterLog.debug(LOG_TAG, "Previous dialog is still being shown in the same activity.");
+                    AppCenterLog.debug(LOG_TAG, "Previous dialog is still being shown in the same activity.");
                     return false;
                 }
 
@@ -1060,7 +1060,7 @@ public class Distribute extends AbstractMobileCenterService {
             mUsingDefaultUpdateDialog = true;
         }
         if (mListener != null && mForegroundActivity != mLastActivityWithDialog.get()) {
-            MobileCenterLog.debug(LOG_TAG, "Calling listener.onReleaseAvailable.");
+            AppCenterLog.debug(LOG_TAG, "Calling listener.onReleaseAvailable.");
             boolean customized = mListener.onReleaseAvailable(mForegroundActivity, mReleaseDetails);
             if (customized) {
                 mLastActivityWithDialog = new WeakReference<>(mForegroundActivity);
@@ -1071,7 +1071,7 @@ public class Distribute extends AbstractMobileCenterService {
             if (!shouldRefreshDialog(mUpdateDialog)) {
                 return;
             }
-            MobileCenterLog.debug(LOG_TAG, "Show default update dialog.");
+            AppCenterLog.debug(LOG_TAG, "Show default update dialog.");
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
             dialogBuilder.setTitle(R.string.appcenter_distribute_update_dialog_title);
             final ReleaseDetails releaseDetails = mReleaseDetails;
@@ -1121,7 +1121,7 @@ public class Distribute extends AbstractMobileCenterService {
         try {
             mForegroundActivity.startActivity(new Intent(Intent.ACTION_VIEW, releaseDetails.getReleaseNotesUrl()));
         } catch (ActivityNotFoundException e) {
-            MobileCenterLog.error(LOG_TAG, "Failed to navigate to release notes.", e);
+            AppCenterLog.error(LOG_TAG, "Failed to navigate to release notes.", e);
         }
     }
 
@@ -1147,7 +1147,7 @@ public class Distribute extends AbstractMobileCenterService {
             try {
                 url = BrowserUtils.appendUri(url, PARAMETER_UPDATE_SETUP_FAILED + "=" + "true");
             } catch (URISyntaxException e) {
-                MobileCenterLog.error(LOG_TAG, "Could not append query parameter to url.", e);
+                AppCenterLog.error(LOG_TAG, "Could not append query parameter to url.", e);
             }
             BrowserUtils.openBrowser(url, mForegroundActivity);
 
@@ -1169,7 +1169,7 @@ public class Distribute extends AbstractMobileCenterService {
         if (!shouldRefreshDialog(mUnknownSourcesDialog)) {
             return;
         }
-        MobileCenterLog.debug(LOG_TAG, "Show new unknown sources dialog.");
+        AppCenterLog.debug(LOG_TAG, "Show new unknown sources dialog.");
 
         /*
          * We invite user to go to setting and will navigate to setting upon clicking,
@@ -1224,7 +1224,7 @@ public class Distribute extends AbstractMobileCenterService {
         if (!shouldRefreshDialog(mUpdateSetupFailedDialog)) {
             return;
         }
-        MobileCenterLog.debug(LOG_TAG, "Show update setup failed dialog.");
+        AppCenterLog.debug(LOG_TAG, "Show update setup failed dialog.");
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
         dialogBuilder.setCancelable(false);
         dialogBuilder.setTitle(R.string.appcenter_distribute_update_failed_dialog_title);
@@ -1274,7 +1274,7 @@ public class Distribute extends AbstractMobileCenterService {
         } catch (ActivityNotFoundException e) {
 
             /* On some devices, it's not possible, user will do it by himself. */
-            MobileCenterLog.warn(LOG_TAG, "No way to navigate to secure settings on this device automatically");
+            AppCenterLog.warn(LOG_TAG, "No way to navigate to secure settings on this device automatically");
 
             /* Don't pop dialog until app restarted in that case. */
             if (releaseDetails == mReleaseDetails) {
@@ -1290,7 +1290,7 @@ public class Distribute extends AbstractMobileCenterService {
      */
     private synchronized void postponeRelease(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
-            MobileCenterLog.debug(LOG_TAG, "Postpone updates for a day.");
+            AppCenterLog.debug(LOG_TAG, "Postpone updates for a day.");
             PreferencesStorage.putLong(PREFERENCE_KEY_POSTPONE_TIME, System.currentTimeMillis());
             completeWorkflow();
         } else {
@@ -1306,7 +1306,7 @@ public class Distribute extends AbstractMobileCenterService {
     synchronized void enqueueDownloadOrShowUnknownSourcesDialog(final ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
             if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
-                MobileCenterLog.debug(LOG_TAG, "Schedule download...");
+                AppCenterLog.debug(LOG_TAG, "Schedule download...");
                 if (releaseDetails.isMandatoryUpdate()) {
                     showDownloadProgress();
                 }
@@ -1358,7 +1358,7 @@ public class Distribute extends AbstractMobileCenterService {
             /* Delete previous download. */
             long previousDownloadId = DistributeUtils.getStoredDownloadId();
             if (previousDownloadId >= 0) {
-                MobileCenterLog.debug(LOG_TAG, "Delete previous download id=" + previousDownloadId);
+                AppCenterLog.debug(LOG_TAG, "Delete previous download id=" + previousDownloadId);
                 downloadManager.remove(previousDownloadId);
             }
 
@@ -1374,7 +1374,7 @@ public class Distribute extends AbstractMobileCenterService {
         } else {
 
             /* State changed quickly, cancel download. */
-            MobileCenterLog.debug(LOG_TAG, "State changed while downloading, cancel id=" + downloadId);
+            AppCenterLog.debug(LOG_TAG, "State changed while downloading, cancel id=" + downloadId);
             downloadManager.remove(downloadId);
         }
     }
@@ -1440,7 +1440,7 @@ public class Distribute extends AbstractMobileCenterService {
         }
 
         /* Post notification. */
-        MobileCenterLog.debug(LOG_TAG, "Post a notification as the download finished in background.");
+        AppCenterLog.debug(LOG_TAG, "Post a notification as the download finished in background.");
         NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
         Notification.Builder builder;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -1481,7 +1481,7 @@ public class Distribute extends AbstractMobileCenterService {
      */
     synchronized void markDownloadStillInProgress(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
-            MobileCenterLog.verbose(LOG_TAG, "Download is still in progress...");
+            AppCenterLog.verbose(LOG_TAG, "Download is still in progress...");
             mCheckedDownload = true;
         }
     }

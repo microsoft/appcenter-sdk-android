@@ -24,14 +24,14 @@ import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-public class MobileCenterFutureTest {
+public class AppCenterFutureTest {
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Test
     public void getWithInterruption() throws InterruptedException {
-        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
+        final DefaultAppCenterFuture<Boolean> future = new DefaultAppCenterFuture<>();
         final AtomicReference<Boolean> result = new AtomicReference<>();
         Thread thread = new Thread() {
 
@@ -48,12 +48,12 @@ public class MobileCenterFutureTest {
     }
 
     @Test
-    @PrepareForTest(DefaultMobileCenterFuture.class)
+    @PrepareForTest(DefaultAppCenterFuture.class)
     public void isDoneWithInterruption() throws Exception {
         CountDownLatch latch = mock(CountDownLatch.class);
         whenNew(CountDownLatch.class).withAnyArguments().thenReturn(latch);
         when(latch.await(anyLong(), any(TimeUnit.class))).thenThrow(new InterruptedException()).thenReturn(true);
-        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
+        final DefaultAppCenterFuture<Boolean> future = new DefaultAppCenterFuture<>();
         final AtomicReference<Boolean> result = new AtomicReference<>();
         Thread thread = new Thread() {
 
@@ -69,7 +69,7 @@ public class MobileCenterFutureTest {
 
     @Test
     public void completeTwiceIgnored() {
-        DefaultMobileCenterFuture<Integer> future = new DefaultMobileCenterFuture<>();
+        DefaultAppCenterFuture<Integer> future = new DefaultAppCenterFuture<>();
         future.complete(1);
         future.complete(2);
         assertEquals(Integer.valueOf(1), future.get());
@@ -88,10 +88,10 @@ public class MobileCenterFutureTest {
             }
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
-        DefaultMobileCenterFuture<Integer> future = new DefaultMobileCenterFuture<>();
+        DefaultAppCenterFuture<Integer> future = new DefaultAppCenterFuture<>();
 
         @SuppressWarnings("unchecked")
-        MobileCenterConsumer<Integer> function = mock(MobileCenterConsumer.class);
+        AppCenterConsumer<Integer> function = mock(AppCenterConsumer.class);
         future.thenAccept(function);
         future.thenAccept(function);
         future.complete(1);

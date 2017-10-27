@@ -6,7 +6,7 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -55,7 +55,7 @@ class InstallerUtils {
     static synchronized boolean isInstalledFromAppStore(@NonNull String logTag, @NonNull Context context) {
         if (sInstalledFromAppStore == null) {
             String installer = context.getPackageManager().getInstallerPackageName(context.getPackageName());
-            MobileCenterLog.debug(logTag, "InstallerPackageName=" + installer);
+            AppCenterLog.debug(logTag, "InstallerPackageName=" + installer);
             sInstalledFromAppStore = installer != null && !LOCAL_STORES.contains(installer);
         }
         return sInstalledFromAppStore;

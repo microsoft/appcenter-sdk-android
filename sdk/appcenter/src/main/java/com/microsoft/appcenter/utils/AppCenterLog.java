@@ -13,12 +13,12 @@ import static android.util.Log.VERBOSE;
  *
  * @see Log
  */
-public class MobileCenterLog {
+public class AppCenterLog {
 
     /**
      * Log tag prefix that the SDK uses for all logs.
      */
-    public static final String LOG_TAG = "MobileCenter";
+    public static final String LOG_TAG = "MobileCenter"; //TODO change?
 
     /**
      * Log level to disable all logs, even assert logs.

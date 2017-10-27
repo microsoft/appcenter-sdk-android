@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
-import com.microsoft.appcenter.AbstractMobileCenterService;
+import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
@@ -16,9 +16,9 @@ import com.microsoft.appcenter.analytics.ingestion.models.json.StartSessionLogFa
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * Analytics service.
  */
-public class Analytics extends AbstractMobileCenterService {
+public class Analytics extends AbstractAppCenterService {
 
     /**
      * Name of the service.
@@ -37,7 +37,7 @@ public class Analytics extends AbstractMobileCenterService {
     /**
      * TAG used in logging for Analytics.
      */
-    public static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
+    public static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
      * Constant marking event of the analytics group.
@@ -129,9 +129,9 @@ public class Analytics extends AbstractMobileCenterService {
      * Check whether Analytics service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see MobileCenterFuture
+     * @see AppCenterFuture
      */
-    public static MobileCenterFuture<Boolean> isEnabled() {
+    public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
 
@@ -141,7 +141,7 @@ public class Analytics extends AbstractMobileCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    public static MobileCenterFuture<Void> setEnabled(boolean enabled) {
+    public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
 
@@ -276,11 +276,11 @@ public class Analytics extends AbstractMobileCenterService {
      */
     private static String validateName(String name, String logType) {
         if (name == null || name.isEmpty()) {
-            MobileCenterLog.error(Analytics.LOG_TAG, logType + " name cannot be null or empty.");
+            AppCenterLog.error(Analytics.LOG_TAG, logType + " name cannot be null or empty.");
             return null;
         }
         if (name.length() > MAX_NAME_LENGTH) {
-            MobileCenterLog.warn(Analytics.LOG_TAG, String.format("%s '%s' : name length cannot be longer than %s characters. Name will be truncated.", logType, name, MAX_NAME_LENGTH));
+            AppCenterLog.warn(Analytics.LOG_TAG, String.format("%s '%s' : name length cannot be longer than %s characters. Name will be truncated.", logType, name, MAX_NAME_LENGTH));
             name = name.substring(0, MAX_NAME_LENGTH);
         }
         return name;
@@ -305,27 +305,27 @@ public class Analytics extends AbstractMobileCenterService {
             String value = property.getValue();
             if (result.size() >= MAX_PROPERTY_COUNT) {
                 message = String.format("%s '%s' : properties cannot contain more than %s items. Skipping other properties.", logType, logName, MAX_PROPERTY_COUNT);
-                MobileCenterLog.warn(Analytics.LOG_TAG, message);
+                AppCenterLog.warn(Analytics.LOG_TAG, message);
                 break;
             }
             if (key == null || key.isEmpty()) {
                 message = String.format("%s '%s' : a property key cannot be null or empty. Property will be skipped.", logType, logName);
-                MobileCenterLog.warn(Analytics.LOG_TAG, message);
+                AppCenterLog.warn(Analytics.LOG_TAG, message);
                 continue;
             }
             if (value == null) {
                 message = String.format("%s '%s' : property '%s' : property value cannot be null. Property '%s' will be skipped.", logType, logName, key, key);
-                MobileCenterLog.warn(Analytics.LOG_TAG, message);
+                AppCenterLog.warn(Analytics.LOG_TAG, message);
                 continue;
             }
             if (key.length() > MAX_PROPERTY_ITEM_LENGTH) {
                 message = String.format("%s '%s' : property '%s' : property key length cannot be longer than %s characters. Property key will be truncated.", logType, logName, key, MAX_PROPERTY_ITEM_LENGTH);
-                MobileCenterLog.warn(Analytics.LOG_TAG, message);
+                AppCenterLog.warn(Analytics.LOG_TAG, message);
                 key = key.substring(0, MAX_PROPERTY_ITEM_LENGTH);
             }
             if (value.length() > MAX_PROPERTY_ITEM_LENGTH) {
                 message = String.format("%s '%s' : property '%s' : property value cannot be longer than %s characters. Property value will be truncated.", logType, logName, key, MAX_PROPERTY_ITEM_LENGTH);
-                MobileCenterLog.warn(Analytics.LOG_TAG, message);
+                AppCenterLog.warn(Analytics.LOG_TAG, message);
                 value = value.substring(0, MAX_PROPERTY_ITEM_LENGTH);
             }
             result.put(key, value);

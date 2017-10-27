@@ -3,7 +3,7 @@ package com.microsoft.appcenter.crashes;
 import android.content.Context;
 import android.os.SystemClock;
 
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.MobileCenterHandler;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
@@ -12,9 +12,9 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.ShutdownHelper;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
@@ -52,7 +52,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
-@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, MobileCenterLog.class, MobileCenter.class, HandlerUtils.class})
+@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, AppCenterLog.class, MobileCenter.class, HandlerUtils.class})
 public class UncaughtExceptionHandlerTest {
 
     private static final String CRASHES_ENABLED_KEY = KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
@@ -68,7 +68,7 @@ public class UncaughtExceptionHandlerTest {
     public void setUp() throws java.lang.Exception {
         Crashes.unsetInstance();
         mockStatic(MobileCenter.class);
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
         mockStatic(SystemClock.class);
         mockStatic(StorageHelper.PreferencesStorage.class);
         mockStatic(StorageHelper.InternalStorage.class);
@@ -77,8 +77,8 @@ public class UncaughtExceptionHandlerTest {
         mockStatic(System.class);
 
         @SuppressWarnings("unchecked")
-        MobileCenterFuture<Boolean> future = (MobileCenterFuture<Boolean>) mock(MobileCenterFuture.class);
-        when(MobileCenter.isEnabled()).thenReturn(future);
+        AppCenterFuture<Boolean> future = (AppCenterFuture<Boolean>) mock(AppCenterFuture.class);
+        when(AppCenter.isEnabled()).thenReturn(future);
         when(future.get()).thenReturn(true);
         when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
 
@@ -199,7 +199,7 @@ public class UncaughtExceptionHandlerTest {
         mExceptionHandler.uncaughtException(thread, exception);
 
         verifyStatic();
-        MobileCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(jsonException));
+        AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(jsonException));
 
         verify(mDefaultExceptionHandler).uncaughtException(thread, exception);
     }
@@ -217,7 +217,7 @@ public class UncaughtExceptionHandlerTest {
         mExceptionHandler.uncaughtException(thread, exception);
 
         verifyStatic();
-        MobileCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(ioException));
+        AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(ioException));
 
         verify(mDefaultExceptionHandler).uncaughtException(thread, exception);
     }

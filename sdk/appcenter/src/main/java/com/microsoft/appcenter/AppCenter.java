@@ -22,11 +22,11 @@ import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.ShutdownHelper;
-import com.microsoft.appcenter.utils.async.DefaultMobileCenterFuture;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.ArrayList;
@@ -44,14 +44,14 @@ import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_COUNT;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_INTERVAL;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
-import static com.microsoft.appcenter.utils.MobileCenterLog.NONE;
+import static com.microsoft.appcenter.utils.AppCenterLog.NONE;
 
-public class MobileCenter {
+public class AppCenter {
 
     /**
      * TAG used in logging.
      */
-    public static final String LOG_TAG = MobileCenterLog.LOG_TAG;
+    public static final String LOG_TAG = AppCenterLog.LOG_TAG;
 
     /**
      * Group for sending logs.
@@ -68,7 +68,7 @@ public class MobileCenter {
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
-    private static MobileCenter sInstance;
+    private static AppCenter sInstance;
 
     /**
      * Remember if log level was configured using this class.
@@ -98,7 +98,7 @@ public class MobileCenter {
     /**
      * Configured services.
      */
-    private Set<MobileCenterService> mServices;
+    private Set<AppCenterService> mServices;
 
     /**
      * Log serializer.
@@ -123,11 +123,11 @@ public class MobileCenter {
     /**
      * Background thread handler abstraction to shared with services.
      */
-    private MobileCenterHandler mMobileCenterHandler;
+    private AppCenterHandler mAppCenterHandler;
 
-    static synchronized MobileCenter getInstance() {
+    static synchronized AppCenter getInstance() {
         if (sInstance == null) {
-            sInstance = new MobileCenter();
+            sInstance = new AppCenter();
         }
         return sInstance;
     }
@@ -154,11 +154,11 @@ public class MobileCenter {
      */
     @IntRange(from = VERBOSE, to = NONE)
     public static int getLogLevel() {
-        return MobileCenterLog.getLogLevel();
+        return AppCenterLog.getLogLevel();
     }
 
     /**
-     * Set a log level for logs coming from Mobile Center SDK.
+     * Set a log level for logs coming from App Center SDK.
      *
      * @param logLevel A log level as defined by {@link android.util.Log}.
      * @see android.util.Log#VERBOSE
@@ -167,7 +167,7 @@ public class MobileCenter {
      * @see android.util.Log#WARN
      * @see android.util.Log#ERROR
      * @see android.util.Log#ASSERT
-     * @see MobileCenterLog#NONE
+     * @see AppCenterLog#NONE
      */
     public static void setLogLevel(@IntRange(from = VERBOSE, to = NONE) int logLevel) {
         getInstance().setInstanceLogLevel(logLevel);
@@ -183,9 +183,9 @@ public class MobileCenter {
     }
 
     /**
-     * Get the current version of MobileCenter SDK.
+     * Get the current version of App Center SDK.
      *
-     * @return The current version of MobileCenter SDK.
+     * @return The current version of App Center SDK.
      */
     @SuppressWarnings("WeakerAccess")
     public static String getSdkVersion() {
@@ -230,7 +230,7 @@ public class MobileCenter {
      * @param services List of services to use.
      */
     @SafeVarargs
-    public static void start(Class<? extends MobileCenterService>... services) {
+    public static void start(Class<? extends AppCenterService>... services) {
         getInstance().startServices(services);
     }
 
@@ -243,7 +243,7 @@ public class MobileCenter {
      * @param services    List of services to use.
      */
     @SafeVarargs
-    public static void start(Application application, String appSecret, Class<? extends MobileCenterService>... services) {
+    public static void start(Application application, String appSecret, Class<? extends AppCenterService>... services) {
         getInstance().configureAndStartServices(application, appSecret, services);
     }
 
@@ -252,21 +252,21 @@ public class MobileCenter {
      * This operation is performed in background as it accesses SharedPreferences.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see MobileCenterFuture
+     * @see AppCenterFuture
      */
-    public static MobileCenterFuture<Boolean> isEnabled() {
+    public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
 
     /**
-     * Enable or disable the SDK as a whole. In addition to the MobileCenter resources,
+     * Enable or disable the SDK as a whole. In addition to the App Center resources,
      * it will also enable or disable
      * all services registered via {@link #start(Application, String, Class[])}.
      *
      * @param enabled true to enable, false to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    public static MobileCenterFuture<Void> setEnabled(boolean enabled) {
+    public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
 
@@ -276,9 +276,9 @@ public class MobileCenter {
      * This operation is performed in background as it accesses SharedPreferences and UUID.
      *
      * @return future with result being the installation identifier.
-     * @see MobileCenterFuture
+     * @see AppCenterFuture
      */
-    public static MobileCenterFuture<UUID> getInstallId() {
+    public static AppCenterFuture<UUID> getInstallId() {
         return getInstance().getInstanceInstallId();
     }
 
@@ -291,7 +291,7 @@ public class MobileCenter {
         if (isInstanceConfigured()) {
             return true;
         }
-        MobileCenterLog.error(LOG_TAG, "Mobile Center hasn't been configured. You need to call MobileCenter.start with appSecret or MobileCenter.configure first.");
+        AppCenterLog.error(LOG_TAG, "App Center hasn't been configured. You need to call AppCenter.start with appSecret or AppCenter.configure first.");
         return false;
     }
 
@@ -314,7 +314,7 @@ public class MobileCenter {
      */
     private synchronized void setInstanceLogLevel(int logLevel) {
         mLogLevelConfigured = true;
-        MobileCenterLog.setLogLevel(logLevel);
+        AppCenterLog.setLogLevel(logLevel);
     }
 
     /**
@@ -336,15 +336,15 @@ public class MobileCenter {
      */
     private synchronized void setInstanceCustomProperties(CustomProperties customProperties) {
         if (customProperties == null) {
-            MobileCenterLog.error(LOG_TAG, "Custom properties may not be null.");
+            AppCenterLog.error(LOG_TAG, "Custom properties may not be null.");
             return;
         }
         final Map<String, Object> properties = customProperties.getProperties();
         if (properties.size() == 0) {
-            MobileCenterLog.error(LOG_TAG, "Custom properties may not be empty.");
+            AppCenterLog.error(LOG_TAG, "Custom properties may not be empty.");
             return;
         }
-        handlerMobileCenterOperation(new Runnable() {
+        handlerAppCenterOperation(new Runnable() {
 
             @Override
             public void run() {
@@ -373,23 +373,23 @@ public class MobileCenter {
 
         /* Check parameters. */
         if (application == null) {
-            MobileCenterLog.error(LOG_TAG, "application may not be null");
+            AppCenterLog.error(LOG_TAG, "application may not be null");
             return false;
         }
         if (appSecret == null || appSecret.isEmpty()) {
-            MobileCenterLog.error(LOG_TAG, "appSecret may not be null or empty");
+            AppCenterLog.error(LOG_TAG, "appSecret may not be null or empty");
             return false;
         }
 
         /* Ignore call if already configured. */
         if (mHandler != null) {
-            MobileCenterLog.warn(LOG_TAG, "Mobile Center may only be configured once.");
+            AppCenterLog.warn(LOG_TAG, "App Center may only be configured once.");
             return false;
         }
 
         /* Enable a default log level for debuggable applications. */
         if (!mLogLevelConfigured && (application.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {
-            MobileCenterLog.setLogLevel(Log.WARN);
+            AppCenterLog.setLogLevel(Log.WARN);
         }
 
         /* Store state. */
@@ -397,14 +397,14 @@ public class MobileCenter {
         mAppSecret = appSecret;
 
         /* Start looper. */
-        mHandlerThread = new HandlerThread("MobileCenter.Looper");
+        mHandlerThread = new HandlerThread("MobileCenter.Looper"); //TODO change?
         mHandlerThread.start();
         mHandler = new Handler(mHandlerThread.getLooper());
-        mMobileCenterHandler = new MobileCenterHandler() {
+        mAppCenterHandler = new AppCenterHandler() {
 
             @Override
             public void post(@NonNull Runnable runnable, Runnable disabledRunnable) {
-                handlerMobileCenterOperation(runnable, disabledRunnable);
+                handlerAppCenterOperation(runnable, disabledRunnable);
             }
         };
 
@@ -417,11 +417,11 @@ public class MobileCenter {
                 finishConfiguration();
             }
         });
-        MobileCenterLog.logAssert(LOG_TAG, "Mobile Center SDK configured successfully.");
+        AppCenterLog.logAssert(LOG_TAG, "App Center SDK configured successfully.");
         return true;
     }
 
-    private synchronized void handlerMobileCenterOperation(final Runnable runnable, final Runnable disabledRunnable) {
+    private synchronized void handlerAppCenterOperation(final Runnable runnable, final Runnable disabledRunnable) {
         if (checkPrecondition()) {
             Runnable wrapperRunnable = new Runnable() {
 
@@ -433,7 +433,7 @@ public class MobileCenter {
                         if (disabledRunnable != null) {
                             disabledRunnable.run();
                         } else {
-                            MobileCenterLog.error(LOG_TAG, "Mobile Center SDK is disabled.");
+                            AppCenterLog.error(LOG_TAG, "App Center SDK is disabled.");
                         }
                     }
                 }
@@ -479,44 +479,44 @@ public class MobileCenter {
         if (mLogUrl != null) {
             mChannel.setLogUrl(mLogUrl);
         }
-        MobileCenterLog.debug(LOG_TAG, "Mobile Center storage initialized.");
+        AppCenterLog.debug(LOG_TAG, "App Center storage initialized.");
     }
 
     @SafeVarargs
-    private final synchronized void startServices(Class<? extends MobileCenterService>... services) {
+    private final synchronized void startServices(Class<? extends AppCenterService>... services) {
         if (services == null) {
-            MobileCenterLog.error(LOG_TAG, "Cannot start services, services array is null. Failed to start services.");
+            AppCenterLog.error(LOG_TAG, "Cannot start services, services array is null. Failed to start services.");
             return;
         }
         if (mApplication == null) {
             String serviceNames = "";
-            for (Class<? extends MobileCenterService> service : services) {
+            for (Class<? extends AppCenterService> service : services) {
                 serviceNames += "\t" + service.getName() + "\n";
             }
-            MobileCenterLog.error(LOG_TAG, "Cannot start services, Mobile Center has not been configured. Failed to start the following services:\n" + serviceNames);
+            AppCenterLog.error(LOG_TAG, "Cannot start services, App Center has not been configured. Failed to start the following services:\n" + serviceNames);
             return;
         }
 
         /* Start each service and collect info for send start service log. */
-        final Collection<MobileCenterService> startedServices = new ArrayList<>();
-        for (Class<? extends MobileCenterService> service : services) {
+        final Collection<AppCenterService> startedServices = new ArrayList<>();
+        for (Class<? extends AppCenterService> service : services) {
             if (service == null) {
-                MobileCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
+                AppCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
             } else {
                 try {
-                    MobileCenterService serviceInstance = (MobileCenterService) service.getMethod("getInstance").invoke(null);
+                    AppCenterService serviceInstance = (AppCenterService) service.getMethod("getInstance").invoke(null);
                     if (mServices.contains(serviceInstance)) {
-                        MobileCenterLog.warn(LOG_TAG, "Mobile Center has already started the service with class name: " + service.getName());
+                        AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
                     } else {
 
                         /* Share handler now with service while starting. */
-                        serviceInstance.onStarting(mMobileCenterHandler);
+                        serviceInstance.onStarting(mAppCenterHandler);
                         mApplication.registerActivityLifecycleCallbacks(serviceInstance);
                         mServices.add(serviceInstance);
                         startedServices.add(serviceInstance);
                     }
                 } catch (Exception e) {
-                    MobileCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
+                    AppCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
                 }
             }
         }
@@ -536,9 +536,9 @@ public class MobileCenter {
     }
 
     @WorkerThread
-    private void finishStartServices(Iterable<MobileCenterService> services) {
+    private void finishStartServices(Iterable<AppCenterService> services) {
         List<String> serviceNames = new ArrayList<>();
-        for (MobileCenterService service : services) {
+        for (AppCenterService service : services) {
             Map<String, LogFactory> logFactories = service.getLogFactories();
             if (logFactories != null) {
                 for (Map.Entry<String, LogFactory> logFactory : logFactories.entrySet()) {
@@ -546,7 +546,7 @@ public class MobileCenter {
                 }
             }
             service.onStarted(mApplication, mAppSecret, mChannel);
-            MobileCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
+            AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
             serviceNames.add(service.getServiceName());
         }
 
@@ -559,7 +559,7 @@ public class MobileCenter {
     }
 
     @SafeVarargs
-    private final synchronized void configureAndStartServices(Application application, String appSecret, Class<? extends MobileCenterService>... services) {
+    private final synchronized void configureAndStartServices(Application application, String appSecret, Class<? extends AppCenterService>... services) {
         boolean configuredSuccessfully = instanceConfigure(application, appSecret);
         if (configuredSuccessfully) {
             startServices(services);
@@ -582,10 +582,10 @@ public class MobileCenter {
     /**
      * Implements {@link #isEnabled()} at instance level.
      */
-    private synchronized MobileCenterFuture<Boolean> isInstanceEnabledAsync() {
-        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
+    private synchronized AppCenterFuture<Boolean> isInstanceEnabledAsync() {
+        final DefaultAppCenterFuture<Boolean> future = new DefaultAppCenterFuture<>();
         if (checkPrecondition()) {
-            mMobileCenterHandler.post(new Runnable() {
+            mAppCenterHandler.post(new Runnable() {
 
                 @Override
                 public void run() {
@@ -639,7 +639,7 @@ public class MobileCenter {
         }
 
         /* Apply change to services. */
-        for (MobileCenterService service : mServices) {
+        for (AppCenterService service : mServices) {
 
             /* Forward status change. */
             if (service.isInstanceEnabled() != enabled) {
@@ -654,19 +654,19 @@ public class MobileCenter {
 
         /* Log current state. */
         if (switchToDisabled) {
-            MobileCenterLog.info(LOG_TAG, "Mobile Center has been disabled.");
+            AppCenterLog.info(LOG_TAG, "App Center has been disabled.");
         } else if (switchToEnabled) {
-            MobileCenterLog.info(LOG_TAG, "Mobile Center has been enabled.");
+            AppCenterLog.info(LOG_TAG, "App Center has been enabled.");
         } else {
-            MobileCenterLog.info(LOG_TAG, "Mobile Center has already been " + (enabled ? "enabled" : "disabled") + ".");
+            AppCenterLog.info(LOG_TAG, "App Center has already been " + (enabled ? "enabled" : "disabled") + ".");
         }
     }
 
     /**
      * Implements {@link #setEnabled(boolean)}}.
      */
-    private synchronized MobileCenterFuture<Void> setInstanceEnabledAsync(final boolean enabled) {
-        final DefaultMobileCenterFuture<Void> future = new DefaultMobileCenterFuture<>();
+    private synchronized AppCenterFuture<Void> setInstanceEnabledAsync(final boolean enabled) {
+        final DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
         if (checkPrecondition()) {
             mHandler.post(new Runnable() {
 
@@ -685,10 +685,10 @@ public class MobileCenter {
     /**
      * Implements {@link #getInstallId()}.
      */
-    private synchronized MobileCenterFuture<UUID> getInstanceInstallId() {
-        final DefaultMobileCenterFuture<UUID> future = new DefaultMobileCenterFuture<>();
+    private synchronized AppCenterFuture<UUID> getInstanceInstallId() {
+        final DefaultAppCenterFuture<UUID> future = new DefaultAppCenterFuture<>();
         if (checkPrecondition()) {
-            mMobileCenterHandler.post(new Runnable() {
+            mAppCenterHandler.post(new Runnable() {
 
                 @Override
                 public void run() {
@@ -708,7 +708,7 @@ public class MobileCenter {
     }
 
     @VisibleForTesting
-    Set<MobileCenterService> getServices() {
+    Set<AppCenterService> getServices() {
         return mServices;
     }
 
@@ -752,16 +752,16 @@ public class MobileCenter {
                         if (mChannel != null) {
                             mChannel.shutdown();
                         }
-                        MobileCenterLog.debug(LOG_TAG, "Channel completed shutdown.");
+                        AppCenterLog.debug(LOG_TAG, "Channel completed shutdown.");
                         semaphore.release();
                     }
                 });
                 try {
                     if (!semaphore.tryAcquire(SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS)) {
-                        MobileCenterLog.error(LOG_TAG, "Timeout waiting for looper tasks to complete.");
+                        AppCenterLog.error(LOG_TAG, "Timeout waiting for looper tasks to complete.");
                     }
                 } catch (InterruptedException e) {
-                    MobileCenterLog.warn(LOG_TAG, "Interrupted while waiting looper to flush.", e);
+                    AppCenterLog.warn(LOG_TAG, "Interrupted while waiting looper to flush.", e);
                 }
             }
             if (mDefaultUncaughtExceptionHandler != null) {

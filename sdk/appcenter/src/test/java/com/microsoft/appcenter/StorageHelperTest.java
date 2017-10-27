@@ -2,7 +2,7 @@ package com.microsoft.appcenter;
 
 import android.text.TextUtils;
 
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.Rule;
@@ -38,7 +38,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({StorageHelper.InternalStorage.class, MobileCenterLog.class, TextUtils.class})
+@PrepareForTest({StorageHelper.InternalStorage.class, AppCenterLog.class, TextUtils.class})
 public class StorageHelperTest {
 
     @Rule
@@ -46,18 +46,18 @@ public class StorageHelperTest {
 
     @Test
     public void readFileNotFound() throws Exception {
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
         FileReader fileReader = mock(FileReader.class, new ThrowsException(new FileNotFoundException()));
         whenNew(FileReader.class).withAnyArguments().thenReturn(fileReader);
         assertNull(StorageHelper.InternalStorage.read(new File("")));
         verify(fileReader).close();
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), any(IOException.class));
+        AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
 
     @Test
     public void readError() throws Exception {
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
         BufferedReader reader = mock(BufferedReader.class);
         whenNew(BufferedReader.class).withAnyArguments().thenReturn(reader);
         whenNew(FileReader.class).withAnyArguments().thenReturn(mock(FileReader.class));
@@ -66,18 +66,18 @@ public class StorageHelperTest {
         assertNull(StorageHelper.InternalStorage.read(new File("")));
         verify(reader).close();
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), any(IOException.class));
+        AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
 
     @Test
     public void readErrorAndCloseError() throws Exception {
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
         FileReader fileReader = mock(FileReader.class, new ThrowsException(new IOException()));
         whenNew(FileReader.class).withAnyArguments().thenReturn(fileReader);
         assertNull(StorageHelper.InternalStorage.read(new File("")));
         verify(fileReader).close();
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), any(IOException.class));
+        AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
 
     @Test(expected = IOException.class)

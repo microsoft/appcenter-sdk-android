@@ -9,7 +9,7 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.utils.HashUtils;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
@@ -109,7 +109,7 @@ class DistributeUtils {
          * as it's unpredictable and will interrupt the user, so just wait next relaunch.
          */
         if (!NetworkStateHelper.getSharedInstance(activity).isNetworkConnected()) {
-            MobileCenterLog.info(LOG_TAG, "Postpone enabling in app updates via browser as network is disconnected.");
+            AppCenterLog.info(LOG_TAG, "Postpone enabling in app updates via browser as network is disconnected.");
             Distribute.getInstance().completeWorkflow();
             return;
         }
@@ -128,7 +128,7 @@ class DistributeUtils {
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
-        MobileCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
+        AppCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
 
         /* Store request id. */
         StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
@@ -148,7 +148,7 @@ class DistributeUtils {
             try {
                 return ReleaseDetails.parse(cachedReleaseDetails);
             } catch (JSONException e) {
-                MobileCenterLog.error(LOG_TAG, "Invalid release details in cache.", e);
+                AppCenterLog.error(LOG_TAG, "Invalid release details in cache.", e);
                 StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
             }
         }

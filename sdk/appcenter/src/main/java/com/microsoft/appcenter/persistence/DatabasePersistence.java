@@ -7,7 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.ingestion.models.Log;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 
@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static com.microsoft.appcenter.MobileCenter.LOG_TAG;
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.utils.storage.StorageHelper.DatabaseStorage;
 
 public class DatabasePersistence extends Persistence {
@@ -105,7 +105,7 @@ public class DatabasePersistence extends Persistence {
                 new DatabaseStorage.DatabaseErrorListener() {
                     @Override
                     public void onError(String operation, RuntimeException e) {
-                        MobileCenterLog.error(LOG_TAG, "Cannot complete an operation (" + operation + ")", e);
+                        AppCenterLog.error(LOG_TAG, "Cannot complete an operation (" + operation + ")", e);
                     }
                 });
     }
@@ -128,7 +128,7 @@ public class DatabasePersistence extends Persistence {
     public void putLog(@NonNull String group, @NonNull Log log) throws PersistenceException {
         /* Convert log to JSON string and put in the database. */
         try {
-            MobileCenterLog.debug(LOG_TAG, "Storing a log to the Persistence database for log type " + log.getType() + " with " + log.getSid());
+            AppCenterLog.debug(LOG_TAG, "Storing a log to the Persistence database for log type " + log.getType() + " with " + log.getSid());
             mDatabaseStorage.put(getContentValues(group, getLogSerializer().serializeLog(log)));
         } catch (JSONException e) {
             throw new PersistenceException("Cannot convert to JSON string", e);
@@ -138,13 +138,13 @@ public class DatabasePersistence extends Persistence {
     @Override
     public void deleteLogs(@NonNull String group, @NonNull String id) {
         /* Log. */
-        MobileCenterLog.debug(LOG_TAG, "Deleting logs from the Persistence database for " + group + " with " + id);
-        MobileCenterLog.debug(LOG_TAG, "The IDs for deleting log(s) is/are:");
+        AppCenterLog.debug(LOG_TAG, "Deleting logs from the Persistence database for " + group + " with " + id);
+        AppCenterLog.debug(LOG_TAG, "The IDs for deleting log(s) is/are:");
 
         List<Long> dbIdentifiers = mPendingDbIdentifiersGroups.remove(group + id);
         if (dbIdentifiers != null) {
             for (Long dbIdentifier : dbIdentifiers) {
-                MobileCenterLog.debug(LOG_TAG, "\t" + dbIdentifier);
+                AppCenterLog.debug(LOG_TAG, "\t" + dbIdentifier);
                 mDatabaseStorage.delete(dbIdentifier);
                 mPendingDbIdentifiers.remove(dbIdentifier);
             }
@@ -154,7 +154,7 @@ public class DatabasePersistence extends Persistence {
     @Override
     public void deleteLogs(String group) {
         /* Log. */
-        MobileCenterLog.debug(LOG_TAG, "Deleting all logs from the Persistence database for " + group);
+        AppCenterLog.debug(LOG_TAG, "Deleting all logs from the Persistence database for " + group);
 
         /* Delete from database. */
         mDatabaseStorage.delete(COLUMN_GROUP, group);
@@ -182,7 +182,7 @@ public class DatabasePersistence extends Persistence {
     @Nullable
     public String getLogs(@NonNull String group, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
         /* Log. */
-        MobileCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
+        AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
 
         /* Query database and get scanner. */
         DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group);
@@ -203,7 +203,7 @@ public class DatabasePersistence extends Persistence {
                     count++;
                 } catch (JSONException e) {
                     /* If it is not able to deserialize, delete and get another log. */
-                    MobileCenterLog.error(LOG_TAG, "Cannot deserialize a log in the database", e);
+                    AppCenterLog.error(LOG_TAG, "Cannot deserialize a log in the database", e);
 
                     /* Put the failed identifier to delete. */
                     failedDbIdentifiers.add(dbIdentifier);
@@ -215,12 +215,12 @@ public class DatabasePersistence extends Persistence {
         /* Delete any logs that cannot be deserialized. */
         if (failedDbIdentifiers.size() > 0) {
             mDatabaseStorage.delete(failedDbIdentifiers);
-            MobileCenterLog.warn(LOG_TAG, "Deleted logs that cannot be deserialized");
+            AppCenterLog.warn(LOG_TAG, "Deleted logs that cannot be deserialized");
         }
 
         /* No logs found. */
         if (candidates.size() <= 0) {
-            MobileCenterLog.debug(LOG_TAG, "No logs found in the Persistence database at the moment");
+            AppCenterLog.debug(LOG_TAG, "No logs found in the Persistence database at the moment");
             return null;
         }
 
@@ -228,8 +228,8 @@ public class DatabasePersistence extends Persistence {
         String id = UUIDUtils.randomUUID().toString();
 
         /* Log. */
-        MobileCenterLog.debug(LOG_TAG, "Returning " + candidates.size() + " log(s) with an ID, " + id);
-        MobileCenterLog.debug(LOG_TAG, "The SID/ID pairs for returning log(s) is/are:");
+        AppCenterLog.debug(LOG_TAG, "Returning " + candidates.size() + " log(s) with an ID, " + id);
+        AppCenterLog.debug(LOG_TAG, "The SID/ID pairs for returning log(s) is/are:");
 
         List<Long> pendingDbIdentifiersGroup = new ArrayList<>();
         for (Map.Entry<Long, Log> entry : candidates.entrySet()) {
@@ -245,7 +245,7 @@ public class DatabasePersistence extends Persistence {
             outLogs.add(entry.getValue());
 
             /* Log. */
-            MobileCenterLog.debug(LOG_TAG, "\t" + entry.getValue().getSid() + " / " + dbIdentifier);
+            AppCenterLog.debug(LOG_TAG, "\t" + entry.getValue().getSid() + " / " + dbIdentifier);
         }
 
         /* Update pending IDs. */
@@ -257,7 +257,7 @@ public class DatabasePersistence extends Persistence {
     public void clearPendingLogState() {
         mPendingDbIdentifiers.clear();
         mPendingDbIdentifiersGroups.clear();
-        MobileCenterLog.debug(LOG_TAG, "Cleared pending log states");
+        AppCenterLog.debug(LOG_TAG, "Cleared pending log states");
     }
 
     @Override

@@ -12,7 +12,7 @@ import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
 
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
 
@@ -52,7 +52,7 @@ public class DeviceInfoHelper {
             device.setAppVersion(packageInfo.versionName);
             device.setAppBuild(String.valueOf(packageInfo.versionCode));
         } catch (Exception e) {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Cannot retrieve package info", e);
+            AppCenterLog.error(AppCenter.LOG_TAG, "Cannot retrieve package info", e);
             throw new DeviceInfoException("Cannot retrieve package info", e);
         }
 
@@ -71,7 +71,7 @@ public class DeviceInfoHelper {
                 device.setCarrierName(networkOperatorName);
             }
         } catch (Exception e) {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Cannot retrieve carrier info", e);
+            AppCenterLog.error(AppCenter.LOG_TAG, "Cannot retrieve carrier info", e);
         }
 
         /* Locale. */
@@ -91,7 +91,7 @@ public class DeviceInfoHelper {
         try {
             device.setScreenSize(getScreenSize(context));
         } catch (Exception e) {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Cannot retrieve screen size", e);
+            AppCenterLog.error(AppCenter.LOG_TAG, "Cannot retrieve screen size", e);
         }
 
         /* Set SDK name and version. Don't add the BuildConfig import or it will trigger a Javadoc warning... */

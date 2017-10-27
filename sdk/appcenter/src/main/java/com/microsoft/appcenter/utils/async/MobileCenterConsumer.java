@@ -7,7 +7,7 @@ package com.microsoft.appcenter.utils.async;
  *
  * @param <T> input argument type.
  */
-public interface MobileCenterConsumer<T> {
+public interface AppCenterConsumer<T> {
 
     /**
      * Performs this operation on the given argument.

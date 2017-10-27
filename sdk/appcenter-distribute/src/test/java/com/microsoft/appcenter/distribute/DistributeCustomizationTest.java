@@ -8,7 +8,7 @@ import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.Test;
@@ -120,7 +120,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
         verifyStatic(times(++mobileCenterLogErrorCounter));
-        MobileCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString());
 
         /* Enable the service. */
         distribute.setInstanceEnabled(true);
@@ -136,7 +136,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
         verifyStatic(times(++mobileCenterLogErrorCounter));
-        MobileCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString());
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
@@ -148,7 +148,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
         verifyStatic(times(++mobileCenterLogErrorCounter));
-        MobileCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString());
 
         /* Verify again to make sure the user action has NOT been processed yet. */
         verify(distribute, never()).completeWorkflow();
@@ -189,7 +189,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
         verifyStatic(times(++mobileCenterLogErrorCounter));
-        MobileCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString());
 
         /* Enable the service. */
         distribute.setInstanceEnabled(true);
@@ -205,7 +205,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
         verifyStatic(times(++mobileCenterLogErrorCounter));
-        MobileCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString());
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
@@ -217,7 +217,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
         verifyStatic(times(++mobileCenterLogErrorCounter));
-        MobileCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString());
 
         /* Verify again to make sure the user action has NOT been processed yet. */
         verify(distribute, never()).completeWorkflow();
@@ -367,7 +367,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Verify update has NOT been processed. */
         verifyStatic();
-        MobileCenterLog.error(anyString(), contains(String.valueOf(invalidUserAction)));
+        AppCenterLog.error(anyString(), contains(String.valueOf(invalidUserAction)));
     }
 
     @Test

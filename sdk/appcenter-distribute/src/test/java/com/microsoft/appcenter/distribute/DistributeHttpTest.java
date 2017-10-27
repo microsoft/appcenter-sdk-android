@@ -9,7 +9,7 @@ import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import junit.framework.Assert;
@@ -53,8 +53,8 @@ public class DistributeHttpTest extends AbstractDistributeTest {
         Map<String, String> headers = new HashMap<>();
         headers.put("Another-Header", "Another-Value");
         HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret, apiToken);
-        when(MobileCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
-        mockStatic(MobileCenterLog.class);
+        when(AppCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
+        mockStatic(AppCenterLog.class);
 
         /* Put api token to header. */
         headers.put(HEADER_API_TOKEN, apiToken);
@@ -64,15 +64,15 @@ public class DistributeHttpTest extends AbstractDistributeTest {
 
         /* Verify url log. */
         verifyStatic();
-        MobileCenterLog.verbose(anyString(), contains(obfuscatedUrlString));
+        AppCenterLog.verbose(anyString(), contains(obfuscatedUrlString));
 
         /* Verify header logs. */
         for (Map.Entry<String, String> header : headers.entrySet()) {
             verifyStatic();
             if (header.getKey().equals(HEADER_API_TOKEN)) {
-                MobileCenterLog.verbose(anyString(), contains(obfuscatedToken));
+                AppCenterLog.verbose(anyString(), contains(obfuscatedToken));
             } else {
-                MobileCenterLog.verbose(anyString(), contains(header.getValue()));
+                AppCenterLog.verbose(anyString(), contains(header.getValue()));
             }
         }
     }
@@ -88,20 +88,20 @@ public class DistributeHttpTest extends AbstractDistributeTest {
         String obfuscatedUrlString = String.format(urlFormat, obfuscatedSecret);
         Map<String, String> headers = new HashMap<>();
         HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret, null);
-        when(MobileCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
-        mockStatic(MobileCenterLog.class);
+        when(AppCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
+        mockStatic(AppCenterLog.class);
 
         /* Call onBeforeCalling with parameters. */
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify url log. */
         verifyStatic();
-        MobileCenterLog.verbose(anyString(), contains(obfuscatedUrlString));
+        AppCenterLog.verbose(anyString(), contains(obfuscatedUrlString));
 
         /* Verify header log. */
         for (Map.Entry<String, String> header : headers.entrySet()) {
             verifyStatic();
-            MobileCenterLog.verbose(anyString(), contains(header.getValue()));
+            AppCenterLog.verbose(anyString(), contains(header.getValue()));
         }
     }
 
@@ -115,14 +115,14 @@ public class DistributeHttpTest extends AbstractDistributeTest {
         HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret, apiToken);
 
         /* Change log level. */
-        when(MobileCenterLog.getLogLevel()).thenReturn(Log.WARN);
+        when(AppCenterLog.getLogLevel()).thenReturn(Log.WARN);
 
         /* Call onBeforeCalling with parameters. */
         callTemplate.onBeforeCalling(mock(URL.class), mock(Map.class));
 
         /* Verify. */
         verifyStatic(never());
-        MobileCenterLog.verbose(anyString(), anyString());
+        AppCenterLog.verbose(anyString(), anyString());
     }
 
     @Test

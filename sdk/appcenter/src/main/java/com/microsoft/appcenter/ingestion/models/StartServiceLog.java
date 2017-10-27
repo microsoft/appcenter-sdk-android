@@ -9,7 +9,7 @@ import org.json.JSONStringer;
 import java.util.List;
 
 /**
- * Describe a MobileCenter.start call from the SDK.
+ * Describe a AppCenter.start call from the SDK.
  */
 public class StartServiceLog extends AbstractLog {
 
@@ -21,7 +21,7 @@ public class StartServiceLog extends AbstractLog {
     private static final String SERVICES = "services";
 
     /**
-     * The list of services of the MobileCenter start call.
+     * The list of services of the AppCenter start call.
      */
     private List<String> services;
 

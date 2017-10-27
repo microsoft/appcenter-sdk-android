@@ -2,11 +2,11 @@ package com.microsoft.appcenter.persistence;
 
 import android.content.ContentValues;
 
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
@@ -35,7 +35,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
-@PrepareForTest({MobileCenterLog.class, StorageHelper.DatabaseStorage.class})
+@PrepareForTest({AppCenterLog.class, StorageHelper.DatabaseStorage.class})
 public class DatabasePersistenceTest {
 
     @Rule
@@ -45,7 +45,7 @@ public class DatabasePersistenceTest {
     public void databaseOperationException() throws Persistence.PersistenceException, IOException {
 
         /* Mock instances. */
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
         LogSerializer mockSerializer = mock(DefaultLogSerializer.class);
         DatabasePersistence mockPersistence = spy(new DatabasePersistence("test-persistence", "operation.exception", 1));
         doReturn(mockSerializer).when(mockPersistence).getLogSerializer();
@@ -61,7 +61,7 @@ public class DatabasePersistenceTest {
         }
 
         verifyStatic();
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString(), any(RuntimeException.class));
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 
     @Test(expected = IOException.class)

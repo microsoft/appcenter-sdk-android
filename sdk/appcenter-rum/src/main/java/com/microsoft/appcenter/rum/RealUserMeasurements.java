@@ -5,17 +5,17 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.microsoft.appcenter.AbstractMobileCenterService;
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,7 +38,7 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 /**
  * RealUserMeasurements service.
  */
-public class RealUserMeasurements extends AbstractMobileCenterService {
+public class RealUserMeasurements extends AbstractAppCenterService {
 
     /**
      * Name of the service.
@@ -48,7 +48,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
     /**
      * TAG used in logging for Analytics.
      */
-    private static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
+    private static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
      * Rum key length.
@@ -150,9 +150,9 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
      * Check whether RealUserMeasurements service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see MobileCenterFuture
+     * @see AppCenterFuture
      */
-    public static MobileCenterFuture<Boolean> isEnabled() {
+    public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
 
@@ -162,7 +162,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    public static MobileCenterFuture<Void> setEnabled(boolean enabled) {
+    public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
 
@@ -178,12 +178,12 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
      */
     private synchronized void setInstanceRumKey(String rumKey) {
         if (rumKey == null) {
-            MobileCenterLog.error(LOG_TAG, "Rum key is invalid.");
+            AppCenterLog.error(LOG_TAG, "Rum key is invalid.");
             return;
         }
         rumKey = rumKey.trim();
         if (rumKey.length() != RUM_KEY_LENGTH) {
-            MobileCenterLog.error(LOG_TAG, "Rum key is invalid.");
+            AppCenterLog.error(LOG_TAG, "Rum key is invalid.");
             return;
         }
         mRumKey = rumKey;
@@ -209,7 +209,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
 
             /* Check rum key. */
             if (rumKey == null) {
-                MobileCenterLog.error(LOG_TAG, "Rum key must be configured before start.");
+                AppCenterLog.error(LOG_TAG, "Rum key must be configured before start.");
                 return;
             }
 
@@ -226,7 +226,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
             try {
                 mHttpClient.close();
             } catch (IOException e) {
-                MobileCenterLog.error(LOG_TAG, "Failed to close http client.", e);
+                AppCenterLog.error(LOG_TAG, "Failed to close http client.", e);
             }
             mHttpClient = null;
             mConfiguration = null;
@@ -244,11 +244,11 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
             return;
         }
         if (configurationUrlIndex >= CONFIGURATION_ENDPOINTS.length) {
-            MobileCenterLog.error(LOG_TAG, "Could not get configuration file from any of the endpoints.");
+            AppCenterLog.error(LOG_TAG, "Could not get configuration file from any of the endpoints.");
             return;
         }
         final String url = CONFIGURATION_ENDPOINTS[configurationUrlIndex];
-        MobileCenterLog.verbose(LOG_TAG, "Calling " + url);
+        AppCenterLog.verbose(LOG_TAG, "Calling " + url);
         httpClient.callAsync(url, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
             @Override
@@ -262,7 +262,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
             public void onCallFailed(Exception e) {
 
                 /* Log error and try the next configuration endpoint. */
-                MobileCenterLog.error(LOG_TAG, "Could not get configuration file at " + url, e);
+                AppCenterLog.error(LOG_TAG, "Could not get configuration file at " + url, e);
                 getConfiguration(configurationUrlIndex + 1, rumKey, httpClient);
             }
         });
@@ -362,7 +362,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
             /* Run tests. */
             testUrl(httpClient, rumKey, mTestUrls.iterator());
         } catch (JSONException e) {
-            MobileCenterLog.error(LOG_TAG, "Could not read configuration file.", e);
+            AppCenterLog.error(LOG_TAG, "Could not read configuration file.", e);
         }
     }
 
@@ -380,7 +380,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
         if (iterator.hasNext()) {
             final long startTime = System.currentTimeMillis();
             final TestUrl testUrl = iterator.next();
-            MobileCenterLog.verbose(LOG_TAG, "Calling " + testUrl.url);
+            AppCenterLog.verbose(LOG_TAG, "Calling " + testUrl.url);
             mHttpClient.callAsync(testUrl.url, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
                 @Override
@@ -391,7 +391,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
 
                 @Override
                 public void onCallFailed(Exception e) {
-                    MobileCenterLog.error(LOG_TAG, testUrl.url + " call failed", e);
+                    AppCenterLog.error(LOG_TAG, testUrl.url + " call failed", e);
                     testUrl(httpClient, rumKey, iterator);
                 }
             });
@@ -416,8 +416,8 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                     }
                 }
                 String reportJson = results.toString();
-                if (MobileCenter.getLogLevel() <= Log.VERBOSE) {
-                    MobileCenterLog.verbose(LOG_TAG, "Report payload=" + results.toString(2));
+                if (AppCenter.getLogLevel() <= Log.VERBOSE) {
+                    AppCenterLog.verbose(LOG_TAG, "Report payload=" + results.toString(2));
                 }
 
                 /* There can be more than 1 report URL, parse them. */
@@ -426,7 +426,7 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                 /* Report. */
                 report(httpClient, rumKey, reportUrls, reportJson, reportId, 0);
             } catch (JSONException e) {
-                MobileCenterLog.error(LOG_TAG, "Failed to generate report.", e);
+                AppCenterLog.error(LOG_TAG, "Failed to generate report.", e);
             }
         }
     }
@@ -448,17 +448,17 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                 String parameters = URLEncoder.encode(reportJson, "UTF-8");
                 reportUrl = String.format(REPORT_URL_FORMAT, reportUrl, reportId, rumKey, parameters);
                 final String finalReportUrl = reportUrl;
-                MobileCenterLog.verbose(LOG_TAG, "Calling " + finalReportUrl);
+                AppCenterLog.verbose(LOG_TAG, "Calling " + finalReportUrl);
                 mHttpClient.callAsync(finalReportUrl, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
                     @Override
                     public void onCallSucceeded(String payload) {
-                        MobileCenterLog.info(LOG_TAG, "Measurements reported successfully.");
+                        AppCenterLog.info(LOG_TAG, "Measurements reported successfully.");
                     }
 
                     @Override
                     public void onCallFailed(Exception e) {
-                        MobileCenterLog.error(LOG_TAG, "Failed to report measurements at " + finalReportUrl, e);
+                        AppCenterLog.error(LOG_TAG, "Failed to report measurements at " + finalReportUrl, e);
                         reportNextUrl();
                     }
 
@@ -467,10 +467,10 @@ public class RealUserMeasurements extends AbstractMobileCenterService {
                     }
                 });
             } catch (JSONException | UnsupportedEncodingException e) {
-                MobileCenterLog.error(LOG_TAG, "Failed to generate report.", e);
+                AppCenterLog.error(LOG_TAG, "Failed to generate report.", e);
             }
         } else {
-            MobileCenterLog.error(LOG_TAG, "Measurements report failed on all report endpoints.");
+            AppCenterLog.error(LOG_TAG, "Measurements report failed on all report endpoints.");
         }
     }
 

@@ -9,7 +9,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.util.NoSuchElementException;
 
@@ -74,7 +74,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
          * We still want to generate the notification: if we can find the data in preferences
          * that means they were not deleted, and thus that the sdk was not disabled.
          */
-        MobileCenterLog.debug(LOG_TAG, "Check download id=" + mDownloadId);
+        AppCenterLog.debug(LOG_TAG, "Check download id=" + mDownloadId);
         Distribute distribute = Distribute.getInstance();
         if (mReleaseDetails == null) {
             mReleaseDetails = distribute.startFromBackground(mContext);
@@ -83,7 +83,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
         /* Check intent data is what we expected. */
         long expectedDownloadId = DistributeUtils.getStoredDownloadId();
         if (expectedDownloadId == INVALID_DOWNLOAD_IDENTIFIER || expectedDownloadId != mDownloadId) {
-            MobileCenterLog.debug(LOG_TAG, "Ignoring download identifier we didn't expect, id=" + mDownloadId);
+            AppCenterLog.debug(LOG_TAG, "Ignoring download identifier we didn't expect, id=" + mDownloadId);
             return null;
         }
 
@@ -106,7 +106,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                     if (mCheckProgress) {
                         long totalSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
                         long currentSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
-                        MobileCenterLog.verbose(LOG_TAG, "currentSize=" + currentSize + " totalSize=" + totalSize);
+                        AppCenterLog.verbose(LOG_TAG, "currentSize=" + currentSize + " totalSize=" + totalSize);
                         return new DownloadProgress(currentSize, totalSize);
                     } else {
                         distribute.markDownloadStillInProgress(mReleaseDetails);
@@ -116,7 +116,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
 
                 /* Build install intent. */
                 String localUri = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
-                MobileCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId + " uri=" + localUri);
+                AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId + " uri=" + localUri);
                 Intent intent = DistributeUtils.getInstallIntent(Uri.parse(localUri));
                 boolean installerFound = false;
                 if (intent.resolveActivity(mContext.getPackageManager()) == null) {
@@ -128,7 +128,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                     installerFound = true;
                 }
                 if (!installerFound) {
-                    MobileCenterLog.error(LOG_TAG, "Installer not found");
+                    AppCenterLog.error(LOG_TAG, "Installer not found");
                     distribute.completeWorkflow(mReleaseDetails);
                     return null;
                 }
@@ -145,7 +145,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                      * This corner case cannot be avoided without triggering
                      * strict mode exception.
                      */
-                    MobileCenterLog.info(LOG_TAG, "Show install UI now intentUri=" + intent.getData());
+                    AppCenterLog.info(LOG_TAG, "Show install UI now intentUri=" + intent.getData());
                     mContext.startActivity(intent);
                     if (mReleaseDetails != null && mReleaseDetails.isMandatoryUpdate()) {
                         distribute.setInstalling(mReleaseDetails);
@@ -157,7 +157,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                 cursor.close();
             }
         } catch (RuntimeException e) {
-            MobileCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
+            AppCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
             distribute.completeWorkflow(mReleaseDetails);
         }
         return null;

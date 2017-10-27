@@ -7,16 +7,16 @@ import android.os.Bundle;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.RemoteMessage;
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.MobileCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.MobileCenterLog;
-import com.microsoft.appcenter.utils.async.MobileCenterConsumer;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.Before;
@@ -60,7 +60,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @PrepareForTest({
         Push.class,
         PushInstallationLog.class,
-        MobileCenterLog.class,
+        AppCenterLog.class,
         MobileCenter.class,
         StorageHelper.PreferencesStorage.class,
         FirebaseInstanceId.class,
@@ -83,21 +83,21 @@ public class PushTest {
     private MobileCenterHandler mMobileCenterHandler;
 
     @Mock
-    private MobileCenterFuture<Boolean> mBooleanMobileCenterFuture;
+    private AppCenterFuture<Boolean> mBooleanAppCenterFuture;
 
     @Before
     public void setUp() throws Exception {
         Push.unsetInstance();
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
         mockStatic(MobileCenter.class);
-        when(MobileCenter.isEnabled()).thenReturn(mBooleanMobileCenterFuture);
-        when(mBooleanMobileCenterFuture.get()).thenReturn(true);
+        when(AppCenter.isEnabled()).thenReturn(mBooleanAppCenterFuture);
+        when(mBooleanAppCenterFuture.get()).thenReturn(true);
         doAnswer(new Answer<Void>() {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
-                if (MobileCenter.isEnabled().get()) {
+                if (AppCenter.isEnabled().get()) {
                     ((Runnable) args[0]).run();
                 } else if (args[1] instanceof Runnable) {
                     ((Runnable) args[1]).run();
@@ -165,7 +165,7 @@ public class PushTest {
         /* Before start it's disabled. */
         assertFalse(Push.isEnabled().get());
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString());
 
         /* Start. */
         String testToken = "TEST";
@@ -194,7 +194,7 @@ public class PushTest {
 
         /* Disable again. Test waiting with async callback. */
         final CountDownLatch latch = new CountDownLatch(1);
-        Push.setEnabled(false).thenAccept(new MobileCenterConsumer<Void>() {
+        Push.setEnabled(false).thenAccept(new AppCenterConsumer<Void>() {
 
             @Override
             public void accept(Void aVoid) {
@@ -217,7 +217,7 @@ public class PushTest {
 
         /* No additional error was logged since before start. */
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString());
 
         /* Verify only once to disable Firebase. */
         verifyStatic();
@@ -432,17 +432,17 @@ public class PushTest {
         push.onActivityResumed(activity);
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
         verifyStatic(never());
-        MobileCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString());
 
         /* Same effect if we disable Mobile Center. */
-        when(mBooleanMobileCenterFuture.get()).thenReturn(false);
+        when(mBooleanAppCenterFuture.get()).thenReturn(false);
         push.onActivityResumed(activity);
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
         verifyStatic(never());
-        MobileCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString());
 
         /* Same if we remove listener. */
-        when(mBooleanMobileCenterFuture.get()).thenReturn(true);
+        when(mBooleanAppCenterFuture.get()).thenReturn(true);
         Push.setEnabled(true);
         Push.setListener(null);
         push.onActivityResumed(activity);
@@ -550,10 +550,10 @@ public class PushTest {
         start(mock(Context.class), Push.getInstance(), mock(Channel.class));
         Push.checkLaunchedFromNotification(null, mock(Intent.class));
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString());
         Push.checkLaunchedFromNotification(mock(Activity.class), null);
         verifyStatic(times(2));
-        MobileCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString());
     }
 
     @Test
@@ -564,6 +564,6 @@ public class PushTest {
         start(contextMock, Push.getInstance(), mock(Channel.class));
         assertTrue(Push.isEnabled().get());
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString(), eq(exception));
+        AppCenterLog.error(anyString(), anyString(), eq(exception));
     }
 }

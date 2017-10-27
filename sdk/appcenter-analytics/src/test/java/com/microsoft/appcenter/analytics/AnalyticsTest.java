@@ -3,7 +3,7 @@ package com.microsoft.appcenter.analytics;
 import android.content.Context;
 import android.os.SystemClock;
 
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.MobileCenterHandler;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
@@ -17,10 +17,10 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
-import com.microsoft.appcenter.utils.async.MobileCenterConsumer;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import junit.framework.Assert;
@@ -69,13 +69,13 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, HandlerUtils.class})
+@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, AppCenterLog.class, MobileCenter.class, HandlerUtils.class})
 public class AnalyticsTest {
 
     private static final String ANALYTICS_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Analytics.getInstance().getServiceName();
 
     @Mock
-    private MobileCenterFuture<Boolean> mCoreEnabledFuture;
+    private AppCenterFuture<Boolean> mCoreEnabledFuture;
 
     @Mock
     private MobileCenterHandler mMobileCenterHandler;
@@ -84,9 +84,9 @@ public class AnalyticsTest {
     public void setUp() {
         Analytics.unsetInstance();
         mockStatic(SystemClock.class);
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
         mockStatic(MobileCenter.class);
-        when(MobileCenter.isEnabled()).thenReturn(mCoreEnabledFuture);
+        when(AppCenter.isEnabled()).thenReturn(mCoreEnabledFuture);
         when(mCoreEnabledFuture.get()).thenReturn(true);
         Answer<Void> runNow = new Answer<Void>() {
 
@@ -149,7 +149,7 @@ public class AnalyticsTest {
         Analytics.trackPage("test", new HashMap<String, String>());
 
         verifyStatic(times(4));
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString());
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
     private void activityResumed(final String expectedName, android.app.Activity activity) {
@@ -162,10 +162,10 @@ public class AnalyticsTest {
         analytics.onActivityResumed(new Activity());
         assertNull(analytics.getCurrentActivity());
         verifyStatic();
-        MobileCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString());
         analytics.onActivityPaused(new Activity());
         verifyStatic(times(2));
-        MobileCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString());
 
         /* Start. */
         Channel channel = mock(Channel.class);
@@ -459,7 +459,7 @@ public class AnalyticsTest {
 
         /* Enable again, verify the async behavior of setEnabled with the callback. */
         final CountDownLatch latch = new CountDownLatch(1);
-        Analytics.setEnabled(true).thenAccept(new MobileCenterConsumer<Void>() {
+        Analytics.setEnabled(true).thenAccept(new AppCenterConsumer<Void>() {
 
             @Override
             public void accept(Void aVoid) {

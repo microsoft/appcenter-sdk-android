@@ -2,7 +2,7 @@ package com.microsoft.appcenter;
 
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -74,7 +74,7 @@ public class CustomProperties {
             if (value != null) {
                 addProperty(key, value);
             } else {
-                MobileCenterLog.error(MobileCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
+                AppCenterLog.error(AppCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
             }
         }
         return this;
@@ -94,7 +94,7 @@ public class CustomProperties {
             if (value != null) {
                 addProperty(key, value);
             } else {
-                MobileCenterLog.error(MobileCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
+                AppCenterLog.error(AppCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
             }
         }
         return this;
@@ -135,32 +135,32 @@ public class CustomProperties {
         if (mProperties.containsKey(key) || mProperties.size() < MAX_PROPERTIES_COUNT) {
             mProperties.put(key, value);
         } else {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom properties cannot contain more than " + MAX_PROPERTIES_COUNT + " items");
+            AppCenterLog.error(AppCenter.LOG_TAG, "Custom properties cannot contain more than " + MAX_PROPERTIES_COUNT + " items");
         }
     }
 
     private boolean isValidKey(String key) {
         if (key == null || !KEY_PATTERN.matcher(key).matches()) {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" must match \"" + KEY_PATTERN + "\"");
+            AppCenterLog.error(AppCenter.LOG_TAG, "Custom property \""+ key + "\" must match \"" + KEY_PATTERN + "\"");
             return false;
         }
         if (key.length() > MAX_PROPERTY_KEY_LENGTH) {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" length cannot be longer than " + MAX_PROPERTY_KEY_LENGTH + " characters.");
+            AppCenterLog.error(AppCenter.LOG_TAG, "Custom property \""+ key + "\" length cannot be longer than " + MAX_PROPERTY_KEY_LENGTH + " characters.");
             return false;
         }
         if (mProperties.containsKey(key)) {
-            MobileCenterLog.warn(MobileCenter.LOG_TAG, "Custom property \"" + key + "\" is already set or cleared and will be overridden.");
+            AppCenterLog.warn(AppCenter.LOG_TAG, "Custom property \"" + key + "\" is already set or cleared and will be overridden.");
         }
         return true;
     }
 
     private boolean isValidStringValue(String key, String value) {
         if (value == null) {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
+            AppCenterLog.error(AppCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
             return false;
         }
         if (value.length() > MAX_PROPERTY_VALUE_LENGTH) {
-            MobileCenterLog.error(MobileCenter.LOG_TAG, "Custom property \""+ key + "\" value length cannot be longer than " + MAX_PROPERTY_VALUE_LENGTH + " characters.");
+            AppCenterLog.error(AppCenter.LOG_TAG, "Custom property \""+ key + "\" value length cannot be longer than " + MAX_PROPERTY_VALUE_LENGTH + " characters.");
             return false;
         }
         return true;

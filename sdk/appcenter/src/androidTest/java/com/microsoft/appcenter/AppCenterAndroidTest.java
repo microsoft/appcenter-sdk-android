@@ -8,12 +8,12 @@ import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
 import com.microsoft.appcenter.channel.Channel;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.async.DefaultMobileCenterFuture;
-import com.microsoft.appcenter.utils.async.MobileCenterConsumer;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.After;
@@ -30,39 +30,39 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 @SuppressWarnings("unused")
-public class MobileCenterAndroidTest {
+public class AppCenterAndroidTest {
 
     private Application mApplication;
 
     @Before
     public void setUp() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
-        MobileCenter.unsetInstance();
+        AppCenter.unsetInstance();
         Constants.APPLICATION_DEBUGGABLE = false;
         mApplication = Instrumentation.newApplication(Application.class, InstrumentationRegistry.getTargetContext());
     }
 
     @After
     public void tearDown() {
-        MobileCenter.setEnabled(true).get();
+        AppCenter.setEnabled(true).get();
     }
 
     @Test
     public void getInstallId() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
-        assertNull(MobileCenter.getInstallId().get());
+        assertNull(AppCenter.getInstallId().get());
         StorageHelper.initialize(mApplication);
         StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
-        MobileCenter.start(mApplication, UUIDUtils.randomUUID().toString(), DummyService.class);
-        UUID installId = MobileCenter.getInstallId().get();
+        AppCenter.start(mApplication, UUIDUtils.randomUUID().toString(), DummyService.class);
+        UUID installId = AppCenter.getInstallId().get();
         assertNotNull(installId);
-        assertEquals(installId, MobileCenter.getInstallId().get());
+        assertEquals(installId, AppCenter.getInstallId().get());
         assertEquals(installId, DummyService.getInstallId().get());
         StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
-        final UUID installId2 = MobileCenter.getInstallId().get();
+        final UUID installId2 = AppCenter.getInstallId().get();
         assertNotNull(installId2);
         assertNotEquals(installId2, installId);
         final Semaphore lock = new Semaphore(0);
         final AtomicReference<UUID> asyncUUID = new AtomicReference<>();
-        MobileCenter.getInstallId().thenAccept(new MobileCenterConsumer<UUID>() {
+        AppCenter.getInstallId().thenAccept(new AppCenterConsumer<UUID>() {
 
             @Override
             public void accept(UUID uuid) {
@@ -72,25 +72,25 @@ public class MobileCenterAndroidTest {
         });
         lock.acquireUninterruptibly();
         assertEquals(installId2, asyncUUID.get());
-        MobileCenter.setEnabled(false);
-        assertNull(MobileCenter.getInstallId().get());
+        AppCenter.setEnabled(false);
+        assertNull(AppCenter.getInstallId().get());
     }
 
     @Test
     public void setDefaultLogLevelDebug() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
-        MobileCenterLog.setLogLevel(Log.ASSERT);
-        MobileCenter.start(mApplication, UUIDUtils.randomUUID().toString());
-        assertEquals(Log.WARN, MobileCenter.getLogLevel());
+        AppCenterLog.setLogLevel(Log.ASSERT);
+        AppCenter.start(mApplication, UUIDUtils.randomUUID().toString());
+        assertEquals(Log.WARN, AppCenter.getLogLevel());
     }
 
-    private static class DummyService extends AbstractMobileCenterService {
+    private static class DummyService extends AbstractAppCenterService {
 
         private static DummyService sInstance = new DummyService();
 
         private static UUID mInstallId;
 
-        static MobileCenterFuture<UUID> getInstallId() {
-            final DefaultMobileCenterFuture<UUID> future = new DefaultMobileCenterFuture<>();
+        static AppCenterFuture<UUID> getInstallId() {
+            final DefaultAppCenterFuture<UUID> future = new DefaultAppCenterFuture<>();
             getInstance().post(new Runnable() {
 
                 @Override
@@ -125,7 +125,7 @@ public class MobileCenterAndroidTest {
             super.onStarted(context, appSecret, channel);
 
             /* Check no dead lock if we do that. */
-            mInstallId = MobileCenter.getInstallId().get();
+            mInstallId = AppCenter.getInstallId().get();
         }
     }
 }

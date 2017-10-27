@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.EXTRA_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.EXTRA_REQUEST_ID;
@@ -27,11 +27,11 @@ public class DeepLinkActivity extends Activity {
         String distributionGroupId = intent.getStringExtra(EXTRA_DISTRIBUTION_GROUP_ID);
         String updateToken = intent.getStringExtra(EXTRA_UPDATE_TOKEN);
         String updateSetupFailed = intent.getStringExtra(EXTRA_UPDATE_SETUP_FAILED);
-        MobileCenterLog.debug(LOG_TAG, getLocalClassName() + ".getIntent()=" + intent);
-        MobileCenterLog.debug(LOG_TAG, "Intent requestId=" + requestId);
-        MobileCenterLog.debug(LOG_TAG, "Intent distributionGroupId=" + distributionGroupId);
-        MobileCenterLog.debug(LOG_TAG, "Intent updateToken passed=" + (updateToken != null));
-        MobileCenterLog.debug(LOG_TAG, "Intent updateSetupFailed passed=" + (updateSetupFailed != null));
+        AppCenterLog.debug(LOG_TAG, getLocalClassName() + ".getIntent()=" + intent);
+        AppCenterLog.debug(LOG_TAG, "Intent requestId=" + requestId);
+        AppCenterLog.debug(LOG_TAG, "Intent distributionGroupId=" + distributionGroupId);
+        AppCenterLog.debug(LOG_TAG, "Intent updateToken passed=" + (updateToken != null));
+        AppCenterLog.debug(LOG_TAG, "Intent updateSetupFailed passed=" + (updateSetupFailed != null));
 
         /* Store redirection parameters if both required values were passed. */
         if (requestId != null && distributionGroupId != null) {
@@ -59,7 +59,7 @@ public class DeepLinkActivity extends Activity {
          */
         finish();
         if (!((getIntent().getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK) == Intent.FLAG_ACTIVITY_NEW_TASK)) {
-            MobileCenterLog.debug(LOG_TAG, "Using restart work around to correctly resume app.");
+            AppCenterLog.debug(LOG_TAG, "Using restart work around to correctly resume app.");
             startActivity(intent.cloneFilter().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         } else if (isTaskRoot()) {
             Intent launchIntentForPackage = getPackageManager().getLaunchIntentForPackage(getPackageName());

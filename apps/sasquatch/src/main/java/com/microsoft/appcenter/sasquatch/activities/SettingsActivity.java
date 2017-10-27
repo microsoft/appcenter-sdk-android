@@ -17,8 +17,8 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
-import com.microsoft.appcenter.MobileCenter;
-import com.microsoft.appcenter.MobileCenterService;
+import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.AppCenterService;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.crashes.Crashes;
@@ -26,7 +26,7 @@ import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.lang.reflect.Method;
@@ -58,12 +58,12 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public void setEnabled(boolean enabled) {
-                    MobileCenter.setEnabled(enabled);
+                    AppCenter.setEnabled(enabled);
                 }
 
                 @Override
                 public boolean isEnabled() {
-                    return MobileCenter.isEnabled().get();
+                    return AppCenter.isEnabled().get();
                 }
             });
             initCheckBoxSetting(R.string.appcenter_analytics_state_key, R.string.appcenter_analytics_state_summary_enabled, R.string.appcenter_analytics_state_summary_disabled, new HasEnabled() {
@@ -116,7 +116,7 @@ public class SettingsActivity extends AppCompatActivity {
             });
             try {
                 @SuppressWarnings("unchecked")
-                Class<? extends MobileCenterService> rum = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.appcenter.rum.RealUserMeasurements");
+                Class<? extends AppCenterService> rum = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.rum.RealUserMeasurements");
                 final Method isEnabled = rum.getMethod("isEnabled");
                 final Method setEnabled = rum.getMethod("setEnabled", boolean.class);
                 initCheckBoxSetting(R.string.appcenter_rum_state_key, R.string.appcenter_rum_state_summary_enabled, R.string.appcenter_rum_state_summary_disabled, new HasEnabled() {
@@ -134,7 +134,7 @@ public class SettingsActivity extends AppCompatActivity {
                     @SuppressWarnings("unchecked")
                     public boolean isEnabled() {
                         try {
-                            return ((MobileCenterFuture<Boolean>) isEnabled.invoke(null)).get();
+                            return ((AppCenterFuture<Boolean>) isEnabled.invoke(null)).get();
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
@@ -176,13 +176,13 @@ public class SettingsActivity extends AppCompatActivity {
                     AnalyticsPrivateHelper.setAutoPageTrackingEnabled(enabled);
                 }
             });
-            initClickableSetting(R.string.install_id_key, String.valueOf(MobileCenter.getInstallId().get()), new Preference.OnPreferenceClickListener() {
+            initClickableSetting(R.string.install_id_key, String.valueOf(AppCenter.getInstallId().get()), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
                     final EditText input = new EditText(getActivity());
                     input.setInputType(InputType.TYPE_CLASS_TEXT);
-                    input.setText(String.valueOf(MobileCenter.getInstallId().get()));
+                    input.setText(String.valueOf(AppCenter.getInstallId().get()));
 
                     new AlertDialog.Builder(getActivity()).setTitle(R.string.install_id_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
@@ -195,7 +195,7 @@ public class SettingsActivity extends AppCompatActivity {
                                     } else {
                                         Toast.makeText(getActivity(), R.string.install_id_invalid, Toast.LENGTH_SHORT).show();
                                     }
-                                    preference.setSummary(String.valueOf(MobileCenter.getInstallId().get()));
+                                    preference.setSummary(String.valueOf(AppCenter.getInstallId().get()));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)

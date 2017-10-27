@@ -2,7 +2,7 @@ package com.microsoft.appcenter.utils;
 
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.UUID;
@@ -23,7 +23,7 @@ public class IdHelper {
         try {
             installId = UUID.fromString(installIdString);
         } catch (Exception e) {
-            MobileCenterLog.warn(MobileCenter.LOG_TAG, "Unable to get installID from Shared Preferences");
+            AppCenterLog.warn(AppCenter.LOG_TAG, "Unable to get installID from Shared Preferences");
             installId = UUIDUtils.randomUUID();
             StorageHelper.PreferencesStorage.putString(KEY_INSTALL_ID, installId.toString());
         }

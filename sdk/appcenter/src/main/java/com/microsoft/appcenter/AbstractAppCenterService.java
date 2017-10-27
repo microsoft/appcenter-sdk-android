@@ -8,9 +8,9 @@ import android.support.annotation.NonNull;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.MobileCenterLog;
-import com.microsoft.appcenter.utils.async.DefaultMobileCenterFuture;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.Map;
@@ -18,10 +18,10 @@ import java.util.Map;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_COUNT;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_INTERVAL;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
-import static com.microsoft.appcenter.MobileCenter.LOG_TAG;
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
 
-public abstract class AbstractMobileCenterService implements MobileCenterService {
+public abstract class AbstractAppCenterService implements AppCenterService {
 
     /**
      * Separator for preference key.
@@ -36,7 +36,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     /**
      * Background thread handler.
      */
-    private MobileCenterHandler mHandler;
+    private AppCenterHandler mHandler;
 
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
@@ -71,8 +71,8 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      */
-    protected synchronized MobileCenterFuture<Boolean> isInstanceEnabledAsync() {
-        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
+    protected synchronized AppCenterFuture<Boolean> isInstanceEnabledAsync() {
+        final DefaultAppCenterFuture<Boolean> future = new DefaultAppCenterFuture<>();
         postAsyncGetter(new Runnable() {
 
             @Override
@@ -89,18 +89,18 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      * @param enabled true to enable, false to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    protected final synchronized MobileCenterFuture<Void> setInstanceEnabledAsync(final boolean enabled) {
+    protected final synchronized AppCenterFuture<Void> setInstanceEnabledAsync(final boolean enabled) {
 
         /*
          * We need to execute this while the service is disabled to enable it again,
          * but not if core disabled... Hence the parameters in post.
          */
-        final DefaultMobileCenterFuture<Void> future = new DefaultMobileCenterFuture<>();
+        final DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
         final Runnable coreDisabledRunnable = new Runnable() {
 
             @Override
             public void run() {
-                MobileCenterLog.error(LOG_TAG, "Mobile Center SDK is disabled.");
+                AppCenterLog.error(LOG_TAG, "App Center SDK is disabled.");
                 future.complete(null);
             }
         };
@@ -128,7 +128,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
 
         /* Nothing to do if state does not change. */
         if (enabled == isInstanceEnabled()) {
-            MobileCenterLog.info(getLoggerTag(), String.format("%s service has already been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
+            AppCenterLog.info(getLoggerTag(), String.format("%s service has already been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
             return;
         }
 
@@ -150,7 +150,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
 
         /* Save new state. */
         StorageHelper.PreferencesStorage.putBoolean(getEnabledPreferenceKey(), enabled);
-        MobileCenterLog.info(getLoggerTag(), String.format("%s service has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
+        AppCenterLog.info(getLoggerTag(), String.format("%s service has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
 
         /* Allow sub-class to handle state change. */
         applyEnabledState(enabled);
@@ -162,7 +162,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
     }
 
     @Override
-    public final synchronized void onStarting(@NonNull MobileCenterHandler handler) {
+    public final synchronized void onStarting(@NonNull AppCenterHandler handler) {
 
         /*
          * The method is final just to avoid a sub-class start using the handler now,
@@ -277,7 +277,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      */
     protected synchronized boolean post(final Runnable runnable, final Runnable coreDisabledRunnable, final Runnable serviceDisabledRunnable) {
         if (mHandler == null) {
-            MobileCenterLog.error(LOG_TAG, getServiceName() + " needs to be started before it can be used.");
+            AppCenterLog.error(LOG_TAG, getServiceName() + " needs to be started before it can be used.");
             return false;
         } else {
             mHandler.post(new Runnable() {
@@ -289,7 +289,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
                     } else if (serviceDisabledRunnable != null) {
                         serviceDisabledRunnable.run();
                     } else {
-                        MobileCenterLog.info(LOG_TAG, getServiceName() + " service disabled, discarding calls.");
+                        AppCenterLog.info(LOG_TAG, getServiceName() + " service disabled, discarding calls.");
                     }
                 }
             }, coreDisabledRunnable);
@@ -302,16 +302,16 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
      *
      * @param runnable                    command to run if service is enabled.
      * @param future                      future to complete the result of the async operation.
-     * @param valueIfDisabledOrNotStarted value to use for the future async operation result if service is disabled or not started or MobileCenter not started.
+     * @param valueIfDisabledOrNotStarted value to use for the future async operation result if service is disabled or not started or App Center not started.
      * @param <T>                         getter value type.
      */
-    protected synchronized <T> void postAsyncGetter(final Runnable runnable, final DefaultMobileCenterFuture<T> future, final T valueIfDisabledOrNotStarted) {
+    protected synchronized <T> void postAsyncGetter(final Runnable runnable, final DefaultAppCenterFuture<T> future, final T valueIfDisabledOrNotStarted) {
         Runnable disabledOrNotStartedRunnable = new Runnable() {
 
             @Override
             public void run() {
 
-                /* Same runnable is used whether Mobile Center or the service is disabled or not started. */
+                /* Same runnable is used whether App Center or the service is disabled or not started. */
                 future.complete(valueIfDisabledOrNotStarted);
             }
         };
@@ -323,7 +323,7 @@ public abstract class AbstractMobileCenterService implements MobileCenterService
             }
         }, disabledOrNotStartedRunnable, disabledOrNotStartedRunnable)) {
 
-            /* MobileCenter is not configured if we reach this. */
+            /* App Center is not configured if we reach this. */
             disabledOrNotStartedRunnable.run();
         }
     }

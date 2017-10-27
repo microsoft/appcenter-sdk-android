@@ -6,7 +6,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.AbstractMobileCenterService;
+import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
@@ -23,9 +23,9 @@ import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.MobileCenterLog;
-import com.microsoft.appcenter.utils.async.DefaultMobileCenterFuture;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
@@ -44,7 +44,7 @@ import java.util.UUID;
 /**
  * Crashes service.
  */
-public class Crashes extends AbstractMobileCenterService {
+public class Crashes extends AbstractAppCenterService {
 
     /**
      * Constant for SEND crash report.
@@ -81,7 +81,7 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * TAG used in logging for Crashes.
      */
-    public static final String LOG_TAG = MobileCenterLog.LOG_TAG + SERVICE_NAME;
+    public static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
      * Max allowed attachments per crash.
@@ -187,9 +187,9 @@ public class Crashes extends AbstractMobileCenterService {
      * Check whether Crashes service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see MobileCenterFuture
+     * @see AppCenterFuture
      */
-    public static MobileCenterFuture<Boolean> isEnabled() {
+    public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
 
@@ -199,7 +199,7 @@ public class Crashes extends AbstractMobileCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    public static MobileCenterFuture<Void> setEnabled(boolean enabled) {
+    public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
 
@@ -221,7 +221,7 @@ public class Crashes extends AbstractMobileCenterService {
         if (Constants.APPLICATION_DEBUGGABLE) {
             throw new TestCrashException();
         } else {
-            MobileCenterLog.warn(LOG_TAG, "The application is not debuggable so SDK won't generate test crash");
+            AppCenterLog.warn(LOG_TAG, "The application is not debuggable so SDK won't generate test crash");
         }
     }
 
@@ -250,9 +250,9 @@ public class Crashes extends AbstractMobileCenterService {
      * Check whether the app crashed in its last session.
      *
      * @return future with result being <code>true</code> if there was a crash in the last session, <code>false</code> otherwise.
-     * @see MobileCenterFuture
+     * @see AppCenterFuture
      */
-    public static MobileCenterFuture<Boolean> hasCrashedInLastSession() {
+    public static AppCenterFuture<Boolean> hasCrashedInLastSession() {
         return getInstance().hasInstanceCrashedInLastSession();
     }
 
@@ -260,17 +260,17 @@ public class Crashes extends AbstractMobileCenterService {
      * Provides information about any available crash report from the last session, if it crashed.
      *
      * @return future with result being the crash report from last session or null if there wasn't one.
-     * @see MobileCenterFuture
+     * @see AppCenterFuture
      */
-    public static MobileCenterFuture<ErrorReport> getLastSessionCrashReport() {
+    public static AppCenterFuture<ErrorReport> getLastSessionCrashReport() {
         return getInstance().getInstanceLastSessionCrashReport();
     }
 
     /**
      * Implements {@link #hasCrashedInLastSession()} at instance level.
      */
-    private synchronized MobileCenterFuture<Boolean> hasInstanceCrashedInLastSession() {
-        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
+    private synchronized AppCenterFuture<Boolean> hasInstanceCrashedInLastSession() {
+        final DefaultAppCenterFuture<Boolean> future = new DefaultAppCenterFuture<>();
         postAsyncGetter(new Runnable() {
 
             @Override
@@ -284,8 +284,8 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Implements {@link #getLastSessionCrashReport()} at instance level.
      */
-    private synchronized MobileCenterFuture<ErrorReport> getInstanceLastSessionCrashReport() {
-        final DefaultMobileCenterFuture<ErrorReport> future = new DefaultMobileCenterFuture<>();
+    private synchronized AppCenterFuture<ErrorReport> getInstanceLastSessionCrashReport() {
+        final DefaultAppCenterFuture<ErrorReport> future = new DefaultAppCenterFuture<>();
         postAsyncGetter(new Runnable() {
 
             @Override
@@ -302,12 +302,12 @@ public class Crashes extends AbstractMobileCenterService {
         initialize();
         if (!enabled) {
             for (File file : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
-                MobileCenterLog.debug(LOG_TAG, "Deleting file " + file);
+                AppCenterLog.debug(LOG_TAG, "Deleting file " + file);
                 if (!file.delete()) {
-                    MobileCenterLog.warn(LOG_TAG, "Failed to delete file " + file);
+                    AppCenterLog.warn(LOG_TAG, "Failed to delete file " + file);
                 }
             }
-            MobileCenterLog.info(LOG_TAG, "Deleted crashes local files");
+            AppCenterLog.info(LOG_TAG, "Deleted crashes local files");
         }
     }
 
@@ -377,10 +377,10 @@ public class Crashes extends AbstractMobileCenterService {
                                     }
                                 });
                             } else {
-                                MobileCenterLog.warn(LOG_TAG, "Cannot find crash report for the error log: " + id);
+                                AppCenterLog.warn(LOG_TAG, "Cannot find crash report for the error log: " + id);
                             }
                         } else if (!(log instanceof ErrorAttachmentLog) && !(log instanceof HandledErrorLog)) {
-                            MobileCenterLog.warn(LOG_TAG, "A different type of log comes to crashes: " + log.getClass().getName());
+                            AppCenterLog.warn(LOG_TAG, "A different type of log comes to crashes: " + log.getClass().getName());
                         }
                     }
                 });
@@ -502,17 +502,17 @@ public class Crashes extends AbstractMobileCenterService {
             mUncaughtExceptionHandler.register();
             final File logFile = ErrorLogHelper.getLastErrorLogFile();
             if (logFile != null) {
-                MobileCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
+                AppCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
                 String logFileContents = StorageHelper.InternalStorage.read(logFile);
                 if (logFileContents == null) {
-                    MobileCenterLog.error(LOG_TAG, "Error reading last session error log.");
+                    AppCenterLog.error(LOG_TAG, "Error reading last session error log.");
                 } else {
                     try {
                         ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logFileContents);
                         mLastSessionErrorReport = buildErrorReport(log);
-                        MobileCenterLog.debug(LOG_TAG, "Processed crash report for the last session.");
+                        AppCenterLog.debug(LOG_TAG, "Processed crash report for the last session.");
                     } catch (JSONException e) {
-                        MobileCenterLog.error(LOG_TAG, "Error parsing last session error log.", e);
+                        AppCenterLog.error(LOG_TAG, "Error parsing last session error log.", e);
                     }
                 }
             }
@@ -521,7 +521,7 @@ public class Crashes extends AbstractMobileCenterService {
 
     private void processPendingErrors() {
         for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
-            MobileCenterLog.debug(LOG_TAG, "Process pending error file: " + logFile);
+            AppCenterLog.debug(LOG_TAG, "Process pending error file: " + logFile);
             String logfileContents = StorageHelper.InternalStorage.read(logFile);
             if (logfileContents != null) {
                 try {
@@ -532,15 +532,15 @@ public class Crashes extends AbstractMobileCenterService {
                         removeAllStoredErrorLogFiles(id);
                     } else if (!mAutomaticProcessing || mCrashesListener.shouldProcess(report)) {
                         if (!mAutomaticProcessing) {
-                            MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + id.toString());
+                            AppCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + id.toString());
                         }
                         mUnprocessedErrorReports.put(id, mErrorReportCache.get(id));
                     } else {
-                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
+                        AppCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
                         removeAllStoredErrorLogFiles(id);
                     }
                 } catch (JSONException e) {
-                    MobileCenterLog.error(LOG_TAG, "Error parsing error log", e);
+                    AppCenterLog.error(LOG_TAG, "Error parsing error log", e);
                 }
             }
         }
@@ -573,23 +573,23 @@ public class Crashes extends AbstractMobileCenterService {
 
                     /* Check for always send: this bypasses user confirmation callback. */
                     if (alwaysSend) {
-                        MobileCenterLog.debug(LOG_TAG, "The flag for user confirmation is set to ALWAYS_SEND, will send logs.");
+                        AppCenterLog.debug(LOG_TAG, "The flag for user confirmation is set to ALWAYS_SEND, will send logs.");
                         handleUserConfirmation(SEND);
                         return;
                     }
 
                     /* For disabled automatic processing, we don't call listener. */
                     if (!mAutomaticProcessing) {
-                        MobileCenterLog.debug(LOG_TAG, "Automatic processing disabled, will wait for explicit user confirmation.");
+                        AppCenterLog.debug(LOG_TAG, "Automatic processing disabled, will wait for explicit user confirmation.");
                         return;
                     }
 
                     /* Check via listener if should wait for user confirmation. */
                     if (!mCrashesListener.shouldAwaitUserConfirmation()) {
-                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldAwaitUserConfirmation returned false, will send logs.");
+                        AppCenterLog.debug(LOG_TAG, "CrashesListener.shouldAwaitUserConfirmation returned false, will send logs.");
                         handleUserConfirmation(SEND);
                     } else {
-                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldAwaitUserConfirmation returned true, wait sending logs.");
+                        AppCenterLog.debug(LOG_TAG, "CrashesListener.shouldAwaitUserConfirmation returned true, wait sending logs.");
                     }
                 }
             }
@@ -636,9 +636,9 @@ public class Crashes extends AbstractMobileCenterService {
                     mErrorReportCache.put(id, new ErrorLogReport(log, report));
                     return report;
                 } catch (ClassNotFoundException ignored) {
-                    MobileCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), ignored);
+                    AppCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), ignored);
                 } catch (IOException ignored) {
-                    MobileCenterLog.error(LOG_TAG, "Cannot access serialized throwable file " + file.getName(), ignored);
+                    AppCenterLog.error(LOG_TAG, "Cannot access serialized throwable file " + file.getName(), ignored);
                 }
             }
         }
@@ -713,7 +713,7 @@ public class Crashes extends AbstractMobileCenterService {
      */
     private void sendErrorAttachment(UUID errorId, Iterable<ErrorAttachmentLog> attachments) {
         if (attachments == null) {
-            MobileCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachments returned null, no additional information will be attached to log: " + errorId.toString());
+            AppCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachments returned null, no additional information will be attached to log: " + errorId.toString());
         } else {
             int totalErrorAttachments = 0;
             for (ErrorAttachmentLog attachment : attachments) {
@@ -724,14 +724,14 @@ public class Crashes extends AbstractMobileCenterService {
                         ++totalErrorAttachments;
                         mChannel.enqueue(attachment, ERROR_GROUP);
                     } else {
-                        MobileCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
+                        AppCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
                     }
                 } else {
-                    MobileCenterLog.warn(LOG_TAG, "Skipping null ErrorAttachmentLog in CrashesListener.getErrorAttachments.");
+                    AppCenterLog.warn(LOG_TAG, "Skipping null ErrorAttachmentLog in CrashesListener.getErrorAttachments.");
                 }
             }
             if (totalErrorAttachments > MAX_ATTACHMENT_PER_CRASH) {
-                MobileCenterLog.warn(LOG_TAG, "A limit of " + MAX_ATTACHMENT_PER_CRASH + " attachments per error report might be enforced by server.");
+                AppCenterLog.warn(LOG_TAG, "A limit of " + MAX_ATTACHMENT_PER_CRASH + " attachments per error report might be enforced by server.");
             }
         }
     }
@@ -751,9 +751,9 @@ public class Crashes extends AbstractMobileCenterService {
         try {
             saveUncaughtException(thread, throwable, ErrorLogHelper.getModelExceptionFromThrowable(throwable));
         } catch (JSONException e) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Error serializing error log to JSON", e);
+            AppCenterLog.error(Crashes.LOG_TAG, "Error serializing error log to JSON", e);
         } catch (IOException e) {
-            MobileCenterLog.error(Crashes.LOG_TAG, "Error writing error log to file", e);
+            AppCenterLog.error(Crashes.LOG_TAG, "Error writing error log to file", e);
         }
     }
 
@@ -788,15 +788,15 @@ public class Crashes extends AbstractMobileCenterService {
         File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
         UUID errorLogId = errorLog.getId();
         String filename = errorLogId.toString();
-        MobileCenterLog.debug(Crashes.LOG_TAG, "Saving uncaught exception.");
+        AppCenterLog.debug(Crashes.LOG_TAG, "Saving uncaught exception.");
         File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
         String errorLogString = mLogSerializer.serializeLog(errorLog);
         StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
-        MobileCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
+        AppCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
         File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         if (throwable != null) {
             StorageHelper.InternalStorage.writeObject(throwableFile, throwable);
-            MobileCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile);
+            AppCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile);
         } else {
 
             /*
@@ -806,7 +806,7 @@ public class Crashes extends AbstractMobileCenterService {
             if (!throwableFile.createNewFile()) {
                 throw new IOException(throwableFile.getName());
             }
-            MobileCenterLog.debug(Crashes.LOG_TAG, "Saved empty Throwable file in " + throwableFile);
+            AppCenterLog.debug(Crashes.LOG_TAG, "Saved empty Throwable file in " + throwableFile);
         }
         return errorLogId;
     }
@@ -821,8 +821,8 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Implementation of {@link WrapperSdkExceptionManager#getUnprocessedErrorReports()}.
      */
-    MobileCenterFuture<Collection<ErrorReport>> getUnprocessedErrorReports() {
-        final DefaultMobileCenterFuture<Collection<ErrorReport>> future = new DefaultMobileCenterFuture<>();
+    AppCenterFuture<Collection<ErrorReport>> getUnprocessedErrorReports() {
+        final DefaultAppCenterFuture<Collection<ErrorReport>> future = new DefaultAppCenterFuture<>();
         postAsyncGetter(new Runnable() {
 
             @Override
@@ -840,8 +840,8 @@ public class Crashes extends AbstractMobileCenterService {
     /**
      * Implementation of {@link WrapperSdkExceptionManager#sendCrashReportsOrAwaitUserConfirmation(Collection)}.
      */
-    MobileCenterFuture<Boolean> sendCrashReportsOrAwaitUserConfirmation(final Collection<String> filteredReportIds) {
-        final DefaultMobileCenterFuture<Boolean> future = new DefaultMobileCenterFuture<>();
+    AppCenterFuture<Boolean> sendCrashReportsOrAwaitUserConfirmation(final Collection<String> filteredReportIds) {
+        final DefaultAppCenterFuture<Boolean> future = new DefaultAppCenterFuture<>();
         postAsyncGetter(new Runnable() {
 
             @Override
@@ -854,9 +854,9 @@ public class Crashes extends AbstractMobileCenterService {
                     UUID id = entry.getKey();
                     String idString = entry.getValue().report.getId();
                     if (filteredReportIds != null && filteredReportIds.contains(idString)) {
-                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + idString);
+                        AppCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + idString);
                     } else {
-                        MobileCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + idString);
+                        AppCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + idString);
                         removeAllStoredErrorLogFiles(id);
                         iterator.remove();
                     }
@@ -883,7 +883,7 @@ public class Crashes extends AbstractMobileCenterService {
                 try {
                     errorId = UUID.fromString(errorReportId);
                 } catch (RuntimeException e) {
-                    MobileCenterLog.error(LOG_TAG, "Error report identifier has an invalid format for sending attachments.");
+                    AppCenterLog.error(LOG_TAG, "Error report identifier has an invalid format for sending attachments.");
                     return;
                 }
 

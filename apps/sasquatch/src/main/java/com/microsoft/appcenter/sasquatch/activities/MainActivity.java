@@ -22,8 +22,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.microsoft.appcenter.MobileCenter;
-import com.microsoft.appcenter.MobileCenterService;
+import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.AppCenterService;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
@@ -42,8 +42,8 @@ import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.features.TestFeatures;
 import com.microsoft.appcenter.sasquatch.features.TestFeaturesListAdapter;
-import com.microsoft.appcenter.utils.MobileCenterLog;
-import com.microsoft.appcenter.utils.async.MobileCenterConsumer;
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import org.json.JSONObject;
 
@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
         /* Set custom log URL if one was configured in settings. */
         String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getString(R.string.log_url));
         if (!TextUtils.isEmpty(logUrl)) {
-            MobileCenter.setLogUrl(logUrl);
+            AppCenter.setLogUrl(logUrl);
         }
 
         /* Set listeners. */
@@ -102,21 +102,21 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* Start Mobile center. */
-        MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
+        AppCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
 
         /* If rum available, use it. */
         try {
             @SuppressWarnings("unchecked")
-            Class<? extends MobileCenterService> rum = (Class<? extends MobileCenterService>) Class.forName("com.microsoft.appcenter.rum.RealUserMeasurements");
+            Class<? extends AppCenterService> rum = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.rum.RealUserMeasurements");
             rum.getMethod("setRumKey", String.class).invoke(null, getString(R.string.rum_key));
 
             /* Start rum. */
-            MobileCenter.start(rum);
+            AppCenter.start(rum);
         } catch (Exception ignore) {
         }
 
         /* Use some mobile center getters. */
-        MobileCenter.getInstallId().thenAccept(new MobileCenterConsumer<UUID>() {
+        AppCenter.getInstallId().thenAccept(new AppCenterConsumer<UUID>() {
 
             @Override
             public void accept(UUID uuid) {
@@ -125,14 +125,14 @@ public class MainActivity extends AppCompatActivity {
         });
 
         /* Print last crash. */
-        Crashes.hasCrashedInLastSession().thenAccept(new MobileCenterConsumer<Boolean>() {
+        Crashes.hasCrashedInLastSession().thenAccept(new AppCenterConsumer<Boolean>() {
 
             @Override
             public void accept(Boolean crashed) {
                 Log.i(LOG_TAG, "Crashes.hasCrashedInLastSession=" + crashed);
             }
         });
-        Crashes.getLastSessionCrashReport().thenAccept(new MobileCenterConsumer<ErrorReport>() {
+        Crashes.getLastSessionCrashReport().thenAccept(new AppCenterConsumer<ErrorReport>() {
 
             @Override
             public void accept(ErrorReport data) {
@@ -303,7 +303,7 @@ public class MainActivity extends AppCompatActivity {
                 String title = pushNotification.getTitle();
                 String message = pushNotification.getMessage();
                 Map<String, String> customData = pushNotification.getCustomData();
-                MobileCenterLog.info(MainActivity.LOG_TAG, "Push received title=" + title + " message=" + message + " customData=" + customData + " activity=" + activity);
+                AppCenterLog.info(MainActivity.LOG_TAG, "Push received title=" + title + " message=" + message + " customData=" + customData + " activity=" + activity);
                 if (message != null) {
                     android.app.AlertDialog.Builder dialog = new android.app.AlertDialog.Builder(activity);
                     dialog.setTitle(title);

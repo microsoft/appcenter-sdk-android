@@ -10,15 +10,15 @@ import android.content.pm.PackageManager;
 import android.text.TextUtils;
 import android.widget.Toast;
 
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.MobileCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.HashUtils;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.async.MobileCenterFuture;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.StorageHelper.PreferencesStorage;
 
@@ -48,7 +48,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
-@PrepareForTest({Distribute.class, PreferencesStorage.class, MobileCenterLog.class, MobileCenter.class, NetworkStateHelper.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, CryptoUtils.class, InstallerUtils.class, Toast.class, HandlerUtils.class})
+@PrepareForTest({Distribute.class, PreferencesStorage.class, AppCenterLog.class, MobileCenter.class, NetworkStateHelper.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, CryptoUtils.class, InstallerUtils.class, Toast.class, HandlerUtils.class})
 public class AbstractDistributeTest {
 
     static final String TEST_HASH = HashUtils.sha256("com.contoso:1.2.3:6");
@@ -94,17 +94,17 @@ public class AbstractDistributeTest {
     MobileCenterHandler mMobileCenterHandler;
 
     @Mock
-    private MobileCenterFuture<Boolean> mBooleanMobileCenterFuture;
+    private AppCenterFuture<Boolean> mBooleanAppCenterFuture;
 
     @Before
     @SuppressLint("ShowToast")
     @SuppressWarnings("ResourceType")
     public void setUp() throws Exception {
         Distribute.unsetInstance();
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
         mockStatic(MobileCenter.class);
-        when(MobileCenter.isEnabled()).thenReturn(mBooleanMobileCenterFuture);
-        when(mBooleanMobileCenterFuture.get()).thenReturn(true);
+        when(AppCenter.isEnabled()).thenReturn(mBooleanAppCenterFuture);
+        when(mBooleanAppCenterFuture.get()).thenReturn(true);
         doAnswer(new Answer<Void>() {
 
             @Override

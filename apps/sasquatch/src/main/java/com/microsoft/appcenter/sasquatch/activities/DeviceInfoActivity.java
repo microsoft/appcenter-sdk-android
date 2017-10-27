@@ -14,7 +14,7 @@ import android.widget.Toast;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import java.lang.reflect.Method;
@@ -108,7 +108,7 @@ public class DeviceInfoActivity extends AppCompatActivity implements NetworkStat
     @Override
     public void onNetworkStateUpdated(boolean connected) {
         String message = "Network " + (connected ? "up" : "down");
-        MobileCenterLog.verbose(TAG, message);
+        AppCenterLog.verbose(TAG, message);
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 

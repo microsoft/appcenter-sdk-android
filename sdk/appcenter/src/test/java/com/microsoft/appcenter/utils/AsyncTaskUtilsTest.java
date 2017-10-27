@@ -24,7 +24,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(MobileCenterLog.class)
+@PrepareForTest(AppCenterLog.class)
 public class AsyncTaskUtilsTest {
 
     @Test
@@ -47,13 +47,13 @@ public class AsyncTaskUtilsTest {
 
         @SuppressWarnings("unchecked")
         AsyncTask<Integer, Void, Void> task = mock(AsyncTask.class);
-        mockStatic(MobileCenterLog.class);
+        mockStatic(AppCenterLog.class);
         RejectedExecutionException exception = new RejectedExecutionException();
         when(task.executeOnExecutor(any(Executor.class), anyInt(), anyInt())).thenThrow(exception).thenReturn(task);
         assertSame(task, AsyncTaskUtils.execute("", task, 1, 2));
         verify(task, times(2)).executeOnExecutor(any(Executor.class), eq(1), eq(2));
         verifyStatic();
-        MobileCenterLog.warn(eq(""), anyString(), eq(exception));
+        AppCenterLog.warn(eq(""), anyString(), eq(exception));
     }
 
 }

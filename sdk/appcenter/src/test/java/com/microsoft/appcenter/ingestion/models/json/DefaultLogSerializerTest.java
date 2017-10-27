@@ -2,9 +2,9 @@ package com.microsoft.appcenter.ingestion.models.json;
 
 import android.util.Log;
 
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
-import com.microsoft.appcenter.utils.MobileCenterLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.json.JSONStringer;
 import org.junit.Rule;
@@ -26,7 +26,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
  * Supplements tests in LogSerializerTest.
  */
 @SuppressWarnings("unused")
-@PrepareForTest({DefaultLogSerializer.class, MobileCenterLog.class})
+@PrepareForTest({DefaultLogSerializer.class, AppCenterLog.class})
 public class DefaultLogSerializerTest {
 
     @Rule
@@ -36,8 +36,8 @@ public class DefaultLogSerializerTest {
     public void failToUsePrettyJson() throws Exception {
 
         /* Mock logs to verify interactions. */
-        mockStatic(MobileCenterLog.class);
-        when(MobileCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
+        mockStatic(AppCenterLog.class);
+        when(AppCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
 
         /* Mock stub JSONStringer. */
         JSONStringer stringer = mock(JSONStringer.class);
@@ -54,6 +54,6 @@ public class DefaultLogSerializerTest {
 
         /* And that it logs why the pretty json could not be used. */
         verifyStatic();
-        MobileCenterLog.error(eq(MobileCenter.LOG_TAG), anyString(), any(NoSuchMethodError.class));
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(NoSuchMethodError.class));
     }
 }

@@ -3,7 +3,7 @@ package com.microsoft.appcenter.distribute;
 import android.app.DownloadManager;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.MobileCenter;
+import com.microsoft.appcenter.AppCenter;
 
 /**
  * Distribute constants.
@@ -18,7 +18,7 @@ final class DistributeConstants {
     /**
      * Log tag for this service.
      */
-    static final String LOG_TAG = MobileCenter.LOG_TAG + SERVICE_NAME;
+    static final String LOG_TAG = AppCenter.LOG_TAG + SERVICE_NAME;
 
     /**
      * Used for deep link intent from browser, string field for update token.

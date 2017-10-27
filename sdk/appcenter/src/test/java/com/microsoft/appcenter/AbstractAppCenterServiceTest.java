@@ -38,16 +38,16 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({StorageHelper.PreferencesStorage.class, MobileCenter.class})
-public class AbstractMobileCenterServiceTest {
+@PrepareForTest({StorageHelper.PreferencesStorage.class, AppCenter.class})
+public class AbstractAppCenterServiceTest {
 
     private static final String SERVICE_ENABLED_KEY = KEY_ENABLED + "_Test";
 
-    private AbstractMobileCenterService mService;
+    private AbstractAppCenterService mService;
 
     @Before
     public void setUp() throws Exception {
-        mService = new AbstractMobileCenterService() {
+        mService = new AbstractAppCenterService() {
 
             @Override
             protected String getGroupName() {
@@ -64,9 +64,9 @@ public class AbstractMobileCenterServiceTest {
                 return "TestLog";
             }
         };
-        mockStatic(MobileCenter.class);
+        mockStatic(AppCenter.class);
 
-        /* First call to com.microsoft.appcenter.MobileCenter.isEnabled shall return true, initial state. */
+        /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
         mockStatic(StorageHelper.PreferencesStorage.class);
         when(StorageHelper.PreferencesStorage.getBoolean(SERVICE_ENABLED_KEY, true)).thenReturn(true);
 
@@ -122,7 +122,7 @@ public class AbstractMobileCenterServiceTest {
 
     @Test
     public void setEnabledIfCoreEnabled() {
-        MobileCenterHandler mobileCenterHandler = mock(MobileCenterHandler.class);
+        AppCenterHandler appCenterHandler = mock(AppCenterHandler.class);
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -130,8 +130,8 @@ public class AbstractMobileCenterServiceTest {
                 ((Runnable) invocation.getArguments()[0]).run();
                 return null;
             }
-        }).when(mobileCenterHandler).post(any(Runnable.class), any(Runnable.class));
-        mService.onStarting(mobileCenterHandler);
+        }).when(appCenterHandler).post(any(Runnable.class), any(Runnable.class));
+        mService.onStarting(appCenterHandler);
         mService.onStarted(mock(Context.class), "", mock(Channel.class));
 
         /* Enabled at first. */
@@ -173,7 +173,7 @@ public class AbstractMobileCenterServiceTest {
 
     @Test
     public void setEnabledIfCoreDisabled() {
-        MobileCenterHandler mobileCenterHandler = mock(MobileCenterHandler.class);
+        AppCenterHandler appCenterHandler = mock(AppCenterHandler.class);
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -184,8 +184,8 @@ public class AbstractMobileCenterServiceTest {
                 }
                 return null;
             }
-        }).when(mobileCenterHandler).post(any(Runnable.class), any(Runnable.class));
-        mService.onStarting(mobileCenterHandler);
+        }).when(appCenterHandler).post(any(Runnable.class), any(Runnable.class));
+        mService.onStarting(appCenterHandler);
         mService.onStarted(mock(Context.class), "", mock(Channel.class));
 
         /* Whatever we do it stays disabled. */
@@ -241,7 +241,7 @@ public class AbstractMobileCenterServiceTest {
 
     @Test
     public void optionalGroup() {
-        mService = new AbstractMobileCenterService() {
+        mService = new AbstractAppCenterService() {
 
             @Override
             protected String getGroupName() {
