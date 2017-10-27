@@ -8,7 +8,7 @@ import android.os.Bundle;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.RemoteMessage;
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.MobileCenterHandler;
+import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
@@ -61,7 +61,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
         Push.class,
         PushInstallationLog.class,
         AppCenterLog.class,
-        MobileCenter.class,
+        AppCenter.class,
         StorageHelper.PreferencesStorage.class,
         FirebaseInstanceId.class,
         FirebaseAnalyticsUtils.class,
@@ -80,7 +80,7 @@ public class PushTest {
     private FirebaseInstanceId mFirebaseInstanceId;
 
     @Mock
-    private MobileCenterHandler mMobileCenterHandler;
+    private AppCenterHandler mAppCenterHandler;
 
     @Mock
     private AppCenterFuture<Boolean> mBooleanAppCenterFuture;
@@ -89,7 +89,7 @@ public class PushTest {
     public void setUp() throws Exception {
         Push.unsetInstance();
         mockStatic(AppCenterLog.class);
-        mockStatic(MobileCenter.class);
+        mockStatic(AppCenter.class);
         when(AppCenter.isEnabled()).thenReturn(mBooleanAppCenterFuture);
         when(mBooleanAppCenterFuture.get()).thenReturn(true);
         doAnswer(new Answer<Void>() {
@@ -104,9 +104,9 @@ public class PushTest {
                 }
                 return null;
             }
-        }).when(mMobileCenterHandler).post(any(Runnable.class), any(Runnable.class));
+        }).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
 
-        /* First call to com.microsoft.appcenter.MobileCenter.isEnabled shall return true, initial state. */
+        /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
         mockStatic(StorageHelper.PreferencesStorage.class);
         when(StorageHelper.PreferencesStorage.getBoolean(PUSH_ENABLED_KEY, true)).thenReturn(true);
 
@@ -142,7 +142,7 @@ public class PushTest {
     }
 
     private void start(Context contextMock, Push push, Channel channel) {
-        push.onStarting(mMobileCenterHandler);
+        push.onStarting(mAppCenterHandler);
         push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
     }
 
@@ -434,7 +434,7 @@ public class PushTest {
         verifyStatic(never());
         AppCenterLog.error(anyString(), anyString());
 
-        /* Same effect if we disable Mobile Center. */
+        /* Same effect if we disable App Center. */
         when(mBooleanAppCenterFuture.get()).thenReturn(false);
         push.onActivityResumed(activity);
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());

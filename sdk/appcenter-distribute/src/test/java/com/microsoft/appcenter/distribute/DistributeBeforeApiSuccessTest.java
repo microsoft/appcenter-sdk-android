@@ -313,7 +313,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
             }
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
-        Distribute.getInstance().onStarting(mMobileCenterHandler);
+        Distribute.getInstance().onStarting(mAppCenterHandler);
         Distribute.getInstance().onActivityResumed(mActivity);
         Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
 

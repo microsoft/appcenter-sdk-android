@@ -4,7 +4,7 @@ import android.content.Context;
 import android.os.SystemClock;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.MobileCenterHandler;
+import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
@@ -52,7 +52,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
-@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, AppCenterLog.class, MobileCenter.class, HandlerUtils.class})
+@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, AppCenterLog.class, AppCenter.class, HandlerUtils.class})
 public class UncaughtExceptionHandlerTest {
 
     private static final String CRASHES_ENABLED_KEY = KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
@@ -67,7 +67,7 @@ public class UncaughtExceptionHandlerTest {
     @Before
     public void setUp() throws java.lang.Exception {
         Crashes.unsetInstance();
-        mockStatic(MobileCenter.class);
+        mockStatic(AppCenter.class);
         mockStatic(AppCenterLog.class);
         mockStatic(SystemClock.class);
         mockStatic(StorageHelper.PreferencesStorage.class);
@@ -120,7 +120,7 @@ public class UncaughtExceptionHandlerTest {
         };
         doAnswer(runNow).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
-        MobileCenterHandler handler = mock(MobileCenterHandler.class);
+        AppCenterHandler handler = mock(AppCenterHandler.class);
         Crashes.getInstance().onStarting(handler);
         doAnswer(runNow).when(handler).post(any(Runnable.class), any(Runnable.class));
     }

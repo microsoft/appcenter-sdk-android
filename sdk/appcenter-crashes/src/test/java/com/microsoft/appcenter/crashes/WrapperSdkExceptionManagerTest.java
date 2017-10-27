@@ -3,7 +3,7 @@ package com.microsoft.appcenter.crashes;
 import android.content.Context;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.MobileCenterHandler;
+import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
@@ -51,7 +51,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest({MobileCenter.class, WrapperSdkExceptionManager.class, AppCenterLog.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, HandlerUtils.class})
+@PrepareForTest({AppCenter.class, WrapperSdkExceptionManager.class, AppCenterLog.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, HandlerUtils.class})
 public class WrapperSdkExceptionManagerTest {
 
     private static final String CRASHES_ENABLED_KEY = KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
@@ -65,7 +65,7 @@ public class WrapperSdkExceptionManagerTest {
     @Before
     public void setUp() {
         Crashes.unsetInstance();
-        mockStatic(MobileCenter.class);
+        mockStatic(AppCenter.class);
         mockStatic(StorageHelper.PreferencesStorage.class);
         mockStatic(StorageHelper.InternalStorage.class);
         mockStatic(AppCenterLog.class);
@@ -94,7 +94,7 @@ public class WrapperSdkExceptionManagerTest {
         };
         doAnswer(runNow).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
-        MobileCenterHandler handler = mock(MobileCenterHandler.class);
+        AppCenterHandler handler = mock(AppCenterHandler.class);
         Crashes.getInstance().onStarting(handler);
         doAnswer(runNow).when(handler).post(any(Runnable.class), any(Runnable.class));
     }

@@ -43,12 +43,12 @@ final class DistributeConstants {
     /**
      * Base URL used to open browser to check install and get API token to check latest release.
      */
-    static final String DEFAULT_INSTALL_URL = "https://install.mobile.azure.com";
+    static final String DEFAULT_INSTALL_URL = "https://install.appcenter.ms";
 
     /**
      * Base URL to call server to check latest release.
      */
-    static final String DEFAULT_API_URL = "https://api.mobile.azure.com/v0.1";
+    static final String DEFAULT_API_URL = "https://api.appcenter/v0.1"; //TODO change to correct version
 
     /**
      * Update setup URL path. Contains the app secret variable to replace.
@@ -163,7 +163,7 @@ final class DistributeConstants {
     /**
      * Notification channel identifier.
      */
-    static final String NOTIFICATION_CHANNEL_ID = "mobile.center.distribute";
+    static final String NOTIFICATION_CHANNEL_ID = "mobile.center.distribute"; //TODO not sure what this should be
 
     /**
      * Base key for stored preferences.

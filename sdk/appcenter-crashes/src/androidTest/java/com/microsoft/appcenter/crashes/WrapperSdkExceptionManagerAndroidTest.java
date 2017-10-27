@@ -6,7 +6,7 @@ import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.MobileCenterPrivateHelper;
+import com.microsoft.appcenter.AppCenterPrivateHelper;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
@@ -52,18 +52,18 @@ public class WrapperSdkExceptionManagerAndroidTest {
     private void startFresh() throws java.lang.Exception {
 
         /* Configure new instance. */
-        MobileCenterPrivateHelper.unsetInstance();
+        AppCenterPrivateHelper.unsetInstance();
         Crashes.unsetInstance();
         AppCenter.setLogLevel(android.util.Log.VERBOSE);
         AppCenter.configure(sApplication, "a");
 
         /* Replace channel. */
-        Method method = MobileCenter.class.getDeclaredMethod("getInstance");
+        Method method = AppCenter.class.getDeclaredMethod("getInstance");
         method.setAccessible(true);
-        AppCenter appCenter = (MobileCenter) method.invoke(null);
-        method = MobileCenter.class.getDeclaredMethod("setChannel", Channel.class);
+        AppCenter appCenter = (AppCenter) method.invoke(null);
+        method = AppCenter.class.getDeclaredMethod("setChannel", Channel.class);
         method.setAccessible(true);
-        method.invoke(mobileCenter, mock(Channel.class));
+        method.invoke(appCenter, mock(Channel.class));
 
         /* Start crashes. */
         AppCenter.start(Crashes.class);

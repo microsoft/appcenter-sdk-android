@@ -573,7 +573,7 @@ public class Distribute extends AbstractAppCenterService {
                 }
             }
 
-            /* If we received the redirection parameters before Mobile Center was started/enabled, process them now. */
+            /* If we received the redirection parameters before App Center was started/enabled, process them now. */
             if (mBeforeStartRequestId != null) {
                 AppCenterLog.debug(LOG_TAG, "Processing update token we kept in memory before onStarted");
                 storeRedirectionParameters(mBeforeStartRequestId, mBeforeStartDistributionGroupId, mBeforeStartUpdateToken);

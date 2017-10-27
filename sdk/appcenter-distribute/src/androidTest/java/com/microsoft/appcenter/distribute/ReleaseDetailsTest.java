@@ -19,7 +19,7 @@ public class ReleaseDetailsTest {
                 "id: 42," +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "release_notes_url: 'https://mock/'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
@@ -31,7 +31,7 @@ public class ReleaseDetailsTest {
         assertEquals(42, releaseDetails.getId());
         assertEquals(14, releaseDetails.getVersion());
         assertEquals("2.1.5", releaseDetails.getShortVersion());
-        assertEquals("Fix a critical bug, this text was entered in Mobile Center portal.", releaseDetails.getReleaseNotes());
+        assertEquals("Fix a critical bug, this text was entered in App Center portal.", releaseDetails.getReleaseNotes());
         assertEquals(Uri.parse("https://mock/"), releaseDetails.getReleaseNotesUrl());
         assertEquals(19, releaseDetails.getMinApiLevel());
         assertEquals(Uri.parse("http://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
@@ -44,7 +44,7 @@ public class ReleaseDetailsTest {
         String json = "{" +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
@@ -59,7 +59,7 @@ public class ReleaseDetailsTest {
                 "id: '42abc'," +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
@@ -74,7 +74,7 @@ public class ReleaseDetailsTest {
                 "id: '42'," +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
@@ -85,7 +85,7 @@ public class ReleaseDetailsTest {
         assertEquals(42, releaseDetails.getId());
         assertEquals(14, releaseDetails.getVersion());
         assertEquals("2.1.5", releaseDetails.getShortVersion());
-        assertEquals("Fix a critical bug, this text was entered in Mobile Center portal.", releaseDetails.getReleaseNotes());
+        assertEquals("Fix a critical bug, this text was entered in App Center portal.", releaseDetails.getReleaseNotes());
         assertNull(releaseDetails.getReleaseNotesUrl());
         assertEquals(19, releaseDetails.getMinApiLevel());
         assertEquals(Uri.parse("http://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
@@ -98,7 +98,7 @@ public class ReleaseDetailsTest {
         String json = "{" +
                 "id: 42," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
@@ -113,7 +113,7 @@ public class ReleaseDetailsTest {
                 "id: 42," +
                 "version: true," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
@@ -127,7 +127,7 @@ public class ReleaseDetailsTest {
         String json = "{" +
                 "id: 42," +
                 "version: '14'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
@@ -218,7 +218,7 @@ public class ReleaseDetailsTest {
                 "id: 42," +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
@@ -232,7 +232,7 @@ public class ReleaseDetailsTest {
                 "id: 42," +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: '19'," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
@@ -243,7 +243,7 @@ public class ReleaseDetailsTest {
         assertEquals(42, releaseDetails.getId());
         assertEquals(14, releaseDetails.getVersion());
         assertEquals("2.1.5", releaseDetails.getShortVersion());
-        assertEquals("Fix a critical bug, this text was entered in Mobile Center portal.", releaseDetails.getReleaseNotes());
+        assertEquals("Fix a critical bug, this text was entered in App Center portal.", releaseDetails.getReleaseNotes());
         assertNull(releaseDetails.getReleaseNotesUrl());
         assertEquals(19, releaseDetails.getMinApiLevel());
         assertEquals(Uri.parse("http://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
@@ -257,7 +257,7 @@ public class ReleaseDetailsTest {
                 "id: 42," +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: '4.0.3'," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
@@ -272,7 +272,7 @@ public class ReleaseDetailsTest {
                 "id: 42," +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19" +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
@@ -285,7 +285,7 @@ public class ReleaseDetailsTest {
                 "id: 42," +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'someFile'," +
                 "mandatory_update: false," +
@@ -300,7 +300,7 @@ public class ReleaseDetailsTest {
                 "id: 42," +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'ftp://someFile'," +
                 "mandatory_update: false," +
@@ -315,7 +315,7 @@ public class ReleaseDetailsTest {
                 "id: 42," +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: true," +
@@ -326,7 +326,7 @@ public class ReleaseDetailsTest {
         assertEquals(42, releaseDetails.getId());
         assertEquals(14, releaseDetails.getVersion());
         assertEquals("2.1.5", releaseDetails.getShortVersion());
-        assertEquals("Fix a critical bug, this text was entered in Mobile Center portal.", releaseDetails.getReleaseNotes());
+        assertEquals("Fix a critical bug, this text was entered in App Center portal.", releaseDetails.getReleaseNotes());
         assertNull(releaseDetails.getReleaseNotesUrl());
         assertEquals(19, releaseDetails.getMinApiLevel());
         assertEquals(Uri.parse("http://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
@@ -340,7 +340,7 @@ public class ReleaseDetailsTest {
                 "id: 42," +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
@@ -354,7 +354,7 @@ public class ReleaseDetailsTest {
                 "id: 42," +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "mandatory_update: false," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'" +
@@ -368,7 +368,7 @@ public class ReleaseDetailsTest {
                 "id: 42," +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
@@ -383,7 +383,7 @@ public class ReleaseDetailsTest {
                 "id: 42," +
                 "version: '14'," +
                 "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in Mobile Center portal.'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +

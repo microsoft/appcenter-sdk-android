@@ -68,7 +68,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
     protected DownloadProgress doInBackground(Void... params) {
 
         /*
-         * Completion might be triggered in background before MobileCenter.start
+         * Completion might be triggered in background before AppCenter.start
          * if application was killed after starting download.
          *
          * We still want to generate the notification: if we can find the data in preferences

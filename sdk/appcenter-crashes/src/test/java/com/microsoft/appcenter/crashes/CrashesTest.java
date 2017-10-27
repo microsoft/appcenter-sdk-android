@@ -6,7 +6,7 @@ import android.os.SystemClock;
 
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.MobileCenterHandler;
+import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.HandledErrorLog;
@@ -85,7 +85,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
-@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, AppCenterLog.class, MobileCenter.class, Crashes.class, HandlerUtils.class, Looper.class})
+@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, AppCenterLog.class, AppCenter.class, Crashes.class, HandlerUtils.class, Looper.class})
 public class CrashesTest {
 
     @SuppressWarnings("ThrowableInstanceNeverThrown")
@@ -102,7 +102,7 @@ public class CrashesTest {
     private ManagedErrorLog mErrorLog;
 
     @Mock
-    private MobileCenterHandler mMobileCenterHandler;
+    private AppCenterHandler mAppCenterHandler;
 
     private static void assertErrorEquals(ManagedErrorLog errorLog, ErrorReport report) {
         assertNotNull(report);
@@ -124,7 +124,7 @@ public class CrashesTest {
         mockStatic(AppCenterLog.class);
         when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
 
-        mockStatic(MobileCenter.class);
+        mockStatic(AppCenter.class);
 
         @SuppressWarnings("unchecked")
         AppCenterFuture<Boolean> future = (AppCenterFuture<Boolean>) mock(AppCenterFuture.class);
@@ -159,7 +159,7 @@ public class CrashesTest {
         };
         doAnswer(runNow).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
-        doAnswer(runNow).when(mMobileCenterHandler).post(any(Runnable.class), any(Runnable.class));
+        doAnswer(runNow).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
 
         mErrorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0, true);
     }
@@ -184,7 +184,7 @@ public class CrashesTest {
         when(dir.listFiles()).thenReturn(new File[]{file1, file2});
         crashes.setUncaughtExceptionHandler(mockHandler);
         when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(false);
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
         /* Test. */
@@ -236,7 +236,7 @@ public class CrashesTest {
         assertEquals(0, crashes.getInitializeTimestamp());
 
         /* Start. */
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", mockChannel);
         verify(mockChannel).removeGroup(eq(crashes.getGroupName()));
         verify(mockChannel).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
@@ -316,7 +316,7 @@ public class CrashesTest {
         Crashes crashes = Crashes.getInstance();
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mockContext, "", mockChannel);
 
         /* Test. */
@@ -355,7 +355,7 @@ public class CrashesTest {
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mockContext, "", mockChannel);
 
         verify(mockListener).shouldProcess(report);
@@ -403,7 +403,7 @@ public class CrashesTest {
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mockContext, "", mockChannel);
 
         verify(mockListener).shouldProcess(report);
@@ -436,7 +436,7 @@ public class CrashesTest {
         crashes.setInstanceListener(listener);
 
         Channel channel = mock(Channel.class);
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", channel);
         verifyZeroInteractions(listener);
         verify(channel, never()).enqueue(any(Log.class), anyString());
@@ -447,7 +447,7 @@ public class CrashesTest {
         when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(false);
         Channel channel = mock(Channel.class);
         Crashes crashes = Crashes.getInstance();
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", channel);
         verify(channel, never()).enqueue(any(Log.class), anyString());
     }
@@ -465,7 +465,7 @@ public class CrashesTest {
         when(logSerializer.deserializeLog(anyString())).thenReturn(null);
         crashes.setLogSerializer(logSerializer);
 
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mockContext, "", mockChannel);
 
         verify(mockChannel, never()).enqueue(any(Log.class), anyString());
@@ -486,7 +486,7 @@ public class CrashesTest {
         when(logSerializer.deserializeLog(anyString())).thenThrow(jsonException);
         crashes.setLogSerializer(logSerializer);
 
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mockContext, "", mockChannel);
 
         verify(mockChannel, never()).enqueue(any(Log.class), anyString());
@@ -512,7 +512,7 @@ public class CrashesTest {
         /* Track exception test. */
         Crashes crashes = Crashes.getInstance();
         Channel mockChannel = mock(Channel.class);
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", mockChannel);
         Crashes.trackException(EXCEPTION);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
@@ -561,7 +561,7 @@ public class CrashesTest {
 
         WrapperSdkExceptionManager.trackException(exception);
         verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", mockChannel);
         WrapperSdkExceptionManager.trackException(exception);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
@@ -589,7 +589,7 @@ public class CrashesTest {
         CrashesListener crashesListener = mock(CrashesListener.class);
         Crashes.setListener(crashesListener);
         Crashes crashes = Crashes.getInstance();
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
         ArgumentCaptor<ErrorReport> errorReportCaptor = ArgumentCaptor.forClass(ErrorReport.class);
@@ -617,7 +617,7 @@ public class CrashesTest {
         CrashesListener mockListener = mock(CrashesListener.class);
         Crashes crashes = Crashes.getInstance();
         crashes.setInstanceListener(mockListener);
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
         Channel.GroupListener listener = Crashes.getInstance().getChannelListener();
@@ -652,7 +652,7 @@ public class CrashesTest {
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
         Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
@@ -689,7 +689,7 @@ public class CrashesTest {
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
         Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
@@ -854,7 +854,7 @@ public class CrashesTest {
         Crashes.getLastSessionCrashReport().thenAccept(beforeCallback);
         verify(beforeCallback).accept(null);
 
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", mock(Channel.class));
         assertTrue(Crashes.isEnabled().get());
         assertTrue(Crashes.hasCrashedInLastSession().get());
@@ -918,7 +918,7 @@ public class CrashesTest {
          */
         assertFalse(Crashes.isEnabled().get());
         assertNull(Crashes.getLastSessionCrashReport().get());
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", mock(Channel.class));
         assertTrue(Crashes.isEnabled().get());
         assertFalse(Crashes.hasCrashedInLastSession().get());
@@ -994,7 +994,7 @@ public class CrashesTest {
         crashes.setInstanceListener(listener);
         crashes.setLogSerializer(logSerializer);
 
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", mock(Channel.class));
 
         String expectedMessage = "A limit of " + MAX_ATTACHMENT_PER_CRASH + " attachments per error report might be enforced by server.";
@@ -1038,7 +1038,7 @@ public class CrashesTest {
         WrapperSdkExceptionManager.setAutomaticProcessing(false);
 
         /* Start crashes. */
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mockContext, "", mockChannel);
 
         /* No log queued. */
@@ -1098,7 +1098,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report1).thenReturn(report2);
         WrapperSdkExceptionManager.setAutomaticProcessing(false);
         crashes.setLogSerializer(logSerializer);
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         mockChannel = mock(Channel.class);
         crashes.onStarted(mockContext, "", mockChannel);
         assertTrue(Crashes.isEnabled().get());
@@ -1141,7 +1141,7 @@ public class CrashesTest {
         WrapperSdkExceptionManager.setAutomaticProcessing(false);
 
         /* Start crashes. */
-        crashes.onStarting(mMobileCenterHandler);
+        crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mockContext, "", mockChannel);
 
         /* No log queued. */

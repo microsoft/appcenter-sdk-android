@@ -11,7 +11,7 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.MobileCenterHandler;
+import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.HashUtils;
@@ -48,7 +48,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
-@PrepareForTest({Distribute.class, PreferencesStorage.class, AppCenterLog.class, MobileCenter.class, NetworkStateHelper.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, CryptoUtils.class, InstallerUtils.class, Toast.class, HandlerUtils.class})
+@PrepareForTest({Distribute.class, PreferencesStorage.class, AppCenterLog.class, AppCenter.class, NetworkStateHelper.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, CryptoUtils.class, InstallerUtils.class, Toast.class, HandlerUtils.class})
 public class AbstractDistributeTest {
 
     static final String TEST_HASH = HashUtils.sha256("com.contoso:1.2.3:6");
@@ -91,7 +91,7 @@ public class AbstractDistributeTest {
     CryptoUtils mCryptoUtils;
 
     @Mock
-    MobileCenterHandler mMobileCenterHandler;
+    AppCenterHandler mAppCenterHandler;
 
     @Mock
     private AppCenterFuture<Boolean> mBooleanAppCenterFuture;
@@ -102,7 +102,7 @@ public class AbstractDistributeTest {
     public void setUp() throws Exception {
         Distribute.unsetInstance();
         mockStatic(AppCenterLog.class);
-        mockStatic(MobileCenter.class);
+        mockStatic(AppCenter.class);
         when(AppCenter.isEnabled()).thenReturn(mBooleanAppCenterFuture);
         when(mBooleanAppCenterFuture.get()).thenReturn(true);
         doAnswer(new Answer<Void>() {
@@ -112,9 +112,9 @@ public class AbstractDistributeTest {
                 ((Runnable) invocation.getArguments()[0]).run();
                 return null;
             }
-        }).when(mMobileCenterHandler).post(any(Runnable.class), any(Runnable.class));
+        }).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
 
-        /* First call to com.microsoft.appcenter.MobileCenter.isEnabled shall return true, initial state. */
+        /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
         mockStatic(PreferencesStorage.class);
         when(PreferencesStorage.getBoolean(DISTRIBUTE_ENABLED_KEY, true)).thenReturn(true);
 
@@ -237,7 +237,7 @@ public class AbstractDistributeTest {
     }
 
     void start() {
-        Distribute.getInstance().onStarting(mMobileCenterHandler);
+        Distribute.getInstance().onStarting(mAppCenterHandler);
         Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
     }
 }

@@ -1,8 +1,8 @@
 package com.microsoft.appcenter;
 
-public class MobileCenterPrivateHelper {
+public class AppCenterPrivateHelper {
 
     public static void unsetInstance() {
-        MobileCenter.unsetInstance();
+        AppCenter.unsetInstance();
     }
 }

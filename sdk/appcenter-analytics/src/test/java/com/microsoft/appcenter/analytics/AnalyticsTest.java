@@ -4,7 +4,7 @@ import android.content.Context;
 import android.os.SystemClock;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.MobileCenterHandler;
+import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
@@ -69,7 +69,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, AppCenterLog.class, MobileCenter.class, HandlerUtils.class})
+@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, AppCenterLog.class, AppCenter.class, HandlerUtils.class})
 public class AnalyticsTest {
 
     private static final String ANALYTICS_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Analytics.getInstance().getServiceName();
@@ -78,14 +78,14 @@ public class AnalyticsTest {
     private AppCenterFuture<Boolean> mCoreEnabledFuture;
 
     @Mock
-    private MobileCenterHandler mMobileCenterHandler;
+    private AppCenterHandler mAppCenterHandler;
 
     @Before
     public void setUp() {
         Analytics.unsetInstance();
         mockStatic(SystemClock.class);
         mockStatic(AppCenterLog.class);
-        mockStatic(MobileCenter.class);
+        mockStatic(AppCenter.class);
         when(AppCenter.isEnabled()).thenReturn(mCoreEnabledFuture);
         when(mCoreEnabledFuture.get()).thenReturn(true);
         Answer<Void> runNow = new Answer<Void>() {
@@ -96,12 +96,12 @@ public class AnalyticsTest {
                 return null;
             }
         };
-        doAnswer(runNow).when(mMobileCenterHandler).post(any(Runnable.class), any(Runnable.class));
+        doAnswer(runNow).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
         mockStatic(HandlerUtils.class);
         doAnswer(runNow).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
-        /* First call to com.microsoft.appcenter.MobileCenter.isEnabled shall return true, initial state. */
+        /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
         mockStatic(StorageHelper.PreferencesStorage.class);
         when(StorageHelper.PreferencesStorage.getBoolean(ANALYTICS_ENABLED_KEY, true)).thenReturn(true);
 
@@ -169,7 +169,7 @@ public class AnalyticsTest {
 
         /* Start. */
         Channel channel = mock(Channel.class);
-        analytics.onStarting(mMobileCenterHandler);
+        analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
 
         /* Test resume/pause. */
@@ -210,7 +210,7 @@ public class AnalyticsTest {
         Analytics.setAutoPageTrackingEnabled(false);
         assertFalse(Analytics.isAutoPageTrackingEnabled());
         Channel channel = mock(Channel.class);
-        analytics.onStarting(mMobileCenterHandler);
+        analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
         analytics.onActivityResumed(new MyActivity());
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
@@ -247,7 +247,7 @@ public class AnalyticsTest {
     public void testTrackEvent() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
-        analytics.onStarting(mMobileCenterHandler);
+        analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
         Analytics.trackEvent(null, null);
         verify(channel, never()).enqueue(any(Log.class), anyString());
@@ -336,7 +336,7 @@ public class AnalyticsTest {
     public void testTrackPage() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
-        analytics.onStarting(mMobileCenterHandler);
+        analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
         Analytics.trackPage(null, null);
         verify(channel, never()).enqueue(any(Log.class), anyString());
@@ -433,7 +433,7 @@ public class AnalyticsTest {
 
         /* Start. */
         Channel channel = mock(Channel.class);
-        analytics.onStarting(mMobileCenterHandler);
+        analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
         verify(channel).removeGroup(eq(analytics.getGroupName()));
         verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), any(Channel.GroupListener.class));
@@ -493,11 +493,11 @@ public class AnalyticsTest {
 
         /*
          * Disable analytics while in background to set up the initial condition
-         * simulating the optin use case.
+         * simulating the opt-in use case.
          */
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
-        analytics.onStarting(mMobileCenterHandler);
+        analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
         Analytics.setEnabled(false);
 
@@ -538,11 +538,11 @@ public class AnalyticsTest {
 
         /*
          * Disable analytics while in background to set up the initial condition
-         * simulating the optin use case.
+         * simulating the opt-in use case.
          */
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
-        analytics.onStarting(mMobileCenterHandler);
+        analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
         Analytics.setEnabled(false);
 
@@ -562,7 +562,7 @@ public class AnalyticsTest {
         Analytics.setListener(listener);
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
-        analytics.onStarting(mMobileCenterHandler);
+        analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
         final ArgumentCaptor<Channel.GroupListener> captor = ArgumentCaptor.forClass(Channel.GroupListener.class);
         verify(channel).addGroup(anyString(), anyInt(), anyLong(), anyInt(), captor.capture());

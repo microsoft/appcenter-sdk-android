@@ -45,7 +45,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class DistributeCustomizationTest extends AbstractDistributeTest {
 
     private void start(Distribute distribute) {
-        distribute.onStarting(mMobileCenterHandler);
+        distribute.onStarting(mAppCenterHandler);
         distribute.onStarted(mContext, "a", mock(Channel.class));
     }
 
@@ -99,7 +99,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         doNothing().when(distribute).completeWorkflow();
 
         /* Counters to verify multiple times for specific methods. */
-        int mobileCenterLogErrorCounter = 0;
+        int appCenterLogErrorCounter = 0;
         int getStoredDownloadStateCounter = 0;
 
         /* Start Distribute service. */
@@ -119,7 +119,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
-        verifyStatic(times(++mobileCenterLogErrorCounter));
+        verifyStatic(times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Enable the service. */
@@ -135,7 +135,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
-        verifyStatic(times(++mobileCenterLogErrorCounter));
+        verifyStatic(times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
@@ -147,7 +147,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
-        verifyStatic(times(++mobileCenterLogErrorCounter));
+        verifyStatic(times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Verify again to make sure the user action has NOT been processed yet. */
@@ -168,7 +168,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         doNothing().when(distribute).completeWorkflow();
 
         /* Counters to verify multiple times for specific methods. */
-        int mobileCenterLogErrorCounter = 0;
+        int appCenterLogErrorCounter = 0;
         int getStoredDownloadStateCounter = 0;
 
         /* Start Distribute service. */
@@ -188,7 +188,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
-        verifyStatic(times(++mobileCenterLogErrorCounter));
+        verifyStatic(times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Enable the service. */
@@ -204,7 +204,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
-        verifyStatic(times(++mobileCenterLogErrorCounter));
+        verifyStatic(times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
@@ -216,7 +216,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Verify the user action has NOT been processed. */
         verifyStatic(times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
-        verifyStatic(times(++mobileCenterLogErrorCounter));
+        verifyStatic(times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Verify again to make sure the user action has NOT been processed yet. */
