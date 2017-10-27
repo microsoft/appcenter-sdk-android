@@ -56,14 +56,21 @@ class PushNotifier {
         /* Click action. */
         PackageManager packageManager = context.getPackageManager();
         Intent actionIntent = packageManager.getLaunchIntentForPackage(context.getPackageName());
-        actionIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        Map<String, String> customData = PushIntentUtils.getCustomData(pushIntent);
-        for (String key : customData.keySet()) {
-            actionIntent.putExtra(key, customData.get(key));
+        if (actionIntent != null) {
+            actionIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            Map<String, String> customData = PushIntentUtils.getCustomData(pushIntent);
+            for (String key : customData.keySet()) {
+                actionIntent.putExtra(key, customData.get(key));
+            }
+
+            /* Set the message ID in the intent. */
+            PushIntentUtils.setGoogleMessageId(messageId, actionIntent);
+        } else {
+
+            /* If no launcher, just create a placeholder action as the field is mandatory. */
+            actionIntent = new Intent();
         }
 
-        /* Set the message ID in the intent. */
-        PushIntentUtils.setGoogleMessageId(messageId, actionIntent);
 
         /* Get text. */
         String notificationTitle = PushIntentUtils.getTitle(pushIntent);
