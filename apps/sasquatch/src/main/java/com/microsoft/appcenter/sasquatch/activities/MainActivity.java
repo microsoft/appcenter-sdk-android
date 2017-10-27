@@ -55,7 +55,7 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String LOG_TAG = "MobileCenterSasquatch";
+    public static final String LOG_TAG = "AppCenterSasquatch";
     static final String APP_SECRET_KEY = "appSecret";
     static final String LOG_URL_KEY = "logUrl";
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
             Push.enableFirebaseAnalytics(this);
         }
 
-        /* Start Mobile center. */
+        /* Start App Center. */
         AppCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
 
         /* If rum available, use it. */
@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception ignore) {
         }
 
-        /* Use some mobile center getters. */
+        /* Use some App Center getters. */
         AppCenter.getInstallId().thenAccept(new AppCenterConsumer<UUID>() {
 
             @Override

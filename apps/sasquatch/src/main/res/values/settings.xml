@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="appcenter_state_key">appcenter_state_key</string>
-    <string name="appcenter_state_title">Mobile Center state</string>
-    <string name="appcenter_state_summary_enabled">Mobile Center is enabled</string>
-    <string name="appcenter_state_summary_disabled">Mobile Center is disabled</string>
+    <string name="appcenter_state_title">App Center state</string>
+    <string name="appcenter_state_summary_enabled">App Center is enabled</string>
+    <string name="appcenter_state_summary_disabled">App Center is disabled</string>
 
     <string name="analytics_key">appcenter_analytics</string>
     <string name="analytics_title">Analytics</string>

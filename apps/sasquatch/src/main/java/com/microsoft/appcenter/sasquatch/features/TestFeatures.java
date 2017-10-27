@@ -40,7 +40,7 @@ public final class TestFeatures {
                 sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
             }
         } catch (Exception e) {
-            AppCenterLog.info("MobileCenterSasquatch", "CustomProperties not yet available in this flavor.");
+            AppCenterLog.info("AppCenterSasquatch", "CustomProperties not yet available in this flavor.");
         }
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
     }

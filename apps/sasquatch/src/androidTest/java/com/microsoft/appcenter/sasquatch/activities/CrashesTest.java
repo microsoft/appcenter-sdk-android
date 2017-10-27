@@ -216,7 +216,7 @@ public class CrashesTest {
 
         private void relaunchActivity() {
             ActivityCompat.finishAffinity(mActivityTestRule.getActivity());
-            unsetInstance(MobileCenter.class);
+            unsetInstance(AppCenter.class);
             unsetInstance(Crashes.class);
             Intent intent = new Intent();
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

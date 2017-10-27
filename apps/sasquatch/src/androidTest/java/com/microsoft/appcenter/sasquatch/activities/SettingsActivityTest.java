@@ -64,12 +64,12 @@ public class SettingsActivityTest {
     }
 
     @Test
-    public void testEnableMobileCenter() {
+    public void testEnableAppCenter() {
 
-        /* Disable mobile center. */
+        /* Disable App Center. */
         onCheckbox(R.string.appcenter_state_key).perform(click());
 
-        /* Check mobile center and services state. */
+        /* Check App Center and services state. */
         onCheckbox(R.string.appcenter_state_key).check(matches(isNotChecked()));
         Assert.assertFalse(AppCenter.isEnabled().get());
         onCheckbox(R.string.appcenter_analytics_state_key).check(matches(isNotChecked()));
@@ -81,30 +81,30 @@ public class SettingsActivityTest {
         onCheckbox(R.string.appcenter_push_state_key).check(matches(isNotChecked()));
         Assert.assertFalse(Push.isEnabled().get());
 
-        /* Unable enable analytics when mobile center is disabled. */
+        /* Unable enable analytics when app center is disabled. */
         onCheckbox(R.string.appcenter_analytics_state_key).perform(click());
         onCheckbox(R.string.appcenter_analytics_state_key).check(matches(isNotChecked()));
         Assert.assertFalse(Analytics.isEnabled().get());
 
-        /* Unable enable crashes when mobile center is disabled. */
+        /* Unable enable crashes when app center is disabled. */
         onCheckbox(R.string.appcenter_crashes_state_key).perform(click());
         onCheckbox(R.string.appcenter_crashes_state_key).check(matches(isNotChecked()));
         Assert.assertFalse(Crashes.isEnabled().get());
 
-        /* Unable enable distribute when mobile center is disabled. */
+        /* Unable enable distribute when app center is disabled. */
         onCheckbox(R.string.appcenter_distribute_state_key).perform(click());
         onCheckbox(R.string.appcenter_distribute_state_key).check(matches(isNotChecked()));
         Assert.assertFalse(Distribute.isEnabled().get());
 
-        /* Unable enable push when mobile center is disabled. */
+        /* Unable enable push when app center is disabled. */
         onCheckbox(R.string.appcenter_push_state_key).perform(click());
         onCheckbox(R.string.appcenter_push_state_key).check(matches(isNotChecked()));
         Assert.assertFalse(Push.isEnabled().get());
 
-        /* Enable mobile center. */
+        /* Enable app center. */
         onCheckbox(R.string.appcenter_state_key).perform(click());
 
-        /* Check mobile center and services state. */
+        /* Check app center and services state. */
         onCheckbox(R.string.appcenter_state_key).check(matches(isChecked()));
         Assert.assertTrue(AppCenter.isEnabled().get());
         onCheckbox(R.string.appcenter_analytics_state_key).check(matches(isChecked()));
@@ -123,7 +123,7 @@ public class SettingsActivityTest {
         /* Disable analytics service. */
         onCheckbox(R.string.appcenter_analytics_state_key).perform(click());
 
-        /* Check mobile center and services state. */
+        /* Check app center and services state. */
         onCheckbox(R.string.appcenter_state_key).check(matches(isChecked()));
         Assert.assertTrue(AppCenter.isEnabled().get());
         onCheckbox(R.string.appcenter_analytics_state_key).check(matches(isNotChecked()));
@@ -138,7 +138,7 @@ public class SettingsActivityTest {
         /* Enable analytics service. */
         onCheckbox(R.string.appcenter_analytics_state_key).perform(click());
 
-        /* Check mobile center and services state. */
+        /* Check app center and services state. */
         onCheckbox(R.string.appcenter_state_key).check(matches(isChecked()));
         Assert.assertTrue(AppCenter.isEnabled().get());
         onCheckbox(R.string.appcenter_analytics_state_key).check(matches(isChecked()));
@@ -157,7 +157,7 @@ public class SettingsActivityTest {
         /* Disable distribute service. */
         onCheckbox(R.string.appcenter_crashes_state_key).perform(click());
 
-        /* Check mobile center and services state. */
+        /* Check app center and services state. */
         onCheckbox(R.string.appcenter_state_key).check(matches(isChecked()));
         Assert.assertTrue(AppCenter.isEnabled().get());
         onCheckbox(R.string.appcenter_analytics_state_key).check(matches(isChecked()));
@@ -172,7 +172,7 @@ public class SettingsActivityTest {
         /* Enable distribute service. */
         onCheckbox(R.string.appcenter_crashes_state_key).perform(click());
 
-        /* Check mobile center and services state. */
+        /* Check app center and services state. */
         onCheckbox(R.string.appcenter_state_key).check(matches(isChecked()));
         Assert.assertTrue(AppCenter.isEnabled().get());
         onCheckbox(R.string.appcenter_analytics_state_key).check(matches(isChecked()));
@@ -191,7 +191,7 @@ public class SettingsActivityTest {
         /* Disable distribute service. */
         onCheckbox(R.string.appcenter_distribute_state_key).perform(click());
 
-        /* Check mobile center and services state. */
+        /* Check app center and services state. */
         onCheckbox(R.string.appcenter_state_key).check(matches(isChecked()));
         Assert.assertTrue(AppCenter.isEnabled().get());
         onCheckbox(R.string.appcenter_analytics_state_key).check(matches(isChecked()));
@@ -206,7 +206,7 @@ public class SettingsActivityTest {
         /* Enable distribute service. */
         onCheckbox(R.string.appcenter_distribute_state_key).perform(click());
 
-        /* Check mobile center and services state. */
+        /* Check app center and services state. */
         onCheckbox(R.string.appcenter_state_key).check(matches(isChecked()));
         Assert.assertTrue(AppCenter.isEnabled().get());
         onCheckbox(R.string.appcenter_analytics_state_key).check(matches(isChecked()));
@@ -225,7 +225,7 @@ public class SettingsActivityTest {
         /* Disable push service. */
         onCheckbox(R.string.appcenter_push_state_key).perform(click());
 
-        /* Check mobile center and services state. */
+        /* Check app center and services state. */
         onCheckbox(R.string.appcenter_state_key).check(matches(isChecked()));
         Assert.assertTrue(AppCenter.isEnabled().get());
         onCheckbox(R.string.appcenter_analytics_state_key).check(matches(isChecked()));
@@ -240,7 +240,7 @@ public class SettingsActivityTest {
         /* Enable push service. */
         onCheckbox(R.string.appcenter_push_state_key).perform(click());
 
-        /* Check mobile center and services state. */
+        /* Check app center and services state. */
         onCheckbox(R.string.appcenter_state_key).check(matches(isChecked()));
         Assert.assertTrue(AppCenter.isEnabled().get());
         onCheckbox(R.string.appcenter_analytics_state_key).check(matches(isChecked()));
