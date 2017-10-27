@@ -14,22 +14,22 @@ public class PushNotification {
     /**
      * Notification title.
      */
-    private String mTitle;
+    private final String mTitle;
 
     /**
      * Notification message.
      */
-    private String mMessage;
+    private final String mMessage;
 
     /**
      * Custom data.
      */
-    private Map<String, String> mCustomData;
+    private final Map<String, String> mCustomData;
 
     /**
      * Init.
      */
-    public PushNotification(String title, String message, @NonNull Map<String, String> customData) {
+    public PushNotification(@SuppressWarnings("SameParameterValue") String title, @SuppressWarnings("SameParameterValue") String message, @NonNull Map<String, String> customData) {
         mTitle = title;
         mMessage = message;
         mCustomData = customData;

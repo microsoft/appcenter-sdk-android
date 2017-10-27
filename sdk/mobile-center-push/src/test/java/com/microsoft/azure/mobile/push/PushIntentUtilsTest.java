@@ -9,6 +9,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,7 +21,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
-import static com.microsoft.azure.mobile.test.TestUtils.checkStringMapEquals;
 
 @RunWith(PowerMockRunner.class)
 public class PushIntentUtilsTest {
@@ -51,17 +51,22 @@ public class PushIntentUtilsTest {
         /* Create a mock bundle that will actually use a map to store values. */
         Bundle mockBundle = mock(Bundle.class);
         when(mockBundle.keySet()).thenReturn(extras.keySet());
-        when(mockBundle.getString(anyString())).thenAnswer(new Answer<Object> () {
+        when(mockBundle.getString(anyString())).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                String key = (String)invocation.getArguments()[0];
+                String key = (String) invocation.getArguments()[0];
                 return extras.get(key);
             }
         });
         Intent pushIntent = mock(Intent.class);
         when(pushIntent.getExtras()).thenReturn(mockBundle);
         Map<String, String> retrievedCustomData = PushIntentUtils.getCustomData(pushIntent);
-        checkStringMapEquals(customData, retrievedCustomData);
+        assertEquals(customData, retrievedCustomData);
+    }
+
+    @Test
+    public void getCustomDataFromNullIntentExtras() {
+        assertEquals(Collections.emptyMap(), PushIntentUtils.getCustomData(mock(Intent.class)));
     }
 
     @Test
