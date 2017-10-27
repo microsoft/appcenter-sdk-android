@@ -23,21 +23,24 @@ import static android.content.Context.NOTIFICATION_SERVICE;
 class PushNotifier {
 
     /**
-     * Default channel.
+     * Default channel identifier on Android 8.
      */
-    static final String CHANNEL_ID = "app_center_push";
-    static final String CHANNEL_NAME = "Push";
+    private static final String CHANNEL_ID = "app_center_push";
+
+    /**
+     * Default channel name on Android 8.
+     */
+    private static final String CHANNEL_NAME = "Push";
 
     /**
      * Builds a push notification using the given context and intent.
      *
-     * @param context The current context.
+     * @param context    The current context.
      * @param pushIntent The intent that is associated with the push.
      */
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
-    static void handleNotification(Context context, Intent pushIntent)
-            throws RuntimeException {
+    static void handleNotification(Context context, Intent pushIntent) throws RuntimeException {
         context = context.getApplicationContext();
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
 
@@ -95,6 +98,7 @@ class PushNotifier {
                     CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
 
             /* Create or update channel. */
+            //noinspection ConstantConditions
             notificationManager.createNotificationChannel(channel);
 
             /* And associate to notification. */
@@ -105,11 +109,11 @@ class PushNotifier {
         /* Build method depends on versions. */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             notification = builder.build();
-        }
-        else {
+        } else {
             notification = builder.getNotification();
         }
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
+        //noinspection ConstantConditions
         notificationManager.notify(notificationId, notification);
     }
 
@@ -117,7 +121,7 @@ class PushNotifier {
      * Sets the color in the notification builder if the property is set in the intent.
      *
      * @param pushIntent The push intent.
-     * @param builder The builder to modify.
+     * @param builder    The builder to modify.
      */
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
@@ -133,7 +137,7 @@ class PushNotifier {
      * Sets the sound in the notification builder if the property is set in the intent.
      *
      * @param pushIntent The push intent.
-     * @param builder The builder to modify.
+     * @param builder    The builder to modify.
      */
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
@@ -156,8 +160,7 @@ class PushNotifier {
                     .appendPath(resources.getResourceEntryName(id))
                     .build();
             builder.setSound(soundUri);
-        }
-        catch (Resources.NotFoundException e) {
+        } catch (Resources.NotFoundException e) {
             MobileCenterLog.warn(Push.getInstance().getLoggerTag(),
                     "Sound file '" + customSound + "' not found; falling back to default.");
             builder.setDefaults(Notification.DEFAULT_SOUND);
@@ -170,7 +173,7 @@ class PushNotifier {
      * icon is provided as an extra, the app icon is used.
      *
      * @param pushIntent The push intent.
-     * @param builder The builder to modify.
+     * @param builder    The builder to modify.
      */
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")

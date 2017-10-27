@@ -10,7 +10,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.microsoft.azure.mobile.test.TestUtils.checkStringMapEquals;
 import static org.junit.Assert.assertEquals;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -29,7 +28,7 @@ public class PushNotificationTest {
         PushNotification notification = new PushNotification("title", "message", customData);
         assertEquals(title, notification.getTitle());
         assertEquals(message, notification.getMessage());
-        checkStringMapEquals(customData, notification.getCustomData());
+        assertEquals(customData, notification.getCustomData());
     }
 
     @Test
@@ -46,6 +45,6 @@ public class PushNotificationTest {
         PushNotification notification = new PushNotification(pushIntent);
         assertEquals(title, notification.getTitle());
         assertEquals(message, notification.getMessage());
-        checkStringMapEquals(customData, notification.getCustomData());
+        assertEquals(customData, notification.getCustomData());
     }
 }
