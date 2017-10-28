@@ -96,6 +96,11 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
         }
+        try {
+            Push.class.getMethod("setSenderId", String.class).invoke(null, SENDER_ID);
+        } catch (Exception e) {
+            MobileCenterLog.error(LOG_TAG, "Push.setSenderdId method not available.");
+        }
 
         /* Start Mobile center. */
         MobileCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
