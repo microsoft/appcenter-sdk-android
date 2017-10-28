@@ -17,24 +17,27 @@ public class TokenService extends Service {
 
     private final FirebaseInstanceIdService mFirebaseInstanceIdService;
 
+    @VisibleForTesting
+    class FirebaseInstanceIdServiceWrapper extends FirebaseInstanceIdService {
+
+        @Override
+        public Context getApplicationContext() {
+            return TokenService.this.getApplicationContext();
+        }
+
+        @Override
+        public void onTokenRefresh() {
+
+            /* Firebase presence already tested, avoid try/catch by using API directly. */
+            Push.getInstance().onTokenRefresh(FirebaseInstanceId.getInstance().getToken());
+        }
+    }
+
     public TokenService() {
 
         /* If Firebase not present, this service would crash, so that's why we wrap it. */
         if (FirebaseUtils.isFirebaseAvailable()) {
-            mFirebaseInstanceIdService = new FirebaseInstanceIdService() {
-
-                @Override
-                public Context getApplicationContext() {
-                    return TokenService.this.getApplicationContext();
-                }
-
-                @Override
-                public void onTokenRefresh() {
-
-                    /* Firebase presence already tested, avoid try/catch by using API directly. */
-                    Push.getInstance().onTokenRefresh(FirebaseInstanceId.getInstance().getToken());
-                }
-            };
+            mFirebaseInstanceIdService = new FirebaseInstanceIdServiceWrapper();
         } else {
             mFirebaseInstanceIdService = null;
         }

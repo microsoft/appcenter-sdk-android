@@ -1,8 +1,7 @@
 package com.microsoft.azure.mobile.push;
 
-import android.app.Application;
 import android.content.Context;
-import android.test.ApplicationTestCase;
+import android.content.Intent;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.FirebaseInstanceIdService;
@@ -15,14 +14,12 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
@@ -66,7 +63,7 @@ public class TokenServiceTest {
     }
 
     @Test
-    public void getApplicationContextWrapper() {
+    public void getApplicationContext() {
         final Context context = mock(Context.class);
         TokenService service = new TokenService() {
 
@@ -76,5 +73,31 @@ public class TokenServiceTest {
             }
         };
         assertSame(context, service.getFirebaseInstanceIdService().getApplicationContext());
+    }
+
+    @Test
+    public void wrapperCallPassing() throws Exception {
+
+        /* Just check service public method calls are passed to Firebase. */
+        TokenService.FirebaseInstanceIdServiceWrapper wrapper = mock(TokenService.FirebaseInstanceIdServiceWrapper.class);
+        whenNew(TokenService.FirebaseInstanceIdServiceWrapper.class).withNoArguments().thenReturn(wrapper);
+        TokenService service = new TokenService();
+        assertSame(wrapper, service.getFirebaseInstanceIdService());
+        Intent intent = mock(Intent.class);
+        service.onBind(intent);
+        verify(wrapper).onBind(intent);
+        service.onStartCommand(intent, 0, 1);
+        verify(wrapper).onStartCommand(intent, 0, 1);
+    }
+
+    @Test
+    public void firebaseUnavailable() throws Exception {
+
+        /* Just check it does not crash when no firebase. */
+        when(FirebaseInstanceId.getInstance()).thenThrow(new NoClassDefFoundError());
+        TokenService service = new TokenService();
+        service.onBind(mock(Intent.class));
+        service.onStartCommand(mock(Intent.class), 0, 1);
+        assertNull(service.getFirebaseInstanceIdService());
     }
 }
