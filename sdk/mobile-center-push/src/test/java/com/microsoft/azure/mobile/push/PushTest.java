@@ -3,6 +3,7 @@ package com.microsoft.azure.mobile.push;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -500,8 +501,22 @@ public class PushTest {
         Context contextMock = mock(Context.class);
         start(contextMock, Push.getInstance(), mock(Channel.class));
         assertTrue(Push.isEnabled().get());
-        verifyStatic();
-        MobileCenterLog.info(anyString(), anyString());
+        verify(contextMock).startService(any(Intent.class));
+    }
+
+    @Test
+    public void registerWithoutFirebaseButUseGoogleServicesStringForSenderId() {
+        IllegalStateException exception = new IllegalStateException();
+        when(FirebaseInstanceId.getInstance()).thenThrow(exception);
+        Context contextMock = mock(Context.class);
+        when(contextMock.getPackageName()).thenReturn("com.contoso");
+        Resources resources = mock(Resources.class);
+        when(resources.getIdentifier("gcm_defaultSenderId", "string", "com.contoso")).thenReturn(42);
+        when(contextMock.getString(42)).thenReturn("4567");
+        when(contextMock.getResources()).thenReturn(resources);
+        start(contextMock, Push.getInstance(), mock(Channel.class));
+        assertTrue(Push.isEnabled().get());
+        verify(contextMock).startService(any(Intent.class));
     }
 
     @Test
@@ -509,10 +524,12 @@ public class PushTest {
         IllegalStateException exception = new IllegalStateException();
         when(FirebaseInstanceId.getInstance()).thenThrow(exception);
         Context contextMock = mock(Context.class);
+        Resources resources = mock(Resources.class);
+        when(contextMock.getString(0)).thenThrow(new Resources.NotFoundException());
+        when(contextMock.getResources()).thenReturn(resources);
         start(contextMock, Push.getInstance(), mock(Channel.class));
         assertTrue(Push.isEnabled().get());
-        verifyStatic();
-        MobileCenterLog.error(anyString(), anyString());
+        verify(contextMock, never()).startService(any(Intent.class));
     }
 
     @Test

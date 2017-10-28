@@ -5,12 +5,12 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
 
-import com.google.firebase.iid.FirebaseInstanceId;
 import com.microsoft.azure.mobile.AbstractMobileCenterService;
 import com.microsoft.azure.mobile.channel.Channel;
 import com.microsoft.azure.mobile.ingestion.models.json.LogFactory;
@@ -157,7 +157,7 @@ public class Push extends AbstractMobileCenterService {
      *
      * @param senderId sender ID of your project.
      */
-    public static void setSenderId(String senderId) {
+    public static void setSenderId(@SuppressWarnings("SameParameterValue") String senderId) {
         getInstance().instanceSetSenderId(senderId);
     }
 
@@ -353,9 +353,9 @@ public class Push extends AbstractMobileCenterService {
      */
     private synchronized void registerPushToken() {
         try {
-            onTokenRefresh(FirebaseInstanceId.getInstance().getToken());
+            onTokenRefresh(FirebaseUtils.getToken());
             MobileCenterLog.info(LOG_TAG, "Firebase SDK is available, using Firebase SDK registration.");
-        } catch (NoClassDefFoundError | IllegalStateException e) {
+        } catch (FirebaseUtils.FirebaseUnavailableException e) {
             MobileCenterLog.info(LOG_TAG, "Firebase SDK is not available, using built in registration. cause: " + e.getMessage());
             registerPushTokenWithoutFirebase();
         }
@@ -366,8 +366,13 @@ public class Push extends AbstractMobileCenterService {
      */
     private synchronized void registerPushTokenWithoutFirebase() {
         if (mSenderId == null) {
-            MobileCenterLog.error(LOG_TAG, "Push.setSenderId was not called, aborting registration.");
-            return;
+            int resId = mContext.getResources().getIdentifier("gcm_defaultSenderId", "string", mContext.getPackageName());
+            try {
+                mSenderId = mContext.getString(resId);
+            } catch (Resources.NotFoundException e) {
+                MobileCenterLog.error(LOG_TAG, "Push.setSenderId was not called, aborting registration.");
+                return;
+            }
         }
         Intent registrationIntent = new Intent("com.google.android.c2dm.intent.REGISTER");
         registrationIntent.setPackage("com.google.android.gsf");
