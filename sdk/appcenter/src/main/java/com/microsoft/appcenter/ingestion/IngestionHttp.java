@@ -34,7 +34,7 @@ public class IngestionHttp implements Ingestion {
      * Default log URL.
      */
     @SuppressWarnings("WeakerAccess")
-    public static final String DEFAULT_LOG_URL = "https://in.mobile.azure.com";
+    public static final String DEFAULT_LOG_URL = "https://in.appcenter.ms";
 
     /**
      * API Path.
