@@ -43,4 +43,9 @@ public class FirebaseUtilsTest {
         when(instanceId.getToken()).thenReturn("token");
         assertTrue(FirebaseUtils.isFirebaseAvailable());
     }
+
+    @Test
+    public void firebaseNullInstance() throws Exception {
+        assertFalse(FirebaseUtils.isFirebaseAvailable());
+    }
 }

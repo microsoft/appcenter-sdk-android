@@ -13,14 +13,16 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 
+import com.microsoft.azure.mobile.test.TestUtils;
+
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,13 +48,29 @@ public class PushNotifierTest {
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     private String mDummyGoogleMessageId = "messageId";
+
+    @Mock
     private Context mContextMock;
+
+    @Mock
     private NotificationManager mNotificationManagerMock;
+
+    @Mock
     private Notification mNotificationMock;
+
+    @Mock
     private Notification.Builder mNotificationBuilderMock;
+
     private int mIconId = 29;
+
+    @Mock
     private Intent mActionIntentMock;
+
     private ApplicationInfo mApplicationInfoMock;
+
+    private static void setVersionSdkInt(int versionSdkInt) throws Exception {
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", versionSdkInt);
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -61,11 +79,6 @@ public class PushNotifierTest {
         when(PushIntentUtils.getMessage(any(Intent.class))).thenReturn("message");
         when(PushIntentUtils.getGoogleMessageId(any(Intent.class))).thenReturn(mDummyGoogleMessageId);
         when(PushIntentUtils.getCustomData(any(Intent.class))).thenReturn(new HashMap<String, String>());
-
-        mContextMock = mock(Context.class);
-        mNotificationManagerMock = mock(NotificationManager.class);
-        mNotificationMock = mock(Notification.class);
-        mNotificationBuilderMock = mock(Notification.Builder.class);
 
         when(mNotificationBuilderMock.setContentTitle(anyString())).thenReturn(mNotificationBuilderMock);
         when(mNotificationBuilderMock.setContentText(anyString())).thenReturn(mNotificationBuilderMock);
@@ -77,7 +90,6 @@ public class PushNotifierTest {
         whenNew(Notification.Builder.class).withArguments(mContextMock).thenReturn(mNotificationBuilderMock);
 
         PackageManager packageManagerMock = mock(PackageManager.class);
-        mActionIntentMock = mock(Intent.class);
         when(packageManagerMock.getLaunchIntentForPackage(anyString())).thenReturn(mActionIntentMock);
         when(mContextMock.getPackageManager()).thenReturn(packageManagerMock);
         when(mContextMock.getApplicationContext()).thenReturn(mContextMock);
@@ -87,6 +99,11 @@ public class PushNotifierTest {
         mApplicationInfoMock.icon = mIconId;
         mApplicationInfoMock.targetSdkVersion = Build.VERSION_CODES.O;
         when(mContextMock.getApplicationInfo()).thenReturn(mApplicationInfoMock);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        setVersionSdkInt(0);
     }
 
     @Test
@@ -246,15 +263,24 @@ public class PushNotifierTest {
         verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
     }
 
-    /**
-     * Adapted from https://stackoverflow.com/questions/40300469/mock-build-version-with-mockito
-     */
-    private static void setVersionSdkInt(int versionSdkInt) throws Exception {
-        Field field = Build.VERSION.class.getField("SDK_INT");
-        field.setAccessible(true);
-        Field modifiersField = Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-        field.set(null, versionSdkInt);
+    @Test
+    public void handleNotificationWithNoLauncherActivity() throws Exception {
+
+        /* Override set up mock to return null for launcher activity. */
+        Intent intent = mock(Intent.class);
+        whenNew(Intent.class).withNoArguments().thenReturn(intent);
+        when(mContextMock.getPackageManager()).thenReturn(mock(PackageManager.class));
+        String title = "title";
+        when(PushIntentUtils.getTitle(any(Intent.class))).thenReturn(title);
+        Map<String, String> customData = new HashMap<>();
+        customData.put("key", "val");
+        customData.put("key2", "val2");
+        when(PushIntentUtils.getCustomData(any(Intent.class))).thenReturn(customData);
+        PushNotifier.handleNotification(mContextMock, new Intent("mock"));
+        verify(mNotificationBuilderMock).setContentTitle(title);
+        verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
+
+        /* Intent being invalid, we don't put extras in that case, it will never be listened. */
+        verify(intent, never()).putExtra(anyString(), anyString());
     }
 }
