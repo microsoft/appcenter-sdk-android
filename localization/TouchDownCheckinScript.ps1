@@ -22,7 +22,7 @@ $ProjectInfo = "appcenter-sdks-loc-file-list.csv"
 
 $TempLocBranch = "translatedFiles"
 $repoPath = $SrcRoot
-$DefaultRepoBranch = "refactor"
+$DefaultRepoBranch = "develop"
 $teamId = "269" #ID for Android
 $git = "git"
 
@@ -250,7 +250,6 @@ Function RefreshTDFiles
     }
 
     CheckinFilesIntoRepo
-
     # Remove temporary files after they have been dropped in resources.
     Remove-Item "appcenter-distribute -recurse"
 }
