@@ -4,7 +4,7 @@ set -e
 # Compute new version
 gradleVersion=`egrep "versionName = '(.*)'" *.gradle | sed -r "s/^.*versionName = '(.*)'.*$/\1/"`
 
-bintrayRelease=`curl -s https://api.bintray.com/packages/${BINTRAY_USER_ORG}/${BINTRAY_REPO}/mobile-center --user $BINTRAY_USER:$BINTRAY_KEY`
+bintrayRelease=`curl -s https://api.bintray.com/packages/${BINTRAY_USER_ORG}/${BINTRAY_REPO}/appcenter --user $BINTRAY_USER:$BINTRAY_KEY`
 bintrayVersion=`sed -r 's/^.*"latest_version":"([^"]+)",.*$/\1/' <<< "$bintrayRelease"`
 
 bintrayBaseVersion=`sed -r 's/^(([0-9]+\.){2}[0-9]+).*$/\1/' <<< "$bintrayVersion"`
