@@ -30,7 +30,7 @@ android {
 
 repositories {
     maven {
-        url  "https://app-center.bintray.com/appcenter"
+        url "https://${rootProject.ext.bintrayUserOrg}.bintray.com/${rootProject.ext.bintrayRepo}"
         credentials {
             username rootProject.ext.bintrayUser
             password rootProject.ext.bintrayKey
