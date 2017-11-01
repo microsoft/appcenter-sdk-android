@@ -59,10 +59,10 @@ Function InitializeRepoForCheckin
     $Argument = "pull origin " + $DefaultRepoBranch
     ProcessStart $git $Argument $repoPath
 
-    $Argument = "branch -D " + $TempLocBranch
+    $Argument = "branch -D" + $TempLocBranch
     ProcessStart $git $Argument
 
-    $Argument = "checkout -b " + $TempLocBranch
+    $Argument = "checkout -b" + $TempLocBranch
     ProcessStart $git $Argument $repoPath
 }
 
@@ -172,16 +172,22 @@ Function BinPlace ($UnzipFileTo,$relativeFilePath,$TargetPath,$LanguageSet)
     foreach($Language in $Langs)
     {
         $OCulture = GetCulture $CultureSettingFile $Language
-        $Culture = $OCulture.LSBUILD
-
         $LocalizedFile = $UnzipFileTo + "\" + $OCulture.LSBUILD + $relativeFilePath
-        $TargetPathDir = $TargetPath + "\" + $OCulture.LSBUILD
+        $LocDir = ""
+
+        # Chinese (zh) regions use a different directory structure
+        if ($OCulture.Culture -eq "zh") {
+            $LocDir = $TargetPath + $OCulture.Culture + "-r" + $Language.split("-")[1]
+        } else {
+            $LocDir = $TargetPath + $OCulture.Culture
+        }
         
-        if(!(Test-Path -Path $TargetPathDir)){
-            New-Item -Path $TargetPathDir -ItemType directory
+        if(!(Test-Path -Path $LocDir)){
+            New-Item -Path $LocDir -ItemType directory
         }
 
-        $targetFile = $TargetPath + "\" + $OCulture.LSBUILD + $relativeFilePath
+        $targetFile = $LocDir + $relativeFilePath
+
         write-host "Loc File:   $LocalizedFile"
         write-host "TargetPath: $targetFile"
         write-host "Copying Loc file to TargetPath"
@@ -197,10 +203,13 @@ Function AddFiletoRepo ($TargetPath,$LanguageSet)
     foreach($Language in $Langs)
     {
         $OCulture = GetCulture $CultureSettingFile $Language
+        if ($OCulture.Culture -eq "zh") {
+            $LocDir = $TargetPath + $OCulture.Culture + "-r" + $Language.split("-")[1]
+        } else {
+            $LocDir = $TargetPath + $OCulture.Culture
+        }
 
-        #We pull out here the culture that might be used during the string expansion.
-        $Culture = $OCulture.Culture
-        $Argument = "add " + $TargetPath
+        $Argument = "add " + $LocDir
 
         write-host $Argument
 
@@ -241,6 +250,9 @@ Function RefreshTDFiles
     }
 
     CheckinFilesIntoRepo
+
+    # Remove temporary files after they have been dropped in resources
+    Remove-Item "mobile-center-distribute -recurse"
 }
 
 RefreshTDFiles
