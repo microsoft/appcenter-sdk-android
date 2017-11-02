@@ -1,4 +1,4 @@
-Microsoft Mobile Center SDK for Android
+Microsoft App Center SDK for Android
 
 Copyright (c) Microsoft Corporation
 

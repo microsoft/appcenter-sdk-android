@@ -18,7 +18,7 @@ public class AppCenterLog {
     /**
      * Log tag prefix that the SDK uses for all logs.
      */
-    public static final String LOG_TAG = "MobileCenter"; //TODO change?
+    public static final String LOG_TAG = "AppCenter";
 
     /**
      * Log level to disable all logs, even assert logs.

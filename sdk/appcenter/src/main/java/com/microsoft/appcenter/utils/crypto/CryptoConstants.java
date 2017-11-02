@@ -18,7 +18,7 @@ class CryptoConstants {
     /**
      * Keystore alias prefix to use for App Center SDK.
      */
-    static final String KEYSTORE_ALIAS_PREFIX = "mobile.center"; //TODO change?
+    static final String KEYSTORE_ALIAS_PREFIX = "appcenter";
 
     /**
      * Keystore alias separator.
