@@ -3,9 +3,7 @@ evaluationDependsOn(':sdk')
 
 dependencies {
     compile project(':sdk:appcenter')
-
-    /* Need add explicit core dependency to avoid error on transform classes with dex task */
-    def version = "11.0.2"
-    compile "com.google.firebase:firebase-core:${version}"
-    compile "com.google.firebase:firebase-messaging:${version}"
+    def fcm = "com.google.firebase:firebase-messaging:${rootProject.ext.firebaseLibVersion}"
+    provided fcm
+    testCompile fcm
 }

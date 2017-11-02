@@ -58,7 +58,8 @@ public class MainActivity extends AppCompatActivity {
     public static final String LOG_TAG = "AppCenterSasquatch";
     static final String APP_SECRET_KEY = "appSecret";
     static final String LOG_URL_KEY = "logUrl";
-    static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
+    static final String SENDER_ID = "177539951155";
+
     @VisibleForTesting
     static final CountingIdlingResource analyticsIdlingResource = new CountingIdlingResource("analytics");
     @VisibleForTesting
@@ -95,10 +96,10 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
         }
-
-        /* Enable Firebase analytics if we enabled the setting previously. */
-        if (sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false)) {
-            Push.enableFirebaseAnalytics(this);
+        try {
+            Push.class.getMethod("setSenderId", String.class).invoke(null, SENDER_ID);
+        } catch (Exception e) {
+            MobileCenterLog.error(LOG_TAG, "Push.setSenderdId method not available.");
         }
 
         /* Start App Center. */

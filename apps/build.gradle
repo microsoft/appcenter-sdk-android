@@ -31,10 +31,14 @@ subprojects {
 
 // Task to copy a specific APK from sub projects to current project, for Mobile Center build to find it.
 def copyApkToProjectBuildTask(buildType) {
-    def variant = 'projectDependency'
     subprojects.each { project ->
+        def apkPath = "${project.buildDir}/outputs/apk/projectDependencyVanilla/${buildType}/${project.name}-projectDependency-vanilla-${buildType}"
+        if ("release".equals(buildType)) {
+            apkPath += "-unsigned"
+        }
+        apkPath += ".apk"
         copy {
-            from "${project.buildDir}/outputs/apk/${variant}/${buildType}/${project.name}-${variant}-${buildType}.apk"
+            from apkPath
             into "${buildDir}/outputs/apk/"
         }
     }
@@ -54,3 +58,7 @@ task assembleRelease() {
 
 // Empty task with task dependencies.
 task assemble(dependsOn: [assembleDebug, assembleRelease]) {}
+
+task clean() {
+    delete project.buildDir
+}

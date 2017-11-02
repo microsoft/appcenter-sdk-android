@@ -1,6 +1,7 @@
 # Built application files
 *.apk
 *.ap_
+output.json
 
 # Files for the ART/Dalvik VM
 *.dex
@@ -49,3 +50,8 @@ google-services.json
 # Localization
 localization/*.zip
 localization/unzip/
+
+# VS Code + Java extension follows Eclipse conventions
+.settings
+.project
+.classpath

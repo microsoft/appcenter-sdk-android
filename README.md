@@ -26,8 +26,6 @@ It is super easy to use App Center. Have a look at our [get started documentatio
 
 We are looking forward to your contributions via pull requests.
 
-Please note that the test app named **Sasquatch** requires a **google-services.json** to compile. This file is git ignored as it contains secrets. You have to provide your own **google-services.json** file in the **app/sasquatch** folder if you want to build. This requires having your own Firebase Project.
-
 ### 2.1 Code of Conduct
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
@@ -43,4 +41,5 @@ You must sign a [Contributor License Agreement](https://cla.microsoft.com/) befo
 If you have further questions, want to provide feedback or you are running into issues, log in to the [App Center portal](https://appcenter.ms) and use the blue Intercom button on the bottom right to start a conversation with us.
 
 ### 3.2 Twitter
+
 We're on Twitter as [@mobilecenter](https://www.twitter.com/mobilecenter).

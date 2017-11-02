@@ -2,15 +2,15 @@ package com.microsoft.appcenter.push;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
 
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.messaging.RemoteMessage;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
@@ -20,9 +20,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Push notifications interface.
@@ -30,31 +28,12 @@ import java.util.Set;
 public class Push extends AbstractAppCenterService {
 
     /**
-     * Google message identifier extra intent key.
-     */
-    @VisibleForTesting
-    static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
-
-    /**
-     * Intent extras not part of custom data.
-     */
-    @VisibleForTesting
-    static final Set<String> EXTRA_STANDARD_KEYS = new HashSet<String>() {
-        {
-            add(EXTRA_GOOGLE_MESSAGE_ID);
-            add("google.sent_time");
-            add("collapse_key");
-            add("from");
-        }
-    };
-
-    /**
      * Name of the service.
      */
     private static final String SERVICE_NAME = "Push";
 
     /**
-     * TAG used in logging for Analytics.
+     * TAG used in logging for Push.
      */
     private static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
 
@@ -62,11 +41,6 @@ public class Push extends AbstractAppCenterService {
      * Constant marking event of the push group.
      */
     private static final String PUSH_GROUP = "group_push";
-
-    /**
-     * Firebase analytics flag.
-     */
-    private static boolean sFirebaseAnalyticsEnabled;
 
     /**
      * Shared instance.
@@ -96,6 +70,21 @@ public class Push extends AbstractAppCenterService {
     private Activity mActivity;
 
     /**
+     * Current context.
+     */
+    private Context mContext;
+
+    /**
+     * Sender ID. Used only when Firebase SDK not available to register for push.
+     */
+    private String mSenderId;
+
+    /**
+     * Indicates whether the push token must be registered in foreground.
+     */
+    private boolean mTokenNeedsRegistrationInForeground;
+
+    /**
      * Init.
      */
     private Push() {
@@ -119,7 +108,6 @@ public class Push extends AbstractAppCenterService {
     @VisibleForTesting
     static synchronized void unsetInstance() {
         sInstance = null;
-        sFirebaseAnalyticsEnabled = false;
     }
 
     /**
@@ -164,26 +152,29 @@ public class Push extends AbstractAppCenterService {
     }
 
     /**
-     * Enable firebase analytics collection.
+     * If you do not use the Google Services plugin, you must set the
+     * Sender ID of your project before starting the Push service.
      *
-     * @param context the context to retrieve FirebaseAnalytics instance.
+     * @param senderId sender ID of your project.
      */
+<<<<<<< HEAD:sdk/appcenter-push/src/main/java/com/microsoft/appcenter/push/Push.java
     @SuppressWarnings("WeakerAccess")
     public static void enableFirebaseAnalytics(@NonNull Context context) {
         AppCenterLog.debug(LOG_TAG, "Enabling firebase analytics collection.");
         setFirebaseAnalyticsEnabled(context, true);
+=======
+    public static void setSenderId(@SuppressWarnings("SameParameterValue") String senderId) {
+        getInstance().instanceSetSenderId(senderId);
+>>>>>>> feature/remove-firebase-dependency:sdk/mobile-center-push/src/main/java/com/microsoft/azure/mobile/push/Push.java
     }
 
     /**
-     * Enable or disable firebase analytics collection.
+     * Sets the sender ID. Must be called prior to starting the Push service.
      *
-     * @param context the context to retrieve FirebaseAnalytics instance.
-     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     * @param senderId sender ID of your project.
      */
-    @SuppressWarnings("MissingPermission")
-    private static void setFirebaseAnalyticsEnabled(@NonNull Context context, boolean enabled) {
-        FirebaseAnalyticsUtils.setEnabled(context, enabled);
-        sFirebaseAnalyticsEnabled = enabled;
+    private synchronized void instanceSetSenderId(String senderId) {
+        mSenderId = senderId;
     }
 
     /**
@@ -202,6 +193,7 @@ public class Push extends AbstractAppCenterService {
      *
      * @param pushToken the push token value.
      */
+<<<<<<< HEAD:sdk/appcenter-push/src/main/java/com/microsoft/appcenter/push/Push.java
     synchronized void onTokenRefresh(@NonNull final String pushToken) {
         AppCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
         post(new Runnable() {
@@ -211,6 +203,19 @@ public class Push extends AbstractAppCenterService {
                 enqueuePushInstallationLog(pushToken);
             }
         });
+=======
+    synchronized void onTokenRefresh(final String pushToken) {
+        if (pushToken != null) {
+            MobileCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
+            post(new Runnable() {
+
+                @Override
+                public void run() {
+                    enqueuePushInstallationLog(pushToken);
+                }
+            });
+        }
+>>>>>>> feature/remove-firebase-dependency:sdk/mobile-center-push/src/main/java/com/microsoft/azure/mobile/push/Push.java
     }
 
     /**
@@ -221,6 +226,7 @@ public class Push extends AbstractAppCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
+<<<<<<< HEAD:sdk/appcenter-push/src/main/java/com/microsoft/appcenter/push/Push.java
             try {
                 String token = FirebaseInstanceId.getInstance().getToken();
                 if (token != null) {
@@ -229,6 +235,9 @@ public class Push extends AbstractAppCenterService {
             } catch (IllegalStateException e) {
                 AppCenterLog.error(LOG_TAG, "Failed to get firebase push token.", e);
             }
+=======
+            registerPushToken();
+>>>>>>> feature/remove-firebase-dependency:sdk/mobile-center-push/src/main/java/com/microsoft/azure/mobile/push/Push.java
         }
     }
 
@@ -259,11 +268,15 @@ public class Push extends AbstractAppCenterService {
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
+        mContext = context;
         super.onStarted(context, appSecret, channel);
+<<<<<<< HEAD:sdk/appcenter-push/src/main/java/com/microsoft/appcenter/push/Push.java
         if (!sFirebaseAnalyticsEnabled) {
             AppCenterLog.debug(LOG_TAG, "Disabling firebase analytics collection by default.");
             setFirebaseAnalyticsEnabled(context, false);
         }
+=======
+>>>>>>> feature/remove-firebase-dependency:sdk/mobile-center-push/src/main/java/com/microsoft/azure/mobile/push/Push.java
     }
 
     /**
@@ -289,8 +302,12 @@ public class Push extends AbstractAppCenterService {
     }
 
     @Override
-    public void onActivityResumed(Activity activity) {
+    public synchronized void onActivityResumed(Activity activity) {
         checkPushInActivityIntent(activity);
+        if (mTokenNeedsRegistrationInForeground) {
+            mTokenNeedsRegistrationInForeground = false;
+            registerPushToken();
+        }
     }
 
     @Override
@@ -334,6 +351,7 @@ public class Push extends AbstractAppCenterService {
      */
     private synchronized void checkPushInIntent(Intent intent) {
         if (mInstanceListener != null) {
+<<<<<<< HEAD:sdk/appcenter-push/src/main/java/com/microsoft/appcenter/push/Push.java
             Bundle extras = intent.getExtras();
             if (extras != null) {
                 String googleMessageId = extras.getString(EXTRA_GOOGLE_MESSAGE_ID);
@@ -351,6 +369,15 @@ public class Push extends AbstractAppCenterService {
                     AppCenterLog.debug(LOG_TAG, "Push intent extra=" + allData);
                     mInstanceListener.onPushNotificationReceived(mActivity, new PushNotification(null, null, customData));
                 }
+=======
+            String googleMessageId = PushIntentUtils.getGoogleMessageId(intent);
+            if (googleMessageId != null && !googleMessageId.equals(mLastGoogleMessageId)) {
+                PushNotification notification = new PushNotification(intent);
+                MobileCenterLog.info(LOG_TAG, "Clicked push message from background id=" + googleMessageId);
+                mLastGoogleMessageId = googleMessageId;
+                MobileCenterLog.debug(LOG_TAG, "Push intent extras=" + intent.getExtras());
+                mInstanceListener.onPushNotificationReceived(mActivity, notification);
+>>>>>>> feature/remove-firebase-dependency:sdk/mobile-center-push/src/main/java/com/microsoft/azure/mobile/push/Push.java
             }
         }
     }
@@ -358,33 +385,77 @@ public class Push extends AbstractAppCenterService {
     /**
      * Called when push message received in foreground.
      *
-     * @param remoteMessage push message details.
+     * @param pushIntent intent from push.
      */
+<<<<<<< HEAD:sdk/appcenter-push/src/main/java/com/microsoft/appcenter/push/Push.java
     void onMessageReceived(final RemoteMessage remoteMessage) {
         AppCenterLog.info(LOG_TAG, "Received push message in foreground id=" + remoteMessage.getMessageId());
+=======
+    synchronized void onMessageReceived(Context context, final Intent pushIntent) {
+        if (mActivity == null) {
+            if (!FirebaseUtils.isFirebaseAvailable()) {
+                PushNotifier.handleNotification(context, pushIntent);
+            }
+            return;
+        }
+        String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
+        final PushNotification notification = new PushNotification(pushIntent);
+        MobileCenterLog.info(LOG_TAG, "Received push message in foreground id=" + messageId);
+>>>>>>> feature/remove-firebase-dependency:sdk/mobile-center-push/src/main/java/com/microsoft/azure/mobile/push/Push.java
         postOnUiThread(new Runnable() {
-
             @Override
             public void run() {
-                handleOnMessageReceived(remoteMessage);
+                handleOnMessageReceived(notification);
             }
         });
+    }
+
+    /**
+     * Register application for push.
+     */
+    private synchronized void registerPushToken() {
+        try {
+            onTokenRefresh(FirebaseUtils.getToken());
+            MobileCenterLog.info(LOG_TAG, "Firebase SDK is available, using Firebase SDK registration.");
+        } catch (FirebaseUtils.FirebaseUnavailableException e) {
+            MobileCenterLog.info(LOG_TAG, "Firebase SDK is not available, using built in registration. cause: " + e.getMessage());
+            registerPushTokenWithoutFirebase();
+        }
+    }
+
+    /**
+     * Register application for push without Firebase.
+     */
+    private synchronized void registerPushTokenWithoutFirebase() {
+        if (mSenderId == null) {
+            int resId = mContext.getResources().getIdentifier("gcm_defaultSenderId", "string", mContext.getPackageName());
+            try {
+                mSenderId = mContext.getString(resId);
+            } catch (Resources.NotFoundException e) {
+                MobileCenterLog.error(LOG_TAG, "Push.setSenderId was not called, aborting registration.");
+                return;
+            }
+        }
+        Intent registrationIntent = new Intent("com.google.android.c2dm.intent.REGISTER");
+        registrationIntent.setPackage("com.google.android.gsf");
+        registrationIntent.putExtra("sender", mSenderId);
+        registrationIntent.putExtra("app", PendingIntent.getBroadcast(mContext, 0, new Intent(), 0));
+        try {
+            mContext.startService(registrationIntent);
+        } catch (IllegalStateException e) {
+            MobileCenterLog.info(LOG_TAG, "Cannot register in background, will wait to be in foreground");
+            mTokenNeedsRegistrationInForeground = true;
+        } catch (RuntimeException e) {
+            MobileCenterLog.error(LOG_TAG, "Failed to register push token", e);
+        }
     }
 
     /**
      * Top level method needed for synchronized code coverage.
      */
     @UiThread
-    private synchronized void handleOnMessageReceived(RemoteMessage remoteMessage) {
+    private synchronized void handleOnMessageReceived(PushNotification pushNotification) {
         if (mInstanceListener != null) {
-            String title = null;
-            String message = null;
-            RemoteMessage.Notification notification = remoteMessage.getNotification();
-            if (notification != null) {
-                title = notification.getTitle();
-                message = notification.getBody();
-            }
-            PushNotification pushNotification = new PushNotification(title, message, remoteMessage.getData());
             mInstanceListener.onPushNotificationReceived(mActivity, pushNotification);
         }
     }
