@@ -28,8 +28,18 @@ android {
     }
 }
 
+repositories {
+    maven {
+        url "https://${rootProject.ext.bintrayUserOrg}.bintray.com/${rootProject.ext.bintrayRepo}"
+        credentials {
+            username rootProject.ext.bintrayUser
+            password rootProject.ext.bintrayKey
+        }
+    }
+}
+
 dependencies {
-    def version = "0.13.0"
+    def version = "1.0.0-0"
     compile "com.android.support:support-v4:${rootProject.ext.supportLibVersion}"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     projectDependencyCompile project(':sdk:appcenter-analytics')
@@ -37,10 +47,10 @@ dependencies {
     projectDependencyCompile project(':sdk:appcenter-distribute')
     projectDependencyCompile project(':sdk:appcenter-push')
     projectDependencyCompile project(':sdk:appcenter-rum')
-    jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-analytics:${version}"
-    jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-crashes:${version}"
-    jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-distribute:${version}"
-    jcenterDependencyCompile "com.microsoft.azure.mobile:mobile-center-push:${version}"
+    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-analytics:${version}"
+    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-crashes:${version}"
+    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-distribute:${version}"
+    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-push:${version}"
 
     /* Force usage this version of support annotations to avoid conflict. */
     androidTestCompile "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
