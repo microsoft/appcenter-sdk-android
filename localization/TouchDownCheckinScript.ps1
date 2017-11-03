@@ -17,8 +17,8 @@
 #  -Set the Flag (ChangesAreDetected = True)
 #  -Run a Git push (Integrate the TempLocBranch to your working branch)
 
-$CultureSettingFile= "mobile-center-cultures.csv"
-$ProjectInfo = "mobile-center-sdks-loc-file-list.csv"
+$CultureSettingFile= "appcenter-cultures.csv"
+$ProjectInfo = "appcenter-sdks-loc-file-list.csv"
 
 $TempLocBranch = "translatedFiles"
 $repoPath = $SrcRoot
@@ -50,19 +50,19 @@ Function ProcessStart($AppToRun,$Argument,$WorkingDir)
 
 Function InitializeRepoForCheckin
 {
-    $Argument = "checkout " + $DefaultRepoBranch 
+    $Argument = "checkout" + $DefaultRepoBranch 
     ProcessStart $git $Argument $repoPath
 
     $Argument = "reset --hard HEAD"
     ProcessStart $git $Argument $repoPath
 
-    $Argument = "pull origin " + $DefaultRepoBranch
+    $Argument = "pull vsts " + $DefaultRepoBranch
     ProcessStart $git $Argument $repoPath
 
-    $Argument = "branch -D" + $TempLocBranch
+    $Argument = "branch -D " + $TempLocBranch
     ProcessStart $git $Argument
 
-    $Argument = "checkout -b" + $TempLocBranch
+    $Argument = "checkout -b " + $TempLocBranch
     ProcessStart $git $Argument $repoPath
 }
 
@@ -75,11 +75,11 @@ Function CheckinFilesIntoRepo
     #Push the Changes to the git server you still need to merge the changes
     if ($AuthToken -eq "") {
         #Unauthorized
-        $Argument = "push origin " + $TempLocBranch
+        $Argument = "push vsts " + $TempLocBranch
     }
     else {
         #Authorized
-        $Argument = "-c http.extraheader=`"Authorization: Bearer " + $AuthToken + "`" push origin " + $TempLocBranch
+        $Argument = "-c http.extraheader=`"Authorization: Bearer " + $AuthToken + "`" push vsts " + $TempLocBranch
     }
     
     ProcessStart $git $Argument $repoPath
@@ -250,9 +250,6 @@ Function RefreshTDFiles
     }
 
     CheckinFilesIntoRepo
-
-    # Remove temporary files after they have been dropped in resources
-    Remove-Item "mobile-center-distribute -recurse"
 }
 
 RefreshTDFiles

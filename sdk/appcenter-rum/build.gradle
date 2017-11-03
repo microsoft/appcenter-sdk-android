@@ -1,0 +1,6 @@
+project.description = 'This package contains functionalities to measure endpoints performances.'
+evaluationDependsOn(':sdk')
+
+dependencies {
+    compile project(':sdk:appcenter')
+}

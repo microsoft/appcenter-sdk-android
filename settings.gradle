@@ -1,11 +1,11 @@
 // sdk modules
 include ':sdk'
-include ':sdk:mobile-center'
-include ':sdk:mobile-center-crashes'
-include ':sdk:mobile-center-analytics'
-include ':sdk:mobile-center-distribute'
-include ':sdk:mobile-center-push'
-include ':sdk:mobile-center-rum'
+include ':sdk:appcenter'
+include ':sdk:appcenter-crashes'
+include ':sdk:appcenter-analytics'
+include ':sdk:appcenter-distribute'
+include ':sdk:appcenter-push'
+include ':sdk:appcenter-rum'
 
 // common test code
 include ':test'

@@ -1,9 +1,9 @@
 // Bintray constants
 
 ext {
-    siteUrl = 'https://github.com/Microsoft/mobile-center-sdk-android'
-    gitUrl = 'https://github.com/Microsoft/mobile-center-sdk-android.git'
-    groupId = 'com.microsoft.azure.mobile'
+    siteUrl = 'https://github.com/Microsoft/appcenter-sdk-android'
+    gitUrl = 'https://github.com/Microsoft/appcenter-sdk-android.git'
+    groupId = 'com.microsoft.appcenter'
 
     Properties properties = new Properties()
     File file = rootProject.file('local.properties')
@@ -23,5 +23,5 @@ ext {
 
     developerId = 'microsoft'
     developerName = 'Microsoft'
-    developerEmail = 'mobiledevopssdk@microsoft.com'
+    developerEmail = 'appcentersdk@microsoft.com'
 }

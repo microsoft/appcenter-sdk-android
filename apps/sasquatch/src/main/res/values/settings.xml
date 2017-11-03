@@ -1,58 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="mobile_center_state_key">mobile_center_state_key</string>
-    <string name="mobile_center_state_title">Mobile Center state</string>
-    <string name="mobile_center_state_summary_enabled">Mobile Center is enabled</string>
-    <string name="mobile_center_state_summary_disabled">Mobile Center is disabled</string>
+    <string name="appcenter_state_key">appcenter_state_key</string>
+    <string name="appcenter_state_title">App Center state</string>
+    <string name="appcenter_state_summary_enabled">App Center is enabled</string>
+    <string name="appcenter_state_summary_disabled">App Center is disabled</string>
 
-    <string name="analytics_key">mobile_center_analytics</string>
+    <string name="analytics_key">appcenter_analytics</string>
     <string name="analytics_title">Analytics</string>
 
-    <string name="mobile_center_analytics_state_key">mobile_center_analytics_state_key</string>
-    <string name="mobile_center_analytics_state_title">Analytics state</string>
-    <string name="mobile_center_analytics_state_summary_enabled">Analytics is enabled</string>
-    <string name="mobile_center_analytics_state_summary_disabled">Analytics is disabled</string>
+    <string name="appcenter_analytics_state_key">appcenter_analytics_state_key</string>
+    <string name="appcenter_analytics_state_title">Analytics state</string>
+    <string name="appcenter_analytics_state_summary_enabled">Analytics is enabled</string>
+    <string name="appcenter_analytics_state_summary_disabled">Analytics is disabled</string>
 
-    <string name="mobile_center_auto_page_tracking_key">mobile_center_auto_page_tracking_key</string>
-    <string name="mobile_center_auto_page_tracking_title">Analytics automatic page tracking</string>
-    <string name="mobile_center_auto_page_tracking_enabled">Automatic page tracking is enabled</string>
-    <string name="mobile_center_auto_page_tracking_disabled">Automatic page tracking is disabled</string>
+    <string name="appcenter_auto_page_tracking_key">appcenter_auto_page_tracking_key</string>
+    <string name="appcenter_auto_page_tracking_title">Analytics automatic page tracking</string>
+    <string name="appcenter_auto_page_tracking_enabled">Automatic page tracking is enabled</string>
+    <string name="appcenter_auto_page_tracking_disabled">Automatic page tracking is disabled</string>
 
-    <string name="crashes_key">mobile_center_crashes</string>
+    <string name="crashes_key">appcenter_crashes</string>
     <string name="crashes_title">Crashes</string>
 
-    <string name="mobile_center_crashes_state_key">mobile_center_crashes_state_key</string>
-    <string name="mobile_center_crashes_state_title">Crashes state</string>
-    <string name="mobile_center_crashes_state_summary_enabled">Crashes are enabled</string>
-    <string name="mobile_center_crashes_state_summary_disabled">Crashes are disabled</string>
+    <string name="appcenter_crashes_state_key">appcenter_crashes_state_key</string>
+    <string name="appcenter_crashes_state_title">Crashes state</string>
+    <string name="appcenter_crashes_state_summary_enabled">Crashes are enabled</string>
+    <string name="appcenter_crashes_state_summary_disabled">Crashes are disabled</string>
 
-    <string name="distribute_key">mobile_center_distribute</string>
+    <string name="distribute_key">appcenter_distribute</string>
     <string name="distribute_title">Distribute</string>
 
-    <string name="mobile_center_distribute_state_key">mobile_center_distribute_state_key</string>
-    <string name="mobile_center_distribute_state_title">Distribute state</string>
-    <string name="mobile_center_distribute_state_summary_enabled">Distribute is enabled</string>
-    <string name="mobile_center_distribute_state_summary_disabled">Distribute is disabled</string>
+    <string name="appcenter_distribute_state_key">appcenter_distribute_state_key</string>
+    <string name="appcenter_distribute_state_title">Distribute state</string>
+    <string name="appcenter_distribute_state_summary_enabled">Distribute is enabled</string>
+    <string name="appcenter_distribute_state_summary_disabled">Distribute is disabled</string>
 
-    <string name="push_key">mobile_center_push</string>
+    <string name="push_key">appcenter_push</string>
     <string name="push_title">Push</string>
 
-    <string name="mobile_center_push_firebase_state_key">mobile_center_push_firebase_state_key</string>
-    <string name="mobile_center_push_firebase_state_title">Firebase analytics state</string>
-    <string name="mobile_center_push_firebase_summary_enabled">Firebase analytics is enabled</string>
-    <string name="mobile_center_push_firebase_summary_disabled">Firebase analytics is disabled</string>
-    <string name="mobile_center_push_state_key">mobile_center_push_state_key</string>
-    <string name="mobile_center_push_state_title">Push state</string>
-    <string name="mobile_center_push_state_summary_enabled">Push is enabled</string>
-    <string name="mobile_center_push_state_summary_disabled">Push is disabled</string>
+    <string name="appcenter_push_firebase_state_key">appcenter_push_firebase_state_key</string>
+    <string name="appcenter_push_firebase_state_title">Firebase analytics state</string>
+    <string name="appcenter_push_firebase_summary_enabled">Firebase analytics is enabled</string>
+    <string name="appcenter_push_firebase_summary_disabled">Firebase analytics is disabled</string>
+    <string name="appcenter_push_state_key">appcenter_push_state_key</string>
+    <string name="appcenter_push_state_title">Push state</string>
+    <string name="appcenter_push_state_summary_enabled">Push is enabled</string>
+    <string name="appcenter_push_state_summary_disabled">Push is disabled</string>
 
-    <string name="real_user_measurements_key">mobile_center_rum</string>
+    <string name="real_user_measurements_key">appcenter_rum</string>
     <string name="real_user_measurements_title">Real User Measurements</string>
 
-    <string name="mobile_center_rum_state_key">mobile_center_rum_state_key</string>
-    <string name="mobile_center_rum_state_title">RUM state</string>
-    <string name="mobile_center_rum_state_summary_enabled">RUM is enabled</string>
-    <string name="mobile_center_rum_state_summary_disabled">RUM is disabled</string>
+    <string name="appcenter_rum_state_key">appcenter_rum_state_key</string>
+    <string name="appcenter_rum_state_title">RUM state</string>
+    <string name="appcenter_rum_state_summary_enabled">RUM is enabled</string>
+    <string name="appcenter_rum_state_summary_disabled">RUM is disabled</string>
 
     <string name="application_info_key">application_info</string>
     <string name="application_info_title">Application Information</string>
