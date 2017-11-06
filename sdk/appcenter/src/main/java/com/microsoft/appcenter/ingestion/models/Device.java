@@ -11,37 +11,37 @@ import org.json.JSONStringer;
  */
 public class Device extends WrapperSdk {
 
-    private static final String SDK_NAME = "sdk_name";
+    private static final String SDK_NAME = "sdkName";
 
-    private static final String SDK_VERSION = "sdk_version";
+    private static final String SDK_VERSION = "sdkVersion";
 
     private static final String MODEL = "model";
 
-    private static final String OEM_NAME = "oem_name";
+    private static final String OEM_NAME = "oemName";
 
-    private static final String OS_NAME = "os_name";
+    private static final String OS_NAME = "osName";
 
-    private static final String OS_VERSION = "os_version";
+    private static final String OS_VERSION = "osVersion";
 
-    private static final String OS_BUILD = "os_build";
+    private static final String OS_BUILD = "osBuild";
 
-    private static final String OS_API_LEVEL = "os_api_level";
+    private static final String OS_API_LEVEL = "osApiLevel";
 
     private static final String LOCALE = "locale";
 
-    private static final String TIME_ZONE_OFFSET = "time_zone_offset";
+    private static final String TIME_ZONE_OFFSET = "timeZoneOffset";
 
-    private static final String SCREEN_SIZE = "screen_size";
+    private static final String SCREEN_SIZE = "screenSize";
 
-    private static final String APP_VERSION = "app_version";
+    private static final String APP_VERSION = "appVersion";
 
-    private static final String CARRIER_NAME = "carrier_name";
+    private static final String CARRIER_NAME = "carrierName";
 
-    private static final String CARRIER_COUNTRY = "carrier_country";
+    private static final String CARRIER_COUNTRY = "carrierCountry";
 
-    private static final String APP_BUILD = "app_build";
+    private static final String APP_BUILD = "appBuild";
 
-    private static final String APP_NAMESPACE = "app_namespace";
+    private static final String APP_NAMESPACE = "appNamespace";
 
     /**
      * Name of the SDK.

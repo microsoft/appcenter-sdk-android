@@ -8,17 +8,17 @@ import org.json.JSONStringer;
 
 public class WrapperSdk implements Model {
 
-    private static final String WRAPPER_SDK_VERSION = "wrapper_sdk_version";
+    private static final String WRAPPER_SDK_VERSION = "wrapperSdkVersion";
 
-    private static final String WRAPPER_SDK_NAME = "wrapper_sdk_name";
+    private static final String WRAPPER_SDK_NAME = "wrapperSdkName";
 
-    private static final String WRAPPER_RUNTIME_VERSION = "wrapper_runtime_version";
+    private static final String WRAPPER_RUNTIME_VERSION = "wrapperRuntimeVersion";
 
-    private static final String LIVE_UPDATE_RELEASE_LABEL = "live_update_release_label";
+    private static final String LIVE_UPDATE_RELEASE_LABEL = "liveUpdateReleaseLabel";
 
-    private static final String LIVE_UPDATE_DEPLOYMENT_KEY = "live_update_deployment_key";
+    private static final String LIVE_UPDATE_DEPLOYMENT_KEY = "liveUpdateDeploymentKey";
 
-    private static final String LIVE_UPDATE_PACKAGE_HASH = "live_update_package_hash";
+    private static final String LIVE_UPDATE_PACKAGE_HASH = "liveUpdatePackageHash";
 
     /**
      * Version of the wrapper SDK in semver format. When the SDK is embedding another base SDK (for example Xamarin.Android wraps Android),
