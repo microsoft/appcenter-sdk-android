@@ -397,7 +397,7 @@ public class AppCenter {
         mAppSecret = appSecret;
 
         /* Start looper. */
-        mHandlerThread = new HandlerThread("MobileCenter.Looper"); //TODO change?
+        mHandlerThread = new HandlerThread("AppCenter.Looper");
         mHandlerThread.start();
         mHandler = new Handler(mHandlerThread.getLooper());
         mAppCenterHandler = new AppCenterHandler() {

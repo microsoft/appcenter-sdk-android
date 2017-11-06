@@ -59,10 +59,10 @@ Function InitializeRepoForCheckin
     $Argument = "pull vsts " + $DefaultRepoBranch
     ProcessStart $git $Argument $repoPath
 
-    $Argument = "branch -D" + $TempLocBranch
+    $Argument = "branch -D " + $TempLocBranch
     ProcessStart $git $Argument
 
-    $Argument = "checkout -b" + $TempLocBranch
+    $Argument = "checkout -b " + $TempLocBranch
     ProcessStart $git $Argument $repoPath
 }
 
@@ -250,8 +250,6 @@ Function RefreshTDFiles
     }
 
     CheckinFilesIntoRepo
-    # Remove temporary files after they have been dropped in resources.
-    Remove-Item "appcenter-distribute -recurse"
 }
 
 RefreshTDFiles

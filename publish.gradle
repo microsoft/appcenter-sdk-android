@@ -23,5 +23,5 @@ ext {
 
     developerId = 'microsoft'
     developerName = 'Microsoft'
-    developerEmail = 'mobiledevopssdk@microsoft.com'
+    developerEmail = 'appcentersdk@microsoft.com'
 }

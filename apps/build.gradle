@@ -29,7 +29,7 @@ subprojects {
     }
 }
 
-// Task to copy a specific APK from sub projects to current project, for Mobile Center build to find it.
+// Task to copy a specific APK from sub projects to current project, for App Center build to find it.
 def copyApkToProjectBuildTask(buildType) {
     subprojects.each { project ->
         def apkPath = "${project.buildDir}/outputs/apk/projectDependencyVanilla/${buildType}/${project.name}-projectDependency-vanilla-${buildType}"

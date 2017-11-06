@@ -9,7 +9,7 @@ import android.support.annotation.Nullable;
 public interface AppCenterHandler {
 
     /**
-     * Post a command to run on Mobile Center background event loop.
+     * Post a command to run on App Center background event loop.
      *
      * @param runnable         command to run if App Center is enabled.
      * @param disabledRunnable optional alternate command to run if App Center is disabled.

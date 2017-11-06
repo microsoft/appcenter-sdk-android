@@ -38,7 +38,7 @@ public class StorageHelper {
     /**
      * Name of preferences.
      */
-    private static final String PREFERENCES_NAME = "MobileCenter";
+    private static final String PREFERENCES_NAME = "AppCenter";
 
     /**
      * Application context instance.
