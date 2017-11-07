@@ -77,6 +77,11 @@ final class DistributeConstants {
     static final String PARAMETER_REDIRECT_ID = "redirect_id";
 
     /**
+     * API parameter for redirection scheme.
+     */
+    static final String PARAMETER_REDIRECT_SCHEME = "redirect_scheme";
+
+    /**
      * API parameter for request identifier.
      */
     static final String PARAMETER_REQUEST_ID = "request_id";
