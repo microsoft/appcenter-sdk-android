@@ -47,6 +47,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_E
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_PLATFORM;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_PLATFORM_VALUE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REDIRECT_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REDIRECT_SCHEME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REQUEST_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
@@ -451,6 +452,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
@@ -569,6 +571,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
@@ -687,6 +690,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
@@ -740,6 +744,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
