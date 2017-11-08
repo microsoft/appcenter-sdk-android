@@ -60,7 +60,7 @@ Function InitializeRepoForCheckin
     $Argument = "reset --hard HEAD"
     ProcessStart $git $Argument $repoPath
 
-    $Argument = "pull vsts " + $DefaultRepoBranch
+    $Argument = "pull origin " + $DefaultRepoBranch
     ProcessStart $git $Argument $repoPath
 
     $Argument = "branch -D " + $TempLocBranch
