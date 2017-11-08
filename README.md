@@ -6,7 +6,7 @@
 
 # App Center SDK for Android
 
-App Center is mission control for mobile apps.
+App Center is your continuous integration, delivery and learning solution for Android apps.
 Get faster release cycles, higher-quality apps, and the insights to build what users want.
 
 The App Center SDK uses a modular architecture so you can use any or all of the following services:
