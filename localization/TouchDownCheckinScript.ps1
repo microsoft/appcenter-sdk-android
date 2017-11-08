@@ -79,11 +79,11 @@ Function CheckinFilesIntoRepo
     #Push the Changes to the git server you still need to merge the changes
     if ($AuthToken -eq "") {
         #Unauthorized
-        $Argument = "push vsts " + $TempLocBranch
+        $Argument = "push origin " + $TempLocBranch
     }
     else {
         #Authorized
-        $Argument = "-c http.extraheader=`"Authorization: Bearer " + $AuthToken + "`" push vsts " + $TempLocBranch
+        $Argument = "-c http.extraheader=`"Authorization: Bearer " + $AuthToken + "`" push origin " + $TempLocBranch
     }
     
     ProcessStart $git $Argument $repoPath
