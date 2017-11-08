@@ -18,8 +18,7 @@
                 <data
                     android:host="updates"
                     android:path="/"
-                    android:scheme="mobile.center"/>
-                <!-- TODO update to appcenter once backend ready for the renaming. -->
+                    android:scheme="appcenter"/>
             </intent-filter>
         </activity>
 
