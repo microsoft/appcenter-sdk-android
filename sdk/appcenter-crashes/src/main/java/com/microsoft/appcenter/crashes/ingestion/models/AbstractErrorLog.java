@@ -18,21 +18,21 @@ import static com.microsoft.appcenter.ingestion.models.CommonProperties.ID;
  */
 public abstract class AbstractErrorLog extends AbstractLog {
 
-    private static final String PROCESS_ID = "process_id";
+    private static final String PROCESS_ID = "processId";
 
-    private static final String PROCESS_NAME = "process_name";
+    private static final String PROCESS_NAME = "processName";
 
-    private static final String PARENT_PROCESS_ID = "parent_process_id";
+    private static final String PARENT_PROCESS_ID = "parentProcessId";
 
-    private static final String PARENT_PROCESS_NAME = "parent_process_name";
+    private static final String PARENT_PROCESS_NAME = "parentProcessName";
 
-    private static final String ERROR_THREAD_ID = "error_thread_id";
+    private static final String ERROR_THREAD_ID = "errorThreadId";
 
-    private static final String ERROR_THREAD_NAME = "error_thread_name";
+    private static final String ERROR_THREAD_NAME = "errorThreadName";
 
     private static final String FATAL = "fatal";
 
-    private static final String APP_LAUNCH_TIMESTAMP = "app_launch_timestamp";
+    private static final String APP_LAUNCH_TIMESTAMP = "appLaunchTimestamp";
 
     private static final String ARCHITECTURE = "architecture";
 

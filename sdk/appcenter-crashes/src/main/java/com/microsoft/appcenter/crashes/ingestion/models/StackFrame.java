@@ -12,13 +12,13 @@ import org.json.JSONStringer;
  */
 public class StackFrame implements Model {
 
-    private static final String CLASS_NAME = "class_name";
+    private static final String CLASS_NAME = "className";
 
-    private static final String METHOD_NAME = "method_name";
+    private static final String METHOD_NAME = "methodName";
 
-    private static final String LINE_NUMBER = "line_number";
+    private static final String LINE_NUMBER = "lineNumber";
 
-    private static final String FILE_NAME = "file_name";
+    private static final String FILE_NAME = "fileName";
 
     /**
      * The fully qualified name of the Class containing the execution point

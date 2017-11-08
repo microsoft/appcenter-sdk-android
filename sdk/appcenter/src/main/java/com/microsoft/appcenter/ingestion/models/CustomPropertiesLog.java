@@ -20,7 +20,7 @@ public class CustomPropertiesLog extends AbstractLog {
     /**
      * Log type.
      */
-    public static final String TYPE = "custom_properties";
+    public static final String TYPE = "customProperties";
 
     private static final String PROPERTIES = "properties";
 
@@ -36,7 +36,7 @@ public class CustomPropertiesLog extends AbstractLog {
 
     private static final String PROPERTY_TYPE_NUMBER = "number";
 
-    private static final String PROPERTY_TYPE_DATETIME = "date_time";
+    private static final String PROPERTY_TYPE_DATETIME = "dateTime";
 
     private static final String PROPERTY_TYPE_STRING = "string";
 

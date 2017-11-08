@@ -16,7 +16,7 @@ public class StartServiceLog extends AbstractLog {
     /**
      * Log type.
      */
-    public static final String TYPE = "start_service";
+    public static final String TYPE = "startService";
 
     private static final String SERVICES = "services";
 

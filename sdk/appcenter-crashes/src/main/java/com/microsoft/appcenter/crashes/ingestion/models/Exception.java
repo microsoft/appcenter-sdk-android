@@ -21,11 +21,11 @@ public class Exception implements Model {
 
     private static final String MESSAGE = "message";
 
-    private static final String STACK_TRACE = "stack_trace";
+    private static final String STACK_TRACE = "stackTrace";
 
-    private static final String INNER_EXCEPTIONS = "inner_exceptions";
+    private static final String INNER_EXCEPTIONS = "innerExceptions";
 
-    private static final String WRAPPER_SDK_NAME = "wrapper_sdk_name";
+    private static final String WRAPPER_SDK_NAME = "wrapperSdkName";
 
     /**
      * Exception type (fully qualified class name).

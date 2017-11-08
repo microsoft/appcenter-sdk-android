@@ -105,7 +105,7 @@ public class LogSerializerAndroidTest {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         serializer.deserializeLog("{" +
-                "\"type\": \"custom_properties\"," +
+                "\"type\": \"customProperties\"," +
                 "\"timestamp\": \"2017-07-08T00:32:58.123Z\"" +
                 "}");
     }
@@ -115,7 +115,7 @@ public class LogSerializerAndroidTest {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         serializer.deserializeLog("{" +
-                "\"type\": \"custom_properties\"," +
+                "\"type\": \"customProperties\"," +
                 "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
                 "\"properties\":[{\"name\":\"test\",\"type\":\"unknown\",\"value\":42}]" +
                 "}");
@@ -126,9 +126,9 @@ public class LogSerializerAndroidTest {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         serializer.deserializeLog("{" +
-                "\"type\": \"custom_properties\"," +
+                "\"type\": \"customProperties\"," +
                 "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
-                "\"properties\":[{\"name\":\"test\",\"type\":\"date_time\",\"value\":\"today\"}]" +
+                "\"properties\":[{\"name\":\"test\",\"type\":\"dateTime\",\"value\":\"today\"}]" +
                 "}");
     }
 
@@ -137,7 +137,7 @@ public class LogSerializerAndroidTest {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         serializer.deserializeLog("{" +
-                "\"type\": \"custom_properties\"," +
+                "\"type\": \"customProperties\"," +
                 "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
                 "\"properties\":[{\"name\":\"test\",\"type\":\"number\",\"value\":false}]" +
                 "}");

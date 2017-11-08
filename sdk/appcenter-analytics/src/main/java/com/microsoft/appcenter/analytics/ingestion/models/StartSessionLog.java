@@ -7,7 +7,7 @@ import com.microsoft.appcenter.ingestion.models.AbstractLog;
  */
 public class StartSessionLog extends AbstractLog {
 
-    public static final String TYPE = "start_session";
+    public static final String TYPE = "startSession";
 
     @Override
     public String getType() {
