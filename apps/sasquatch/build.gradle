@@ -38,8 +38,14 @@ repositories {
     }
 }
 
+repositories {
+    maven {
+        url  "https://dl.bintray.com/vsappcenter/appcenter-snapshot"
+    }
+}
+
 dependencies {
-    def version = "1.0.0-0"
+    def version = "1.0.0-0+166f65d"
     compile "com.android.support:support-v4:${rootProject.ext.supportLibVersion}"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     projectDependencyCompile project(':sdk:appcenter-analytics')
