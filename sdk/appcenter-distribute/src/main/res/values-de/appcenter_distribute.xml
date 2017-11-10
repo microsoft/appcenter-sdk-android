@@ -17,5 +17,5 @@
   <string name="appcenter_distribute_notification_category">App-Updates</string>
   <string name="appcenter_distribute_update_failed_dialog_title">In-App-Updates deaktiviert</string>
   <string name="appcenter_distribute_update_failed_dialog_ignore">Ignorieren</string>
-  <string name="appcenter_distribute_update_failed_dialog_reinstall">Installieren Sie App</string>
+  <string name="appcenter_distribute_update_failed_dialog_reinstall">App erneut installieren</string>
 </resources>
