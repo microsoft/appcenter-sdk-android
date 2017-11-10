@@ -30,16 +30,6 @@ android {
 
 repositories {
     maven {
-        url "https://${rootProject.ext.bintrayUserOrg}.bintray.com/${rootProject.ext.bintrayRepo}"
-        credentials {
-            username rootProject.ext.bintrayUser
-            password rootProject.ext.bintrayKey
-        }
-    }
-}
-
-repositories {
-    maven {
         url  "https://dl.bintray.com/vsappcenter/appcenter-snapshot"
     }
 }
