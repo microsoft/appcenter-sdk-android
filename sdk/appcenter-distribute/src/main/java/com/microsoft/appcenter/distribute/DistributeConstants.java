@@ -43,7 +43,7 @@ final class DistributeConstants {
     /**
      * Base URL used to open browser to check install and get API token to check latest release.
      */
-    static final String DEFAULT_INSTALL_URL = "https://install.mobile.azure.com"; //TODO change to install.appcenter.ms
+    static final String DEFAULT_INSTALL_URL = "https://install.appcenter.ms";
 
     /**
      * Base URL to call server to check latest release.
