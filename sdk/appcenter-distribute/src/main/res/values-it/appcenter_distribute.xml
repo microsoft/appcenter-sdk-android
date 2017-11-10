@@ -16,6 +16,6 @@
   <string name="appcenter_distribute_install">Installa</string>
   <string name="appcenter_distribute_notification_category">Aggiornamenti app</string>
   <string name="appcenter_distribute_update_failed_dialog_title">Aggiornamenti in-app disabilitati</string>
-  <string name="appcenter_distribute_update_failed_dialog_ignore">ignorare</string>
+  <string name="appcenter_distribute_update_failed_dialog_ignore">Ignorare</string>
   <string name="appcenter_distribute_update_failed_dialog_reinstall">Reinstallare app</string>
 </resources>

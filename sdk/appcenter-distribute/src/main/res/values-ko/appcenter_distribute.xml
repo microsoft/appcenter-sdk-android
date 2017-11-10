@@ -15,7 +15,7 @@
   <string name="appcenter_distribute_install_ready_message">%1$s %2$s(%3$d)이(가) 다운로드되어 설치할 준비가 되었습니다.</string>
   <string name="appcenter_distribute_install">설치</string>
   <string name="appcenter_distribute_notification_category">앱 업데이트</string>
-  <string name="appcenter_distribute_update_failed_dialog_title">앱 내 업데이트 사용 안 함</string>
+  <string name="appcenter_distribute_update_failed_dialog_title">인앱 업데이트 비활성</string>
   <string name="appcenter_distribute_update_failed_dialog_ignore">무시</string>
   <string name="appcenter_distribute_update_failed_dialog_reinstall">앱 재설치</string>
 </resources>
