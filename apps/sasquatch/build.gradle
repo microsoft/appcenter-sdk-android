@@ -35,7 +35,7 @@ repositories {
 }
 
 dependencies {
-    def version = "1.0.0-1+9e53a49"
+    def version = "1.0.0"
     compile "com.android.support:support-v4:${rootProject.ext.supportLibVersion}"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     projectDependencyCompile project(':sdk:appcenter-analytics')
