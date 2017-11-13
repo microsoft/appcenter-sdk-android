@@ -1,4 +1,4 @@
-﻿param([String]$SrcRoot="undefined",[String]$AuthToken="")
+﻿param([String]$SrcRoot="undefined",[String]$AuthToken="",[String]$Branch="")
 
 # This script will upload the files which need to be localized to the Touchdown servers and they will automatically be translated by Bing translate
 
@@ -50,13 +50,17 @@ Function ProcessStart($AppToRun,$Argument,$WorkingDir)
 
 Function InitializeRepoForCheckin
 {
-    $Argument = "checkout" + $DefaultRepoBranch 
+    if (!($Branch -eq "")) {
+        $DefaultRepoBranch = $Branch
+    }
+
+    $Argument = "checkout " + $DefaultRepoBranch 
     ProcessStart $git $Argument $repoPath
 
     $Argument = "reset --hard HEAD"
     ProcessStart $git $Argument $repoPath
 
-    $Argument = "pull vsts " + $DefaultRepoBranch
+    $Argument = "pull origin " + $DefaultRepoBranch
     ProcessStart $git $Argument $repoPath
 
     $Argument = "branch -D " + $TempLocBranch
@@ -75,11 +79,11 @@ Function CheckinFilesIntoRepo
     #Push the Changes to the git server you still need to merge the changes
     if ($AuthToken -eq "") {
         #Unauthorized
-        $Argument = "push vsts " + $TempLocBranch
+        $Argument = "push origin " + $TempLocBranch
     }
     else {
         #Authorized
-        $Argument = "-c http.extraheader=`"Authorization: Bearer " + $AuthToken + "`" push vsts " + $TempLocBranch
+        $Argument = "-c http.extraheader=`"Authorization: Bearer " + $AuthToken + "`" push origin " + $TempLocBranch
     }
     
     ProcessStart $git $Argument $repoPath

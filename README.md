@@ -1,12 +1,12 @@
 [![Build Status](https://www.bitrise.io/app/78891228f9c6e6dc.svg?token=KQ6kVAci490XBjulCcQuGQ&branch=develop)](https://www.bitrise.io/app/78891228f9c6e6dc)
-[![codecov](https://codecov.io/gh/Microsoft/mobile-center-sdk-android/branch/develop/graph/badge.svg?token=YwMZRPnYK3)](https://codecov.io/gh/Microsoft/mobile-center-sdk-android)
-[![GitHub Release](https://img.shields.io/github/release/Microsoft/mobile-center-sdk-android.svg)](https://github.com/Microsoft/mobile-center-sdk-android/releases/latest)
-[![Bintray](https://api.bintray.com/packages/mobile-center/mobile-center/mobile-center/images/download.svg)](https://bintray.com/mobile-center/mobile-center)
-[![license](https://img.shields.io/badge/license-MIT%20License-00AAAA.svg)](https://github.com/Microsoft/mobile-center-sdk-android/blob/master/license.txt)
+[![codecov](https://codecov.io/gh/Microsoft/AppCenter-SDK-Android/branch/develop/graph/badge.svg?token=YwMZRPnYK3)](https://codecov.io/gh/Microsoft/AppCenter-SDK-Android)
+[![GitHub Release](https://img.shields.io/github/release/Microsoft/AppCenter-SDK-Android.svg)](https://github.com/Microsoft/AppCenter-SDK-Android/releases/latest)
+[![Bintray](https://api.bintray.com/packages/vsappcenter/appcenter/appcenter/images/download.svg)](https://bintray.com/vsappcenter/appcenter)
+[![license](https://img.shields.io/badge/license-MIT%20License-00AAAA.svg)](https://github.com/Microsoft/AppCenter-SDK-Android/blob/master/license.txt)
 
-# App Center SDK for Android
+# Visual Studio App Center SDK for Android
 
-App Center is mission control for mobile apps.
+App Center is your continuous integration, delivery and learning solution for Android apps.
 Get faster release cycles, higher-quality apps, and the insights to build what users want.
 
 The App Center SDK uses a modular architecture so you can use any or all of the following services:
@@ -20,7 +20,7 @@ The App Center SDK uses a modular architecture so you can use any or all of the 
 4. **App Center Push**: App Center Push enables you to send push notifications to users of your app from the App Center portal. To do that, the App Center SDK and portal integrate with [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging/). You can also segment your user base based on a set of properties and send them targeted notifications.
 
 ## 1. Get started
-It is super easy to use App Center. Have a look at our [get started documentation](https://docs.microsoft.com/en-us/mobile-center/sdk/getting-started/android) and onboard your app within minutes. Our [detailed documentation](https://docs.microsoft.com/en-us/mobile-center/sdk/) is available as well.
+It is super easy to use App Center. Have a look at our [get started documentation](https://docs.microsoft.com/en-us/appcenter/sdk/getting-started/android) and onboard your app within minutes. Our [detailed documentation](https://docs.microsoft.com/en-us/appcenter/sdk/) is available as well.
 
 ## 2. Contributing
 
@@ -41,5 +41,4 @@ You must sign a [Contributor License Agreement](https://cla.microsoft.com/) befo
 If you have further questions, want to provide feedback or you are running into issues, log in to the [App Center portal](https://appcenter.ms) and use the blue Intercom button on the bottom right to start a conversation with us.
 
 ### 3.2 Twitter
-
-We're on Twitter as [@mobilecenter](https://www.twitter.com/mobilecenter).
+We're on Twitter as [@vsappcenter](https://www.twitter.com/vsappcenter).

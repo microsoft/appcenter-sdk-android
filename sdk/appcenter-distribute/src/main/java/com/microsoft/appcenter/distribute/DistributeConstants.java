@@ -43,12 +43,12 @@ final class DistributeConstants {
     /**
      * Base URL used to open browser to check install and get API token to check latest release.
      */
-    static final String DEFAULT_INSTALL_URL = "https://install.mobile.azure.com"; //TODO change to install.appcenter.ms
+    static final String DEFAULT_INSTALL_URL = "https://install.appcenter.ms";
 
     /**
      * Base URL to call server to check latest release.
      */
-    static final String DEFAULT_API_URL = "https://api.mobile.azure.com/v0.1"; //TODO change to public URL when available https://api.appcenter/vX.X
+    static final String DEFAULT_API_URL = "https://api.appcenter.ms/v0.1";
 
     /**
      * Update setup URL path. Contains the app secret variable to replace.
@@ -75,6 +75,11 @@ final class DistributeConstants {
      * API parameter for redirect URL.
      */
     static final String PARAMETER_REDIRECT_ID = "redirect_id";
+
+    /**
+     * API parameter for redirection scheme.
+     */
+    static final String PARAMETER_REDIRECT_SCHEME = "redirect_scheme";
 
     /**
      * API parameter for request identifier.

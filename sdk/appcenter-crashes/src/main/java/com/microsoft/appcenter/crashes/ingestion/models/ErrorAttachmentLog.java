@@ -27,19 +27,19 @@ public class ErrorAttachmentLog extends AbstractLog {
     @SuppressWarnings("WeakerAccess")
     public static final String CONTENT_TYPE_TEXT_PLAIN = "text/plain";
 
-    public static final String TYPE = "error_attachment";
+    public static final String TYPE = "errorAttachment";
+
+    private static final String ERROR_ID = "errorId";
+
+    private static final String CONTENT_TYPE = "contentType";
+
+    private static final String FILE_NAME = "fileName";
 
     @VisibleForTesting
     static final Charset CHARSET = Charset.forName("UTF-8");
 
     @VisibleForTesting
     static final String DATA = "data";
-
-    private static final String ERROR_ID = "error_id";
-
-    private static final String CONTENT_TYPE = "content_type";
-
-    private static final String FILE_NAME = "file_name";
 
     /**
      * Error attachment identifier.

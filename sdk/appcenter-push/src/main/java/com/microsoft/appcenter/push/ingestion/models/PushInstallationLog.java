@@ -12,9 +12,9 @@ import org.json.JSONStringer;
 
 public class PushInstallationLog extends AbstractLog {
 
-    public static final String TYPE = "push_installation";
+    public static final String TYPE = "pushInstallation";
 
-    private static final String PUSH_TOKEN = "push_token";
+    private static final String PUSH_TOKEN = "pushToken";
 
     /**
      * The PNS handle for this installation.

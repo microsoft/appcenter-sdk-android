@@ -71,7 +71,7 @@ public class Crashes extends AbstractAppCenterService {
      * Group for sending logs.
      */
     @VisibleForTesting
-    static final String ERROR_GROUP = "group_errors";
+    static final String ERROR_GROUP = "groupErrors";
 
     /**
      * Name of the service.

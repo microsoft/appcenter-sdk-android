@@ -34,13 +34,13 @@ public class IngestionHttp implements Ingestion {
      * Default log URL.
      */
     @SuppressWarnings("WeakerAccess")
-    public static final String DEFAULT_LOG_URL = "https://in.mobile.azure.com"; //TODO change to https://in.appcenter.ms once endpoint is live
+    public static final String DEFAULT_LOG_URL = "https://in.appcenter.ms";
 
     /**
      * API Path.
      */
     @VisibleForTesting
-    static final String API_PATH = "/logs?api_version=1.0.0-preview20160914";
+    static final String API_PATH = "/logs?api-version=1.0.0";
 
     /**
      * Installation identifier HTTP Header.

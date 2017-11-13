@@ -18,7 +18,7 @@ public class HandledErrorLog extends AbstractLog {
     /**
      * Log type.
      */
-    public static final String TYPE = "handled_error";
+    public static final String TYPE = "handledError";
 
     /**
      * Exception associated to the error.

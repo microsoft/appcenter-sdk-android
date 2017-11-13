@@ -50,6 +50,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
@@ -774,24 +775,38 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Verify dialog. */
         verify(mDialogBuilder, never()).setNeutralButton(eq(R.string.appcenter_distribute_update_dialog_view_release_notes), any(DialogInterface.OnClickListener.class));
         verify(mDialog).show();
+        reset(mDialog);
 
         /* Release notes but somehow no URL. */
         when(releaseDetails.getReleaseNotes()).thenReturn("Fix a bug");
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialogBuilder, never()).setNeutralButton(eq(R.string.appcenter_distribute_update_dialog_view_release_notes), any(DialogInterface.OnClickListener.class));
-        verify(mDialog, times(2)).show();
+        verify(mDialog).show();
+        reset(mDialog);
 
         /* Release notes URL this time. */
         final Uri uri = mock(Uri.class);
         Intent intent = mock(Intent.class);
         whenNew(Intent.class).withArguments(Intent.ACTION_VIEW, uri).thenReturn(intent);
         when(releaseDetails.getReleaseNotesUrl()).thenReturn(uri);
+
+        /* Empty release notes and URL. */
+        when(releaseDetails.getReleaseNotes()).thenReturn("");
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verify(mDialogBuilder, never()).setNeutralButton(eq(R.string.appcenter_distribute_update_dialog_view_release_notes), any(DialogInterface.OnClickListener.class));
+        verify(mDialog).show();
+        reset(mDialog);
+
+        /* Release notes and URL. */
+        when(releaseDetails.getReleaseNotes()).thenReturn("Fix a bug");
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mActivity);
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
         verify(mDialogBuilder).setNeutralButton(eq(R.string.appcenter_distribute_update_dialog_view_release_notes), clickListener.capture());
-        verify(mDialog, times(3)).show();
+        verify(mDialog).show();
+        reset(mDialog);
 
         /* Click and check navigation. */
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEUTRAL);
@@ -805,7 +820,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mActivity);
         clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
         verify(mDialogBuilder, times(2)).setNeutralButton(eq(R.string.appcenter_distribute_update_dialog_view_release_notes), clickListener.capture());
-        verify(mDialog, times(4)).show();
+        verify(mDialog).show();
 
         /* Do the same test and simulate failed navigation. */
         mockStatic(AppCenterLog.class);

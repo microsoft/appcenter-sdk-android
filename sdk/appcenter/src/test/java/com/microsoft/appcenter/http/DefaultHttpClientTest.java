@@ -98,7 +98,7 @@ public class DefaultHttpClientTest {
         AppCenter.setLogLevel(VERBOSE);
 
         /* Configure mock HTTP. */
-        String urlString = "http://mock/logs?api_version=1.0.0-preview20160914";
+        String urlString = "http://mock/logs?api-version=1.0.0";
         URL url = mock(URL.class);
         whenNew(URL.class).withArguments(urlString).thenReturn(url);
         HttpURLConnection urlConnection = mock(HttpURLConnection.class);
@@ -153,7 +153,7 @@ public class DefaultHttpClientTest {
         AppCenter.setLogLevel(VERBOSE);
 
         /* Configure mock HTTP. */
-        String urlString = "http://mock/logs?api_version=1.0.0-preview20160914";
+        String urlString = "http://mock/logs?api-version=1.0.0";
         URL url = mock(URL.class);
         whenNew(URL.class).withArguments(urlString).thenReturn(url);
         HttpURLConnection urlConnection = mock(HttpURLConnection.class);

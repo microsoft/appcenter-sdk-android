@@ -17,7 +17,7 @@ public class ManagedErrorLog extends AbstractErrorLog {
     /**
      * Log type.
      */
-    public static final String TYPE = "managed_error";
+    public static final String TYPE = "managedError";
 
     private static final String EXCEPTION = "exception";
 

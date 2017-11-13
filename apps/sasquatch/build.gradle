@@ -44,16 +44,12 @@ android {
 
 repositories {
     maven {
-        url "https://${rootProject.ext.bintrayUserOrg}.bintray.com/${rootProject.ext.bintrayRepo}"
-        credentials {
-            username rootProject.ext.bintrayUser
-            password rootProject.ext.bintrayKey
-        }
+        url  "https://dl.bintray.com/vsappcenter/appcenter-snapshot"
     }
 }
 
 dependencies {
-    def version = "1.0.0-0"
+    def version = "1.0.0"
     compile "com.android.support:support-v4:${rootProject.ext.supportLibVersion}"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     projectDependencyCompile project(':sdk:appcenter-analytics')
