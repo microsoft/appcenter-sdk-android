@@ -65,6 +65,13 @@ public class Push extends AbstractAppCenterService {
     private String mLastGoogleMessageId;
 
     /**
+     * First google message id obtained. Need to save because when app is launched from
+     * push, the activity will always contain the original intent thereafter, so it needs to
+     * be remembered to avoid being replayed.
+     */
+    private String mFirstGoogleMessageId;
+
+    /**
      * Current activity.
      */
     private Activity mActivity;
@@ -315,7 +322,11 @@ public class Push extends AbstractAppCenterService {
     private synchronized void checkPushInIntent(Intent intent) {
         if (mInstanceListener != null) {
             String googleMessageId = PushIntentUtils.getGoogleMessageId(intent);
-            if (googleMessageId != null && !googleMessageId.equals(mLastGoogleMessageId)) {
+            if (googleMessageId != null && !googleMessageId.equals(mLastGoogleMessageId)
+                    && !googleMessageId.equals(mFirstGoogleMessageId)) {
+                if (mFirstGoogleMessageId == null) {
+                    mFirstGoogleMessageId = googleMessageId;
+                }
                 PushNotification notification = new PushNotification(intent);
                 AppCenterLog.info(LOG_TAG, "Clicked push message from background id=" + googleMessageId);
                 mLastGoogleMessageId = googleMessageId;

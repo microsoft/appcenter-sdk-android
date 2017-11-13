@@ -65,6 +65,7 @@ class PushNotifier {
 
             /* Set the message ID in the intent. */
             PushIntentUtils.setGoogleMessageId(messageId, actionIntent);
+
         } else {
 
             /* If no launcher, just create a placeholder action as the field is mandatory. */
