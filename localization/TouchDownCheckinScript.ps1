@@ -1,4 +1,4 @@
-﻿param([String]$SrcRoot="undefined",[String]$AuthToken="")
+﻿param([String]$SrcRoot="undefined",[String]$AuthToken="",[String]$Branch="")
 
 # This script will upload the files which need to be localized to the Touchdown servers and they will automatically be translated by Bing translate
 
@@ -17,8 +17,8 @@
 #  -Set the Flag (ChangesAreDetected = True)
 #  -Run a Git push (Integrate the TempLocBranch to your working branch)
 
-$CultureSettingFile= "mobile-center-cultures.csv"
-$ProjectInfo = "mobile-center-sdks-loc-file-list.csv"
+$CultureSettingFile= "appcenter-cultures.csv"
+$ProjectInfo = "appcenter-sdks-loc-file-list.csv"
 
 $TempLocBranch = "translatedFiles"
 $repoPath = $SrcRoot
@@ -50,6 +50,10 @@ Function ProcessStart($AppToRun,$Argument,$WorkingDir)
 
 Function InitializeRepoForCheckin
 {
+    if (!($Branch -eq "")) {
+        $DefaultRepoBranch = $Branch
+    }
+
     $Argument = "checkout " + $DefaultRepoBranch 
     ProcessStart $git $Argument $repoPath
 
@@ -172,16 +176,22 @@ Function BinPlace ($UnzipFileTo,$relativeFilePath,$TargetPath,$LanguageSet)
     foreach($Language in $Langs)
     {
         $OCulture = GetCulture $CultureSettingFile $Language
-        $Culture = $OCulture.LSBUILD
-
         $LocalizedFile = $UnzipFileTo + "\" + $OCulture.LSBUILD + $relativeFilePath
-        $TargetPathDir = $TargetPath + "\" + $OCulture.LSBUILD
+        $LocDir = ""
+
+        # Chinese (zh) regions use a different directory structure
+        if ($OCulture.Culture -eq "zh") {
+            $LocDir = $TargetPath + $OCulture.Culture + "-r" + $Language.split("-")[1]
+        } else {
+            $LocDir = $TargetPath + $OCulture.Culture
+        }
         
-        if(!(Test-Path -Path $TargetPathDir)){
-            New-Item -Path $TargetPathDir -ItemType directory
+        if(!(Test-Path -Path $LocDir)){
+            New-Item -Path $LocDir -ItemType directory
         }
 
-        $targetFile = $TargetPath + "\" + $OCulture.LSBUILD + $relativeFilePath
+        $targetFile = $LocDir + $relativeFilePath
+
         write-host "Loc File:   $LocalizedFile"
         write-host "TargetPath: $targetFile"
         write-host "Copying Loc file to TargetPath"
@@ -197,10 +207,13 @@ Function AddFiletoRepo ($TargetPath,$LanguageSet)
     foreach($Language in $Langs)
     {
         $OCulture = GetCulture $CultureSettingFile $Language
+        if ($OCulture.Culture -eq "zh") {
+            $LocDir = $TargetPath + $OCulture.Culture + "-r" + $Language.split("-")[1]
+        } else {
+            $LocDir = $TargetPath + $OCulture.Culture
+        }
 
-        #We pull out here the culture that might be used during the string expansion.
-        $Culture = $OCulture.Culture
-        $Argument = "add " + $TargetPath
+        $Argument = "add " + $LocDir
 
         write-host $Argument
 

@@ -1,0 +1,6 @@
+project.description = 'This package contains functionalities to get in-app updates for your application.'
+evaluationDependsOn(':sdk')
+
+dependencies {
+    compile project(':sdk:appcenter')
+}
