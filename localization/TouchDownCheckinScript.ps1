@@ -1,4 +1,4 @@
-﻿param([String]$SrcRoot="undefined",[String]$AuthToken="")
+﻿param([String]$SrcRoot="undefined",[String]$AuthToken="",[String]$Branch="")
 
 # This script will upload the files which need to be localized to the Touchdown servers and they will automatically be translated by Bing translate
 
@@ -17,8 +17,8 @@
 #  -Set the Flag (ChangesAreDetected = True)
 #  -Run a Git push (Integrate the TempLocBranch to your working branch)
 
-$CultureSettingFile= "mobile-center-cultures.csv"
-$ProjectInfo = "mobile-center-sdks-loc-file-list.csv"
+$CultureSettingFile= "appcenter-cultures.csv"
+$ProjectInfo = "appcenter-sdks-loc-file-list.csv"
 
 $TempLocBranch = "translatedFiles"
 $repoPath = $SrcRoot
@@ -50,6 +50,10 @@ Function ProcessStart($AppToRun,$Argument,$WorkingDir)
 
 Function InitializeRepoForCheckin
 {
+    if (!($Branch -eq "")) {
+        $DefaultRepoBranch = $Branch
+    }
+
     $Argument = "checkout " + $DefaultRepoBranch 
     ProcessStart $git $Argument $repoPath
 

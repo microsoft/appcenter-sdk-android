@@ -3,7 +3,7 @@ set -e
 
 BINARY_FILE_FILTER="*release.aar"
 PUBLISH_VERSION="$(grep "versionName = '" *.gradle | awk -F "[']" '{print $2}')"
-ARCHIVE=MobileCenter-SDK-Android-${PUBLISH_VERSION}
+ARCHIVE=AppCenter-SDK-Android-${PUBLISH_VERSION}
 ZIP_FILE=$ARCHIVE.zip
 
 # Copy release aar files from sdk
