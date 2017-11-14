@@ -1,0 +1,2 @@
+absoluteFilePath,outFilePath,relativeFilePath,TargetPath,LanguageSet
+$SrcRoot\sdk\appcenter-distribute\src\main\res\values\appcenter_distribute.xml,$SrcRoot\localization\appcenter_distribute.zip,\appcenter_distribute.xml,$SrcRoot\sdk\appcenter-distribute\src\main\res\values-,cs-CZ;de-DE;es-ES;fr-FR;it-IT;ja-JP;ko-KR;pl-PL;pt-BR;ru-RU;tr-TR;zh-CN;zh-TW

@@ -1,0 +1,2 @@
+description = 'This package contains the basic functionalities that all App Center services use to communicate with the backend.'
+evaluationDependsOn(':sdk')
