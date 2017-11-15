@@ -1,4 +1,3 @@
-[![Build Status](https://www.bitrise.io/app/78891228f9c6e6dc.svg?token=KQ6kVAci490XBjulCcQuGQ&branch=develop)](https://www.bitrise.io/app/78891228f9c6e6dc)
 [![codecov](https://codecov.io/gh/Microsoft/AppCenter-SDK-Android/branch/develop/graph/badge.svg?token=YwMZRPnYK3)](https://codecov.io/gh/Microsoft/AppCenter-SDK-Android)
 [![GitHub Release](https://img.shields.io/github/release/Microsoft/AppCenter-SDK-Android.svg)](https://github.com/Microsoft/AppCenter-SDK-Android/releases/latest)
 [![Bintray](https://api.bintray.com/packages/vsappcenter/appcenter/appcenter/images/download.svg)](https://bintray.com/vsappcenter/appcenter)
