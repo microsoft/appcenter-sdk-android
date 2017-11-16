@@ -207,6 +207,11 @@ final class DistributeConstants {
     static final String PREFERENCE_KEY_RELEASE_DETAILS = PREFERENCE_PREFIX + "release_details";
 
     /**
+     * Previous name of preferences, used for failover logic for missing token/distribution group.
+     */
+    static final String PREFERENCES_NAME_MC = "MobileCenter";
+
+    /**
      * Preference key to store download start time. Used to avoid showing install U.I. of a completed
      * download if we already updated (the download workflow can work across process restarts).
      * <p>

@@ -14,6 +14,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -89,6 +90,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MC;
 import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAME;
 import static com.microsoft.appcenter.distribute.DistributeUtils.computeReleaseHash;
 import static com.microsoft.appcenter.distribute.DistributeUtils.getStoredDownloadState;
@@ -246,6 +248,11 @@ public class Distribute extends AbstractAppCenterService {
     private Boolean mUsingDefaultUpdateDialog;
 
     /**
+     * Preferences to use in case of token/distribution group missing from original context.
+     */
+    private SharedPreferences mSharedPreferencesFailover;
+
+    /**
      * Get shared instance.
      *
      * @return shared instance.
@@ -365,6 +372,7 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
             mContext = context;
             StorageHelper.initialize(mContext);
+            mSharedPreferencesFailover = mContext.getSharedPreferences(PREFERENCES_NAME_MC, Context.MODE_PRIVATE);
             mReleaseDetails = DistributeUtils.loadCachedReleaseDetails();
         }
         return mReleaseDetails;
@@ -703,22 +711,17 @@ public class Distribute extends AbstractAppCenterService {
             String updateToken = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
             if (updateToken != null || distributionGroupId != null) {
-
-                /* Decrypt token if any. */
-                if (updateToken != null) {
-                    CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(updateToken);
-                    String newEncryptedData = decryptedData.getNewEncryptedData();
-
-                    /* Store new encrypted value if updated. */
-                    if (newEncryptedData != null) {
-                        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, newEncryptedData);
-                    }
-                    updateToken = decryptedData.getDecryptedData();
-                }
-
-                /* Check latest release. */
-                getLatestReleaseDetails(distributionGroupId, updateToken);
+                decryptAndGetReleaseDetails(updateToken, distributionGroupId, false);
                 return;
+            }
+            else {
+                /* Use failover logic to search for missing token/disctribution group */
+                updateToken = mSharedPreferencesFailover.getString(PREFERENCE_KEY_UPDATE_TOKEN, null);
+                distributionGroupId = mSharedPreferencesFailover.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null);
+                if (updateToken != null || distributionGroupId != null) {
+                    decryptAndGetReleaseDetails(updateToken, distributionGroupId, true);
+                    return;
+                }
             }
 
              /* If not, open browser to update setup. */
@@ -727,6 +730,23 @@ public class Distribute extends AbstractAppCenterService {
                 mBrowserOpenedOrAborted = true;
             }
         }
+    }
+
+    private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId, boolean mobileCenterFailover) {
+        /* Decrypt token if any. */
+        if (updateToken != null) {
+            CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(updateToken, mobileCenterFailover);
+            String newEncryptedData = decryptedData.getNewEncryptedData();
+
+             /* Store new encrypted value if updated. */
+            if (newEncryptedData != null) {
+                PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, newEncryptedData);
+            }
+            updateToken = decryptedData.getDecryptedData();
+        }
+
+        /* Check latest release. */
+        getLatestReleaseDetails(distributionGroupId, updateToken);
     }
 
     /**
