@@ -417,6 +417,13 @@ public class PushTest {
         when(intent.getExtras()).thenReturn(mock(Bundle.class));
         push.onActivityResumed(activity);
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
+
+        /* Receiving push with the same id as first push should do nothing. */
+        when(PushIntentUtils.getGoogleMessageId(intent)).thenReturn("a new id");
+        push.onActivityResumed(activity);
+        when(PushIntentUtils.getGoogleMessageId(intent)).thenReturn("reserved value by google");
+        push.onActivityResumed(activity);
+        verify(pushListener, times(1)).onPushNotificationReceived(eq(activity), any(PushNotification.class));
     }
 
     @Test
