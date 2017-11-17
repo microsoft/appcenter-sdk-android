@@ -4,9 +4,6 @@ evaluationDependsOn(':sdk')
 dependencies {
     compile project(':sdk:appcenter')
     def fcm = "com.google.firebase:firebase-messaging:${rootProject.ext.firebaseLibVersion}"
-    def fc = "com.google.firebase:firebase-core:${rootProject.ext.firebaseLibVersion}"
     provided fcm
-    provided fc
     testCompile fcm
-    testCompile fc
 }
