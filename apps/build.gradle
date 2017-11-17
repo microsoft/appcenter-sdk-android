@@ -36,8 +36,8 @@ def copyApkToProjectBuildTask(buildType) {
     if (file.exists()) {
         properties.load(file.newDataInputStream())
     }
+    def dependency = properties.get("dimension.dependency", "jcenter")
     subprojects.each { project ->
-        def dependency = "jcenter"
         def apkPath = "${project.buildDir}/outputs/apk/${dependency}DependencyVanilla/${buildType}/${project.name}-${dependency}Dependency-vanilla-${buildType}"
         if ("release".equals(buildType)) {
             apkPath += "-unsigned"
