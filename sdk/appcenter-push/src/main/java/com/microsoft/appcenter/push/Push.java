@@ -183,6 +183,7 @@ public class Push extends AbstractAppCenterService {
     }
 
     /**
+     * @deprecated
      * Enable firebase analytics collection.
      *
      * @param context the context to retrieve FirebaseAnalytics instance.
@@ -280,7 +281,6 @@ public class Push extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         mContext = context;
         super.onStarted(context, appSecret, channel);
-
         if (FirebaseUtils.isFirebaseAvailable() && !mFirebaseAnalyticsEnabled) {
             AppCenterLog.debug(LOG_TAG, "Disabling Firebase analytics collection by default.");
             setFirebaseAnalyticsEnabled(context, false);
