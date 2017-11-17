@@ -23,7 +23,7 @@ class CryptoConstants {
     /**
      * Keystore alias prefix fallback for old Mobile Center store.
      */
-    static final String KEYSTORE_ALIAS_PREFIX_MC = "mobile.center";
+    static final String KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER = "mobile.center";
 
     /**
      * Keystore alias separator.

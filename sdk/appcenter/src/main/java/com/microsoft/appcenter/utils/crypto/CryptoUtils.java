@@ -28,7 +28,7 @@ import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALGORITHM_DAT
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALIAS_SEPARATOR;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ANDROID_KEY_STORE;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CHARSET;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX_MC;
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX;
 
 /**
@@ -248,7 +248,7 @@ public class CryptoUtils {
 
     @NonNull
     private String getAlias(@NonNull CryptoHandler handler, int index, boolean mobileCenterFallback) {
-        return (mobileCenterFallback ? KEYSTORE_ALIAS_PREFIX_MC : KEYSTORE_ALIAS_PREFIX) + ALIAS_SEPARATOR + index + ALIAS_SEPARATOR + handler.getAlgorithm();
+        return (mobileCenterFallback ? KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER : KEYSTORE_ALIAS_PREFIX) + ALIAS_SEPARATOR + index + ALIAS_SEPARATOR + handler.getAlgorithm();
     }
 
     /**
@@ -442,16 +442,18 @@ public class CryptoUtils {
      * Structure for the register handler entries.
      */
     @VisibleForTesting
-    public static class CryptoHandlerEntry {
+    static class CryptoHandlerEntry {
 
         /**
          * Crypto handler.
          */
         final CryptoHandler mCryptoHandler;
+
         /**
          * Keystore alias index, 0 or 1.
          */
         int mAliasIndex;
+
         /**
          * Fallback Mobile Center Key Store alias index, 0 or 1.
          */
@@ -511,13 +513,5 @@ public class CryptoUtils {
         public String getNewEncryptedData() {
             return mNewEncryptedData;
         }
-    }
-
-    /**
-     * Test helper to look at which handlers were registered.
-     */
-    @VisibleForTesting
-    public Map<String, CryptoHandlerEntry> getCryptoHandlers() {
-        return mCryptoHandlers;
     }
 }

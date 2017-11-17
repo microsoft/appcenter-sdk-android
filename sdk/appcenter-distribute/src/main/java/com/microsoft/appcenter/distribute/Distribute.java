@@ -90,7 +90,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MC;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAME;
 import static com.microsoft.appcenter.distribute.DistributeUtils.computeReleaseHash;
 import static com.microsoft.appcenter.distribute.DistributeUtils.getStoredDownloadState;
@@ -248,9 +248,10 @@ public class Distribute extends AbstractAppCenterService {
     private Boolean mUsingDefaultUpdateDialog;
 
     /**
-     * Preferences to use in case of token/distribution group missing from original context.
+     * Preferences to use in case of token/distribution group missing from Mobile Center SDK releases
+     * (versions 0.x).
      */
-    private SharedPreferences mSharedPreferencesFailover;
+    private SharedPreferences mMobileCenterPreferenceStorage;
 
     /**
      * Get shared instance.
@@ -372,7 +373,7 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
             mContext = context;
             StorageHelper.initialize(mContext);
-            mSharedPreferencesFailover = mContext.getSharedPreferences(PREFERENCES_NAME_MC, Context.MODE_PRIVATE);
+            mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
             mReleaseDetails = DistributeUtils.loadCachedReleaseDetails();
         }
         return mReleaseDetails;
@@ -715,9 +716,10 @@ public class Distribute extends AbstractAppCenterService {
                 return;
             }
             else {
+
                 /* Use failover logic to search for missing token/distribution group */
-                updateToken = mSharedPreferencesFailover.getString(PREFERENCE_KEY_UPDATE_TOKEN, null);
-                distributionGroupId = mSharedPreferencesFailover.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null);
+                updateToken = mMobileCenterPreferenceStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null);
+                distributionGroupId = mMobileCenterPreferenceStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null);
                 if (updateToken != null || distributionGroupId != null) {
                     decryptAndGetReleaseDetails(updateToken, distributionGroupId, true);
                     return;
@@ -733,6 +735,7 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId, boolean mobileCenterFailover) {
+
         /* Decrypt token if any. */
         if (updateToken != null) {
             CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(updateToken, mobileCenterFailover);
@@ -743,6 +746,15 @@ public class Distribute extends AbstractAppCenterService {
                 PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, newEncryptedData);
             }
             updateToken = decryptedData.getDecryptedData();
+
+            if (mobileCenterFailover) {
+
+                /* Store the token and distribution group id from Mobile Center into App Center storage, re-encrypting it */
+                String encryptedUpdateToken = CryptoUtils.getInstance(mContext).encrypt(updateToken);
+                String encryptedDistributionId = CryptoUtils.getInstance(mContext).encrypt(distributionGroupId);
+                PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, encryptedUpdateToken);
+                PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, encryptedDistributionId);
+            }
         }
 
         /* Check latest release. */
@@ -888,11 +900,11 @@ public class Distribute extends AbstractAppCenterService {
 
                     @Override
                     public void run() {
-                        try {
-                            handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload));
-                        } catch (JSONException e) {
-                            onCallFailed(e);
-                        }
+                    try {
+                        handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload));
+                    } catch (JSONException e) {
+                        onCallFailed(e);
+                    }
                     }
                 });
             }

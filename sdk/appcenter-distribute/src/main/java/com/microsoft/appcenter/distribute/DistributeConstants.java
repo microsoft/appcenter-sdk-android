@@ -209,7 +209,7 @@ final class DistributeConstants {
     /**
      * Previous name of preferences, used for failover logic for missing token/distribution group.
      */
-    static final String PREFERENCES_NAME_MC = "MobileCenter";
+    static final String PREFERENCES_NAME_MOBILE_CENTER = "MobileCenter";
 
     /**
      * Preference key to store download start time. Used to avoid showing install U.I. of a completed
