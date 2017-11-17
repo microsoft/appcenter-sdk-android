@@ -174,28 +174,27 @@ public class Push extends AbstractAppCenterService {
     }
 
     /**
-     * Sets the sender ID. Must be called prior to starting the Push service.
-     *
-     * @param senderId sender ID of your project.
-     */
-    private synchronized void instanceSetSenderId(String senderId) {
-        mSenderId = senderId;
-    }
-
-    /**
+     * @param context the context to retrieve FirebaseAnalytics instance.
      * @deprecated Future releases will not alter the state of Firebase Analytics data collection by
      * default, and this method will be removed. To remove your project's dependency on Firebase,
      * follow the documentation at https://aka.ms/abokiz.
-     *
+     * <p>
      * Enable firebase analytics collection.
-     *
-     * @param context the context to retrieve FirebaseAnalytics instance.
      */
     @Deprecated
     @SuppressWarnings("WeakerAccess")
     public static void enableFirebaseAnalytics(@NonNull Context context) {
         AppCenterLog.debug(LOG_TAG, "Enabling Firebase analytics collection.");
         getInstance().setFirebaseAnalyticsEnabled(context, true);
+    }
+
+    /**
+     * Sets the sender ID. Must be called prior to starting the Push service.
+     *
+     * @param senderId sender ID of your project.
+     */
+    private synchronized void instanceSetSenderId(String senderId) {
+        mSenderId = senderId;
     }
 
     /**
