@@ -43,11 +43,6 @@ public class Push extends AbstractAppCenterService {
     private static final String PUSH_GROUP = "group_push";
 
     /**
-     * Firebase analytics flag.
-     */
-    private static boolean sFirebaseAnalyticsEnabled;
-
-    /**
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
@@ -62,6 +57,11 @@ public class Push extends AbstractAppCenterService {
      * Push listener.
      */
     private PushListener mInstanceListener;
+
+    /**
+     * Firebase analytics flag.
+     */
+    private boolean mFirebaseAnalyticsEnabled;
 
     /**
      * Check if push already inspected from intent.
@@ -112,9 +112,6 @@ public class Push extends AbstractAppCenterService {
     @SuppressWarnings("WeakerAccess")
     public static synchronized Push getInstance() {
         if (sInstance == null) {
-
-            /* Explicitly set to false for testing. */
-            sFirebaseAnalyticsEnabled = false;
             sInstance = new Push();
         }
         return sInstance;
@@ -194,8 +191,7 @@ public class Push extends AbstractAppCenterService {
     @SuppressWarnings("WeakerAccess")
     public static void enableFirebaseAnalytics(@NonNull Context context) {
         AppCenterLog.debug(LOG_TAG, "Enabling Firebase analytics collection.");
-        setFirebaseAnalyticsEnabled(context, true);
-        sFirebaseAnalyticsEnabled = true;
+        getInstance().setFirebaseAnalyticsEnabled(context, true);
     }
 
     /**
@@ -205,12 +201,13 @@ public class Push extends AbstractAppCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
     @SuppressWarnings("MissingPermission")
-    private static void setFirebaseAnalyticsEnabled(@NonNull Context context, boolean enabled) {
+    private synchronized void setFirebaseAnalyticsEnabled(@NonNull Context context, boolean enabled) {
         try {
             FirebaseUtils.setAnalyticsEnabled(context, enabled);
         } catch (FirebaseUtils.FirebaseUnavailableException e) {
             AppCenterLog.warn(LOG_TAG, "Failed to enable or disable Firebase analytics collection.");
         }
+        mFirebaseAnalyticsEnabled = enabled;
     }
 
     /**
@@ -284,7 +281,7 @@ public class Push extends AbstractAppCenterService {
         mContext = context;
         super.onStarted(context, appSecret, channel);
 
-        if (FirebaseUtils.isFirebaseAvailable() && !sFirebaseAnalyticsEnabled) {
+        if (FirebaseUtils.isFirebaseAvailable() && !mFirebaseAnalyticsEnabled) {
             AppCenterLog.debug(LOG_TAG, "Disabling Firebase analytics collection by default.");
             setFirebaseAnalyticsEnabled(context, false);
         }
