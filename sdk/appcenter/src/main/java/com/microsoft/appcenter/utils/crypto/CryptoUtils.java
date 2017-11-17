@@ -133,6 +133,7 @@ public class CryptoUtils {
     /**
      * Supported crypto handlers. Ordered, first one is the preferred one.
      */
+    @VisibleForTesting
     private final Map<String, CryptoHandlerEntry> mCryptoHandlers = new LinkedHashMap<>();
 
     /**
@@ -438,9 +439,10 @@ public class CryptoUtils {
     }
 
     /**
-     * Internal structure for the register handler entries.
+     * Structure for the register handler entries.
      */
-    private static class CryptoHandlerEntry {
+    @VisibleForTesting
+    public static class CryptoHandlerEntry {
 
         /**
          * Crypto handler.
@@ -509,5 +511,13 @@ public class CryptoUtils {
         public String getNewEncryptedData() {
             return mNewEncryptedData;
         }
+    }
+
+    /**
+     * Test helper to look at which handlers were registered.
+     */
+    @VisibleForTesting
+    public Map<String, CryptoHandlerEntry> getCryptoHandlers() {
+        return mCryptoHandlers;
     }
 }

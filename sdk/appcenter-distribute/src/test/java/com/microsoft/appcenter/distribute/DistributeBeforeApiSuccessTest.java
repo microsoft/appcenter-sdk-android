@@ -62,6 +62,7 @@ import static com.microsoft.appcenter.utils.storage.StorageHelper.PreferencesSto
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
@@ -1030,7 +1031,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some encrypted token");
-        when(mCryptoUtils.decrypt("some encrypted token")).thenReturn(new CryptoUtils.DecryptedData("some token", "some better encrypted token"));
+        when(mCryptoUtils.decrypt("some encrypted token", anyBoolean())).thenReturn(new CryptoUtils.DecryptedData("some token", "some better encrypted token"));
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();

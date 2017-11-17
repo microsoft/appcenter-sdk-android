@@ -179,7 +179,7 @@ public class AbstractDistributeTest {
         /* Mock Crypto to not crypt. */
         mockStatic(CryptoUtils.class);
         when(CryptoUtils.getInstance(any(Context.class))).thenReturn(mCryptoUtils);
-        when(mCryptoUtils.decrypt(anyString())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
+        when(mCryptoUtils.decrypt(anyString(), anyBoolean())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
 
             @Override
             public CryptoUtils.DecryptedData answer(InvocationOnMock invocation) throws Throwable {

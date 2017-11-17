@@ -715,7 +715,7 @@ public class Distribute extends AbstractAppCenterService {
                 return;
             }
             else {
-                /* Use failover logic to search for missing token/disctribution group */
+                /* Use failover logic to search for missing token/distribution group */
                 updateToken = mSharedPreferencesFailover.getString(PREFERENCE_KEY_UPDATE_TOKEN, null);
                 distributionGroupId = mSharedPreferencesFailover.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null);
                 if (updateToken != null || distributionGroupId != null) {
