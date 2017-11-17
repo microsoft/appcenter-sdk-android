@@ -183,7 +183,10 @@ public class Push extends AbstractAppCenterService {
     }
 
     /**
-     * @deprecated
+     * @deprecated Future releases will not alter the state of Firebase Analytics data collection by
+     * default, and this method will be removed. To remove your project's dependency on Firebase,
+     * follow the documentation at https://aka.ms/abokiz.
+     *
      * Enable firebase analytics collection.
      *
      * @param context the context to retrieve FirebaseAnalytics instance.
