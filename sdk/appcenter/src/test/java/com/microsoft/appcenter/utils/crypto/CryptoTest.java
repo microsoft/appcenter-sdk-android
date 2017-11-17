@@ -189,7 +189,10 @@ public class CryptoTest {
     public void nullData() {
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1);
         assertNull(cryptoUtils.encrypt(null));
-        CryptoUtils.DecryptedData nullDecryptedData = cryptoUtils.decrypt(null, anyBoolean());
+        CryptoUtils.DecryptedData nullDecryptedData = cryptoUtils.decrypt(null, false);
+        assertNull(nullDecryptedData.getDecryptedData());
+        assertNull(nullDecryptedData.getNewEncryptedData());
+        nullDecryptedData = cryptoUtils.decrypt(null, true);
         assertNull(nullDecryptedData.getDecryptedData());
         assertNull(nullDecryptedData.getNewEncryptedData());
     }
@@ -198,7 +201,9 @@ public class CryptoTest {
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, apiLevel);
         String encrypted = cryptoUtils.encrypt("anything");
         assertEquals("None" + ALGORITHM_DATA_SEPARATOR + "anything", encrypted);
-        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encrypted, anyBoolean());
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encrypted, false);
+        assertEquals("anything", decryptedData.getDecryptedData());
+        decryptedData = cryptoUtils.decrypt(encrypted, true);
         assertEquals("anything", decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
     }
@@ -235,10 +240,16 @@ public class CryptoTest {
     @Test
     public void decryptUnknownAlgorithm() throws Exception {
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1);
-        CryptoUtils.DecryptedData data = cryptoUtils.decrypt("rot13:caesar", anyBoolean());
+        CryptoUtils.DecryptedData data = cryptoUtils.decrypt("rot13:caesar", false);
         assertEquals("rot13:caesar", data.getDecryptedData());
         assertNull(data.getNewEncryptedData());
-        data = cryptoUtils.decrypt(":", anyBoolean());
+        data = cryptoUtils.decrypt("rot13:caesar", true);
+        assertEquals("rot13:caesar", data.getDecryptedData());
+        assertNull(data.getNewEncryptedData());
+        data = cryptoUtils.decrypt(":", false);
+        assertEquals(":", data.getDecryptedData());
+        assertNull(data.getNewEncryptedData());
+        data = cryptoUtils.decrypt(":", true);
         assertEquals(":", data.getDecryptedData());
         assertNull(data.getNewEncryptedData());
     }
@@ -250,7 +261,10 @@ public class CryptoTest {
         String data = "anythingThatWouldMakeTheCipherFailForSomeReason";
         String encryptedData = cryptoUtils.encrypt(data);
         assertEquals(data, encryptedData);
-        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData, anyBoolean());
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData, false);
+        assertEquals(data, decryptedData.getDecryptedData());
+        assertNull(decryptedData.getNewEncryptedData());
+        decryptedData = cryptoUtils.decrypt(encryptedData, true);
         assertEquals(data, decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
     }
@@ -259,18 +273,27 @@ public class CryptoTest {
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, apiLevel);
         String encrypted = cryptoUtils.encrypt("anything");
         assertEquals(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "anything", encrypted);
-        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encrypted, anyBoolean());
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encrypted, false);
+        assertEquals("anything", decryptedData.getDecryptedData());
+        assertNull(decryptedData.getNewEncryptedData());
+        decryptedData = cryptoUtils.decrypt(encrypted, true);
         assertEquals("anything", decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
 
         /* Test old data encryption upgrade. */
-        CryptoUtils.DecryptedData oldDecryptedData = cryptoUtils.decrypt("None:oldData", anyBoolean());
+        CryptoUtils.DecryptedData oldDecryptedData = cryptoUtils.decrypt("None:oldData", false);
+        assertEquals("oldData", oldDecryptedData.getDecryptedData());
+        assertEquals(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "oldData", oldDecryptedData.getNewEncryptedData());
+        oldDecryptedData = cryptoUtils.decrypt("None:oldData", true);
         assertEquals("oldData", oldDecryptedData.getDecryptedData());
         assertEquals(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "oldData", oldDecryptedData.getNewEncryptedData());
 
         /* Check we can still read data after expiration. */
         doThrow(new CertificateExpiredException()).doNothing().when(mRsaCert).checkValidity();
-        decryptedData = cryptoUtils.decrypt(encrypted, anyBoolean());
+        decryptedData = cryptoUtils.decrypt(encrypted, false);
+        assertEquals("anything", decryptedData.getDecryptedData());
+        assertNull(decryptedData.getNewEncryptedData());
+        decryptedData = cryptoUtils.decrypt(encrypted, true);
         assertEquals("anything", decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
 
@@ -349,15 +372,24 @@ public class CryptoTest {
 
         /* The init vector is encoded alongside data, in the mock setup it's just a word. */
         assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "anything", encrypted);
-        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encrypted, anyBoolean());
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encrypted, false);
+        assertEquals("anything", decryptedData.getDecryptedData());
+        assertNull(decryptedData.getNewEncryptedData());
+        decryptedData = cryptoUtils.decrypt(encrypted, true);
         assertEquals("anything", decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
 
         /* Test old data encryption upgrade. */
-        CryptoUtils.DecryptedData oldDecryptedData = cryptoUtils.decrypt("None:oldData", anyBoolean());
+        CryptoUtils.DecryptedData oldDecryptedData = cryptoUtils.decrypt("None:oldData", false);
         assertEquals("oldData", oldDecryptedData.getDecryptedData());
         assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "oldData", oldDecryptedData.getNewEncryptedData());
-        CryptoUtils.DecryptedData oldDecryptedRsaData = cryptoUtils.decrypt(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "oldRsaData", anyBoolean());
+        oldDecryptedData = cryptoUtils.decrypt("None:oldData", true);
+        assertEquals("oldData", oldDecryptedData.getDecryptedData());
+        assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "oldData", oldDecryptedData.getNewEncryptedData());
+        CryptoUtils.DecryptedData oldDecryptedRsaData = cryptoUtils.decrypt(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "oldRsaData", false);
+        assertEquals("oldRsaData", oldDecryptedRsaData.getDecryptedData());
+        assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "oldRsaData", oldDecryptedRsaData.getNewEncryptedData());
+        oldDecryptedRsaData = cryptoUtils.decrypt(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "oldRsaData", true);
         assertEquals("oldRsaData", oldDecryptedRsaData.getDecryptedData());
         assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "oldRsaData", oldDecryptedRsaData.getNewEncryptedData());
 
@@ -369,14 +401,6 @@ public class CryptoTest {
 
     @Test
     public void registerHandlerWithOldMCKeyStore() throws Exception {
-        ArgumentCaptor<String> alias = ArgumentCaptor.forClass(String.class);
-        verify(mRsaBuilder, times(4)).setAlias(alias.capture());
-        String alias0 = alias.getAllValues().get(0);
-        String alias1 = alias.getAllValues().get(1);
-        String alias0MC = alias.getAllValues().get(2);
-        String alias1MC = alias.getAllValues().get(3);
-        assertNotEquals(alias0, alias1);
-        assertNotEquals(alias0MC, alias1MC);
 
         /* Create a calendar which will fall back to the MC aliases */
         Calendar calendar = Calendar.getInstance();
