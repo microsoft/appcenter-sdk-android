@@ -31,11 +31,10 @@ subprojects {
 
 // Task to copy a specific APK from sub projects to current project, for App Center build to find it.
 def copyApkToProjectBuildTask(buildType) {
+    Properties properties = new Properties()
+    properties.load(rootProject.file('local.properties').newDataInputStream())
+    def dependency = properties.get("dimension.dependency", "jcenter")
     subprojects.each { project ->
-        def dependency = System.getenv("DIMENSION_DEPENDENCY")
-        if (dependency == null) {
-            dependency = "jcenter"
-        }
         def apkPath = "${project.buildDir}/outputs/apk/${dependency}Dependency/${buildType}/${project.name}-${dependency}Dependency-${buildType}"
         if ("release".equals(buildType)) {
             apkPath += "-unsigned"
