@@ -1,9 +1,11 @@
 package com.microsoft.appcenter.push;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 /**
@@ -40,6 +42,19 @@ class FirebaseUtils {
             return true;
         } catch (FirebaseUnavailableException e) {
             return false;
+        }
+    }
+
+    @SuppressWarnings("MissingPermission")
+    static void setAnalyticsEnabled(@NonNull Context context, boolean enabled) throws FirebaseUnavailableException {
+        try {
+            FirebaseAnalytics instance = FirebaseAnalytics.getInstance(context);
+            if (instance == null) {
+                throw new FirebaseUnavailableException("null instance");
+            }
+            instance.setAnalyticsCollectionEnabled(enabled);
+        } catch (NoClassDefFoundError | IllegalAccessError e) {
+            throw new FirebaseUnavailableException(e);
         }
     }
 

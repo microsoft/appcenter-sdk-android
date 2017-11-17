@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
@@ -13,8 +14,8 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
@@ -56,6 +57,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
+
 @SuppressWarnings({"unused", "MissingPermission"})
 @PrepareForTest({
         Push.class,
@@ -66,6 +68,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
         AppCenter.class,
         StorageHelper.PreferencesStorage.class,
         FirebaseInstanceId.class,
+        FirebaseAnalytics.class,
         HandlerUtils.class
 })
 public class PushTest {
@@ -78,6 +81,9 @@ public class PushTest {
 
     @Mock
     private FirebaseInstanceId mFirebaseInstanceId;
+
+    @Mock
+    private FirebaseAnalytics mFirebaseAnalyticsInstance;
 
     @Mock
     private AppCenterHandler mAppCenterHandler;
@@ -128,6 +134,10 @@ public class PushTest {
         mockStatic(FirebaseInstanceId.class);
         when(FirebaseInstanceId.getInstance()).thenReturn(mFirebaseInstanceId);
 
+        /* Mock Firebase Analytics instance. */
+        mockStatic(FirebaseAnalytics.class);
+        when(FirebaseAnalytics.getInstance(any(Context.class))).thenReturn(mFirebaseAnalyticsInstance);
+
         /* Mock handler. */
         mockStatic(HandlerUtils.class);
         doAnswer(new Answer<Void>() {
@@ -160,7 +170,7 @@ public class PushTest {
     }
 
     @Test
-    public void setEnabled() throws InterruptedException {
+    public void setEnabled() throws InterruptedException, FirebaseUtils.FirebaseUnavailableException {
 
         /* Before start it's disabled. */
         assertFalse(Push.isEnabled().get());
@@ -218,6 +228,38 @@ public class PushTest {
         /* No additional error was logged since before start. */
         verifyStatic();
         AppCenterLog.error(anyString(), anyString());
+        verify(mFirebaseAnalyticsInstance).setAnalyticsCollectionEnabled(false);
+        verify(mFirebaseAnalyticsInstance, never()).setAnalyticsCollectionEnabled(true);
+
+        /* If disabled before start, still we must disable firebase. */
+        Push.unsetInstance();
+        push = Push.getInstance();
+        start(mock(Context.class), push, channel);
+        verify(mFirebaseAnalyticsInstance, times(2)).setAnalyticsCollectionEnabled(false);
+        verify(mFirebaseAnalyticsInstance, never()).setAnalyticsCollectionEnabled(true);
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void verifyEnableFirebaseAnalytics() throws FirebaseUtils.FirebaseUnavailableException {
+        Context contextMock = mock(Context.class);
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(contextMock, push, channel);
+        verify(mFirebaseAnalyticsInstance).setAnalyticsCollectionEnabled(false);
+        Push.enableFirebaseAnalytics(contextMock);
+        verify(mFirebaseAnalyticsInstance).setAnalyticsCollectionEnabled(false);
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void verifyEnableFirebaseAnalyticsBeforeStart() throws FirebaseUtils.FirebaseUnavailableException {
+        Context contextMock = mock(Context.class);
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        Push.enableFirebaseAnalytics(contextMock);
+        start(contextMock, push, channel);
+        verify(mFirebaseAnalyticsInstance, never()).setAnalyticsCollectionEnabled(false);
     }
 
     @Test
@@ -563,6 +605,36 @@ public class PushTest {
         assertTrue(Push.isEnabled().get());
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), any(Exception.class));
+    }
+
+    @Test
+    public void firebaseAnalyticsThrowsNoClassDefFoundError() {
+        when(FirebaseAnalytics.getInstance(any(Context.class))).thenThrow(new NoClassDefFoundError());
+        Context contextMock = mock(Context.class);
+        start(contextMock, Push.getInstance(), mock(Channel.class));
+        assertTrue(Push.isEnabled().get());
+        verifyStatic();
+        AppCenterLog.warn(anyString(), anyString());
+    }
+
+    @Test
+    public void firebaseAnalyticsThrowsIllegalAccessError() {
+        when(FirebaseAnalytics.getInstance(any(Context.class))).thenThrow(new IllegalAccessError());
+        Context contextMock = mock(Context.class);
+        start(contextMock, Push.getInstance(), mock(Channel.class));
+        assertTrue(Push.isEnabled().get());
+        verifyStatic();
+        AppCenterLog.warn(anyString(), anyString());
+    }
+
+    @Test
+    public void firebaseAnalyticsNullInstance() {
+        when(FirebaseAnalytics.getInstance(any(Context.class))).thenReturn(null);
+        Context contextMock = mock(Context.class);
+        start(contextMock, Push.getInstance(), mock(Channel.class));
+        assertTrue(Push.isEnabled().get());
+        verifyStatic();
+        AppCenterLog.warn(anyString(), anyString());
     }
 
     private static Intent createPushIntent(String title, String message, final Map<String, String> customData) {
