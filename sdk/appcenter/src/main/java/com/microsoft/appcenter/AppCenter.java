@@ -187,7 +187,7 @@ public class AppCenter {
      *
      * @return The current version of App Center SDK.
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "SameReturnValue"})
     public static String getSdkVersion() {
         return com.microsoft.appcenter.BuildConfig.VERSION_NAME;
     }

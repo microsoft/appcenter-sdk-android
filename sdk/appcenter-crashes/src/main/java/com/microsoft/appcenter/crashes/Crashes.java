@@ -44,6 +44,7 @@ import java.util.UUID;
 /**
  * Crashes service.
  */
+@SuppressWarnings("WeakerAccess")
 public class Crashes extends AbstractAppCenterService {
 
     /**

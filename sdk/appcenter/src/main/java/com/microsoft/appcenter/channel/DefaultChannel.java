@@ -114,9 +114,10 @@ public class DefaultChannel implements Channel {
     /**
      * Creates and initializes a new instance.
      *
-     * @param context       The context.
-     * @param appSecret     The application secret.
-     * @param logSerializer The log serializer.
+     * @param context           The context.
+     * @param appSecret         The application secret.
+     * @param logSerializer     The log serializer.
+     * @param appCenterHandler  App Center looper thread handler.
      */
     public DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler) {
         this(context, appSecret, buildDefaultPersistence(logSerializer), new IngestionHttp(context, logSerializer), appCenterHandler);
