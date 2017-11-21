@@ -2,6 +2,7 @@ package com.microsoft.appcenter.sasquatch.features;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 
@@ -13,7 +14,6 @@ import com.microsoft.appcenter.sasquatch.activities.DummyActivity;
 import com.microsoft.appcenter.sasquatch.activities.EventActivity;
 import com.microsoft.appcenter.sasquatch.activities.ManagedErrorActivity;
 import com.microsoft.appcenter.sasquatch.activities.PageActivity;
-import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ public final class TestFeatures {
                 sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
             }
         } catch (Exception e) {
-            AppCenterLog.info("AppCenterSasquatch", "CustomProperties not yet available in this flavor.");
+            Log.i("AppCenterSasquatch", "CustomProperties not yet available in this flavor.");
         }
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
     }

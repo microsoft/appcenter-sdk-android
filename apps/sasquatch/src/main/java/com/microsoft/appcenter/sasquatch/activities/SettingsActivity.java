@@ -2,7 +2,10 @@ package com.microsoft.appcenter.sasquatch.activities;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
@@ -11,6 +14,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Patterns;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
@@ -33,10 +37,16 @@ import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APP_SECRET_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FILE_ATTACHMENT_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FIREBASE_ENABLED_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_URL_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.TEXT_ATTACHMENT_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.sCrashesListener;
 
 public class SettingsActivity extends AppCompatActivity {
+
+    private static final String LOG_TAG = "SettingsActivity";
+    private static final int FILE_ATTACHMENT_DIALOG_ID = 1;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -66,6 +76,8 @@ public class SettingsActivity extends AppCompatActivity {
                     return AppCenter.isEnabled().get();
                 }
             });
+
+            /* Analytics. */
             initCheckBoxSetting(R.string.appcenter_analytics_state_key, R.string.appcenter_analytics_state_summary_enabled, R.string.appcenter_analytics_state_summary_disabled, new HasEnabled() {
 
                 @Override
@@ -78,6 +90,20 @@ public class SettingsActivity extends AppCompatActivity {
                     return Analytics.isEnabled().get();
                 }
             });
+            initCheckBoxSetting(R.string.appcenter_auto_page_tracking_key, R.string.appcenter_auto_page_tracking_enabled, R.string.appcenter_auto_page_tracking_disabled, new HasEnabled() {
+
+                @Override
+                public boolean isEnabled() {
+                    return AnalyticsPrivateHelper.isAutoPageTrackingEnabled();
+                }
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    AnalyticsPrivateHelper.setAutoPageTrackingEnabled(enabled);
+                }
+            });
+
+            /* Crashes. */
             initCheckBoxSetting(R.string.appcenter_crashes_state_key, R.string.appcenter_crashes_state_summary_enabled, R.string.appcenter_crashes_state_summary_disabled, new HasEnabled() {
 
                 @Override
@@ -90,6 +116,32 @@ public class SettingsActivity extends AppCompatActivity {
                     return Crashes.isEnabled().get();
                 }
             });
+            initChangeableSetting(R.string.appcenter_crashes_text_attachment_key, getCrashesTextAttachmentSummary(), new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    setKeyValue(TEXT_ATTACHMENT_KEY, (String) newValue);
+                    sCrashesListener.setTextAttachment((String) newValue);
+                    preference.setSummary(getCrashesTextAttachmentSummary());
+                    return true;
+                }
+            });
+            initClickableSetting(R.string.appcenter_crashes_file_attachment_key, getCrashesFileAttachmentSummary(), new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    Intent intent;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                        intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    } else {
+                        intent = new Intent(Intent.ACTION_GET_CONTENT);
+                    }
+                    intent.setType("*/*");
+                    startActivityForResult(Intent.createChooser(intent, "Select attachment file"), FILE_ATTACHMENT_DIALOG_ID);
+                    return true;
+                }
+            });
+
+            /* Distribute. */
             initCheckBoxSetting(R.string.appcenter_distribute_state_key, R.string.appcenter_distribute_state_summary_enabled, R.string.appcenter_distribute_state_summary_disabled, new HasEnabled() {
 
                 @Override
@@ -102,6 +154,8 @@ public class SettingsActivity extends AppCompatActivity {
                     return Distribute.isEnabled().get();
                 }
             });
+
+            /* Push. */
             initCheckBoxSetting(R.string.appcenter_push_state_key, R.string.appcenter_push_state_summary_enabled, R.string.appcenter_push_state_summary_disabled, new HasEnabled() {
 
                 @Override
@@ -114,6 +168,29 @@ public class SettingsActivity extends AppCompatActivity {
                     return Push.isEnabled().get();
                 }
             });
+            initCheckBoxSetting(R.string.appcenter_push_firebase_state_key, R.string.appcenter_push_firebase_summary_enabled, R.string.appcenter_push_firebase_summary_disabled, new HasEnabled() {
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    try {
+                        if (enabled) {
+                            Push.enableFirebaseAnalytics(getActivity());
+                        } else {
+                            FirebaseAnalytics.getInstance(getActivity()).setAnalyticsCollectionEnabled(false);
+                        }
+                        MainActivity.sSharedPreferences.edit().putBoolean(FIREBASE_ENABLED_KEY, enabled).apply();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    return isFirebaseEnabled();
+                }
+            });
+
+            /* Real User Measurements. */
             try {
                 @SuppressWarnings("unchecked")
                 Class<? extends AppCenterService> rum = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.rum.RealUserMeasurements");
@@ -143,39 +220,8 @@ public class SettingsActivity extends AppCompatActivity {
             } catch (Exception e) {
                 getPreferenceScreen().removePreference(findPreference(getString(R.string.real_user_measurements_key)));
             }
-            initCheckBoxSetting(R.string.appcenter_push_firebase_state_key, R.string.appcenter_push_firebase_summary_enabled, R.string.appcenter_push_firebase_summary_disabled, new HasEnabled() {
 
-                @Override
-                public void setEnabled(boolean enabled) {
-                    try {
-                        if (enabled) {
-                            Push.enableFirebaseAnalytics(getActivity());
-                        } else {
-                            FirebaseAnalytics.getInstance(getActivity()).setAnalyticsCollectionEnabled(false);
-                        }
-                        MainActivity.sSharedPreferences.edit().putBoolean(FIREBASE_ENABLED_KEY, enabled).apply();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-
-                @Override
-                public boolean isEnabled() {
-                    return isFirebaseEnabled();
-                }
-            });
-            initCheckBoxSetting(R.string.appcenter_auto_page_tracking_key, R.string.appcenter_auto_page_tracking_enabled, R.string.appcenter_auto_page_tracking_disabled, new HasEnabled() {
-
-                @Override
-                public boolean isEnabled() {
-                    return AnalyticsPrivateHelper.isAutoPageTrackingEnabled();
-                }
-
-                @Override
-                public void setEnabled(boolean enabled) {
-                    AnalyticsPrivateHelper.setAutoPageTrackingEnabled(enabled);
-                }
-            });
+            /* Application Information. */
             initClickableSetting(R.string.install_id_key, String.valueOf(AppCenter.getInstallId().get()), new Preference.OnPreferenceClickListener() {
 
                 @Override
@@ -239,6 +285,8 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
+
+            /* Miscellaneous. */
             initClickableSetting(R.string.clear_crash_user_confirmation_key, new Preference.OnPreferenceClickListener() {
 
                 @Override
@@ -329,8 +377,26 @@ public class SettingsActivity extends AppCompatActivity {
             }
         }
 
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            super.onActivityResult(requestCode, resultCode, data);
+            if (requestCode == FILE_ATTACHMENT_DIALOG_ID && resultCode == RESULT_OK) {
+                Uri fileAttachment = data != null ? data.getData() : null;
+                setKeyValue(FILE_ATTACHMENT_KEY, fileAttachment != null ? fileAttachment.toString() : null);
+                MainActivity.sCrashesListener.setFileAttachment(fileAttachment);
+                Preference preference = getPreferenceManager().findPreference(getString(R.string.appcenter_crashes_file_attachment_key));
+                if (preference != null) {
+                    preference.setSummary(getCrashesFileAttachmentSummary());
+                }
+            }
+        }
+
         private void initCheckBoxSetting(int key, final int enabledSummary, final int disabledSummary, final HasEnabled hasEnabled) {
             Preference preference = getPreferenceManager().findPreference(getString(key));
+            if (preference == null) {
+                Log.w(LOG_TAG, "Couldn't find preference for key: " + key);
+                return;
+            }
             preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 
                 @Override
@@ -353,14 +419,30 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         @SuppressWarnings("SameParameterValue")
-        private void initClickableSetting(int key, Preference.OnPreferenceClickListener listener) {
-            initClickableSetting(key, null, listener);
+        private void initClickableSetting(int key, Preference.OnPreferenceClickListener clickListener) {
+            initClickableSetting(key, null, clickListener);
         }
 
         @SuppressWarnings("SameParameterValue")
         private void initClickableSetting(int key, String summary, Preference.OnPreferenceClickListener clickListener) {
             Preference preference = getPreferenceManager().findPreference(getString(key));
+            if (preference == null) {
+                Log.w(LOG_TAG, "Couldn't find preference for key: " + key);
+                return;
+            }
             preference.setOnPreferenceClickListener(clickListener);
+            if (summary != null) {
+                preference.setSummary(summary);
+            }
+        }
+
+        private void initChangeableSetting(int key, String summary, Preference.OnPreferenceChangeListener changeListener) {
+            Preference preference = getPreferenceManager().findPreference(getString(key));
+            if (preference == null) {
+                Log.w(LOG_TAG, "Couldn't find preference for key: " + key);
+                return;
+            }
+            preference.setOnPreferenceChangeListener(changeListener);
             if (summary != null) {
                 preference.setSummary(summary);
             }
@@ -378,6 +460,24 @@ public class SettingsActivity extends AppCompatActivity {
 
         private boolean isFirebaseEnabled() {
             return MainActivity.sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false);
+        }
+
+        private String getCrashesTextAttachmentSummary() {
+            String textAttachment = MainActivity.sCrashesListener.getTextAttachment();
+            if (!TextUtils.isEmpty(textAttachment)) {
+                return getString(R.string.appcenter_crashes_text_attachment_summary, textAttachment.length());
+            }
+            return getString(R.string.appcenter_crashes_text_attachment_summary_empty);
+        }
+
+        private String getCrashesFileAttachmentSummary() {
+            Uri fileAttachment = MainActivity.sCrashesListener.getFileAttachment();
+            if (fileAttachment != null) {
+                String name = MainActivity.sCrashesListener.getFileAttachmentDisplayName();
+                String size = MainActivity.sCrashesListener.getFileAttachmentSize();
+                return getString(R.string.appcenter_crashes_file_attachment_summary, name, size);
+            }
+            return getString(R.string.appcenter_crashes_file_attachment_summary_empty);
         }
 
         private interface HasEnabled {

@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -14,7 +15,6 @@ import android.widget.Toast;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
-import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import java.lang.reflect.Method;
@@ -26,7 +26,7 @@ public class DeviceInfoActivity extends AppCompatActivity implements NetworkStat
     /**
      * TAG used in logging.
      */
-    private static final String TAG = "DeviceInfoActivity";
+    private static final String LOG_TAG = "DeviceInfoActivity";
 
     private static final String[] METHOD_BLACK_LIST = {"getClass"};
 
@@ -108,7 +108,7 @@ public class DeviceInfoActivity extends AppCompatActivity implements NetworkStat
     @Override
     public void onNetworkStateUpdated(boolean connected) {
         String message = "Network " + (connected ? "up" : "down");
-        AppCenterLog.verbose(TAG, message);
+        Log.v(LOG_TAG, message);
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 

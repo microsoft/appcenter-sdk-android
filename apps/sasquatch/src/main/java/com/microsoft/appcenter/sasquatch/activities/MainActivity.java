@@ -1,18 +1,12 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
-import android.support.test.espresso.idling.CountingIdlingResource;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
@@ -20,25 +14,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterService;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
-import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
-import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
-import com.microsoft.appcenter.crashes.AbstractCrashesListener;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesListener;
-import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.distribute.Distribute;
-import com.microsoft.appcenter.ingestion.models.LogWithProperties;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.push.PushListener;
-import com.microsoft.appcenter.push.PushNotification;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.features.TestFeatures;
@@ -48,11 +35,6 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
-import org.json.JSONObject;
-
-import java.io.ByteArrayOutputStream;
-import java.util.Arrays;
-import java.util.Map;
 import java.util.UUID;
 
 
@@ -62,7 +44,12 @@ public class MainActivity extends AppCompatActivity {
     static final String APP_SECRET_KEY = "appSecret";
     static final String LOG_URL_KEY = "logUrl";
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
+    static final String TEXT_ATTACHMENT_KEY = "textAttachment";
+    static final String FILE_ATTACHMENT_KEY = "fileAttachment";
     static SharedPreferences sSharedPreferences;
+    static SasquatchAnalyticsListener sAnalyticsListener;
+    static SasquatchCrashesListener sCrashesListener;
+    static SasquatchPushListener sPushListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +85,13 @@ public class MainActivity extends AppCompatActivity {
         /* Enable Firebase analytics if we enabled the setting previously. */
         if (sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false)) {
             Push.enableFirebaseAnalytics(this);
+        }
+
+        /* Set crash attachments. */
+        sCrashesListener.setTextAttachment(sSharedPreferences.getString(TEXT_ATTACHMENT_KEY, null));
+        String fileAttachment = sSharedPreferences.getString(FILE_ATTACHMENT_KEY, null);
+        if (fileAttachment != null) {
+            sCrashesListener.setFileAttachment(Uri.parse(fileAttachment));
         }
 
         /* Start App Center. */
@@ -172,17 +166,27 @@ public class MainActivity extends AppCompatActivity {
         Push.checkLaunchedFromNotification(this, intent);
     }
 
+    @NonNull
     private AnalyticsListener getAnalyticsListener() {
-        return new SasquatchAnalyticsListener(this);
+        if (sAnalyticsListener == null) {
+            sAnalyticsListener = new SasquatchAnalyticsListener(this);
+        }
+        return sAnalyticsListener;
     }
 
     @NonNull
     private CrashesListener getCrashesListener() {
-        return new SasquatchCrashesListener(this);
+        if (sCrashesListener == null) {
+            sCrashesListener = new SasquatchCrashesListener(this);
+        }
+        return sCrashesListener;
     }
 
     @NonNull
     private PushListener getPushListener() {
-        return new SasquatchPushListener();
+        if (sPushListener == null) {
+            sPushListener = new SasquatchPushListener();
+        }
+        return sPushListener;
     }
 }
