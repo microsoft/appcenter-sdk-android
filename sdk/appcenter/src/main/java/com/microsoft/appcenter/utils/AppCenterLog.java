@@ -13,6 +13,7 @@ import static android.util.Log.VERBOSE;
  *
  * @see Log
  */
+@SuppressWarnings("SameParameterValue")
 public class AppCenterLog {
 
     /**
