@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+AZURE_CLI_PATH=$1
+AZURE_STORAGE_ACCESS_KEY=${2:-$AZURE_STORAGE_ACCESS_KEY}
+
 BINARY_FILE_FILTER="*release.aar"
 PUBLISH_VERSION="$(grep "versionName = '" *.gradle | awk -F "[']" '{print $2}')"
 ARCHIVE=AppCenter-SDK-Android-${PUBLISH_VERSION}
@@ -11,14 +14,16 @@ FILES="$(find sdk -name $BINARY_FILE_FILTER)"
 for file in $FILES
 do
     echo "Found binary" $file
-    cp $file $BITRISE_DEPLOY_DIR
+    cp $file $BUILD_ARTIFACTSTAGINGDIRECTORY
 done
 
 # Zip them
-cd $BITRISE_DEPLOY_DIR
+cd $BUILD_ARTIFACTSTAGINGDIRECTORY
 mkdir $ARCHIVE
 cp $BINARY_FILE_FILTER $ARCHIVE
 zip -r $ZIP_FILE $ARCHIVE
+cd -
 
 # Upload file
-$1azure storage blob upload $ZIP_FILE sdk
+AZURE_STORAGE_ACCESS_KEY=$AZURE_STORAGE_ACCESS_KEY \
+${AZURE_CLI_PATH}azure storage blob upload $BUILD_ARTIFACTSTAGINGDIRECTORY/$ZIP_FILE sdk
