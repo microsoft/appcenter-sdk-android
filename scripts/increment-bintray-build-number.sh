@@ -1,9 +1,28 @@
 #!/bin/bash
 set -e
 
-# Get credentials
-BINTRAY_USER=${1:-$BINTRAY_USER}
-BINTRAY_KEY=${2:-$BINTRAY_KEY}
+# Command line arguments
+while getopts ":hu:p:" opt; do
+  case $opt in
+    h)
+      USE_HASH=true >&2
+      ;;
+    u)
+      BINTRAY_USER=$OPTARG >&2
+      ;;
+    p)
+      BINTRAY_KEY=$OPTARG >&2
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
 
 # Compute new version
 gradleVersion=`egrep "versionName = '(.*)'" *.gradle | sed -E "s/^.*versionName = '(.*)'.*$/\1/"`
@@ -23,7 +42,7 @@ else
 fi
 newVersion=$gradleVersion-$buildNumber
 
-if [[ "$1" == "--use-hash" ]]
+if [[ "$USE_HASH" == "true" ]]
 then
   newVersion+="+$(git rev-parse --short HEAD)"
 fi
