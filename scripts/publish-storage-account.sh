@@ -1,8 +1,7 @@
 #!/bin/bash
 set -e
 
-AZURE_CLI_PATH=$1
-AZURE_STORAGE_ACCESS_KEY=${2:-$AZURE_STORAGE_ACCESS_KEY}
+AZURE_STORAGE_ACCESS_KEY=${1:-$AZURE_STORAGE_ACCESS_KEY}
 
 BINARY_FILE_FILTER="*release.aar"
 PUBLISH_VERSION="$(grep "versionName = '" *.gradle | awk -F "[']" '{print $2}')"
@@ -26,4 +25,4 @@ cd -
 
 # Upload file
 AZURE_STORAGE_ACCESS_KEY=$AZURE_STORAGE_ACCESS_KEY \
-${AZURE_CLI_PATH}azure storage blob upload $BUILD_ARTIFACTSTAGINGDIRECTORY/$ZIP_FILE sdk
+azure storage blob upload $BUILD_ARTIFACTSTAGINGDIRECTORY/$ZIP_FILE sdk
