@@ -19,6 +19,7 @@ import com.microsoft.appcenter.crashes.CrashesPrivateHelper;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.hamcrest.Description;
@@ -100,14 +101,14 @@ public class CrashesTest {
         mActivityTestRule.launchActivity(new Intent());
 
         /* Register IdlingResource */
-        Espresso.registerIdlingResources(MainActivity.crashesIdlingResource);
+        Espresso.registerIdlingResources(SasquatchCrashesListener.crashesIdlingResource);
     }
 
     @After
     public final void tearDown() {
 
         /* Unregister IdlingResource */
-        Espresso.unregisterIdlingResources(MainActivity.crashesIdlingResource);
+        Espresso.unregisterIdlingResources(SasquatchCrashesListener.crashesIdlingResource);
     }
 
     @Test

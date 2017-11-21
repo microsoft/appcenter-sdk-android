@@ -6,6 +6,7 @@ import android.support.test.rule.ActivityTestRule;
 
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.listeners.SasquatchAnalyticsListener;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -78,8 +79,8 @@ public class AnalyticsTest {
     }
 
     private void waitAnalytics() {
-        Espresso.registerIdlingResources(MainActivity.analyticsIdlingResource);
+        Espresso.registerIdlingResources(SasquatchAnalyticsListener.analyticsIdlingResource);
         onView(isRoot()).perform(waitFor(CHECK_DELAY));
-        Espresso.unregisterIdlingResources(MainActivity.analyticsIdlingResource);
+        Espresso.unregisterIdlingResources(SasquatchAnalyticsListener.analyticsIdlingResource);
     }
 }
