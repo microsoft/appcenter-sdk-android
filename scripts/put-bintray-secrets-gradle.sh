@@ -1,6 +1,7 @@
 #!/bin/bash
-set -e
-echo "bintray.user=$BINTRAY_USER" > local.properties
-echo "bintray.key=$BINTRAY_KEY" >> local.properties
-echo "bintray.user.org=$BINTRAY_USER_ORG" >> local.properties
-echo "bintray.repo=$BINTRAY_REPO" >> local.properties
+cat >> local.properties << EOL
+bintray.user=${1:-$BINTRAY_USER}
+bintray.key=${2:-$BINTRAY_KEY}
+bintray.repo=${3:-$BINTRAY_REPO}
+bintray.user.org=${4:-$BINTRAY_USER_ORG}
+EOL
