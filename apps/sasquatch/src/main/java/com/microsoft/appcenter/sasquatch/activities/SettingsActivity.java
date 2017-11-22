@@ -381,8 +381,8 @@ public class SettingsActivity extends AppCompatActivity {
         @Override
         public void onActivityResult(int requestCode, int resultCode, Intent data) {
             super.onActivityResult(requestCode, resultCode, data);
-            if (requestCode == FILE_ATTACHMENT_DIALOG_ID && resultCode == RESULT_OK) {
-                Uri fileAttachment = data != null ? data.getData() : null;
+            if (requestCode == FILE_ATTACHMENT_DIALOG_ID) {
+                Uri fileAttachment = resultCode == RESULT_OK && data != null ? data.getData() : null;
                 setKeyValue(FILE_ATTACHMENT_KEY, fileAttachment != null ? fileAttachment.toString() : null);
                 MainActivity.sCrashesListener.setFileAttachment(fileAttachment);
                 Preference preference = getPreferenceManager().findPreference(getString(R.string.appcenter_crashes_file_attachment_key));
