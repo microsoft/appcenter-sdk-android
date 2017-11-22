@@ -1,18 +1,12 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
-import android.support.test.espresso.idling.CountingIdlingResource;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
@@ -20,50 +14,51 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterService;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
-import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
-import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
-import com.microsoft.appcenter.crashes.AbstractCrashesListener;
 import com.microsoft.appcenter.crashes.Crashes;
-import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
+import com.microsoft.appcenter.crashes.CrashesListener;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.distribute.Distribute;
-import com.microsoft.appcenter.ingestion.models.LogWithProperties;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.push.PushListener;
-import com.microsoft.appcenter.push.PushNotification;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.features.TestFeatures;
 import com.microsoft.appcenter.sasquatch.features.TestFeaturesListAdapter;
-import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.sasquatch.listeners.SasquatchAnalyticsListener;
+import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
+import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
-import org.json.JSONObject;
-
-import java.io.ByteArrayOutputStream;
-import java.util.Arrays;
-import java.util.Map;
 import java.util.UUID;
 
 
 public class MainActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = "AppCenterSasquatch";
+
     static final String APP_SECRET_KEY = "appSecret";
+
     static final String LOG_URL_KEY = "logUrl";
+
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
-    @VisibleForTesting
-    static final CountingIdlingResource analyticsIdlingResource = new CountingIdlingResource("analytics");
-    @VisibleForTesting
-    static final CountingIdlingResource crashesIdlingResource = new CountingIdlingResource("crashes");
+
+    static final String TEXT_ATTACHMENT_KEY = "textAttachment";
+
+    static final String FILE_ATTACHMENT_KEY = "fileAttachment";
+
     static SharedPreferences sSharedPreferences;
+
+    static SasquatchAnalyticsListener sAnalyticsListener;
+
+    static SasquatchCrashesListener sCrashesListener;
+
+    static SasquatchPushListener sPushListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +94,13 @@ public class MainActivity extends AppCompatActivity {
         /* Enable Firebase analytics if we enabled the setting previously. */
         if (sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false)) {
             Push.enableFirebaseAnalytics(this);
+        }
+
+        /* Set crash attachments. */
+        sCrashesListener.setTextAttachment(sSharedPreferences.getString(TEXT_ATTACHMENT_KEY, null));
+        String fileAttachment = sSharedPreferences.getString(FILE_ATTACHMENT_KEY, null);
+        if (fileAttachment != null) {
+            sCrashesListener.setFileAttachment(Uri.parse(fileAttachment));
         }
 
         /* Start App Center. */
@@ -173,150 +175,27 @@ public class MainActivity extends AppCompatActivity {
         Push.checkLaunchedFromNotification(this, intent);
     }
 
+    @NonNull
     private AnalyticsListener getAnalyticsListener() {
-        return new AnalyticsListener() {
-
-            @Override
-            public void onBeforeSending(com.microsoft.appcenter.ingestion.models.Log log) {
-                if (log instanceof EventLog) {
-                    Toast.makeText(MainActivity.this, R.string.event_before_sending, Toast.LENGTH_SHORT).show();
-                } else if (log instanceof PageLog) {
-                    Toast.makeText(MainActivity.this, R.string.page_before_sending, Toast.LENGTH_SHORT).show();
-                }
-                analyticsIdlingResource.increment();
-            }
-
-            @Override
-            public void onSendingFailed(com.microsoft.appcenter.ingestion.models.Log log, Exception e) {
-                String message = null;
-                if (log instanceof EventLog) {
-                    message = getString(R.string.event_sent_failed);
-                } else if (log instanceof PageLog) {
-                    message = getString(R.string.page_sent_failed);
-                }
-                if (message != null) {
-                    message = String.format("%s\nException: %s", message, e.toString());
-                    Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
-                }
-                analyticsIdlingResource.decrement();
-            }
-
-            @Override
-            public void onSendingSucceeded(com.microsoft.appcenter.ingestion.models.Log log) {
-                String message = null;
-                if (log instanceof EventLog) {
-                    message = String.format("%s\nName: %s", getString(R.string.event_sent_succeeded), ((EventLog) log).getName());
-                } else if (log instanceof PageLog) {
-                    message = String.format("%s\nName: %s", getString(R.string.page_sent_succeeded), ((PageLog) log).getName());
-                }
-                if (message != null) {
-                    if (((LogWithProperties) log).getProperties() != null) {
-                        message += String.format("\nProperties: %s", new JSONObject(((LogWithProperties) log).getProperties()).toString());
-                    }
-                    Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
-                }
-                analyticsIdlingResource.decrement();
-            }
-        };
+        if (sAnalyticsListener == null) {
+            sAnalyticsListener = new SasquatchAnalyticsListener(this);
+        }
+        return sAnalyticsListener;
     }
 
     @NonNull
-    private AbstractCrashesListener getCrashesListener() {
-        return new AbstractCrashesListener() {
-
-            @Override
-            public boolean shouldAwaitUserConfirmation() {
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder
-                        .setTitle(R.string.crash_confirmation_dialog_title)
-                        .setMessage(R.string.crash_confirmation_dialog_message)
-                        .setPositiveButton(R.string.crash_confirmation_dialog_send_button, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Crashes.notifyUserConfirmation(Crashes.SEND);
-                            }
-                        })
-                        .setNegativeButton(R.string.crash_confirmation_dialog_not_send_button, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
-                            }
-                        })
-                        .setNeutralButton(R.string.crash_confirmation_dialog_always_send_button, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
-                            }
-                        });
-                builder.create().show();
-                return true;
-            }
-
-            @Override
-            public Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report) {
-
-                /* Attach some text. */
-                ErrorAttachmentLog textLog = ErrorAttachmentLog.attachmentWithText("This is a text attachment.", "text.txt");
-
-                /* Attach app icon to test binary. */
-                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
-                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-                byte[] bitMapData = stream.toByteArray();
-                ErrorAttachmentLog binaryLog = ErrorAttachmentLog.attachmentWithBinary(bitMapData, "icon.jpeg", "image/jpeg");
-
-                /* Return attachments as list. */
-                return Arrays.asList(textLog, binaryLog);
-            }
-
-            @Override
-            public void onBeforeSending(ErrorReport report) {
-                Toast.makeText(MainActivity.this, R.string.crash_before_sending, Toast.LENGTH_SHORT).show();
-                crashesIdlingResource.increment();
-            }
-
-            @Override
-            public void onSendingFailed(ErrorReport report, Exception e) {
-                Toast.makeText(MainActivity.this, R.string.crash_sent_failed, Toast.LENGTH_SHORT).show();
-                crashesIdlingResource.decrement();
-            }
-
-            @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-            @Override
-            public void onSendingSucceeded(ErrorReport report) {
-                String message = String.format("%s\nCrash ID: %s", getString(R.string.crash_sent_succeeded), report.getId());
-                if (report.getThrowable() != null) {
-                    message += String.format("\nThrowable: %s", report.getThrowable().toString());
-                }
-                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
-                crashesIdlingResource.decrement();
-            }
-        };
+    private CrashesListener getCrashesListener() {
+        if (sCrashesListener == null) {
+            sCrashesListener = new SasquatchCrashesListener(this);
+        }
+        return sCrashesListener;
     }
 
     @NonNull
     private PushListener getPushListener() {
-        return new PushListener() {
-
-            @Override
-            public void onPushNotificationReceived(Activity activity, PushNotification pushNotification) {
-                String title = pushNotification.getTitle();
-                String message = pushNotification.getMessage();
-                Map<String, String> customData = pushNotification.getCustomData();
-                AppCenterLog.info(MainActivity.LOG_TAG, "Push received title=" + title + " message=" + message + " customData=" + customData + " activity=" + activity);
-                if (message != null) {
-                    android.app.AlertDialog.Builder dialog = new android.app.AlertDialog.Builder(activity);
-                    dialog.setTitle(title);
-                    dialog.setMessage(message);
-                    if (!customData.isEmpty()) {
-                        dialog.setMessage(message + "\n" + customData);
-                    }
-                    dialog.setPositiveButton(android.R.string.ok, null);
-                    dialog.show();
-                } else {
-                    Toast.makeText(activity, String.format(activity.getString(R.string.push_toast), customData), Toast.LENGTH_LONG).show();
-                }
-            }
-        };
+        if (sPushListener == null) {
+            sPushListener = new SasquatchPushListener();
+        }
+        return sPushListener;
     }
 }
