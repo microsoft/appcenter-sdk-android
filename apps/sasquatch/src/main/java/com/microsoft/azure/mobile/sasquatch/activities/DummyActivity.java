@@ -7,7 +7,7 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
-import com.microsoft.azure.mobile.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.R;
 
 import java.util.Locale;
 

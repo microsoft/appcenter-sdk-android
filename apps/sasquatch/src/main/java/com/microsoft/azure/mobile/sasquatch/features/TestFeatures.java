@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.view.View;
 import android.widget.AdapterView;
 
-import com.microsoft.azure.mobile.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.activities.CrashActivity;
 import com.microsoft.azure.mobile.sasquatch.activities.CustomPropertiesActivity;
 import com.microsoft.azure.mobile.sasquatch.activities.DeviceInfoActivity;

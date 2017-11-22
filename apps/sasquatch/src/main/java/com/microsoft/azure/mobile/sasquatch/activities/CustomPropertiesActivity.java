@@ -23,7 +23,7 @@ import android.widget.TimePicker;
 
 import com.microsoft.azure.mobile.CustomProperties;
 import com.microsoft.azure.mobile.MobileCenter;
-import com.microsoft.azure.mobile.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.R;
 
 import java.text.DateFormat;
 import java.util.ArrayList;

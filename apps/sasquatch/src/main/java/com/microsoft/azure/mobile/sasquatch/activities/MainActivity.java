@@ -38,7 +38,7 @@ import com.microsoft.azure.mobile.ingestion.models.LogWithProperties;
 import com.microsoft.azure.mobile.push.Push;
 import com.microsoft.azure.mobile.push.PushListener;
 import com.microsoft.azure.mobile.push.PushNotification;
-import com.microsoft.azure.mobile.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.azure.mobile.sasquatch.SasquatchDistributeListener;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeatures;
 import com.microsoft.azure.mobile.sasquatch.features.TestFeaturesListAdapter;

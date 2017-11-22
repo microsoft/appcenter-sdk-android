@@ -12,7 +12,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.microsoft.azure.mobile.crashes.CrashesPrivateHelper;
-import com.microsoft.azure.mobile.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.R;
 
 import java.util.Arrays;
 import java.util.List;

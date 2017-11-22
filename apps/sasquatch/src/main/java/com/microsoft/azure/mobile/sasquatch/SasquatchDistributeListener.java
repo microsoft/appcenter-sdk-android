@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.support.v7.app.AlertDialog;
 
+import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.azure.mobile.distribute.Distribute;
 import com.microsoft.azure.mobile.distribute.DistributeListener;
 import com.microsoft.azure.mobile.distribute.ReleaseDetails;

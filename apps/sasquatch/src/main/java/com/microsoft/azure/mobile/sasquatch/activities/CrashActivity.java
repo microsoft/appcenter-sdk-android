@@ -13,9 +13,10 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.azure.mobile.crashes.Crashes;
 import com.microsoft.azure.mobile.crashes.model.TestCrashException;
-import com.microsoft.azure.mobile.sasquatch.R;
+
 
 import java.util.Arrays;
 import java.util.List;
