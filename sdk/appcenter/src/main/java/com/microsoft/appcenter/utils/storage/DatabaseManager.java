@@ -350,7 +350,7 @@ public class DatabaseManager implements Closeable {
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
-                Cursor cursor = getCursor(key, value, true);
+                Cursor cursor = getCursor(key, value, false);
                 ContentValues values = cursor.moveToFirst() ? buildValues(cursor, mSchema) : null;
                 cursor.close();
                 return values;

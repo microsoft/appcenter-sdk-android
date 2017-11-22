@@ -70,12 +70,12 @@ public class DatabaseManagerTest {
         /* Scanner. */
         {
             databaseManagerMock = getDatabaseManagerMock();
-            databaseManagerMock.getScanner(null, null, ).iterator();
+            databaseManagerMock.getScanner(null, null, false).iterator();
             verify(databaseManagerMock).switchToInMemory(eq("scan.iterator"), any(RuntimeException.class));
         }
         {
             databaseManagerMock = getDatabaseManagerMock();
-            databaseManagerMock.getScanner(null, null, ).getCount();
+            databaseManagerMock.getScanner(null, null, false).getCount();
             verify(databaseManagerMock).switchToInMemory(eq("scan.count"), any(RuntimeException.class));
         }
         {
@@ -87,7 +87,7 @@ public class DatabaseManagerTest {
             SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
             when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
             when(cursor.moveToNext()).thenThrow(new RuntimeException());
-            DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, );
+            DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, false);
             assertFalse(scanner.iterator().hasNext());
             verify(databaseManagerMock).switchToInMemory(eq("scan.hasNext"), any(RuntimeException.class));
 
@@ -106,7 +106,7 @@ public class DatabaseManagerTest {
             when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
             when(cursor.moveToNext()).thenThrow(new RuntimeException());
             doThrow(new RuntimeException()).when(cursor).close();
-            DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, );
+            DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, false);
             assertFalse(scanner.iterator().hasNext());
             verify(databaseManagerMock).switchToInMemory(eq("scan.hasNext"), any(RuntimeException.class));
 
@@ -123,7 +123,7 @@ public class DatabaseManagerTest {
             SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
             when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
             doThrow(new RuntimeException()).when(cursor).close();
-            DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, );
+            DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, false);
             assertFalse(scanner.iterator().hasNext());
             scanner.close();
             verify(databaseManagerMock).switchToInMemory(eq("scan.close"), any(RuntimeException.class));
@@ -228,7 +228,7 @@ public class DatabaseManagerTest {
         databaseManagerMock.get(0);
 
         /* Remove. */
-        databaseManagerMock.getScanner(null, null, ).iterator().remove();
+        databaseManagerMock.getScanner(null, null, false).iterator().remove();
     }
 
     @Test(expected = NoSuchElementException.class)
@@ -240,7 +240,7 @@ public class DatabaseManagerTest {
         databaseManagerMock.get(0);
 
         /* Next. */
-        databaseManagerMock.getScanner(null, null, ).iterator().next();
+        databaseManagerMock.getScanner(null, null, false).iterator().next();
     }
 
     @Test
