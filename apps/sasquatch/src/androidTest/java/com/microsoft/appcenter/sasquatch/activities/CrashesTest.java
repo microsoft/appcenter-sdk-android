@@ -12,8 +12,8 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.v4.app.ActivityCompat;
 import android.view.View;
 
-import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesPrivateHelper;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
@@ -96,6 +96,11 @@ public class CrashesTest {
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
             assertTrue(logFile.delete());
         }
+
+        /* Clear listeners. */
+        MainActivity.sAnalyticsListener = null;
+        MainActivity.sCrashesListener = null;
+        MainActivity.sPushListener = null;
 
         /* Launch main activity and go to setting page. Required to properly initialize. */
         mActivityTestRule.launchActivity(new Intent());
@@ -216,9 +221,18 @@ public class CrashesTest {
         }
 
         private void relaunchActivity() {
+
+            /* Destroy old instances. */
             ActivityCompat.finishAffinity(mActivityTestRule.getActivity());
             unsetInstance(AppCenter.class);
             unsetInstance(Crashes.class);
+
+            /* Clear listeners. */
+            MainActivity.sAnalyticsListener = null;
+            MainActivity.sCrashesListener = null;
+            MainActivity.sPushListener = null;
+
+            /* Launch activity again. */
             Intent intent = new Intent();
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             mActivityTestRule.launchActivity(intent);
