@@ -40,6 +40,9 @@ import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ANDROID_KEY_S
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CIPHER_AES;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CIPHER_RSA;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.RSA_KEY_SIZE;
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALIAS_SEPARATOR;
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER;
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX;
 import static com.microsoft.appcenter.utils.crypto.CryptoUtils.CryptoHandlerEntry;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -47,7 +50,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
@@ -91,9 +93,6 @@ public class CryptoTest {
 
     @Mock
     private CryptoUtils.ICipher mCipher;
-
-    @Mock
-    private Map<String, CryptoHandlerEntry> mCryptoHandlers = new LinkedHashMap<>();
 
     @Before
     @SuppressWarnings("WrongConstant")
@@ -402,19 +401,26 @@ public class CryptoTest {
     @Test
     public void registerHandlerWithOldMCKeyStore() throws Exception {
 
+        /* Basically pre-constructing the four values that CryptoUtils.getAlias() will return */
+        String alias0 = KEYSTORE_ALIAS_PREFIX + ALIAS_SEPARATOR + "0" + ALIAS_SEPARATOR + CIPHER_RSA + "/" + RSA_KEY_SIZE;
+        String alias1 = KEYSTORE_ALIAS_PREFIX + ALIAS_SEPARATOR + "1" + ALIAS_SEPARATOR + CIPHER_RSA + "/" + RSA_KEY_SIZE;
+        String alias0MC = KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER + ALIAS_SEPARATOR + "0" + ALIAS_SEPARATOR + CIPHER_RSA + "/" + RSA_KEY_SIZE;
+        String alias1MC = KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER + ALIAS_SEPARATOR + "1" + ALIAS_SEPARATOR + CIPHER_RSA + "/" + RSA_KEY_SIZE;
+
         /* Create a calendar which will fall back to the MC aliases */
         Calendar calendar = Calendar.getInstance();
-        when(mKeyStore.getCreationDate(alias0)).thenReturn(calendar.getTime());
-        when(mKeyStore.getCreationDate(alias1)).thenReturn(calendar.getTime());
-        when(mKeyStore.getCreationDate(alias0MC)).thenReturn(calendar.getTime());
+        Date d = calendar.getTime();
+        when(mKeyStore.getCreationDate(alias0)).thenReturn(d);
+        when(mKeyStore.getCreationDate(alias1)).thenReturn(d);
+        when(mKeyStore.getCreationDate(alias0MC)).thenReturn(d);
         calendar.add(Calendar.YEAR, 1);
-        when(mKeyStore.getCreationDate(alias1MC)).thenReturn(calendar.getTime());
+        d = calendar.getTime();
+        when(mKeyStore.getCreationDate(alias1MC)).thenReturn(d);
 
-        new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.KITKAT);
 
-        assertTrue(mCryptoHandlers.containsKey(CIPHER_RSA + "/" + RSA_KEY_SIZE));
-        assertEquals(0, mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE).mAliasIndex);
-        assertEquals(1, mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE).mAliasIndexMC);
+        assertEquals(0, cryptoUtils.mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE).mAliasIndex);
+        assertEquals(1, cryptoUtils.mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE).mAliasIndexMC);
     }
 }
 

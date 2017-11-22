@@ -134,7 +134,7 @@ public class CryptoUtils {
      * Supported crypto handlers. Ordered, first one is the preferred one.
      */
     @VisibleForTesting
-    private final Map<String, CryptoHandlerEntry> mCryptoHandlers = new LinkedHashMap<>();
+    public final Map<String, CryptoHandlerEntry> mCryptoHandlers = new LinkedHashMap<>();
 
     /**
      * Init.
