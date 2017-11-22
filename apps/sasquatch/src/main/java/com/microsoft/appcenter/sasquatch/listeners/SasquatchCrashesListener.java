@@ -31,7 +31,9 @@ import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 public class SasquatchCrashesListener extends AbstractCrashesListener {
 
     private Context context;
+    
     private String textAttachment;
+
     private Uri fileAttachment;
 
     @VisibleForTesting

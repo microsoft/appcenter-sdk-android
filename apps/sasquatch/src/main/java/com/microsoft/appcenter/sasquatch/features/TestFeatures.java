@@ -19,6 +19,8 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
+
 public final class TestFeatures {
     private static List<TestFeatureModel> sTestFeatureModels;
     private static WeakReference<Activity> sParentActivity;
@@ -40,7 +42,7 @@ public final class TestFeatures {
                 sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
             }
         } catch (Exception e) {
-            Log.i("AppCenterSasquatch", "CustomProperties not yet available in this flavor.");
+            Log.i(LOG_TAG, "CustomProperties not yet available in this flavor.");
         }
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
     }

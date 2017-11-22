@@ -41,14 +41,23 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = "AppCenterSasquatch";
+
     static final String APP_SECRET_KEY = "appSecret";
+
     static final String LOG_URL_KEY = "logUrl";
+
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
+
     static final String TEXT_ATTACHMENT_KEY = "textAttachment";
+
     static final String FILE_ATTACHMENT_KEY = "fileAttachment";
+
     static SharedPreferences sSharedPreferences;
+
     static SasquatchAnalyticsListener sAnalyticsListener;
+
     static SasquatchCrashesListener sCrashesListener;
+
     static SasquatchPushListener sPushListener;
 
     @Override

@@ -46,6 +46,7 @@ import static com.microsoft.appcenter.sasquatch.activities.MainActivity.sCrashes
 public class SettingsActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = "SettingsActivity";
+
     private static final int FILE_ATTACHMENT_DIALOG_ID = 1;
 
     @Override
