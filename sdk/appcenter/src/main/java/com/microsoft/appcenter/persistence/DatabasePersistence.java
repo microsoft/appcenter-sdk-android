@@ -126,10 +126,12 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     public void putLog(@NonNull String group, @NonNull Log log) throws PersistenceException {
+
         /* Convert log to JSON string and put in the database. */
         try {
-            AppCenterLog.debug(LOG_TAG, "Storing a log to the Persistence database for log type " + log.getType() + " with " + log.getSid());
-            mDatabaseStorage.put(getContentValues(group, getLogSerializer().serializeLog(log)));
+            AppCenterLog.debug(LOG_TAG, "Storing a log to the Persistence database for log type " + log.getType() + " with sid=" + log.getSid());
+            long databaseId = mDatabaseStorage.put(getContentValues(group, getLogSerializer().serializeLog(log)));
+            AppCenterLog.debug(LOG_TAG, "Stored a log to the Persistence database for log type " + log.getType() + " with databaseId=" + databaseId);
         } catch (JSONException e) {
             throw new PersistenceException("Cannot convert to JSON string", e);
         }
@@ -137,6 +139,7 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     public void deleteLogs(@NonNull String group, @NonNull String id) {
+
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Deleting logs from the Persistence database for " + group + " with " + id);
         AppCenterLog.debug(LOG_TAG, "The IDs for deleting log(s) is/are:");
@@ -153,6 +156,7 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     public void deleteLogs(String group) {
+
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Deleting all logs from the Persistence database for " + group);
 
@@ -172,7 +176,7 @@ public class DatabasePersistence extends Persistence {
     public int countLogs(@NonNull String group) {
 
         /* Query database and get scanner. */
-        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group);
+        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, true);
         int count = scanner.getCount();
         scanner.close();
         return count;
@@ -181,6 +185,7 @@ public class DatabasePersistence extends Persistence {
     @Override
     @Nullable
     public String getLogs(@NonNull String group, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
+
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
 
@@ -195,13 +200,37 @@ public class DatabasePersistence extends Persistence {
             ContentValues values = iterator.next();
             Long dbIdentifier = values.getAsLong(DatabaseManager.PRIMARY_KEY);
 
+            /*
+             * When we can't even read the identifier (in this case ContentValues is most likely empty).
+             * That probably means it contained a record larger than 5MB and we hit the cursor limit.
+             * Get rid of first non pending log.
+             */
+            if (dbIdentifier == null) {
+                AppCenterLog.error(LOG_TAG, "Empty database record, probably entry larger than 5MB, need to delete as it's now corrupted");
+                DatabaseStorage.DatabaseScanner idScanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, true);
+                for (ContentValues idValues : idScanner) {
+                    Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
+                    if (!mPendingDbIdentifiers.contains(invalidId)) {
+
+                        /* Found the record to delete that we could not read when selecting all fields. */
+                        mDatabaseStorage.delete(invalidId);
+                        AppCenterLog.error(LOG_TAG, "Empty database corrupted empty record deleted, id=" + invalidId);
+                        break;
+                    }
+                }
+                idScanner.close();
+                continue;
+            }
+
             /* If the log is already in pending state, then skip. Otherwise put the log to candidate container. */
             if (!mPendingDbIdentifiers.contains(dbIdentifier)) {
                 try {
+
                     /* Deserialize JSON to Log. */
                     candidates.put(dbIdentifier, getLogSerializer().deserializeLog(values.getAsString(COLUMN_LOG)));
                     count++;
                 } catch (JSONException e) {
+
                     /* If it is not able to deserialize, delete and get another log. */
                     AppCenterLog.error(LOG_TAG, "Cannot deserialize a log in the database", e);
 

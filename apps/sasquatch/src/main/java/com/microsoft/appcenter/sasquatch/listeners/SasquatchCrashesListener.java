@@ -91,12 +91,6 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
     public Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report) {
         List<ErrorAttachmentLog> attachments = new LinkedList<>();
 
-        /* Attach some text. */
-        if (!TextUtils.isEmpty(textAttachment)) {
-            ErrorAttachmentLog textLog = ErrorAttachmentLog.attachmentWithText(textAttachment, "text.txt");
-            attachments.add(textLog);
-        }
-
         /* Attach app icon to test binary. */
         if (fileAttachment != null) {
             byte[] data = getFileAttachmentData();
@@ -104,6 +98,12 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
             String mime = getFileAttachmentMimeType();
             ErrorAttachmentLog binaryLog = ErrorAttachmentLog.attachmentWithBinary(data, name, mime);
             attachments.add(binaryLog);
+        }
+
+        /* Attach some text. */
+        if (!TextUtils.isEmpty(textAttachment)) {
+            ErrorAttachmentLog textLog = ErrorAttachmentLog.attachmentWithText(textAttachment, "text.txt");
+            attachments.add(textLog);
         }
 
         /* Return attachments as list. */
@@ -144,7 +144,7 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
                 }
             }
         } finally {
-            if (cursor != null){
+            if (cursor != null) {
                 cursor.close();
             }
         }
@@ -162,7 +162,7 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
                 }
             }
         } finally {
-            if (cursor != null){
+            if (cursor != null) {
                 cursor.close();
             }
         }

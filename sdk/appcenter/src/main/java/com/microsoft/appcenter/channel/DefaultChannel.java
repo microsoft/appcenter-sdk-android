@@ -18,10 +18,10 @@ import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.persistence.Persistence;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -126,11 +126,11 @@ public class DefaultChannel implements Channel {
     /**
      * Overloaded constructor with limited visibility that allows for dependency injection.
      *
-     * @param context             The context.
-     * @param appSecret           The application secret.
-     * @param persistence         Persistence object for dependency injection.
-     * @param ingestion           Ingestion object for dependency injection.
-     * @param appCenterHandler    App Center looper thread handler.
+     * @param context          The context.
+     * @param appSecret        The application secret.
+     * @param persistence      Persistence object for dependency injection.
+     * @param ingestion        Ingestion object for dependency injection.
+     * @param appCenterHandler App Center looper thread handler.
      */
     @VisibleForTesting
     DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull Persistence persistence, @NonNull Ingestion ingestion, @NonNull Handler appCenterHandler) {
@@ -325,7 +325,8 @@ public class DefaultChannel implements Channel {
             return;
         }
         final GroupState groupState = mGroupStates.get(groupName);
-        AppCenterLog.debug(LOG_TAG, "triggerIngestion(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
+        int pendingLogCount = groupState.mPendingLogCount;
+        AppCenterLog.debug(LOG_TAG, "triggerIngestion(" + groupName + ") pendingLogCount=" + pendingLogCount);
         cancelTimer(groupState);
 
         /* Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending. */
@@ -337,7 +338,7 @@ public class DefaultChannel implements Channel {
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(groupState.mMaxLogsPerBatch);
         final int stateSnapshot = mCurrentState;
-        final String batchId = mPersistence.getLogs(groupName, groupState.mMaxLogsPerBatch, batch);
+        final String batchId = mPersistence.getLogs(groupName, pendingLogCount, batch);
         if (batchId == null) {
             return;
         }
@@ -350,7 +351,7 @@ public class DefaultChannel implements Channel {
         }
 
         /* Decrement counter. */
-        groupState.mPendingLogCount -= batch.size();
+        groupState.mPendingLogCount -= pendingLogCount;
         AppCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
 
         /* Remember this batch. */

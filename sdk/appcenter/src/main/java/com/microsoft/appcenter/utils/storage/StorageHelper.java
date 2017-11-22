@@ -665,7 +665,21 @@ public class StorageHelper {
          * @return A scanner to iterate all values.
          */
         public DatabaseScanner getScanner(@Nullable String key, @Nullable Object value) {
-            return new DatabaseScanner(mDatabaseManager.getScanner(key, value));
+            return getScanner(key, value, false);
+        }
+
+        /**
+         * Gets a scanner to iterate all values those match key == value, but records contain
+         * only identifiers.
+         *
+         * @param key    The optional key for query.
+         * @param value  The optional value for query.
+         * @param idOnly True to return only identifiers, false to return all fields.
+         *               This flag is ignored if using in memory database.
+         * @return A scanner to iterate all values (records contain only identifiers).
+         */
+        public DatabaseScanner getScanner(@Nullable String key, @Nullable Object value, boolean idOnly) {
+            return new DatabaseScanner(mDatabaseManager.getScanner(key, value, idOnly));
         }
 
         /**
@@ -701,13 +715,14 @@ public class StorageHelper {
          */
         @VisibleForTesting
         String[] getColumnNames() {
-            return mDatabaseManager.getCursor(null, null).getColumnNames();
+            return mDatabaseManager.getCursor(null, null, false).getColumnNames();
         }
 
         /**
          * GroupListener specification, each callback is called only once per instance
          */
         public interface DatabaseErrorListener {
+
             /**
              * Notifies an exception
              *
@@ -721,6 +736,7 @@ public class StorageHelper {
          * Database scanner to iterate over values.
          */
         public static class DatabaseScanner implements Iterable<ContentValues>, Closeable {
+
             private final DatabaseManager.Scanner mScanner;
 
             private DatabaseScanner(DatabaseManager.Scanner scanner) {
@@ -732,6 +748,7 @@ public class StorageHelper {
                 mScanner.close();
             }
 
+            @NonNull
             @Override
             public Iterator<ContentValues> iterator() {
                 return mScanner.iterator();
