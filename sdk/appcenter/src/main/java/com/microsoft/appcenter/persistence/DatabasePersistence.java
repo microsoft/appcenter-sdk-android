@@ -103,6 +103,7 @@ public class DatabasePersistence extends Persistence {
         mPendingDbIdentifiers = new HashSet<>();
         mDatabaseStorage = DatabaseStorage.getDatabaseStorage(database, table, version, SCHEMA, maxRecords,
                 new DatabaseStorage.DatabaseErrorListener() {
+
                     @Override
                     public void onError(String operation, RuntimeException e) {
                         AppCenterLog.error(LOG_TAG, "Cannot complete an operation (" + operation + ")", e);
@@ -210,7 +211,7 @@ public class DatabasePersistence extends Persistence {
                 DatabaseStorage.DatabaseScanner idScanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, true);
                 for (ContentValues idValues : idScanner) {
                     Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
-                    if (!mPendingDbIdentifiers.contains(invalidId)) {
+                    if (!mPendingDbIdentifiers.contains(invalidId) && !candidates.containsKey(invalidId)) {
 
                         /* Found the record to delete that we could not read when selecting all fields. */
                         mDatabaseStorage.delete(invalidId);
