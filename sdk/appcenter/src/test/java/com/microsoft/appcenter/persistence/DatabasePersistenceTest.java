@@ -27,6 +27,7 @@ import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_GRO
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -213,5 +214,60 @@ public class DatabasePersistenceTest {
         outLogs = new ArrayList<>();
         persistence.getLogs("mock", 50, outLogs);
         assertEquals(0, outLogs.size());
+
+        /*
+         * Add new logs with corruption again. First 2 logs are still there.
+         * Also this time the corrupted log will not even return its identifier when scanning
+         * with only id fields, to test that the delete fails gracefully and that we can still
+         * work with other logs.
+         */
+        logCount = 4;
+        fieldValues = new ArrayList<>(logCount);
+        {
+            /* Valid record. */
+            ContentValues contentValues = mock(ContentValues.class);
+            when(contentValues.getAsLong(DatabaseManager.PRIMARY_KEY)).thenReturn(0L);
+            when(contentValues.getAsString(DatabasePersistence.COLUMN_LOG)).thenReturn("first");
+            fieldValues.add(contentValues);
+        }
+        {
+            /* Valid record. */
+            ContentValues contentValues = mock(ContentValues.class);
+            when(contentValues.getAsLong(DatabaseManager.PRIMARY_KEY)).thenReturn(2L);
+            when(contentValues.getAsString(DatabasePersistence.COLUMN_LOG)).thenReturn("last");
+            fieldValues.add(contentValues);
+        }
+        {
+            /* New corrupted record. */
+            ContentValues contentValues = mock(ContentValues.class);
+            when(contentValues.getAsLong(DatabaseManager.PRIMARY_KEY)).thenReturn(null);
+            fieldValues.add(contentValues);
+        }
+        {
+            /* Valid new record. */
+            ContentValues contentValues = mock(ContentValues.class);
+            when(contentValues.getAsLong(DatabaseManager.PRIMARY_KEY)).thenReturn(4L);
+            when(contentValues.getAsString(DatabasePersistence.COLUMN_LOG)).thenReturn("true last");
+            fieldValues.add(contentValues);
+        }
+        when(databaseScanner.iterator()).thenReturn(fieldValues.iterator());
+        idValues = new ArrayList<>(4);
+
+        /* Here the id scanner will also skip the new corrupted log which id would be 3. */
+        for (long i = 0; i < logCount; i += 2) {
+            ContentValues contentValues = mock(ContentValues.class);
+            when(contentValues.getAsLong(DatabaseManager.PRIMARY_KEY)).thenReturn(i);
+            idValues.add(contentValues);
+        }
+        when(idDatabaseScanner.iterator()).thenReturn(idValues.iterator());
+
+        /* Verify next call is only the new valid log as others are marked pending. */
+        outLogs = new ArrayList<>();
+        persistence.getLogs("mock", 50, outLogs);
+        assertEquals(1, outLogs.size());
+        assertEquals("true last", outLogs.get(0).getType());
+
+        /* Verify that the only log we deleted in the entire test was the one from previous test (id=1). */
+        verify(databaseStorage).delete(anyLong());
     }
 }
