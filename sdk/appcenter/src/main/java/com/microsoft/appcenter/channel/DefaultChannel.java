@@ -326,6 +326,7 @@ public class DefaultChannel implements Channel {
         }
         final GroupState groupState = mGroupStates.get(groupName);
         int pendingLogCount = groupState.mPendingLogCount;
+        int maxFetch = Math.min(pendingLogCount, groupState.mMaxLogsPerBatch);
         AppCenterLog.debug(LOG_TAG, "triggerIngestion(" + groupName + ") pendingLogCount=" + pendingLogCount);
         cancelTimer(groupState);
 
@@ -336,9 +337,9 @@ public class DefaultChannel implements Channel {
         }
 
         /* Get a batch from Persistence. */
-        final List<Log> batch = new ArrayList<>(groupState.mMaxLogsPerBatch);
+        final List<Log> batch = new ArrayList<>(maxFetch);
         final int stateSnapshot = mCurrentState;
-        final String batchId = mPersistence.getLogs(groupName, pendingLogCount, batch);
+        final String batchId = mPersistence.getLogs(groupName, maxFetch, batch);
         if (batchId == null) {
             return;
         }
@@ -351,7 +352,7 @@ public class DefaultChannel implements Channel {
         }
 
         /* Decrement counter. */
-        groupState.mPendingLogCount -= pendingLogCount;
+        groupState.mPendingLogCount -= maxFetch;
         AppCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
 
         /* Remember this batch. */
