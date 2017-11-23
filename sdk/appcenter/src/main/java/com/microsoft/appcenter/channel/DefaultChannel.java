@@ -340,9 +340,15 @@ public class DefaultChannel implements Channel {
         final List<Log> batch = new ArrayList<>(maxFetch);
         final int stateSnapshot = mCurrentState;
         final String batchId = mPersistence.getLogs(groupName, maxFetch, batch);
+
+        /* Decrement counter. */
+        groupState.mPendingLogCount -= maxFetch;
+
+        /* Nothing more to do if no logs. */
         if (batchId == null) {
             return;
         }
+        AppCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
 
         /* Call group listener before sending logs to ingestion service. */
         if (groupState.mListener != null) {
@@ -350,10 +356,6 @@ public class DefaultChannel implements Channel {
                 groupState.mListener.onBeforeSending(log);
             }
         }
-
-        /* Decrement counter. */
-        groupState.mPendingLogCount -= maxFetch;
-        AppCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
 
         /* Remember this batch. */
         groupState.mSendingBatches.put(batchId, batch);
