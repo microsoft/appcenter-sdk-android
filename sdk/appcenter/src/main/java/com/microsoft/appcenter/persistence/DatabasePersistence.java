@@ -207,7 +207,7 @@ public class DatabasePersistence extends Persistence {
              * Get rid of first non pending log.
              */
             if (dbIdentifier == null) {
-                AppCenterLog.error(LOG_TAG, "Empty database record, probably entry larger than 5MB, need to delete as it's now corrupted");
+                AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 1.4MB, need to delete as it's now corrupted");
                 DatabaseStorage.DatabaseScanner idScanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, true);
                 for (ContentValues idValues : idScanner) {
                     Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
