@@ -23,6 +23,16 @@
             android:dependency="@string/appcenter_state_key"
             android:key="@string/appcenter_crashes_state_key"
             android:title="@string/appcenter_crashes_state_title"/>
+        <EditTextPreference
+            android:dependency="@string/appcenter_crashes_state_key"
+            android:title="@string/appcenter_crashes_text_attachment_title"
+            android:key="@string/appcenter_crashes_text_attachment_key"
+            android:inputType="textMultiLine"
+            android:singleLine="false"/>
+        <Preference
+            android:dependency="@string/appcenter_crashes_state_key"
+            android:title="@string/appcenter_crashes_file_attachment_title"
+            android:key="@string/appcenter_crashes_file_attachment_key"/>
     </PreferenceCategory>
     
     <PreferenceCategory
