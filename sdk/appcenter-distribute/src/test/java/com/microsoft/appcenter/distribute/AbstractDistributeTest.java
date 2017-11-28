@@ -13,9 +13,10 @@ import android.widget.Toast;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.HashUtils;
-import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -48,7 +49,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
-@PrepareForTest({Distribute.class, PreferencesStorage.class, AppCenterLog.class, AppCenter.class, NetworkStateHelper.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, CryptoUtils.class, InstallerUtils.class, Toast.class, HandlerUtils.class})
+@PrepareForTest({Distribute.class, PreferencesStorage.class, AppNameHelper.class, AppCenterLog.class, AppCenter.class, NetworkStateHelper.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, CryptoUtils.class, InstallerUtils.class, Toast.class, HandlerUtils.class})
 public class AbstractDistributeTest {
 
     static final String TEST_HASH = HashUtils.sha256("com.contoso:1.2.3:6");
@@ -150,8 +151,8 @@ public class AbstractDistributeTest {
         Whitebox.setInternalState(packageInfo, "versionCode", 6);
 
         /* Mock app name and other string resources. */
-        Whitebox.setInternalState(mApplicationInfo, "labelRes", 42);
-        when(mContext.getString(42)).thenReturn("unit-test-app");
+        mockStatic(AppNameHelper.class);
+        when(AppNameHelper.getAppName(mContext)).thenReturn("unit-test-app");
         when(mContext.getString(R.string.appcenter_distribute_update_dialog_message_optional)).thenReturn("%s%s%d");
         when(mContext.getString(R.string.appcenter_distribute_update_dialog_message_mandatory)).thenReturn("%s%s%d");
         when(mContext.getString(R.string.appcenter_distribute_install_ready_message)).thenReturn("%s%s%d");

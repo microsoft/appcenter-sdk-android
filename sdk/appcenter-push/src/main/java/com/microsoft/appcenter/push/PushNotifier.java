@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.Build;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.AppNameHelper;
 
 import java.util.Map;
 
@@ -69,8 +70,11 @@ class PushNotifier {
             actionIntent = new Intent();
         }
 
-        /* Get text. */
+        /* Get text. Use app name for title if title is missing. */
         String notificationTitle = PushIntentUtils.getTitle(pushIntent);
+        if (notificationTitle == null || notificationTitle.isEmpty()) {
+            notificationTitle = AppNameHelper.getAppName(context);
+        }
         String notificationMessage = PushIntentUtils.getMessage(pushIntent);
         Notification.Builder builder = new Notification.Builder(context);
 

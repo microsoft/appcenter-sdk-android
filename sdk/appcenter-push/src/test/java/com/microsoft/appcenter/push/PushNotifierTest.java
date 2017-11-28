@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.Build;
 
 import com.microsoft.appcenter.test.TestUtils;
+import com.microsoft.appcenter.utils.AppNameHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -41,7 +42,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings({"unused", "deprecation"})
-@PrepareForTest({PushIntentUtils.class, PushNotifier.class})
+@PrepareForTest({PushIntentUtils.class, PushNotifier.class, AppNameHelper.class})
 public class PushNotifierTest {
 
     @Rule
@@ -149,6 +150,17 @@ public class PushNotifierTest {
         verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
     }
 
+    @SuppressLint("InlinedApi")
+    @Test
+    public void handleNotificationWithColorKitKat() throws Exception {
+        setVersionSdkInt(Build.VERSION_CODES.KITKAT);
+        String colorString = "#331144";
+        when(PushIntentUtils.getColor(any(Intent.class))).thenReturn(colorString);
+        PushNotifier.handleNotification(mContextMock, new Intent());
+        verify(mNotificationBuilderMock, never()).setColor(Color.parseColor(colorString));
+        verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
+    }
+
     @Test
     public void handleNotificationWithTitle() throws Exception {
         String title = "title";
@@ -156,6 +168,27 @@ public class PushNotifierTest {
         PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mNotificationBuilderMock).setContentTitle(title);
         verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
+    }
+
+    @Test
+    public void handleNotificationWithNullTitle() throws Exception {
+        String appName = "app-name";
+        mockStatic(AppNameHelper.class);
+        when(AppNameHelper.getAppName(mContextMock)).thenReturn(appName);
+        when(PushIntentUtils.getTitle(any(Intent.class))).thenReturn(null);
+        PushNotifier.handleNotification(mContextMock, new Intent());
+        verify(mNotificationBuilderMock).setContentTitle(appName);
+        verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
+    }
+
+    @Test
+    public void handleNotificationWithEmptyTitle() throws Exception {
+        String appName = "app-name";
+        mockStatic(AppNameHelper.class);
+        when(AppNameHelper.getAppName(mContextMock)).thenReturn(appName);
+        when(PushIntentUtils.getTitle(any(Intent.class))).thenReturn("");
+        PushNotifier.handleNotification(mContextMock, new Intent());
+        verify(mNotificationBuilderMock).setContentTitle(appName);
     }
 
     @Test
