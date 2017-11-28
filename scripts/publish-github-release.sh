@@ -1,12 +1,13 @@
 #!/bin/bash
 
 # Constants
+GITHUB_ACCESS_TOKEN=${1:-$GITHUB_ACCESS_TOKEN}
 GITHUB_API_URL_TEMPLATE="https://%s.github.com/repos/%s/%s?access_token=%s%s"
 GITHUB_API_HOST="api"
 GITHUB_UPLOAD_HOST="uploads"
 BINARY_FILE_FILTER="*release.aar"
 JQ_COMMAND=jq
-PUBLISH_VERSION="$(grep "versionName = '" *.gradle | awk -F "[']" '{print $2}')"
+PUBLISH_VERSION="$(grep "versionName = '" versions.gradle | awk -F "[']" '{print $2}')"
 
 # GitHub API endpoints
 REQUEST_URL_TAG="$(printf $GITHUB_API_URL_TEMPLATE $GITHUB_API_HOST $BUILD_REPOSITORY_NAME 'git/tags' $GITHUB_ACCESS_TOKEN)"
