@@ -37,7 +37,6 @@ import java.util.UUID;
 
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APP_SECRET_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FILE_ATTACHMENT_KEY;
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FIREBASE_ENABLED_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_URL_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.TEXT_ATTACHMENT_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.sCrashesListener;
@@ -166,27 +165,6 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public boolean isEnabled() {
                     return Push.isEnabled().get();
-                }
-            });
-            initCheckBoxSetting(R.string.appcenter_push_firebase_state_key, R.string.appcenter_push_firebase_summary_enabled, R.string.appcenter_push_firebase_summary_disabled, new HasEnabled() {
-
-                @Override
-                public void setEnabled(boolean enabled) {
-                    try {
-                        if (enabled) {
-                            Push.enableFirebaseAnalytics(getActivity());
-                        } else {
-                            FirebaseAnalytics.getInstance(getActivity()).setAnalyticsCollectionEnabled(false);
-                        }
-                        MainActivity.sSharedPreferences.edit().putBoolean(FIREBASE_ENABLED_KEY, enabled).apply();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-
-                @Override
-                public boolean isEnabled() {
-                    return isFirebaseEnabled();
                 }
             });
 
@@ -468,10 +446,6 @@ public class SettingsActivity extends AppCompatActivity {
                 editor.putString(key, value);
             }
             editor.apply();
-        }
-
-        private boolean isFirebaseEnabled() {
-            return MainActivity.sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false);
         }
 
         private String getCrashesTextAttachmentSummary() {

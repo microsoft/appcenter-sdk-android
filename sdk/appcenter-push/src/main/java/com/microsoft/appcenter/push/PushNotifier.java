@@ -1,6 +1,5 @@
 package com.microsoft.appcenter.push;
 
-import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -38,8 +37,6 @@ class PushNotifier {
      * @param context    The current context.
      * @param pushIntent The intent that is associated with the push.
      */
-    @SuppressLint("NewApi")
-    @SuppressWarnings("deprecation")
     static void handleNotification(Context context, Intent pushIntent) throws RuntimeException {
         context = context.getApplicationContext();
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
@@ -71,7 +68,6 @@ class PushNotifier {
             /* If no launcher, just create a placeholder action as the field is mandatory. */
             actionIntent = new Intent();
         }
-
 
         /* Get text. */
         String notificationTitle = PushIntentUtils.getTitle(pushIntent);
@@ -131,12 +127,12 @@ class PushNotifier {
      * @param pushIntent The push intent.
      * @param builder    The builder to modify.
      */
-    @SuppressLint("NewApi")
-    @SuppressWarnings("deprecation")
     private static void setColor(Intent pushIntent, Notification.Builder builder) {
         String colorString = PushIntentUtils.getColor(pushIntent);
         if (colorString != null) {
-            builder.setColor(Color.parseColor(colorString));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                builder.setColor(Color.parseColor(colorString));
+            }
         }
     }
 
@@ -147,8 +143,6 @@ class PushNotifier {
      * @param pushIntent The push intent.
      * @param builder    The builder to modify.
      */
-    @SuppressLint("NewApi")
-    @SuppressWarnings("deprecation")
     private static void setSound(Context context, Intent pushIntent, Notification.Builder builder) {
         if (!PushIntentUtils.useAnySound(pushIntent)) {
             return;
@@ -183,8 +177,6 @@ class PushNotifier {
      * @param pushIntent The push intent.
      * @param builder    The builder to modify.
      */
-    @SuppressLint("NewApi")
-    @SuppressWarnings("deprecation")
     private static void setIcon(Context context, Intent pushIntent, Notification.Builder builder) {
         String iconString = PushIntentUtils.getIcon(pushIntent);
         if (iconString != null) {

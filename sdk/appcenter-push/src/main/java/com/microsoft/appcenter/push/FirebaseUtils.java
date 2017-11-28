@@ -26,7 +26,7 @@ class FirebaseUtils {
             super(cause);
         }
 
-        FirebaseUnavailableException(String message) {
+        FirebaseUnavailableException(@SuppressWarnings("SameParameterValue") String message) {
             super(message);
         }
     }
