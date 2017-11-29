@@ -51,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
 
     static final String SENDER_ID = "177539951155";
 
+    static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
+
     static final String TEXT_ATTACHMENT_KEY = "textAttachment";
 
     static final String FILE_ATTACHMENT_KEY = "fileAttachment";
@@ -110,6 +112,11 @@ public class MainActivity extends AppCompatActivity {
         String fileAttachment = sSharedPreferences.getString(FILE_ATTACHMENT_KEY, null);
         if (fileAttachment != null) {
             sCrashesListener.setFileAttachment(Uri.parse(fileAttachment));
+        }
+
+        /* Enable Firebase analytics if we enabled the setting previously. */
+        if (sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false)) {
+            Push.enableFirebaseAnalytics(this);
         }
 
         /* Start App Center. */
