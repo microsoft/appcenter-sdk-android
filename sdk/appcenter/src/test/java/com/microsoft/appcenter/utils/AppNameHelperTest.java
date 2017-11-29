@@ -21,11 +21,12 @@ public class AppNameHelperTest {
     @Test
     public void localizedAppName() {
         String appName = "localized-app-name";
+        int resId = 42;
         Context context = mock(Context.class);
         ApplicationInfo applicationInfo = mock(ApplicationInfo.class);
         when(context.getApplicationInfo()).thenReturn(applicationInfo);
-        Whitebox.setInternalState(applicationInfo, "labelRes", 42);
-        when(context.getString(42)).thenReturn(appName);
+        Whitebox.setInternalState(applicationInfo, "labelRes", resId);
+        when(context.getString(resId)).thenReturn(appName);
         String retrievedAppName = AppNameHelper.getAppName(context);
         assertEquals(appName, retrievedAppName);
     }
