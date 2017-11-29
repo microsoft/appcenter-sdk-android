@@ -1,6 +1,5 @@
 package com.microsoft.appcenter.utils;
 
-
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 
@@ -42,6 +41,4 @@ public class AppNameHelperTest {
         String retrievedAppName = AppNameHelper.getAppName(context);
         assertEquals(appName, retrievedAppName);
     }
-
 }
-
