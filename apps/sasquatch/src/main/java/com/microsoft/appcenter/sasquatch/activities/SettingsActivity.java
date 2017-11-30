@@ -37,11 +37,8 @@ import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APP_SECRET_KEY;
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FILE_ATTACHMENT_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FIREBASE_ENABLED_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_URL_KEY;
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.TEXT_ATTACHMENT_KEY;
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.sCrashesListener;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -120,8 +117,7 @@ public class SettingsActivity extends AppCompatActivity {
             initChangeableSetting(R.string.appcenter_crashes_text_attachment_key, getCrashesTextAttachmentSummary(), new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    setKeyValue(TEXT_ATTACHMENT_KEY, (String) newValue);
-                    sCrashesListener.setTextAttachment((String) newValue);
+                    MainActivity.setTextAttachment((String) newValue);
                     preference.setSummary(getCrashesTextAttachmentSummary());
                     return true;
                 }
@@ -383,8 +379,10 @@ public class SettingsActivity extends AppCompatActivity {
             super.onActivityResult(requestCode, resultCode, data);
             if (requestCode == FILE_ATTACHMENT_DIALOG_ID) {
                 Uri fileAttachment = resultCode == RESULT_OK && data != null ? data.getData() : null;
-                setKeyValue(FILE_ATTACHMENT_KEY, fileAttachment != null ? fileAttachment.toString() : null);
-                MainActivity.sCrashesListener.setFileAttachment(fileAttachment);
+                if (fileAttachment != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    getActivity().getContentResolver().takePersistableUriPermission(fileAttachment, data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                }
+                MainActivity.setFileAttachment(fileAttachment);
                 Preference preference = getPreferenceManager().findPreference(getString(R.string.appcenter_crashes_file_attachment_key));
                 if (preference != null) {
                     preference.setSummary(getCrashesFileAttachmentSummary());
@@ -474,9 +472,16 @@ public class SettingsActivity extends AppCompatActivity {
         private String getCrashesFileAttachmentSummary() {
             Uri fileAttachment = MainActivity.sCrashesListener.getFileAttachment();
             if (fileAttachment != null) {
-                String name = MainActivity.sCrashesListener.getFileAttachmentDisplayName();
-                String size = MainActivity.sCrashesListener.getFileAttachmentSize();
-                return getString(R.string.appcenter_crashes_file_attachment_summary, name, size);
+                try {
+                    String name = MainActivity.sCrashesListener.getFileAttachmentDisplayName();
+                    String size = MainActivity.sCrashesListener.getFileAttachmentSize();
+                    return getString(R.string.appcenter_crashes_file_attachment_summary, name, size);
+                } catch (SecurityException e) {
+                    Log.e(LOG_TAG, "Couldn't get info about file attachment.", e);
+
+                    /* Reset file attachment. */
+                    MainActivity.setFileAttachment(null);
+                }
             }
             return getString(R.string.appcenter_crashes_file_attachment_summary_empty);
         }
