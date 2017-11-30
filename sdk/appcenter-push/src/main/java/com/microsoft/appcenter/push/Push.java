@@ -35,7 +35,7 @@ public class Push extends AbstractAppCenterService {
     /**
      * TAG used in logging for Push.
      */
-    private static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
+    static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
      * Constant marking event of the push group.

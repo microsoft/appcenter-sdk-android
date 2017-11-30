@@ -14,9 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -38,7 +37,7 @@ public class PushIntentUtilsTest {
         final Map<String, String> extras = new HashMap<>();
         extras.putAll(customData);
         extras.put(PushIntentUtils.EXTRA_COLOR, "val");
-        extras.put(PushIntentUtils.EXTRA_CUSTOM_SOUND, "val");
+        extras.put(PushIntentUtils.EXTRA_SOUND_ALT, "val");
         extras.put(PushIntentUtils.EXTRA_GOOGLE_MESSAGE_ID, "val");
         extras.put(PushIntentUtils.EXTRA_ICON, "val");
         extras.put(PushIntentUtils.EXTRA_MESSAGE, "val");
@@ -105,38 +104,27 @@ public class PushIntentUtilsTest {
     }
 
     @Test
-    public void getCustomSound() {
+    public void noSound() {
+        assertNull(PushIntentUtils.getSound(mock(Intent.class)));
+    }
+
+    @Test
+    public void getSoundWithOldKey() {
         String sound = "sound";
         Intent pushIntent = mock(Intent.class);
-        mockPutExtra(pushIntent, PushIntentUtils.EXTRA_CUSTOM_SOUND, sound);
-        String retrievedSound = PushIntentUtils.getCustomSound(pushIntent);
+        mockPutExtra(pushIntent, PushIntentUtils.EXTRA_SOUND, "this is not the sound you are looking for");
+        mockPutExtra(pushIntent, PushIntentUtils.EXTRA_SOUND_ALT, sound);
+        String retrievedSound = PushIntentUtils.getSound(pushIntent);
         assertEquals(sound, retrievedSound);
     }
 
     @Test
-    public void useAnySound() {
+    public void getSound() {
+        String sound = "sound";
         Intent pushIntent = mock(Intent.class);
-
-        /* Case 1: neither sound nor sound2 are set. */
-        boolean useAnySound = PushIntentUtils.useAnySound(pushIntent);
-        assertFalse(useAnySound);
-
-        /* Case 2: only sound is set. */
-        mockPutExtra(pushIntent, PushIntentUtils.EXTRA_SOUND, "default");
-        useAnySound = PushIntentUtils.useAnySound(pushIntent);
-        assertTrue(useAnySound);
-
-        /* Case 3: only sound2 is set. */
-        mockPutExtra(pushIntent, PushIntentUtils.EXTRA_SOUND, null);
-        mockPutExtra(pushIntent, PushIntentUtils.EXTRA_CUSTOM_SOUND, "custom_sound");
-        useAnySound = PushIntentUtils.useAnySound(pushIntent);
-        assertTrue(useAnySound);
-
-        /* Case 4: both sound and sound2 are set. */
-        mockPutExtra(pushIntent, PushIntentUtils.EXTRA_SOUND, "default");
-        mockPutExtra(pushIntent, PushIntentUtils.EXTRA_CUSTOM_SOUND, "custom_sound");
-        useAnySound = PushIntentUtils.useAnySound(pushIntent);
-        assertTrue(useAnySound);
+        mockPutExtra(pushIntent, PushIntentUtils.EXTRA_SOUND, "sound");
+        String retrievedSound = PushIntentUtils.getSound(pushIntent);
+        assertEquals(sound, retrievedSound);
     }
 
     @Test
