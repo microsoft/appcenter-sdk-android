@@ -421,6 +421,15 @@ public class CryptoTest {
 
         assertEquals(0, cryptoUtils.mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE).mAliasIndex);
         assertEquals(1, cryptoUtils.mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE).mAliasIndexMC);
+
+        /* do it again for sets of dates which are the same */
+        when(mKeyStore.getCreationDate(alias0MC)).thenReturn(d);
+        when(mKeyStore.getCreationDate(alias1MC)).thenReturn(d);
+
+        cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.KITKAT);
+
+        assertEquals(0, cryptoUtils.mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE).mAliasIndex);
+        assertEquals(0, cryptoUtils.mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE).mAliasIndexMC);
     }
 }
 

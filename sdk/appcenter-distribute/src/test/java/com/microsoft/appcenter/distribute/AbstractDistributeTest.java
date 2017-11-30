@@ -31,6 +31,7 @@ import org.mockito.Mock;
 import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
@@ -126,6 +127,9 @@ public class AbstractDistributeTest {
         mockStatic(PreferencesStorage.class);
         when(PreferencesStorage.getBoolean(DISTRIBUTE_ENABLED_KEY, true)).thenReturn(true);
 
+        /* Mobile Center Preferences failover initialization */
+        when(mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE)).thenReturn(mMobileCenterPreferencesStorage);
+
         /* Then simulate further changes to state. */
         doAnswer(new Answer<Void>() {
 
@@ -142,8 +146,6 @@ public class AbstractDistributeTest {
 
         /* Default download id when not found. */
         when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
-
-        mMobileCenterPreferencesStorage = mock(SharedPreferences.class);
 
         /* Mock package manager. */
         when(mContext.getApplicationContext()).thenReturn(mContext);

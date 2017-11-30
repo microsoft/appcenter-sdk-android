@@ -90,9 +90,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest({ErrorDetails.class, DistributeUtils.class})
 public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
-    @Mock
-    private SharedPreferences mMobileCenterPreferencesStorage;
-
     /**
      * Shared code to mock a restart of an activity considered to be the launcher.
      */
@@ -147,13 +144,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verify(mDialog).show();
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-    }
-
-    @Override
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-        when(mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE)).thenReturn(mMobileCenterPreferencesStorage);
     }
 
     @Test
@@ -1083,6 +1073,14 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token MC");
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "some group MC");
+
+        /* do it again for an update token and dist group which are also null in the fallback */
+        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn(null);
+        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn(null);
+
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
 

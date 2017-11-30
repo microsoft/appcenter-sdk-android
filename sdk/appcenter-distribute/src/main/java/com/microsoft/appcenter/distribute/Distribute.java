@@ -719,7 +719,6 @@ public class Distribute extends AbstractAppCenterService {
             else {
 
                 /* Use failover logic to search for missing token/distribution group */
-                System.out.println("mmcps: " + mMobileCenterPreferenceStorage);
                 updateToken = mMobileCenterPreferenceStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null);
                 distributionGroupId = mMobileCenterPreferenceStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null);
                 if (updateToken != null || distributionGroupId != null) {
