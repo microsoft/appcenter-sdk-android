@@ -7,7 +7,7 @@
   <string name="appcenter_distribute_update_dialog_postpone">Bir gün içinde sor</string>
   <string name="appcenter_distribute_update_dialog_view_release_notes">Sürüm notlarını görüntüle</string>
   <string name="appcenter_distribute_dialog_actioned_on_disabled_toast">Dağıtım devre dışı bırakıldı</string>
-  <string name="appcenter_distribute_unknown_sources_dialog_message">Güvenlik nedenleriyle, cihazınız bilinmeyen kaynaklardan gelen uygulamaların yüklenmesini engelleyecek şekilde ayarlandı..</string>
+  <string name="appcenter_distribute_unknown_sources_dialog_message">Güvenlik nedenleriyle, cihazınız bilinmeyen kaynaklardan gelen uygulamaların yüklenmesini engelleyecek şekilde ayarlandı.</string>
   <string name="appcenter_distribute_unknown_sources_dialog_settings">Ayarlar</string>
   <string name="appcenter_distribute_downloading_mandatory_update">Güncelleştirme indiriliyor</string>
   <string name="appcenter_distribute_download_progress_number_format">%1$d MB / %2$d MB</string>

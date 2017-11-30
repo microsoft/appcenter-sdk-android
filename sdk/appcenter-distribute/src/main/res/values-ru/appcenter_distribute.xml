@@ -12,7 +12,7 @@
   <string name="appcenter_distribute_downloading_mandatory_update">Скачивается обновление</string>
   <string name="appcenter_distribute_download_progress_number_format">%1$d из %2$d МБ</string>
   <string name="appcenter_distribute_install_ready_title">Обновление для приложения скачано</string>
-  <string name="appcenter_distribute_install_ready_message">Обновление %1$s %2$s (%3$d) скачано и готово к установке</string>
+  <string name="appcenter_distribute_install_ready_message">Обновление %1$s %2$s (%3$d) скачано и готово к установке.</string>
   <string name="appcenter_distribute_install">Установить</string>
   <string name="appcenter_distribute_notification_category">Обновления приложения</string>
   <string name="appcenter_distribute_update_failed_dialog_title">Обновления в приложении отключены</string>
