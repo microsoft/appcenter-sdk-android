@@ -18,4 +18,5 @@
   <string name="appcenter_distribute_update_failed_dialog_title">인앱 업데이트 비활성</string>
   <string name="appcenter_distribute_update_failed_dialog_ignore">무시</string>
   <string name="appcenter_distribute_update_failed_dialog_reinstall">앱 재설치</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">이 릴리스는 사이드 로딩 또는 개인정보 보호 브라우징 모드에서 다운로드 되었습니다.</string>
 </resources>
