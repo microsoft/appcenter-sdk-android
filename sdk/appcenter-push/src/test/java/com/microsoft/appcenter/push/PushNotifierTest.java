@@ -253,8 +253,7 @@ public class PushNotifierTest {
     public void handleNotificationWithCustomSound() throws Exception {
         String customSoundString = "sound";
         int resourceId = 2;
-        when(PushIntentUtils.useAnySound(any(Intent.class))).thenReturn(true);
-        when(PushIntentUtils.getCustomSound(any(Intent.class))).thenReturn(customSoundString);
+        when(PushIntentUtils.getSound(any(Intent.class))).thenReturn(customSoundString);
         Resources resourcesMock = mock(Resources.class);
         when(mContextMock.getResources()).thenReturn(resourcesMock);
         when(resourcesMock.getIdentifier(eq(customSoundString), eq("raw"), anyString())).thenReturn(resourceId);
@@ -275,19 +274,10 @@ public class PushNotifierTest {
     }
 
     @Test
-    public void handleNotificationWithDefaultSound() throws Exception {
-        when(PushIntentUtils.useAnySound(any(Intent.class))).thenReturn(true);
-        PushNotifier.handleNotification(mContextMock, new Intent());
-        verify(mNotificationBuilderMock).setDefaults(Notification.DEFAULT_SOUND);
-        verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
-    }
-
-    @Test
     public void handleNotificationWithInvalidCustomSound() throws Exception {
-        String customSoundString = "sound";
+        String customSoundString = "default";
         int resourceId = 2;
-        when(PushIntentUtils.useAnySound(any(Intent.class))).thenReturn(true);
-        when(PushIntentUtils.getCustomSound(any(Intent.class))).thenReturn(customSoundString);
+        when(PushIntentUtils.getSound(any(Intent.class))).thenReturn(customSoundString);
         Resources resourcesMock = mock(Resources.class);
         when(mContextMock.getResources()).thenReturn(resourcesMock);
         when(resourcesMock.getIdentifier(eq(customSoundString), eq("raw"), anyString())).thenThrow(new Resources.NotFoundException());

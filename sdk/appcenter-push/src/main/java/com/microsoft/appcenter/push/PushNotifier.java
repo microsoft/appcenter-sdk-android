@@ -148,28 +148,23 @@ class PushNotifier {
      * @param builder    The builder to modify.
      */
     private static void setSound(Context context, Intent pushIntent, Notification.Builder builder) {
-        if (!PushIntentUtils.useAnySound(pushIntent)) {
-            return;
-        }
-        String customSound = PushIntentUtils.getCustomSound(pushIntent);
-        if (customSound == null) {
-            builder.setDefaults(Notification.DEFAULT_SOUND);
-            return;
-        }
-        try {
-            Resources resources = context.getResources();
-            int id = resources.getIdentifier(customSound, "raw", context.getPackageName());
-            Uri soundUri = new Uri.Builder()
-                    .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
-                    .authority(resources.getResourcePackageName(id))
-                    .appendPath(resources.getResourceTypeName(id))
-                    .appendPath(resources.getResourceEntryName(id))
-                    .build();
-            builder.setSound(soundUri);
-        } catch (Resources.NotFoundException e) {
-            AppCenterLog.warn(Push.getInstance().getLoggerTag(),
-                    "Sound file '" + customSound + "' not found; falling back to default.");
-            builder.setDefaults(Notification.DEFAULT_SOUND);
+        String sound = PushIntentUtils.getSound(pushIntent);
+        if (sound != null) {
+            try {
+                Resources resources = context.getResources();
+                int id = resources.getIdentifier(sound, "raw", context.getPackageName());
+                Uri soundUri = new Uri.Builder()
+                        .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+                        .authority(resources.getResourcePackageName(id))
+                        .appendPath(resources.getResourceTypeName(id))
+                        .appendPath(resources.getResourceEntryName(id))
+                        .build();
+                builder.setSound(soundUri);
+            } catch (Resources.NotFoundException e) {
+                AppCenterLog.warn(Push.getInstance().getLoggerTag(),
+                        "Sound file '" + sound + "' not found; falling back to default.");
+                builder.setDefaults(Notification.DEFAULT_SOUND);
+            }
         }
     }
 

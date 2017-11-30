@@ -4,10 +4,14 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.utils.AppCenterLog;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import static com.microsoft.appcenter.push.Push.LOG_TAG;
 
 class PushIntentUtils {
 
@@ -29,7 +33,7 @@ class PushIntentUtils {
     static final String EXTRA_SOUND = EXTRA_GCM_PREFIX + "sound";
 
     @VisibleForTesting
-    static final String EXTRA_CUSTOM_SOUND = EXTRA_GCM_PREFIX + "sound2";
+    static final String EXTRA_SOUND_ALT = EXTRA_GCM_PREFIX + "sound2";
 
     @VisibleForTesting
     static final String EXTRA_ICON = EXTRA_GCM_PREFIX + "icon";
@@ -58,17 +62,20 @@ class PushIntentUtils {
      */
     static Map<String, String> getCustomData(Intent pushIntent) {
         Map<String, String> customData = new HashMap<>();
+        Map<String, String> standardData = new HashMap<>();
         Bundle intentExtras = pushIntent.getExtras();
         if (intentExtras != null) {
-            Set<String> intentKeys = intentExtras.keySet();
-            intentKeys.removeAll(EXTRA_STANDARD_KEYS);
-            for (String key : intentKeys) {
-                if (key.startsWith(EXTRA_GCM_PREFIX)) {
-                    continue;
+            for (String key : intentExtras.keySet()) {
+                String value = String.valueOf(intentExtras.get(key));
+                if (key.startsWith(EXTRA_GCM_PREFIX) || EXTRA_STANDARD_KEYS.contains(key)) {
+                    standardData.put(key, value);
+                } else {
+                    customData.put(key, value);
                 }
-                customData.put(key, intentExtras.getString(key));
             }
         }
+        AppCenterLog.debug(LOG_TAG, "Push standard data: " + standardData);
+        AppCenterLog.debug(LOG_TAG, "Push custom data: " + customData);
         return customData;
     }
 
@@ -113,24 +120,14 @@ class PushIntentUtils {
     }
 
     /**
-     * Gets the name of the custom sound specified by the push intent.
+     * Gets the name of the sound specified by the push intent.
      *
      * @param pushIntent The push intent.
-     * @return The name of the custom sound, or null if there is none set.
+     * @return The name of the sound, or null if there is none set.
      */
-    static String getCustomSound(Intent pushIntent) {
-        return pushIntent.getStringExtra(EXTRA_CUSTOM_SOUND);
-    }
-
-    /**
-     * Returns whether a sound should be played by the notification.
-     *
-     * @param pushIntent The push intent.
-     * @return 'true' if a sound should be played, 'false' otherwise.
-     */
-    static boolean useAnySound(Intent pushIntent) {
-        return pushIntent.getStringExtra(EXTRA_SOUND) != null ||
-                pushIntent.getStringExtra(EXTRA_CUSTOM_SOUND) != null;
+    static String getSound(Intent pushIntent) {
+        String sound = pushIntent.getStringExtra(EXTRA_SOUND_ALT);
+        return sound == null ? pushIntent.getStringExtra(EXTRA_SOUND) : sound;
     }
 
     /**
