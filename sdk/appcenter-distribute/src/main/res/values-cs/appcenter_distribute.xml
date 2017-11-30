@@ -18,4 +18,5 @@
   <string name="appcenter_distribute_update_failed_dialog_title">Neaktivní aktualizace v aplikacích</string>
   <string name="appcenter_distribute_update_failed_dialog_ignore">Ignorovat</string>
   <string name="appcenter_distribute_update_failed_dialog_reinstall">Znovu nainstalujte aplikaci</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">Tato verze byla buď strana-naložený nebo stáhnout pomocí prohlížeče v soukromém režimu.</string>
 </resources>

@@ -18,4 +18,5 @@
   <string name="appcenter_distribute_update_failed_dialog_title">In-App-Updates deaktiviert</string>
   <string name="appcenter_distribute_update_failed_dialog_ignore">Ignorieren</string>
   <string name="appcenter_distribute_update_failed_dialog_reinstall">App erneut installieren</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">Diese Version wurde entweder Seiten geladen oder mit einem Browser im privaten Modus heruntergeladen.</string>
 </resources>

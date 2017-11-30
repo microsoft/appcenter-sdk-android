@@ -18,4 +18,5 @@
   <string name="appcenter_distribute_update_failed_dialog_title">Обновления в приложении отключены</string>
   <string name="appcenter_distribute_update_failed_dialog_ignore">Игнорировать</string>
   <string name="appcenter_distribute_update_failed_dialog_reinstall">Переустановить приложение</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">Эта версия была либо загружена, либо загружена с помощью браузера в частном режиме.</string>
 </resources>

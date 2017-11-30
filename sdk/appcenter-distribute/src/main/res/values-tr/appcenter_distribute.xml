@@ -18,4 +18,5 @@
   <string name="appcenter_distribute_update_failed_dialog_title">Uygulama içi güncelleştirmeler devre dışı</string>
   <string name="appcenter_distribute_update_failed_dialog_ignore">Görmezden</string>
   <string name="appcenter_distribute_update_failed_dialog_reinstall">Uygulamayı yeniden yükle</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">Bu sürüm ya yan yüklenen veya özel modda bir tarayıcı kullanılarak indirilmiş.</string>
 </resources>
