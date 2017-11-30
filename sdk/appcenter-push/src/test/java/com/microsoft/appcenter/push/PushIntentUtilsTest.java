@@ -50,7 +50,7 @@ public class PushIntentUtilsTest {
         /* Create a mock bundle that will actually use a map to store values. */
         Bundle mockBundle = mock(Bundle.class);
         when(mockBundle.keySet()).thenReturn(extras.keySet());
-        when(mockBundle.getString(anyString())).thenAnswer(new Answer<Object>() {
+        when(mockBundle.get(anyString())).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 String key = (String) invocation.getArguments()[0];

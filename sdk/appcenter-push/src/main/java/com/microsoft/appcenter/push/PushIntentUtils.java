@@ -66,7 +66,7 @@ class PushIntentUtils {
         Bundle intentExtras = pushIntent.getExtras();
         if (intentExtras != null) {
             for (String key : intentExtras.keySet()) {
-                String value = intentExtras.getString(key);
+                String value = String.valueOf(intentExtras.get(key));
                 if (key.startsWith(EXTRA_GCM_PREFIX) || EXTRA_STANDARD_KEYS.contains(key)) {
                     standardData.put(key, value);
                 } else {
