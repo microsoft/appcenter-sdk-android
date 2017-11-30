@@ -379,6 +379,9 @@ public class SettingsActivity extends AppCompatActivity {
             super.onActivityResult(requestCode, resultCode, data);
             if (requestCode == FILE_ATTACHMENT_DIALOG_ID) {
                 Uri fileAttachment = resultCode == RESULT_OK && data != null ? data.getData() : null;
+                if (fileAttachment != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    getActivity().getContentResolver().takePersistableUriPermission(fileAttachment, data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                }
                 MainActivity.setFileAttachment(fileAttachment);
                 Preference preference = getPreferenceManager().findPreference(getString(R.string.appcenter_crashes_file_attachment_key));
                 if (preference != null) {
