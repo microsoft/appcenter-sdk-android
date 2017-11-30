@@ -37,7 +37,6 @@ import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.UUID;
 
-
 public class MainActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = "AppCenterSasquatch";
@@ -198,4 +197,27 @@ public class MainActivity extends AppCompatActivity {
         }
         return sPushListener;
     }
+
+    public static void setTextAttachment(String textAttachment) {
+        SharedPreferences.Editor editor = sSharedPreferences.edit();
+        if (textAttachment == null) {
+            editor.remove(TEXT_ATTACHMENT_KEY);
+        } else {
+            editor.putString(TEXT_ATTACHMENT_KEY, textAttachment);
+        }
+        editor.apply();
+        sCrashesListener.setTextAttachment(textAttachment);
+    }
+
+    public static void setFileAttachment(Uri fileAttachment) {
+        SharedPreferences.Editor editor = sSharedPreferences.edit();
+        if (fileAttachment == null) {
+            editor.remove(FILE_ATTACHMENT_KEY);
+        } else {
+            editor.putString(FILE_ATTACHMENT_KEY, fileAttachment.toString());
+        }
+        editor.apply();
+        sCrashesListener.setFileAttachment(fileAttachment);
+    }
+
 }

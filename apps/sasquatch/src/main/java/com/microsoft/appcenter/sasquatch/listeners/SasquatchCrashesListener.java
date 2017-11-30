@@ -20,6 +20,7 @@ import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.activities.MainActivity;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -94,11 +95,18 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
 
         /* Attach app icon to test binary. */
         if (fileAttachment != null) {
-            byte[] data = getFileAttachmentData();
-            String name = getFileAttachmentDisplayName();
-            String mime = getFileAttachmentMimeType();
-            ErrorAttachmentLog binaryLog = ErrorAttachmentLog.attachmentWithBinary(data, name, mime);
-            attachments.add(binaryLog);
+            try {
+                byte[] data = getFileAttachmentData();
+                String name = getFileAttachmentDisplayName();
+                String mime = getFileAttachmentMimeType();
+                ErrorAttachmentLog binaryLog = ErrorAttachmentLog.attachmentWithBinary(data, name, mime);
+                attachments.add(binaryLog);
+            } catch (SecurityException e) {
+                Log.e(LOG_TAG, "Couldn't get file attachment data.", e);
+
+                /* Reset file attachment. */
+                MainActivity.setFileAttachment(null);
+            }
         }
 
         /* Attach some text. */
@@ -134,7 +142,7 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
         crashesIdlingResource.decrement();
     }
 
-    public String getFileAttachmentDisplayName() {
+    public String getFileAttachmentDisplayName() throws SecurityException {
         Cursor cursor = context.getContentResolver()
                 .query(fileAttachment, null, null, null, null);
         try {
@@ -152,7 +160,7 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
         return "";
     }
 
-    public String getFileAttachmentSize() {
+    public String getFileAttachmentSize() throws SecurityException {
         Cursor cursor = context.getContentResolver()
                 .query(fileAttachment, null, null, null, null);
         try {
@@ -170,7 +178,7 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
         return "Unknown";
     }
 
-    private byte[] getFileAttachmentData() {
+    private byte[] getFileAttachmentData() throws SecurityException {
         InputStream inputStream = null;
         ByteArrayOutputStream outputStream = null;
         try {
