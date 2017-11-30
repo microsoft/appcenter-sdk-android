@@ -10,6 +10,7 @@ import android.support.annotation.VisibleForTesting;
 import android.support.test.espresso.idling.CountingIdlingResource;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 import android.widget.Toast;
@@ -158,7 +159,7 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
             if (cursor != null && cursor.moveToFirst()) {
                 int sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
                 if (!cursor.isNull(sizeIndex)) {
-                    return cursor.getString(sizeIndex);
+                    return Formatter.formatFileSize(context, cursor.getLong(sizeIndex));
                 }
             }
         } finally {
