@@ -3,7 +3,9 @@ package com.microsoft.appcenter.distribute;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.backup.SharedPreferencesBackupHelper;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -33,7 +35,10 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
+import java.util.Arrays;
+
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.any;
@@ -94,6 +99,9 @@ public class AbstractDistributeTest {
     AppCenterHandler mAppCenterHandler;
 
     @Mock
+    SharedPreferences mMobileCenterPreferencesStorage;
+
+    @Mock
     private AppCenterFuture<Boolean> mBooleanAppCenterFuture;
 
     @Before
@@ -134,6 +142,8 @@ public class AbstractDistributeTest {
 
         /* Default download id when not found. */
         when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
+
+        mMobileCenterPreferencesStorage = mock(SharedPreferences.class);
 
         /* Mock package manager. */
         when(mContext.getApplicationContext()).thenReturn(mContext);
@@ -183,7 +193,8 @@ public class AbstractDistributeTest {
 
             @Override
             public CryptoUtils.DecryptedData answer(InvocationOnMock invocation) throws Throwable {
-            return new CryptoUtils.DecryptedData(invocation.getArguments()[0].toString(), null);
+                Object arg = invocation.getArguments()[0];
+                return new CryptoUtils.DecryptedData(arg == null ? null : arg.toString(), null);
             }
         });
         when(mCryptoUtils.encrypt(anyString())).thenAnswer(new Answer<String>() {

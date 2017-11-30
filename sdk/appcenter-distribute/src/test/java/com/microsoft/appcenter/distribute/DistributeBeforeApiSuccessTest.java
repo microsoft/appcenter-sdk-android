@@ -24,9 +24,11 @@ import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 
 import org.json.JSONException;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Mock;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -88,6 +90,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest({ErrorDetails.class, DistributeUtils.class})
 public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
+    @Mock
+    private SharedPreferences mMobileCenterPreferencesStorage;
+
     /**
      * Shared code to mock a restart of an activity considered to be the launcher.
      */
@@ -142,6 +147,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verify(mDialog).show();
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+    }
+
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        when(mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE)).thenReturn(mMobileCenterPreferencesStorage);
     }
 
     @Test
@@ -1035,7 +1047,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock we already have token. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some encrypted token");
-        when(mCryptoUtils.decrypt("some encrypted token", anyBoolean())).thenReturn(new CryptoUtils.DecryptedData("some token", "some better encrypted token"));
+        when(mCryptoUtils.decrypt(eq("some encrypted token"), anyBoolean())).thenReturn(new CryptoUtils.DecryptedData("some token", "some better encrypted token"));
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();
@@ -1054,19 +1066,14 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void useMobileCenterFailoverForDecryptAndReleaseDetails() throws Exception {
-
-        SharedPreferences mMobileCenterPreferencesStorage = mock(SharedPreferences.class);
-
-        PowerMockito.when(mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE)).thenReturn(mMobileCenterPreferencesStorage);
-        PowerMockito.when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
-        PowerMockito.when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("some group MC");
+        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
+        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("some group MC");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token MC");
 
         /* Put any invalid strings in primary storage */
-
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));

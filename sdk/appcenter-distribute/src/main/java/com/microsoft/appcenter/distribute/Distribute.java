@@ -251,8 +251,7 @@ public class Distribute extends AbstractAppCenterService {
      * Preferences to use in case of token/distribution group missing from Mobile Center SDK releases
      * (versions 0.x).
      */
-    @VisibleForTesting
-    public SharedPreferences mMobileCenterPreferenceStorage;
+    private SharedPreferences mMobileCenterPreferenceStorage;
 
     /**
      * Get shared instance.
@@ -714,13 +713,13 @@ public class Distribute extends AbstractAppCenterService {
             String updateToken = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
             if (updateToken != null || distributionGroupId != null) {
-
                 decryptAndGetReleaseDetails(updateToken, distributionGroupId, false);
                 return;
             }
             else {
 
                 /* Use failover logic to search for missing token/distribution group */
+                System.out.println("mmcps: " + mMobileCenterPreferenceStorage);
                 updateToken = mMobileCenterPreferenceStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null);
                 distributionGroupId = mMobileCenterPreferenceStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null);
                 if (updateToken != null || distributionGroupId != null) {
@@ -738,9 +737,6 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId, boolean mobileCenterFailover) {
-        System.out.println("updateToken: " + updateToken);
-        System.out.println("distId: " + distributionGroupId);
-        System.out.println("mobileCenterFailover: " + mobileCenterFailover);
 
         /* Decrypt token if any. */
         if (updateToken != null) {
@@ -750,7 +746,6 @@ public class Distribute extends AbstractAppCenterService {
              /* Store new encrypted value if updated. */
             if (newEncryptedData != null) {
                 PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, newEncryptedData);
-                System.out.println("Putting at line ~745");
             }
             updateToken = decryptedData.getDecryptedData();
 
@@ -761,7 +756,6 @@ public class Distribute extends AbstractAppCenterService {
                 String encryptedDistributionId = CryptoUtils.getInstance(mContext).encrypt(distributionGroupId);
                 PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, encryptedUpdateToken);
                 PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, encryptedDistributionId);
-                System.out.println("Putting 2x at line ~755");
             }
         }
 
@@ -817,7 +811,6 @@ public class Distribute extends AbstractAppCenterService {
         if (requestId.equals(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
             AppCenterLog.debug(LOG_TAG, "Stored update setup failed parameter.");
             PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, updateSetupFailed);
-            System.out.println("Putting at line ~815");
         }
     }
 
@@ -836,12 +829,10 @@ public class Distribute extends AbstractAppCenterService {
             if (updateToken != null) {
                 String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(updateToken);
                 PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, encryptedToken);
-                System.out.println("Putting at line ~830");
             } else {
                 PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
             }
             PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
-            System.out.println("Putting at line ~840");
             AppCenterLog.debug(LOG_TAG, "Stored redirection parameters.");
             PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
             cancelPreviousTasks();
@@ -986,7 +977,6 @@ public class Distribute extends AbstractAppCenterService {
 
                     /* Update cache. */
                     PreferencesStorage.putString(PREFERENCE_KEY_RELEASE_DETAILS, rawReleaseDetails);
-                    System.out.println("Putting at line ~980");
 
                     /* If previous release is mandatory and still processing, don't do anything right now. */
                     if (mReleaseDetails != null && mReleaseDetails.isMandatoryUpdate()) {
@@ -1176,7 +1166,6 @@ public class Distribute extends AbstractAppCenterService {
     private synchronized void storeUpdateSetupFailedPackageHash(DialogInterface dialog) {
         if (mUpdateSetupFailedDialog == dialog) {
             PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY, DistributeUtils.computeReleaseHash(mPackageInfo));
-            System.out.println("Putting at line ~1175");
         } else {
             showDisabledToast();
         }

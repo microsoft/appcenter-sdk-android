@@ -71,6 +71,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
 
     static final long DOWNLOAD_ID = 42;
 
+
     static final ArgumentMatcher<CheckDownloadTask> sCheckCompleteTask = new ArgumentMatcher<CheckDownloadTask>() {
 
         @Override
