@@ -18,4 +18,5 @@
   <string name="appcenter_distribute_update_failed_dialog_title">禁用應用程式更新</string>
   <string name="appcenter_distribute_update_failed_dialog_ignore">忽略</string>
   <string name="appcenter_distribute_update_failed_dialog_reinstall">重新安裝應用程式</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">此版本要麼是側面載入, 要麼是在專用模式下使用瀏覽器下載的。</string>
 </resources>

@@ -26,6 +26,16 @@
     <string name="appcenter_crashes_state_summary_enabled">Crashes are enabled</string>
     <string name="appcenter_crashes_state_summary_disabled">Crashes are disabled</string>
 
+    <string name="appcenter_crashes_text_attachment_key">appcenter_crashes_text_attachment_key</string>
+    <string name="appcenter_crashes_text_attachment_title">Text attachment</string>
+    <string name="appcenter_crashes_text_attachment_summary">Length: %d characters</string>
+    <string name="appcenter_crashes_text_attachment_summary_empty">Empty</string>
+
+    <string name="appcenter_crashes_file_attachment_key">appcenter_crashes_file_attachment_key</string>
+    <string name="appcenter_crashes_file_attachment_title">File attachment</string>
+    <string name="appcenter_crashes_file_attachment_summary">File: %1$s Size: %2$s</string>
+    <string name="appcenter_crashes_file_attachment_summary_empty">The file isn\'t selected</string>
+
     <string name="distribute_key">appcenter_distribute</string>
     <string name="distribute_title">Distribute</string>
 

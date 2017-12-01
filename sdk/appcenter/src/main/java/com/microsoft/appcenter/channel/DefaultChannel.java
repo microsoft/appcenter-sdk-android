@@ -18,10 +18,10 @@ import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.persistence.Persistence;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -114,9 +114,10 @@ public class DefaultChannel implements Channel {
     /**
      * Creates and initializes a new instance.
      *
-     * @param context       The context.
-     * @param appSecret     The application secret.
-     * @param logSerializer The log serializer.
+     * @param context           The context.
+     * @param appSecret         The application secret.
+     * @param logSerializer     The log serializer.
+     * @param appCenterHandler  App Center looper thread handler.
      */
     public DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler) {
         this(context, appSecret, buildDefaultPersistence(logSerializer), new IngestionHttp(context, logSerializer), appCenterHandler);
@@ -125,11 +126,11 @@ public class DefaultChannel implements Channel {
     /**
      * Overloaded constructor with limited visibility that allows for dependency injection.
      *
-     * @param context             The context.
-     * @param appSecret           The application secret.
-     * @param persistence         Persistence object for dependency injection.
-     * @param ingestion           Ingestion object for dependency injection.
-     * @param appCenterHandler    App Center looper thread handler.
+     * @param context          The context.
+     * @param appSecret        The application secret.
+     * @param persistence      Persistence object for dependency injection.
+     * @param ingestion        Ingestion object for dependency injection.
+     * @param appCenterHandler App Center looper thread handler.
      */
     @VisibleForTesting
     DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull Persistence persistence, @NonNull Ingestion ingestion, @NonNull Handler appCenterHandler) {
@@ -324,7 +325,9 @@ public class DefaultChannel implements Channel {
             return;
         }
         final GroupState groupState = mGroupStates.get(groupName);
-        AppCenterLog.debug(LOG_TAG, "triggerIngestion(" + groupName + ") pendingLogCount=" + groupState.mPendingLogCount);
+        int pendingLogCount = groupState.mPendingLogCount;
+        int maxFetch = Math.min(pendingLogCount, groupState.mMaxLogsPerBatch);
+        AppCenterLog.debug(LOG_TAG, "triggerIngestion(" + groupName + ") pendingLogCount=" + pendingLogCount);
         cancelTimer(groupState);
 
         /* Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending. */
@@ -334,12 +337,18 @@ public class DefaultChannel implements Channel {
         }
 
         /* Get a batch from Persistence. */
-        final List<Log> batch = new ArrayList<>(groupState.mMaxLogsPerBatch);
+        final List<Log> batch = new ArrayList<>(maxFetch);
         final int stateSnapshot = mCurrentState;
-        final String batchId = mPersistence.getLogs(groupName, groupState.mMaxLogsPerBatch, batch);
+        final String batchId = mPersistence.getLogs(groupName, maxFetch, batch);
+
+        /* Decrement counter. */
+        groupState.mPendingLogCount -= maxFetch;
+
+        /* Nothing more to do if no logs. */
         if (batchId == null) {
             return;
         }
+        AppCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
 
         /* Call group listener before sending logs to ingestion service. */
         if (groupState.mListener != null) {
@@ -347,10 +356,6 @@ public class DefaultChannel implements Channel {
                 groupState.mListener.onBeforeSending(log);
             }
         }
-
-        /* Decrement counter. */
-        groupState.mPendingLogCount -= batch.size();
-        AppCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
 
         /* Remember this batch. */
         groupState.mSendingBatches.put(batchId, batch);

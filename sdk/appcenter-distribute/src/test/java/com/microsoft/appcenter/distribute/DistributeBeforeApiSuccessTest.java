@@ -140,7 +140,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Verify dialog. */
         verify(mDialogBuilder).setCancelable(false);
         verify(mDialogBuilder).setTitle(R.string.appcenter_distribute_update_failed_dialog_title);
-        verify(mDialogBuilder).setMessage("failed_message");
+        verify(mDialogBuilder).setMessage(R.string.appcenter_distribute_update_failed_dialog_message);
         verify(mDialog).show();
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
@@ -160,7 +160,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void doNothingIfUpdateSetupFailedMessageExist() throws Exception {
-        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message_from_backend");
         testDistributeInactive();
     }
 
@@ -399,7 +399,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void handleFailedUpdateSetupDialogIgnoreAction() throws URISyntaxException {
-        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message_from_backend");
         when(mDialog.isShowing()).thenReturn(false);
         when(mDialogBuilder.create()).thenReturn(mDialog);
         mockStatic(DistributeUtils.class);
@@ -413,7 +413,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
         verify(mDialogBuilder).setCancelable(false);
         verify(mDialogBuilder).setTitle(R.string.appcenter_distribute_update_failed_dialog_title);
-        verify(mDialogBuilder).setMessage("failed_message");
+        verify(mDialogBuilder).setMessage(R.string.appcenter_distribute_update_failed_dialog_message);
         verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_update_failed_dialog_ignore), clickListener.capture());
         verify(mDialog).show();
 
@@ -425,7 +425,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void verifyFailedUpdateSetupDialogIsAlreadyShownInSameActivity() throws Exception {
-        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message_from_backend");
 
         /* Trigger call. */
         start();
