@@ -1076,7 +1076,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* do it again for an update token and dist group which are also null in the fallback */
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn(null);
-        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn(null);
+        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("some group MC");
 
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
