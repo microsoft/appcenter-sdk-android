@@ -160,6 +160,34 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence).deleteLogs(eq(TEST_GROUP));
     }
 
+    @Test
+    public void lessLogsThanExpected() {
+        Persistence mockPersistence = mock(Persistence.class);
+        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+
+        when(mockPersistence.getLogs(any(String.class), anyInt(), Matchers.<ArrayList<Log>> any())).then(getGetLogsAnswer(40));
+
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
+
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mCoreHandler);
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockListener);
+
+        /* Enqueuing 49 events. */
+        for (int i = 1; i <= 49; i++) {
+            channel.enqueue(mock(Log.class), TEST_GROUP);
+            assertEquals(i, channel.getCounter(TEST_GROUP));
+        }
+        verify(mHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
+
+        /* Enqueue another event. */
+        channel.enqueue(mock(Log.class), TEST_GROUP);
+        verify(mHandler).removeCallbacks(any(Runnable.class));
+
+        /* Database returned less logs than we expected (40 vs 50), yet counter must be reset. */
+        assertEquals(0, channel.getCounter(TEST_GROUP));
+    }
+
     @NonNull
     private AtomicReference<Runnable> catchPostRunnable() {
         final AtomicReference<Runnable> runnable = new AtomicReference<>();
@@ -180,7 +208,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Persistence mockPersistence = mock(Persistence.class);
         IngestionHttp mockIngestion = mock(IngestionHttp.class);
 
-        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
+        /* We make second request return less logs than expected to make sure counter is reset properly. */
+        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer()).then(getGetLogsAnswer(49)).then(getGetLogsAnswer());
 
         final List<ServiceCallback> callbacks = new ArrayList<>();
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {

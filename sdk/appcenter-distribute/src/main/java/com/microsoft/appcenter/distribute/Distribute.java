@@ -1229,7 +1229,7 @@ public class Distribute extends AbstractAppCenterService {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
         dialogBuilder.setCancelable(false);
         dialogBuilder.setTitle(R.string.appcenter_distribute_update_failed_dialog_title);
-        dialogBuilder.setMessage(errorMessage);
+        dialogBuilder.setMessage(R.string.appcenter_distribute_update_failed_dialog_message);
         dialogBuilder.setPositiveButton(R.string.appcenter_distribute_update_failed_dialog_ignore, new DialogInterface.OnClickListener() {
 
             @Override

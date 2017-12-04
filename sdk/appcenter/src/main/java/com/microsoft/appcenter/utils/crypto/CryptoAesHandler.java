@@ -13,7 +13,6 @@ import javax.crypto.spec.IvParameterSpec;
 
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.AES_KEY_SIZE;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ANDROID_KEY_STORE;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CIPHER_AES;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ENCRYPT_KEY_LIFETIME_IN_YEARS;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.PROVIDER_ANDROID_M;
 import static javax.crypto.Cipher.DECRYPT_MODE;
@@ -24,7 +23,7 @@ class CryptoAesHandler implements CryptoHandler {
 
     @Override
     public String getAlgorithm() {
-        return CIPHER_AES + "/" + AES_KEY_SIZE;
+        return CryptoConstants.CIPHER_AES + "/" + AES_KEY_SIZE;
     }
 
     @Override
@@ -44,7 +43,7 @@ class CryptoAesHandler implements CryptoHandler {
 
     @Override
     public byte[] encrypt(CryptoUtils.ICryptoFactory cryptoFactory, int apiLevel, KeyStore.Entry keyStoreEntry, byte[] input) throws Exception {
-        CryptoUtils.ICipher cipher = cryptoFactory.getCipher(CIPHER_AES, PROVIDER_ANDROID_M);
+        CryptoUtils.ICipher cipher = cryptoFactory.getCipher(CryptoConstants.CIPHER_AES, PROVIDER_ANDROID_M);
         cipher.init(ENCRYPT_MODE, ((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey());
         byte[] cipherIV = cipher.getIV();
         byte[] output = cipher.doFinal(input);
@@ -56,7 +55,7 @@ class CryptoAesHandler implements CryptoHandler {
 
     @Override
     public byte[] decrypt(CryptoUtils.ICryptoFactory cryptoFactory, int apiLevel, KeyStore.Entry keyStoreEntry, byte[] data) throws Exception {
-        CryptoUtils.ICipher cipher = cryptoFactory.getCipher(CIPHER_AES, PROVIDER_ANDROID_M);
+        CryptoUtils.ICipher cipher = cryptoFactory.getCipher(CryptoConstants.CIPHER_AES, PROVIDER_ANDROID_M);
         int blockSize = cipher.getBlockSize();
         IvParameterSpec ivParameterSpec = new IvParameterSpec(data, 0, blockSize);
         cipher.init(DECRYPT_MODE, ((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey(), ivParameterSpec);

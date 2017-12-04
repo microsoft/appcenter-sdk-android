@@ -122,8 +122,10 @@ public class DatabaseManager implements Closeable {
         mErrorListener = listener;
 
         mSQLiteOpenHelper = new SQLiteOpenHelper(context, database, null, version) {
+
             @Override
             public void onCreate(SQLiteDatabase db) {
+
                 /* Generate a schema from specimen. */
                 StringBuilder sql = new StringBuilder("CREATE TABLE `");
                 sql.append(mTable);
@@ -147,6 +149,7 @@ public class DatabaseManager implements Closeable {
 
             @Override
             public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
                 /* For now we upgrade by destroying the old table. */
                 db.execSQL("DROP TABLE `" + mTable + "`");
                 onCreate(db);
@@ -200,15 +203,17 @@ public class DatabaseManager implements Closeable {
      * @return A database identifier
      */
     public long put(@NonNull ContentValues values) {
+
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
+
                 /* Insert data. */
                 long id = getDatabase().insertOrThrow(mTable, null, values);
 
                 /* Purge oldest entry if it hits the limit. */
                 if (mMaxNumberOfRecords < getRowCount() && mMaxNumberOfRecords > 0) {
-                    Cursor cursor = getCursor(null, null);
+                    Cursor cursor = getCursor(null, null, true);
                     cursor.moveToNext();
                     delete(cursor.getLong(0));
                     cursor.close();
@@ -234,6 +239,7 @@ public class DatabaseManager implements Closeable {
      * @return true if the values updated successfully, false otherwise.
      */
     public boolean update(@IntRange(from = 0) long id, @NonNull ContentValues values) {
+
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
@@ -295,6 +301,7 @@ public class DatabaseManager implements Closeable {
      * @param value The optional value for query.
      */
     public void delete(@Nullable String key, @Nullable Object value) {
+
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
@@ -339,10 +346,11 @@ public class DatabaseManager implements Closeable {
      * @return A matching entry.
      */
     public ContentValues get(@Nullable String key, @Nullable Object value) {
+
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
-                Cursor cursor = getCursor(key, value);
+                Cursor cursor = getCursor(key, value, false);
                 ContentValues values = cursor.moveToFirst() ? buildValues(cursor, mSchema) : null;
                 cursor.close();
                 return values;
@@ -372,18 +380,21 @@ public class DatabaseManager implements Closeable {
     /**
      * Gets a scanner to iterate all values those match key == value.
      *
-     * @param key   The optional key for query.
-     * @param value The optional value for query.
+     * @param key    The optional key for query.
+     * @param value  The optional value for query.
+     * @param idOnly true to return only identifier, false to return all fields.
+     *               This flag is ignored if using in memory database.
      * @return A scanner to iterate all values.
      */
-    Scanner getScanner(String key, Object value) {
-        return new Scanner(key, value);
+    Scanner getScanner(String key, Object value, boolean idOnly) {
+        return new Scanner(key, value, idOnly);
     }
 
     /**
      * Clears the table in the database.
      */
     public void clear() {
+
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
@@ -406,6 +417,7 @@ public class DatabaseManager implements Closeable {
      */
     @Override
     public void close() throws IOException {
+
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
@@ -428,6 +440,7 @@ public class DatabaseManager implements Closeable {
      * @return The number of records in the table.
      */
     final long getRowCount() {
+
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
@@ -444,12 +457,13 @@ public class DatabaseManager implements Closeable {
     /**
      * Gets a cursor for all rows in the table, all rows where key matches value if specified.
      *
-     * @param key   The optional key for query.
-     * @param value The optional value for query.
+     * @param key    The optional key for query.
+     * @param value  The optional value for query.
+     * @param idOnly Return only row identifier if true, return all fields otherwise.
      * @return A cursor for all rows that matches the given criteria.
      * @throws RuntimeException If an error occurs.
      */
-    Cursor getCursor(String key, Object value) throws RuntimeException {
+    Cursor getCursor(String key, Object value, boolean idOnly) throws RuntimeException {
 
         /* Build a query to get values. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
@@ -466,7 +480,8 @@ public class DatabaseManager implements Closeable {
         }
 
         /* Query database. */
-        return builder.query(getDatabase(), null, null, selectionArgs, null, null, PRIMARY_KEY);
+        String[] projectionIn = idOnly ? new String[]{PRIMARY_KEY} : null;
+        return builder.query(getDatabase(), projectionIn, null, selectionArgs, null, null, PRIMARY_KEY);
     }
 
     /**
@@ -477,10 +492,12 @@ public class DatabaseManager implements Closeable {
      */
     @VisibleForTesting
     SQLiteDatabase getDatabase() throws RuntimeException {
+
         /* Try opening database. */
         try {
             return mSQLiteOpenHelper.getWritableDatabase();
         } catch (RuntimeException e) {
+
             /* First error, try to delete database (may be corrupted). */
             mContext.deleteDatabase(mDatabase);
 
@@ -497,6 +514,7 @@ public class DatabaseManager implements Closeable {
      */
     @VisibleForTesting
     void switchToInMemory(String operation, RuntimeException exception) {
+
         /* Create an in-memory database. */
         mIMDB = new LinkedHashMap<Long, ContentValues>() {
             @Override
@@ -536,6 +554,7 @@ public class DatabaseManager implements Closeable {
      * Scanner specification.
      */
     class Scanner implements Iterable<ContentValues>, Closeable {
+
         /**
          * Filter key.
          */
@@ -547,6 +566,11 @@ public class DatabaseManager implements Closeable {
         private final Object value;
 
         /**
+         * Return only IDs flags (SQLite implementation only).
+         */
+        private final boolean idOnly;
+
+        /**
          * SQLite cursor.
          */
         private Cursor cursor;
@@ -554,9 +578,10 @@ public class DatabaseManager implements Closeable {
         /**
          * Initializes a cursor with optional filter.
          */
-        private Scanner(String key, Object value) {
+        private Scanner(String key, Object value, boolean idOnly) {
             this.key = key;
             this.value = value;
+            this.idOnly = idOnly;
         }
 
         @Override
@@ -573,17 +598,20 @@ public class DatabaseManager implements Closeable {
             }
         }
 
+        @NonNull
         @Override
         public Iterator<ContentValues> iterator() {
+
             /* Try SQLite. */
             if (mIMDB == null) {
                 try {
                     /* Close cursor first if it was being used. */
                     close();
-                    cursor = getCursor(key, value);
+                    cursor = getCursor(key, value, idOnly);
 
                     /* Wrap cursor as iterator. */
                     return new Iterator<ContentValues>() {
+
                         /**
                          * If null, cursor needs to be moved to next.
                          */
@@ -616,6 +644,7 @@ public class DatabaseManager implements Closeable {
 
                         @Override
                         public ContentValues next() {
+
                             /* Check next. */
                             if (!hasNext()) {
                                 throw new NoSuchElementException();
@@ -650,6 +679,7 @@ public class DatabaseManager implements Closeable {
 
                 @Override
                 public boolean hasNext() {
+
                     /* Iterator needs to be moved to the next. */
                     if (!advanced) {
                         next = null;
@@ -686,7 +716,7 @@ public class DatabaseManager implements Closeable {
             if (mIMDB == null) {
                 try {
                     if (cursor == null) {
-                        cursor = getCursor(key, value);
+                        cursor = getCursor(key, value, idOnly);
                     }
                     return cursor.getCount();
                 } catch (RuntimeException e) {

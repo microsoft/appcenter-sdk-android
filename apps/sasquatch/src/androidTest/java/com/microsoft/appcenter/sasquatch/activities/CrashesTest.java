@@ -12,13 +12,14 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.v4.app.ActivityCompat;
 import android.view.View;
 
-import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesPrivateHelper;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.hamcrest.Description;
@@ -96,18 +97,23 @@ public class CrashesTest {
             assertTrue(logFile.delete());
         }
 
+        /* Clear listeners. */
+        MainActivity.sAnalyticsListener = null;
+        MainActivity.sCrashesListener = null;
+        MainActivity.sPushListener = null;
+
         /* Launch main activity and go to setting page. Required to properly initialize. */
         mActivityTestRule.launchActivity(new Intent());
 
         /* Register IdlingResource */
-        Espresso.registerIdlingResources(MainActivity.crashesIdlingResource);
+        Espresso.registerIdlingResources(SasquatchCrashesListener.crashesIdlingResource);
     }
 
     @After
     public final void tearDown() {
 
         /* Unregister IdlingResource */
-        Espresso.unregisterIdlingResources(MainActivity.crashesIdlingResource);
+        Espresso.unregisterIdlingResources(SasquatchCrashesListener.crashesIdlingResource);
     }
 
     @Test
@@ -215,9 +221,18 @@ public class CrashesTest {
         }
 
         private void relaunchActivity() {
+
+            /* Destroy old instances. */
             ActivityCompat.finishAffinity(mActivityTestRule.getActivity());
             unsetInstance(AppCenter.class);
             unsetInstance(Crashes.class);
+
+            /* Clear listeners. */
+            MainActivity.sAnalyticsListener = null;
+            MainActivity.sCrashesListener = null;
+            MainActivity.sPushListener = null;
+
+            /* Launch activity again. */
             Intent intent = new Intent();
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             mActivityTestRule.launchActivity(intent);

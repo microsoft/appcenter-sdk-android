@@ -18,4 +18,5 @@
   <string name="appcenter_distribute_update_failed_dialog_title">Mises à jour désactivées</string>
   <string name="appcenter_distribute_update_failed_dialog_ignore">Ignorer</string>
   <string name="appcenter_distribute_update_failed_dialog_reinstall">Réinstaller l\'application</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">Cette version était soit à chargement latéral, soit téléchargée à l\'aide d\'un navigateur en mode privé.</string>
 </resources>
