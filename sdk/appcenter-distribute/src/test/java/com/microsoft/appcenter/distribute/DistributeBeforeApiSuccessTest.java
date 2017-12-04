@@ -6,7 +6,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -24,11 +23,9 @@ import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 
 import org.json.JSONException;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
-import org.mockito.Mock;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -53,18 +50,15 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_R
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REDIRECT_SCHEME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REQUEST_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_SETUP_PATH_FORMAT;
 import static com.microsoft.appcenter.utils.storage.StorageHelper.PreferencesStorage;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -128,7 +122,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verify(httpClient, never()).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
-    private void showUpdateSetupFailedDialog(ArgumentCaptor<DialogInterface.OnClickListener> clickListener){
+    private void showUpdateSetupFailedDialog() {
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
         when(mDialog.isShowing()).thenReturn(false);
         when(mDialogBuilder.create()).thenReturn(mDialog);
@@ -343,7 +337,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     @Test
     public void disableBeforeHandleUpdateSetupFailureDialogIgnoreAction() throws Exception {
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        showUpdateSetupFailedDialog(clickListener);
+        showUpdateSetupFailedDialog();
         verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_update_failed_dialog_ignore), clickListener.capture());
 
         /* Disable. */
@@ -357,7 +351,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     @Test
     public void disableBeforeHandleUpdateSetupFailureDialogReinstallAction() throws Exception {
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        showUpdateSetupFailedDialog(clickListener);
+        showUpdateSetupFailedDialog();
         verify(mDialogBuilder).setNegativeButton(eq(R.string.appcenter_distribute_update_failed_dialog_reinstall), clickListener.capture());
 
         /* Disable. */
@@ -371,7 +365,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     @Test
     public void handleFailedUpdateSetupDialogReinstallAction() throws URISyntaxException {
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        showUpdateSetupFailedDialog(clickListener);
+        showUpdateSetupFailedDialog();
         verify(mDialogBuilder).setNegativeButton(eq(R.string.appcenter_distribute_update_failed_dialog_reinstall), clickListener.capture());
 
         /* Click. */
@@ -385,7 +379,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     @Test
     public void handleFailedUpdateSetupDialogReinstallActionWithException() throws URISyntaxException {
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        showUpdateSetupFailedDialog(clickListener);
+        showUpdateSetupFailedDialog();
         when(BrowserUtils.appendUri(anyString(), anyString())).thenThrow(new URISyntaxException("Ex", "Reason"));
         verify(mDialogBuilder).setNegativeButton(eq(R.string.appcenter_distribute_update_failed_dialog_reinstall), clickListener.capture());
 
@@ -1053,9 +1047,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some better encrypted token");
     }
 
-
     @Test
-    public void useMobileCenterFailoverForDecryptAndReleaseDetails() throws Exception {
+    public void useMobileCenterFailOverForDecryptAndReleaseDetailsPrivate() throws Exception {
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("some group MC");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
@@ -1063,7 +1056,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token MC");
 
-        /* Put any invalid strings in primary storage */
+        /* Primary storage will be missing data. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -1073,15 +1066,25 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token MC");
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "some group MC");
+    }
 
-        /* do it again for an update token and dist group which are also null in the fallback */
+    @Test
+    public void useMobileCenterFailOverForDecryptAndReleaseDetailsPublic() throws Exception {
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn(null);
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("some group MC");
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        HashMap<String, String> headers = new HashMap<>();
 
+        /* Primary storage will be missing data. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Verify the group was saved into new storage. */
+        verifyStatic(never());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_UPDATE_TOKEN), anyString());
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "some group MC");
     }
-
-
 }

@@ -41,9 +41,9 @@ import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -78,8 +78,9 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.DistributeConstants.NOTIFICATION_CHANNEL_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_UPDATE_SETUP_FAILED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
@@ -87,10 +88,9 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAME;
 import static com.microsoft.appcenter.distribute.DistributeUtils.computeReleaseHash;
 import static com.microsoft.appcenter.distribute.DistributeUtils.getStoredDownloadState;
@@ -277,6 +277,7 @@ public class Distribute extends AbstractAppCenterService {
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
+    @SuppressWarnings("WeakerAccess")
     public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
@@ -287,6 +288,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
+    @SuppressWarnings("WeakerAccess")
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
@@ -296,7 +298,7 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param installUrl install base URL.
      */
-    @SuppressWarnings("SameParameterValue")
+    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void setInstallUrl(String installUrl) {
         getInstance().setInstanceInstallUrl(installUrl);
     }
@@ -306,7 +308,7 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param apiUrl API base URL.
      */
-    @SuppressWarnings("SameParameterValue")
+    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void setApiUrl(String apiUrl) {
         getInstance().setInstanceApiUrl(apiUrl);
     }
@@ -316,6 +318,7 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param listener The custom distribute listener.
      */
+    @SuppressWarnings("WeakerAccess")
     public static void setListener(DistributeListener listener) {
         getInstance().setInstanceListener(listener);
     }
@@ -691,7 +694,7 @@ public class Distribute extends AbstractAppCenterService {
             String updateSetupFailedMessage = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
             if (updateSetupFailedMessage != null) {
                 AppCenterLog.debug(LOG_TAG, "In-app updates setup failure detected.");
-                showUpdateSetupFailedDialog(updateSetupFailedMessage);
+                showUpdateSetupFailedDialog();
                 return;
             }
 
@@ -715,10 +718,9 @@ public class Distribute extends AbstractAppCenterService {
             if (updateToken != null || distributionGroupId != null) {
                 decryptAndGetReleaseDetails(updateToken, distributionGroupId, false);
                 return;
-            }
-            else {
+            } else {
 
-                /* Use failover logic to search for missing token/distribution group */
+                /* Use fail-over logic to search for missing token/distribution group */
                 updateToken = mMobileCenterPreferenceStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null);
                 distributionGroupId = mMobileCenterPreferenceStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null);
                 if (updateToken != null || distributionGroupId != null) {
@@ -735,27 +737,29 @@ public class Distribute extends AbstractAppCenterService {
         }
     }
 
-    private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId, boolean mobileCenterFailover) {
+    private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId, boolean mobileCenterFailOver) {
 
         /* Decrypt token if any. */
         if (updateToken != null) {
-            CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(updateToken, mobileCenterFailover);
+            CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(updateToken, mobileCenterFailOver);
             String newEncryptedData = decryptedData.getNewEncryptedData();
 
-             /* Store new encrypted value if updated. */
+            /* Store new encrypted value if updated. */
             if (newEncryptedData != null) {
                 PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, newEncryptedData);
             }
             updateToken = decryptedData.getDecryptedData();
+            if (mobileCenterFailOver) {
 
-            if (mobileCenterFailover) {
-
-                /* Store the token and distribution group id from Mobile Center into App Center storage, re-encrypting it */
+                /* Store the token from Mobile Center into App Center storage, re-encrypting it */
                 String encryptedUpdateToken = CryptoUtils.getInstance(mContext).encrypt(updateToken);
-                String encryptedDistributionId = CryptoUtils.getInstance(mContext).encrypt(distributionGroupId);
                 PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, encryptedUpdateToken);
-                PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, encryptedDistributionId);
             }
+        }
+
+        /* If the group was from Mobile Center storage, save it in the new storage. */
+        if (mobileCenterFailOver) {
+            PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
         }
 
         /* Check latest release. */
@@ -901,11 +905,11 @@ public class Distribute extends AbstractAppCenterService {
 
                     @Override
                     public void run() {
-                    try {
-                        handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload));
-                    } catch (JSONException e) {
-                        onCallFailed(e);
-                    }
+                        try {
+                            handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload));
+                        } catch (JSONException e) {
+                            onCallFailed(e);
+                        }
                     }
                 });
             }
@@ -1252,7 +1256,7 @@ public class Distribute extends AbstractAppCenterService {
      * Show update setup failed dialog.
      */
     @UiThread
-    private synchronized void showUpdateSetupFailedDialog(final String errorMessage) {
+    private synchronized void showUpdateSetupFailedDialog() {
 
         /* Check if we need to replace the dialog. */
         if (!shouldRefreshDialog(mUpdateSetupFailedDialog)) {
