@@ -2,12 +2,14 @@ package com.microsoft.appcenter;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
+import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
 import com.microsoft.appcenter.channel.Channel;
@@ -20,16 +22,17 @@ import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.ShutdownHelper;
-import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -63,6 +66,19 @@ public class AppCenter {
      * Shutdown timeout in millis.
      */
     private static final int SHUTDOWN_TIMEOUT = 5000;
+
+    /**
+     * Name of the variable used to indicate services that should be disabled (typically for test
+     * cloud).
+     */
+    @VisibleForTesting
+    static final String DISABLE_SERVICES = "APP_CENTER_DISABLE";
+
+    /**
+     * Value to indicate that all services should be disabled.
+     */
+    @VisibleForTesting
+    static final String DISABLE_ALL_SERVICES = "All";
 
     /**
      * Shared instance.
@@ -502,6 +518,9 @@ public class AppCenter {
         for (Class<? extends AppCenterService> service : services) {
             if (service == null) {
                 AppCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
+            } else if (shouldDisable(service.getName())) {
+                AppCenterLog.debug(LOG_TAG, "Environment variable to disable service has been set; not starting service " + service.getName() + ".");
+                return;
             } else {
                 try {
                     AppCenterService serviceInstance = (AppCenterService) service.getMethod("getInstance").invoke(null);
@@ -783,6 +802,24 @@ public class AppCenter {
 
         void unregister() {
             Thread.setDefaultUncaughtExceptionHandler(mDefaultUncaughtExceptionHandler);
+        }
+    }
+
+    @VisibleForTesting
+    Boolean shouldDisable(String serviceName) {
+        try {
+            Bundle arguments = InstrumentationRegistry.getArguments();
+            String disableServices = arguments.getString(DISABLE_SERVICES);
+            if (disableServices == null) {
+                return false;
+            }
+            disableServices = disableServices.trim();
+            String[] disableServicesList = disableServices.split(",");
+            return  Arrays.asList(disableServicesList).contains(DISABLE_ALL_SERVICES) ||
+                    Arrays.asList(disableServicesList).contains(serviceName);
+        } catch (NoClassDefFoundError | IllegalAccessError e) {
+            AppCenterLog.debug(LOG_TAG, "Cannot read environment variables in a non-test environment.");
+            return false;
         }
     }
 }
