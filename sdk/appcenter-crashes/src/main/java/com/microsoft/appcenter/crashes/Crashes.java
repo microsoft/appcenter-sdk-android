@@ -16,6 +16,7 @@ import com.microsoft.appcenter.crashes.ingestion.models.json.ErrorAttachmentLogF
 import com.microsoft.appcenter.crashes.ingestion.models.json.HandledErrorLogFactory;
 import com.microsoft.appcenter.crashes.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
+import com.microsoft.appcenter.crashes.model.NativeException;
 import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -587,7 +588,7 @@ public class Crashes extends AbstractAppCenterService {
                     List<ErrorAttachmentLog> list = new LinkedList<>();
                     list.add(breakpadAttachment);
 
-                    ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new Exception(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
+                    ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new NativeException(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
                     errorLog.getException().setWrapperSdkName("appcenter.ndk");
                     mChannel.enqueue(errorLog, ERROR_GROUP);
 
