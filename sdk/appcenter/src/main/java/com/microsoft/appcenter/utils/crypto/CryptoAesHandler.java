@@ -13,7 +13,6 @@ import javax.crypto.spec.IvParameterSpec;
 
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.AES_KEY_SIZE;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ANDROID_KEY_STORE;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CIPHER_AES;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ENCRYPT_KEY_LIFETIME_IN_YEARS;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.PROVIDER_ANDROID_M;
 import static javax.crypto.Cipher.DECRYPT_MODE;

@@ -18,4 +18,5 @@
   <string name="appcenter_distribute_update_failed_dialog_title">アプリ内更新の無効化</string>
   <string name="appcenter_distribute_update_failed_dialog_ignore">無視</string>
   <string name="appcenter_distribute_update_failed_dialog_reinstall">アプリの再インストール</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">このリリースは、プライベートモードでブラウザを使用してサイドローディングまたはダウンロードされました。</string>
 </resources>

@@ -18,4 +18,5 @@
   <string name="appcenter_distribute_update_failed_dialog_title">Aggiornamenti in-app disabilitati</string>
   <string name="appcenter_distribute_update_failed_dialog_ignore">Ignorare</string>
   <string name="appcenter_distribute_update_failed_dialog_reinstall">Reinstallare app</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">Questa versione è stata caricata a lato o scaricata utilizzando un browser in modalità privata.</string>
 </resources>
