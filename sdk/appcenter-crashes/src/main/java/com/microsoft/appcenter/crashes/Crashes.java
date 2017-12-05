@@ -30,7 +30,11 @@ import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -565,19 +569,32 @@ public class Crashes extends AbstractAppCenterService {
             public void run() {
                 for (File logFile : ErrorLogHelper.getStoredBreakpadLogFiles()) {
                     AppCenterLog.debug(LOG_TAG, "Process pending breakpad file: " + logFile);
-                    String logfileContents = StorageHelper.InternalStorage.read(logFile);
-                    if (logfileContents != null) {
-                        ErrorAttachmentLog breakpadAttachment = ErrorAttachmentLog.attachmentWithText(logfileContents, "minidump.dmp");
-                        List<ErrorAttachmentLog> list = new LinkedList<>();
-                        list.add(breakpadAttachment);
 
-                        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new Exception(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
-                        mChannel.enqueue(errorLog, ERROR_GROUP);
-
-                        UUID errorLogId = errorLog.getId();
-                        sendErrorAttachment(errorLogId, list);
+                    byte logfileContents[] = new byte[(int) logFile.length()];
+                    try {
+                        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(logFile));
+                        try {
+                            DataInputStream dis = new DataInputStream(bis);
+                            dis.readFully(logfileContents);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
                     }
+
+                    ErrorAttachmentLog breakpadAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
+                    List<ErrorAttachmentLog> list = new LinkedList<>();
+                    list.add(breakpadAttachment);
+
+                    ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new Exception(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
+                    errorLog.getException().setWrapperSdkName("appcenter.ndk");
+                    mChannel.enqueue(errorLog, ERROR_GROUP);
+
+                    sendErrorAttachment(errorLog.getId(), list);
                 }
+
+                ErrorLogHelper.removeStoredBreakpadLogFiles();
             }
         });
 

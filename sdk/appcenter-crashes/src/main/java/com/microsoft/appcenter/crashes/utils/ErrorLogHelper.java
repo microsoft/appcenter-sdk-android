@@ -192,6 +192,14 @@ public class ErrorLogHelper {
         return files != null && files.length > 0 ? files : new File[0];
     }
 
+    public static void removeStoredBreakpadLogFiles() {
+        File[] files = getStoredBreakpadLogFiles();
+        for (File file : ErrorLogHelper.getStoredBreakpadLogFiles()) {
+            AppCenterLog.info(Crashes.LOG_TAG, "Deleting breakpad log file " + file.getName());
+            StorageHelper.InternalStorage.delete(file);
+        }
+    }
+
     @Nullable
     public static File getLastErrorLogFile() {
         return StorageHelper.InternalStorage.lastModifiedFile(getErrorStorageDirectory(), new FilenameFilter() {
