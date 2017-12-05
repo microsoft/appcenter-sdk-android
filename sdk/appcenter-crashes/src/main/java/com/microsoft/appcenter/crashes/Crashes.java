@@ -38,6 +38,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -318,6 +320,7 @@ public class Crashes extends AbstractAppCenterService {
         mContext = context;
         if (isInstanceEnabled()) {
             processPendingErrors();
+            processPendingBreakpadErrors();
         } else {
             initialize();
         }
@@ -552,6 +555,32 @@ public class Crashes extends AbstractAppCenterService {
             /* Proceed to check if user confirmation is needed. */
             sendCrashReportsOrAwaitUserConfirmation();
         }
+
+    }
+
+    private void processPendingBreakpadErrors() {
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                for (File logFile : ErrorLogHelper.getStoredBreakpadLogFiles()) {
+                    AppCenterLog.debug(LOG_TAG, "Process pending breakpad file: " + logFile);
+                    String logfileContents = StorageHelper.InternalStorage.read(logFile);
+                    if (logfileContents != null) {
+                        ErrorAttachmentLog breakpadAttachment = ErrorAttachmentLog.attachmentWithText(logfileContents, "minidump.dmp");
+                        List<ErrorAttachmentLog> list = new LinkedList<>();
+                        list.add(breakpadAttachment);
+
+                        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new Exception(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
+                        mChannel.enqueue(errorLog, ERROR_GROUP);
+
+                        UUID errorLogId = errorLog.getId();
+                        sendErrorAttachment(errorLogId, list);
+                    }
+                }
+            }
+        });
+
 
     }
 
@@ -793,6 +822,11 @@ public class Crashes extends AbstractAppCenterService {
         File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
         String errorLogString = mLogSerializer.serializeLog(errorLog);
         StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
+
+        AppCenterLog.debug(Crashes.LOG_TAG, "Saving fake breakpad file.");
+        File breakpadLogFile = new File(ErrorLogHelper.getBreakpadErrorStorageDirectory(), filename);
+        StorageHelper.InternalStorage.write(breakpadLogFile, errorLogString);
+
         AppCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
         File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         if (throwable != null) {

@@ -57,6 +57,8 @@ public class ErrorLogHelper {
     @VisibleForTesting
     static final String ERROR_DIRECTORY = "error";
 
+    static final String BREAKPAD_DIRECTORY = "breakpad";
+
     /**
      * We keep the first half of the limit of frames from the beginning and the second half from end.
      */
@@ -66,6 +68,11 @@ public class ErrorLogHelper {
      * Root directory for error log and throwable files.
      */
     private static File sErrorLogDirectory;
+
+    /**
+     * Root directory for breakpad files.
+     */
+    private static File sBreakpadErrorLogDirectory;
 
     @NonNull
     public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Throwable throwable, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp, boolean fatal) {
@@ -145,8 +152,21 @@ public class ErrorLogHelper {
             sErrorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
             StorageHelper.InternalStorage.mkdir(sErrorLogDirectory.getAbsolutePath());
         }
+
         return sErrorLogDirectory;
     }
+
+    @NonNull
+    public static synchronized File getBreakpadErrorStorageDirectory() {
+        if (sBreakpadErrorLogDirectory == null) {
+            File errorStorageDirectory = getErrorStorageDirectory();
+            sBreakpadErrorLogDirectory = new File(errorStorageDirectory.getAbsolutePath(), BREAKPAD_DIRECTORY);
+            StorageHelper.InternalStorage.mkdir(sBreakpadErrorLogDirectory.getAbsolutePath());
+        }
+
+        return sBreakpadErrorLogDirectory;
+    }
+
 
     @NonNull
     public static File[] getStoredErrorLogFiles() {
@@ -154,6 +174,18 @@ public class ErrorLogHelper {
             @Override
             public boolean accept(File dir, String filename) {
                 return filename.endsWith(ERROR_LOG_FILE_EXTENSION);
+            }
+        });
+
+        return files != null && files.length > 0 ? files : new File[0];
+    }
+
+    @NonNull
+    public static File[] getStoredBreakpadLogFiles() {
+        File[] files = getBreakpadErrorStorageDirectory().listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String filename) {
+                return true;
             }
         });
 
