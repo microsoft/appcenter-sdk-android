@@ -9,7 +9,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -191,7 +190,7 @@ public class Distribute extends AbstractAppCenterService {
      * They will always keep this dialog to remain compatible but just mark it deprecated.
      */
     @SuppressWarnings("deprecation")
-    private ProgressDialog mProgressDialog;
+    private android.app.ProgressDialog mProgressDialog;
 
     /**
      * Mandatory download completed in app notification.
@@ -1490,9 +1489,7 @@ public class Distribute extends AbstractAppCenterService {
             notificationManager.createNotificationChannel(channel);
             builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
         } else {
-
-            //noinspection deprecation
-            builder = new Notification.Builder(mContext);
+            builder = getOldNotificationBuilder();
         }
         builder.setTicker(mContext.getString(R.string.appcenter_distribute_install_ready_title))
                 .setContentTitle(mContext.getString(R.string.appcenter_distribute_install_ready_title))
@@ -1510,6 +1507,12 @@ public class Distribute extends AbstractAppCenterService {
         /* Reset check download flag to show install U.I. on resume if notification ignored. */
         mCheckedDownload = false;
         return true;
+    }
+
+    @NonNull
+    @SuppressWarnings("deprecation")
+    private Notification.Builder getOldNotificationBuilder() {
+        return new Notification.Builder(mContext);
     }
 
     /**
@@ -1538,10 +1541,10 @@ public class Distribute extends AbstractAppCenterService {
      */
     @SuppressWarnings("deprecation")
     private void showDownloadProgress() {
-        mProgressDialog = new ProgressDialog(mForegroundActivity);
+        mProgressDialog = new android.app.ProgressDialog(mForegroundActivity);
         mProgressDialog.setTitle(R.string.appcenter_distribute_downloading_mandatory_update);
         mProgressDialog.setCancelable(false);
-        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        mProgressDialog.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
         mProgressDialog.setIndeterminate(true);
         mProgressDialog.setProgressNumberFormat(null);
         mProgressDialog.setProgressPercentFormat(null);
@@ -1554,7 +1557,7 @@ public class Distribute extends AbstractAppCenterService {
     @SuppressWarnings("deprecation")
     private synchronized void hideProgressDialog() {
         if (mProgressDialog != null) {
-            final ProgressDialog progressDialog = mProgressDialog;
+            final android.app.ProgressDialog progressDialog = mProgressDialog;
             mProgressDialog = null;
 
             /* This can be called from background check download task. */

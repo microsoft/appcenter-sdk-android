@@ -61,6 +61,7 @@ public class NetworkStateHelperTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void listenNetwork() {
         Context context = mock(Context.class);
         ConnectivityManager connectivityManager = mock(ConnectivityManager.class);
@@ -96,7 +97,6 @@ public class NetworkStateHelperTest {
         when(networkInfo.getSubtypeName()).thenReturn("EDGE");
         when(connectivityManager.getActiveNetworkInfo()).thenReturn(networkInfo);
 
-        //noinspection deprecation
         when(intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO)).thenReturn(networkInfo);
         receiver.onReceive(context, intent);
         verify(listener).onNetworkStateUpdated(true);
