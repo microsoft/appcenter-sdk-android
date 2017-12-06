@@ -188,13 +188,6 @@ public class ErrorLogHelper {
     }
 
     @NonNull
-    public static File[] getAllStoredErrorLogFiles() {
-        File[] files = getErrorStorageDirectory().listFiles();
-
-        return files != null && files.length > 0 ? files : new File[0];
-    }
-
-    @NonNull
     public static File[] getStoredBreakpadLogFiles() {
         File[] files = getBreakpadErrorStorageDirectory().listFiles();
 
