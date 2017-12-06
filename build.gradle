@@ -10,7 +10,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.0'
+        classpath 'com.android.tools.build:gradle:3.0.1'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.2'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
         classpath 'com.google.gms:google-services:3.1.0'
@@ -24,34 +24,6 @@ allprojects {
     repositories {
         jcenter()
         google()
-    }
-
-    apply plugin: 'checkstyle'
-
-    //add checkstyle to each module
-    task checkstyle(type: Checkstyle) {
-        configFile = new File(rootDir, "config/checkstyle/checkstyle.xml")
-        //use same config file for each module
-        source 'src/'
-        include '**/*.java'
-        exclude '**/gen/**'
-        classpath = files()
-        reports {
-            xml {
-                destination "build/outputs/reports/checkstyle-results.xml"
-            }
-        }
-    }
-
-    task checkstyleReport(dependsOn: 'checkstyle') {
-        doLast {
-            if (file("build/outputs/reports/checkstyle-results.xml").exists()) {
-                ant.xslt(in: "build/outputs/reports/checkstyle-results.xml",
-                        style: "${rootDir}/config/checkstyle/checkstyle.xsl",
-                        out: "build/outputs/reports/checkstyle-results.html"
-                )
-            }
-        }
     }
 }
 
