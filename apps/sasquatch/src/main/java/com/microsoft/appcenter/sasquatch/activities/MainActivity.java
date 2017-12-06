@@ -36,6 +36,7 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
+import java.io.File;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -115,9 +116,16 @@ public class MainActivity extends AppCompatActivity {
         /* Start App Center. */
         AppCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
 
-        /* Attach NDK Crash Handler after SDK is initialized */
-        String path = ErrorLogHelper.getBreakpadErrorStorageDirectory().getAbsolutePath();
-        setupNativeCrashesListener(path);
+        /* Attach NDK Crash Handler (if available) after SDK is initialized */
+        try {
+            @SuppressWarnings("unchecked")
+            Class<? extends ErrorLogHelper> errorLogHelper = (Class<? extends ErrorLogHelper>) Class.forName("com.microsoft.appcenter.crashes.utils.ErrorLogHelper");
+
+            File breakpadErrorStorageDirectory = (File) errorLogHelper.getMethod("getBreakpadErrorStorageDirectory").invoke(null);
+            String path = breakpadErrorStorageDirectory.getAbsolutePath();
+            setupNativeCrashesListener(path);
+        } catch (Exception ignore) {
+        }
 
         /* If rum available, use it. */
         try {
