@@ -29,11 +29,11 @@ public class CrashActivity extends AppCompatActivity {
 
     private boolean mCrashSuperDestroyNotCalled;
 
-    public native void nativeDivideByZeroCrash();
+    private native void nativeDivideByZeroCrash();
 
-    public native void nativeStackOverflowCrash();
+    private native void nativeStackOverflowCrash();
 
-    public native void nativeOutOfMemoryCrash();
+    private native void nativeOutOfMemoryCrash();
 
     private final List<Crash> sCrashes = Arrays.asList(
             new Crash(R.string.title_test_crash, R.string.description_test_crash, new Runnable() {
@@ -95,7 +95,7 @@ public class CrashActivity extends AppCompatActivity {
 
                 @Override
                 public void run() {
-                    new int[Integer.MAX_VALUE].clone();
+                    nativeOutOfMemoryCrash();
                 }
             }),
             new Crash(R.string.title_memory_crash2, R.string.description_memory_crash2, new Runnable() {

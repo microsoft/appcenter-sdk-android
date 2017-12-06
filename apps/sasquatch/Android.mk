@@ -9,7 +9,7 @@ LOCAL_PATH := $(MY_ROOT_PATH)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE    := Sasquatch
+LOCAL_MODULE    := SasquatchBreakpad
 LOCAL_SRC_FILES := Main.cpp
 
 LOCAL_LDFLAGS := -latomic
