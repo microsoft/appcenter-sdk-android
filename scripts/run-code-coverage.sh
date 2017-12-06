@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # We can't run emulator as a daemon
 # VSTS will not execute next step until emulator killed
@@ -19,6 +18,11 @@ echo "Android Emulator started after $duration seconds."
 
 # Run tests now
 ./gradlew coverageReport
+EXIT_CODE=$?
 
 # And kill emulator
 adb emu kill
+
+# use gradle exit code, we can't use set -e as we need to kill emulator.
+# also if starting emulator fails, gradle will fail, so we can just test gradle.
+exit $EXIT_CODE
