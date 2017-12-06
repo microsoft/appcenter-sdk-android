@@ -69,6 +69,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -917,8 +918,8 @@ public class AppCenterTest {
         assertFalse(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
 
         /* Verify single service can be disabled. */
-        AddArgumentToRegistry(AppCenter.DISABLE_SERVICES, DummyService.getInstance().getServiceName());
         AppCenter.unsetInstance();
+        AddArgumentToRegistry(AppCenter.DISABLE_SERVICES, DummyService.getInstance().getServiceName());
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertFalse(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
@@ -933,7 +934,7 @@ public class AppCenterTest {
 
         /* Repeat last test with whitespace. */
         AddArgumentToRegistry(AppCenter.DISABLE_SERVICES, " " + DummyService.getInstance().getServiceName()
-                + ",anotherService," + AnotherDummyService.getInstance().getServiceName() + " ");
+                + " , anotherService, " + AnotherDummyService.getInstance().getServiceName() + " ");
         AppCenter.unsetInstance();
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertFalse(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
@@ -941,27 +942,28 @@ public class AppCenterTest {
     }
 
     @Test
-    public void dontDisableServicesInNonTestEnvironment() {
+    public void doNotDisableServicesInNonTestEnvironment() {
         mockStatic(InstrumentationRegistry.class);
 
         /* Throw IllegalAccessError. */
-        when(InstrumentationRegistry.getArguments()).thenThrow(new IllegalAccessError());
+        doThrow(new IllegalAccessError()).when(InstrumentationRegistry.class);
+        InstrumentationRegistry.getArguments();
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
 
         /* Throw NoClassDefFoundError. */
         AppCenter.unsetInstance();
-        when(InstrumentationRegistry.getArguments()).thenThrow(new NoClassDefFoundError());
-        AppCenter.unsetInstance();
+        doThrow(new NoClassDefFoundError()).when(InstrumentationRegistry.class);
+        InstrumentationRegistry.getArguments();
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
 
         /* Throw IllegalStateException. */
         AppCenter.unsetInstance();
-        when(InstrumentationRegistry.getArguments()).thenThrow(new IllegalStateException());
-        AppCenter.unsetInstance();
+        doThrow(new IllegalStateException()).when(InstrumentationRegistry.class);
+        InstrumentationRegistry.getArguments();
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));

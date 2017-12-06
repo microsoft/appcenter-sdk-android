@@ -517,14 +517,13 @@ public class AppCenter {
         for (Class<? extends AppCenterService> service : services) {
             if (service == null) {
                 AppCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
-            } else if (shouldDisable(service.getName())) {
-                AppCenterLog.debug(LOG_TAG, "Environment variable to disable service has been set; not starting service " + service.getName() + ".");
-                return;
             } else {
                 try {
                     AppCenterService serviceInstance = (AppCenterService) service.getMethod("getInstance").invoke(null);
                     if (mServices.contains(serviceInstance)) {
                         AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
+                    } else if (shouldDisable(serviceInstance.getServiceName())) {
+                        AppCenterLog.debug(LOG_TAG, "Environment variable to disable service has been set; not starting service " + service.getName() + ".");
                     } else {
 
                         /* Share handler now with service while starting. */
@@ -804,17 +803,16 @@ public class AppCenter {
         }
     }
 
-    @VisibleForTesting
-    Boolean shouldDisable(String serviceName) {
+    private Boolean shouldDisable(String serviceName) {
         try {
             Bundle arguments = InstrumentationRegistry.getArguments();
             String disableServices = arguments.getString(DISABLE_SERVICES);
             if (disableServices == null) {
                 return false;
             }
-            disableServices = disableServices.trim();
             String[] disableServicesList = disableServices.split(",");
             for (String service : disableServicesList) {
+                service = service.trim();
                 if (service.equals(DISABLE_ALL_SERVICES) || service.equals(serviceName)) {
                     return true;
                 }
