@@ -29,7 +29,7 @@ public class CrashActivity extends AppCompatActivity {
 
     private boolean mCrashSuperDestroyNotCalled;
 
-    public native String nativeDivideByZeroCrash();
+    public native void nativeDivideByZeroCrash();
 
     private final List<Crash> sCrashes = Arrays.asList(
             new Crash(R.string.title_test_crash, R.string.description_test_crash, new Runnable() {
@@ -44,8 +44,7 @@ public class CrashActivity extends AppCompatActivity {
 
                 @Override
                 public void run() {
-                    Crashes.generateTestCrash();
-                    throw new TestCrashException();
+                    nativeDivideByZeroCrash();
                 }
             }),
             new Crash(R.string.title_crash_divide_by_0, R.string.description_crash_divide_by_0, new Runnable() {

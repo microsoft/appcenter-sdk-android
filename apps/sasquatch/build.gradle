@@ -8,6 +8,21 @@ android {
 
     flavorDimensions "dependency"
 
+    defaultConfig {
+        applicationId "com.microsoft.appcenter.sasquatch"
+        minSdkVersion 19
+        targetSdkVersion 21
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            ndkBuild {
+                arguments "NDK_APPLICATION_MK:=Application.mk"
+                abiFilters "armeabi-v7a", "armeabi"
+            }
+        }
+    }
+
     productFlavors {
         projectDependency {
             dimension "dependency"
@@ -26,6 +41,11 @@ android {
             matchingFallbacks = ['release']
         }
     }
+    externalNativeBuild {
+        ndkBuild {
+            path "Android.mk"
+        }
+    }
 }
 
 repositories {
@@ -38,15 +58,15 @@ dependencies {
     def version = "1.0.0"
     compile "com.android.support:support-v4:${rootProject.ext.supportLibVersion}"
     compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
-    projectDependencyCompile project(':sdk:appcenter-analytics')
-    projectDependencyCompile project(':sdk:appcenter-crashes')
-    projectDependencyCompile project(':sdk:appcenter-distribute')
-    projectDependencyCompile project(':sdk:appcenter-push')
-    projectDependencyCompile project(':sdk:appcenter-rum')
-    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-analytics:${version}"
-    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-crashes:${version}"
-    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-distribute:${version}"
-    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-push:${version}"
+    compile project(':sdk:appcenter-analytics')
+    compile project(':sdk:appcenter-crashes')
+    compile project(':sdk:appcenter-distribute')
+    compile project(':sdk:appcenter-push')
+    compile project(':sdk:appcenter-rum')
+//    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-analytics:${version}"
+//    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-crashes:${version}"
+//    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-distribute:${version}"
+//    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-push:${version}"
 
     /* Force usage this version of support annotations to avoid conflict. */
     androidTestCompile "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
