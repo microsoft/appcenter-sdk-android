@@ -28,6 +28,10 @@ public class PushNotification {
 
     /**
      * Init.
+     *
+     * @param title      notification title.
+     * @param message    notification message.
+     * @param customData custom data.
      */
     public PushNotification(@SuppressWarnings("SameParameterValue") String title, @SuppressWarnings("SameParameterValue") String message, @NonNull Map<String, String> customData) {
         mTitle = title;

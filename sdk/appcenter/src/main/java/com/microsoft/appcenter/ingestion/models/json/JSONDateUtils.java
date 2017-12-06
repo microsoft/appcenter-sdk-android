@@ -46,6 +46,7 @@ public final class JSONDateUtils {
      *
      * @param date date.
      * @return string.
+     * @throws JSONException if the date is null.
      */
     public static String toString(Date date) throws JSONException {
         checkNull(date);

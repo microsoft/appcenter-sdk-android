@@ -28,8 +28,8 @@ import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALGORITHM_DAT
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALIAS_SEPARATOR;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ANDROID_KEY_STORE;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CHARSET;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX;
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER;
 
 /**
  * Tool to encrypt/decrypt strings seamlessly.
@@ -111,6 +111,12 @@ public class CryptoUtils {
     private static CryptoUtils sInstance;
 
     /**
+     * Supported crypto handlers. Ordered, first one is the preferred one.
+     */
+    @VisibleForTesting
+    final Map<String, CryptoHandlerEntry> mCryptoHandlers = new LinkedHashMap<>();
+
+    /**
      * Application context.
      */
     private final Context mContext;
@@ -129,12 +135,6 @@ public class CryptoUtils {
      * Android key store or null if could not use it.
      */
     private final KeyStore mKeyStore;
-
-    /**
-     * Supported crypto handlers. Ordered, first one is the preferred one.
-     */
-    @VisibleForTesting
-    public final Map<String, CryptoHandlerEntry> mCryptoHandlers = new LinkedHashMap<>();
 
     /**
      * Init.
@@ -217,12 +217,12 @@ public class CryptoUtils {
     private void registerHandler(@NonNull CryptoHandler handler) throws Exception {
 
         /* Check which of the potential aliases is the more recent one, the one to use. */
-        String alias0   = getAlias(handler, 0, false);
-        String alias1   = getAlias(handler, 1, false);
+        String alias0 = getAlias(handler, 0, false);
+        String alias1 = getAlias(handler, 1, false);
         String alias0MC = getAlias(handler, 0, true);
         String alias1MC = getAlias(handler, 1, true);
-        Date aliasDate0   = mKeyStore.getCreationDate(alias0);
-        Date aliasDate1   = mKeyStore.getCreationDate(alias1);
+        Date aliasDate0 = mKeyStore.getCreationDate(alias0);
+        Date aliasDate1 = mKeyStore.getCreationDate(alias1);
         Date aliasDate0MC = mKeyStore.getCreationDate(alias0MC);
         Date aliasDate1MC = mKeyStore.getCreationDate(alias1MC);
         int index = 0, indexMC = 0;
@@ -322,11 +322,12 @@ public class CryptoUtils {
     /**
      * Decrypt data.
      *
-     * @param data data to decrypt.
+     * @param data                 data to decrypt.
+     * @param mobileCenterFailOver if true, uses Mobile Center keystore instead of App Center keystore when false.
      * @return decrypted data.
      */
     @NonNull
-    public DecryptedData decrypt(@Nullable String data, boolean mobileCenterFailover) {
+    public DecryptedData decrypt(@Nullable String data, boolean mobileCenterFailOver) {
 
         /* Handle null for convenience. */
         if (data == null) {
@@ -341,7 +342,7 @@ public class CryptoUtils {
             if (cryptoHandler == null) {
                 throw new IllegalStateException("Could not find crypto handler that was used for the specified data.");
             }
-            KeyStore.Entry keyStoreEntry = getKeyStoreEntry(handlerEntry, mobileCenterFailover);
+            KeyStore.Entry keyStoreEntry = getKeyStoreEntry(handlerEntry, mobileCenterFailOver);
             byte[] decryptedBytes = cryptoHandler.decrypt(mCryptoFactory, mApiLevel, keyStoreEntry, Base64.decode(dataSplit[1], Base64.DEFAULT));
             String decryptedString = new String(decryptedBytes, CHARSET);
             String newEncryptedData = null;
@@ -487,7 +488,7 @@ public class CryptoUtils {
         /**
          * Init.
          *
-         * @param decryptedData decrypted data.
+         * @param decryptedData    decrypted data.
          * @param newEncryptedData new encrypted data that should be replace previously encrypted data.
          */
         @VisibleForTesting

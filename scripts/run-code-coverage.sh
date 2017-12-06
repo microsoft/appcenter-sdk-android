@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e
+
 # We can't run emulator as a daemon
 # VSTS will not execute next step until emulator killed
 # So we need to run tests in same step...
