@@ -501,6 +501,7 @@ public class Crashes extends AbstractAppCenterService {
     private void initialize() {
         boolean enabled = isInstanceEnabled();
         mInitializeTimestamp = enabled ? System.currentTimeMillis() : -1;
+        ErrorLogHelper.createErrorStorageDirectories();
         if (!enabled) {
             if (mUncaughtExceptionHandler != null) {
                 mUncaughtExceptionHandler.unregister();
@@ -840,10 +841,6 @@ public class Crashes extends AbstractAppCenterService {
         File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
         String errorLogString = mLogSerializer.serializeLog(errorLog);
         StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
-
-        AppCenterLog.debug(Crashes.LOG_TAG, "Saving fake breakpad file.");
-        File breakpadLogFile = new File(ErrorLogHelper.getBreakpadErrorStorageDirectory(), filename);
-        StorageHelper.InternalStorage.write(breakpadLogFile, errorLogString);
 
         AppCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
         File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
