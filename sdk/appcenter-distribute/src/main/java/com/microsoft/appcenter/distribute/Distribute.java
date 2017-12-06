@@ -1489,9 +1489,7 @@ public class Distribute extends AbstractAppCenterService {
             notificationManager.createNotificationChannel(channel);
             builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
         } else {
-
-            //noinspection deprecation
-            builder = new Notification.Builder(mContext);
+            builder = getOldNotificationBuilder();
         }
         builder.setTicker(mContext.getString(R.string.appcenter_distribute_install_ready_title))
                 .setContentTitle(mContext.getString(R.string.appcenter_distribute_install_ready_title))
@@ -1509,6 +1507,12 @@ public class Distribute extends AbstractAppCenterService {
         /* Reset check download flag to show install U.I. on resume if notification ignored. */
         mCheckedDownload = false;
         return true;
+    }
+
+    @NonNull
+    @SuppressWarnings("deprecation")
+    private Notification.Builder getOldNotificationBuilder() {
+        return new Notification.Builder(mContext);
     }
 
     /**
