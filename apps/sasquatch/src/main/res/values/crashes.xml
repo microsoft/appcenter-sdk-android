@@ -2,6 +2,8 @@
 <resources>
     <string name="title_test_crash">Test crash</string>
     <string name="description_test_crash">Using Crash.generateTestCrash() API</string>
+    <string name="title_test_native_crash">Test native crash</string>
+    <string name="description_test_native_crash">Divide by 0 NDK crash</string>
     <string name="title_crash_divide_by_0">Divide by 0</string>
     <string name="description_crash_divide_by_0">Divide by 0</string>
     <string name="title_test_ui_crash">Test some UI crash</string>
