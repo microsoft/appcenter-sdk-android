@@ -3,7 +3,6 @@ package com.microsoft.appcenter.utils.crypto;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
-import android.security.KeyPairGeneratorSpec;
 import android.security.keystore.KeyGenParameterSpec;
 import android.util.Base64;
 
@@ -28,22 +27,19 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import javax.crypto.BadPaddingException;
 import javax.security.auth.x500.X500Principal;
 
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.AES_KEY_SIZE;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALGORITHM_DATA_SEPARATOR;
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALIAS_SEPARATOR;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ANDROID_KEY_STORE;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CIPHER_AES;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CIPHER_RSA;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.RSA_KEY_SIZE;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALIAS_SEPARATOR;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX;
-import static com.microsoft.appcenter.utils.crypto.CryptoUtils.CryptoHandlerEntry;
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER;
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.RSA_KEY_SIZE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -65,7 +61,6 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressLint("NewApi")
-@SuppressWarnings({"deprecation", "CanBeFinal"})
 @PowerMockIgnore({"javax.security.auth.x500.*"})
 @PrepareForTest({KeyStore.class, KeyPairGenerator.class, Base64.class, CryptoUtils.class, CryptoRsaHandler.class, CryptoAesHandler.class})
 public class CryptoTest {
@@ -80,7 +75,8 @@ public class CryptoTest {
     private X509Certificate mRsaCert;
 
     @Mock
-    private KeyPairGeneratorSpec.Builder mRsaBuilder;
+    @SuppressWarnings("deprecation")
+    private android.security.KeyPairGeneratorSpec.Builder mRsaBuilder;
 
     @Mock
     private KeyGenParameterSpec.Builder mAesBuilder;
@@ -95,7 +91,7 @@ public class CryptoTest {
     private CryptoUtils.ICipher mCipher;
 
     @Before
-    @SuppressWarnings("WrongConstant")
+    @SuppressWarnings({"deprecation", "WrongConstant"})
     public void setUp() throws Exception {
         when(mContext.getApplicationContext()).thenReturn(mContext);
         mockStatic(KeyStore.class);
@@ -118,7 +114,7 @@ public class CryptoTest {
         when(KeyStore.getInstance(ANDROID_KEY_STORE)).thenReturn(mKeyStore);
 
         /* Mock some RSA specifics. */
-        whenNew(KeyPairGeneratorSpec.Builder.class).withAnyArguments().thenReturn(mRsaBuilder);
+        whenNew(android.security.KeyPairGeneratorSpec.Builder.class).withAnyArguments().thenReturn(mRsaBuilder);
         when(mRsaBuilder.setAlias(anyString())).thenReturn(mRsaBuilder);
         when(mRsaBuilder.setSubject(any(X500Principal.class))).thenReturn(mRsaBuilder);
         when(mRsaBuilder.setStartDate(any(Date.class))).thenReturn(mRsaBuilder);

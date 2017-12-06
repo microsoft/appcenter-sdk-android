@@ -1,7 +1,6 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.DownloadManager;
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -55,17 +54,17 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
 
     @Mock
     @SuppressWarnings("deprecation")
-    private ProgressDialog mProgressDialog;
+    private android.app.ProgressDialog mProgressDialog;
 
     @Mock
     private Handler mHandler;
 
     @Before
+    @SuppressWarnings("deprecation")
     public void setUpDownload() throws Exception {
 
         /* Mock some dialog methods. */
-        //noinspection deprecation
-        whenNew(ProgressDialog.class).withAnyArguments().thenReturn(mProgressDialog);
+        whenNew(android.app.ProgressDialog.class).withAnyArguments().thenReturn(mProgressDialog);
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -117,6 +116,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void longMandatoryDownloadAndInstallAcrossRestarts() throws Exception {
 
         /* Make timer goes off only while updating progress, 3 times here. */
@@ -174,10 +174,8 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         waitCheckDownloadTask();
 
         /* On restart progress is restored. */
-        //noinspection deprecation
-        mProgressDialog = mock(ProgressDialog.class);
-        //noinspection deprecation
-        whenNew(ProgressDialog.class).withAnyArguments().thenReturn(mProgressDialog);
+        mProgressDialog = mock(android.app.ProgressDialog.class);
+        whenNew(android.app.ProgressDialog.class).withAnyArguments().thenReturn(mProgressDialog);
         restartProcessAndSdk();
 
         /* Resume shows a new dialog as process restarted. */
