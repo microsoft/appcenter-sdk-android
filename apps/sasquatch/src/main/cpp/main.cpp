@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <jni.h>
+#include <limits.h>
 
 
 /*void Crash() {
@@ -26,6 +27,17 @@
 }*/
 
 void Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeDivideByZeroCrash(JNIEnv* env, jobject obj) {
-    volatile int* a = reinterpret_cast<volatile int*>(NULL);
+    volatile int *a = reinterpret_cast<volatile int *>(NULL);
     *a = 1;
+}
+
+void Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeStackOverflowCrash(JNIEnv* env, jobject obj) {
+    Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeStackOverflowCrash(env,
+                                                                                             obj);
+
+}
+
+void Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeOutOfMemoryCrash(JNIEnv* env, jobject obj) {
+    uint size = UINT_MAX;
+    int* array = new int[size];
 }

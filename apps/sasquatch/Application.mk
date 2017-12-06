@@ -30,4 +30,3 @@
 APP_STL := gnustl_static
 APP_ABI := arm64-v8a x86 x86_64 mips mips64
 APP_PLATFORM := android-9
-#APP_CXXFLAGS := -std=c++11 -D__STDC_LIMIT_MACROS

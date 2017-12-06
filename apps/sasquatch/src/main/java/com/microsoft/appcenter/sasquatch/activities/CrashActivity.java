@@ -31,6 +31,10 @@ public class CrashActivity extends AppCompatActivity {
 
     public native void nativeDivideByZeroCrash();
 
+    public native void nativeStackOverflowCrash();
+
+    public native void nativeOutOfMemoryCrash();
+
     private final List<Crash> sCrashes = Arrays.asList(
             new Crash(R.string.title_test_crash, R.string.description_test_crash, new Runnable() {
 
@@ -72,7 +76,22 @@ public class CrashActivity extends AppCompatActivity {
                     run();
                 }
             }),
+            new Crash(R.string.title_native_stack_overflow_crash, R.string.description_native_stack_overflow_crash, new Runnable() {
+
+                @Override
+                @SuppressWarnings("InfiniteRecursion")
+                public void run() {
+                    nativeStackOverflowCrash();
+                }
+            }),
             new Crash(R.string.title_memory_crash, R.string.description_memory_crash, new Runnable() {
+
+                @Override
+                public void run() {
+                    new int[Integer.MAX_VALUE].clone();
+                }
+            }),
+            new Crash(R.string.title_native_memory_crash, R.string.description_native_memory_crash, new Runnable() {
 
                 @Override
                 public void run() {

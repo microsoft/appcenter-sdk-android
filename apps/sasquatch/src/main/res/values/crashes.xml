@@ -2,16 +2,20 @@
 <resources>
     <string name="title_test_crash">Test crash</string>
     <string name="description_test_crash">Using Crash.generateTestCrash() API</string>
-    <string name="title_test_native_crash">Test native crash</string>
-    <string name="description_test_native_crash">Divide by 0 NDK crash</string>
+    <string name="title_test_native_crash">Divide by 0 NDK</string>
+    <string name="description_test_native_crash">NDK Divide by 0 crash</string>
     <string name="title_crash_divide_by_0">Divide by 0</string>
     <string name="description_crash_divide_by_0">Divide by 0</string>
     <string name="title_test_ui_crash">Test some UI crash</string>
     <string name="description_test_ui_crash">A UI coding mistake, has inner exception</string>
     <string name="title_stack_overflow_crash">Stack overflow crash</string>
     <string name="description_stack_overflow_crash">Caused by infinite recursion</string>
+    <string name="title_native_stack_overflow_crash">NDK stack overflow crash</string>
+    <string name="description_native_stack_overflow_crash">Caused by infinite recursion in NDK function</string>
     <string name="title_memory_crash">Out of memory crash</string>
     <string name="description_memory_crash">Allocating a huge array</string>
+    <string name="title_native_memory_crash">NDK out of memory crash</string>
+    <string name="description_native_memory_crash">Allocating a huge array in NDK function</string>
     <string name="title_memory_crash2">Out of memory crash 2</string>
     <string name="description_memory_crash2">Allocating a huge string builder in another class</string>
     <string name="title_variable_message">Crash with a variable message</string>
