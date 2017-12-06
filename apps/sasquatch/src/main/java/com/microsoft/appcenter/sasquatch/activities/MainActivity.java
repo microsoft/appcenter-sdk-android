@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
 
     static SasquatchCrashesListener sCrashesListener;
 
-    native void setupNativeCrashesListener();
+    native void setupNativeCrashesListener(String path);
 
     static SasquatchPushListener sPushListener;
 
@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
         /* Set listeners. */
         AnalyticsPrivateHelper.setListener(getAnalyticsListener());
         Crashes.setListener(getCrashesListener());
-        setupNativeCrashesListener();
+
         Distribute.setListener(new SasquatchDistributeListener());
         Push.setListener(getPushListener());
 
@@ -117,6 +117,10 @@ public class MainActivity extends AppCompatActivity {
 
         /* Start App Center. */
         AppCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
+
+        /* Attach NDK Crash Handler after SDK is initialized */
+        String path = ErrorLogHelper.getBreakpadErrorStorageDirectory().getAbsolutePath();
+        setupNativeCrashesListener(path);
 
         /* If rum available, use it. */
         try {
