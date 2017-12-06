@@ -38,9 +38,13 @@ extern "C"
         return succeeded;
     }
 
-    void Java_com_microsoft_appcenter_sasquatch_activities_MainActivity_setupNativeCrashesListener(JNIEnv *env, jobject) {
-        google_breakpad::MinidumpDescriptor descriptor("/data/user/0/com.microsoft.appcenter.sasquatch.jcenter/files/error/breakpad");
+    void Java_com_microsoft_appcenter_sasquatch_activities_MainActivity_setupNativeCrashesListener(JNIEnv *env, jobject, jstring path) {
+        const char* dump_path = (char *)env->GetStringUTFChars(path, NULL);
+
+        google_breakpad::MinidumpDescriptor descriptor(dump_path);
         exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, NULL, DumpCallback, NULL, true, -1);
+
+        env->ReleaseStringUTFChars(path, dump_path);
     }
 
     jint JNI_OnLoad(JavaVM *vm, void * /*reserved*/) {
