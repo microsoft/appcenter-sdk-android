@@ -165,7 +165,7 @@ public class ErrorLogHelper {
     }
 
     @NonNull
-    private static synchronized File getBreakpadErrorStorageDirectory() {
+    public static synchronized File getBreakpadErrorStorageDirectory() {
         if (sBreakpadErrorLogDirectory == null) {
             File errorStorageDirectory = getErrorStorageDirectory();
             sBreakpadErrorLogDirectory = new File(errorStorageDirectory.getAbsolutePath(), BREAKPAD_DIRECTORY);
@@ -189,12 +189,7 @@ public class ErrorLogHelper {
 
     @NonNull
     public static File[] getStoredBreakpadLogFiles() {
-        File[] files = getBreakpadErrorStorageDirectory().listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String filename) {
-                return true;
-            }
-        });
+        File[] files = getBreakpadErrorStorageDirectory().listFiles();
 
         return files != null && files.length > 0 ? files : new File[0];
     }
