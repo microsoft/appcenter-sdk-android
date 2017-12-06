@@ -501,6 +501,7 @@ public class Crashes extends AbstractAppCenterService {
     private void initialize() {
         boolean enabled = isInstanceEnabled();
         mInitializeTimestamp = enabled ? System.currentTimeMillis() : -1;
+        ErrorLogHelper.createErrorStorageDirectories();
         if (!enabled) {
             if (mUncaughtExceptionHandler != null) {
                 mUncaughtExceptionHandler.unregister();

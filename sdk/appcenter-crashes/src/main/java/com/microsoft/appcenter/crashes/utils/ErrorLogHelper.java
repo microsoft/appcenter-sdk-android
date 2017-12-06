@@ -147,6 +147,14 @@ public class ErrorLogHelper {
     }
 
     @NonNull
+    public static synchronized void createErrorStorageDirectories() {
+        File errorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
+        StorageHelper.InternalStorage.mkdir(errorLogDirectory.getAbsolutePath());
+        File breakpadErrorLogDirectory = new File(errorLogDirectory.getAbsolutePath(), BREAKPAD_DIRECTORY);
+        StorageHelper.InternalStorage.mkdir(breakpadErrorLogDirectory.getAbsolutePath());
+    }
+
+    @NonNull
     public static synchronized File getErrorStorageDirectory() {
         if (sErrorLogDirectory == null) {
             sErrorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
@@ -157,7 +165,7 @@ public class ErrorLogHelper {
     }
 
     @NonNull
-    public static synchronized File getBreakpadErrorStorageDirectory() {
+    private static synchronized File getBreakpadErrorStorageDirectory() {
         if (sBreakpadErrorLogDirectory == null) {
             File errorStorageDirectory = getErrorStorageDirectory();
             sBreakpadErrorLogDirectory = new File(errorStorageDirectory.getAbsolutePath(), BREAKPAD_DIRECTORY);
@@ -166,7 +174,6 @@ public class ErrorLogHelper {
 
         return sBreakpadErrorLogDirectory;
     }
-
 
     @NonNull
     public static File[] getStoredErrorLogFiles() {
