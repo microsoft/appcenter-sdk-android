@@ -841,10 +841,6 @@ public class Crashes extends AbstractAppCenterService {
         String errorLogString = mLogSerializer.serializeLog(errorLog);
         StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
 
-        AppCenterLog.debug(Crashes.LOG_TAG, "Saving fake breakpad file.");
-        File breakpadLogFile = new File(ErrorLogHelper.getBreakpadErrorStorageDirectory(), filename);
-        StorageHelper.InternalStorage.write(breakpadLogFile, errorLogString);
-
         AppCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
         File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         if (throwable != null) {
