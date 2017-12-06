@@ -32,7 +32,6 @@ import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -815,9 +814,13 @@ public class AppCenter {
             }
             disableServices = disableServices.trim();
             String[] disableServicesList = disableServices.split(",");
-            return  Arrays.asList(disableServicesList).contains(DISABLE_ALL_SERVICES) ||
-                    Arrays.asList(disableServicesList).contains(serviceName);
-        } catch (NoClassDefFoundError | IllegalAccessError e) {
+            for (String service : disableServicesList) {
+                if (service.equals(DISABLE_ALL_SERVICES) || service.equals(serviceName)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (NoClassDefFoundError | IllegalAccessError | IllegalStateException e) {
             AppCenterLog.debug(LOG_TAG, "Cannot read environment variables in a non-test environment.");
             return false;
         }
