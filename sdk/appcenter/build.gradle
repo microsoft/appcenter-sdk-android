@@ -3,6 +3,6 @@ evaluationDependsOn(':sdk')
 
 dependencies {
     def version = "1.0.1"
-    provided "com.android.support.test:runner:${version}"
+    compileOnly "com.android.support.test:runner:${version}"
     testCompile "com.android.support.test:runner:${version}"
 }
