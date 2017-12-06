@@ -16,6 +16,7 @@ import com.microsoft.appcenter.crashes.ingestion.models.json.ErrorAttachmentLogF
 import com.microsoft.appcenter.crashes.ingestion.models.json.HandledErrorLogFactory;
 import com.microsoft.appcenter.crashes.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
+import com.microsoft.appcenter.crashes.model.NativeException;
 import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -30,7 +31,11 @@ import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,6 +43,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -318,6 +325,7 @@ public class Crashes extends AbstractAppCenterService {
         mContext = context;
         if (isInstanceEnabled()) {
             processPendingErrors();
+            processPendingBreakpadErrors();
         } else {
             initialize();
         }
@@ -493,6 +501,7 @@ public class Crashes extends AbstractAppCenterService {
     private void initialize() {
         boolean enabled = isInstanceEnabled();
         mInitializeTimestamp = enabled ? System.currentTimeMillis() : -1;
+        ErrorLogHelper.createErrorStorageDirectories();
         if (!enabled) {
             if (mUncaughtExceptionHandler != null) {
                 mUncaughtExceptionHandler.unregister();
@@ -552,6 +561,45 @@ public class Crashes extends AbstractAppCenterService {
             /* Proceed to check if user confirmation is needed. */
             sendCrashReportsOrAwaitUserConfirmation();
         }
+
+    }
+
+    private void processPendingBreakpadErrors() {
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                for (File logFile : ErrorLogHelper.getStoredBreakpadLogFiles()) {
+                    AppCenterLog.debug(LOG_TAG, "Process pending breakpad file: " + logFile);
+
+                    byte logfileContents[] = new byte[(int) logFile.length()];
+                    try {
+                        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(logFile));
+                        try {
+                            DataInputStream dis = new DataInputStream(bis);
+                            dis.readFully(logfileContents);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+
+                    ErrorAttachmentLog breakpadAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
+                    List<ErrorAttachmentLog> list = new LinkedList<>();
+                    list.add(breakpadAttachment);
+
+                    ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new NativeException(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
+                    errorLog.getException().setWrapperSdkName("appcenter.ndk");
+                    mChannel.enqueue(errorLog, ERROR_GROUP);
+
+                    sendErrorAttachment(errorLog.getId(), list);
+                }
+
+                ErrorLogHelper.removeStoredBreakpadLogFiles();
+            }
+        });
+
 
     }
 
@@ -793,6 +841,7 @@ public class Crashes extends AbstractAppCenterService {
         File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
         String errorLogString = mLogSerializer.serializeLog(errorLog);
         StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
+
         AppCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
         File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         if (throwable != null) {

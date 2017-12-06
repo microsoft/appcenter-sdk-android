@@ -23,6 +23,7 @@ import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesListener;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
+import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.push.PushListener;
@@ -38,6 +39,11 @@ import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
+
+    // Used to load the 'native-lib' library on application startup.
+    static {
+        System.loadLibrary("SasquatchBreakpad");
+    }
 
     public static final String LOG_TAG = "AppCenterSasquatch";
 
@@ -57,11 +63,14 @@ public class MainActivity extends AppCompatActivity {
 
     static SasquatchCrashesListener sCrashesListener;
 
+    native void setupNativeCrashesListener(String path);
+
     static SasquatchPushListener sPushListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
         setContentView(R.layout.activity_main);
 
         sSharedPreferences = getSharedPreferences("Sasquatch", Context.MODE_PRIVATE);
@@ -77,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
         /* Set listeners. */
         AnalyticsPrivateHelper.setListener(getAnalyticsListener());
         Crashes.setListener(getCrashesListener());
+
         Distribute.setListener(new SasquatchDistributeListener());
         Push.setListener(getPushListener());
 
@@ -104,6 +114,10 @@ public class MainActivity extends AppCompatActivity {
 
         /* Start App Center. */
         AppCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
+
+        /* Attach NDK Crash Handler after SDK is initialized */
+        String path = ErrorLogHelper.getBreakpadErrorStorageDirectory().getAbsolutePath();
+        setupNativeCrashesListener(path);
 
         /* If rum available, use it. */
         try {

@@ -50,3 +50,4 @@ google-services.json
 # Localization
 localization/*.zip
 localization/unzip/
+/apps/sasquatch/.externalNativeBuild
