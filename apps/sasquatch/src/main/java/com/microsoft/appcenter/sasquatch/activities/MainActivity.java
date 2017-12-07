@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
         /* Start App Center. */
         AppCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
 
-        /* Attach NDK Crash Handler (if available) after SDK is initialized */
+        /* Attach NDK Crash Handler (if available) after SDK is initialized. */
         try {
             @SuppressWarnings("unchecked")
             Class<? extends ErrorLogHelper> errorLogHelper = (Class<? extends ErrorLogHelper>) Class.forName("com.microsoft.appcenter.crashes.utils.ErrorLogHelper");
