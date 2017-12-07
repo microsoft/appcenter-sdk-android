@@ -591,6 +591,7 @@ public class Crashes extends AbstractAppCenterService {
 
                     ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new NativeException(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
                     errorLog.getException().setWrapperSdkName("appcenter.ndk");
+                    errorLog.getDevice().setWrapperSdkName("appcenter.ndk");
                     mChannel.enqueue(errorLog, ERROR_GROUP);
 
                     sendErrorAttachment(errorLog.getId(), list);
