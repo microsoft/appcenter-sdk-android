@@ -132,4 +132,40 @@ public class StorageHelperTest {
 
         assertEquals(file3, StorageHelper.InternalStorage.lastModifiedFile(dir, filter));
     }
+
+    @Test
+    public void readBytesFileNotFound() throws Exception {
+        mockStatic(AppCenterLog.class);
+        FileReader fileReader = mock(FileReader.class, new ThrowsException(new FileNotFoundException()));
+        whenNew(FileReader.class).withAnyArguments().thenReturn(fileReader);
+        assertNull(StorageHelper.InternalStorage.readBytes(new File("")));
+        verify(fileReader).close();
+        verifyStatic();
+        AppCenterLog.error(anyString(), anyString(), any(IOException.class));
+    }
+
+    @Test
+    public void readBytesError() throws Exception {
+        mockStatic(AppCenterLog.class);
+        BufferedReader reader = mock(BufferedReader.class);
+        whenNew(BufferedReader.class).withAnyArguments().thenReturn(reader);
+        whenNew(FileReader.class).withAnyArguments().thenReturn(mock(FileReader.class));
+        when(reader.readLine()).thenReturn("incomplete");
+        when(reader.readLine()).thenThrow(new EOFException());
+        assertNull(StorageHelper.InternalStorage.readBytes(new File("")));
+        verify(reader).close();
+        verifyStatic();
+        AppCenterLog.error(anyString(), anyString(), any(IOException.class));
+    }
+
+    @Test
+    public void readBytesErrorAndCloseError() throws Exception {
+        mockStatic(AppCenterLog.class);
+        FileReader fileReader = mock(FileReader.class, new ThrowsException(new IOException()));
+        whenNew(FileReader.class).withAnyArguments().thenReturn(fileReader);
+        assertNull(StorageHelper.InternalStorage.readBytes(new File("")));
+        verify(fileReader).close();
+        verifyStatic();
+        AppCenterLog.error(anyString(), anyString(), any(IOException.class));
+    }
 }
