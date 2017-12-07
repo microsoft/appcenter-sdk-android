@@ -88,6 +88,11 @@ public class Crashes extends AbstractAppCenterService {
     public static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
+     * NDK wrapper name for exceptions.
+     */
+    private static final String NDK_WRAPPER = "appcenter.ndk";
+
+    /**
      * Max allowed attachments per crash.
      */
     private static final int MAX_ATTACHMENT_PER_CRASH = 2;
@@ -577,8 +582,8 @@ public class Crashes extends AbstractAppCenterService {
                     /* Attach dump to NDK managed exception. */
                     ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new NativeException(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
                     if(errorLog != null) {
-                        errorLog.getException().setWrapperSdkName("appcenter.ndk");
-                        errorLog.getDevice().setWrapperSdkName("appcenter.ndk");
+                        errorLog.getException().setWrapperSdkName(NDK_WRAPPER);
+                        errorLog.getDevice().setWrapperSdkName(NDK_WRAPPER);
                         mChannel.enqueue(errorLog, ERROR_GROUP);
                         sendErrorAttachment(errorLog.getId(), list);
                     }

@@ -16,22 +16,32 @@ public class Constants {
      * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
      */
     public static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
+
     /**
      * Number of metrics queue items which will trigger synchronization.
      */
     static final int DEFAULT_TRIGGER_COUNT = 50;
+
     /**
      * Maximum number of requests being sent for the group.
      */
     static final int DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
-    /**
-     * Directory under the FILES_PATH containing breakpad minidumps.
-     */
-    public static final String BREAKPAD_DIRECTORY = "breakpad";
+
     /**
      * Path where crash logs and temporary files are stored.
      */
     public static String FILES_PATH = null;
+
+    /**
+     * Directory under the FILES_PATH containing breakpad minidumps.
+     */
+    public static final String BREAKPAD_DIRECTORY = "breakpad";
+
+    /**
+     * Directory under the FILES_PATH containing breakpad minidumps.
+     */
+    public static final String BREAKPAD_WRAPPER_NAME = "appcenter.ndk";
+
     /**
      * Flag indicates whether the host application is debuggable or not.
      */
