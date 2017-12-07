@@ -523,7 +523,7 @@ public class AppCenter {
                     if (mServices.contains(serviceInstance)) {
                         AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
                     } else if (shouldDisable(serviceInstance.getServiceName())) {
-                        AppCenterLog.debug(LOG_TAG, "Environment variable to disable service has been set; not starting service " + service.getName() + ".");
+                        AppCenterLog.debug(LOG_TAG, "Instrumentation variable to disable service has been set; not starting service " + service.getName() + ".");
                     } else {
 
                         /* Share handler now with service while starting. */
@@ -819,7 +819,7 @@ public class AppCenter {
             }
             return false;
         } catch (NoClassDefFoundError | IllegalAccessError e) {
-            AppCenterLog.debug(LOG_TAG, "Cannot read environment variables in a non-test environment.");
+            AppCenterLog.debug(LOG_TAG, "Cannot read instrumentation variables in a non-test environment.");
             return false;
         }
     }
