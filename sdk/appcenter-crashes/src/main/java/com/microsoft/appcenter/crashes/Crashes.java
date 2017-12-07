@@ -571,19 +571,7 @@ public class Crashes extends AbstractAppCenterService {
             public void run() {
                 for (File logFile : ErrorLogHelper.getStoredBreakpadLogFiles()) {
                     AppCenterLog.debug(LOG_TAG, "Process pending breakpad file: " + logFile);
-
-                    byte logfileContents[] = new byte[(int) logFile.length()];
-                    try {
-                        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(logFile));
-                        try {
-                            DataInputStream dis = new DataInputStream(bis);
-                            dis.readFully(logfileContents);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
+                    byte[] logfileContents = StorageHelper.InternalStorage.readBytes(logFile);
 
                     /* Create our Breakpad dump attachment */
                     ErrorAttachmentLog breakpadAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
@@ -592,10 +580,11 @@ public class Crashes extends AbstractAppCenterService {
 
                     /* Attach dump to NDK managed exception */
                     ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new NativeException(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
-                    errorLog.getException().setWrapperSdkName("appcenter.ndk");
-                    errorLog.getDevice().setWrapperSdkName("appcenter.ndk");
-                    mChannel.enqueue(errorLog, ERROR_GROUP);
-                    sendErrorAttachment(errorLog.getId(), list);
+                    if(errorLog != null) {
+                        errorLog.getException().setWrapperSdkName("appcenter.ndk");
+                        mChannel.enqueue(errorLog, ERROR_GROUP);
+                        sendErrorAttachment(errorLog.getId(), list);
+                    }
                 }
                 ErrorLogHelper.removeStoredBreakpadLogFiles();
             }

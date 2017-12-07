@@ -348,6 +348,35 @@ public class StorageHelper {
         }
 
         /**
+         * Read contents from a file into byte array.
+         *
+         * @param file The file to read from.
+         * @return The contents of the file.
+         */
+        public static byte[] readBytes(@NonNull File file) {
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                StringBuilder contents;
+                //noinspection TryFinallyCanBeTryWithResources (requires min API level 19)
+                try {
+                    String line;
+                    String lineSeparator = System.getProperty("line.separator");
+                    contents = new StringBuilder();
+                    while ((line = reader.readLine()) != null) {
+                        contents.append(line).append(lineSeparator);
+                    }
+                } finally {
+                    //noinspection ThrowFromFinallyBlock
+                    reader.close();
+                }
+                return contents.toString().getBytes();
+            } catch (IOException e) {
+                AppCenterLog.error(AppCenter.LOG_TAG, "Could not read file " + file.getAbsolutePath(), e);
+            }
+            return null;
+        }
+
+        /**
          * Write contents to a file.
          *
          * @param path     The path of the file.
