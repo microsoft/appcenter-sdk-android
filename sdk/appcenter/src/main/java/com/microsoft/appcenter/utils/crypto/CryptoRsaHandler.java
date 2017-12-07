@@ -3,7 +3,6 @@ package com.microsoft.appcenter.utils.crypto;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
-import android.security.KeyPairGeneratorSpec;
 import android.security.keystore.KeyProperties;
 import android.support.annotation.RequiresApi;
 
@@ -45,7 +44,7 @@ class CryptoRsaHandler implements CryptoHandler {
         Calendar writeExpiry = Calendar.getInstance();
         writeExpiry.add(Calendar.YEAR, ENCRYPT_KEY_LIFETIME_IN_YEARS);
         KeyPairGenerator generator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEY_STORE);
-        generator.initialize(new KeyPairGeneratorSpec.Builder(context)
+        generator.initialize(new android.security.KeyPairGeneratorSpec.Builder(context)
                 .setAlias(alias)
                 .setSubject(new X500Principal("CN=" + alias))
                 .setStartDate(new Date())

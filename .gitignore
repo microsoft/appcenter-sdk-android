@@ -50,4 +50,10 @@ google-services.json
 # Localization
 localization/*.zip
 localization/unzip/
-/apps/sasquatch/.externalNativeBuild
+.externalNativeBuild
+
+# VS Code + Java extension follows Eclipse conventions
+.settings
+.project
+.classpath
+

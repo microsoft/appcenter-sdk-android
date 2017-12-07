@@ -9,13 +9,11 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -42,6 +40,7 @@ import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -191,7 +190,7 @@ public class Distribute extends AbstractAppCenterService {
      * They will always keep this dialog to remain compatible but just mark it deprecated.
      */
     @SuppressWarnings("deprecation")
-    private ProgressDialog mProgressDialog;
+    private android.app.ProgressDialog mProgressDialog;
 
     /**
      * Mandatory download completed in app notification.
@@ -1490,9 +1489,7 @@ public class Distribute extends AbstractAppCenterService {
             notificationManager.createNotificationChannel(channel);
             builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
         } else {
-
-            //noinspection deprecation
-            builder = new Notification.Builder(mContext);
+            builder = getOldNotificationBuilder();
         }
         builder.setTicker(mContext.getString(R.string.appcenter_distribute_install_ready_title))
                 .setContentTitle(mContext.getString(R.string.appcenter_distribute_install_ready_title))
@@ -1510,6 +1507,12 @@ public class Distribute extends AbstractAppCenterService {
         /* Reset check download flag to show install U.I. on resume if notification ignored. */
         mCheckedDownload = false;
         return true;
+    }
+
+    @NonNull
+    @SuppressWarnings("deprecation")
+    private Notification.Builder getOldNotificationBuilder() {
+        return new Notification.Builder(mContext);
     }
 
     /**
@@ -1538,10 +1541,10 @@ public class Distribute extends AbstractAppCenterService {
      */
     @SuppressWarnings("deprecation")
     private void showDownloadProgress() {
-        mProgressDialog = new ProgressDialog(mForegroundActivity);
+        mProgressDialog = new android.app.ProgressDialog(mForegroundActivity);
         mProgressDialog.setTitle(R.string.appcenter_distribute_downloading_mandatory_update);
         mProgressDialog.setCancelable(false);
-        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        mProgressDialog.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
         mProgressDialog.setIndeterminate(true);
         mProgressDialog.setProgressNumberFormat(null);
         mProgressDialog.setProgressPercentFormat(null);
@@ -1554,7 +1557,7 @@ public class Distribute extends AbstractAppCenterService {
     @SuppressWarnings("deprecation")
     private synchronized void hideProgressDialog() {
         if (mProgressDialog != null) {
-            final ProgressDialog progressDialog = mProgressDialog;
+            final android.app.ProgressDialog progressDialog = mProgressDialog;
             mProgressDialog = null;
 
             /* This can be called from background check download task. */
@@ -1636,14 +1639,7 @@ public class Distribute extends AbstractAppCenterService {
      * Inject app name version and version code in a format string.
      */
     private String formatAppNameAndVersion(String format) {
-        String appName;
-        ApplicationInfo applicationInfo = mContext.getApplicationInfo();
-        int labelRes = applicationInfo.labelRes;
-        if (labelRes == 0) {
-            appName = String.valueOf(applicationInfo.nonLocalizedLabel);
-        } else {
-            appName = mContext.getString(labelRes);
-        }
+        String appName = AppNameHelper.getAppName(mContext);
         return String.format(format, appName, mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion());
     }
 

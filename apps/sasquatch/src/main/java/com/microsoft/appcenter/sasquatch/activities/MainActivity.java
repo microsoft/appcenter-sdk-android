@@ -7,6 +7,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
+import android.support.test.espresso.idling.CountingIdlingResource;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
@@ -34,6 +36,7 @@ import com.microsoft.appcenter.sasquatch.features.TestFeaturesListAdapter;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchAnalyticsListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.io.File;
@@ -52,11 +55,19 @@ public class MainActivity extends AppCompatActivity {
 
     static final String LOG_URL_KEY = "logUrl";
 
+    static final String SENDER_ID = "177539951155";
+
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
 
     static final String TEXT_ATTACHMENT_KEY = "textAttachment";
 
     static final String FILE_ATTACHMENT_KEY = "fileAttachment";
+
+    @VisibleForTesting
+    static final CountingIdlingResource analyticsIdlingResource = new CountingIdlingResource("analytics");
+
+    @VisibleForTesting
+    static final CountingIdlingResource crashesIdlingResource = new CountingIdlingResource("crashes");
 
     static SharedPreferences sSharedPreferences;
 
@@ -87,7 +98,6 @@ public class MainActivity extends AppCompatActivity {
         /* Set listeners. */
         AnalyticsPrivateHelper.setListener(getAnalyticsListener());
         Crashes.setListener(getCrashesListener());
-
         Distribute.setListener(new SasquatchDistributeListener());
         Push.setListener(getPushListener());
 
@@ -100,10 +110,10 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
         }
-
-        /* Enable Firebase analytics if we enabled the setting previously. */
-        if (sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false)) {
-            Push.enableFirebaseAnalytics(this);
+        try {
+            Push.class.getMethod("setSenderId", String.class).invoke(null, SENDER_ID);
+        } catch (Exception e) {
+            AppCenterLog.error(LOG_TAG, "Push.setSenderdId method not available.");
         }
 
         /* Set crash attachments. */
@@ -111,6 +121,11 @@ public class MainActivity extends AppCompatActivity {
         String fileAttachment = sSharedPreferences.getString(FILE_ATTACHMENT_KEY, null);
         if (fileAttachment != null) {
             sCrashesListener.setFileAttachment(Uri.parse(fileAttachment));
+        }
+
+        /* Enable Firebase analytics if we enabled the setting previously. */
+        if (sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false)) {
+            Push.enableFirebaseAnalytics(this);
         }
 
         /* Start App Center. */
