@@ -38,7 +38,7 @@ def copyApkToProjectBuildTask(buildType) {
     }
     def dependency = properties.get("dimension.dependency", "jcenter")
     subprojects.each { project ->
-        def apkPath = "${project.buildDir}/outputs/apk/${dependency}Dependency/${buildType}/${project.name}-${dependency}Dependency-${buildType}"
+        def apkPath = "${project.buildDir}/outputs/apk/${dependency}DependencyVanilla/${buildType}/${project.name}-${dependency}Dependency-vanilla-${buildType}"
         if ("release".equals(buildType)) {
             apkPath += "-unsigned"
         }
@@ -64,3 +64,7 @@ task assembleRelease() {
 
 // Empty task with task dependencies.
 task assemble(dependsOn: [assembleDebug, assembleRelease]) {}
+
+task clean() {
+    delete project.buildDir
+}

@@ -13,8 +13,9 @@ import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.test.TestUtils;
-import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.AppNameHelper;
+import com.microsoft.appcenter.utils.AsyncTaskUtils;
 
 import org.junit.After;
 import org.junit.Test;
@@ -25,7 +26,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.reflect.Whitebox;
 
 import java.util.HashMap;
 import java.util.concurrent.Semaphore;
@@ -271,8 +271,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Mock app name to be not localizable. */
-        Whitebox.setInternalState(mContext.getApplicationInfo(), "labelRes", 0);
-        Whitebox.setInternalState(mContext.getApplicationInfo(), "nonLocalizedLabel", "hardcoded-app-name");
+        mockStatic(AppNameHelper.class);
+        when(AppNameHelper.getAppName(mContext)).thenReturn("hardcoded-app-name");
 
         /* Trigger call. */
         start();

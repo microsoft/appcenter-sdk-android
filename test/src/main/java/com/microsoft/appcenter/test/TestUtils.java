@@ -61,7 +61,7 @@ public final class TestUtils {
     /**
      * Generates string of arbitrary length with contents composed of single character.
      *
-     * @param length length of the resulting string.
+     * @param length     length of the resulting string.
      * @param charToFill character to compose string of.
      * @return <code>String</code> of desired length.
      */

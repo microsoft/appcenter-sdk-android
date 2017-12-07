@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.push;
 
+import android.content.Intent;
 import android.support.annotation.NonNull;
 
 import java.util.Map;
@@ -13,17 +14,17 @@ public class PushNotification {
     /**
      * Notification title.
      */
-    private String mTitle;
+    private final String mTitle;
 
     /**
      * Notification message.
      */
-    private String mMessage;
+    private final String mMessage;
 
     /**
      * Custom data.
      */
-    private Map<String, String> mCustomData;
+    private final Map<String, String> mCustomData;
 
     /**
      * Init.
@@ -32,10 +33,21 @@ public class PushNotification {
      * @param message    notification message.
      * @param customData custom data.
      */
-    public PushNotification(String title, String message, @NonNull Map<String, String> customData) {
+    public PushNotification(@SuppressWarnings("SameParameterValue") String title, @SuppressWarnings("SameParameterValue") String message, @NonNull Map<String, String> customData) {
         mTitle = title;
         mMessage = message;
         mCustomData = customData;
+    }
+
+    /**
+     * Init from an intent.
+     *
+     * @param pushIntent the intent that triggered the Push.
+     */
+    public PushNotification(Intent pushIntent) {
+        mTitle = PushIntentUtils.getTitle(pushIntent);
+        mMessage = PushIntentUtils.getMessage(pushIntent);
+        mCustomData = PushIntentUtils.getCustomData(pushIntent);
     }
 
     /**

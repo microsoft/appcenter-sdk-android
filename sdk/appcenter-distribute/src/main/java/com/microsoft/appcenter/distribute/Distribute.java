@@ -14,7 +14,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -41,6 +40,7 @@ import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -1639,14 +1639,7 @@ public class Distribute extends AbstractAppCenterService {
      * Inject app name version and version code in a format string.
      */
     private String formatAppNameAndVersion(String format) {
-        String appName;
-        ApplicationInfo applicationInfo = mContext.getApplicationInfo();
-        int labelRes = applicationInfo.labelRes;
-        if (labelRes == 0) {
-            appName = String.valueOf(applicationInfo.nonLocalizedLabel);
-        } else {
-            appName = mContext.getString(labelRes);
-        }
+        String appName = AppNameHelper.getAppName(mContext);
         return String.format(format, appName, mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion());
     }
 
