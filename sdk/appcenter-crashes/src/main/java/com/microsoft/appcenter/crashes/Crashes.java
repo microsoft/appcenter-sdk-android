@@ -31,11 +31,7 @@ import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;

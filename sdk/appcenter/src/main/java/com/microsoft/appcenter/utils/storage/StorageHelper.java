@@ -19,6 +19,9 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
@@ -356,20 +359,20 @@ public class StorageHelper {
         public static byte[] readBytes(@NonNull File file) {
             try {
                 BufferedReader reader = new BufferedReader(new FileReader(file));
-                StringBuilder contents;
-                //noinspection TryFinallyCanBeTryWithResources (requires min API level 19)
+
+                byte fileContents[] = new byte[(int) file.length()];
                 try {
-                    String line;
-                    String lineSeparator = System.getProperty("line.separator");
-                    contents = new StringBuilder();
-                    while ((line = reader.readLine()) != null) {
-                        contents.append(line).append(lineSeparator);
+                    BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+                    try {
+                        DataInputStream dis = new DataInputStream(bis);
+                        dis.readFully(fileContents);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                } finally {
-                    //noinspection ThrowFromFinallyBlock
-                    reader.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
                 }
-                return contents.toString().getBytes();
+                return fileContents;
             } catch (IOException e) {
                 AppCenterLog.error(AppCenter.LOG_TAG, "Could not read file " + file.getAbsolutePath(), e);
             }
