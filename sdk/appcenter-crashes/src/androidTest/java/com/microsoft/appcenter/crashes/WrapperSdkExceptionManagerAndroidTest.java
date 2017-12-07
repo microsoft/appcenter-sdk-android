@@ -97,7 +97,7 @@ public class WrapperSdkExceptionManagerAndroidTest {
             startFresh();
 
             /* Save crash. */
-            error.id = WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), error.data);
+            error.id = WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), error.data);
             byte[] loadedData = WrapperSdkExceptionManager.loadWrapperExceptionData(error.id);
 
             if (error.data == null) {
@@ -128,6 +128,6 @@ public class WrapperSdkExceptionManagerAndroidTest {
         }
 
         /* Save another crash without reset: will be ignored as only 1 crash per process. */
-        assertNull(WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), new byte[]{'e'}));
+        assertNull(WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), new byte[]{'e'}));
     }
 }

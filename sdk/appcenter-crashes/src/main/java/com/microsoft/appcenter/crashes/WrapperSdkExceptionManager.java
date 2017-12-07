@@ -40,14 +40,15 @@ public class WrapperSdkExceptionManager {
      * Save a crash from wrapper SDK.
      *
      * @param thread                 thread where uncaught exception originated.
+     * @param throwable              Java throwable for client side inspection if available, can be null.
      * @param modelException         model exception.
-     * @param rawSerializedException raw exception bytes.
+     * @param rawSerializedException raw exception bytes if available, can be null.
      * @return error log identifier if successful or null if failed to save to disk.
      */
-    public static UUID saveWrapperException(Thread thread, com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, byte[] rawSerializedException) {
+    public static UUID saveWrapperException(Thread thread, Throwable throwable, com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, byte[] rawSerializedException) {
         try {
-            UUID errorId = Crashes.getInstance().saveUncaughtException(thread, null, modelException);
-            if (errorId != null) {
+            UUID errorId = Crashes.getInstance().saveUncaughtException(thread, throwable, modelException);
+            if (errorId != null && rawSerializedException != null) {
                 sWrapperExceptionDataContainer.put(errorId.toString(), rawSerializedException);
                 File dataFile = getFile(errorId);
                 StorageHelper.InternalStorage.writeObject(dataFile, rawSerializedException);
@@ -91,22 +92,21 @@ public class WrapperSdkExceptionManager {
             AppCenterLog.error(Crashes.LOG_TAG, "Failed to load wrapper exception data: null errorId");
             return null;
         }
-
         byte[] dataBytes = sWrapperExceptionDataContainer.get(errorId.toString());
         if (dataBytes != null) {
             return dataBytes;
         }
-
         File dataFile = getFile(errorId);
-
-        try {
-            dataBytes = StorageHelper.InternalStorage.readObject(dataFile);
-            if (dataBytes != null) {
-                sWrapperExceptionDataContainer.put(errorId.toString(), dataBytes);
+        if (dataFile.exists()) {
+            try {
+                dataBytes = StorageHelper.InternalStorage.readObject(dataFile);
+                if (dataBytes != null) {
+                    sWrapperExceptionDataContainer.put(errorId.toString(), dataBytes);
+                }
+                return dataBytes;
+            } catch (ClassNotFoundException | IOException e) {
+                AppCenterLog.error(Crashes.LOG_TAG, "Cannot access wrapper exception data file " + dataFile.getName(), e);
             }
-            return dataBytes;
-        } catch (ClassNotFoundException | IOException e) {
-            AppCenterLog.error(Crashes.LOG_TAG, "Cannot access wrapper exception data file " + dataFile.getName(), e);
         }
         return null;
     }
