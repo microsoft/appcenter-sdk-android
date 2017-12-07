@@ -335,7 +335,7 @@ public class CrashesAndroidTest {
         thread.join();
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
 
-        /* Check there are only 2 files: the throwable and the json one. */
+        /* Check there are only 3 files: the throwable, the json one and a breakpad folder. */
         assertEquals(3, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
     }
 
