@@ -26,6 +26,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.lang.reflect.Method;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
@@ -57,6 +58,16 @@ public class CrashesAndroidTest {
     private static Thread.UncaughtExceptionHandler sDefaultCrashHandler;
 
     private Channel mChannel;
+
+    static final String BREAKPAD_DIRECTORY = "breakpad";
+
+    /* Filter out the breakpad folder. */
+    FilenameFilter breakpadFilter = new FilenameFilter() {
+        @Override
+        public boolean accept(File dir, String filename) {
+            return !filename.toLowerCase().equals(BREAKPAD_DIRECTORY);
+        }
+    };
 
     @BeforeClass
     public static void setUpClass() {
@@ -178,7 +189,7 @@ public class CrashesAndroidTest {
         thread.join();
         assertEquals(ErrorLogHelper.FRAME_LIMIT, exception.getStackTrace().length);
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
-        assertEquals(3, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(breakpadFilter).length);
         verifyZeroInteractions(crashesListener);
 
         /* Second process: enqueue log but network is down... */
@@ -237,7 +248,7 @@ public class CrashesAndroidTest {
         assertTrue(Crashes.isEnabled().get());
         verify(mChannel).enqueue(argThat(matchCrashLog), anyString());
         assertNotNull(log.get());
-        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles(breakpadFilter).length);
 
         verify(crashesListener).getErrorAttachments(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);
@@ -271,7 +282,7 @@ public class CrashesAndroidTest {
         });
         semaphore.acquire();
 
-        assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles(breakpadFilter).length);
         verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString());
         verify(crashesListener).onBeforeSending(any(ErrorReport.class));
         verify(crashesListener).onSendingSucceeded(any(ErrorReport.class));
@@ -305,12 +316,12 @@ public class CrashesAndroidTest {
         thread.start();
         thread.join();
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
-        assertEquals(3, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(breakpadFilter).length);
 
         /* Disable, test waiting for disable to finish. */
         Crashes.setEnabled(false).get();
         assertFalse(Crashes.isEnabled().get());
-        assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles(breakpadFilter).length);
     }
 
     @Test
@@ -335,8 +346,8 @@ public class CrashesAndroidTest {
         thread.join();
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
 
-        /* Check there are only 3 files: the throwable, the json one and a breakpad folder. */
-        assertEquals(3, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        /* Check there are only 2 files: the throwable and the json one. */
+        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(breakpadFilter).length);
     }
 
     private Error generateStackOverflowError() {
