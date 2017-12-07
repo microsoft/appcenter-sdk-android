@@ -585,17 +585,17 @@ public class Crashes extends AbstractAppCenterService {
                         e.printStackTrace();
                     }
 
+                    /* Create our Breakpad dump attachment */
                     ErrorAttachmentLog breakpadAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
                     List<ErrorAttachmentLog> list = new LinkedList<>();
                     list.add(breakpadAttachment);
 
+                    /* Attach dump to NDK managed exception */
                     ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new NativeException(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
                     errorLog.getException().setWrapperSdkName("appcenter.ndk");
                     mChannel.enqueue(errorLog, ERROR_GROUP);
-
                     sendErrorAttachment(errorLog.getId(), list);
                 }
-
                 ErrorLogHelper.removeStoredBreakpadLogFiles();
             }
         });
