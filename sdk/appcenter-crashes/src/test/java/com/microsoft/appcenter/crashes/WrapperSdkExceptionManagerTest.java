@@ -9,8 +9,8 @@ import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
@@ -40,6 +40,7 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
@@ -186,6 +187,24 @@ public class WrapperSdkExceptionManagerTest {
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), throwable, new Exception(), data);
         verifyStatic(never());
         StorageHelper.InternalStorage.writeObject(any(File.class), eq(data));
+        verifyStatic();
+        StorageHelper.InternalStorage.writeObject(any(File.class), eq(throwable));
+    }
+
+    @Test
+    public void saveWrapperSdkCrashWithOnlyJavaThrowable() throws JSONException, IOException {
+        LogSerializer logSerializer = Mockito.mock(LogSerializer.class);
+        when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenReturn("mock");
+        Crashes.getInstance().setLogSerializer(logSerializer);
+        Throwable throwable = new Throwable();
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), throwable, new Exception(), null);
+        verifyStatic(never());
+        StorageHelper.InternalStorage.writeObject(any(File.class), isNull(byte[].class));
+        verifyStatic();
+        StorageHelper.InternalStorage.writeObject(any(File.class), eq(throwable));
+
+        /* We can't do it twice in the same process. */
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), throwable, new Exception(), null);
         verifyStatic();
         StorageHelper.InternalStorage.writeObject(any(File.class), eq(throwable));
     }
