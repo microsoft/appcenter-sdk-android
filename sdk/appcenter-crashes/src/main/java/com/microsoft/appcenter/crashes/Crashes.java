@@ -569,12 +569,12 @@ public class Crashes extends AbstractAppCenterService {
                     AppCenterLog.debug(LOG_TAG, "Process pending breakpad file: " + logFile);
                     byte[] logfileContents = StorageHelper.InternalStorage.readBytes(logFile);
 
-                    /* Create our Breakpad dump attachment */
+                    /* Create our Breakpad dump attachment. */
                     ErrorAttachmentLog breakpadAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
                     List<ErrorAttachmentLog> list = new LinkedList<>();
                     list.add(breakpadAttachment);
 
-                    /* Attach dump to NDK managed exception */
+                    /* Attach dump to NDK managed exception. */
                     ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new NativeException(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
                     if(errorLog != null) {
                         errorLog.getException().setWrapperSdkName("appcenter.ndk");
