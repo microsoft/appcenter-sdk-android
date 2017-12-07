@@ -5,8 +5,6 @@ include $(MY_ROOT_PATH)/google-breakpad/Android.mk
 
 LOCAL_PATH := $(MY_ROOT_PATH)
 
-
-
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := SasquatchBreakpad
