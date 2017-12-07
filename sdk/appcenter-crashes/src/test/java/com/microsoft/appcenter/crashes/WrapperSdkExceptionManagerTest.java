@@ -157,15 +157,37 @@ public class WrapperSdkExceptionManagerTest {
         when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenReturn("mock");
         Crashes.getInstance().setLogSerializer(logSerializer);
         byte[] data = new byte[]{'d'};
-        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), data);
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), data);
         verifyStatic();
         StorageHelper.InternalStorage.writeObject(any(File.class), eq(data));
 
         /* We can't do it twice in the same process. */
         data = new byte[]{'e'};
-        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), data);
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), data);
         verifyStatic(never());
         StorageHelper.InternalStorage.writeObject(any(File.class), eq(data));
+    }
+
+    @Test
+    public void saveWrapperSdkCrashWithJavaThrowable() throws JSONException, IOException {
+        LogSerializer logSerializer = Mockito.mock(LogSerializer.class);
+        when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenReturn("mock");
+        Crashes.getInstance().setLogSerializer(logSerializer);
+        byte[] data = new byte[]{'d'};
+        Throwable throwable = new Throwable();
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), throwable, new Exception(), data);
+        verifyStatic();
+        StorageHelper.InternalStorage.writeObject(any(File.class), eq(data));
+        verifyStatic();
+        StorageHelper.InternalStorage.writeObject(any(File.class), eq(throwable));
+
+        /* We can't do it twice in the same process. */
+        data = new byte[]{'e'};
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), throwable, new Exception(), data);
+        verifyStatic(never());
+        StorageHelper.InternalStorage.writeObject(any(File.class), eq(data));
+        verifyStatic();
+        StorageHelper.InternalStorage.writeObject(any(File.class), eq(throwable));
     }
 
     @Test
@@ -183,7 +205,7 @@ public class WrapperSdkExceptionManagerTest {
         })).thenReturn(throwableFile);
         when(throwableFile.createNewFile()).thenReturn(false);
         byte[] data = new byte[]{'d'};
-        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), data);
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), data);
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
 
@@ -195,7 +217,7 @@ public class WrapperSdkExceptionManagerTest {
 
         /* Second call is ignored. */
         data = new byte[]{'e'};
-        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), data);
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), data);
 
         /* No more error. */
         verifyStatic();
@@ -213,7 +235,7 @@ public class WrapperSdkExceptionManagerTest {
         LogSerializer logSerializer = Mockito.mock(LogSerializer.class);
         when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenThrow(new JSONException("mock"));
         Crashes.getInstance().setLogSerializer(logSerializer);
-        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), new byte[]{'d'});
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), new byte[]{'d'});
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
 
@@ -224,7 +246,7 @@ public class WrapperSdkExceptionManagerTest {
         }));
 
         /* Second call is ignored. */
-        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), new byte[]{'e'});
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), new byte[]{'e'});
 
         /* No more error. */
         verifyStatic();
@@ -244,7 +266,7 @@ public class WrapperSdkExceptionManagerTest {
         LogSerializer logSerializer = Mockito.mock(LogSerializer.class);
         when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenReturn("mock");
         Crashes.getInstance().setLogSerializer(logSerializer);
-        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), new byte[]{'d'});
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), new byte[]{'d'});
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
 
@@ -255,7 +277,7 @@ public class WrapperSdkExceptionManagerTest {
         }));
 
         /* Second call is ignored. */
-        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), new byte[]{'e'});
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), new byte[]{'e'});
 
         /* No more error. */
         verifyStatic();
@@ -276,7 +298,7 @@ public class WrapperSdkExceptionManagerTest {
         LogSerializer logSerializer = Mockito.mock(LogSerializer.class);
         when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenReturn("mock");
         Crashes.getInstance().setLogSerializer(logSerializer);
-        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), data);
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), data);
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
 
@@ -287,7 +309,7 @@ public class WrapperSdkExceptionManagerTest {
         }));
 
         /* Second call is ignored. */
-        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), new byte[]{'e'});
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), new byte[]{'e'});
 
         /* No more error. */
         verifyStatic();
@@ -305,7 +327,7 @@ public class WrapperSdkExceptionManagerTest {
         when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(false);
         LogSerializer logSerializer = Mockito.mock(LogSerializer.class);
         Crashes.getInstance().setLogSerializer(logSerializer);
-        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), new Exception(), new byte[]{'d'});
+        WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), new byte[]{'d'});
         verify(logSerializer, never()).serializeLog(any(Log.class));
         verifyNoMoreInteractions(ErrorLogHelper.class);
     }

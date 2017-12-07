@@ -40,13 +40,14 @@ public class WrapperSdkExceptionManager {
      * Save a crash from wrapper SDK.
      *
      * @param thread                 thread where uncaught exception originated.
+     * @param throwable              Java throwable for client side inspection if available, can be null.
      * @param modelException         model exception.
      * @param rawSerializedException raw exception bytes.
      * @return error log identifier if successful or null if failed to save to disk.
      */
-    public static UUID saveWrapperException(Thread thread, com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, byte[] rawSerializedException) {
+    public static UUID saveWrapperException(Thread thread, Throwable throwable, com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, byte[] rawSerializedException) {
         try {
-            UUID errorId = Crashes.getInstance().saveUncaughtException(thread, null, modelException);
+            UUID errorId = Crashes.getInstance().saveUncaughtException(thread, throwable, modelException);
             if (errorId != null) {
                 sWrapperExceptionDataContainer.put(errorId.toString(), rawSerializedException);
                 File dataFile = getFile(errorId);
