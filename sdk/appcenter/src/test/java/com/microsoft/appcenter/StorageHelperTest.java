@@ -5,11 +5,11 @@ import android.text.TextUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.mockito.internal.stubbing.answers.ThrowsException;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -37,12 +38,13 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
+@RunWith(PowerMockRunner.class)
 @SuppressWarnings("unused")
 @PrepareForTest({StorageHelper.InternalStorage.class, AppCenterLog.class, TextUtils.class})
 public class StorageHelperTest {
 
-    @Rule
-    public PowerMockRule rule = new PowerMockRule();
+    //@Rule
+    //public PowerMockRule rule = new PowerMockRule();
 
     @Test
     public void readFileNotFound() throws Exception {
@@ -136,10 +138,9 @@ public class StorageHelperTest {
     @Test
     public void readBytesFileNotFound() throws Exception {
         mockStatic(AppCenterLog.class);
-        FileReader fileReader = mock(FileReader.class, new ThrowsException(new FileNotFoundException()));
-        whenNew(FileReader.class).withAnyArguments().thenReturn(fileReader);
+        BufferedReader bufferedReader = mock(BufferedReader.class, new ThrowsException(new FileNotFoundException()));
+        whenNew(BufferedReader.class).withAnyArguments().thenReturn(bufferedReader);
         assertNull(StorageHelper.InternalStorage.readBytes(new File("")));
-        verify(fileReader).close();
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
@@ -149,11 +150,9 @@ public class StorageHelperTest {
         mockStatic(AppCenterLog.class);
         BufferedReader reader = mock(BufferedReader.class);
         whenNew(BufferedReader.class).withAnyArguments().thenReturn(reader);
-        whenNew(FileReader.class).withAnyArguments().thenReturn(mock(FileReader.class));
-        when(reader.readLine()).thenReturn("incomplete");
-        when(reader.readLine()).thenThrow(new EOFException());
+        DataInputStream dataInputStream = mock(DataInputStream.class);
+        whenNew(DataInputStream.class).withAnyArguments().thenReturn(dataInputStream);
         assertNull(StorageHelper.InternalStorage.readBytes(new File("")));
-        verify(reader).close();
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
@@ -161,10 +160,11 @@ public class StorageHelperTest {
     @Test
     public void readBytesErrorAndCloseError() throws Exception {
         mockStatic(AppCenterLog.class);
-        FileReader fileReader = mock(FileReader.class, new ThrowsException(new IOException()));
-        whenNew(FileReader.class).withAnyArguments().thenReturn(fileReader);
+        BufferedReader bufferReader = mock(BufferedReader.class, new ThrowsException(new IOException()));
+        whenNew(BufferedReader.class).withAnyArguments().thenReturn(bufferReader);
+        DataInputStream dataInputStream = mock(DataInputStream.class);
+        whenNew(DataInputStream.class).withAnyArguments().thenReturn(dataInputStream);
         assertNull(StorageHelper.InternalStorage.readBytes(new File("")));
-        verify(fileReader).close();
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }

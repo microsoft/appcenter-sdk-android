@@ -360,15 +360,11 @@ public class StorageHelper {
             try {
                 BufferedReader reader = new BufferedReader(new FileReader(file));
                 byte fileContents[] = new byte[(int) file.length()];
+                BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
                 try {
-                    BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-                    try {
-                        DataInputStream dis = new DataInputStream(bis);
-                        dis.readFully(fileContents);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                } catch (FileNotFoundException e) {
+                    DataInputStream dis = new DataInputStream(bis);
+                    dis.readFully(fileContents);
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
                 return fileContents;
