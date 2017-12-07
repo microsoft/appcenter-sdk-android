@@ -5,11 +5,11 @@ import android.text.TextUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.mockito.internal.stubbing.answers.ThrowsException;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -38,13 +38,12 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@RunWith(PowerMockRunner.class)
 @SuppressWarnings("unused")
 @PrepareForTest({StorageHelper.InternalStorage.class, AppCenterLog.class, TextUtils.class})
 public class StorageHelperTest {
 
-    //@Rule
-    //public PowerMockRule rule = new PowerMockRule();
+    @Rule
+    public PowerMockRule rule = new PowerMockRule();
 
     @Test
     public void readFileNotFound() throws Exception {
