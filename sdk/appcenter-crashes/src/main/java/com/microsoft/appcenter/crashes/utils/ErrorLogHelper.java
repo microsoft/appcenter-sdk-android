@@ -181,13 +181,13 @@ public class ErrorLogHelper {
                 return filename.endsWith(ERROR_LOG_FILE_EXTENSION);
             }
         });
-        return files != null && files.length > 0 ? files : new File[0];
+        return files != null ? files : new File[0];
     }
 
     @NonNull
     public static File[] getStoredBreakpadLogFiles() {
         File[] files = getBreakpadErrorStorageDirectory().listFiles();
-        return files != null && files.length > 0 ? files : new File[0];
+        return files != null ? files : new File[0];
     }
 
     public static void removeStoredBreakpadLogFiles() {
