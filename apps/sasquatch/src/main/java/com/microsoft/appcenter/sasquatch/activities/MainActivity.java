@@ -133,7 +133,6 @@ public class MainActivity extends AppCompatActivity {
         try {
             @SuppressWarnings("unchecked")
             Class<? extends ErrorLogHelper> errorLogHelper = (Class<? extends ErrorLogHelper>) Class.forName("com.microsoft.appcenter.crashes.utils.ErrorLogHelper");
-
             File breakpadErrorStorageDirectory = (File) errorLogHelper.getMethod("getBreakpadErrorStorageDirectory").invoke(null);
             String path = breakpadErrorStorageDirectory.getAbsolutePath();
             setupNativeCrashesListener(path);

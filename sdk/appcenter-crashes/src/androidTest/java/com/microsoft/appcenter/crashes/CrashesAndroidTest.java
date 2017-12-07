@@ -59,13 +59,11 @@ public class CrashesAndroidTest {
 
     private Channel mChannel;
 
-    static final String BREAKPAD_DIRECTORY = "breakpad";
-
     /* Filter out the breakpad folder. */
     FilenameFilter breakpadFilter = new FilenameFilter() {
         @Override
         public boolean accept(File dir, String filename) {
-            return !filename.toLowerCase().equals(BREAKPAD_DIRECTORY);
+            return !filename.toLowerCase().equals(Constants.BREAKPAD_DIRECTORY);
         }
     };
 

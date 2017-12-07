@@ -28,5 +28,5 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 APP_STL := gnustl_static
-APP_ABI := arm64-v8a x86 x86_64 mips mips64
+APP_ABI := arm64-v8a x86 x86_64
 APP_PLATFORM := android-9

@@ -12,7 +12,7 @@ android {
         externalNativeBuild {
             ndkBuild {
                 arguments "NDK_APPLICATION_MK:=Application.mk"
-                abiFilters "armeabi-v7a", "armeabi"
+                abiFilters "armeabi-v7a"
             }
         }
     }

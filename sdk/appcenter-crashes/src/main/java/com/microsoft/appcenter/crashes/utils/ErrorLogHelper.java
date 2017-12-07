@@ -57,8 +57,6 @@ public class ErrorLogHelper {
     @VisibleForTesting
     static final String ERROR_DIRECTORY = "error";
 
-    static final String BREAKPAD_DIRECTORY = "breakpad";
-
     /**
      * We keep the first half of the limit of frames from the beginning and the second half from end.
      */
@@ -150,7 +148,7 @@ public class ErrorLogHelper {
     public static synchronized void createErrorStorageDirectories() {
         File errorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
         StorageHelper.InternalStorage.mkdir(errorLogDirectory.getAbsolutePath());
-        File breakpadErrorLogDirectory = new File(errorLogDirectory.getAbsolutePath(), BREAKPAD_DIRECTORY);
+        File breakpadErrorLogDirectory = new File(errorLogDirectory.getAbsolutePath(), Constants.BREAKPAD_DIRECTORY);
         StorageHelper.InternalStorage.mkdir(breakpadErrorLogDirectory.getAbsolutePath());
     }
 
@@ -167,7 +165,7 @@ public class ErrorLogHelper {
     public static synchronized File getBreakpadErrorStorageDirectory() {
         if (sBreakpadErrorLogDirectory == null) {
             File errorStorageDirectory = getErrorStorageDirectory();
-            sBreakpadErrorLogDirectory = new File(errorStorageDirectory.getAbsolutePath(), BREAKPAD_DIRECTORY);
+            sBreakpadErrorLogDirectory = new File(errorStorageDirectory.getAbsolutePath(), Constants.BREAKPAD_DIRECTORY);
             StorageHelper.InternalStorage.mkdir(sBreakpadErrorLogDirectory.getAbsolutePath());
         }
         return sBreakpadErrorLogDirectory;
