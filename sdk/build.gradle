@@ -64,20 +64,20 @@ subprojects {
     }
 
     dependencies {
-        provided "com.android.support:support-annotations:${ext.supportLibVersion}"
+        compileOnly "com.android.support:support-annotations:${ext.supportLibVersion}"
         javadocDeps "com.android.support:support-annotations:${ext.supportLibVersion}"
 
-        testCompile 'org.powermock:powermock-api-mockito:1.6.5'
-        testCompile 'org.powermock:powermock-module-junit4:1.6.5'
-        testCompile 'org.powermock:powermock-module-junit4-rule-agent:1.6.5'
-        testCompile "com.android.support:support-annotations:${ext.supportLibVersion}"
-        testCompile project(':test')
+        testImplementation 'org.powermock:powermock-api-mockito:1.6.5'
+        testImplementation 'org.powermock:powermock-module-junit4:1.6.5'
+        testImplementation 'org.powermock:powermock-module-junit4-rule-agent:1.6.5'
+        testImplementation "com.android.support:support-annotations:${ext.supportLibVersion}"
+        testImplementation project(':test')
 
-        androidTestCompile 'com.crittercism.dexmaker:dexmaker-dx:1.4'
-        androidTestCompile 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
-        androidTestCompile 'com.android.support.test:runner:1.0.1'
-        androidTestCompile 'com.android.support.test:rules:1.0.1'
-        androidTestCompile project(':test')
+        androidTestImplementation 'com.crittercism.dexmaker:dexmaker-dx:1.4'
+        androidTestImplementation 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
+        androidTestImplementation 'com.android.support.test:runner:1.0.1'
+        androidTestImplementation 'com.android.support.test:rules:1.0.1'
+        androidTestImplementation project(':test')
     }
 
     // Android Studio 2.2.0 broke a lot of scripting, could not find another way of doing this rename trick

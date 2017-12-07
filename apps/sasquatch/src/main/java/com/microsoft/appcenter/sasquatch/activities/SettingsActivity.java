@@ -20,7 +20,6 @@ import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.firebase.analytics.FirebaseAnalytics;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterService;
 import com.microsoft.appcenter.analytics.Analytics;
@@ -168,12 +167,19 @@ public class SettingsActivity extends AppCompatActivity {
             initCheckBoxSetting(R.string.appcenter_push_firebase_state_key, R.string.appcenter_push_firebase_summary_enabled, R.string.appcenter_push_firebase_summary_disabled, new HasEnabled() {
 
                 @Override
+                @SuppressWarnings("unchecked")
                 public void setEnabled(boolean enabled) {
                     try {
                         if (enabled) {
                             Push.enableFirebaseAnalytics(getActivity());
                         } else {
-                            FirebaseAnalytics.getInstance(getActivity()).setAnalyticsCollectionEnabled(false);
+                            try {
+                                Class firebaseAnalyticsClass = Class.forName("com.google.firebase.analytics.FirebaseAnalytics");
+                                Object analyticsInstance = firebaseAnalyticsClass.getMethod("getInstance").invoke(null, getActivity());
+                                firebaseAnalyticsClass.getMethod("setAnalyticsCollectionEnabled").invoke(analyticsInstance, true);
+                            } catch (Exception ignored) {
+                                /* Nothing to handle; this is reached if Firebase isn't being used. */
+                            }
                         }
                         MainActivity.sSharedPreferences.edit().putBoolean(FIREBASE_ENABLED_KEY, enabled).apply();
                     } catch (Exception e) {
@@ -217,6 +223,18 @@ public class SettingsActivity extends AppCompatActivity {
             } catch (Exception e) {
                 getPreferenceScreen().removePreference(findPreference(getString(R.string.real_user_measurements_key)));
             }
+            initCheckBoxSetting(R.string.appcenter_auto_page_tracking_key, R.string.appcenter_auto_page_tracking_enabled, R.string.appcenter_auto_page_tracking_disabled, new HasEnabled() {
+
+                @Override
+                public boolean isEnabled() {
+                    return AnalyticsPrivateHelper.isAutoPageTrackingEnabled();
+                }
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    AnalyticsPrivateHelper.setAutoPageTrackingEnabled(enabled);
+                }
+            });
 
             /* Application Information. */
             initClickableSetting(R.string.install_id_key, String.valueOf(AppCenter.getInstallId().get()), new Preference.OnPreferenceClickListener() {
@@ -485,6 +503,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
             return getString(R.string.appcenter_crashes_file_attachment_summary_empty);
         }
+
 
         private interface HasEnabled {
             boolean isEnabled();
