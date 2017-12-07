@@ -49,6 +49,7 @@ android {
             matchingFallbacks = ['release']
         }
     }
+    
     externalNativeBuild {
         ndkBuild {
             path "Android.mk"
