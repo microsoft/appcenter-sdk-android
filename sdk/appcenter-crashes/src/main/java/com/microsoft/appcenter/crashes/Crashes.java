@@ -589,8 +589,6 @@ public class Crashes extends AbstractAppCenterService {
                 ErrorLogHelper.removeStoredBreakpadLogFiles();
             }
         });
-
-
     }
 
     /**
@@ -831,7 +829,6 @@ public class Crashes extends AbstractAppCenterService {
         File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
         String errorLogString = mLogSerializer.serializeLog(errorLog);
         StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
-
         AppCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
         File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         if (throwable != null) {
