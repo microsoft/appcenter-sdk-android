@@ -229,7 +229,7 @@ public class CrashesAndroidTest {
             }
         };
         verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString());
-        assertEquals(3, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(breakpadFilter).length);
         verify(crashesListener).shouldProcess(any(ErrorReport.class));
         verify(crashesListener).shouldAwaitUserConfirmation();
         verifyNoMoreInteractions(crashesListener);
