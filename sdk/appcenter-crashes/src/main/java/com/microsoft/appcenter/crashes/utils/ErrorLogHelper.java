@@ -160,7 +160,6 @@ public class ErrorLogHelper {
             sErrorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
             StorageHelper.InternalStorage.mkdir(sErrorLogDirectory.getAbsolutePath());
         }
-
         return sErrorLogDirectory;
     }
 
@@ -171,7 +170,6 @@ public class ErrorLogHelper {
             sBreakpadErrorLogDirectory = new File(errorStorageDirectory.getAbsolutePath(), BREAKPAD_DIRECTORY);
             StorageHelper.InternalStorage.mkdir(sBreakpadErrorLogDirectory.getAbsolutePath());
         }
-
         return sBreakpadErrorLogDirectory;
     }
 
@@ -183,14 +181,12 @@ public class ErrorLogHelper {
                 return filename.endsWith(ERROR_LOG_FILE_EXTENSION);
             }
         });
-
         return files != null && files.length > 0 ? files : new File[0];
     }
 
     @NonNull
     public static File[] getStoredBreakpadLogFiles() {
         File[] files = getBreakpadErrorStorageDirectory().listFiles();
-
         return files != null && files.length > 0 ? files : new File[0];
     }
 

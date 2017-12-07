@@ -9,12 +9,6 @@ android {
     flavorDimensions "dependency", "pushLibrary"
 
     defaultConfig {
-        applicationId "com.microsoft.appcenter.sasquatch"
-        minSdkVersion 19
-        targetSdkVersion 21
-        versionCode 1
-        versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             ndkBuild {
                 arguments "NDK_APPLICATION_MK:=Application.mk"

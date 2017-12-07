@@ -98,7 +98,6 @@ public class MainActivity extends AppCompatActivity {
         /* Set listeners. */
         AnalyticsPrivateHelper.setListener(getAnalyticsListener());
         Crashes.setListener(getCrashesListener());
-
         Distribute.setListener(new SasquatchDistributeListener());
         Push.setListener(getPushListener());
 
