@@ -97,9 +97,6 @@ public class AppCenterTest {
 
     private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
 
-//    @Rule
-//    public PowerMockRule mPowerMockRule = new PowerMockRule();
-
     @Mock
     private Iterator<ContentValues> mDataBaseScannerIterator;
 
