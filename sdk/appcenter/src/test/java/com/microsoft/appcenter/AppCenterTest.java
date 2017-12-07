@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.DefaultChannel;
@@ -19,6 +18,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
+import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
@@ -90,7 +90,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         Thread.class,
         ShutdownHelper.class,
         CustomProperties.class,
-        InstrumentationRegistry.class
+        InstrumentationRegistryHelper.class
 })
 public class AppCenterTest {
 
@@ -136,6 +136,7 @@ public class AppCenterTest {
         mockStatic(Thread.class);
         mockStatic(ShutdownHelper.class);
         mockStatic(DeviceInfoHelper.class);
+        mockStatic(InstrumentationRegistryHelper.class);
 
         /* Mock handlers. */
         Handler handler = mock(Handler.class);
@@ -151,6 +152,7 @@ public class AppCenterTest {
         HandlerThread handlerThread = mock(HandlerThread.class);
         whenNew(HandlerThread.class).withAnyArguments().thenReturn(handlerThread);
         when(handlerThread.getLooper()).thenReturn(mock(Looper.class));
+        AddArgumentToRegistry(AppCenter.DISABLE_SERVICES, null);
 
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
         when(StorageHelper.PreferencesStorage.getBoolean(anyString(), eq(true))).thenReturn(true);
@@ -902,7 +904,6 @@ public class AppCenterTest {
 
     @Test
     public void disableServices() {
-        mockStatic(InstrumentationRegistry.class);
 
         /* Verify that when variable is not set, services are started. */
         AddArgumentToRegistry(AppCenter.DISABLE_SERVICES, null);
@@ -943,27 +944,18 @@ public class AppCenterTest {
 
     @Test
     public void doNotDisableServicesInNonTestEnvironment() {
-        mockStatic(InstrumentationRegistry.class);
 
         /* Throw IllegalAccessError. */
-        doThrow(new IllegalAccessError()).when(InstrumentationRegistry.class);
-        InstrumentationRegistry.getArguments();
+        doThrow(new IllegalAccessError()).when(InstrumentationRegistryHelper.class);
+        InstrumentationRegistryHelper.getArguments();
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
 
         /* Throw NoClassDefFoundError. */
         AppCenter.unsetInstance();
-        doThrow(new NoClassDefFoundError()).when(InstrumentationRegistry.class);
-        InstrumentationRegistry.getArguments();
-        AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
-        assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
-        assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
-
-        /* Throw IllegalStateException. */
-        AppCenter.unsetInstance();
-        doThrow(new IllegalStateException()).when(InstrumentationRegistry.class);
-        InstrumentationRegistry.getArguments();
+        doThrow(new NoClassDefFoundError()).when(InstrumentationRegistryHelper.class);
+        InstrumentationRegistryHelper.getArguments();
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
@@ -972,7 +964,7 @@ public class AppCenterTest {
     private static void AddArgumentToRegistry(String key, String value) {
         Bundle mockBundle = mock(Bundle.class);
         when(mockBundle.getString(key)).thenReturn(value);
-        when(InstrumentationRegistry.getArguments()).thenReturn(mockBundle);
+        when(InstrumentationRegistryHelper.getArguments()).thenReturn(mockBundle);
     }
 
     private static class DummyService extends AbstractAppCenterService {
