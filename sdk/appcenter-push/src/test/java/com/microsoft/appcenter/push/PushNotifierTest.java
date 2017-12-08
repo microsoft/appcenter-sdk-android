@@ -289,7 +289,7 @@ public class PushNotifierTest {
     @Test
     public void handleNotificationWithLauncherActivityHasRightFlags() throws Exception {
         PushNotifier.handleNotification(mContextMock, new Intent());
-        verify(mActionIntentMock).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        verify(mActionIntentMock).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
     }
 
