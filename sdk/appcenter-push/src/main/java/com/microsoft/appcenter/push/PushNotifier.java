@@ -55,7 +55,7 @@ class PushNotifier {
         PackageManager packageManager = context.getPackageManager();
         Intent actionIntent = packageManager.getLaunchIntentForPackage(context.getPackageName());
         if (actionIntent != null) {
-            actionIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            actionIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             Map<String, String> customData = PushIntentUtils.getCustomData(pushIntent);
             for (String key : customData.keySet()) {
                 actionIntent.putExtra(key, customData.get(key));
