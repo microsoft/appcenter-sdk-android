@@ -88,11 +88,6 @@ public class Crashes extends AbstractAppCenterService {
     public static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
-     * NDK wrapper name for exceptions.
-     */
-    private static final String NDK_WRAPPER = "appcenter.ndk";
-
-    /**
      * Max allowed attachments per crash.
      */
     private static final int MAX_ATTACHMENT_PER_CRASH = 2;
@@ -241,6 +236,15 @@ public class Crashes extends AbstractAppCenterService {
      */
     public static void setListener(CrashesListener listener) {
         getInstance().setInstanceListener(listener);
+    }
+
+    /**
+     * Sets a crashes listener.
+     *
+     * @return path where breakpad minidumps should be created.
+     */
+    public static String getBreakpadDirectory() {
+        return ErrorLogHelper.getBreakpadErrorStorageDirectory().getAbsolutePath();
     }
 
     /**
@@ -582,8 +586,8 @@ public class Crashes extends AbstractAppCenterService {
                     /* Attach dump to NDK managed exception. */
                     ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new NativeException(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
                     if(errorLog != null) {
-                        errorLog.getException().setWrapperSdkName(NDK_WRAPPER);
-                        errorLog.getDevice().setWrapperSdkName(NDK_WRAPPER);
+                        errorLog.getException().setWrapperSdkName(Constants.BREAKPAD_WRAPPER_NAME);
+                        errorLog.getDevice().setWrapperSdkName(Constants.BREAKPAD_WRAPPER_NAME);
                         mChannel.enqueue(errorLog, ERROR_GROUP);
                         sendErrorAttachment(errorLog.getId(), list);
                     }
