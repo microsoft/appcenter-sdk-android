@@ -25,14 +25,6 @@ android {
         }
     }
 
-    /* TODO remove that filter once we update the jcenter demo to include the no firebase push sdk. */
-    variantFilter { variant ->
-        def names = variant.flavors*.name
-        if (names.contains("jcenterDependency") && names.contains("vanilla")) {
-            setIgnore(true)
-        }
-    }
-
     buildTypes {
         releaseProguard {
             minifyEnabled true
