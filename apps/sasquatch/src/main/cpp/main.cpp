@@ -40,13 +40,13 @@ extern "C"
 #endif
 
     /*
-     *
+     * Triggered automatically after an attempt to write a minidump file to the breakpad folder.
      */
-    jint JNI_OnLoad(JavaVM *vm, void * /*reserved*/) {
-
-        __android_log_print(ANDROID_LOG_INFO, "breakpad", "JNI onLoad...");
-
-        return JNI_VERSION_1_4;
+    bool DumpCallback(const google_breakpad::MinidumpDescriptor &descriptor,
+                      void *context,
+                      bool succeeded) {
+        __android_log_print(ANDROID_LOG_INFO, "breakpad", "Dump path: %s\n", descriptor.path());
+        return succeeded;
     }
 
     /**
@@ -63,16 +63,12 @@ extern "C"
         env->ReleaseStringUTFChars(path, dump_path);
     }
 
-    /*
-     * Triggered automatically after an attempt to write a minidump file to the breakpad folder.
-     */
-    bool DumpCallback(const google_breakpad::MinidumpDescriptor &descriptor,
-                      void *context,
-                      bool succeeded) {
-        __android_log_print(ANDROID_LOG_INFO, "breakpad", "Dump path: %s\n", descriptor.path());
-        return succeeded;
-    }
+    jint JNI_OnLoad(JavaVM *vm, void * /*reserved*/) {
 
+        __android_log_print(ANDROID_LOG_INFO, "breakpad", "JNI onLoad...");
+
+        return JNI_VERSION_1_4;
+    }
 
     void Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeDivideByZeroCrash(JNIEnv* env, jobject obj) {
         volatile int *a = reinterpret_cast<volatile int *>(NULL);
