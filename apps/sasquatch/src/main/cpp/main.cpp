@@ -1,18 +1,26 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (c) Microsoft Corporation
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * All rights reserved.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * MIT License
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in the
+ * Software without restriction, including without limitation the rights to use, copy,
+ * modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+ * and to permit persons to whom the Software is furnished to do so, subject to the
+ * following conditions:
  *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include <jni.h>
@@ -31,13 +39,21 @@ extern "C"
 {
 #endif
 
-    bool DumpCallback(const google_breakpad::MinidumpDescriptor &descriptor,
-                      void *context,
-                      bool succeeded) {
-        __android_log_print(ANDROID_LOG_INFO, "breakpad", "Dump path: %s\n", descriptor.path());
-        return succeeded;
+    /*
+     *
+     */
+    jint JNI_OnLoad(JavaVM *vm, void * /*reserved*/) {
+
+        __android_log_print(ANDROID_LOG_INFO, "breakpad", "JNI onLoad...");
+
+        return JNI_VERSION_1_4;
     }
 
+    /**
+     * Registers breakpad as the exception handler for NDK code.
+     *
+     * @param path returned from Crashes.getBreakpadDirectory()
+     */
     void Java_com_microsoft_appcenter_sasquatch_activities_MainActivity_setupNativeCrashesListener(JNIEnv *env, jobject, jstring path) {
         const char* dump_path = (char *)env->GetStringUTFChars(path, NULL);
 
@@ -47,11 +63,14 @@ extern "C"
         env->ReleaseStringUTFChars(path, dump_path);
     }
 
-    jint JNI_OnLoad(JavaVM *vm, void * /*reserved*/) {
-
-        __android_log_print(ANDROID_LOG_INFO, "breakpad", "JNI onLoad...");
-
-        return JNI_VERSION_1_4;
+    /*
+     * Triggered automatically after an attempt to write a minidump file to the breakpad folder.
+     */
+    bool DumpCallback(const google_breakpad::MinidumpDescriptor &descriptor,
+                      void *context,
+                      bool succeeded) {
+        __android_log_print(ANDROID_LOG_INFO, "breakpad", "Dump path: %s\n", descriptor.path());
+        return succeeded;
     }
 
 
