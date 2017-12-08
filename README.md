@@ -1,4 +1,3 @@
-[![Build Status](https://www.bitrise.io/app/78891228f9c6e6dc.svg?token=KQ6kVAci490XBjulCcQuGQ&branch=develop)](https://www.bitrise.io/app/78891228f9c6e6dc)
 [![codecov](https://codecov.io/gh/Microsoft/AppCenter-SDK-Android/branch/develop/graph/badge.svg?token=YwMZRPnYK3)](https://codecov.io/gh/Microsoft/AppCenter-SDK-Android)
 [![GitHub Release](https://img.shields.io/github/release/Microsoft/AppCenter-SDK-Android.svg)](https://github.com/Microsoft/AppCenter-SDK-Android/releases/latest)
 [![Bintray](https://api.bintray.com/packages/vsappcenter/appcenter/appcenter/images/download.svg)](https://bintray.com/vsappcenter/appcenter)
@@ -25,8 +24,6 @@ It is super easy to use App Center. Have a look at our [get started documentatio
 ## 2. Contributing
 
 We are looking forward to your contributions via pull requests.
-
-Please note that the test app named **Sasquatch** requires a **google-services.json** to compile. This file is git ignored as it contains secrets. You have to provide your own **google-services.json** file in the **app/sasquatch** folder if you want to build. This requires having your own Firebase Project.
 
 ### 2.1 Code of Conduct
 

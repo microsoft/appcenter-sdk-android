@@ -44,6 +44,7 @@ import java.util.UUID;
 /**
  * Crashes service.
  */
+@SuppressWarnings("WeakerAccess")
 public class Crashes extends AbstractAppCenterService {
 
     /**
@@ -796,7 +797,7 @@ public class Crashes extends AbstractAppCenterService {
         File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         if (throwable != null) {
             StorageHelper.InternalStorage.writeObject(throwableFile, throwable);
-            AppCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile);
+            AppCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile + " throwable:", throwable);
         } else {
 
             /*

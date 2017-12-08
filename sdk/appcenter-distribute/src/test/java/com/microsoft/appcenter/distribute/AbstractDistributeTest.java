@@ -3,7 +3,9 @@ package com.microsoft.appcenter.distribute;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.backup.SharedPreferencesBackupHelper;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -13,9 +15,10 @@ import android.widget.Toast;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.HashUtils;
-import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -29,11 +32,15 @@ import org.mockito.Mock;
 import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
+import java.util.Arrays;
+
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.any;
@@ -48,7 +55,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
-@PrepareForTest({Distribute.class, PreferencesStorage.class, AppCenterLog.class, AppCenter.class, NetworkStateHelper.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, CryptoUtils.class, InstallerUtils.class, Toast.class, HandlerUtils.class})
+@PrepareForTest({Distribute.class, PreferencesStorage.class, AppNameHelper.class, AppCenterLog.class, AppCenter.class, NetworkStateHelper.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, CryptoUtils.class, InstallerUtils.class, Toast.class, HandlerUtils.class})
 public class AbstractDistributeTest {
 
     static final String TEST_HASH = HashUtils.sha256("com.contoso:1.2.3:6");
@@ -94,6 +101,9 @@ public class AbstractDistributeTest {
     AppCenterHandler mAppCenterHandler;
 
     @Mock
+    SharedPreferences mMobileCenterPreferencesStorage;
+
+    @Mock
     private AppCenterFuture<Boolean> mBooleanAppCenterFuture;
 
     @Before
@@ -117,6 +127,9 @@ public class AbstractDistributeTest {
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
         mockStatic(PreferencesStorage.class);
         when(PreferencesStorage.getBoolean(DISTRIBUTE_ENABLED_KEY, true)).thenReturn(true);
+
+        /* Mobile Center Preferences failover initialization */
+        when(mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE)).thenReturn(mMobileCenterPreferencesStorage);
 
         /* Then simulate further changes to state. */
         doAnswer(new Answer<Void>() {
@@ -150,8 +163,8 @@ public class AbstractDistributeTest {
         Whitebox.setInternalState(packageInfo, "versionCode", 6);
 
         /* Mock app name and other string resources. */
-        Whitebox.setInternalState(mApplicationInfo, "labelRes", 42);
-        when(mContext.getString(42)).thenReturn("unit-test-app");
+        mockStatic(AppNameHelper.class);
+        when(AppNameHelper.getAppName(mContext)).thenReturn("unit-test-app");
         when(mContext.getString(R.string.appcenter_distribute_update_dialog_message_optional)).thenReturn("%s%s%d");
         when(mContext.getString(R.string.appcenter_distribute_update_dialog_message_mandatory)).thenReturn("%s%s%d");
         when(mContext.getString(R.string.appcenter_distribute_install_ready_message)).thenReturn("%s%s%d");
@@ -171,26 +184,27 @@ public class AbstractDistributeTest {
 
             @Override
             public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                CharSequence str = (CharSequence) invocation.getArguments()[0];
-                return str == null || str.length() == 0;
+            CharSequence str = (CharSequence) invocation.getArguments()[0];
+            return str == null || str.length() == 0;
             }
         });
 
         /* Mock Crypto to not crypt. */
         mockStatic(CryptoUtils.class);
         when(CryptoUtils.getInstance(any(Context.class))).thenReturn(mCryptoUtils);
-        when(mCryptoUtils.decrypt(anyString())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
+        when(mCryptoUtils.decrypt(anyString(), anyBoolean())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
 
             @Override
             public CryptoUtils.DecryptedData answer(InvocationOnMock invocation) throws Throwable {
-                return new CryptoUtils.DecryptedData(invocation.getArguments()[0].toString(), null);
+                Object arg = invocation.getArguments()[0];
+                return new CryptoUtils.DecryptedData(arg == null ? null : arg.toString(), null);
             }
         });
         when(mCryptoUtils.encrypt(anyString())).thenAnswer(new Answer<String>() {
 
             @Override
             public String answer(InvocationOnMock invocation) throws Throwable {
-                return invocation.getArguments()[0].toString();
+            return invocation.getArguments()[0].toString();
             }
         });
 
@@ -201,16 +215,16 @@ public class AbstractDistributeTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(mDialog.isShowing()).thenReturn(true);
-                return null;
+            when(mDialog.isShowing()).thenReturn(true);
+            return null;
             }
         }).when(mDialog).show();
         doAnswer(new Answer<Void>() {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                when(mDialog.isShowing()).thenReturn(false);
-                return null;
+            when(mDialog.isShowing()).thenReturn(false);
+            return null;
             }
         }).when(mDialog).hide();
 
@@ -224,8 +238,8 @@ public class AbstractDistributeTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                ((Runnable) invocation.getArguments()[0]).run();
-                return null;
+            ((Runnable) invocation.getArguments()[0]).run();
+            return null;
             }
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));

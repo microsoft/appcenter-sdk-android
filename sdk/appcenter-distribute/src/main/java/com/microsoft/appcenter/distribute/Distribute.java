@@ -9,12 +9,11 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -40,9 +39,10 @@ import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -77,8 +77,9 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.DistributeConstants.NOTIFICATION_CHANNEL_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_UPDATE_SETUP_FAILED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
@@ -86,9 +87,9 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAME;
 import static com.microsoft.appcenter.distribute.DistributeUtils.computeReleaseHash;
 import static com.microsoft.appcenter.distribute.DistributeUtils.getStoredDownloadState;
@@ -189,7 +190,7 @@ public class Distribute extends AbstractAppCenterService {
      * They will always keep this dialog to remain compatible but just mark it deprecated.
      */
     @SuppressWarnings("deprecation")
-    private ProgressDialog mProgressDialog;
+    private android.app.ProgressDialog mProgressDialog;
 
     /**
      * Mandatory download completed in app notification.
@@ -246,6 +247,12 @@ public class Distribute extends AbstractAppCenterService {
     private Boolean mUsingDefaultUpdateDialog;
 
     /**
+     * Preferences to use in case of token/distribution group missing from Mobile Center SDK releases
+     * (versions 0.x).
+     */
+    private SharedPreferences mMobileCenterPreferenceStorage;
+
+    /**
      * Get shared instance.
      *
      * @return shared instance.
@@ -269,6 +276,7 @@ public class Distribute extends AbstractAppCenterService {
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
+    @SuppressWarnings("WeakerAccess")
     public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
@@ -279,6 +287,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
+    @SuppressWarnings("WeakerAccess")
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
@@ -288,7 +297,7 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param installUrl install base URL.
      */
-    @SuppressWarnings("SameParameterValue")
+    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void setInstallUrl(String installUrl) {
         getInstance().setInstanceInstallUrl(installUrl);
     }
@@ -298,7 +307,7 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param apiUrl API base URL.
      */
-    @SuppressWarnings("SameParameterValue")
+    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void setApiUrl(String apiUrl) {
         getInstance().setInstanceApiUrl(apiUrl);
     }
@@ -308,6 +317,7 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param listener The custom distribute listener.
      */
+    @SuppressWarnings("WeakerAccess")
     public static void setListener(DistributeListener listener) {
         getInstance().setInstanceListener(listener);
     }
@@ -343,6 +353,7 @@ public class Distribute extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
         mContext = context;
         mAppSecret = appSecret;
+        mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
         try {
             mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
         } catch (PackageManager.NameNotFoundException e) {
@@ -365,6 +376,7 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
             mContext = context;
             StorageHelper.initialize(mContext);
+            mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
             mReleaseDetails = DistributeUtils.loadCachedReleaseDetails();
         }
         return mReleaseDetails;
@@ -681,7 +693,7 @@ public class Distribute extends AbstractAppCenterService {
             String updateSetupFailedMessage = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
             if (updateSetupFailedMessage != null) {
                 AppCenterLog.debug(LOG_TAG, "In-app updates setup failure detected.");
-                showUpdateSetupFailedDialog(updateSetupFailedMessage);
+                showUpdateSetupFailedDialog();
                 return;
             }
 
@@ -703,22 +715,17 @@ public class Distribute extends AbstractAppCenterService {
             String updateToken = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
             if (updateToken != null || distributionGroupId != null) {
-
-                /* Decrypt token if any. */
-                if (updateToken != null) {
-                    CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(updateToken);
-                    String newEncryptedData = decryptedData.getNewEncryptedData();
-
-                    /* Store new encrypted value if updated. */
-                    if (newEncryptedData != null) {
-                        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, newEncryptedData);
-                    }
-                    updateToken = decryptedData.getDecryptedData();
-                }
-
-                /* Check latest release. */
-                getLatestReleaseDetails(distributionGroupId, updateToken);
+                decryptAndGetReleaseDetails(updateToken, distributionGroupId, false);
                 return;
+            } else {
+
+                /* Use fail-over logic to search for missing token/distribution group */
+                updateToken = mMobileCenterPreferenceStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null);
+                distributionGroupId = mMobileCenterPreferenceStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null);
+                if (updateToken != null || distributionGroupId != null) {
+                    decryptAndGetReleaseDetails(updateToken, distributionGroupId, true);
+                    return;
+                }
             }
 
              /* If not, open browser to update setup. */
@@ -727,6 +734,35 @@ public class Distribute extends AbstractAppCenterService {
                 mBrowserOpenedOrAborted = true;
             }
         }
+    }
+
+    private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId, boolean mobileCenterFailOver) {
+
+        /* Decrypt token if any. */
+        if (updateToken != null) {
+            CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(updateToken, mobileCenterFailOver);
+            String newEncryptedData = decryptedData.getNewEncryptedData();
+
+            /* Store new encrypted value if updated. */
+            if (newEncryptedData != null) {
+                PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, newEncryptedData);
+            }
+            updateToken = decryptedData.getDecryptedData();
+            if (mobileCenterFailOver) {
+
+                /* Store the token from Mobile Center into App Center storage, re-encrypting it */
+                String encryptedUpdateToken = CryptoUtils.getInstance(mContext).encrypt(updateToken);
+                PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, encryptedUpdateToken);
+            }
+        }
+
+        /* If the group was from Mobile Center storage, save it in the new storage. */
+        if (mobileCenterFailOver) {
+            PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
+        }
+
+        /* Check latest release. */
+        getLatestReleaseDetails(distributionGroupId, updateToken);
     }
 
     /**
@@ -1219,7 +1255,7 @@ public class Distribute extends AbstractAppCenterService {
      * Show update setup failed dialog.
      */
     @UiThread
-    private synchronized void showUpdateSetupFailedDialog(final String errorMessage) {
+    private synchronized void showUpdateSetupFailedDialog() {
 
         /* Check if we need to replace the dialog. */
         if (!shouldRefreshDialog(mUpdateSetupFailedDialog)) {
@@ -1229,7 +1265,7 @@ public class Distribute extends AbstractAppCenterService {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
         dialogBuilder.setCancelable(false);
         dialogBuilder.setTitle(R.string.appcenter_distribute_update_failed_dialog_title);
-        dialogBuilder.setMessage(errorMessage);
+        dialogBuilder.setMessage(R.string.appcenter_distribute_update_failed_dialog_message);
         dialogBuilder.setPositiveButton(R.string.appcenter_distribute_update_failed_dialog_ignore, new DialogInterface.OnClickListener() {
 
             @Override
@@ -1453,9 +1489,7 @@ public class Distribute extends AbstractAppCenterService {
             notificationManager.createNotificationChannel(channel);
             builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
         } else {
-
-            //noinspection deprecation
-            builder = new Notification.Builder(mContext);
+            builder = getOldNotificationBuilder();
         }
         builder.setTicker(mContext.getString(R.string.appcenter_distribute_install_ready_title))
                 .setContentTitle(mContext.getString(R.string.appcenter_distribute_install_ready_title))
@@ -1473,6 +1507,12 @@ public class Distribute extends AbstractAppCenterService {
         /* Reset check download flag to show install U.I. on resume if notification ignored. */
         mCheckedDownload = false;
         return true;
+    }
+
+    @NonNull
+    @SuppressWarnings("deprecation")
+    private Notification.Builder getOldNotificationBuilder() {
+        return new Notification.Builder(mContext);
     }
 
     /**
@@ -1501,10 +1541,10 @@ public class Distribute extends AbstractAppCenterService {
      */
     @SuppressWarnings("deprecation")
     private void showDownloadProgress() {
-        mProgressDialog = new ProgressDialog(mForegroundActivity);
+        mProgressDialog = new android.app.ProgressDialog(mForegroundActivity);
         mProgressDialog.setTitle(R.string.appcenter_distribute_downloading_mandatory_update);
         mProgressDialog.setCancelable(false);
-        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        mProgressDialog.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
         mProgressDialog.setIndeterminate(true);
         mProgressDialog.setProgressNumberFormat(null);
         mProgressDialog.setProgressPercentFormat(null);
@@ -1517,7 +1557,7 @@ public class Distribute extends AbstractAppCenterService {
     @SuppressWarnings("deprecation")
     private synchronized void hideProgressDialog() {
         if (mProgressDialog != null) {
-            final ProgressDialog progressDialog = mProgressDialog;
+            final android.app.ProgressDialog progressDialog = mProgressDialog;
             mProgressDialog = null;
 
             /* This can be called from background check download task. */
@@ -1599,14 +1639,7 @@ public class Distribute extends AbstractAppCenterService {
      * Inject app name version and version code in a format string.
      */
     private String formatAppNameAndVersion(String format) {
-        String appName;
-        ApplicationInfo applicationInfo = mContext.getApplicationInfo();
-        int labelRes = applicationInfo.labelRes;
-        if (labelRes == 0) {
-            appName = String.valueOf(applicationInfo.nonLocalizedLabel);
-        } else {
-            appName = mContext.getString(labelRes);
-        }
+        String appName = AppNameHelper.getAppName(mContext);
         return String.format(format, appName, mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion());
     }
 

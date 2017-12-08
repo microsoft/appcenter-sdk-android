@@ -6,7 +6,7 @@ evaluationDependsOn(':apps')
 
 android {
 
-    flavorDimensions "dependency"
+    flavorDimensions "dependency", "pushLibrary"
 
     productFlavors {
         projectDependency {
@@ -16,6 +16,20 @@ android {
         jcenterDependency {
             dimension "dependency"
             applicationIdSuffix ".jcenter"
+        }
+        vanilla {
+            dimension "pushLibrary"
+        }
+        firebase {
+            dimension "pushLibrary"
+        }
+    }
+
+    /* TODO remove that filter once we update the jcenter demo to include the no firebase push sdk. */
+    variantFilter { variant ->
+        def names = variant.flavors*.name
+        if (names.contains("jcenterDependency") && names.contains("vanilla")) {
+            setIgnore(true)
         }
     }
 
@@ -30,28 +44,45 @@ android {
 
 repositories {
     maven {
-        url  "https://dl.bintray.com/vsappcenter/appcenter-snapshot"
+        url "https://dl.bintray.com/vsappcenter/appcenter-snapshot"
     }
 }
 
 dependencies {
+    implementation "com.android.support:support-v4:${rootProject.ext.supportLibVersion}"
+    implementation "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
+
+    projectDependencyImplementation project(':sdk:appcenter-analytics')
+    projectDependencyImplementation project(':sdk:appcenter-crashes')
+    projectDependencyImplementation project(':sdk:appcenter-distribute')
+    projectDependencyImplementation project(':sdk:appcenter-push')
+    projectDependencyImplementation project(':sdk:appcenter-rum')
+
     def version = "1.0.0"
-    compile "com.android.support:support-v4:${rootProject.ext.supportLibVersion}"
-    compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
-    projectDependencyCompile project(':sdk:appcenter-analytics')
-    projectDependencyCompile project(':sdk:appcenter-crashes')
-    projectDependencyCompile project(':sdk:appcenter-distribute')
-    projectDependencyCompile project(':sdk:appcenter-push')
-    projectDependencyCompile project(':sdk:appcenter-rum')
-    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-analytics:${version}"
-    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-crashes:${version}"
-    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-distribute:${version}"
-    jcenterDependencyCompile "com.microsoft.appcenter:appcenter-push:${version}"
+    //noinspection GradleDependency
+    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${version}"
+    //noinspection GradleDependency
+    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${version}"
+    //noinspection GradleDependency
+    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${version}"
+    //noinspection GradleDependency
+    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-push:${version}"
+
+    firebaseCompile "com.google.firebase:firebase-core:${rootProject.ext.firebaseLibVersion}"
+    firebaseCompile "com.google.firebase:firebase-messaging:${rootProject.ext.firebaseLibVersion}"
 
     /* Force usage this version of support annotations to avoid conflict. */
-    androidTestCompile "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
-    androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.1'
-    compile 'com.android.support.test.espresso:espresso-idling-resource:3.0.1'
+    androidTestImplementation "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+    implementation 'com.android.support.test.espresso:espresso-idling-resource:3.0.1'
 }
 
-apply plugin: 'com.google.gms.google-services'
+/*
+ * This will also bypass google-services.json if executing assembleDebug wildcard task.
+ * This is needed to build from App Center build as we don't commit google-services.json and
+ * App Center build cannot detect our gradle tasks so we make it execute assembleDebug with a
+ * work around. We are interested in only a vanilla build variant (no Firebase) for such builds.
+ */
+if (getGradle().getStartParameter().getTaskRequests().toString().contains("Firebase")) {
+    apply plugin: 'com.google.gms.google-services'
+}

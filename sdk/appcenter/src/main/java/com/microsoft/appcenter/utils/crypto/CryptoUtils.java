@@ -29,6 +29,7 @@ import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALIAS_SEPARAT
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ANDROID_KEY_STORE;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CHARSET;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX;
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER;
 
 /**
  * Tool to encrypt/decrypt strings seamlessly.
@@ -110,6 +111,12 @@ public class CryptoUtils {
     private static CryptoUtils sInstance;
 
     /**
+     * Supported crypto handlers. Ordered, first one is the preferred one.
+     */
+    @VisibleForTesting
+    final Map<String, CryptoHandlerEntry> mCryptoHandlers = new LinkedHashMap<>();
+
+    /**
      * Application context.
      */
     private final Context mContext;
@@ -128,11 +135,6 @@ public class CryptoUtils {
      * Android key store or null if could not use it.
      */
     private final KeyStore mKeyStore;
-
-    /**
-     * Supported crypto handlers. Ordered, first one is the preferred one.
-     */
-    private final Map<String, CryptoHandlerEntry> mCryptoHandlers = new LinkedHashMap<>();
 
     /**
      * Init.
@@ -188,7 +190,7 @@ public class CryptoUtils {
 
         /* Add the fake handler at the end of the list no matter what. */
         CryptoNoOpHandler cryptoNoOpHandler = new CryptoNoOpHandler();
-        mCryptoHandlers.put(cryptoNoOpHandler.getAlgorithm(), new CryptoHandlerEntry(0, cryptoNoOpHandler));
+        mCryptoHandlers.put(cryptoNoOpHandler.getAlgorithm(), new CryptoHandlerEntry(0, 0, cryptoNoOpHandler));
     }
 
     /**
@@ -215,15 +217,22 @@ public class CryptoUtils {
     private void registerHandler(@NonNull CryptoHandler handler) throws Exception {
 
         /* Check which of the potential aliases is the more recent one, the one to use. */
-        String alias0 = getAlias(handler, 0);
-        String alias1 = getAlias(handler, 1);
+        String alias0 = getAlias(handler, 0, false);
+        String alias1 = getAlias(handler, 1, false);
+        String alias0MC = getAlias(handler, 0, true);
+        String alias1MC = getAlias(handler, 1, true);
         Date aliasDate0 = mKeyStore.getCreationDate(alias0);
         Date aliasDate1 = mKeyStore.getCreationDate(alias1);
-        int index = 0;
+        Date aliasDate0MC = mKeyStore.getCreationDate(alias0MC);
+        Date aliasDate1MC = mKeyStore.getCreationDate(alias1MC);
+        int index = 0, indexMC = 0;
         String alias = alias0;
         if (aliasDate1 != null && aliasDate1.after(aliasDate0)) {
             index = 1;
             alias = alias1;
+        }
+        if (aliasDate1MC != null && aliasDate1MC.after(aliasDate0MC)) {
+            indexMC = 1;
         }
 
         /* If it's the first time we use the preferred handler, create the alias. */
@@ -234,23 +243,23 @@ public class CryptoUtils {
 
         /* Register the handler. */
         AppCenterLog.debug(LOG_TAG, "Using " + alias);
-        mCryptoHandlers.put(handler.getAlgorithm(), new CryptoHandlerEntry(index, handler));
+        mCryptoHandlers.put(handler.getAlgorithm(), new CryptoHandlerEntry(index, indexMC, handler));
     }
 
     @NonNull
-    private String getAlias(@NonNull CryptoHandler handler, int index) {
-        return KEYSTORE_ALIAS_PREFIX + ALIAS_SEPARATOR + index + ALIAS_SEPARATOR + handler.getAlgorithm();
+    private String getAlias(@NonNull CryptoHandler handler, int index, boolean mobileCenterFallback) {
+        return (mobileCenterFallback ? KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER : KEYSTORE_ALIAS_PREFIX) + ALIAS_SEPARATOR + index + ALIAS_SEPARATOR + handler.getAlgorithm();
     }
 
     /**
      * Get key store entry for the corresponding handler.
      */
     @Nullable
-    private KeyStore.Entry getKeyStoreEntry(@NonNull CryptoHandlerEntry handlerEntry) throws Exception {
+    private KeyStore.Entry getKeyStoreEntry(@NonNull CryptoHandlerEntry handlerEntry, boolean mobileCenterFailover) throws Exception {
         if (mKeyStore == null) {
             return null;
         }
-        String alias = getAlias(handlerEntry.mCryptoHandler, handlerEntry.mAliasIndex);
+        String alias = getAlias(handlerEntry.mCryptoHandler, handlerEntry.mAliasIndex, mobileCenterFailover);
         return mKeyStore.getEntry(alias, null);
     }
 
@@ -273,7 +282,7 @@ public class CryptoUtils {
             try {
 
                 /* Attempt encryption. */
-                KeyStore.Entry keyStoreEntry = getKeyStoreEntry(handlerEntry);
+                KeyStore.Entry keyStoreEntry = getKeyStoreEntry(handlerEntry, false);
                 byte[] encryptedBytes = handler.encrypt(mCryptoFactory, mApiLevel, keyStoreEntry, data.getBytes(CHARSET));
                 String encryptedString = Base64.encodeToString(encryptedBytes, Base64.DEFAULT);
 
@@ -287,7 +296,7 @@ public class CryptoUtils {
                 /* When key expires, switch to another alias. */
                 AppCenterLog.debug(LOG_TAG, "Alias expired: " + handlerEntry.mAliasIndex);
                 handlerEntry.mAliasIndex ^= 1;
-                String newAlias = getAlias(handler, handlerEntry.mAliasIndex);
+                String newAlias = getAlias(handler, handlerEntry.mAliasIndex, false);
 
                 /* If this is the second time we switch, we delete the previous key. */
                 if (mKeyStore.containsAlias(newAlias)) {
@@ -313,11 +322,12 @@ public class CryptoUtils {
     /**
      * Decrypt data.
      *
-     * @param data data to decrypt.
+     * @param data                 data to decrypt.
+     * @param mobileCenterFailOver if true, uses Mobile Center keystore instead of App Center keystore when false.
      * @return decrypted data.
      */
     @NonNull
-    public DecryptedData decrypt(@Nullable String data) {
+    public DecryptedData decrypt(@Nullable String data, boolean mobileCenterFailOver) {
 
         /* Handle null for convenience. */
         if (data == null) {
@@ -332,7 +342,7 @@ public class CryptoUtils {
             if (cryptoHandler == null) {
                 throw new IllegalStateException("Could not find crypto handler that was used for the specified data.");
             }
-            KeyStore.Entry keyStoreEntry = getKeyStoreEntry(handlerEntry);
+            KeyStore.Entry keyStoreEntry = getKeyStoreEntry(handlerEntry, mobileCenterFailOver);
             byte[] decryptedBytes = cryptoHandler.decrypt(mCryptoFactory, mApiLevel, keyStoreEntry, Base64.decode(dataSplit[1], Base64.DEFAULT));
             String decryptedString = new String(decryptedBytes, CHARSET);
             String newEncryptedData = null;
@@ -430,30 +440,38 @@ public class CryptoUtils {
     }
 
     /**
-     * Internal structure for the register handler entries.
+     * Structure for the register handler entries.
      */
-    private static class CryptoHandlerEntry {
+    @VisibleForTesting
+    static class CryptoHandlerEntry {
 
         /**
          * Crypto handler.
          */
         final CryptoHandler mCryptoHandler;
+
         /**
          * Keystore alias index, 0 or 1.
          */
         int mAliasIndex;
 
         /**
+         * Fallback Mobile Center Key Store alias index, 0 or 1.
+         */
+        int mAliasIndexMC;
+
+        /**
          * Init.
          */
-        CryptoHandlerEntry(int aliasIndex, CryptoHandler cryptoHandler) {
+        CryptoHandlerEntry(int aliasIndex, int aliasIndexMC, CryptoHandler cryptoHandler) {
             mAliasIndex = aliasIndex;
+            mAliasIndexMC = aliasIndexMC;
             mCryptoHandler = cryptoHandler;
         }
     }
 
     /**
-     * Decrypted data returned by {@link #decrypt(String)}.
+     * Decrypted data returned by {@link #decrypt(String, boolean)}.
      */
     public static class DecryptedData {
 
@@ -470,7 +488,7 @@ public class CryptoUtils {
         /**
          * Init.
          *
-         * @param decryptedData decrypted data.
+         * @param decryptedData    decrypted data.
          * @param newEncryptedData new encrypted data that should be replace previously encrypted data.
          */
         @VisibleForTesting

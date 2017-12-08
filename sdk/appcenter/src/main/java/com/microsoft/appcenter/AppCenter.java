@@ -2,6 +2,7 @@ package com.microsoft.appcenter;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.IntRange;
@@ -20,13 +21,14 @@ import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.ShutdownHelper;
-import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.ArrayList;
@@ -63,6 +65,19 @@ public class AppCenter {
      * Shutdown timeout in millis.
      */
     private static final int SHUTDOWN_TIMEOUT = 5000;
+
+    /**
+     * Name of the variable used to indicate services that should be disabled (typically for test
+     * cloud).
+     */
+    @VisibleForTesting
+    static final String DISABLE_SERVICES = "APP_CENTER_DISABLE";
+
+    /**
+     * Value to indicate that all services should be disabled.
+     */
+    @VisibleForTesting
+    static final String DISABLE_ALL_SERVICES = "All";
 
     /**
      * Shared instance.
@@ -187,7 +202,7 @@ public class AppCenter {
      *
      * @return The current version of App Center SDK.
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "SameReturnValue"})
     public static String getSdkVersion() {
         return com.microsoft.appcenter.BuildConfig.VERSION_NAME;
     }
@@ -507,6 +522,8 @@ public class AppCenter {
                     AppCenterService serviceInstance = (AppCenterService) service.getMethod("getInstance").invoke(null);
                     if (mServices.contains(serviceInstance)) {
                         AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
+                    } else if (shouldDisable(serviceInstance.getServiceName())) {
+                        AppCenterLog.debug(LOG_TAG, "Instrumentation variable to disable service has been set; not starting service " + service.getName() + ".");
                     } else {
 
                         /* Share handler now with service while starting. */
@@ -783,6 +800,27 @@ public class AppCenter {
 
         void unregister() {
             Thread.setDefaultUncaughtExceptionHandler(mDefaultUncaughtExceptionHandler);
+        }
+    }
+
+    private Boolean shouldDisable(String serviceName) {
+        try {
+            Bundle arguments = InstrumentationRegistryHelper.getArguments();
+            String disableServices = arguments.getString(DISABLE_SERVICES);
+            if (disableServices == null) {
+                return false;
+            }
+            String[] disableServicesList = disableServices.split(",");
+            for (String service : disableServicesList) {
+                service = service.trim();
+                if (service.equals(DISABLE_ALL_SERVICES) || service.equals(serviceName)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (NoClassDefFoundError | IllegalAccessError e) {
+            AppCenterLog.debug(LOG_TAG, "Cannot read instrumentation variables in a non-test environment.");
+            return false;
         }
     }
 }

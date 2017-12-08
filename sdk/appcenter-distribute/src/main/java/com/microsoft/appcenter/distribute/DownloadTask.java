@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.distribute;
 
+import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.net.Uri;
@@ -18,6 +19,7 @@ class DownloadTask extends AsyncTask<Void, Void, Void> {
     /**
      * Context.
      */
+    @SuppressLint("StaticFieldLeak")
     private final Context mContext;
 
     /**
