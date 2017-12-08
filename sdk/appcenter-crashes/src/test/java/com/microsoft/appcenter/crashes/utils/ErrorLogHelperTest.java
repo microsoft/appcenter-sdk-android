@@ -16,6 +16,7 @@ import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
+import com.microsoft.appcenter.utils.SessionIdKeeper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.After;
@@ -32,6 +33,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -46,7 +48,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class})
+@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class, SessionIdKeeper.class})
 public class ErrorLogHelperTest {
 
     @Rule
@@ -67,6 +69,11 @@ public class ErrorLogHelperTest {
 
     @Test
     public void createErrorLog() throws java.lang.Exception {
+        SessionIdKeeper mockKeeper = mock(SessionIdKeeper.class);
+        UUID sessionId = UUIDUtils.randomUUID();
+        when(mockKeeper.getSessionId()).thenReturn(sessionId);
+        mockStatic(SessionIdKeeper.class);
+        when(SessionIdKeeper.getInstance()).thenReturn(mockKeeper);
 
         /* Dummy coverage of utils class. */
         new ErrorLogHelper();
@@ -116,6 +123,7 @@ public class ErrorLogHelperTest {
         assertEquals(java.lang.Thread.currentThread().getName(), errorLog.getErrorThreadName());
         assertEquals(Boolean.TRUE, errorLog.getFatal());
         assertEquals(launchTimeStamp, errorLog.getAppLaunchTimestamp().getTime());
+        assertEquals(sessionId, errorLog.getSid());
 
         /* Check first exception. */
         Exception topException = errorLog.getException();
