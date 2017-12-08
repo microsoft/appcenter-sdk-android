@@ -239,9 +239,9 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     /**
-     * Sets a crashes listener.
+     * Get the path where NDK breakpad minidumps should be created.
      *
-     * @return path where breakpad minidumps should be created.
+     * @return path where minidump files should be created.
      */
     public static String getBreakpadDirectory() {
         return ErrorLogHelper.getBreakpadErrorStorageDirectory().getAbsolutePath();
@@ -586,8 +586,8 @@ public class Crashes extends AbstractAppCenterService {
                     /* Attach dump to NDK managed exception. */
                     ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new NativeException(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
                     if(errorLog != null) {
-                        errorLog.getException().setWrapperSdkName(Constants.BREAKPAD_WRAPPER_NAME);
-                        errorLog.getDevice().setWrapperSdkName(Constants.BREAKPAD_WRAPPER_NAME);
+                        errorLog.getException().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
+                        errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
                         mChannel.enqueue(errorLog, ERROR_GROUP);
                         sendErrorAttachment(errorLog.getId(), list);
                     }

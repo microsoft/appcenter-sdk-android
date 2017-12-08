@@ -40,7 +40,7 @@ public class Constants {
     /**
      * Directory under the FILES_PATH containing breakpad minidumps.
      */
-    public static final String BREAKPAD_WRAPPER_NAME = "appcenter.ndk";
+    public static final String WRAPPER_SDK_NAME_NDK = "appcenter.ndk";
 
     /**
      * Flag indicates whether the host application is debuggable or not.
