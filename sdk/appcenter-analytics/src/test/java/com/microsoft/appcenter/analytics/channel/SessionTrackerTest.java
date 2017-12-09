@@ -20,6 +20,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -390,6 +391,18 @@ public class SessionTrackerTest {
             assertEquals(expectedSid, log.getSid());
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
+    }
+
+    @Test
+    public void enqueueLogWithTimestamp() {
+        Log log = newEvent();
+        UUID sessionId = null;
+        log.setTimestamp(new Date());
+        spendTime(30000);
+        mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+
+        /* Session ID should not have been overwritten. */
+        assertEquals(sessionId, log.getSid());
     }
 
     @Test
