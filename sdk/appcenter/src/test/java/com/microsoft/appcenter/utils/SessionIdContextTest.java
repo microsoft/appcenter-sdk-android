@@ -11,35 +11,35 @@ import static junit.framework.Assert.assertSame;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 
-public class SessionIdKeeperTest {
+public class SessionIdContextTest {
 
     @Before
     public void setUp() {
-        SessionIdKeeper.unsetInstance();
+        SessionIdContext.unsetInstance();
     }
 
     @Test
     public void singleton() {
-        assertNotNull(SessionIdKeeper.getInstance());
-        assertSame(SessionIdKeeper.getInstance(), SessionIdKeeper.getInstance());
+        assertNotNull(SessionIdContext.getInstance());
+        assertSame(SessionIdContext.getInstance(), SessionIdContext.getInstance());
     }
 
     @Test
     public void sessionIdStartsNull() {
-        assertNull(SessionIdKeeper.getInstance().getSessionId());
+        assertNull(SessionIdContext.getInstance().getSessionId());
     }
 
     @Test
     public void refreshSessionId() {
-        UUID initialId = SessionIdKeeper.getInstance().refreshSessionId();
-        UUID refreshedId = SessionIdKeeper.getInstance().refreshSessionId();
+        UUID initialId = SessionIdContext.getInstance().refreshSessionId();
+        UUID refreshedId = SessionIdContext.getInstance().refreshSessionId();
         assertNotEquals(initialId, refreshedId);
     }
 
     @Test
     public void getSessionId() {
-        UUID initialId = SessionIdKeeper.getInstance().refreshSessionId();
-        UUID retrievedId = SessionIdKeeper.getInstance().getSessionId();
+        UUID initialId = SessionIdContext.getInstance().refreshSessionId();
+        UUID retrievedId = SessionIdContext.getInstance().getSessionId();
         assertEquals(initialId, retrievedId);
     }
 }

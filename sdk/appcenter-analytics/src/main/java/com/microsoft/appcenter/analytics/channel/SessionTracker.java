@@ -9,7 +9,7 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.SessionIdKeeper;
+import com.microsoft.appcenter.utils.SessionIdContext;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.UUID;
@@ -120,7 +120,7 @@ public class SessionTracker implements Channel.Listener {
         if (mSid == null || hasSessionTimedOut()) {
 
             /* New session: generate a new identifier. */
-            mSid = SessionIdKeeper.getInstance().refreshSessionId();
+            mSid = SessionIdContext.getInstance().refreshSessionId();
 
             /*
              * Record queued time for the session log itself to avoid double log if resuming

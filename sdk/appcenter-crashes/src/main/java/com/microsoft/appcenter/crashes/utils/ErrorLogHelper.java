@@ -18,7 +18,7 @@ import com.microsoft.appcenter.crashes.ingestion.models.Thread;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
-import com.microsoft.appcenter.utils.SessionIdKeeper;
+import com.microsoft.appcenter.utils.SessionIdContext;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
@@ -81,7 +81,7 @@ public class ErrorLogHelper {
         errorLog.setId(UUIDUtils.randomUUID());
 
         /* Set the Session ID to the current session. */
-        errorLog.setSid(SessionIdKeeper.getInstance().getSessionId());
+        errorLog.setSid(SessionIdContext.getInstance().getSessionId());
 
         /* Set current time. Will be correlated to session after restart. */
         errorLog.setTimestamp(new Date());

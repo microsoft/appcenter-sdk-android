@@ -8,27 +8,27 @@ import java.util.UUID;
 /**
  * Contains the current Session ID.
  */
-public class SessionIdKeeper {
+public class SessionIdContext {
 
     /**
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
-    private static SessionIdKeeper sInstance;
+    private static SessionIdContext sInstance;
 
     /**
      * The Session ID.
      */
-    private UUID mSessionId = null;
+    private UUID mSessionId;
 
     /**
      * Gets the instance.
      *
      * @return the shared instance.
      */
-    public static synchronized SessionIdKeeper getInstance() {
+    public static synchronized SessionIdContext getInstance() {
         if (sInstance == null) {
-            sInstance = new SessionIdKeeper();
+            sInstance = new SessionIdContext();
         }
         return sInstance;
     }

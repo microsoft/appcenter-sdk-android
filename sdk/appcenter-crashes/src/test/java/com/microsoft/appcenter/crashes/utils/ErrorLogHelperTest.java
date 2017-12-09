@@ -16,7 +16,7 @@ import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
-import com.microsoft.appcenter.utils.SessionIdKeeper;
+import com.microsoft.appcenter.utils.SessionIdContext;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.After;
@@ -48,7 +48,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class, SessionIdKeeper.class})
+@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class, SessionIdContext.class})
 public class ErrorLogHelperTest {
 
     @Rule
@@ -69,11 +69,11 @@ public class ErrorLogHelperTest {
 
     @Test
     public void createErrorLog() throws java.lang.Exception {
-        SessionIdKeeper mockKeeper = mock(SessionIdKeeper.class);
+        SessionIdContext mockKeeper = mock(SessionIdContext.class);
         UUID sessionId = UUIDUtils.randomUUID();
         when(mockKeeper.getSessionId()).thenReturn(sessionId);
-        mockStatic(SessionIdKeeper.class);
-        when(SessionIdKeeper.getInstance()).thenReturn(mockKeeper);
+        mockStatic(SessionIdContext.class);
+        when(SessionIdContext.getInstance()).thenReturn(mockKeeper);
 
         /* Dummy coverage of utils class. */
         new ErrorLogHelper();
