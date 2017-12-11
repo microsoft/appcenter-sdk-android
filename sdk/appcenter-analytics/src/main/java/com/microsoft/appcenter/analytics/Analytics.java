@@ -17,7 +17,6 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.SessionIdContext;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
@@ -454,9 +453,8 @@ public class Analytics extends AbstractAppCenterService {
 
         /* Release resources if disabled and enabled before with resources. */
         else {
-            SessionIdContext.getInstance().invalidateSessionId();
             mChannel.removeListener(mSessionTracker);
-            mSessionTracker.clearSessions();
+            mSessionTracker.clearSession();
             mSessionTracker = null;
         }
     }
