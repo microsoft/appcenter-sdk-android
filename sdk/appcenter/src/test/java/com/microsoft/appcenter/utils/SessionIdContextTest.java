@@ -42,4 +42,11 @@ public class SessionIdContextTest {
         UUID retrievedId = SessionIdContext.getInstance().getSessionId();
         assertEquals(initialId, retrievedId);
     }
+
+    @Test
+    public void invalidateSessionId() {
+        SessionIdContext.getInstance().refreshSessionId();
+        SessionIdContext.getInstance().invalidateSessionId();
+        assertNull(SessionIdContext.getInstance().getSessionId());
+    }
 }
