@@ -25,14 +25,6 @@ android {
         }
     }
 
-    /* TODO remove that filter once we update the jcenter demo to include the no firebase push sdk. */
-    variantFilter { variant ->
-        def names = variant.flavors*.name
-        if (names.contains("jcenterDependency") && names.contains("vanilla")) {
-            setIgnore(true)
-        }
-    }
-
     buildTypes {
         releaseProguard {
             minifyEnabled true
@@ -58,15 +50,15 @@ dependencies {
     projectDependencyImplementation project(':sdk:appcenter-push')
     projectDependencyImplementation project(':sdk:appcenter-rum')
 
-    def version = "1.0.0"
+    def appCenterSdkVersion = "1.1.0"
     //noinspection GradleDependency
-    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${version}"
+    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
     //noinspection GradleDependency
-    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${version}"
+    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
     //noinspection GradleDependency
-    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${version}"
+    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
     //noinspection GradleDependency
-    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-push:${version}"
+    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
 
     firebaseCompile "com.google.firebase:firebase-core:${rootProject.ext.firebaseLibVersion}"
     firebaseCompile "com.google.firebase:firebase-messaging:${rootProject.ext.firebaseLibVersion}"
