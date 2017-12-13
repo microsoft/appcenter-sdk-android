@@ -32,7 +32,7 @@ public abstract class Persistence implements Closeable {
      * @param log   The log to be placed in the storage.
      * @throws PersistenceException Exception will be thrown if Persistence cannot write a log to the storage.
      */
-    public abstract void putLog(@NonNull String group, @NonNull Log log) throws PersistenceException;
+    public abstract long putLog(@NonNull String group, @NonNull Log log) throws PersistenceException;
 
     /**
      * Deletes a log with the give ID from the {@code group}.

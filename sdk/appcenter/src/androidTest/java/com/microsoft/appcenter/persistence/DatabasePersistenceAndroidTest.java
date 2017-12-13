@@ -23,6 +23,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -149,6 +150,96 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(1, outputLogs.size());
             assertEquals(log, outputLogs.get(0));
             assertEquals(1, persistence.countLogs("test-p1"));
+        } finally {
+
+            /* Close. */
+            //noinspection ThrowFromFinallyBlock
+            persistence.close();
+        }
+    }
+
+    @Test(expected = PersistenceException.class)
+    public void putLargeLogFails() throws PersistenceException, IOException {
+
+        /* Initialize database persistence. */
+        String path = Constants.FILES_PATH;
+        Constants.FILES_PATH = null;
+        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putLargeLogException", 1);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        try {
+
+            /* Initial count is 0. */
+            assertEquals(0, persistence.countLogs("test-p1"));
+
+            /* Generate a large log and persist. */
+            LogWithProperties log = AndroidTestUtils.generateMockLog();
+            int size = 2 * 1024 * 1024;
+            StringBuilder largeValue = new StringBuilder(size);
+            for (int i = 0; i < size; i++) {
+                largeValue.append("x");
+            }
+            Map<String, String> properties = new HashMap<>();
+            properties.put("key", largeValue.toString());
+            log.setProperties(properties);
+            persistence.putLog("test-p1", log);
+        } finally {
+
+            /* Close. */
+            //noinspection ThrowFromFinallyBlock
+            persistence.close();
+
+            /* Restore path. */
+            Constants.FILES_PATH = path;
+        }
+    }
+
+    @Test
+    public void putLargeLogFailsToRead() throws PersistenceException, IOException {
+
+        /* Initialize database persistence. */
+        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putLargeLogException", 1);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        try {
+
+            /* Initial count is 0. */
+            assertEquals(0, persistence.countLogs("test-p1"));
+
+            /* Generate a large log and persist. */
+            LogWithProperties log = AndroidTestUtils.generateMockLog();
+            int size = 2 * 1024 * 1024;
+            StringBuilder largeValue = new StringBuilder(size);
+            for (int i = 0; i < size; i++) {
+                largeValue.append("x");
+            }
+            Map<String, String> properties = new HashMap<>();
+            properties.put("key", largeValue.toString());
+            log.setProperties(properties);
+            long id = persistence.putLog("test-p1", log);
+            assertEquals(1, persistence.countLogs("test-p1"));
+
+            /* Verify large file. */
+            File file = persistence.getLargePayloadFile(persistence.getLargePayloadGroupDirectory("test-p1"), id);
+            assertNotNull(file);
+            String fileLog = StorageHelper.InternalStorage.read(file);
+            assertNotNull(fileLog);
+            assertTrue(fileLog.length() >= size);
+
+            /* Delete the file. */
+            assertTrue(file.delete());
+
+            /* We won't be able to read the log now but persistence should delete the SQLite log on error. */
+            List<Log> outputLogs = new ArrayList<>();
+            persistence.getLogs("test-p1", 1, outputLogs);
+            assertEquals(0, outputLogs.size());
+            assertEquals(0, persistence.countLogs("test-p1"));
         } finally {
 
             /* Close. */

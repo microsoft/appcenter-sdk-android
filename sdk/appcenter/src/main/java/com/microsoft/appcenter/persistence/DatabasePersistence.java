@@ -72,7 +72,7 @@ public class DatabasePersistence extends Persistence {
     /**
      * Large payload file extension.
      */
-    private static final String PAYLOAD_FILE_EXTENSION = ".payload";
+    private static final String PAYLOAD_FILE_EXTENSION = ".json";
 
     /**
      * Database storage instance to access Persistence database.
@@ -153,7 +153,7 @@ public class DatabasePersistence extends Persistence {
     }
 
     @Override
-    public void putLog(@NonNull String group, @NonNull Log log) throws PersistenceException {
+    public long putLog(@NonNull String group, @NonNull Log log) throws PersistenceException {
 
         /* Convert log to JSON string and put in the database. */
         try {
@@ -177,6 +177,7 @@ public class DatabasePersistence extends Persistence {
                 StorageHelper.InternalStorage.write(payloadFile, payload);
                 AppCenterLog.debug(LOG_TAG, "Payload written to " + payloadFile);
             }
+            return databaseId;
         } catch (JSONException e) {
             throw new PersistenceException("Cannot convert to JSON string", e);
         } catch (IOException e) {
@@ -185,12 +186,14 @@ public class DatabasePersistence extends Persistence {
     }
 
     @NonNull
-    private File getLargePayloadGroupDirectory(String group) {
+    @VisibleForTesting
+    File getLargePayloadGroupDirectory(String group) {
         return new File(mLargePayloadDirectory, group);
     }
 
     @NonNull
-    private File getLargePayloadFile(File directory, long databaseId) {
+    @VisibleForTesting
+    File getLargePayloadFile(File directory, long databaseId) {
         return new File(directory, databaseId + PAYLOAD_FILE_EXTENSION);
     }
 
@@ -272,11 +275,12 @@ public class DatabasePersistence extends Persistence {
 
             /*
              * When we can't even read the identifier (in this case ContentValues is most likely empty).
-             * That probably means it contained a record larger than 5MB and we hit the cursor limit.
+             * That probably means it contained a record larger than 2MB (from a previous SDK version)
+             * and we hit the cursor limit.
              * Get rid of first non pending log.
              */
             if (dbIdentifier == null) {
-                AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 1.4MB, need to delete as it's now corrupted");
+                AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 2MB, need to delete as it's now corrupted.");
                 DatabaseStorage.DatabaseScanner idScanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, true);
                 for (ContentValues idValues : idScanner) {
                     Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
