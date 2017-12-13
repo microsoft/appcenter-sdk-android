@@ -6,6 +6,6 @@ ext {
     minSdkVersion = 15
     targetSdkVersion = 26
     compileSdkVersion = 26
-    supportLibVersion = '27.0.1'
+    supportLibVersion = '27.0.2'
     firebaseLibVersion = '11.6.2'
 }
