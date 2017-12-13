@@ -33,6 +33,7 @@ import java.util.Map;
 
 import static com.microsoft.appcenter.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -115,7 +116,7 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
-    public void putLargeLog() throws PersistenceException, IOException {
+    public void putLargeLogAndDeleteAll() throws PersistenceException, IOException {
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putLargeLog", 1);
@@ -139,7 +140,7 @@ public class DatabasePersistenceAndroidTest {
             Map<String, String> properties = new HashMap<>();
             properties.put("key", largeValue.toString());
             log.setProperties(properties);
-            persistence.putLog("test-p1", log);
+            long id = persistence.putLog("test-p1", log);
 
             /* Count logs. */
             assertEquals(1, persistence.countLogs("test-p1"));
@@ -150,6 +151,20 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(1, outputLogs.size());
             assertEquals(log, outputLogs.get(0));
             assertEquals(1, persistence.countLogs("test-p1"));
+
+            /* Verify large file. */
+            File file = persistence.getLargePayloadFile(persistence.getLargePayloadGroupDirectory("test-p1"), id);
+            assertNotNull(file);
+            String fileLog = StorageHelper.InternalStorage.read(file);
+            assertNotNull(fileLog);
+            assertTrue(fileLog.length() >= size);
+
+            /* Delete entire group. */
+            persistence.deleteLogs("test-p1");
+            assertEquals(0, persistence.countLogs("test-p1"));
+
+            /* Verify file delete. */
+            assertFalse(file.exists());
         } finally {
 
             /* Close. */
