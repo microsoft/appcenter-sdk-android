@@ -59,7 +59,7 @@ public class DatabasePersistence extends Persistence {
     private static final ContentValues SCHEMA = getContentValues("", "");
 
     /**
-     * Size limit for a database row log payload.
+     * Size limit (in bytes) for a database row log payload.
      * A separate file is used if payload is larger.
      */
     private static final int PAYLOAD_MAX_SIZE = (int) (1.9 * 1024 * 1024);
@@ -160,7 +160,7 @@ public class DatabasePersistence extends Persistence {
             AppCenterLog.debug(LOG_TAG, "Storing a log to the Persistence database for log type " + log.getType() + " with sid=" + log.getSid());
             String payload = getLogSerializer().serializeLog(log);
             ContentValues contentValues;
-            boolean isLargePayload = payload.length() >= PAYLOAD_MAX_SIZE;
+            boolean isLargePayload = payload.getBytes("UTF-8").length >= PAYLOAD_MAX_SIZE;
             if (isLargePayload) {
                 contentValues = getContentValues(group, null);
             } else {
