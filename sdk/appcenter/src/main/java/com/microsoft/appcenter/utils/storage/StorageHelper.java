@@ -570,6 +570,7 @@ public class StorageHelper {
                                                          @IntRange(from = 0) int maxRecords,
                                                          final DatabaseErrorListener listener) {
             return new DatabaseStorage(new DatabaseManager(sContext, database, table, version, schema, maxRecords, new DatabaseManager.ErrorListener() {
+
                 @Override
                 public void onError(String operation, RuntimeException e) {
                     listener.onError(operation, e);

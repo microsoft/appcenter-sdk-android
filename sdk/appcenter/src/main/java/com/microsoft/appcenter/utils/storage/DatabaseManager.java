@@ -120,7 +120,6 @@ public class DatabaseManager implements Closeable {
         mSchema = schema;
         mMaxNumberOfRecords = maxRecords;
         mErrorListener = listener;
-
         mSQLiteOpenHelper = new SQLiteOpenHelper(context, database, null, version) {
 
             @Override
@@ -218,7 +217,6 @@ public class DatabaseManager implements Closeable {
                     delete(cursor.getLong(0));
                     cursor.close();
                 }
-
                 return id;
             } catch (RuntimeException e) {
                 switchToInMemory("put", e);

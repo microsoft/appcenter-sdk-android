@@ -69,9 +69,10 @@ public class DatabasePersistence extends Persistence {
      */
     private static final String PAYLOAD_LARGE_DIRECTORY = "/appcenter/database_large_payloads";
 
+    /**
+     * Large payload file extension.
+     */
     private static final String PAYLOAD_FILE_EXTENSION = ".payload";
-
-    private static final String FILE_SCHEME = "file://";
 
     /**
      * Database storage instance to access Persistence database.
@@ -90,6 +91,9 @@ public class DatabasePersistence extends Persistence {
     @VisibleForTesting
     final Set<Long> mPendingDbIdentifiers;
 
+    /**
+     * Base directory to store large payloads outside of SQLite.
+     */
     private final File mLargePayloadDirectory;
 
     /**
@@ -156,22 +160,21 @@ public class DatabasePersistence extends Persistence {
             AppCenterLog.debug(LOG_TAG, "Storing a log to the Persistence database for log type " + log.getType() + " with sid=" + log.getSid());
             String payload = getLogSerializer().serializeLog(log);
             ContentValues contentValues;
-            if (payload.length() >= PAYLOAD_MAX_SIZE) {
+            boolean isLargePayload = payload.length() >= PAYLOAD_MAX_SIZE;
+            if (isLargePayload) {
                 contentValues = getContentValues(group, null);
             } else {
                 contentValues = getContentValues(group, payload);
             }
             long databaseId = mDatabaseStorage.put(contentValues);
             AppCenterLog.debug(LOG_TAG, "Stored a log to the Persistence database for log type " + log.getType() + " with databaseId=" + databaseId);
-            if (payload.length() >= PAYLOAD_MAX_SIZE) {
+            if (isLargePayload) {
                 AppCenterLog.debug(LOG_TAG, "Payload is larger than what SQLite supports, storing payload in a separate file.");
                 File directory = getLargePayloadGroupDirectory(group);
-                //noinspection ResultOfMethodCallIgnored
+                //noinspection ResultOfMethodCallIgnored we'll get an error anyway at write time.
                 directory.mkdir();
                 File payloadFile = getLargePayloadFile(directory, databaseId);
                 StorageHelper.InternalStorage.write(payloadFile, payload);
-                contentValues = getContentValues(group, FILE_SCHEME + payloadFile);
-                mDatabaseStorage.update(databaseId, contentValues);
                 AppCenterLog.debug(LOG_TAG, "Payload written to " + payloadFile);
             }
         } catch (JSONException e) {
@@ -204,9 +207,9 @@ public class DatabasePersistence extends Persistence {
             for (Long dbIdentifier : dbIdentifiers) {
                 AppCenterLog.debug(LOG_TAG, "\t" + dbIdentifier);
                 mDatabaseStorage.delete(dbIdentifier);
-                mPendingDbIdentifiers.remove(dbIdentifier);
-                //noinspection ResultOfMethodCallIgnored
+                //noinspection ResultOfMethodCallIgnored we are not checking SQLite delete either.
                 getLargePayloadFile(directory, dbIdentifier).delete();
+                mPendingDbIdentifiers.remove(dbIdentifier);
             }
         }
     }
@@ -220,21 +223,21 @@ public class DatabasePersistence extends Persistence {
         /* Delete from database. */
         mDatabaseStorage.delete(COLUMN_GROUP, group);
 
-        /* Delete from pending state. */
-        for (Iterator<String> iterator = mPendingDbIdentifiersGroups.keySet().iterator(); iterator.hasNext(); ) {
-            String key = iterator.next();
-            if (key.startsWith(group)) {
-                iterator.remove();
-            }
-        }
-
         /* Delete large payload files */
         File directory = getLargePayloadGroupDirectory(group);
         File[] files = directory.listFiles();
         if (files != null) {
             for (File file : files) {
-                //noinspection ResultOfMethodCallIgnored
+                //noinspection ResultOfMethodCallIgnored we are not checking SQLite result either.
                 file.delete();
+            }
+        }
+
+        /* Delete from pending state. */
+        for (Iterator<String> iterator = mPendingDbIdentifiersGroups.keySet().iterator(); iterator.hasNext(); ) {
+            String key = iterator.next();
+            if (key.startsWith(group)) {
+                iterator.remove();
             }
         }
     }
@@ -296,15 +299,15 @@ public class DatabasePersistence extends Persistence {
                     /* Deserialize JSON to Log. */
                     String logPayload;
                     String databasePayload = values.getAsString(COLUMN_LOG);
-                    if (databasePayload != null && databasePayload.startsWith(FILE_SCHEME)) {
-                        File file = new File(databasePayload.substring(FILE_SCHEME.length()));
+                    if (databasePayload == null) {
+                        File file = getLargePayloadFile(getLargePayloadGroupDirectory(group), dbIdentifier);
                         AppCenterLog.debug(LOG_TAG, "Read payload file " + file);
                         logPayload = StorageHelper.InternalStorage.read(file);
                     } else {
                         logPayload = databasePayload;
                     }
                     if (logPayload == null) {
-                        throw new JSONException("Log payload is null");
+                        throw new JSONException("Log payload is null and not stored as a file.");
                     }
                     candidates.put(dbIdentifier, getLogSerializer().deserializeLog(logPayload));
                     count++;
