@@ -197,6 +197,12 @@ public class DatabasePersistence extends Persistence {
         return new File(directory, databaseId + PAYLOAD_FILE_EXTENSION);
     }
 
+    private void deleteLog(File groupLargePayloadDirectory, long id) {
+        //noinspection ResultOfMethodCallIgnored SQLite delete does not have return type either.
+        getLargePayloadFile(groupLargePayloadDirectory, id).delete();
+        mDatabaseStorage.delete(id);
+    }
+
     @Override
     public void deleteLogs(@NonNull String group, @NonNull String id) {
 
@@ -209,9 +215,7 @@ public class DatabasePersistence extends Persistence {
         if (dbIdentifiers != null) {
             for (Long dbIdentifier : dbIdentifiers) {
                 AppCenterLog.debug(LOG_TAG, "\t" + dbIdentifier);
-                mDatabaseStorage.delete(dbIdentifier);
-                //noinspection ResultOfMethodCallIgnored we are not checking SQLite delete either.
-                getLargePayloadFile(directory, dbIdentifier).delete();
+                deleteLog(directory, dbIdentifier);
                 mPendingDbIdentifiers.remove(dbIdentifier);
             }
         }
@@ -223,9 +227,6 @@ public class DatabasePersistence extends Persistence {
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Deleting all logs from the Persistence database for " + group);
 
-        /* Delete from database. */
-        mDatabaseStorage.delete(COLUMN_GROUP, group);
-
         /* Delete large payload files */
         File directory = getLargePayloadGroupDirectory(group);
         File[] files = directory.listFiles();
@@ -235,6 +236,9 @@ public class DatabasePersistence extends Persistence {
                 file.delete();
             }
         }
+
+        /* Delete from database. */
+        mDatabaseStorage.delete(COLUMN_GROUP, group);
 
         /* Delete from pending state. */
         for (Iterator<String> iterator = mPendingDbIdentifiersGroups.keySet().iterator(); iterator.hasNext(); ) {
@@ -269,6 +273,7 @@ public class DatabasePersistence extends Persistence {
         int count = 0;
         Map<Long, Log> candidates = new TreeMap<>();
         List<Long> failedDbIdentifiers = new ArrayList<>();
+        File largePayloadGroupDirectory = getLargePayloadGroupDirectory(group);
         for (Iterator<ContentValues> iterator = scanner.iterator(); iterator.hasNext() && count < limit; ) {
             ContentValues values = iterator.next();
             Long dbIdentifier = values.getAsLong(DatabaseManager.PRIMARY_KEY);
@@ -287,7 +292,7 @@ public class DatabasePersistence extends Persistence {
                     if (!mPendingDbIdentifiers.contains(invalidId) && !candidates.containsKey(invalidId)) {
 
                         /* Found the record to delete that we could not read when selecting all fields. */
-                        mDatabaseStorage.delete(invalidId);
+                        deleteLog(largePayloadGroupDirectory, invalidId);
                         AppCenterLog.error(LOG_TAG, "Empty database corrupted empty record deleted, id=" + invalidId);
                         break;
                     }
@@ -304,7 +309,7 @@ public class DatabasePersistence extends Persistence {
                     String logPayload;
                     String databasePayload = values.getAsString(COLUMN_LOG);
                     if (databasePayload == null) {
-                        File file = getLargePayloadFile(getLargePayloadGroupDirectory(group), dbIdentifier);
+                        File file = getLargePayloadFile(largePayloadGroupDirectory, dbIdentifier);
                         AppCenterLog.debug(LOG_TAG, "Read payload file " + file);
                         logPayload = StorageHelper.InternalStorage.read(file);
                     } else {
@@ -329,7 +334,9 @@ public class DatabasePersistence extends Persistence {
 
         /* Delete any logs that cannot be deserialized. */
         if (failedDbIdentifiers.size() > 0) {
-            mDatabaseStorage.delete(failedDbIdentifiers);
+            for (long id : failedDbIdentifiers) {
+                deleteLog(largePayloadGroupDirectory, id);
+            }
             AppCenterLog.warn(LOG_TAG, "Deleted logs that cannot be deserialized");
         }
 
