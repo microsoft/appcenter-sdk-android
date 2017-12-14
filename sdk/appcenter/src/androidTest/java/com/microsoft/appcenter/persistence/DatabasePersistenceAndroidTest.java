@@ -7,7 +7,9 @@ import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 
 import com.microsoft.appcenter.AndroidTestUtils;
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.ingestion.models.LogWithProperties;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.MockLogFactory;
@@ -21,14 +23,17 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import static com.microsoft.appcenter.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -54,6 +59,7 @@ public class DatabasePersistenceAndroidTest {
     public static void setUpClass() {
         sContext = InstrumentationRegistry.getTargetContext();
         StorageHelper.initialize(sContext);
+        Constants.loadFromContext(sContext);
 
         /* Clean up database. */
         sContext.deleteDatabase("test-persistence");
@@ -83,7 +89,6 @@ public class DatabasePersistenceAndroidTest {
         LogSerializer logSerializer = new DefaultLogSerializer();
         logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
         persistence.setLogSerializer(logSerializer);
-
         try {
 
             /* Initial count is 0. */
@@ -103,6 +108,155 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(log, outputLogs.get(0));
             assertEquals(1, persistence.countLogs("test-p1"));
         } finally {
+
+            /* Close. */
+            //noinspection ThrowFromFinallyBlock
+            persistence.close();
+        }
+    }
+
+    @Test
+    public void putLargeLogAndDeleteAll() throws PersistenceException, IOException {
+
+        /* Initialize database persistence. */
+        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putLargeLog", 1);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        try {
+
+            /* Initial count is 0. */
+            assertEquals(0, persistence.countLogs("test-p1"));
+
+            /* Generate a large log and persist. */
+            LogWithProperties log = AndroidTestUtils.generateMockLog();
+            int size = 2 * 1024 * 1024;
+            StringBuilder largeValue = new StringBuilder(size);
+            for (int i = 0; i < size; i++) {
+                largeValue.append("x");
+            }
+            Map<String, String> properties = new HashMap<>();
+            properties.put("key", largeValue.toString());
+            log.setProperties(properties);
+            long id = persistence.putLog("test-p1", log);
+
+            /* Count logs. */
+            assertEquals(1, persistence.countLogs("test-p1"));
+
+            /* Get a log from persistence. */
+            List<Log> outputLogs = new ArrayList<>();
+            persistence.getLogs("test-p1", 1, outputLogs);
+            assertEquals(1, outputLogs.size());
+            assertEquals(log, outputLogs.get(0));
+            assertEquals(1, persistence.countLogs("test-p1"));
+
+            /* Verify large file. */
+            File file = persistence.getLargePayloadFile(persistence.getLargePayloadGroupDirectory("test-p1"), id);
+            assertNotNull(file);
+            String fileLog = StorageHelper.InternalStorage.read(file);
+            assertNotNull(fileLog);
+            assertTrue(fileLog.length() >= size);
+
+            /* Delete entire group. */
+            persistence.deleteLogs("test-p1");
+            assertEquals(0, persistence.countLogs("test-p1"));
+
+            /* Verify file delete. */
+            assertFalse(file.exists());
+        } finally {
+
+            /* Close. */
+            //noinspection ThrowFromFinallyBlock
+            persistence.close();
+        }
+    }
+
+    @Test(expected = PersistenceException.class)
+    public void putLargeLogFails() throws PersistenceException, IOException {
+
+        /* Initialize database persistence. */
+        String path = Constants.FILES_PATH;
+        Constants.FILES_PATH = null;
+        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putLargeLogException", 1);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        try {
+
+            /* Initial count is 0. */
+            assertEquals(0, persistence.countLogs("test-p1"));
+
+            /* Generate a large log and persist. */
+            LogWithProperties log = AndroidTestUtils.generateMockLog();
+            int size = 2 * 1024 * 1024;
+            StringBuilder largeValue = new StringBuilder(size);
+            for (int i = 0; i < size; i++) {
+                largeValue.append("x");
+            }
+            Map<String, String> properties = new HashMap<>();
+            properties.put("key", largeValue.toString());
+            log.setProperties(properties);
+            persistence.putLog("test-p1", log);
+        } finally {
+
+            /* Close. */
+            //noinspection ThrowFromFinallyBlock
+            persistence.close();
+
+            /* Restore path. */
+            Constants.FILES_PATH = path;
+        }
+    }
+
+    @Test
+    public void putLargeLogFailsToRead() throws PersistenceException, IOException {
+
+        /* Initialize database persistence. */
+        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putLargeLogException", 1);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        try {
+
+            /* Initial count is 0. */
+            assertEquals(0, persistence.countLogs("test-p1"));
+
+            /* Generate a large log and persist. */
+            LogWithProperties log = AndroidTestUtils.generateMockLog();
+            int size = 2 * 1024 * 1024;
+            StringBuilder largeValue = new StringBuilder(size);
+            for (int i = 0; i < size; i++) {
+                largeValue.append("x");
+            }
+            Map<String, String> properties = new HashMap<>();
+            properties.put("key", largeValue.toString());
+            log.setProperties(properties);
+            long id = persistence.putLog("test-p1", log);
+            assertEquals(1, persistence.countLogs("test-p1"));
+
+            /* Verify large file. */
+            File file = persistence.getLargePayloadFile(persistence.getLargePayloadGroupDirectory("test-p1"), id);
+            assertNotNull(file);
+            String fileLog = StorageHelper.InternalStorage.read(file);
+            assertNotNull(fileLog);
+            assertTrue(fileLog.length() >= size);
+
+            /* Delete the file. */
+            assertTrue(file.delete());
+
+            /* We won't be able to read the log now but persistence should delete the SQLite log on error. */
+            List<Log> outputLogs = new ArrayList<>();
+            persistence.getLogs("test-p1", 1, outputLogs);
+            assertEquals(0, outputLogs.size());
+            assertEquals(0, persistence.countLogs("test-p1"));
+        } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             persistence.close();
@@ -119,8 +273,8 @@ public class DatabasePersistenceAndroidTest {
         LogSerializer logSerializer = new DefaultLogSerializer();
         logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
         persistence.setLogSerializer(logSerializer);
-
         try {
+
             /* Generate too many logs and persist. */
             Log log1 = AndroidTestUtils.generateMockLog();
             Log log2 = AndroidTestUtils.generateMockLog();
@@ -139,6 +293,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(log4, outputLogs.get(1));
             assertEquals(2, persistence.countLogs("test-p1"));
         } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             persistence.close();
@@ -155,12 +310,13 @@ public class DatabasePersistenceAndroidTest {
         LogSerializer logSerializer = mock(LogSerializer.class);
         doThrow(new JSONException("JSON exception")).when(logSerializer).serializeLog(any(Log.class));
         persistence.setLogSerializer(logSerializer);
-
         try {
+
             /* Generate a log and persist. */
             Log log = AndroidTestUtils.generateMockLog();
             persistence.putLog("test-p1", log);
         } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             persistence.close();
@@ -177,8 +333,8 @@ public class DatabasePersistenceAndroidTest {
         LogSerializer logSerializer = new DefaultLogSerializer();
         logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
         persistence.setLogSerializer(logSerializer);
-
         try {
+
             /* Generate a log and persist. */
             Log log1 = AndroidTestUtils.generateMockLog();
             Log log2 = AndroidTestUtils.generateMockLog();
@@ -217,11 +373,13 @@ public class DatabasePersistenceAndroidTest {
 
             //noinspection TryFinallyCanBeTryWithResources
             try {
+
                 /* Verify. */
                 assertEquals(2, getIteratorSize(scanner1.iterator()));
                 assertEquals(1, getIteratorSize(scanner2.iterator()));
                 assertEquals(1, getIteratorSize(scanner3.iterator()));
             } finally {
+
                 /* Close. */
                 scanner1.close();
                 scanner2.close();
@@ -236,9 +394,11 @@ public class DatabasePersistenceAndroidTest {
 
             //noinspection TryFinallyCanBeTryWithResources
             try {
+
                 /* Verify. */
                 assertEquals(0, getIteratorSize(scanner4.iterator()));
             } finally {
+
                 /* Close. */
                 scanner4.close();
             }
@@ -249,6 +409,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(1, persistence.countLogs("test-p3"));
 
         } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             persistence.close();
@@ -265,8 +426,8 @@ public class DatabasePersistenceAndroidTest {
         LogSerializer logSerializer = new DefaultLogSerializer();
         logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
         persistence.setLogSerializer(logSerializer);
-
         try {
+
             /* Generate a log and persist. */
             Log log1 = AndroidTestUtils.generateMockLog();
             Log log2 = AndroidTestUtils.generateMockLog();
@@ -312,6 +473,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(1, persistence.countLogs("test-p2"));
             assertEquals(0, persistence.countLogs("test-p3"));
         } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             persistence.close();
@@ -328,8 +490,8 @@ public class DatabasePersistenceAndroidTest {
         LogSerializer logSerializer = new DefaultLogSerializer();
         logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
         persistence.setLogSerializer(logSerializer);
-
         try {
+
             /* Test constants. */
             int numberOfLogs = 10;
             int sizeForGetLogs = 4;
@@ -360,6 +522,7 @@ public class DatabasePersistenceAndroidTest {
             assertTrue(outputLogs.isEmpty());
             assertEquals(0, persistence.countLogs("test"));
         } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             persistence.close();
@@ -390,6 +553,7 @@ public class DatabasePersistenceAndroidTest {
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = spy(new DefaultLogSerializer());
+
         /* Throw a JSON exception for the first call. */
         doThrow(new JSONException("JSON exception"))
                 /* Return a normal log for the second call. */
@@ -400,8 +564,8 @@ public class DatabasePersistenceAndroidTest {
                 .doReturn(AndroidTestUtils.generateMockLog())
                 .when(logSerializer).deserializeLog(anyString());
         persistence.setLogSerializer(logSerializer);
-
         try {
+
             /* Test constants. */
             int numberOfLogs = 4;
 
@@ -420,6 +584,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(numberOfLogs / 2, outputLogs.size());
             assertEquals(2, persistence.mDatabaseStorage.size());
         } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             persistence.close();

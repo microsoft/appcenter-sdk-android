@@ -47,11 +47,12 @@ public class DatabasePersistenceTest {
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Test
-    public void databaseOperationException() throws Persistence.PersistenceException, IOException {
+    public void databaseOperationException() throws Persistence.PersistenceException, IOException, JSONException {
 
         /* Mock instances. */
         mockStatic(AppCenterLog.class);
         LogSerializer mockSerializer = mock(DefaultLogSerializer.class);
+        when(mockSerializer.serializeLog(any(Log.class))).thenReturn("{}");
         DatabasePersistence mockPersistence = spy(new DatabasePersistence("test-persistence", "operation.exception", 1));
         doReturn(mockSerializer).when(mockPersistence).getLogSerializer();
         try {
@@ -60,6 +61,7 @@ public class DatabasePersistenceTest {
             Log log = mock(Log.class);
             mockPersistence.putLog("test-p1", log);
         } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             mockPersistence.close();

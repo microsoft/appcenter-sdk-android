@@ -16,7 +16,7 @@ import java.util.List;
 public abstract class Persistence implements Closeable {
 
     /**
-     * Storage capacity in number of logs
+     * Storage capacity in number of logs.
      */
     static final int DEFAULT_CAPACITY = 300;
 
@@ -30,9 +30,10 @@ public abstract class Persistence implements Closeable {
      *
      * @param group The group of the storage for the log.
      * @param log   The log to be placed in the storage.
+     * @return log identifier from persistence after saving.
      * @throws PersistenceException Exception will be thrown if Persistence cannot write a log to the storage.
      */
-    public abstract void putLog(@NonNull String group, @NonNull Log log) throws PersistenceException;
+    public abstract long putLog(@NonNull String group, @NonNull Log log) throws PersistenceException;
 
     /**
      * Deletes a log with the give ID from the {@code group}.
@@ -70,7 +71,6 @@ public abstract class Persistence implements Closeable {
 
     /**
      * Clears all associations between logs of the {@code group} and ids returned by {@link #getLogs(String, int, List)}}.
-     *
      */
     public abstract void clearPendingLogState();
 
