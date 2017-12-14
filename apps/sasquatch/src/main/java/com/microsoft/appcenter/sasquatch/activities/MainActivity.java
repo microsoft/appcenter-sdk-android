@@ -132,9 +132,8 @@ public class MainActivity extends AppCompatActivity {
         /* Attach NDK Crash Handler (if available) after SDK is initialized. */
         try {
             @SuppressWarnings("unchecked")
-            Class<? extends Crashes> crashes = (Class<? extends Crashes>) Class.forName("com.microsoft.appcenter.crashes");
-            File getBreakpadDirectory = (File) crashes.getMethod("getBreakpadDirectory").invoke(null);
-            String path = getBreakpadDirectory.getAbsolutePath();
+            Class<? extends Crashes> crashes = (Class<? extends Crashes>) Class.forName("com.microsoft.appcenter.crashes.Crashes");
+            String path = (String) crashes.getMethod("getBreakpadDirectory").invoke(null);
             setupNativeCrashesListener(path);
         } catch (Exception ignore) {
         }
