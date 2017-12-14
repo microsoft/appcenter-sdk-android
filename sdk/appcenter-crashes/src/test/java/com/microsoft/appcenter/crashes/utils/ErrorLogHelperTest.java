@@ -109,7 +109,7 @@ public class ErrorLogHelperTest {
 
         /* Test. */
         long launchTimeStamp = 2000;
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new IOException(new TestCrashException())), java.lang.Thread.getAllStackTraces(), launchTimeStamp, true);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new IOException(new TestCrashException())), java.lang.Thread.getAllStackTraces(), launchTimeStamp);
         assertNotNull(errorLog);
         assertNotNull(errorLog.getId());
         assertEquals(logTimestamp, errorLog.getTimestamp());
@@ -200,7 +200,7 @@ public class ErrorLogHelperTest {
 
         /* Test. */
         long launchTimeStamp = 2000;
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new java.lang.Exception(), java.lang.Thread.getAllStackTraces(), launchTimeStamp, true);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new java.lang.Exception(), java.lang.Thread.getAllStackTraces(), launchTimeStamp);
         assertNotNull(errorLog);
         assertNotNull(errorLog.getId());
         assertEquals(logTimestamp, errorLog.getTimestamp());
@@ -240,7 +240,7 @@ public class ErrorLogHelperTest {
         TestUtils.setInternalState(Build.class, "SUPPORTED_ABIS", new String[]{"armeabi-v7a", "arm"});
 
         /* Create an error log. */
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new TestCrashException()), java.lang.Thread.getAllStackTraces(), 900, true);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new TestCrashException()), java.lang.Thread.getAllStackTraces(), 900);
         assertNotNull(errorLog);
 
         /* Test. */

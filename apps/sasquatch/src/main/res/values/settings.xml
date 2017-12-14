@@ -1,97 +1,97 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="appcenter_state_key">appcenter_state_key</string>
-    <string name="appcenter_state_title">App Center state</string>
-    <string name="appcenter_state_summary_enabled">App Center is enabled</string>
-    <string name="appcenter_state_summary_disabled">App Center is disabled</string>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="appcenter_state_key" tools:ignore="MissingTranslation">appcenter_state_key</string>
+    <string name="appcenter_state_title" tools:ignore="MissingTranslation">App Center state</string>
+    <string name="appcenter_state_summary_enabled" tools:ignore="MissingTranslation">App Center is enabled</string>
+    <string name="appcenter_state_summary_disabled" tools:ignore="MissingTranslation">App Center is disabled</string>
 
-    <string name="analytics_key">appcenter_analytics</string>
-    <string name="analytics_title">Analytics</string>
+    <string name="analytics_key" tools:ignore="MissingTranslation">appcenter_analytics</string>
+    <string name="analytics_title" tools:ignore="MissingTranslation">Analytics</string>
 
-    <string name="appcenter_analytics_state_key">appcenter_analytics_state_key</string>
-    <string name="appcenter_analytics_state_title">Analytics state</string>
-    <string name="appcenter_analytics_state_summary_enabled">Analytics is enabled</string>
-    <string name="appcenter_analytics_state_summary_disabled">Analytics is disabled</string>
+    <string name="appcenter_analytics_state_key" tools:ignore="MissingTranslation">appcenter_analytics_state_key</string>
+    <string name="appcenter_analytics_state_title" tools:ignore="MissingTranslation">Analytics state</string>
+    <string name="appcenter_analytics_state_summary_enabled" tools:ignore="MissingTranslation">Analytics is enabled</string>
+    <string name="appcenter_analytics_state_summary_disabled" tools:ignore="MissingTranslation">Analytics is disabled</string>
 
-    <string name="appcenter_auto_page_tracking_key">appcenter_auto_page_tracking_key</string>
-    <string name="appcenter_auto_page_tracking_title">Analytics automatic page tracking</string>
-    <string name="appcenter_auto_page_tracking_enabled">Automatic page tracking is enabled</string>
-    <string name="appcenter_auto_page_tracking_disabled">Automatic page tracking is disabled</string>
+    <string name="appcenter_auto_page_tracking_key" tools:ignore="MissingTranslation">appcenter_auto_page_tracking_key</string>
+    <string name="appcenter_auto_page_tracking_title" tools:ignore="MissingTranslation">Analytics automatic page tracking</string>
+    <string name="appcenter_auto_page_tracking_enabled" tools:ignore="MissingTranslation">Automatic page tracking is enabled</string>
+    <string name="appcenter_auto_page_tracking_disabled" tools:ignore="MissingTranslation">Automatic page tracking is disabled</string>
 
-    <string name="crashes_key">appcenter_crashes</string>
-    <string name="crashes_title">Crashes</string>
+    <string name="crashes_key" tools:ignore="MissingTranslation">appcenter_crashes</string>
+    <string name="crashes_title" tools:ignore="MissingTranslation">Crashes</string>
 
-    <string name="appcenter_crashes_state_key">appcenter_crashes_state_key</string>
-    <string name="appcenter_crashes_state_title">Crashes state</string>
-    <string name="appcenter_crashes_state_summary_enabled">Crashes are enabled</string>
-    <string name="appcenter_crashes_state_summary_disabled">Crashes are disabled</string>
+    <string name="appcenter_crashes_state_key" tools:ignore="MissingTranslation">appcenter_crashes_state_key</string>
+    <string name="appcenter_crashes_state_title" tools:ignore="MissingTranslation">Crashes state</string>
+    <string name="appcenter_crashes_state_summary_enabled" tools:ignore="MissingTranslation">Crashes are enabled</string>
+    <string name="appcenter_crashes_state_summary_disabled" tools:ignore="MissingTranslation">Crashes are disabled</string>
 
-    <string name="appcenter_crashes_text_attachment_key">appcenter_crashes_text_attachment_key</string>
-    <string name="appcenter_crashes_text_attachment_title">Text attachment</string>
-    <string name="appcenter_crashes_text_attachment_summary">Length: %d characters</string>
-    <string name="appcenter_crashes_text_attachment_summary_empty">Empty</string>
+    <string name="appcenter_crashes_text_attachment_key" tools:ignore="MissingTranslation">appcenter_crashes_text_attachment_key</string>
+    <string name="appcenter_crashes_text_attachment_title" tools:ignore="MissingTranslation">Text attachment</string>
+    <string name="appcenter_crashes_text_attachment_summary" tools:ignore="MissingTranslation,PluralsCandidate">Length: %d character(s)</string>
+    <string name="appcenter_crashes_text_attachment_summary_empty" tools:ignore="MissingTranslation">Empty</string>
 
-    <string name="appcenter_crashes_file_attachment_key">appcenter_crashes_file_attachment_key</string>
-    <string name="appcenter_crashes_file_attachment_title">File attachment</string>
-    <string name="appcenter_crashes_file_attachment_summary">File: %1$s Size: %2$s</string>
-    <string name="appcenter_crashes_file_attachment_summary_empty">The file isn\'t selected</string>
+    <string name="appcenter_crashes_file_attachment_key" tools:ignore="MissingTranslation">appcenter_crashes_file_attachment_key</string>
+    <string name="appcenter_crashes_file_attachment_title" tools:ignore="MissingTranslation">File attachment</string>
+    <string name="appcenter_crashes_file_attachment_summary" tools:ignore="MissingTranslation">File: %1$s Size: %2$s</string>
+    <string name="appcenter_crashes_file_attachment_summary_empty" tools:ignore="MissingTranslation">The file isn\'t selected</string>
 
-    <string name="distribute_key">appcenter_distribute</string>
-    <string name="distribute_title">Distribute</string>
+    <string name="distribute_key" tools:ignore="MissingTranslation">appcenter_distribute</string>
+    <string name="distribute_title" tools:ignore="MissingTranslation">Distribute</string>
 
-    <string name="appcenter_distribute_state_key">appcenter_distribute_state_key</string>
-    <string name="appcenter_distribute_state_title">Distribute state</string>
-    <string name="appcenter_distribute_state_summary_enabled">Distribute is enabled</string>
-    <string name="appcenter_distribute_state_summary_disabled">Distribute is disabled</string>
+    <string name="appcenter_distribute_state_key" tools:ignore="MissingTranslation">appcenter_distribute_state_key</string>
+    <string name="appcenter_distribute_state_title" tools:ignore="MissingTranslation">Distribute state</string>
+    <string name="appcenter_distribute_state_summary_enabled" tools:ignore="MissingTranslation">Distribute is enabled</string>
+    <string name="appcenter_distribute_state_summary_disabled" tools:ignore="MissingTranslation">Distribute is disabled</string>
 
-    <string name="push_key">appcenter_push</string>
-    <string name="push_title">Push</string>
+    <string name="push_key" tools:ignore="MissingTranslation">appcenter_push</string>
+    <string name="push_title" tools:ignore="MissingTranslation">Push</string>
 
-    <string name="appcenter_push_firebase_state_key">appcenter_push_firebase_state_key</string>
-    <string name="appcenter_push_firebase_state_title">Firebase analytics state</string>
-    <string name="appcenter_push_firebase_summary_enabled">Firebase analytics is enabled</string>
-    <string name="appcenter_push_firebase_summary_disabled">Firebase analytics is disabled</string>
-    <string name="appcenter_push_state_key">appcenter_push_state_key</string>
-    <string name="appcenter_push_state_title">Push state</string>
-    <string name="appcenter_push_state_summary_enabled">Push is enabled</string>
-    <string name="appcenter_push_state_summary_disabled">Push is disabled</string>
+    <string name="appcenter_push_firebase_state_key" tools:ignore="MissingTranslation">appcenter_push_firebase_state_key</string>
+    <string name="appcenter_push_firebase_state_title" tools:ignore="MissingTranslation">Firebase analytics state</string>
+    <string name="appcenter_push_firebase_summary_enabled" tools:ignore="MissingTranslation">Firebase analytics is enabled</string>
+    <string name="appcenter_push_firebase_summary_disabled" tools:ignore="MissingTranslation">Firebase analytics is disabled</string>
+    <string name="appcenter_push_state_key" tools:ignore="MissingTranslation">appcenter_push_state_key</string>
+    <string name="appcenter_push_state_title" tools:ignore="MissingTranslation">Push state</string>
+    <string name="appcenter_push_state_summary_enabled" tools:ignore="MissingTranslation">Push is enabled</string>
+    <string name="appcenter_push_state_summary_disabled" tools:ignore="MissingTranslation">Push is disabled</string>
 
-    <string name="real_user_measurements_key">appcenter_rum</string>
-    <string name="real_user_measurements_title">Real User Measurements</string>
+    <string name="real_user_measurements_key" tools:ignore="MissingTranslation">appcenter_rum</string>
+    <string name="real_user_measurements_title" tools:ignore="MissingTranslation">Real User Measurements</string>
 
-    <string name="appcenter_rum_state_key">appcenter_rum_state_key</string>
-    <string name="appcenter_rum_state_title">RUM state</string>
-    <string name="appcenter_rum_state_summary_enabled">RUM is enabled</string>
-    <string name="appcenter_rum_state_summary_disabled">RUM is disabled</string>
+    <string name="appcenter_rum_state_key" tools:ignore="MissingTranslation">appcenter_rum_state_key</string>
+    <string name="appcenter_rum_state_title" tools:ignore="MissingTranslation">RUM state</string>
+    <string name="appcenter_rum_state_summary_enabled" tools:ignore="MissingTranslation">RUM is enabled</string>
+    <string name="appcenter_rum_state_summary_disabled" tools:ignore="MissingTranslation">RUM is disabled</string>
 
-    <string name="application_info_key">application_info</string>
-    <string name="application_info_title">Application Information</string>
+    <string name="application_info_key" tools:ignore="MissingTranslation">application_info</string>
+    <string name="application_info_title" tools:ignore="MissingTranslation">Application Information</string>
 
-    <string name="install_id_key">install_id_key</string>
-    <string name="install_id_title">Install ID</string>
-    <string name="install_id_changed_format">Install ID is changed to %s successfully.</string>
-    <string name="install_id_invalid">Install ID is not valid.</string>
+    <string name="install_id_key" tools:ignore="MissingTranslation">install_id_key</string>
+    <string name="install_id_title" tools:ignore="MissingTranslation">Install ID</string>
+    <string name="install_id_changed_format" tools:ignore="MissingTranslation">Install ID is changed to %s successfully.</string>
+    <string name="install_id_invalid" tools:ignore="MissingTranslation">Install ID is not valid.</string>
 
-    <string name="app_secret_key">app_secret_key</string>
-    <string name="app_secret_title">App Secret</string>
-    <string name="app_secret_changed_format">App Secret has been changed to %s successfully. Please close the application completely and relaunch again.</string>
-    <string name="app_secret_invalid">App Secret is not valid.</string>
+    <string name="app_secret_key" tools:ignore="MissingTranslation">app_secret_key</string>
+    <string name="app_secret_title" tools:ignore="MissingTranslation">App Secret</string>
+    <string name="app_secret_changed_format" tools:ignore="MissingTranslation">App Secret has been changed to %s successfully. Please close the application completely and relaunch again.</string>
+    <string name="app_secret_invalid" tools:ignore="MissingTranslation">App Secret is not valid.</string>
 
-    <string name="miscellaneous_key">miscellaneous</string>
-    <string name="miscellaneous_title">Miscellaneous</string>
+    <string name="miscellaneous_key" tools:ignore="MissingTranslation">miscellaneous</string>
+    <string name="miscellaneous_title" tools:ignore="MissingTranslation">Miscellaneous</string>
 
-    <string name="clear_crash_user_confirmation_key">clear_crash_user_confirmation_key</string>
-    <string name="clear_crash_user_confirmation_title">Clear crash user confirmation</string>
-    <string name="clear_crash_user_confirmation_toast">Cleared</string>
+    <string name="clear_crash_user_confirmation_key" tools:ignore="MissingTranslation">clear_crash_user_confirmation_key</string>
+    <string name="clear_crash_user_confirmation_title" tools:ignore="MissingTranslation">Clear crash user confirmation</string>
+    <string name="clear_crash_user_confirmation_toast" tools:ignore="MissingTranslation">Cleared</string>
 
-    <string name="log_url_key">log_url_key</string>
-    <string name="log_url_title">Log URL</string>
-    <string name="log_url_changed_format">Show Log URL has been changed to %s successfully. Please close the application completely and relaunch again.</string>
-    <string name="log_url_invalid">Log URL is not valid.</string>
-    <string name="log_url_set_to_production">Log URL currently set to the production.</string>
-    <string name="log_url_production">production</string>
+    <string name="log_url_key" tools:ignore="MissingTranslation">log_url_key</string>
+    <string name="log_url_title" tools:ignore="MissingTranslation">Log URL</string>
+    <string name="log_url_changed_format" tools:ignore="MissingTranslation">Show Log URL has been changed to %s successfully. Please close the application completely and relaunch again.</string>
+    <string name="log_url_invalid" tools:ignore="MissingTranslation">Log URL is not valid.</string>
+    <string name="log_url_set_to_production" tools:ignore="MissingTranslation">Log URL currently set to the production.</string>
+    <string name="log_url_production" tools:ignore="MissingTranslation">production</string>
 
-    <string name="save">Save</string>
-    <string name="reset">Reset</string>
-    <string name="cancel">Cancel</string>
+    <string name="save" tools:ignore="MissingTranslation">Save</string>
+    <string name="reset" tools:ignore="MissingTranslation">Reset</string>
+    <string name="cancel" tools:ignore="MissingTranslation">Cancel</string>
 </resources>

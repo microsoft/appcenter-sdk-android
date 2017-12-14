@@ -7,8 +7,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
-import android.support.test.espresso.idling.CountingIdlingResource;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
@@ -48,19 +46,13 @@ public class MainActivity extends AppCompatActivity {
 
     static final String LOG_URL_KEY = "logUrl";
 
-    static final String SENDER_ID = "177539951155";
+    private static final String SENDER_ID = "177539951155";
 
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
 
-    static final String TEXT_ATTACHMENT_KEY = "textAttachment";
+    private static final String TEXT_ATTACHMENT_KEY = "textAttachment";
 
-    static final String FILE_ATTACHMENT_KEY = "fileAttachment";
-
-    @VisibleForTesting
-    static final CountingIdlingResource analyticsIdlingResource = new CountingIdlingResource("analytics");
-
-    @VisibleForTesting
-    static final CountingIdlingResource crashesIdlingResource = new CountingIdlingResource("crashes");
+    private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
 
     static SharedPreferences sSharedPreferences;
 

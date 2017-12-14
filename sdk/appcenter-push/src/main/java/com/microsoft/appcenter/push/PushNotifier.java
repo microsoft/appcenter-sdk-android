@@ -12,6 +12,7 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
@@ -76,7 +77,24 @@ class PushNotifier {
             notificationTitle = AppNameHelper.getAppName(context);
         }
         String notificationMessage = PushIntentUtils.getMessage(pushIntent);
-        Notification.Builder builder = new Notification.Builder(context);
+
+        /* Start building notification. */
+        Notification.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && context.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.O) {
+
+            /* Get channel. */
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+                    CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+
+            /* Create or update channel. */
+            notificationManager.createNotificationChannel(channel);
+
+            /* And associate to notification. */
+            builder = new Notification.Builder(context, channel.getId());
+        } else {
+            builder = getOldNotificationBuilder(context);
+        }
 
         /* Set color. */
         setColor(pushIntent, builder);
@@ -97,32 +115,27 @@ class PushNotifier {
                 actionIntent, 0);
         builder.setContentIntent(contentIntent);
 
-        /* Manage notification channel on Android O. */
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                && context.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.O) {
-
-            /* Get channel. */
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                    CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-
-            /* Create or update channel. */
-            //noinspection ConstantConditions
-            notificationManager.createNotificationChannel(channel);
-
-            /* And associate to notification. */
-            builder.setChannelId(channel.getId());
-        }
-        Notification notification;
-
         /* Build method depends on versions. */
+        Notification notification;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             notification = builder.build();
         } else {
-            notification = builder.getNotification();
+            notification = getOldNotification(builder);
         }
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
-        //noinspection ConstantConditions
         notificationManager.notify(notificationId, notification);
+    }
+
+    @NonNull
+    @SuppressWarnings("deprecation")
+    private static Notification.Builder getOldNotificationBuilder(Context context) {
+        return new Notification.Builder(context);
+    }
+
+    @NonNull
+    @SuppressWarnings("deprecation")
+    private static Notification getOldNotification(Notification.Builder builder) {
+        return builder.getNotification();
     }
 
     /**
@@ -143,10 +156,12 @@ class PushNotifier {
 
     /**
      * Sets the sound in the notification builder if the property is set in the intent.
+     * This is effective only for devices running or targeting an Android version lower than 8.
      *
      * @param pushIntent The push intent.
      * @param builder    The builder to modify.
      */
+    @SuppressWarnings("deprecation")
     private static void setSound(Context context, Intent pushIntent, Notification.Builder builder) {
         String sound = PushIntentUtils.getSound(pushIntent);
         if (sound != null) {

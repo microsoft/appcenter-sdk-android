@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- * Database manager for SQLite with failover to in-memory.
+ * Database manager for SQLite with fail-over to in-memory.
  */
 public class DatabaseManager implements Closeable {
 

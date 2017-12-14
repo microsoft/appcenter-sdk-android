@@ -138,7 +138,7 @@ public class WrapperSdkExceptionManager {
      *
      * @param automaticProcessing true to enable, false otherwise.
      */
-    public static void setAutomaticProcessing(boolean automaticProcessing) {
+    public static void setAutomaticProcessing(@SuppressWarnings("SameParameterValue") boolean automaticProcessing) {
         Crashes.getInstance().setAutomaticProcessing(automaticProcessing);
     }
 

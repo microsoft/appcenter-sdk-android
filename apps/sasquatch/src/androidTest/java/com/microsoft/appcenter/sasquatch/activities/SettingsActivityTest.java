@@ -32,7 +32,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.withId;
 public class SettingsActivityTest {
 
     @Rule
-    public ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<>(MainActivity.class, true, false);
+    public final ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<>(MainActivity.class, true, false);
 
     private Context mContext;
 

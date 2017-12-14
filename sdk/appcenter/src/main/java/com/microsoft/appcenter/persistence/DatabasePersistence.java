@@ -242,7 +242,7 @@ public class DatabasePersistence extends Persistence {
         }
         scanner.close();
 
-        /* Delete any logs that cannot be deserialized. */
+        /* Delete any logs that cannot be de-serialized. */
         if (failedDbIdentifiers.size() > 0) {
             mDatabaseStorage.delete(failedDbIdentifiers);
             AppCenterLog.warn(LOG_TAG, "Deleted logs that cannot be deserialized");
