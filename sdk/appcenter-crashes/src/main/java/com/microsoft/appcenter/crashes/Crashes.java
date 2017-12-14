@@ -331,6 +331,7 @@ public class Crashes extends AbstractAppCenterService {
         mContext = context;
         if (isInstanceEnabled()) {
             processPendingErrors();
+            processPendingBreakpadErrors();
         } else {
             initialize();
         }
@@ -535,7 +536,6 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     private void processPendingErrors() {
-        processPendingBreakpadErrors();
         processPendingJavaErrors();
 
         /* If automatic processing is enabled. */
@@ -574,36 +574,31 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     private void processPendingBreakpadErrors() {
-        for (File logFile : ErrorLogHelper.getStoredBreakpadLogFiles()) {
-            AppCenterLog.debug(LOG_TAG, "Process pending breakpad file: " + logFile);
-            byte[] logfileContents = StorageHelper.InternalStorage.readBytes(logFile);
-            if (logfileContents != null && logfileContents.length > 0) {
+        post(new Runnable() {
 
-                /* Create our Breakpad dump attachment. */
-                ErrorAttachmentLog breakpadAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
-                List<ErrorAttachmentLog> list = new LinkedList<>();
-                list.add(breakpadAttachment);
-                ManagedErrorLog log = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new NativeException(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
-                log.getException().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
-                log.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
-                mChannel.enqueue(log, ERROR_GROUP);
-                sendErrorAttachment(log.getId(), list);
-                UUID id = log.getId();
-                ErrorReport report = buildErrorReport(log);
-                if (report == null) {
-                    removeAllStoredErrorLogFiles(id);
-                } else if (!mAutomaticProcessing || mCrashesListener.shouldProcess(report)) {
-                    if (!mAutomaticProcessing) {
-                        AppCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + id.toString());
+            @Override
+            public void run() {
+                for (File logFile : ErrorLogHelper.getStoredBreakpadLogFiles()) {
+                    AppCenterLog.debug(LOG_TAG, "Process pending breakpad file: " + logFile);
+                    byte[] logfileContents = StorageHelper.InternalStorage.readBytes(logFile);
+
+                    /* Create our Breakpad dump attachment. */
+                    ErrorAttachmentLog breakpadAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
+                    List<ErrorAttachmentLog> list = new LinkedList<>();
+                    list.add(breakpadAttachment);
+
+                    /* Attach dump to NDK managed exception. */
+                    ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new NativeException(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
+                    if (errorLog != null) {
+                        errorLog.getException().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
+                        errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
+                        mChannel.enqueue(errorLog, ERROR_GROUP);
+                        sendErrorAttachment(errorLog.getId(), list);
                     }
-                    mUnprocessedErrorReports.put(id, mErrorReportCache.get(id));
-                } else {
-                    AppCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
-                    //removeAllStoredErrorLogFiles(id);
                 }
+                ErrorLogHelper.removeStoredBreakpadLogFiles();
             }
-        }
-        //ErrorLogHelper.removeStoredBreakpadLogFiles();
+        });
     }
 
     /**
