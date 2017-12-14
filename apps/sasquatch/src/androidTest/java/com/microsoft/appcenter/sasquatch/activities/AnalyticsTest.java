@@ -33,7 +33,7 @@ import static org.hamcrest.Matchers.anyOf;
 public class AnalyticsTest {
 
     @Rule
-    public ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<>(MainActivity.class);
+    public final ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<>(MainActivity.class);
 
     @Test
     public void sendEventTest() throws InterruptedException {

@@ -702,7 +702,7 @@ public class AppCenterTest {
     }
 
     @Test
-    public void dontSetDefaultLogLevel() {
+    public void doNotSetDefaultLogLevel() {
         AppCenter.setLogLevel(android.util.Log.VERBOSE);
         verifyStatic();
         AppCenterLog.setLogLevel(android.util.Log.VERBOSE);

@@ -504,9 +504,9 @@ public class AppCenter {
             return;
         }
         if (mApplication == null) {
-            String serviceNames = "";
+            StringBuilder serviceNames = new StringBuilder();
             for (Class<? extends AppCenterService> service : services) {
-                serviceNames += "\t" + service.getName() + "\n";
+                serviceNames.append("\t").append(service.getName()).append("\n");
             }
             AppCenterLog.error(LOG_TAG, "Cannot start services, App Center has not been configured. Failed to start the following services:\n" + serviceNames);
             return;

@@ -25,6 +25,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -78,12 +79,12 @@ public class UnknownSourcesDetectionTest {
         }
 
         /* Test from Android 8 targeting that Android version. */
+        int canRequestPackageInstallsCallCount = 0;
         for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= BuildConfig.TARGET_SDK_VERSION; apiLevel++) {
             mockApiLevel(apiLevel);
             Whitebox.setInternalState(mApplicationInfo, "targetSdkVersion", apiLevel);
             assertTrue(InstallerUtils.isUnknownSourcesEnabled(mContext));
-            verify(mPackageManager).canRequestPackageInstalls();
-            reset(mPackageManager);
+            verify(mPackageManager, times(++canRequestPackageInstallsCallCount)).canRequestPackageInstalls();
         }
 
         /* Test from Android 8 targeting older versions: always true. */
@@ -91,7 +92,9 @@ public class UnknownSourcesDetectionTest {
         for (int apiLevel = Build.VERSION_CODES.O; apiLevel <= BuildConfig.TARGET_SDK_VERSION; apiLevel++) {
             mockApiLevel(apiLevel);
             assertTrue(InstallerUtils.isUnknownSourcesEnabled(mContext));
-            verify(mPackageManager, never()).canRequestPackageInstalls();
+
+            /* No more calls. */
+            verify(mPackageManager, times(canRequestPackageInstallsCallCount)).canRequestPackageInstalls();
         }
     }
 

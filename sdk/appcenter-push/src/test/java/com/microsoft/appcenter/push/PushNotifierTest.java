@@ -48,7 +48,7 @@ public class PushNotifierTest {
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
-    private String mDummyGoogleMessageId = "messageId";
+    private final String mDummyGoogleMessageId = "messageId";
 
     @Mock
     private Context mContextMock;
@@ -62,7 +62,7 @@ public class PushNotifierTest {
     @Mock
     private Notification.Builder mNotificationBuilderMock;
 
-    private int mIconId = 29;
+    private final int mIconId = 29;
 
     @Mock
     private Intent mActionIntentMock;

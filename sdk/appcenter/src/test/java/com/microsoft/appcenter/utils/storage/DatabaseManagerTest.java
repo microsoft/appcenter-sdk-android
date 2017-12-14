@@ -211,9 +211,9 @@ public class DatabaseManagerTest {
     public void updateFailure() {
         /* Update returns 0 or less. */
         DatabaseManager databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, null));
-        SQLiteDatabase sqliteDatabaseMock = mock(SQLiteDatabase.class);
-        when(databaseManagerMock.getDatabase()).thenReturn(sqliteDatabaseMock);
-        when(sqliteDatabaseMock.update(anyString(), any(ContentValues.class), anyString(), any(String[].class))).thenReturn(-1);
+        SQLiteDatabase sQLiteDatabaseMock = mock(SQLiteDatabase.class);
+        when(databaseManagerMock.getDatabase()).thenReturn(sQLiteDatabaseMock);
+        when(sQLiteDatabaseMock.update(anyString(), any(ContentValues.class), anyString(), any(String[].class))).thenReturn(-1);
 
         /* Verify. */
         assertFalse(databaseManagerMock.update(0, new ContentValues()));

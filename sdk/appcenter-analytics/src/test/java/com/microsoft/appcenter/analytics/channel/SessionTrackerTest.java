@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.anyString;
@@ -396,13 +397,12 @@ public class SessionTrackerTest {
     @Test
     public void enqueueLogWithTimestamp() {
         Log log = newEvent();
-        UUID sessionId = null;
         log.setTimestamp(new Date());
         spendTime(30000);
         mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
 
         /* Session ID should not have been overwritten. */
-        assertEquals(sessionId, log.getSid());
+        assertNull(log.getSid());
     }
 
     @Test
