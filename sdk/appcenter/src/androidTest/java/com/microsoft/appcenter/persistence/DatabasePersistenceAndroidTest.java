@@ -38,6 +38,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -163,8 +164,9 @@ public class DatabasePersistenceAndroidTest {
             persistence.deleteLogs("test-p1");
             assertEquals(0, persistence.countLogs("test-p1"));
 
-            /* Verify file delete. */
+            /* Verify file delete and also parent directory since we used group deletion. */
             assertFalse(file.exists());
+            assertFalse(file.getParentFile().exists());
         } finally {
 
             /* Close. */
@@ -173,7 +175,7 @@ public class DatabasePersistenceAndroidTest {
         }
     }
 
-    @Test(expected = PersistenceException.class)
+    @Test
     public void putLargeLogFails() throws PersistenceException, IOException {
 
         /* Initialize database persistence. */
@@ -201,7 +203,16 @@ public class DatabasePersistenceAndroidTest {
             properties.put("key", largeValue.toString());
             log.setProperties(properties);
             persistence.putLog("test-p1", log);
-        } finally {
+            fail("putLog was expected to fail");
+        }
+        catch (Persistence.PersistenceException e)
+        {
+            assertTrue(e.getCause() instanceof IOException);
+
+            /* Make sure database entry has been removed. */
+            assertEquals(0, persistence.countLogs("test-p1"));
+        }
+        finally {
 
             /* Close. */
             //noinspection ThrowFromFinallyBlock

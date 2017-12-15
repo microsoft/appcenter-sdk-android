@@ -30,7 +30,7 @@ public abstract class Persistence implements Closeable {
      *
      * @param group The group of the storage for the log.
      * @param log   The log to be placed in the storage.
-     * @return log identifier from persistence after saving.
+     * @return Log identifier from persistence after saving.
      * @throws PersistenceException Exception will be thrown if Persistence cannot write a log to the storage.
      */
     public abstract long putLog(@NonNull String group, @NonNull Log log) throws PersistenceException;

@@ -134,6 +134,7 @@ public class DatabasePersistence extends Persistence {
                     }
                 });
         mLargePayloadDirectory = new File(Constants.FILES_PATH + PAYLOAD_LARGE_DIRECTORY);
+
         //noinspection ResultOfMethodCallIgnored we handle errors at read/write time for each file.
         mLargePayloadDirectory.mkdirs();
     }
@@ -171,10 +172,18 @@ public class DatabasePersistence extends Persistence {
             if (isLargePayload) {
                 AppCenterLog.debug(LOG_TAG, "Payload is larger than what SQLite supports, storing payload in a separate file.");
                 File directory = getLargePayloadGroupDirectory(group);
+
                 //noinspection ResultOfMethodCallIgnored we'll get an error anyway at write time.
                 directory.mkdir();
                 File payloadFile = getLargePayloadFile(directory, databaseId);
-                StorageHelper.InternalStorage.write(payloadFile, payload);
+                try {
+                    StorageHelper.InternalStorage.write(payloadFile, payload);
+                } catch (IOException e) {
+
+                    /* Remove database entry if we cannot save payload as a file. */
+                    mDatabaseStorage.delete(databaseId);
+                    throw e;
+                }
                 AppCenterLog.debug(LOG_TAG, "Payload written to " + payloadFile);
             }
             return databaseId;
@@ -232,10 +241,14 @@ public class DatabasePersistence extends Persistence {
         File[] files = directory.listFiles();
         if (files != null) {
             for (File file : files) {
+
                 //noinspection ResultOfMethodCallIgnored we are not checking SQLite result either.
                 file.delete();
             }
         }
+
+        //noinspection ResultOfMethodCallIgnored we are not checking SQLite result either.
+        directory.delete();
 
         /* Delete from database. */
         mDatabaseStorage.delete(COLUMN_GROUP, group);
@@ -312,11 +325,11 @@ public class DatabasePersistence extends Persistence {
                         File file = getLargePayloadFile(largePayloadGroupDirectory, dbIdentifier);
                         AppCenterLog.debug(LOG_TAG, "Read payload file " + file);
                         logPayload = StorageHelper.InternalStorage.read(file);
+                        if (logPayload == null) {
+                            throw new JSONException("Log payload is null and not stored as a file.");
+                        }
                     } else {
                         logPayload = databasePayload;
-                    }
-                    if (logPayload == null) {
-                        throw new JSONException("Log payload is null and not stored as a file.");
                     }
                     candidates.put(dbIdentifier, getLogSerializer().deserializeLog(logPayload));
                     count++;
