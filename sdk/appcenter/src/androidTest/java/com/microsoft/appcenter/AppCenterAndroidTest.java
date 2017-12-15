@@ -85,7 +85,7 @@ public class AppCenterAndroidTest {
 
     private static class DummyService extends AbstractAppCenterService {
 
-        private static DummyService sInstance = new DummyService();
+        private static final DummyService sInstance = new DummyService();
 
         private static UUID mInstallId;
 

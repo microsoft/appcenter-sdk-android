@@ -62,7 +62,7 @@ import static org.junit.Assert.assertTrue;
 public class CrashesTest {
 
     @Rule
-    public ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<>(MainActivity.class, true, false);
+    public final ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<>(MainActivity.class, true, false);
 
     private Context mContext;
 

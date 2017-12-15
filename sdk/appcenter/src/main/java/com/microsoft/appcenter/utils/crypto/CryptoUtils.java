@@ -255,11 +255,11 @@ public class CryptoUtils {
      * Get key store entry for the corresponding handler.
      */
     @Nullable
-    private KeyStore.Entry getKeyStoreEntry(@NonNull CryptoHandlerEntry handlerEntry, boolean mobileCenterFailover) throws Exception {
+    private KeyStore.Entry getKeyStoreEntry(@NonNull CryptoHandlerEntry handlerEntry, boolean mobileCenterFailOver) throws Exception {
         if (mKeyStore == null) {
             return null;
         }
-        String alias = getAlias(handlerEntry.mCryptoHandler, handlerEntry.mAliasIndex, mobileCenterFailover);
+        String alias = getAlias(handlerEntry.mCryptoHandler, handlerEntry.mAliasIndex, mobileCenterFailOver);
         return mKeyStore.getEntry(alias, null);
     }
 
@@ -458,7 +458,7 @@ public class CryptoUtils {
         /**
          * Fallback Mobile Center Key Store alias index, 0 or 1.
          */
-        int mAliasIndexMC;
+        final int mAliasIndexMC;
 
         /**
          * Init.

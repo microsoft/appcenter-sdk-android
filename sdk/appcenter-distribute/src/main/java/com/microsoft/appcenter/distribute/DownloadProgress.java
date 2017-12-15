@@ -8,12 +8,12 @@ class DownloadProgress {
     /**
      * Number of bytes downloaded so far.
      */
-    private long mCurrentSize;
+    private final long mCurrentSize;
 
     /**
      * Expected file size.
      */
-    private long mTotalSize;
+    private final long mTotalSize;
 
     /**
      * Init.

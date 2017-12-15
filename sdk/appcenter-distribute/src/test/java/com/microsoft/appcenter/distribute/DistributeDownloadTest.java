@@ -8,10 +8,8 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -21,14 +19,11 @@ import android.os.Build;
 
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
-import com.microsoft.appcenter.utils.crypto.CryptoUtils;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
 import com.microsoft.appcenter.utils.storage.StorageHelper.PreferencesStorage;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
@@ -42,13 +37,9 @@ import static android.app.DownloadManager.EXTRA_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -721,7 +712,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
     @Test
     @SuppressLint("NewApi")
     @SuppressWarnings("deprecation")
-    public void dontShowInstallUiIfUpgradedAfterNotification() throws Exception {
+    public void doNotShowInstallUiIfUpgradedAfterNotification() throws Exception {
 
         /* Mock download time storage. */
         doAnswer(new Answer<Object>() {

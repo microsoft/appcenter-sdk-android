@@ -207,7 +207,7 @@ final class DistributeConstants {
     static final String PREFERENCE_KEY_RELEASE_DETAILS = PREFERENCE_PREFIX + "release_details";
 
     /**
-     * Previous name of preferences, used for failover logic for missing token/distribution group.
+     * Previous name of preferences, used for fail-over logic for missing token/distribution group.
      */
     static final String PREFERENCES_NAME_MOBILE_CENTER = "MobileCenter";
 
