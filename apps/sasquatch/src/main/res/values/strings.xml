@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">Sasquatch</string>
-    <string name="sdk_source_format">SDK source: %s</string>
-    <string name="settings">Settings</string>
-    <string name="add">Add</string>
-    <string name="title_crashes">Crashes</string>
-    <string name="description_crashes">Test crashes</string>
-    <string name="title_custom_properties">Custom properties</string>
-    <string name="description_custom_properties">Send a custom properties</string>
-    <string name="title_device_info">Device info</string>
-    <string name="description_device_info">Display device information</string>
-    <string name="title_generate_page_log">Generate page logs</string>
-    <string name="description_generate_page_log">Simulate page open and close 5 times</string>
-    <string name="error_device_info">Couldn\'t retrieve device information</string>
-    <string name="title_error">Errors</string>
-    <string name="description_error">Send an exception</string>
-    <string name="title_event">Events</string>
-    <string name="description_event">Send a custom event</string>
-    <string name="title_page">Pages</string>
-    <string name="description_page">Send custom pages</string>
-    <string name="send">Send</string>
-    <string name="name">Name</string>
-    <string name="properties">Properties</string>
-    <string name="key">Key</string>
-    <string name="value">Value</string>
-    <string name="type">Type</string>
-    <string-array name="custom_property_types">
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name" tools:ignore="MissingTranslation">Sasquatch</string>
+    <string name="sdk_source_format" tools:ignore="MissingTranslation">SDK source: %s</string>
+    <string name="settings" tools:ignore="MissingTranslation">Settings</string>
+    <string name="add" tools:ignore="MissingTranslation">Add</string>
+    <string name="title_crashes" tools:ignore="MissingTranslation">Crashes</string>
+    <string name="description_crashes" tools:ignore="MissingTranslation">Test crashes</string>
+    <string name="title_custom_properties" tools:ignore="MissingTranslation">Custom properties</string>
+    <string name="description_custom_properties" tools:ignore="MissingTranslation">Send a custom properties</string>
+    <string name="title_device_info" tools:ignore="MissingTranslation">Device info</string>
+    <string name="description_device_info" tools:ignore="MissingTranslation">Display device information</string>
+    <string name="title_generate_page_log" tools:ignore="MissingTranslation">Generate page logs</string>
+    <string name="description_generate_page_log" tools:ignore="MissingTranslation">Simulate page open and close 5 times</string>
+    <string name="error_device_info" tools:ignore="MissingTranslation">Couldn\'t retrieve device information</string>
+    <string name="title_error" tools:ignore="MissingTranslation">Errors</string>
+    <string name="description_error" tools:ignore="MissingTranslation">Send an exception</string>
+    <string name="title_event" tools:ignore="MissingTranslation">Events</string>
+    <string name="description_event" tools:ignore="MissingTranslation">Send a custom event</string>
+    <string name="title_page" tools:ignore="MissingTranslation">Pages</string>
+    <string name="description_page" tools:ignore="MissingTranslation">Send custom pages</string>
+    <string name="send" tools:ignore="MissingTranslation">Send</string>
+    <string name="name" tools:ignore="MissingTranslation">Name</string>
+    <string name="properties" tools:ignore="MissingTranslation">Properties</string>
+    <string name="key" tools:ignore="MissingTranslation">Key</string>
+    <string name="value" tools:ignore="MissingTranslation">Value</string>
+    <string name="type" tools:ignore="MissingTranslation">Type</string>
+    <string-array name="custom_property_types" tools:ignore="MissingTranslation">
         <item>Clear</item>
         <item>Boolean</item>
         <item>Number</item>
         <item>Date/Time</item>
         <item>String</item>
     </string-array>
-    <string name="version_x_available">Version %1$s available!</string>
-    <string name="push_toast">Push clicked with data=%1s</string>
+    <string name="version_x_available" tools:ignore="MissingTranslation">Version %1$s available!</string>
+    <string name="push_toast" tools:ignore="MissingTranslation">Push clicked with data=%1s</string>
 </resources>

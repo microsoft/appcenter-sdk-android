@@ -453,7 +453,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
         }
 
-        private void initChangeableSetting(int key, String summary, Preference.OnPreferenceChangeListener changeListener) {
+        private void initChangeableSetting(@SuppressWarnings("SameParameterValue") int key, String summary, Preference.OnPreferenceChangeListener changeListener) {
             Preference preference = getPreferenceManager().findPreference(getString(key));
             if (preference == null) {
                 Log.w(LOG_TAG, "Couldn't find preference for key: " + key);

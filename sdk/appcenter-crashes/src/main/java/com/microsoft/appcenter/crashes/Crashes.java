@@ -588,7 +588,7 @@ public class Crashes extends AbstractAppCenterService {
                     list.add(breakpadAttachment);
 
                     /* Attach dump to NDK managed exception. */
-                    ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new NativeException(), Thread.getAllStackTraces(), mInitializeTimestamp, true);
+                    ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new NativeException(), Thread.getAllStackTraces(), mInitializeTimestamp);
                     if (errorLog != null) {
                         errorLog.getException().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
                         errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);

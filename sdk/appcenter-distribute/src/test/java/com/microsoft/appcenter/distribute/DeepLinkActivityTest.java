@@ -74,7 +74,7 @@ public class DeepLinkActivityTest {
     }
 
     @Test
-    public void vaidWithUpdateSetupFailedAndNoTaskRoot() {
+    public void validWithUpdateSetupFailedAndNoTaskRoot() {
 
          /* Build valid intent. */
         Intent intent = mock(Intent.class);

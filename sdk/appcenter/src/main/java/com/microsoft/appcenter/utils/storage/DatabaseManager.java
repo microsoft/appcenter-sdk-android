@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- * Database manager for SQLite with failover to in-memory.
+ * Database manager for SQLite with fail-over to in-memory.
  */
 public class DatabaseManager implements Closeable {
 
@@ -120,7 +120,6 @@ public class DatabaseManager implements Closeable {
         mSchema = schema;
         mMaxNumberOfRecords = maxRecords;
         mErrorListener = listener;
-
         mSQLiteOpenHelper = new SQLiteOpenHelper(context, database, null, version) {
 
             @Override
@@ -218,7 +217,6 @@ public class DatabaseManager implements Closeable {
                     delete(cursor.getLong(0));
                     cursor.close();
                 }
-
                 return id;
             } catch (RuntimeException e) {
                 switchToInMemory("put", e);

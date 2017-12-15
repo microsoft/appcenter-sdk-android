@@ -27,5 +27,6 @@ public interface AppCenterFuture<T> {
      *
      * @return true if completed, false otherwise.
      */
+    @SuppressWarnings("unused")
     boolean isDone();
 }

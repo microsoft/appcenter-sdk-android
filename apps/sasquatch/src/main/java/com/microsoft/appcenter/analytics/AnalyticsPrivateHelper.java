@@ -12,7 +12,7 @@ public final class AnalyticsPrivateHelper {
 
     public static void setListener(AnalyticsListener listener) {
 
-        /* TODO Change this when Analytics.setListener is package accessibility in jcenter. */
+        /* TODO Change this when Analytics.setListener is package accessibility in jCenter. */
         // Analytics.setListener(listener);
         try {
             Method method = Analytics.class.getDeclaredMethod("setListener", AnalyticsListener.class);

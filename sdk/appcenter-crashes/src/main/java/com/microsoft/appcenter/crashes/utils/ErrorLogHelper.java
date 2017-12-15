@@ -16,8 +16,9 @@ import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.ingestion.models.StackFrame;
 import com.microsoft.appcenter.crashes.ingestion.models.Thread;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
-import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
+import com.microsoft.appcenter.utils.SessionIdContext;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
@@ -73,8 +74,8 @@ public class ErrorLogHelper {
     private static File sBreakpadErrorLogDirectory;
 
     @NonNull
-    public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Throwable throwable, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp, boolean fatal) {
-        return createErrorLog(context, thread, getModelExceptionFromThrowable(throwable), allStackTraces, initializeTimestamp, fatal);
+    public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Throwable throwable, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
+        return createErrorLog(context, thread, getModelExceptionFromThrowable(throwable), allStackTraces, initializeTimestamp, true);
     }
 
     @NonNull
@@ -83,6 +84,9 @@ public class ErrorLogHelper {
         /* Build error log with a unique identifier. */
         ManagedErrorLog errorLog = new ManagedErrorLog();
         errorLog.setId(UUIDUtils.randomUUID());
+
+        /* Set the Session ID to the current session. */
+        errorLog.setSid(SessionIdContext.getInstance().getSessionId());
 
         /* Set current time. Will be correlated to session after restart. */
         errorLog.setTimestamp(new Date());

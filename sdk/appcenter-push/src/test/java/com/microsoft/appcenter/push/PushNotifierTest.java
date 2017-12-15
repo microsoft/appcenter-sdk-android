@@ -48,7 +48,7 @@ public class PushNotifierTest {
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
-    private String mDummyGoogleMessageId = "messageId";
+    private final String mDummyGoogleMessageId = "messageId";
 
     @Mock
     private Context mContextMock;
@@ -62,7 +62,7 @@ public class PushNotifierTest {
     @Mock
     private Notification.Builder mNotificationBuilderMock;
 
-    private int mIconId = 29;
+    private final int mIconId = 29;
 
     @Mock
     private Intent mActionIntentMock;
@@ -283,6 +283,13 @@ public class PushNotifierTest {
         when(resourcesMock.getIdentifier(eq(customSoundString), eq("raw"), anyString())).thenThrow(new Resources.NotFoundException());
         PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mNotificationBuilderMock).setDefaults(Notification.DEFAULT_SOUND);
+        verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
+    }
+
+    @Test
+    public void handleNotificationWithLauncherActivityHasRightFlags() throws Exception {
+        PushNotifier.handleNotification(mContextMock, new Intent());
+        verify(mActionIntentMock).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
     }
 

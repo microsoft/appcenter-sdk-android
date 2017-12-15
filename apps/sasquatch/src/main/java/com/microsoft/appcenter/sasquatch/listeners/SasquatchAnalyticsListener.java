@@ -14,7 +14,7 @@ import org.json.JSONObject;
 
 public class SasquatchAnalyticsListener implements com.microsoft.appcenter.analytics.channel.AnalyticsListener {
 
-    private Context context;
+    private final Context context;
 
     @VisibleForTesting
     public static final CountingIdlingResource analyticsIdlingResource = new CountingIdlingResource("analytics");
