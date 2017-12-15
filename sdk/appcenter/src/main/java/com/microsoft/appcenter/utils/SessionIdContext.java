@@ -48,13 +48,6 @@ public class SessionIdContext {
     }
 
     /**
-     * Invalidate the Session ID by setting it to null.
-     */
-    public synchronized void invalidateSessionId() {
-        mSessionId = null;
-    }
-
-    /**
      * Resets the Session ID to a new UUID.
      *
      * @return the new Session ID.

@@ -20,11 +20,19 @@ import java.util.UUID;
 public class SessionTracker implements Channel.Listener {
 
     /**
-     * Key used in storage to persist sessions. The sessions are no longer
-     * persisted, but keep the key to delete from devices that had the previous
-     * SDK versions.
+     * Key used in storage to persist sessions.
      */
     private static final String STORAGE_KEY = "sessions";
+
+    /**
+     * Maximum number of sessions to persist the state.
+     */
+    private static final int STORAGE_MAX_SESSIONS = 5;
+
+    /**
+     * Separator used for persistent storage format.
+     */
+    private static final String STORAGE_KEY_VALUE_SEPARATOR = "/";
 
     /**
      * Default session timeout in milliseconds.
@@ -149,11 +157,10 @@ public class SessionTracker implements Channel.Listener {
     }
 
     /**
-     * Clear storage from saved session state and invalidate the current Session ID.
+     * Clear storage from saved session state.
      */
-    public void clearSession() {
+    public void clearSessions() {
         StorageHelper.PreferencesStorage.remove(STORAGE_KEY);
-        SessionIdContext.getInstance().invalidateSessionId();
     }
 
     /**
