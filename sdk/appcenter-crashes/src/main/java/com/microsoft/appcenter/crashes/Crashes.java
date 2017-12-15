@@ -10,6 +10,7 @@ import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
+import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.ingestion.models.HandledErrorLog;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.ingestion.models.json.ErrorAttachmentLogFactory;
@@ -23,10 +24,10 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
@@ -39,8 +40,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -239,13 +238,13 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     /**
-     * Get the path where NDK breakpad minidumps should be created.
+     * Get the path where NDK minidump files should be created.
      *
      * @return path where minidump files should be created.
      */
     @NonNull
     public static String getBreakpadDirectory() {
-        return ErrorLogHelper.getBreakpadErrorStorageDirectory().getAbsolutePath();
+        return ErrorLogHelper.getNewMinidumpDirectory().getAbsolutePath();
     }
 
     /**
@@ -327,11 +326,10 @@ public class Crashes extends AbstractAppCenterService {
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
-        super.onStarted(context, appSecret, channel);
         mContext = context;
+        super.onStarted(context, appSecret, channel);
         if (isInstanceEnabled()) {
             processPendingErrors();
-            processPendingBreakpadErrors();
         } else {
             initialize();
         }
@@ -434,7 +432,7 @@ public class Crashes extends AbstractAppCenterService {
             }
 
             @Override
-            public void onFailure(Log log, final Exception e) {
+            public void onFailure(Log log, final java.lang.Exception e) {
                 processCallback(log, new CallbackProcessor() {
 
                     @Override
@@ -507,16 +505,48 @@ public class Crashes extends AbstractAppCenterService {
     private void initialize() {
         boolean enabled = isInstanceEnabled();
         mInitializeTimestamp = enabled ? System.currentTimeMillis() : -1;
-        ErrorLogHelper.createErrorStorageDirectories();
         if (!enabled) {
             if (mUncaughtExceptionHandler != null) {
                 mUncaughtExceptionHandler.unregister();
                 mUncaughtExceptionHandler = null;
             }
         } else {
+
+            /* Register Java crash handler. */
             mUncaughtExceptionHandler = new UncaughtExceptionHandler();
             mUncaughtExceptionHandler.register();
-            final File logFile = ErrorLogHelper.getLastErrorLogFile();
+
+            /* Convert minidump files to App Center crash files. */
+            for (File logFile : ErrorLogHelper.getNewMinidumpFiles()) {
+
+                /*
+                 * Create missing files from the native crash that we detected.
+                 * TODO timestamps, session id, threads and device properties are wrong
+                 * since the crash happens before restart and we read native crash after restart.
+                 */
+                AppCenterLog.debug(LOG_TAG, "Process pending minidump file: " + logFile);
+                NativeException nativeException = new NativeException();
+                Exception modelException = ErrorLogHelper.getModelExceptionFromThrowable(nativeException);
+                modelException.setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
+                File dest = new File(ErrorLogHelper.getPendingMinidumpDirectory(), logFile.getName());
+                modelException.setStackTrace(dest.getPath());
+                try {
+                    ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), modelException, Collections.<Thread, StackTraceElement[]>emptyMap(), mInitializeTimestamp, true);
+                    errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK); // TODO backend needs that but exception should be enough instead
+                    saveErrorLogFiles(nativeException, errorLog);
+                    if (!logFile.renameTo(dest)) {
+                        throw new IOException("Failed to move file");
+                    }
+                } catch (java.lang.Exception e) {
+
+                    //noinspection ResultOfMethodCallIgnored
+                    logFile.delete();
+                    AppCenterLog.debug(LOG_TAG, "Failed to process new minidump file: " + logFile, e);
+                }
+            }
+
+            /* Check last session crash. */
+            File logFile = ErrorLogHelper.getLastErrorLogFile();
             if (logFile != null) {
                 AppCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
                 String logFileContents = StorageHelper.InternalStorage.read(logFile);
@@ -536,17 +566,6 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     private void processPendingErrors() {
-        processPendingJavaErrors();
-
-        /* If automatic processing is enabled. */
-        if (mAutomaticProcessing) {
-
-            /* Proceed to check if user confirmation is needed. */
-            sendCrashReportsOrAwaitUserConfirmation();
-        }
-    }
-
-    private void processPendingJavaErrors() {
         for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
             AppCenterLog.debug(LOG_TAG, "Process pending error file: " + logFile);
             String logfileContents = StorageHelper.InternalStorage.read(logFile);
@@ -571,34 +590,13 @@ public class Crashes extends AbstractAppCenterService {
                 }
             }
         }
-    }
 
-    private void processPendingBreakpadErrors() {
-        post(new Runnable() {
+        /* If automatic processing is enabled. */
+        if (mAutomaticProcessing) {
 
-            @Override
-            public void run() {
-                for (File logFile : ErrorLogHelper.getStoredBreakpadLogFiles()) {
-                    AppCenterLog.debug(LOG_TAG, "Process pending breakpad file: " + logFile);
-                    byte[] logfileContents = StorageHelper.InternalStorage.readBytes(logFile);
-
-                    /* Create our Breakpad dump attachment. */
-                    ErrorAttachmentLog breakpadAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
-                    List<ErrorAttachmentLog> list = new LinkedList<>();
-                    list.add(breakpadAttachment);
-
-                    /* Attach dump to NDK managed exception. */
-                    ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), new NativeException(), Thread.getAllStackTraces(), mInitializeTimestamp);
-                    if (errorLog != null) {
-                        errorLog.getException().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
-                        errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
-                        mChannel.enqueue(errorLog, ERROR_GROUP);
-                        sendErrorAttachment(errorLog.getId(), list);
-                    }
-                }
-                ErrorLogHelper.removeStoredBreakpadLogFiles();
-            }
-        });
+            /* Proceed to check if user confirmation is needed. */
+            sendCrashReportsOrAwaitUserConfirmation();
+        }
     }
 
     /**
@@ -735,10 +733,29 @@ public class Crashes extends AbstractAppCenterService {
                     Iterator<Map.Entry<UUID, ErrorLogReport>> unprocessedIterator = mUnprocessedErrorReports.entrySet().iterator();
                     while (unprocessedIterator.hasNext()) {
 
-                        /* Send report. */
+                        /* If native crash, send dump as attachment and remove the fake stack trace. */
+                        File dumpFile = null;
+                        ErrorAttachmentLog dumpAttachment = null;
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
+                        if (errorLogReport.report.getThrowable() instanceof NativeException) {
+                            Exception exception = errorLogReport.log.getException();
+                            dumpFile = new File(exception.getStackTrace());
+                            exception.setStackTrace(null);
+                            byte[] logfileContents = StorageHelper.InternalStorage.readBytes(dumpFile);
+                            dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
+                        }
+
+                        /* Send report. */
                         mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
+
+                        /* Send dump attachment and remove file. */
+                        if (dumpAttachment != null) {
+                            sendErrorAttachment(errorLogReport.log.getId(), Collections.singleton(dumpAttachment));
+
+                            //noinspection ResultOfMethodCallIgnored
+                            dumpFile.delete();
+                        }
 
                         /* Get attachments from callback in automatic processing. */
                         if (mAutomaticProcessing) {
@@ -832,6 +849,11 @@ public class Crashes extends AbstractAppCenterService {
 
         /* Save error log. */
         ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, modelException, Thread.getAllStackTraces(), mInitializeTimestamp, true);
+        return saveErrorLogFiles(throwable, errorLog);
+    }
+
+    @NonNull
+    private UUID saveErrorLogFiles(Throwable throwable, ManagedErrorLog errorLog) throws JSONException, IOException {
         File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
         UUID errorLogId = errorLog.getId();
         String filename = errorLogId.toString();

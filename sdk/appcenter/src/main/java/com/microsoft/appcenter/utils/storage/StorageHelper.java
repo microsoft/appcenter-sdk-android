@@ -358,7 +358,6 @@ public class StorageHelper {
          */
         public static byte[] readBytes(@NonNull File file) {
             try {
-                BufferedReader reader = new BufferedReader(new FileReader(file));
                 byte fileContents[] = new byte[(int) file.length()];
                 BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
                 try {

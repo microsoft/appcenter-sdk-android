@@ -47,6 +47,21 @@ public class ErrorLogHelper {
     public static final String THROWABLE_FILE_EXTENSION = ".throwable";
 
     /**
+     * Directory under the FILES_PATH containing minidump files.
+     */
+    private static final String MINIDUMP_DIRECTORY = "minidump";
+
+    /**
+     * Directory under the MINIDUMP_DIRECTORY for new dump files.
+     */
+    private static final String NEW_MINIDUMP_DIRECTORY = "new";
+
+    /**
+     * Directory under the MINIDUMP_DIRECTORY for pending dump files.
+     */
+    private static final String PENDING_MINIDUMP_DIRECTORY = "pending";
+
+    /**
      * For huge stack traces such as giant StackOverflowError, we keep only beginning and end of frames according to this limit.
      */
     @VisibleForTesting
@@ -69,9 +84,15 @@ public class ErrorLogHelper {
     private static File sErrorLogDirectory;
 
     /**
-     * Root directory for breakpad files.
+     * Directory for new minidump files.
      */
-    private static File sBreakpadErrorLogDirectory;
+    private static File sNewMinidumpDirectory;
+
+    /**
+     * Directory for pending minidump files.
+     */
+    private static File sPendingMinidumpDirectory;
+
 
     @NonNull
     public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Throwable throwable, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
@@ -149,14 +170,6 @@ public class ErrorLogHelper {
     }
 
     @NonNull
-    public static synchronized void createErrorStorageDirectories() {
-        File errorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
-        StorageHelper.InternalStorage.mkdir(errorLogDirectory.getAbsolutePath());
-        File breakpadErrorLogDirectory = new File(errorLogDirectory.getAbsolutePath(), Constants.BREAKPAD_DIRECTORY);
-        StorageHelper.InternalStorage.mkdir(breakpadErrorLogDirectory.getAbsolutePath());
-    }
-
-    @NonNull
     public static synchronized File getErrorStorageDirectory() {
         if (sErrorLogDirectory == null) {
             sErrorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
@@ -166,13 +179,25 @@ public class ErrorLogHelper {
     }
 
     @NonNull
-    public static synchronized File getBreakpadErrorStorageDirectory() {
-        if (sBreakpadErrorLogDirectory == null) {
+    public static synchronized File getNewMinidumpDirectory() {
+        if (sNewMinidumpDirectory == null) {
             File errorStorageDirectory = getErrorStorageDirectory();
-            sBreakpadErrorLogDirectory = new File(errorStorageDirectory.getAbsolutePath(), Constants.BREAKPAD_DIRECTORY);
-            StorageHelper.InternalStorage.mkdir(sBreakpadErrorLogDirectory.getAbsolutePath());
+            File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
+            sNewMinidumpDirectory = new File(minidumpDirectory, NEW_MINIDUMP_DIRECTORY);
+            StorageHelper.InternalStorage.mkdir(sNewMinidumpDirectory.getPath());
         }
-        return sBreakpadErrorLogDirectory;
+        return sNewMinidumpDirectory;
+    }
+
+    @NonNull
+    public static synchronized File getPendingMinidumpDirectory() {
+        if (sPendingMinidumpDirectory == null) {
+            File errorStorageDirectory = getErrorStorageDirectory();
+            File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
+            sPendingMinidumpDirectory = new File(minidumpDirectory, PENDING_MINIDUMP_DIRECTORY);
+            StorageHelper.InternalStorage.mkdir(sPendingMinidumpDirectory.getPath());
+        }
+        return sPendingMinidumpDirectory;
     }
 
     @NonNull
@@ -187,17 +212,9 @@ public class ErrorLogHelper {
     }
 
     @NonNull
-    public static File[] getStoredBreakpadLogFiles() {
-        File[] files = getBreakpadErrorStorageDirectory().listFiles();
+    public static File[] getNewMinidumpFiles() {
+        File[] files = getNewMinidumpDirectory().listFiles();
         return files != null ? files : new File[0];
-    }
-
-    public static void removeStoredBreakpadLogFiles() {
-        File[] files = getStoredBreakpadLogFiles();
-        for (File file : ErrorLogHelper.getStoredBreakpadLogFiles()) {
-            AppCenterLog.info(Crashes.LOG_TAG, "Deleting breakpad log file " + file.getName());
-            StorageHelper.InternalStorage.delete(file);
-        }
     }
 
     @Nullable
