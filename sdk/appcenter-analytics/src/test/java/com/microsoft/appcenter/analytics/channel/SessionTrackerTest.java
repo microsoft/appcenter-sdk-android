@@ -21,14 +21,16 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.anyString;
@@ -43,6 +45,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @PrepareForTest({SessionTracker.class, StorageHelper.PreferencesStorage.class, SystemClock.class})
@@ -100,6 +103,7 @@ public class SessionTrackerTest {
     public void longSessionStartingFromBackground() {
 
         /* Application is in background, send a log, verify decoration. */
+        UUID firstSid;
         long firstSessionTime = mMockTime;
         UUID expectedSid;
         StartSessionLog expectedStartSessionLog = new StartSessionLog();
@@ -108,7 +112,7 @@ public class SessionTrackerTest {
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
             mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
             assertNotNull(log.getSid());
-            expectedSid = log.getSid();
+            firstSid = expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
@@ -186,6 +190,16 @@ public class SessionTrackerTest {
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
             mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
+        }
+
+        /* Background for a long time but correlating a log to first session: should not trigger new session. */
+        {
+            Log log = newEvent();
+            log.setTimestamp(new Date(firstSessionTime + 20));
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            assertEquals(firstSid, log.getSid());
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
 
@@ -395,14 +409,141 @@ public class SessionTrackerTest {
     }
 
     @Test
-    public void enqueueLogWithTimestamp() {
-        Log log = newEvent();
-        log.setTimestamp(new Date());
+    public void maxOutStoredSessions() {
+        mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
+        Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+        assertNotNull(sessions);
+        assertEquals(1, sessions.size());
         spendTime(30000);
-        mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+        String firstSession = sessions.iterator().next();
+        for (int i = 2; i <= 5; i++) {
+            mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
+            Set<String> intermediateSessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+            assertNotNull(intermediateSessions);
+            assertEquals(i, intermediateSessions.size());
+            spendTime(30000);
+        }
+        mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
+        Set<String> finalSessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+        assertNotNull(finalSessions);
+        assertEquals(5, finalSessions.size());
+        assertFalse(finalSessions.contains(firstSession));
+    }
 
-        /* Session ID should not have been overwritten. */
-        assertNull(log.getSid());
+    @Test
+    public void pastSessions() {
+
+        /* Get a current session. */
+        UUID firstSid, currentSid;
+        long firstSessionTime = mMockTime;
+        {
+            Log log = newEvent();
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            assertNotNull(log.getSid());
+            currentSid = firstSid = log.getSid();
+        }
+
+        /* Verify session reused for second log. */
+        {
+            Log log = newEvent();
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            assertEquals(currentSid, log.getSid());
+        }
+
+        /* Past log: correlation will fail and use current session. */
+        {
+            Log log = newEvent();
+            log.setTimestamp(new Date(123L));
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            assertEquals(currentSid, log.getSid());
+        }
+
+        /* No usage from background for a long time, should produce a new session but we'll correlate, correlation does not trigger a new session. */
+        {
+            spendTime(30000);
+            Log log = newEvent();
+            log.setTimestamp(new Date(firstSessionTime + 1));
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            assertEquals(currentSid, log.getSid());
+            Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+            assertNotNull(sessions);
+            assertEquals(1, sessions.size());
+        }
+
+        /* Trigger a second session. */
+        {
+            Log log = newEvent();
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            assertNotEquals(currentSid, log.getSid());
+            Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+            assertNotNull(sessions);
+            assertEquals(2, sessions.size());
+        }
+
+        /* Correlate log to previous. */
+        {
+            spendTime(30000);
+            Log log = newEvent();
+            log.setTimestamp(new Date(firstSessionTime + 1));
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            assertEquals(firstSid, log.getSid());
+            Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+            assertNotNull(sessions);
+            assertEquals(2, sessions.size());
+        }
+
+        /* Re-test with persistence now, no current session but same correlation will work and no session will be triggered on the new instance. */
+        mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);
+        {
+            Log log = newEvent();
+            log.setTimestamp(new Date(firstSessionTime + 1));
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            assertEquals(firstSid, log.getSid());
+            Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+            assertNotNull(sessions);
+            assertEquals(2, sessions.size());
+        }
+
+        /* Failed correlation without an active session will start a new session. */
+        {
+            Log log = newEvent();
+            log.setTimestamp(new Date(1));
+            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            assertNotNull(log.getSid());
+            Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+            assertNotNull(sessions);
+            assertEquals(3, sessions.size());
+        }
+
+        /* Clear sessions. */
+        mSessionTracker.clearSessions();
+        verifyStatic();
+        StorageHelper.PreferencesStorage.remove("sessions");
+    }
+
+    @Test
+    public void invalidStorage() {
+        Set<String> sessions = new LinkedHashSet<>();
+        sessions.add("100/10abd355-40a5-4b51-8071-cb5a4c338531");
+        sessions.add("200/invalid");
+        sessions.add("300/10abd355-40a5-4b51-8071-cb5a4c338533/garbage");
+        sessions.add("400");
+        sessions.add("500a/10abd355-40a5-4b51-8071-cb5a4c338535");
+        when(StorageHelper.PreferencesStorage.getStringSet(anyString())).thenReturn(sessions);
+        mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);
+
+        /* Generate a current session. */
+        mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
+
+        /* Check sessions in store. */
+        sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+        assertNotNull(sessions);
+        assertEquals(3, sessions.size());
+        assertTrue(sessions.contains("100/10abd355-40a5-4b51-8071-cb5a4c338531"));
+        assertFalse(sessions.contains("200/invalid"));
+        assertTrue(sessions.contains("300/10abd355-40a5-4b51-8071-cb5a4c338533"));
+        assertFalse(sessions.contains("400"));
+        assertFalse(sessions.contains("500a/10abd355-40a5-4b51-8071-cb5a4c338535"));
     }
 
     @Test
