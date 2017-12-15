@@ -25,6 +25,7 @@ import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -521,18 +523,28 @@ public class Crashes extends AbstractAppCenterService {
 
                 /*
                  * Create missing files from the native crash that we detected.
-                 * TODO timestamps, session id, threads and device properties are wrong
                  * since the crash happens before restart and we read native crash after restart.
                  */
                 AppCenterLog.debug(LOG_TAG, "Process pending minidump file: " + logFile);
-                NativeException nativeException = new NativeException();
-                Exception modelException = ErrorLogHelper.getModelExceptionFromThrowable(nativeException);
-                modelException.setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
                 File dest = new File(ErrorLogHelper.getPendingMinidumpDirectory(), logFile.getName());
+                NativeException nativeException = new NativeException();
+                Exception modelException = new Exception();
+                modelException.setType("minidump");
+                modelException.setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
                 modelException.setStackTrace(dest.getPath());
+                ManagedErrorLog errorLog = new ManagedErrorLog();
+                errorLog.setException(modelException);
+                errorLog.setTimestamp(new Date(logFile.lastModified()));
+                errorLog.setFatal(true);
+                errorLog.setId(UUID.randomUUID());
+
+                /* TODO The following properties are wrong. */
+                errorLog.setProcessId(0);
+                errorLog.setProcessName("");
+                errorLog.setAppLaunchTimestamp(errorLog.getTimestamp());
                 try {
-                    ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, Thread.currentThread(), modelException, Collections.<Thread, StackTraceElement[]>emptyMap(), mInitializeTimestamp, true);
-                    errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK); // TODO backend needs that but exception should be enough instead
+                    errorLog.setDevice(DeviceInfoHelper.getDeviceInfo(mContext));
+                    errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
                     saveErrorLogFiles(nativeException, errorLog);
                     if (!logFile.renameTo(dest)) {
                         throw new IOException("Failed to move file");
