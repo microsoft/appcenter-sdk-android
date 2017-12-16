@@ -568,7 +568,8 @@ public class Crashes extends AbstractAppCenterService {
 
                     //noinspection ResultOfMethodCallIgnored
                     logFile.delete();
-                    AppCenterLog.debug(LOG_TAG, "Failed to process new minidump file: " + logFile, e);
+                    removeAllStoredErrorLogFiles(errorLog.getId());
+                    AppCenterLog.error(LOG_TAG, "Failed to process new minidump file: " + logFile, e);
                 }
             }
 

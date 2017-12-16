@@ -4,16 +4,15 @@ import android.annotation.SuppressLint;
 import android.app.Application;
 import android.support.test.InstrumentationRegistry;
 
-import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterPrivateHelper;
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.model.NativeException;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.models.Log;
-import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
@@ -29,7 +28,6 @@ import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FilenameFilter;
 import java.lang.reflect.Method;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
@@ -90,8 +88,7 @@ public class CrashesAndroidTest {
                         assertTrue(dumpFile.delete());
                     }
                 }
-            }
-            else {
+            } else {
                 assertTrue(logFile.delete());
             }
         }
@@ -190,11 +187,38 @@ public class CrashesAndroidTest {
         assertTrue(Crashes.hasCrashedInLastSession().get());
         assertTrue(errorReport.getThrowable() instanceof NativeException);
 
+        /* File has been deleted. */
+        assertFalse(minidumpFile.exists());
+
         /* After restart, it's processed. */
         Crashes.unsetInstance();
         startFresh(null);
         assertNull(Crashes.getLastSessionCrashReport().get());
         assertFalse(Crashes.hasCrashedInLastSession().get());
+    }
+
+    @Test
+    public void failedToMoveMinidump() throws Exception {
+
+        /* Simulate we have a minidump. */
+        File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
+        File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
+        StorageHelper.InternalStorage.write(minidumpFile, "mock minidump");
+
+        /* Make moving fail. */
+        assertTrue(ErrorLogHelper.getPendingMinidumpDirectory().delete());
+
+        /* Start crashes now. */
+        try {
+            startFresh(null);
+
+            /* If failed to process minidump, delete entire crash. */
+            assertNull(Crashes.getLastSessionCrashReport().get());
+            assertFalse(Crashes.hasCrashedInLastSession().get());
+            assertFalse(minidumpFile.exists());
+        } finally {
+            assertTrue(ErrorLogHelper.getPendingMinidumpDirectory().mkdir());
+        }
     }
 
     @Test
