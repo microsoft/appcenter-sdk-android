@@ -23,7 +23,6 @@ import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesListener;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
-import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.push.PushListener;
@@ -36,39 +35,51 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
-import java.io.File;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
+
+    public static final String LOG_TAG = "AppCenterSasquatch";
+    static final String APP_SECRET_KEY = "appSecret";
+    static final String LOG_URL_KEY = "logUrl";
+    static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
+    private static final String SENDER_ID = "177539951155";
+    private static final String TEXT_ATTACHMENT_KEY = "textAttachment";
+    private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
+    static SharedPreferences sSharedPreferences;
+    static SasquatchAnalyticsListener sAnalyticsListener;
+    static SasquatchCrashesListener sCrashesListener;
+    static SasquatchPushListener sPushListener;
 
     static {
         System.loadLibrary("SasquatchBreakpad");
     }
 
-    public static final String LOG_TAG = "AppCenterSasquatch";
+    public static void setTextAttachment(String textAttachment) {
+        SharedPreferences.Editor editor = sSharedPreferences.edit();
+        if (textAttachment == null) {
+            editor.remove(TEXT_ATTACHMENT_KEY);
+        } else {
+            editor.putString(TEXT_ATTACHMENT_KEY, textAttachment);
+        }
+        editor.apply();
+        sCrashesListener.setTextAttachment(textAttachment);
+    }
 
-    static final String APP_SECRET_KEY = "appSecret";
-
-    static final String LOG_URL_KEY = "logUrl";
-
-    private static final String SENDER_ID = "177539951155";
-
-    static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
-
-    private static final String TEXT_ATTACHMENT_KEY = "textAttachment";
-
-    private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
-
-    static SharedPreferences sSharedPreferences;
-
-    static SasquatchAnalyticsListener sAnalyticsListener;
-
-    static SasquatchCrashesListener sCrashesListener;
+    public static void setFileAttachment(Uri fileAttachment) {
+        SharedPreferences.Editor editor = sSharedPreferences.edit();
+        if (fileAttachment == null) {
+            editor.remove(FILE_ATTACHMENT_KEY);
+        } else {
+            editor.putString(FILE_ATTACHMENT_KEY, fileAttachment.toString());
+        }
+        editor.apply();
+        sCrashesListener.setFileAttachment(fileAttachment);
+    }
 
     native void setupNativeCrashesListener(String path);
-
-    static SasquatchPushListener sPushListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,10 +134,15 @@ public class MainActivity extends AppCompatActivity {
 
         /* Attach NDK Crash Handler (if available) after SDK is initialized. */
         try {
-            @SuppressWarnings("unchecked")
-            Class<? extends Crashes> crashes = (Class<? extends Crashes>) Class.forName("com.microsoft.appcenter.crashes.Crashes");
-            String path = (String) crashes.getMethod("getBreakpadDirectory").invoke(null);
-            setupNativeCrashesListener(path);
+
+            //noinspection unchecked
+            ((AppCenterFuture<String>) Crashes.class.getMethod("getMinidumpDirectory").invoke(null)).thenAccept(new AppCenterConsumer<String>() {
+
+                @Override
+                public void accept(String path) {
+                    setupNativeCrashesListener(path);
+                }
+            });
         } catch (Exception ignore) {
         }
 
@@ -221,28 +237,6 @@ public class MainActivity extends AppCompatActivity {
             sPushListener = new SasquatchPushListener();
         }
         return sPushListener;
-    }
-
-    public static void setTextAttachment(String textAttachment) {
-        SharedPreferences.Editor editor = sSharedPreferences.edit();
-        if (textAttachment == null) {
-            editor.remove(TEXT_ATTACHMENT_KEY);
-        } else {
-            editor.putString(TEXT_ATTACHMENT_KEY, textAttachment);
-        }
-        editor.apply();
-        sCrashesListener.setTextAttachment(textAttachment);
-    }
-
-    public static void setFileAttachment(Uri fileAttachment) {
-        SharedPreferences.Editor editor = sSharedPreferences.edit();
-        if (fileAttachment == null) {
-            editor.remove(FILE_ATTACHMENT_KEY);
-        } else {
-            editor.putString(FILE_ATTACHMENT_KEY, fileAttachment.toString());
-        }
-        editor.apply();
-        sCrashesListener.setFileAttachment(fileAttachment);
     }
 
 }

@@ -244,9 +244,9 @@ public class Crashes extends AbstractAppCenterService {
      *
      * @return path where minidump files should be created.
      */
-    @NonNull
-    public static String getBreakpadDirectory() {
-        return ErrorLogHelper.getNewMinidumpDirectory().getAbsolutePath();
+    @SuppressWarnings("unusued")
+    public static AppCenterFuture<String> getMinidumpDirectory() {
+        return getInstance().getNewMinidumpDirectoryAsync();
     }
 
     /**
@@ -279,6 +279,21 @@ public class Crashes extends AbstractAppCenterService {
      */
     public static AppCenterFuture<ErrorReport> getLastSessionCrashReport() {
         return getInstance().getInstanceLastSessionCrashReport();
+    }
+
+    /**
+     * Implements {@link #getMinidumpDirectory()} at instance level.
+     */
+    private synchronized AppCenterFuture<String> getNewMinidumpDirectoryAsync() {
+        final DefaultAppCenterFuture<String> future = new DefaultAppCenterFuture<>();
+        postAsyncGetter(new Runnable() {
+
+            @Override
+            public void run() {
+                future.complete(ErrorLogHelper.getNewMinidumpDirectory().getAbsolutePath());
+            }
+        }, future, null);
+        return future;
     }
 
     /**
