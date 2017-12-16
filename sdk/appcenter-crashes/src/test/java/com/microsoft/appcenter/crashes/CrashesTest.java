@@ -4,9 +4,9 @@ import android.content.Context;
 import android.os.Looper;
 import android.os.SystemClock;
 
-import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.HandledErrorLog;
@@ -22,8 +22,8 @@ import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
@@ -846,7 +846,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(throwableFile);
         when(ErrorLogHelper.getErrorReportFromErrorLog(errorLog, throwable)).thenReturn(errorReport);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{lastErrorLogFile});
-        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{lastErrorLogFile});
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(throwable);
 
@@ -914,7 +914,7 @@ public class CrashesTest {
         File lastErrorLogFile = errorStorageDirectory.newFile("last-error-log.json");
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(lastErrorLogFile);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{lastErrorLogFile});
-        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{lastErrorLogFile});
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
 
         Crashes crashes = Crashes.getInstance();
@@ -950,7 +950,7 @@ public class CrashesTest {
         mockStatic(ErrorLogHelper.class);
         File file = errorStorageDirectory.newFile("last-error-log.json");
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{file});
-        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{file});
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(file);
         Crashes.getInstance().onStarted(mock(Context.class), "", mock(Channel.class));
         assertFalse(Crashes.hasCrashedInLastSession().get());
