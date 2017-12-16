@@ -536,10 +536,7 @@ public class Crashes extends AbstractAppCenterService {
             /* Convert minidump files to App Center crash files. */
             for (File logFile : ErrorLogHelper.getNewMinidumpFiles()) {
 
-                /*
-                 * Create missing files from the native crash that we detected.
-                 * since the crash happens before restart and we read native crash after restart.
-                 */
+                /* Create missing files from the native crash that we detected. */
                 AppCenterLog.debug(LOG_TAG, "Process pending minidump file: " + logFile);
                 File dest = new File(ErrorLogHelper.getPendingMinidumpDirectory(), logFile.getName());
                 NativeException nativeException = new NativeException();
