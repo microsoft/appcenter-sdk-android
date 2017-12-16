@@ -10,8 +10,10 @@ import com.microsoft.appcenter.AppCenterPrivateHelper;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
+import com.microsoft.appcenter.crashes.model.NativeException;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
@@ -83,11 +85,15 @@ public class CrashesAndroidTest {
         StorageHelper.PreferencesStorage.clear();
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
             if (logFile.isDirectory()) {
-                for (File file : logFile.listFiles()) {
-                    assertTrue(file.delete());
+                for (File dumpDir : logFile.listFiles()) {
+                    for (File dumpFile : dumpDir.listFiles()) {
+                        assertTrue(dumpFile.delete());
+                    }
                 }
             }
-            assertTrue(logFile.delete());
+            else {
+                assertTrue(logFile.delete());
+            }
         }
         mChannel = mock(Channel.class);
     }
@@ -158,6 +164,37 @@ public class CrashesAndroidTest {
         ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
         assertNotNull(errorReport);
         assertTrue(Crashes.hasCrashedInLastSession().get());
+    }
+
+    @Test
+    public void getLastSessionCrashReportNative() throws Exception {
+
+        /* Null before start. */
+        Crashes.unsetInstance();
+        assertNull(Crashes.getLastSessionCrashReport().get());
+        assertFalse(Crashes.hasCrashedInLastSession().get());
+        assertNull(Crashes.getMinidumpDirectory().get());
+
+        /* Simulate we have a minidump. */
+        File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
+        File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
+        StorageHelper.InternalStorage.write(minidumpFile, "mock minidump");
+
+        /* Start crashes now. */
+        startFresh(null);
+
+        /* We can access directory now. */
+        assertEquals(newMinidumpDirectory.getAbsolutePath(), Crashes.getMinidumpDirectory().get());
+        ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
+        assertNotNull(errorReport);
+        assertTrue(Crashes.hasCrashedInLastSession().get());
+        assertTrue(errorReport.getThrowable() instanceof NativeException);
+
+        /* After restart, it's processed. */
+        Crashes.unsetInstance();
+        startFresh(null);
+        assertNull(Crashes.getLastSessionCrashReport().get());
+        assertFalse(Crashes.hasCrashedInLastSession().get());
     }
 
     @Test
