@@ -55,7 +55,7 @@ public class Exception implements Model {
     /**
      * Name of the wrapper SDK that emitted this exception.
      * Consists of the name of the SDK and the wrapper platform,
-     * e.g. "appcenter.xamarin", "appcenter.ndk", "hockeysdk.cordova".
+     * e.g. "appcenter.xamarin", "hockeysdk.cordova".
      */
     private String wrapperSdkName;
 

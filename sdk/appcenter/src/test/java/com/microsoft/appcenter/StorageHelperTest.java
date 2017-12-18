@@ -13,6 +13,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,7 +22,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -135,23 +135,15 @@ public class StorageHelperTest {
     }
 
     @Test
-    public void readBytesFileNotFound() throws Exception {
-        mockStatic(AppCenterLog.class);
-        BufferedReader bufferedReader = mock(BufferedReader.class, new ThrowsException(new FileNotFoundException()));
-        whenNew(BufferedReader.class).withAnyArguments().thenReturn(bufferedReader);
-        assertNull(StorageHelper.InternalStorage.readBytes(new File("")));
-        verifyStatic();
-        AppCenterLog.error(anyString(), anyString(), any(IOException.class));
-    }
-
-    @Test
     public void readBytesError() throws Exception {
         mockStatic(AppCenterLog.class);
-        BufferedReader reader = mock(BufferedReader.class);
-        whenNew(BufferedReader.class).withAnyArguments().thenReturn(reader);
+        FileInputStream fileInputStream = mock(FileInputStream.class);
+        whenNew(FileInputStream.class).withAnyArguments().thenReturn(fileInputStream);
         DataInputStream dataInputStream = mock(DataInputStream.class);
         whenNew(DataInputStream.class).withAnyArguments().thenReturn(dataInputStream);
+        doThrow(new IOException("mock")).when(dataInputStream).readFully(any(byte[].class));
         assertNull(StorageHelper.InternalStorage.readBytes(new File("")));
+        verify(fileInputStream).close();
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
@@ -159,11 +151,14 @@ public class StorageHelperTest {
     @Test
     public void readBytesErrorAndCloseError() throws Exception {
         mockStatic(AppCenterLog.class);
-        BufferedReader bufferReader = mock(BufferedReader.class, new ThrowsException(new IOException()));
-        whenNew(BufferedReader.class).withAnyArguments().thenReturn(bufferReader);
+        FileInputStream fileInputStream = mock(FileInputStream.class);
+        whenNew(FileInputStream.class).withAnyArguments().thenReturn(fileInputStream);
+        doThrow(new IOException("mock close")).when(fileInputStream).close();
         DataInputStream dataInputStream = mock(DataInputStream.class);
         whenNew(DataInputStream.class).withAnyArguments().thenReturn(dataInputStream);
+        doThrow(new IOException("mock")).when(dataInputStream).readFully(any(byte[].class));
         assertNull(StorageHelper.InternalStorage.readBytes(new File("")));
+        verify(fileInputStream).close();
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }

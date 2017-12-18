@@ -45,7 +45,9 @@ public class WrapperSdkExceptionManagerAndroidTest {
         android.util.Log.i(TAG, "Cleanup");
         StorageHelper.PreferencesStorage.clear();
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
-            assertTrue(logFile.delete());
+            if (!logFile.isDirectory()) {
+                assertTrue(logFile.delete());
+            }
         }
     }
 

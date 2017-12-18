@@ -33,12 +33,7 @@ public class Constants {
     public static String FILES_PATH = null;
 
     /**
-     * Directory under the FILES_PATH containing breakpad minidumps.
-     */
-    public static final String BREAKPAD_DIRECTORY = "breakpad";
-
-    /**
-     * Directory under the FILES_PATH containing breakpad minidumps.
+     * Constant used to add NDK identity to native crash logs.
      */
     public static final String WRAPPER_SDK_NAME_NDK = "appcenter.ndk";
 
@@ -67,6 +62,7 @@ public class Constants {
     private static void loadFilesPath(Context context) {
         if (context != null) {
             try {
+
                 /*
                  * The file shouldn't be null, but apparently it still can happen, see
                  * http://code.google.com/p/android/issues/detail?id=8886, Fixed in API 19.

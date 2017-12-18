@@ -477,6 +477,31 @@ public class StorageHelperAndroidTest {
     }
 
     @Test
+    public void internalStorageForBytes() throws IOException {
+        Log.i(TAG, "Testing Internal Storage bytes read/write");
+
+        File file = new File(sAndroidFilesPath + UUIDUtils.randomUUID().toString() + INTERNAL_STORAGE_TEST_FILE_EXTENSION);
+
+        /* Create a mock object. */
+        String hello = "Hello world";
+        StorageHelper.InternalStorage.write(file, hello);
+
+        /* Read the file as bytes. */
+        byte[] helloBytes = StorageHelper.InternalStorage.readBytes(file);
+
+        /* Check. */
+        assertNotNull(helloBytes);
+        assertEquals(hello, new String(helloBytes, "UTF-8"));
+
+        /* Delete the files to clean up. */
+        Log.i(TAG, "Deleting " + file.getName());
+        InternalStorage.delete(file);
+
+        /* Check file not found. */
+        assertNull(StorageHelper.InternalStorage.readBytes(file));
+    }
+
+    @Test
     public void databaseStorage() throws IOException {
         Log.i(TAG, "Testing Database Storage");
 

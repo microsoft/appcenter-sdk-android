@@ -16,12 +16,10 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.Closeable;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
@@ -331,6 +329,7 @@ public class StorageHelper {
             try {
                 BufferedReader reader = new BufferedReader(new FileReader(file));
                 StringBuilder contents;
+
                 //noinspection TryFinallyCanBeTryWithResources (requires min API level 19)
                 try {
                     String line;
@@ -340,6 +339,7 @@ public class StorageHelper {
                         contents.append(line).append(lineSeparator);
                     }
                 } finally {
+
                     //noinspection ThrowFromFinallyBlock
                     reader.close();
                 }
@@ -357,17 +357,18 @@ public class StorageHelper {
          * @return The contents of the file.
          */
         public static byte[] readBytes(@NonNull File file) {
+            byte fileContents[] = new byte[(int) file.length()];
             try {
-                BufferedReader reader = new BufferedReader(new FileReader(file));
-                byte fileContents[] = new byte[(int) file.length()];
-                BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+                FileInputStream fileStream = new FileInputStream(file);
+
+                //noinspection TryFinallyCanBeTryWithResources
                 try {
-                    DataInputStream dis = new DataInputStream(bis);
-                    dis.readFully(fileContents);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    DataInputStream dataInputStream = new DataInputStream(fileStream);
+                    dataInputStream.readFully(fileContents);
+                    return fileContents;
+                } finally {
+                    fileStream.close();
                 }
-                return fileContents;
             } catch (IOException e) {
                 AppCenterLog.error(AppCenter.LOG_TAG, "Could not read file " + file.getAbsolutePath(), e);
             }
@@ -438,10 +439,12 @@ public class StorageHelper {
          */
         public static <T extends Serializable> void writeObject(@NonNull File file, @NonNull T object) throws IOException {
             ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(file));
+
             //noinspection TryFinallyCanBeTryWithResources
             try {
                 outputStream.writeObject(object);
             } finally {
+
                 //noinspection ThrowFromFinallyBlock
                 outputStream.close();
             }
