@@ -134,7 +134,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
 
         /* Initialize channel group. */
         String groupName = getGroupName();
-        if (groupName != null) {
+        if (mChannel != null && groupName != null) {
 
             /* Register service to channel on enabling. */
             if (enabled) {

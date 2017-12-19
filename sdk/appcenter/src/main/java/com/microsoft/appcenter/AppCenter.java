@@ -554,6 +554,7 @@ public class AppCenter {
 
     @WorkerThread
     private void finishStartServices(Iterable<AppCenterService> services) {
+        boolean enabled = isInstanceEnabled();
         List<String> serviceNames = new ArrayList<>();
         for (AppCenterService service : services) {
             Map<String, LogFactory> logFactories = service.getLogFactories();
@@ -561,6 +562,9 @@ public class AppCenter {
                 for (Map.Entry<String, LogFactory> logFactory : logFactories.entrySet()) {
                     mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
                 }
+            }
+            if (!enabled && service.isInstanceEnabled()) {
+                service.setInstanceEnabled(false);
             }
             service.onStarted(mApplication, mAppSecret, mChannel);
             AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
