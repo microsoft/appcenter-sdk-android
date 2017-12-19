@@ -116,6 +116,11 @@ public class AppCenter {
     private Set<AppCenterService> mServices;
 
     /**
+     * Started services for which the log isn't sent yet.
+     */
+    private List<String> mStartedServicesNamesToLog;
+
+    /**
      * Log serializer.
      */
     private LogSerializer mLogSerializer;
@@ -566,12 +571,24 @@ public class AppCenter {
             AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
             serviceNames.add(service.getServiceName());
         }
+        sendStartServiceLog(serviceNames);
+    }
 
-        /* Queue start service log. */
+    /**
+     * Queue start service log.
+     *
+     * @param serviceNames the services to send.
+     */
+    private void sendStartServiceLog(List<String> serviceNames) {
         if (isInstanceEnabled()) {
             StartServiceLog startServiceLog = new StartServiceLog();
             startServiceLog.setServices(serviceNames);
             mChannel.enqueue(startServiceLog, CORE_GROUP);
+        } else {
+            if (mStartedServicesNamesToLog == null) {
+                mStartedServicesNamesToLog = new ArrayList<>();
+            }
+            mStartedServicesNamesToLog.addAll(serviceNames);
         }
     }
 
@@ -648,6 +665,12 @@ public class AppCenter {
             mUncaughtExceptionHandler.register();
         } else if (switchToDisabled) {
             mUncaughtExceptionHandler.unregister();
+        }
+
+        /* Send started services. */
+        if (mStartedServicesNamesToLog != null && switchToEnabled) {
+            sendStartServiceLog(mStartedServicesNamesToLog);
+            mStartedServicesNamesToLog = null;
         }
 
         /* Update state now if true, services are checking this. */
