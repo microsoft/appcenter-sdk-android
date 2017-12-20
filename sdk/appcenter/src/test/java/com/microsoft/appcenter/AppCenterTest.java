@@ -566,13 +566,16 @@ public class AppCenterTest {
     @Test
     public void disablePersisted() {
         when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
+        when(StorageHelper.PreferencesStorage.getBoolean(AnotherDummyService.getInstance().getEnabledPreferenceKey(), true)).thenReturn(false);
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class, AnotherDummyService.class);
         AppCenter appCenter = AppCenter.getInstance();
 
         /* Verify services are disabled by default if App Center is disabled. */
         assertFalse(AppCenter.isEnabled().get());
         for (AppCenterService service : appCenter.getServices()) {
-            assertFalse(((AbstractAppCenterService) service).isInstanceEnabledAsync().get());
+            assertFalse(service.isInstanceEnabled());
+            verify((AbstractAppCenterService) service).applyEnabledState(eq(false));
+            verify((AbstractAppCenterService) service, never()).applyEnabledState(eq(true));
             verify(mApplication).registerActivityLifecycleCallbacks(service);
         }
 
@@ -580,7 +583,8 @@ public class AppCenterTest {
         AppCenter.setEnabled(true);
         assertTrue(AppCenter.isEnabled().get());
         for (AppCenterService service : appCenter.getServices()) {
-            assertTrue(((AbstractAppCenterService) service).isInstanceEnabledAsync().get());
+            assertTrue(service.isInstanceEnabled());
+            verify((AbstractAppCenterService) service).applyEnabledState(eq(true));
         }
     }
 
