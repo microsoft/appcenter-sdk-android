@@ -240,6 +240,28 @@ public class AppCenterTest {
     }
 
     @Test
+    public void useDummyServiceWhenDisablePersisted() {
+        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
+        AppCenter appCenter = AppCenter.getInstance();
+        DummyService service = DummyService.getInstance();
+
+        /* Start. */
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
+        assertFalse(AppCenter.isEnabled().get());
+        assertEquals(1, AppCenter.getInstance().getServices().size());
+        assertTrue(appCenter.getServices().contains(service));
+        verify(mChannel, never()).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
+
+        /* Enable. */
+        AppCenter.setEnabled(true);
+        assertTrue(AppCenter.isEnabled().get());
+        verify(mChannel).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
+        List<String> services = new ArrayList<>();
+        services.add(service.getServiceName());
+        verify(mStartServiceLog).setServices(eq(services));
+    }
+
+    @Test
     public void useDummyServiceTestSplitCall() {
         assertFalse(AppCenter.isConfigured());
         AppCenter.configure(mApplication, DUMMY_APP_SECRET);

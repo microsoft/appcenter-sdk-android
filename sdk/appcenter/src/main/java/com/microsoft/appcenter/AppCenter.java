@@ -667,15 +667,15 @@ public class AppCenter {
             mUncaughtExceptionHandler.unregister();
         }
 
+        /* Update state now if true, services are checking this. */
+        if (enabled) {
+            StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, true);
+        }
+
         /* Send started services. */
         if (mStartedServicesNamesToLog != null && switchToEnabled) {
             sendStartServiceLog(mStartedServicesNamesToLog);
             mStartedServicesNamesToLog = null;
-        }
-
-        /* Update state now if true, services are checking this. */
-        if (enabled) {
-            StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, true);
         }
 
         /* Apply change to services. */
