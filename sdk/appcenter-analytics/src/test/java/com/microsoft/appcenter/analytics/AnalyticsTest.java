@@ -489,6 +489,19 @@ public class AnalyticsTest {
     }
 
     @Test
+    public void disablePersisted() {
+        when(StorageHelper.PreferencesStorage.getBoolean(ANALYTICS_ENABLED_KEY, true)).thenReturn(false);
+        Analytics analytics = Analytics.getInstance();
+
+        /* Start. */
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), "", channel);
+        verify(channel, never()).removeListener(any(Channel.Listener.class));
+        verify(channel, never()).addListener(any(Channel.Listener.class));
+    }
+
+    @Test
     public void startSessionAfterUserApproval() {
 
         /*
