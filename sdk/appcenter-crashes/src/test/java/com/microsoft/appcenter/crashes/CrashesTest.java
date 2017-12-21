@@ -444,6 +444,8 @@ public class CrashesTest {
 
     @Test
     public void noQueueingWhenDisabled() {
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
         when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(false);
         Channel channel = mock(Channel.class);
         Crashes crashes = Crashes.getInstance();

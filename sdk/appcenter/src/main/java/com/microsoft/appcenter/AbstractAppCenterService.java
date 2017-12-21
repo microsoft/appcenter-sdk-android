@@ -134,7 +134,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
 
         /* Initialize channel group. */
         String groupName = getGroupName();
-        if (groupName != null) {
+        if (mChannel != null && groupName != null) {
 
             /* Register service to channel on enabling. */
             if (enabled) {
@@ -152,8 +152,12 @@ public abstract class AbstractAppCenterService implements AppCenterService {
         StorageHelper.PreferencesStorage.putBoolean(getEnabledPreferenceKey(), enabled);
         AppCenterLog.info(getLoggerTag(), String.format("%s service has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
 
-        /* Allow sub-class to handle state change. */
-        applyEnabledState(enabled);
+        /* Don't call it before the service starts. */
+        if (mChannel != null) {
+
+            /* Allow sub-class to handle state change. */
+            applyEnabledState(enabled);
+        }
     }
 
     protected synchronized void applyEnabledState(boolean enabled) {
@@ -189,9 +193,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
             }
         }
         mChannel = channel;
-        if (enabled) {
-            applyEnabledState(true);
-        }
+        applyEnabledState(enabled);
     }
 
     @Override
