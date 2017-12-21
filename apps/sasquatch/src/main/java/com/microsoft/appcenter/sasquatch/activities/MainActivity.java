@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             Push.class.getMethod("setSenderId", String.class).invoke(null, SENDER_ID);
         } catch (Exception e) {
-            AppCenterLog.error(LOG_TAG, "Push.setSenderdId method not available.");
+            AppCenterLog.error(LOG_TAG, "Push.setSenderId method not available.");
         }
 
         /* Set crash attachments. */
