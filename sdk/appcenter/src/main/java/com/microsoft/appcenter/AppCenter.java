@@ -579,6 +579,7 @@ public class AppCenter {
      *
      * @param serviceNames the services to send.
      */
+    @WorkerThread
     private void sendStartServiceLog(List<String> serviceNames) {
         if (isInstanceEnabled()) {
             StartServiceLog startServiceLog = new StartServiceLog();
