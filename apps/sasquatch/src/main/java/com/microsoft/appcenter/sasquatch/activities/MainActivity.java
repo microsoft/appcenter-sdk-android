@@ -150,7 +150,11 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void accept(String path) {
-                    setupNativeCrashesListener(path);
+
+                    /* Path is null when Crashes is disabled. */
+                    if (path != null) {
+                        setupNativeCrashesListener(path);
+                    }
                 }
             });
         } catch (Exception ignore) {
