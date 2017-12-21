@@ -244,6 +244,7 @@ public class AppCenterTest {
         when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
         AppCenter appCenter = AppCenter.getInstance();
         DummyService service = DummyService.getInstance();
+        AnotherDummyService anotherService = AnotherDummyService.getInstance();
 
         /* Start. */
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
@@ -252,12 +253,20 @@ public class AppCenterTest {
         assertTrue(appCenter.getServices().contains(service));
         verify(mChannel, never()).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
 
+        /* Start another service. */
+        AppCenter.start(AnotherDummyService.class);
+        assertFalse(AppCenter.isEnabled().get());
+        assertEquals(2, AppCenter.getInstance().getServices().size());
+        assertTrue(appCenter.getServices().contains(anotherService));
+        verify(mChannel, never()).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
+
         /* Enable. */
         AppCenter.setEnabled(true);
         assertTrue(AppCenter.isEnabled().get());
         verify(mChannel).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
         List<String> services = new ArrayList<>();
         services.add(service.getServiceName());
+        services.add(anotherService.getServiceName());
         verify(mStartServiceLog).setServices(eq(services));
     }
 
