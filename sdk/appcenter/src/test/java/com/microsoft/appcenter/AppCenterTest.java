@@ -554,6 +554,28 @@ public class AppCenterTest {
     }
 
     @Test
+    public void disableBetweenStartCalls() {
+        DummyService dummyService = DummyService.getInstance();
+        AnotherDummyService anotherDummyService = AnotherDummyService.getInstance();
+
+        /* Start App Center SDK with one service. */
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
+        assertTrue(AppCenter.isEnabled().get());
+        assertTrue(dummyService.isInstanceEnabled());
+
+        /* Disable. */
+        AppCenter.setEnabled(false);
+        assertFalse(AppCenter.isEnabled().get());
+        assertFalse(dummyService.isInstanceEnabled());
+
+        /* Start another one service. */
+        AppCenter.start(AnotherDummyService.class);
+        assertFalse(AppCenter.isEnabled().get());
+        assertFalse(dummyService.isInstanceEnabled());
+        assertFalse(anotherDummyService.isInstanceEnabled());
+    }
+
+    @Test
     public void enableBeforeConfiguredTest() {
         /* Test isEnabled and setEnabled before configure */
         assertFalse(AppCenter.isEnabled().get());
