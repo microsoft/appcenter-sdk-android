@@ -79,6 +79,26 @@ public class NetworkStateHelper implements Closeable {
     NetworkStateHelper(Context context) {
         mContext = context.getApplicationContext();
         mConnectivityManager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
+        reopen();
+    }
+
+    /**
+     * Get shared instance.
+     *
+     * @param context any context.
+     * @return shared instance.
+     */
+    public static NetworkStateHelper getSharedInstance(Context context) {
+        if (sSharedInstance == null) {
+            sSharedInstance = new NetworkStateHelper(context);
+        }
+        return sSharedInstance;
+    }
+
+    /**
+     * Make this helper active again after closing.
+     */
+    public void reopen() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 
@@ -131,7 +151,7 @@ public class NetworkStateHelper implements Closeable {
             } else {
                 updateNetworkType();
                 mConnectivityReceiver = new ConnectivityReceiver();
-                context.registerReceiver(mConnectivityReceiver, new IntentFilter(CONNECTIVITY_ACTION));
+                mContext.registerReceiver(mConnectivityReceiver, new IntentFilter(CONNECTIVITY_ACTION));
             }
         } catch (RuntimeException e) {
 
@@ -141,19 +161,6 @@ public class NetworkStateHelper implements Closeable {
              */
             AppCenterLog.error(LOG_TAG, "Cannot access network state information", e);
         }
-    }
-
-    /**
-     * Get shared instance.
-     *
-     * @param context any context.
-     * @return shared instance.
-     */
-    public static NetworkStateHelper getSharedInstance(Context context) {
-        if (sSharedInstance == null) {
-            sSharedInstance = new NetworkStateHelper(context);
-        }
-        return sSharedInstance;
     }
 
     /**
@@ -197,8 +204,10 @@ public class NetworkStateHelper implements Closeable {
     public void close() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
+            mAvailableNetworks.clear();
         } else {
             mContext.unregisterReceiver(mConnectivityReceiver);
+            mNetworkType = null;
         }
     }
 

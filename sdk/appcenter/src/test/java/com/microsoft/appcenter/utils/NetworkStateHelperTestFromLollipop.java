@@ -104,9 +104,27 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         verify(listener3, times(2)).onNetworkStateUpdated(false);
         assertFalse(helper.isNetworkConnected());
 
-        /* Close and verify interactions. */
+        /* Make it connected again before closing with no listener. */
+        helper.removeListener(listener3);
+        network = mock(Network.class);
+        callback.getValue().onAvailable(network);
+        verifyNoMoreInteractions(listener3);
+        assertTrue(helper.isNetworkConnected());
+
+        /* Close and verify interactions. This will also reset to disconnected. */
         helper.close();
+        assertFalse(helper.isNetworkConnected());
         verify(mConnectivityManager).unregisterNetworkCallback(callback.getValue());
+
+        /* Reopening will not restore removed listeners by close. */
+        helper.reopen();
+        assertFalse(helper.isNetworkConnected());
+        network = mock(Network.class);
+        callback.getValue().onAvailable(network);
+        assertTrue(helper.isNetworkConnected());
+        verify(mConnectivityManager, times(2)).registerNetworkCallback(any(NetworkRequest.class), any(ConnectivityManager.NetworkCallback.class));
+
+        /* Check no extra listener calls. */
         verifyNoMoreInteractions(listener);
         verifyNoMoreInteractions(listener2);
         verifyNoMoreInteractions(listener3);

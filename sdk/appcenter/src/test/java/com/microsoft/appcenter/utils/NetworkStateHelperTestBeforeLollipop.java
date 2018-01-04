@@ -21,6 +21,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -68,6 +69,7 @@ public class NetworkStateHelperTestBeforeLollipop extends AbstractNetworkStateHe
             }
         });
         NetworkStateHelper helper = new NetworkStateHelper(mContext);
+        verify(mContext).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));
         NetworkStateHelper.Listener listener = mock(NetworkStateHelper.Listener.class);
         helper.addListener(listener);
 
@@ -113,9 +115,24 @@ public class NetworkStateHelperTestBeforeLollipop extends AbstractNetworkStateHe
         verify(listener3).onNetworkStateUpdated(false);
         assertFalse(helper.isNetworkConnected());
 
-        /* Close and verify interactions. */
+        /* Make it connected again before closing with no listener. */
+        helper.removeListener(listener3);
+        when(networkInfo.isConnected()).thenReturn(true);
+        receiver.onReceive(mContext, intent);
+        verify(listener3, never()).onNetworkStateUpdated(true);
+        assertTrue(helper.isNetworkConnected());
+
+        /* Close and verify interactions. This will also reset to disconnected. */
         helper.close();
+        assertFalse(helper.isNetworkConnected());
         verify(mContext).unregisterReceiver(receiver);
+
+        /* Reopening will not restore removed listeners by close. */
+        helper.reopen();
+        assertTrue(helper.isNetworkConnected());
+        verify(mContext, times(2)).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));
+
+        /* Check no extra listener calls. */
         verifyNoMoreInteractions(listener);
         verifyNoMoreInteractions(listener2);
         verifyNoMoreInteractions(listener3);
