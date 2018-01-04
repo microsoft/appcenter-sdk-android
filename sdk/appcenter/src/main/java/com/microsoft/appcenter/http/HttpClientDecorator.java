@@ -14,4 +14,9 @@ abstract class HttpClientDecorator implements HttpClient {
     public void close() throws IOException {
         mDecoratedApi.close();
     }
+
+    @Override
+    public void reopen() {
+        mDecoratedApi.reopen();
+    }
 }

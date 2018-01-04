@@ -60,6 +60,12 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
     }
 
     @Override
+    public void reopen() {
+        mNetworkStateHelper.addListener(this);
+        super.reopen();
+    }
+
+    @Override
     public synchronized void onNetworkStateUpdated(boolean connected) {
         if (connected) {
             AppCenterLog.debug(LOG_TAG, "Network is available. " + mCalls.size() + " pending call(s) to submit now.");

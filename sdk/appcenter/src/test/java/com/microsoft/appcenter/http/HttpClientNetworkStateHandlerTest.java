@@ -53,6 +53,7 @@ public class HttpClientNetworkStateHandlerTest {
 
         /* Test call. */
         HttpClient decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
+        verify(networkStateHelper).addListener(any(NetworkStateHelper.Listener.class));
         decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
         verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
         verify(callback).onCallSucceeded("mockPayload");
@@ -62,6 +63,12 @@ public class HttpClientNetworkStateHandlerTest {
         /* Close. */
         decorator.close();
         verify(httpClient).close();
+        verify(networkStateHelper).removeListener(any(NetworkStateHelper.Listener.class));
+
+        /* Reopen. */
+        decorator.reopen();
+        verify(httpClient).reopen();
+        verify(networkStateHelper, times(2)).addListener(any(NetworkStateHelper.Listener.class));
     }
 
     @Test
