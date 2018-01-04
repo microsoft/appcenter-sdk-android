@@ -692,6 +692,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.enqueue(mock(Log.class), TEST_GROUP);
         assertNotNull(runnable.get());
         runnable.get().run();
+        verify(ingestion).reopen();
         verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 

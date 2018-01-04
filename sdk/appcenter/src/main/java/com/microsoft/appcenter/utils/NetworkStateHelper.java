@@ -6,8 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
+import android.net.NetworkRequest;
+import android.os.Build;
 import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 
 import com.microsoft.appcenter.AppCenter;
 
@@ -17,6 +22,7 @@ import java.util.Set;
 
 import static android.content.Context.CONNECTIVITY_SERVICE;
 import static android.net.ConnectivityManager.CONNECTIVITY_ACTION;
+import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 
 /**
  * Network state helper.
@@ -40,19 +46,29 @@ public class NetworkStateHelper implements Closeable {
     private final ConnectivityManager mConnectivityManager;
 
     /**
-     * Our connectivity event receiver.
-     */
-    private final ConnectivityReceiver mConnectivityReceiver;
-
-    /**
      * Network state listeners that will subscribe to us.
      */
     private final Set<Listener> mListeners = new HashSet<>();
 
     /**
-     * Current network type, null for disconnected.
+     * Currently available networks, always empty on API level < 21.
+     */
+    private final Set<Network> mAvailableNetworks = new HashSet<>();
+
+    /**
+     * Network callback, null on API level < 21.
+     */
+    private ConnectivityManager.NetworkCallback mNetworkCallback;
+
+    /**
+     * Current network type, null for disconnected or API level >= 21.
      */
     private String mNetworkType;
+
+    /**
+     * Our connectivity event receiver, null on API level >= 21.
+     */
+    private ConnectivityReceiver mConnectivityReceiver;
 
     /**
      * Init.
@@ -63,9 +79,7 @@ public class NetworkStateHelper implements Closeable {
     NetworkStateHelper(Context context) {
         mContext = context.getApplicationContext();
         mConnectivityManager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
-        mConnectivityReceiver = new ConnectivityReceiver();
-        updateNetworkType();
-        context.registerReceiver(mConnectivityReceiver, new IntentFilter(CONNECTIVITY_ACTION));
+        reopen();
     }
 
     /**
@@ -82,38 +96,89 @@ public class NetworkStateHelper implements Closeable {
     }
 
     /**
+     * Make this helper active again after closing.
+     */
+    public void reopen() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+
+                /* Build query to get a working network listener. */
+                NetworkRequest.Builder request = new NetworkRequest.Builder();
+                request.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    request.addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+                }
+                mNetworkCallback = new ConnectivityManager.NetworkCallback() {
+
+                    @Override
+                    public void onAvailable(Network network) {
+                        Log.d(AppCenter.LOG_TAG, "Network available netId: " + network);
+                        mAvailableNetworks.add(network);
+                        Log.d(AppCenter.LOG_TAG, "Available networks netIds: " + mAvailableNetworks);
+
+                        /*
+                         * Trigger event only once if we gain a new network while one was already
+                         * available. Special logic is handled in network lost events.
+                         */
+                        if (mAvailableNetworks.size() == 1) {
+                            notifyNetworkStateUpdated(true);
+                        }
+                    }
+
+                    @Override
+                    public void onLost(Network network) {
+
+                       /*
+                        * We will have WIFI network available event before we lose mobile network.
+                        * Pending calls just before the switch might take a while to fail.
+                        * When we lose a network, but have another one available, just simulate network
+                        * down then up again to properly reset pending calls so that they are reliable
+                        * and fast. This notification scheme is similar to the old connectivity receiver
+                        * implementation.
+                        */
+                        Log.d(AppCenter.LOG_TAG, "Network lost netId: " + network);
+                        mAvailableNetworks.remove(network);
+                        Log.d(AppCenter.LOG_TAG, "Available networks netIds: " + mAvailableNetworks);
+                        notifyNetworkStateUpdated(false);
+                        if (!mAvailableNetworks.isEmpty()) {
+                            notifyNetworkStateUpdated(true);
+                        }
+                    }
+                };
+
+                //noinspection ConstantConditions
+                mConnectivityManager.registerNetworkCallback(request.build(), mNetworkCallback);
+            } else {
+                updateNetworkType();
+                mConnectivityReceiver = new ConnectivityReceiver();
+                mContext.registerReceiver(mConnectivityReceiver, new IntentFilter(CONNECTIVITY_ACTION));
+            }
+        } catch (RuntimeException e) {
+
+            /*
+             * Can be security exception if permission missing or sometimes another runtime exception
+             * on some customized firmwares.
+             */
+            AppCenterLog.error(LOG_TAG, "Cannot access network state information", e);
+        }
+    }
+
+    /**
      * Check whether the network is currently connected.
      *
      * @return true for connected, false for disconnected.
      */
     public boolean isNetworkConnected() {
-        return mNetworkType != null;
+        return mNetworkType != null || !mAvailableNetworks.isEmpty();
     }
 
     /**
-     * Update network type by polling.
+     * Update network type by polling on API level < 21.
      */
     private void updateNetworkType() {
 
         /* Get active network info */
-        NetworkInfo networkInfo;
-        try {
-            networkInfo = mConnectivityManager.getActiveNetworkInfo();
-        } catch (RuntimeException e) {
-
-            /*
-             * Can fail with either SecurityException or even NullPointerException on "corrupted" devices.
-             */
-            networkInfo = null;
-            AppCenterLog.error(AppCenter.LOG_TAG, "Could not get network info and thus stuck in disconnected state, please check you declared android.permission.ACCESS_NETWORK_STATE");
-        }
-        updateNetworkType(networkInfo);
-    }
-
-    /**
-     * Update network type with the specified update.
-     */
-    private void updateNetworkType(NetworkInfo networkInfo) {
+        NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
         AppCenterLog.debug(AppCenter.LOG_TAG, "Active network info=" + networkInfo);
 
         /* Update network type. null for not connected. */
@@ -137,7 +202,13 @@ public class NetworkStateHelper implements Closeable {
 
     @Override
     public void close() {
-        mContext.unregisterReceiver(mConnectivityReceiver);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
+            mAvailableNetworks.clear();
+        } else {
+            mContext.unregisterReceiver(mConnectivityReceiver);
+            mNetworkType = null;
+        }
     }
 
     /**
@@ -189,15 +260,7 @@ public class NetworkStateHelper implements Closeable {
              * We'll simulate a network state down event to the listeners to help with that scenario.
              */
             String previousNetworkType = mNetworkType;
-
-            /*
-             * getActiveNetworkInfo has a bug on Android 8
-             * so we need to use the deprecated extra info.
-             * See https://issuetracker.google.com/issues/37137911.
-             */
-            @SuppressWarnings("deprecation")
-            NetworkInfo networkInfo = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
-            updateNetworkType(networkInfo);
+            updateNetworkType();
             boolean networkTypeChanged = previousNetworkType == null ? mNetworkType != null : !previousNetworkType.equals(mNetworkType);
             if (networkTypeChanged) {
                 boolean connected = isNetworkConnected();

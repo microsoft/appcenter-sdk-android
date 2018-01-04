@@ -25,6 +25,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
+import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -62,11 +63,6 @@ public class AppCenter {
     static final String CORE_GROUP = "group_core";
 
     /**
-     * Shutdown timeout in millis.
-     */
-    private static final int SHUTDOWN_TIMEOUT = 5000;
-
-    /**
      * Name of the variable used to indicate services that should be disabled (typically for test
      * cloud).
      */
@@ -78,6 +74,11 @@ public class AppCenter {
      */
     @VisibleForTesting
     static final String DISABLE_ALL_SERVICES = "All";
+
+    /**
+     * Shutdown timeout in millis.
+     */
+    private static final int SHUTDOWN_TIMEOUT = 5000;
 
     /**
      * Shared instance.
@@ -145,6 +146,7 @@ public class AppCenter {
      */
     private AppCenterHandler mAppCenterHandler;
 
+    @VisibleForTesting
     static synchronized AppCenter getInstance() {
         if (sInstance == null) {
             sInstance = new AppCenter();
@@ -499,6 +501,9 @@ public class AppCenter {
         if (mLogUrl != null) {
             mChannel.setLogUrl(mLogUrl);
         }
+        if (!enabled) {
+            NetworkStateHelper.getSharedInstance(mApplication).close();
+        }
         AppCenterLog.debug(LOG_TAG, "App Center storage initialized.");
     }
 
@@ -668,8 +673,10 @@ public class AppCenter {
         /* Update uncaught exception subscription. */
         if (switchToEnabled) {
             mUncaughtExceptionHandler.register();
+            NetworkStateHelper.getSharedInstance(mApplication).reopen();
         } else if (switchToDisabled) {
             mUncaughtExceptionHandler.unregister();
+            NetworkStateHelper.getSharedInstance(mApplication).close();
         }
 
         /* Update state now if true, services are checking this. */
@@ -773,16 +780,31 @@ public class AppCenter {
         mChannel = channel;
     }
 
+    private Boolean shouldDisable(String serviceName) {
+        try {
+            Bundle arguments = InstrumentationRegistryHelper.getArguments();
+            String disableServices = arguments.getString(DISABLE_SERVICES);
+            if (disableServices == null) {
+                return false;
+            }
+            String[] disableServicesList = disableServices.split(",");
+            for (String service : disableServicesList) {
+                service = service.trim();
+                if (service.equals(DISABLE_ALL_SERVICES) || service.equals(serviceName)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (NoClassDefFoundError | IllegalAccessError e) {
+            AppCenterLog.debug(LOG_TAG, "Cannot read instrumentation variables in a non-test environment.");
+            return false;
+        }
+    }
+
     @VisibleForTesting
     class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
         private Thread.UncaughtExceptionHandler mDefaultUncaughtExceptionHandler;
-
-        /**
-         * This is to avoid lint warning.
-         */
-        public UncaughtExceptionHandler() {
-        }
 
         @Override
         public void uncaughtException(Thread thread, Throwable exception) {
@@ -828,27 +850,6 @@ public class AppCenter {
 
         void unregister() {
             Thread.setDefaultUncaughtExceptionHandler(mDefaultUncaughtExceptionHandler);
-        }
-    }
-
-    private Boolean shouldDisable(String serviceName) {
-        try {
-            Bundle arguments = InstrumentationRegistryHelper.getArguments();
-            String disableServices = arguments.getString(DISABLE_SERVICES);
-            if (disableServices == null) {
-                return false;
-            }
-            String[] disableServicesList = disableServices.split(",");
-            for (String service : disableServicesList) {
-                service = service.trim();
-                if (service.equals(DISABLE_ALL_SERVICES) || service.equals(serviceName)) {
-                    return true;
-                }
-            }
-            return false;
-        } catch (NoClassDefFoundError | IllegalAccessError e) {
-            AppCenterLog.debug(LOG_TAG, "Cannot read instrumentation variables in a non-test environment.");
-            return false;
         }
     }
 }

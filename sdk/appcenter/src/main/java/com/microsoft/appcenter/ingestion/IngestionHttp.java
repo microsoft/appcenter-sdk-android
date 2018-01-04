@@ -108,6 +108,11 @@ public class IngestionHttp implements Ingestion {
         mHttpClient.close();
     }
 
+    @Override
+    public void reopen() {
+        mHttpClient.reopen();
+    }
+
     /**
      * Inner class is used to be able to mock System.currentTimeMillis, does not work if using anonymous inner class...
      */
