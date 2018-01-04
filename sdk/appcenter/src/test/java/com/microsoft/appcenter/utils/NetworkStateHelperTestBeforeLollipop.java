@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.mock;
@@ -86,6 +87,7 @@ public class NetworkStateHelperTestBeforeLollipop extends AbstractNetworkStateHe
         receiver.onReceive(mContext, intent);
         verify(listener).onNetworkStateUpdated(true);
         verify(listener, never()).onNetworkStateUpdated(false);
+        assertTrue(helper.isNetworkConnected());
 
         /* Change to WIFI. */
         helper.removeListener(listener);
@@ -96,6 +98,7 @@ public class NetworkStateHelperTestBeforeLollipop extends AbstractNetworkStateHe
         receiver.onReceive(mContext, intent);
         verify(listener2).onNetworkStateUpdated(false);
         verify(listener2).onNetworkStateUpdated(true);
+        assertTrue(helper.isNetworkConnected());
 
         /* Duplicate WIFI callback. */
         receiver.onReceive(mContext, intent);
@@ -108,6 +111,7 @@ public class NetworkStateHelperTestBeforeLollipop extends AbstractNetworkStateHe
         when(networkInfo.isConnected()).thenReturn(false);
         receiver.onReceive(mContext, intent);
         verify(listener3).onNetworkStateUpdated(false);
+        assertFalse(helper.isNetworkConnected());
 
         /* Close and verify interactions. */
         helper.close();

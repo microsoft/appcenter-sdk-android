@@ -17,11 +17,13 @@ import org.mockito.ArgumentCaptor;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -69,6 +71,7 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         callback.getValue().onAvailable(network);
         verify(listener).onNetworkStateUpdated(true);
         verify(listener, never()).onNetworkStateUpdated(false);
+        assertTrue(helper.isNetworkConnected());
 
         /* Change to say, Mobile. */
         helper.removeListener(listener);
@@ -79,6 +82,7 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         callback.getValue().onAvailable(network);
         verify(listener2).onNetworkStateUpdated(false);
         verify(listener2).onNetworkStateUpdated(true);
+        assertTrue(helper.isNetworkConnected());
 
         /* Make new network available before we lost the previous one. */
         helper.removeListener(listener2);
@@ -86,12 +90,19 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         helper.addListener(listener3);
         Network network2 = mock(Network.class);
         callback.getValue().onAvailable(network2);
+        assertTrue(helper.isNetworkConnected());
 
         /* The callbacks are triggered only when losing previous network. */
         verify(listener3, never()).onNetworkStateUpdated(anyBoolean());
         callback.getValue().onLost(network);
         verify(listener3).onNetworkStateUpdated(false);
         verify(listener3).onNetworkStateUpdated(true);
+        assertTrue(helper.isNetworkConnected());
+
+        /* Lose second network. */
+        callback.getValue().onLost(network2);
+        verify(listener3, times(2)).onNetworkStateUpdated(false);
+        assertFalse(helper.isNetworkConnected());
 
         /* Close and verify interactions. */
         helper.close();
