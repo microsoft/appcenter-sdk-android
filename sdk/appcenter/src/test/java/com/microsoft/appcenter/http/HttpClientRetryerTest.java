@@ -98,7 +98,7 @@ public class HttpClientRetryerTest {
 
     @Test
     public void retryOnceThenFail() {
-        final HttpException expectedException = new HttpException(429);
+        final HttpException expectedException = new HttpException(403);
         final ServiceCallback callback = mock(ServiceCallback.class);
         HttpClient httpClient = mock(HttpClient.class);
         doAnswer(new Answer<ServiceCall>() {
