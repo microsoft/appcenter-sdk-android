@@ -55,7 +55,7 @@ public class HttpUtils {
         if (t instanceof HttpException) {
             HttpException exception = (HttpException) t;
             int code = exception.getStatusCode();
-            return code >= 500 || code == 408 || code == 429;
+            return code >= 500 || code == 408;
         }
 
         /* Check for a generic exception to retry. */
