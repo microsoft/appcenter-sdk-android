@@ -1,0 +1,206 @@
+package com.microsoft.appcenter.persistence;
+
+import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
+
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.storage.StorageHelper;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.UUID;
+
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
+
+/**
+ * Persistent session history.
+ */
+public class SessionStorage {
+
+    /**
+     * Singleton.
+     */
+    private static SessionStorage sInstance;
+
+    /**
+     * Key used in storage to persist sessions.
+     */
+    private static final String STORAGE_KEY = "sessions";
+
+    /**
+     * Maximum number of sessions to persist the state.
+     */
+    private static final int STORAGE_MAX_SESSIONS = 10;
+
+    /**
+     * Separator used for persistent storage format.
+     */
+    private static final String STORAGE_KEY_VALUE_SEPARATOR = "/";
+
+    /**
+     * Past and current session identifiers sorted by session starting timestamp (ascending).
+     */
+    private final NavigableMap<Long, SessionInfo> mSessions = new TreeMap<>();
+
+    /**
+     * App launch timestamp. TODO we should use the real process start time and not SDK start time.
+     * But there is no Android API to do that it requires executing ps command or reading proc files.
+     */
+    private final long mAppLaunchTimestamp;
+
+    /**
+     * Init.
+     */
+    @WorkerThread
+    private SessionStorage() {
+
+        /* Try loading past sessions from storage. */
+        mAppLaunchTimestamp = System.currentTimeMillis();
+        Set<String> storedSessions = StorageHelper.PreferencesStorage.getStringSet(STORAGE_KEY);
+        if (storedSessions != null) {
+            for (String session : storedSessions) {
+                String[] split = session.split(STORAGE_KEY_VALUE_SEPARATOR);
+                try {
+                    long time = Long.parseLong(split[0]);
+                    UUID sid = UUID.fromString(split[1]);
+                    long appLaunchTimestamp;
+                    if (split.length > 2) {
+                        appLaunchTimestamp = Long.parseLong(split[2]);
+                    } else {
+
+                        /* Backward compatibility with older SDK storage. Use placeholder. */
+                        appLaunchTimestamp = time;
+                    }
+                    mSessions.put(time, new SessionInfo(time, sid, appLaunchTimestamp));
+                } catch (RuntimeException e) {
+                    AppCenterLog.warn(LOG_TAG, "Ignore invalid session in store: " + session, e);
+                }
+            }
+        }
+        AppCenterLog.debug(LOG_TAG, "Loaded stored sessions: " + mSessions);
+        addSession(null);
+    }
+
+    @WorkerThread
+    public static synchronized SessionStorage getInstance() {
+        if (sInstance == null) {
+            sInstance = new SessionStorage();
+        }
+        return sInstance;
+    }
+
+    @VisibleForTesting
+    public static synchronized void unsetInstance() {
+        sInstance = null;
+    }
+
+    /**
+     * Record a new session in storage.
+     * If maximum capacity of storage has been reached, the oldest session is discarded.
+     *
+     * @param sessionId session identifier.
+     */
+    public synchronized void addSession(UUID sessionId) {
+
+        /* Update session map. */
+        long now = System.currentTimeMillis();
+        mSessions.put(now, new SessionInfo(now, sessionId, mAppLaunchTimestamp));
+
+        /* Remove oldest session if we reached maximum storage capacity. */
+        if (mSessions.size() > STORAGE_MAX_SESSIONS) {
+            mSessions.pollFirstEntry();
+        }
+
+        /* Persist sessions. */
+        Set<String> sessionStorage = new HashSet<>();
+        for (SessionInfo session : mSessions.values()) {
+            String rawSession = session.getTimestamp() +
+                    STORAGE_KEY_VALUE_SEPARATOR + session.getSessionId() +
+                    STORAGE_KEY_VALUE_SEPARATOR + session.getAppLaunchTimestamp();
+            sessionStorage.add(rawSession);
+        }
+        StorageHelper.PreferencesStorage.putStringSet(STORAGE_KEY, sessionStorage);
+    }
+
+    /**
+     * Get what was the current session from storage at the specified timestamp.
+     *
+     * @param timestamp try to find session at that timestamp.
+     * @return found session or null.
+     */
+    public synchronized SessionInfo getSessionAt(long timestamp) {
+        Map.Entry<Long, SessionInfo> pastEntry = mSessions.floorEntry(timestamp);
+        if (pastEntry != null) {
+            return pastEntry.getValue();
+        }
+        return null;
+    }
+
+    /**
+     * Clear storage from saved session state.
+     */
+    public synchronized void clearSessions() {
+        mSessions.clear();
+        StorageHelper.PreferencesStorage.remove(STORAGE_KEY);
+    }
+
+    /**
+     * Session information object.
+     */
+    public static class SessionInfo {
+
+        /**
+         * Session timestamp.
+         */
+        private long mTimestamp;
+
+        /**
+         * Session identifier.
+         */
+        private UUID mSessionId;
+
+        /**
+         * App launch timestamp.
+         */
+        private long mAppLaunchTimestamp;
+
+        /**
+         * Init.
+         *
+         * @param timestamp          session timestamp.
+         * @param sessionId          session identifier.
+         * @param appLaunchTimestamp app launch timestamp.
+         */
+        SessionInfo(long timestamp, @NonNull UUID sessionId, long appLaunchTimestamp) {
+            mTimestamp = timestamp;
+            mSessionId = sessionId;
+            mAppLaunchTimestamp = appLaunchTimestamp;
+        }
+
+        /**
+         * @return session timestamp.
+         */
+        @SuppressWarnings("WeakerAccess")
+        public long getTimestamp() {
+            return mTimestamp;
+        }
+
+        /**
+         * @return session identifier.
+         */
+        public UUID getSessionId() {
+            return mSessionId;
+        }
+
+        /**
+         * @return application launch timestamp.
+         */
+        public long getAppLaunchTimestamp() {
+            return mAppLaunchTimestamp;
+        }
+    }
+}
