@@ -1,6 +1,5 @@
 package com.microsoft.appcenter.persistence;
 
-import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
@@ -22,25 +21,21 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 public class SessionStorage {
 
     /**
-     * Singleton.
-     */
-    private static SessionStorage sInstance;
-
-    /**
      * Key used in storage to persist sessions.
      */
     private static final String STORAGE_KEY = "sessions";
-
     /**
      * Maximum number of sessions to persist the state.
      */
     private static final int STORAGE_MAX_SESSIONS = 10;
-
     /**
      * Separator used for persistent storage format.
      */
     private static final String STORAGE_KEY_VALUE_SEPARATOR = "/";
-
+    /**
+     * Singleton.
+     */
+    private static SessionStorage sInstance;
     /**
      * Past and current session identifiers sorted by session starting timestamp (ascending).
      */
