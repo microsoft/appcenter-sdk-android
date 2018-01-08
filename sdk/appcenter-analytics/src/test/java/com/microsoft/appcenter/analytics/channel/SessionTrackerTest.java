@@ -1,7 +1,6 @@
 package com.microsoft.appcenter.analytics.channel;
 
 import android.os.SystemClock;
-import android.os.health.SystemHealthManager;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
@@ -12,7 +11,6 @@ import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.persistence.SessionStorage;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
