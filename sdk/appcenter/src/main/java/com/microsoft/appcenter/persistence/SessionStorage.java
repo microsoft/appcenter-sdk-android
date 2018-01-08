@@ -49,6 +49,8 @@ public class SessionStorage {
     /**
      * App launch timestamp. TODO we should use the real process start time and not SDK start time.
      * But there is no Android API to do that it requires executing ps command or reading proc files.
+     * This is used to know minidump files app launch timestamp that are processed after restart.
+     * This is not used for regular managed crashes.
      */
     private final long mAppLaunchTimestamp;
 
@@ -82,6 +84,11 @@ public class SessionStorage {
             }
         }
         AppCenterLog.debug(LOG_TAG, "Loaded stored sessions: " + mSessions);
+
+        /*
+         * Record a session with no identifier
+         * to avoid correlating log to a session from a previous process.
+         */
         addSession(null);
     }
 
@@ -156,17 +163,17 @@ public class SessionStorage {
         /**
          * Session timestamp.
          */
-        private long mTimestamp;
+        private final long mTimestamp;
 
         /**
          * Session identifier.
          */
-        private UUID mSessionId;
+        private final UUID mSessionId;
 
         /**
          * App launch timestamp.
          */
-        private long mAppLaunchTimestamp;
+        private final long mAppLaunchTimestamp;
 
         /**
          * Init.
@@ -175,7 +182,7 @@ public class SessionStorage {
          * @param sessionId          session identifier.
          * @param appLaunchTimestamp app launch timestamp.
          */
-        SessionInfo(long timestamp, @NonNull UUID sessionId, long appLaunchTimestamp) {
+        SessionInfo(long timestamp, UUID sessionId, long appLaunchTimestamp) {
             mTimestamp = timestamp;
             mSessionId = sessionId;
             mAppLaunchTimestamp = appLaunchTimestamp;
@@ -184,7 +191,6 @@ public class SessionStorage {
         /**
          * @return session timestamp.
          */
-        @SuppressWarnings("WeakerAccess")
         public long getTimestamp() {
             return mTimestamp;
         }
