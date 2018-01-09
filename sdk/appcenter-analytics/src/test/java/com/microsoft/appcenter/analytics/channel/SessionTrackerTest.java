@@ -3,12 +3,12 @@ package com.microsoft.appcenter.analytics.channel;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 
+import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
-import com.microsoft.appcenter.persistence.SessionStorage;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.Before;
@@ -50,7 +50,7 @@ import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
-@PrepareForTest({SessionTracker.class, SessionStorage.class, StorageHelper.PreferencesStorage.class, SystemClock.class})
+@PrepareForTest({SessionTracker.class, SessionContext.class, StorageHelper.PreferencesStorage.class, SystemClock.class})
 public class SessionTrackerTest {
 
     private final static String TEST_GROUP = "group_test";
@@ -96,7 +96,7 @@ public class SessionTrackerTest {
         }).when(StorageHelper.PreferencesStorage.class);
         StorageHelper.PreferencesStorage.putStringSet(anyString(), anySetOf(String.class));
         when(StorageHelper.PreferencesStorage.getStringSet(anyString())).thenReturn(null);
-        SessionStorage.unsetInstance();
+        SessionContext.unsetInstance();
         spendTime(1000);
         mChannel = mock(Channel.class);
         mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);
@@ -413,7 +413,7 @@ public class SessionTrackerTest {
 
     @Test
     public void maxOutStoredSessions() {
-        SessionStorage.getInstance();
+        SessionContext.getInstance();
         spendTime(1000);
         Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
         assertNotNull(sessions);
@@ -593,7 +593,7 @@ public class SessionTrackerTest {
 
         /* Init app launch time within session storage. */
         long appLaunchTime = mMockTime;
-        SessionStorage.getInstance();
+        SessionContext.getInstance();
 
         /* Make a log later so that times are different in the test and verify basics. */
         spendTime(1000);
@@ -605,14 +605,14 @@ public class SessionTrackerTest {
 
         /* Get session and check it after reset (simulate a restart). */
         spendTime(1000);
-        SessionStorage.unsetInstance();
-        SessionStorage.SessionInfo session = SessionStorage.getInstance().getSessionAt(firstSessionTime);
+        SessionContext.unsetInstance();
+        SessionContext.SessionInfo session = SessionContext.getInstance().getSessionAt(firstSessionTime);
         assertNotNull(session);
         assertEquals(session.getSessionId(), log.getSid());
         assertEquals(appLaunchTime, session.getAppLaunchTimestamp());
 
         /* Make a new log with explicit timestamp now: it must not correlate to previous session as we restarted process. */
-        SessionStorage.unsetInstance();
+        SessionContext.unsetInstance();
         spendTime(1000);
         mChannel = mock(Channel.class);
         mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);

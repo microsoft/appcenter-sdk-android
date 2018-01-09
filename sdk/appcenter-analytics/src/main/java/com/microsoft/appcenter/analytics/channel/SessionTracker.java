@@ -3,12 +3,12 @@ package com.microsoft.appcenter.analytics.channel;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 
+import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
-import com.microsoft.appcenter.persistence.SessionStorage;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
@@ -86,7 +86,7 @@ public class SessionTracker implements Channel.Listener {
          */
         Date timestamp = log.getTimestamp();
         if (timestamp != null) {
-            SessionStorage.SessionInfo pastSession = SessionStorage.getInstance().getSessionAt(timestamp.getTime());
+            SessionContext.SessionInfo pastSession = SessionContext.getInstance().getSessionAt(timestamp.getTime());
             if (pastSession != null) {
                 log.setSid(pastSession.getSessionId());
             }
@@ -122,7 +122,7 @@ public class SessionTracker implements Channel.Listener {
             mSid = UUIDUtils.randomUUID();
 
             /* Update session storage. */
-            SessionStorage.getInstance().addSession(mSid);
+            SessionContext.getInstance().addSession(mSid);
 
             /*
              * Record queued time for the session log itself to avoid double log if resuming
@@ -162,7 +162,7 @@ public class SessionTracker implements Channel.Listener {
      * Clear storage from saved session state.
      */
     public void clearSessions() {
-        SessionStorage.getInstance().clearSessions();
+        SessionContext.getInstance().clearSessions();
     }
 
     /**

@@ -21,7 +21,6 @@ import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
-import com.microsoft.appcenter.persistence.SessionStorage;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
@@ -484,7 +483,7 @@ public class AppCenter {
         StorageHelper.initialize(mApplication);
 
         /* Initialize session storage. */
-        SessionStorage.getInstance();
+        SessionContext.getInstance();
 
         /* Get enabled state. */
         boolean enabled = isInstanceEnabled();

@@ -1,4 +1,4 @@
-package com.microsoft.appcenter.persistence;
+package com.microsoft.appcenter;
 
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
@@ -18,7 +18,7 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 /**
  * Persistent session history.
  */
-public class SessionStorage {
+public class SessionContext {
 
     /**
      * Key used in storage to persist sessions.
@@ -38,7 +38,7 @@ public class SessionStorage {
     /**
      * Singleton.
      */
-    private static SessionStorage sInstance;
+    private static SessionContext sInstance;
 
     /**
      * Past and current session identifiers sorted by session starting timestamp (ascending).
@@ -46,10 +46,11 @@ public class SessionStorage {
     private final NavigableMap<Long, SessionInfo> mSessions = new TreeMap<>();
 
     /**
-     * App launch timestamp. TODO we should use the real process start time and not SDK start time.
+     * App launch timestamp. We could use the real process start time and not SDK start time.
      * But there is no Android API to do that it requires executing ps command or reading proc files.
      * This is used to know minidump files app launch timestamp that are processed after restart.
-     * This is not used for regular managed crashes.
+     * This is not used for regular managed crashes where that timestamp is maintained by Crashes
+     * and has the same limitation (initialized at SDK start time).
      */
     private final long mAppLaunchTimestamp;
 
@@ -57,7 +58,7 @@ public class SessionStorage {
      * Init.
      */
     @WorkerThread
-    private SessionStorage() {
+    private SessionContext() {
 
         /* Try loading past sessions from storage. */
         mAppLaunchTimestamp = System.currentTimeMillis();
@@ -93,9 +94,9 @@ public class SessionStorage {
     }
 
     @WorkerThread
-    public static synchronized SessionStorage getInstance() {
+    public static synchronized SessionContext getInstance() {
         if (sInstance == null) {
-            sInstance = new SessionStorage();
+            sInstance = new SessionContext();
         }
         return sInstance;
     }
