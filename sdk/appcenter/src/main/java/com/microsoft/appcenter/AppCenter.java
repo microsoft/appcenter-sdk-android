@@ -482,6 +482,9 @@ public class AppCenter {
         /* If parameters are valid, init context related resources. */
         StorageHelper.initialize(mApplication);
 
+        /* Initialize session storage. */
+        SessionContext.getInstance();
+
         /* Get enabled state. */
         boolean enabled = isInstanceEnabled();
 
