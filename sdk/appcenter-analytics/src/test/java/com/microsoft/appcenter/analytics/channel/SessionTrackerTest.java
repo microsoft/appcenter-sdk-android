@@ -413,13 +413,18 @@ public class SessionTrackerTest {
 
     @Test
     public void maxOutStoredSessions() {
-        mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
+        SessionStorage.getInstance();
+        spendTime(1000);
         Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
         assertNotNull(sessions);
         assertEquals(1, sessions.size());
-        spendTime(30000);
         String firstSession = sessions.iterator().next();
-        for (int i = 2; i <= 5; i++) {
+        mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
+        sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+        assertNotNull(sessions);
+        assertEquals(2, sessions.size());
+        spendTime(30000);
+        for (int i = 3; i <= 10; i++) {
             mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
             Set<String> intermediateSessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
             assertNotNull(intermediateSessions);
@@ -429,7 +434,7 @@ public class SessionTrackerTest {
         mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
         Set<String> finalSessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
         assertNotNull(finalSessions);
-        assertEquals(5, finalSessions.size());
+        assertEquals(10, finalSessions.size());
         assertFalse(finalSessions.contains(firstSession));
     }
 
@@ -525,7 +530,7 @@ public class SessionTrackerTest {
     }
 
     @Test
-    public void invalidStorage() {
+    public void partiallyInvalidStorage() {
         Set<String> sessions = new LinkedHashSet<>();
         sessions.add("100/10abd355-40a5-4b51-8071-cb5a4c338531/99");
         sessions.add("200/invalid");
@@ -534,6 +539,9 @@ public class SessionTrackerTest {
         sessions.add("500a/10abd355-40a5-4b51-8071-cb5a4c338535");
         sessions.add("600/10abd355-40a5-4b51-8071-cb5a4c338533/599/extracontent");
         sessions.add("700/10abd355-40a5-4b51-8071-cb5a4c338533");
+        sessions.add("800/");
+        sessions.add("900//899");
+        sessions.add("999//");
         when(StorageHelper.PreferencesStorage.getStringSet(anyString())).thenReturn(sessions);
         mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);
 
@@ -543,7 +551,7 @@ public class SessionTrackerTest {
         /* Check sessions in store. */
         sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
         assertNotNull(sessions);
-        assertEquals(4, sessions.size());
+        assertEquals(6, sessions.size());
         assertTrue(sessions.contains("100/10abd355-40a5-4b51-8071-cb5a4c338531/99"));
         assertFalse(sessions.contains("200/invalid"));
 
@@ -561,6 +569,15 @@ public class SessionTrackerTest {
 
         /* Valid without app launch timestamp, falling back to timestamp. */
         assertTrue(sessions.contains("700/10abd355-40a5-4b51-8071-cb5a4c338533/700"));
+
+        /* Null session id + fallback on app launch timestamp. */
+        assertTrue(sessions.contains("800//800"));
+
+        /* Null session id + specified app launch timestamp. */
+        assertTrue(sessions.contains("900//899"));
+
+        /* Invalid app launch timestamp. */
+        assertFalse(sessions.contains("999//"));
     }
 
     @Test

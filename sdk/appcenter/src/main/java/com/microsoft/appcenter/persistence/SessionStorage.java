@@ -6,7 +6,7 @@ import android.support.annotation.WorkerThread;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
@@ -24,18 +24,22 @@ public class SessionStorage {
      * Key used in storage to persist sessions.
      */
     private static final String STORAGE_KEY = "sessions";
+
     /**
      * Maximum number of sessions to persist the state.
      */
     private static final int STORAGE_MAX_SESSIONS = 10;
+
     /**
      * Separator used for persistent storage format.
      */
     private static final String STORAGE_KEY_VALUE_SEPARATOR = "/";
+
     /**
      * Singleton.
      */
     private static SessionStorage sInstance;
+
     /**
      * Past and current session identifiers sorted by session starting timestamp (ascending).
      */
@@ -60,10 +64,11 @@ public class SessionStorage {
         Set<String> storedSessions = StorageHelper.PreferencesStorage.getStringSet(STORAGE_KEY);
         if (storedSessions != null) {
             for (String session : storedSessions) {
-                String[] split = session.split(STORAGE_KEY_VALUE_SEPARATOR);
+                String[] split = session.split(STORAGE_KEY_VALUE_SEPARATOR, -1);
                 try {
                     long time = Long.parseLong(split[0]);
-                    UUID sid = UUID.fromString(split[1]);
+                    String rawSid = split[1];
+                    UUID sid = rawSid.isEmpty() ? null : UUID.fromString(rawSid);
                     long appLaunchTimestamp;
                     if (split.length > 2) {
                         appLaunchTimestamp = Long.parseLong(split[2]);
@@ -118,12 +123,9 @@ public class SessionStorage {
         }
 
         /* Persist sessions. */
-        Set<String> sessionStorage = new HashSet<>();
+        Set<String> sessionStorage = new LinkedHashSet<>();
         for (SessionInfo session : mSessions.values()) {
-            String rawSession = session.getTimestamp() +
-                    STORAGE_KEY_VALUE_SEPARATOR + session.getSessionId() +
-                    STORAGE_KEY_VALUE_SEPARATOR + session.getAppLaunchTimestamp();
-            sessionStorage.add(rawSession);
+            sessionStorage.add(session.toString());
         }
         StorageHelper.PreferencesStorage.putStringSet(STORAGE_KEY, sessionStorage);
     }
@@ -202,6 +204,16 @@ public class SessionStorage {
          */
         public long getAppLaunchTimestamp() {
             return mAppLaunchTimestamp;
+        }
+
+        @Override
+        public String toString() {
+            String rawSession = getTimestamp() + STORAGE_KEY_VALUE_SEPARATOR;
+            if (getSessionId() != null) {
+                rawSession += getSessionId();
+            }
+            rawSession += STORAGE_KEY_VALUE_SEPARATOR + getAppLaunchTimestamp();
+            return rawSession;
         }
     }
 }
