@@ -92,8 +92,8 @@ public class SessionTracker implements Channel.Listener {
             }
         }
 
-        /* If the log is not to be correlated to a past session. */
-        else if (log.getSid() == null) {
+        /* If the log is not to be correlated to a past session, assign one. */
+        else {
 
             /* Send a new start session log if needed. */
             sendStartSessionIfNeeded();
