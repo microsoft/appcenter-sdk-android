@@ -92,7 +92,7 @@ public class SessionTracker implements Channel.Listener {
             }
         }
 
-        /* If the log is not to be correlated to a past session, assign one. */
+        /* If the log does not have a timestamp yet, then we just correlate with current session. */
         else {
 
             /* Send a new start session log if needed. */

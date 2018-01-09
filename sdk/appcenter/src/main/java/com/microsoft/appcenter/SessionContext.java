@@ -32,6 +32,8 @@ public class SessionContext {
 
     /**
      * Separator used for persistent storage format.
+     * We store session timestamp, then session uuid (can be empty for the special launch session),
+     * then the app launch timestamp. Each field just is separated by this character.
      */
     private static final String STORAGE_KEY_VALUE_SEPARATOR = "/";
 
