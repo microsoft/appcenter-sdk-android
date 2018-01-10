@@ -105,7 +105,7 @@ void
 Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeOutOfMemoryCrash(JNIEnv *env,
                                                                                        jobject obj) {
     while (true) {
-        new int[UINT_MAX];
+        new int[INT_MAX / 2];
     }
 }
 #pragma clang diagnostic pop
