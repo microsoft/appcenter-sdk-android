@@ -1,4 +1,4 @@
-project.description = 'A cloud service that enables developers to deploy mobile app updates directly to their users’ devices.'
+project.description = 'A cloud service that enables developers to deploy mobile app updates directly to their users` devices.'
 evaluationDependsOn(':sdk')
 
 dependencies {
