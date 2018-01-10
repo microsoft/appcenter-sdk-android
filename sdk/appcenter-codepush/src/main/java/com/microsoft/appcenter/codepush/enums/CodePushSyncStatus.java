@@ -15,15 +15,15 @@ public enum CodePushSyncStatus {
 
     /**
      * An available update has been installed and will be run either immediately after the
-     * syncStatusChangedCallback function returns or the next time the app resumes/restarts,
-     * depending on the InstallMode specified in SyncOptions
+     * <code>syncStatusChangedCallback</code> function returns or the next time the app resumes/restarts,
+     * depending on the {@link CodePushInstallMode} specified in {@link com.microsoft.appcenter.codepush.datacontracts.CodePushSyncOptions}.
      */
     @SerializedName("1")
     UPDATE_INSTALLED(1),
 
     /**
      * The app had an optional update which the end user chose to ignore.
-     * (This is only applicable when the updateDialog is used)
+     * (This is only applicable when the updateDialog is used).
      */
     @SerializedName("2")
     UPDATE_IGNORED(2),
@@ -48,7 +48,7 @@ public enum CodePushSyncStatus {
 
     /**
      * An update is available, and a confirmation dialog was shown
-     * to the end user. (This is only applicable when the updateDialog is used)
+     * to the end user. (This is only applicable when the <code>updateDialog</code> is used).
      */
     @SerializedName("6")
     AWAITING_USER_ACTION(6),
