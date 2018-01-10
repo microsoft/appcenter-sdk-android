@@ -522,14 +522,12 @@ public class CrashesTest {
         crashes.onStarted(mock(Context.class), "", mockChannel);
         Crashes.trackException(EXCEPTION);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage());
             }
         }), eq(crashes.getGroupName()));
         reset(mockChannel);
-
         Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
             put(null, null);
             put("", null);
@@ -537,7 +535,6 @@ public class CrashesTest {
             put("1", null);
         }});
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
@@ -545,14 +542,12 @@ public class CrashesTest {
             }
         }), eq(crashes.getGroupName()));
         reset(mockChannel);
-
         Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
             for (int i = 0; i < 10; i++) {
                 put("valid" + i, "valid");
             }
         }});
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
@@ -560,13 +555,11 @@ public class CrashesTest {
             }
         }), eq(crashes.getGroupName()));
         reset(mockChannel);
-
         final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
         Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
             put(longerMapItem, longerMapItem);
         }});
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
             @Override
             public boolean matches(Object item) {
                 if (item instanceof HandledErrorLog) {
@@ -625,14 +618,12 @@ public class CrashesTest {
         crashes.onStarted(mock(Context.class), "", mockChannel);
         WrapperSdkExceptionManager.trackException(exception);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException());
             }
         }), eq(crashes.getGroupName()));
         reset(mockChannel);
-
         WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
             put(null, null);
             put("", null);
@@ -640,7 +631,6 @@ public class CrashesTest {
             put("1", null);
         }});
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
@@ -648,14 +638,12 @@ public class CrashesTest {
             }
         }), eq(crashes.getGroupName()));
         reset(mockChannel);
-
         WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
             for (int i = 0; i < 10; i++) {
                 put("valid" + i, "valid");
             }
         }});
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
@@ -663,13 +651,11 @@ public class CrashesTest {
             }
         }), eq(crashes.getGroupName()));
         reset(mockChannel);
-
         final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
         WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
             put(longerMapItem, longerMapItem);
         }});
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
             @Override
             public boolean matches(Object item) {
                 if (item instanceof HandledErrorLog) {
