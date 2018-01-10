@@ -26,6 +26,7 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -66,6 +67,16 @@ public class ErrorLogHelper {
      * Root directory for error log and throwable files.
      */
     private static File sErrorLogDirectory;
+
+    /**
+     * Max number of properties.
+     */
+    public static final int MAX_PROPERTY_COUNT = 5;
+
+    /**
+     * Max length of properties.
+     */
+    public static final int MAX_PROPERTY_ITEM_LENGTH = 64;
 
     @NonNull
     public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Throwable throwable, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
@@ -275,5 +286,51 @@ public class ErrorLogHelper {
         stackFrame.setLineNumber(stackTraceElement.getLineNumber());
         stackFrame.setFileName(stackTraceElement.getFileName());
         return stackFrame;
+    }
+
+    /**
+     * Validates properties.
+     *
+     * @param properties Properties collection to validate.
+     * @param logType    Log type.
+     * @return valid properties collection with maximum size of 5.
+     */
+    public static Map<String, String> validateProperties(Map<String, String> properties, String logType) {
+        if (properties == null) {
+            return null;
+        }
+        String message;
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<String, String> property : properties.entrySet()) {
+            String key = property.getKey();
+            String value = property.getValue();
+            if (result.size() >= MAX_PROPERTY_COUNT) {
+                message = String.format("%s : properties cannot contain more than %s items. Skipping other properties.", logType, MAX_PROPERTY_COUNT);
+                AppCenterLog.warn(Crashes.LOG_TAG, message);
+                break;
+            }
+            if (key == null || key.isEmpty()) {
+                message = String.format("%s : a property key cannot be null or empty. Property will be skipped.", logType);
+                AppCenterLog.warn(Crashes.LOG_TAG, message);
+                continue;
+            }
+            if (value == null) {
+                message = String.format("%s : property '%s' : property value cannot be null. Property '%s' will be skipped.", logType, key, key);
+                AppCenterLog.warn(Crashes.LOG_TAG, message);
+                continue;
+            }
+            if (key.length() > MAX_PROPERTY_ITEM_LENGTH) {
+                message = String.format("%s : property '%s' : property key length cannot be longer than %s characters. Property key will be truncated.", logType, key, MAX_PROPERTY_ITEM_LENGTH);
+                AppCenterLog.warn(Crashes.LOG_TAG, message);
+                key = key.substring(0, MAX_PROPERTY_ITEM_LENGTH);
+            }
+            if (value.length() > MAX_PROPERTY_ITEM_LENGTH) {
+                message = String.format("%s : property '%s' : property value cannot be longer than %s characters. Property value will be truncated.", logType, key, MAX_PROPERTY_ITEM_LENGTH);
+                AppCenterLog.warn(Crashes.LOG_TAG, message);
+                value = value.substring(0, MAX_PROPERTY_ITEM_LENGTH);
+            }
+            result.put(key, value);
+        }
+        return result;
     }
 }
