@@ -33,7 +33,6 @@ import com.microsoft.appcenter.sasquatch.features.TestFeaturesListAdapter;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchAnalyticsListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
-import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
@@ -121,11 +120,7 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
         }
-        try {
-            Push.class.getMethod("setSenderId", String.class).invoke(null, SENDER_ID);
-        } catch (Exception e) {
-            AppCenterLog.error(LOG_TAG, "Push.setSenderId method not available.");
-        }
+        Push.setSenderId(SENDER_ID);
 
         /* Set crash attachments. */
         sCrashesListener.setTextAttachment(sSharedPreferences.getString(TEXT_ATTACHMENT_KEY, null));
@@ -143,22 +138,7 @@ public class MainActivity extends AppCompatActivity {
         AppCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
 
         /* Attach NDK Crash Handler (if available) after SDK is initialized. */
-        try {
-
-            //noinspection unchecked
-            ((AppCenterFuture<String>) Crashes.class.getMethod("getMinidumpDirectory").invoke(null)).thenAccept(new AppCenterConsumer<String>() {
-
-                @Override
-                public void accept(String path) {
-
-                    /* Path is null when Crashes is disabled. */
-                    if (path != null) {
-                        setupNativeCrashesListener(path);
-                    }
-                }
-            });
-        } catch (Exception ignore) {
-        }
+        initializeBreakpad();
 
         /* If rum available, use it. */
         try {
@@ -204,6 +184,24 @@ public class MainActivity extends AppCompatActivity {
         ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initializeBreakpad() {
+        try {
+            ((AppCenterFuture<String>) Crashes.class.getMethod("getMinidumpDirectory").invoke(null)).thenAccept(new AppCenterConsumer<String>() {
+
+                @Override
+                public void accept(String path) {
+
+                    /* Path is null when Crashes is disabled. */
+                    if (path != null) {
+                        setupNativeCrashesListener(path);
+                    }
+                }
+            });
+        } catch (Exception ignore) {
+        }
     }
 
     @Override
