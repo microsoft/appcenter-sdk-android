@@ -60,21 +60,25 @@ public class AppCenter {
      */
     @VisibleForTesting
     static final String CORE_GROUP = "group_core";
+
     /**
      * Name of the variable used to indicate services that should be disabled (typically for test
      * cloud).
      */
     @VisibleForTesting
     static final String DISABLE_SERVICES = "APP_CENTER_DISABLE";
+
     /**
      * Value to indicate that all services should be disabled.
      */
     @VisibleForTesting
     static final String DISABLE_ALL_SERVICES = "All";
+
     /**
      * Shutdown timeout in millis.
      */
     private static final int SHUTDOWN_TIMEOUT = 5000;
+
     /**
      * Shared instance.
      */
