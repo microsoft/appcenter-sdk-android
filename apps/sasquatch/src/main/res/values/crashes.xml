@@ -2,20 +2,14 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="title_test_crash" tools:ignore="MissingTranslation">Test crash</string>
     <string name="description_test_crash" tools:ignore="MissingTranslation">Using Crash.generateTestCrash() API</string>
-    <string name="title_test_native_crash" tools:ignore="MissingTranslation">Test native crash</string>
-    <string name="description_test_native_crash" tools:ignore="MissingTranslation">Dereference a null pointer with NDK</string>
     <string name="title_crash_divide_by_0" tools:ignore="MissingTranslation">Divide by 0</string>
     <string name="description_crash_divide_by_0" tools:ignore="MissingTranslation">Divide by 0</string>
     <string name="title_test_ui_crash" tools:ignore="MissingTranslation">Test some UI crash</string>
     <string name="description_test_ui_crash" tools:ignore="MissingTranslation">A UI coding mistake, has inner exception</string>
     <string name="title_stack_overflow_crash" tools:ignore="MissingTranslation">Stack overflow crash</string>
     <string name="description_stack_overflow_crash" tools:ignore="MissingTranslation">Caused by infinite recursion</string>
-    <string name="title_native_stack_overflow_crash" tools:ignore="MissingTranslation">NDK stack overflow crash</string>
-    <string name="description_native_stack_overflow_crash" tools:ignore="MissingTranslation">Caused by infinite recursion in NDK function</string>
     <string name="title_memory_crash" tools:ignore="MissingTranslation">Out of memory crash</string>
     <string name="description_memory_crash" tools:ignore="MissingTranslation">Allocating a huge array</string>
-    <string name="title_native_memory_crash">NDK out of memory crash</string>
-    <string name="description_native_memory_crash">Allocating a huge array in NDK function, in a while loop</string>
     <string name="title_memory_crash2" tools:ignore="MissingTranslation">Out of memory crash 2</string>
     <string name="description_memory_crash2" tools:ignore="MissingTranslation">Allocating a huge string builder in another class</string>
     <string name="title_variable_message" tools:ignore="MissingTranslation">Crash with a variable message</string>
@@ -30,6 +24,12 @@
     <string name="description_super_not_called_exception3" tools:ignore="MissingTranslation">Not calling super method in onResume() in sub activity</string>
     <string name="title_super_not_called_exception4" tools:ignore="MissingTranslation">SuperNotCalledException 4</string>
     <string name="description_super_not_called_exception4" tools:ignore="MissingTranslation">Not calling super method in onResume() in another sub activity</string>
+    <string name="title_test_native_crash" tools:ignore="MissingTranslation">NDK crash null</string>
+    <string name="description_test_native_crash" tools:ignore="MissingTranslation">Dereference a null pointer.</string>
+    <string name="title_native_stack_overflow_crash" tools:ignore="MissingTranslation">NDK stack overflow crash</string>
+    <string name="description_native_stack_overflow_crash" tools:ignore="MissingTranslation">Caused by infinite recursion</string>
+    <string name="title_native_abort_crash">NDK call abort()</string>
+    <string name="description_native_abort_crash">Simply call abort() to terminate</string>
     <string name="crash_confirmation_dialog_title" tools:ignore="MissingTranslation">Unexpected crash found</string>
     <string name="crash_confirmation_dialog_message" tools:ignore="MissingTranslation">Would you like to send an anonymous report so we can fix the problem?</string>
     <string name="crash_confirmation_dialog_not_send_button" tools:ignore="MissingTranslation">Don\'t Send</string>
