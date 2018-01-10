@@ -3,6 +3,7 @@ package com.microsoft.appcenter.analytics.channel;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 
+import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.appcenter.channel.Channel;
@@ -10,35 +11,14 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.UUID;
 
 /**
  * Decorator for channel, adding session semantic to logs.
  */
 public class SessionTracker implements Channel.Listener {
-
-    /**
-     * Key used in storage to persist sessions.
-     */
-    private static final String STORAGE_KEY = "sessions";
-
-    /**
-     * Maximum number of sessions to persist the state.
-     */
-    private static final int STORAGE_MAX_SESSIONS = 5;
-
-    /**
-     * Separator used for persistent storage format.
-     */
-    private static final String STORAGE_KEY_VALUE_SEPARATOR = "/";
 
     /**
      * Default session timeout in milliseconds.
@@ -54,11 +34,6 @@ public class SessionTracker implements Channel.Listener {
      * Group name used to send generated logs.
      */
     private final String mGroupName;
-
-    /**
-     * Past and current session identifiers sorted by session starting timestamp (ascending).
-     */
-    private final NavigableMap<Long, UUID> mSessions = new TreeMap<>();
 
     /**
      * Current session identifier.
@@ -91,22 +66,6 @@ public class SessionTracker implements Channel.Listener {
     public SessionTracker(Channel channel, String groupName) {
         mChannel = channel;
         mGroupName = groupName;
-
-        /* Try loading past sessions from storage. */
-        Set<String> storedSessions = StorageHelper.PreferencesStorage.getStringSet(STORAGE_KEY);
-        if (storedSessions != null) {
-            for (String session : storedSessions) {
-                String[] split = session.split(STORAGE_KEY_VALUE_SEPARATOR);
-                try {
-                    Long time = Long.parseLong(split[0]);
-                    UUID sid = UUID.fromString(split[1]);
-                    mSessions.put(time, sid);
-                } catch (RuntimeException e) {
-                    AppCenterLog.warn(Analytics.LOG_TAG, "Ignore invalid session in store: " + session, e);
-                }
-            }
-        }
-        AppCenterLog.debug(Analytics.LOG_TAG, "Loaded stored sessions: " + mSessions);
     }
 
     @Override
@@ -127,14 +86,14 @@ public class SessionTracker implements Channel.Listener {
          */
         Date timestamp = log.getTimestamp();
         if (timestamp != null) {
-            Map.Entry<Long, UUID> pastSession = mSessions.lowerEntry(timestamp.getTime());
+            SessionContext.SessionInfo pastSession = SessionContext.getInstance().getSessionAt(timestamp.getTime());
             if (pastSession != null) {
-                log.setSid(pastSession.getValue());
+                log.setSid(pastSession.getSessionId());
             }
         }
 
-        /* If the log is not correlated to a past session. */
-        if (log.getSid() == null) {
+        /* If the log does not have a timestamp yet, then we just correlate with current session. */
+        else {
 
             /* Send a new start session log if needed. */
             sendStartSessionIfNeeded();
@@ -162,20 +121,8 @@ public class SessionTracker implements Channel.Listener {
             /* New session: generate a new identifier. */
             mSid = UUIDUtils.randomUUID();
 
-            /* Update session map. */
-            mSessions.put(System.currentTimeMillis(), mSid);
-
-            /* Remove oldest session if we reached maximum storage capacity. */
-            if (mSessions.size() > STORAGE_MAX_SESSIONS) {
-                mSessions.pollFirstEntry();
-            }
-
-            /* Persist sessions. */
-            Set<String> sessionStorage = new HashSet<>();
-            for (Map.Entry<Long, UUID> session : mSessions.entrySet()) {
-                sessionStorage.add(session.getKey() + STORAGE_KEY_VALUE_SEPARATOR + session.getValue());
-            }
-            StorageHelper.PreferencesStorage.putStringSet(STORAGE_KEY, sessionStorage);
+            /* Update session storage. */
+            SessionContext.getInstance().addSession(mSid);
 
             /*
              * Record queued time for the session log itself to avoid double log if resuming
@@ -215,7 +162,7 @@ public class SessionTracker implements Channel.Listener {
      * Clear storage from saved session state.
      */
     public void clearSessions() {
-        StorageHelper.PreferencesStorage.remove(STORAGE_KEY);
+        SessionContext.getInstance().clearSessions();
     }
 
     /**

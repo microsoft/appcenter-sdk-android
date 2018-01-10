@@ -30,4 +30,9 @@ public interface Ingestion extends Closeable {
      * @param logUrl log URL.
      */
     void setLogUrl(String logUrl);
+
+    /**
+     * Make ingestion active again after closing.
+     */
+    void reopen();
 }

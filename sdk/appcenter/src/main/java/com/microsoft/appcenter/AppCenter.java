@@ -25,6 +25,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
+import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -116,6 +117,11 @@ public class AppCenter {
     private Set<AppCenterService> mServices;
 
     /**
+     * Started services for which the log isn't sent yet.
+     */
+    private List<String> mStartedServicesNamesToLog;
+
+    /**
      * Log serializer.
      */
     private LogSerializer mLogSerializer;
@@ -140,6 +146,7 @@ public class AppCenter {
      */
     private AppCenterHandler mAppCenterHandler;
 
+    @VisibleForTesting
     static synchronized AppCenter getInstance() {
         if (sInstance == null) {
             sInstance = new AppCenter();
@@ -475,6 +482,9 @@ public class AppCenter {
         /* If parameters are valid, init context related resources. */
         StorageHelper.initialize(mApplication);
 
+        /* Initialize session storage. */
+        SessionContext.getInstance();
+
         /* Get enabled state. */
         boolean enabled = isInstanceEnabled();
 
@@ -493,6 +503,9 @@ public class AppCenter {
         mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null);
         if (mLogUrl != null) {
             mChannel.setLogUrl(mLogUrl);
+        }
+        if (!enabled) {
+            NetworkStateHelper.getSharedInstance(mApplication).close();
         }
         AppCenterLog.debug(LOG_TAG, "App Center storage initialized.");
     }
@@ -554,6 +567,7 @@ public class AppCenter {
 
     @WorkerThread
     private void finishStartServices(Iterable<AppCenterService> services) {
+        boolean enabled = isInstanceEnabled();
         List<String> serviceNames = new ArrayList<>();
         for (AppCenterService service : services) {
             Map<String, LogFactory> logFactories = service.getLogFactories();
@@ -562,16 +576,32 @@ public class AppCenter {
                     mLogSerializer.addLogFactory(logFactory.getKey(), logFactory.getValue());
                 }
             }
+            if (!enabled && service.isInstanceEnabled()) {
+                service.setInstanceEnabled(false);
+            }
             service.onStarted(mApplication, mAppSecret, mChannel);
             AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
             serviceNames.add(service.getServiceName());
         }
+        sendStartServiceLog(serviceNames);
+    }
 
-        /* Queue start service log. */
+    /**
+     * Queue start service log.
+     *
+     * @param serviceNames the services to send.
+     */
+    @WorkerThread
+    private void sendStartServiceLog(List<String> serviceNames) {
         if (isInstanceEnabled()) {
             StartServiceLog startServiceLog = new StartServiceLog();
             startServiceLog.setServices(serviceNames);
             mChannel.enqueue(startServiceLog, CORE_GROUP);
+        } else {
+            if (mStartedServicesNamesToLog == null) {
+                mStartedServicesNamesToLog = new ArrayList<>();
+            }
+            mStartedServicesNamesToLog.addAll(serviceNames);
         }
     }
 
@@ -646,13 +676,21 @@ public class AppCenter {
         /* Update uncaught exception subscription. */
         if (switchToEnabled) {
             mUncaughtExceptionHandler.register();
+            NetworkStateHelper.getSharedInstance(mApplication).reopen();
         } else if (switchToDisabled) {
             mUncaughtExceptionHandler.unregister();
+            NetworkStateHelper.getSharedInstance(mApplication).close();
         }
 
         /* Update state now if true, services are checking this. */
         if (enabled) {
             StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, true);
+        }
+
+        /* Send started services. */
+        if (mStartedServicesNamesToLog != null && switchToEnabled) {
+            sendStartServiceLog(mStartedServicesNamesToLog);
+            mStartedServicesNamesToLog = null;
         }
 
         /* Apply change to services. */
@@ -770,12 +808,6 @@ public class AppCenter {
     class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
         private Thread.UncaughtExceptionHandler mDefaultUncaughtExceptionHandler;
-
-        /**
-         * This is to avoid lint warning.
-         */
-        public UncaughtExceptionHandler() {
-        }
 
         @Override
         public void uncaughtException(Thread thread, Throwable exception) {

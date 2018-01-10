@@ -136,7 +136,7 @@ public class HttpClientRetryerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
-                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(new HttpException(429));
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(new HttpException(408));
                 return call;
             }
         }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -148,7 +148,7 @@ public class HttpClientRetryerTest {
         verifyDelay(handler, 1);
         verifyDelay(handler, 2);
         verifyNoMoreInteractions(handler);
-        verify(callback).onCallFailed(new HttpException(429));
+        verify(callback).onCallFailed(new HttpException(408));
         verifyNoMoreInteractions(callback);
         verifyNoMoreInteractions(call);
     }

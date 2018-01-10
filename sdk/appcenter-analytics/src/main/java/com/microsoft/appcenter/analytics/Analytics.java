@@ -452,7 +452,7 @@ public class Analytics extends AbstractAppCenterService {
         }
 
         /* Release resources if disabled and enabled before with resources. */
-        else {
+        else if (mSessionTracker != null) {
             mChannel.removeListener(mSessionTracker);
             mSessionTracker.clearSessions();
             mSessionTracker = null;

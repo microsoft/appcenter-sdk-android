@@ -213,6 +213,7 @@ public class DefaultChannel implements Channel {
             mEnabled = true;
             mDiscardLogs = false;
             mCurrentState++;
+            mIngestion.reopen();
             for (String groupName : mGroupStates.keySet()) {
                 checkPendingLogs(groupName);
             }
