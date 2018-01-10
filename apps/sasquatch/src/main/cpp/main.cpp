@@ -94,13 +94,14 @@ void Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeStack
         JNIEnv *env, jobject obj) {
     Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeStackOverflowCrash(env,
                                                                                              obj);
+
+    /* Defeat release build optimization by adding another statement after recursion. */
     __android_log_print(ANDROID_LOG_INFO, "AppCenterSasquatch",
                         "You will never see this log after an infinite loop.");
 }
 #pragma clang diagnostic pop
 
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-noreturn"
 #pragma clang diagnostic ignored "-Wunused-parameter"
 void
 Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeBuiltinTrap(JNIEnv *env,
