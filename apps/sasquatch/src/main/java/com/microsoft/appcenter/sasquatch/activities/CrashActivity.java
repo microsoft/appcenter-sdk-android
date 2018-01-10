@@ -28,6 +28,7 @@ public class CrashActivity extends AppCompatActivity {
     private boolean mCrashSuperPauseNotCalled;
 
     private boolean mCrashSuperDestroyNotCalled;
+
     private final List<Crash> sCrashes = Arrays.asList(
             new Crash(R.string.title_test_crash, R.string.description_test_crash, new Runnable() {
 
@@ -195,6 +196,7 @@ public class CrashActivity extends AppCompatActivity {
 
     @VisibleForTesting
     static class Crash {
+
         final int title;
 
         final int description;

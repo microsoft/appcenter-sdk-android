@@ -56,22 +56,22 @@ bool dumpCallback(const google_breakpad::MinidumpDescriptor &descriptor,
 
 /**
  * Registers breakpad as the exception handler for NDK code.
- *
- * @param path returned from Crashes.getBreakpadDirectory()
+ * @param env JNI environment.
+ * @param path minidump directory path returned from Crashes.getMinidumpDirectory()
  */
 void Java_com_microsoft_appcenter_sasquatch_activities_MainActivity_setupNativeCrashesListener(
         JNIEnv *env, jobject, jstring path) {
-    const char *dump_path = (char *) env->GetStringUTFChars(path, NULL);
-    google_breakpad::MinidumpDescriptor descriptor(dump_path);
+    const char *dumpPath = (char *) env->GetStringUTFChars(path, NULL);
+    google_breakpad::MinidumpDescriptor descriptor(dumpPath);
     new google_breakpad::ExceptionHandler(descriptor, NULL, dumpCallback, NULL, true, -1);
-    env->ReleaseStringUTFChars(path, dump_path);
+    env->ReleaseStringUTFChars(path, dumpPath);
 }
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 jint JNI_OnLoad(JavaVM *vm, void * /*reserved*/) {
-    __android_log_print(ANDROID_LOG_INFO, "breakpad", "JNI onLoad...");
+    __android_log_print(ANDROID_LOG_INFO, "AppCenterSasquatch", "JNI OnLoad");
     return JNI_VERSION_1_4;
 }
 #pragma clang diagnostic pop
