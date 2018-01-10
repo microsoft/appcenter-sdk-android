@@ -36,6 +36,7 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -189,7 +190,9 @@ public class MainActivity extends AppCompatActivity {
     @SuppressWarnings("unchecked")
     private void initializeBreakpad() {
         try {
-            ((AppCenterFuture<String>) Crashes.class.getMethod("getMinidumpDirectory").invoke(null)).thenAccept(new AppCenterConsumer<String>() {
+            Method method = Crashes.class.getDeclaredMethod("getMinidumpDirectory");
+            method.setAccessible(true);
+            ((AppCenterFuture<String>) method.invoke(null)).thenAccept(new AppCenterConsumer<String>() {
 
                 @Override
                 public void accept(String path) {
