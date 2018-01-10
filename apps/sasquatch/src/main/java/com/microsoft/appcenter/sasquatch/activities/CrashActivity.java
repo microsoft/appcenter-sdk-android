@@ -141,7 +141,7 @@ public class CrashActivity extends AppCompatActivity {
 
                 @Override
                 public void run() {
-                    nativeBuiltinTrap();
+                    nativeAbortCall();
                 }
             })
     );
@@ -150,7 +150,7 @@ public class CrashActivity extends AppCompatActivity {
 
     private native void nativeStackOverflowCrash();
 
-    private native void nativeBuiltinTrap();
+    private native void nativeAbortCall();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

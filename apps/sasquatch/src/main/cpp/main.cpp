@@ -104,8 +104,8 @@ void Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeStack
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 void
-Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeBuiltinTrap(JNIEnv *env,
-                                                                                  jobject obj) {
+Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeAbortCall(JNIEnv *env,
+                                                                                jobject obj) {
     abort();
 }
 #pragma clang diagnostic pop
