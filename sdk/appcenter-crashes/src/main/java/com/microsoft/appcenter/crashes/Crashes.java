@@ -468,7 +468,7 @@ public class Crashes extends AbstractAppCenterService {
      * @param throwable An handled exception.
      * @param properties optional properties.
      */
-    private synchronized void queueException(@NonNull final Throwable throwable, final Map<String, String> properties) {
+    private synchronized void queueException(@NonNull final Throwable throwable, Map<String, String> properties) {
         queueException(new ExceptionModelBuilder() {
 
             @Override
@@ -484,7 +484,7 @@ public class Crashes extends AbstractAppCenterService {
      * @param modelException An handled exception already in JSON model form.
      * @param properties optional properties.
      */
-    synchronized void queueException(@NonNull final com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, final Map<String, String> properties) {
+    synchronized void queueException(@NonNull final com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, Map<String, String> properties) {
         queueException(new ExceptionModelBuilder() {
 
             @Override
