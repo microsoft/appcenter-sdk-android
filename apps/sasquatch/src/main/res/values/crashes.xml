@@ -2,8 +2,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="title_test_crash" tools:ignore="MissingTranslation">Test crash</string>
     <string name="description_test_crash" tools:ignore="MissingTranslation">Using Crash.generateTestCrash() API</string>
-    <string name="title_test_native_crash" tools:ignore="MissingTranslation">Divide by 0 NDK</string>
-    <string name="description_test_native_crash" tools:ignore="MissingTranslation">NDK Divide by 0 crash</string>
+    <string name="title_test_native_crash" tools:ignore="MissingTranslation">Test native crash</string>
+    <string name="description_test_native_crash" tools:ignore="MissingTranslation">Dereference a null pointer with NDK</string>
     <string name="title_crash_divide_by_0" tools:ignore="MissingTranslation">Divide by 0</string>
     <string name="description_crash_divide_by_0" tools:ignore="MissingTranslation">Divide by 0</string>
     <string name="title_test_ui_crash" tools:ignore="MissingTranslation">Test some UI crash</string>
@@ -15,7 +15,7 @@
     <string name="title_memory_crash" tools:ignore="MissingTranslation">Out of memory crash</string>
     <string name="description_memory_crash" tools:ignore="MissingTranslation">Allocating a huge array</string>
     <string name="title_native_memory_crash">NDK out of memory crash</string>
-    <string name="description_native_memory_crash">Allocating a huge array in NDK function</string>
+    <string name="description_native_memory_crash">Allocating a huge array in NDK function, in a while loop</string>
     <string name="title_memory_crash2" tools:ignore="MissingTranslation">Out of memory crash 2</string>
     <string name="description_memory_crash2" tools:ignore="MissingTranslation">Allocating a huge string builder in another class</string>
     <string name="title_variable_message" tools:ignore="MissingTranslation">Crash with a variable message</string>

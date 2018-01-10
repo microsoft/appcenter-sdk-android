@@ -27,64 +27,88 @@
 #include <string>
 #include <stdio.h>
 #include <string.h>
-#include <limits.h>
 #include "android/log.h"
 #include "google-breakpad/src/client/linux/handler/exception_handler.h"
 #include "google-breakpad/src/client/linux/handler/minidump_descriptor.h"
-
-static google_breakpad::ExceptionHandler* exceptionHandler;
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-    /*
-     * Triggered automatically after an attempt to write a minidump file to the breakpad folder.
-     */
-    bool DumpCallback(const google_breakpad::MinidumpDescriptor &descriptor,
-                      void *context,
-                      bool succeeded) {
-        __android_log_print(ANDROID_LOG_INFO, "breakpad", "Dump path: %s\n", descriptor.path());
-        return succeeded;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+
+/*
+ * Triggered automatically after an attempt to write a minidump file to the breakpad folder.
+ */
+bool dumpCallback(const google_breakpad::MinidumpDescriptor &descriptor,
+                  void *context,
+                  bool succeeded) {
+
+    /* Allow system to log the native stack trace. */
+    __android_log_print(ANDROID_LOG_INFO, "AppCenterSasquatch",
+                        "Wrote breakpad minidump at %s succeeded=%d\n", descriptor.path(),
+                        succeeded);
+    return false;
+}
+#pragma clang diagnostic pop
+
+/**
+ * Registers breakpad as the exception handler for NDK code.
+ *
+ * @param path returned from Crashes.getBreakpadDirectory()
+ */
+void Java_com_microsoft_appcenter_sasquatch_activities_MainActivity_setupNativeCrashesListener(
+        JNIEnv *env, jobject, jstring path) {
+    const char *dump_path = (char *) env->GetStringUTFChars(path, NULL);
+    google_breakpad::MinidumpDescriptor descriptor(dump_path);
+    new google_breakpad::ExceptionHandler(descriptor, NULL, dumpCallback, NULL, true, -1);
+    env->ReleaseStringUTFChars(path, dump_path);
+}
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+jint JNI_OnLoad(JavaVM *vm, void * /*reserved*/) {
+    __android_log_print(ANDROID_LOG_INFO, "breakpad", "JNI onLoad...");
+    return JNI_VERSION_1_4;
+}
+#pragma clang diagnostic pop
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma ide diagnostic ignored "OCDFAInspection"
+void
+Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeDereferenceNullPointer(
+        JNIEnv *env,
+        jobject obj) {
+    volatile int *a = reinterpret_cast<volatile int *>(NULL);
+    *a = 1;
+}
+#pragma clang diagnostic pop
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "InfiniteRecursion"
+void Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeStackOverflowCrash(
+        JNIEnv *env, jobject obj) {
+    Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeStackOverflowCrash(env,
+                                                                                             obj);
+
+}
+#pragma clang diagnostic pop
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+void
+Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeOutOfMemoryCrash(JNIEnv *env,
+                                                                                       jobject obj) {
+    while (true) {
+        new int[UINT_MAX];
     }
-
-    /**
-     * Registers breakpad as the exception handler for NDK code.
-     *
-     * @param path returned from Crashes.getBreakpadDirectory()
-     */
-    void Java_com_microsoft_appcenter_sasquatch_activities_MainActivity_setupNativeCrashesListener(JNIEnv *env, jobject, jstring path) {
-        const char* dump_path = (char *)env->GetStringUTFChars(path, NULL);
-
-        google_breakpad::MinidumpDescriptor descriptor(dump_path);
-        exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, NULL, DumpCallback, NULL, true, -1);
-
-        env->ReleaseStringUTFChars(path, dump_path);
-    }
-
-    jint JNI_OnLoad(JavaVM *vm, void * /*reserved*/) {
-
-        __android_log_print(ANDROID_LOG_INFO, "breakpad", "JNI onLoad...");
-
-        return JNI_VERSION_1_4;
-    }
-
-    void Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeDivideByZeroCrash(JNIEnv* env, jobject obj) {
-        volatile int *a = reinterpret_cast<volatile int *>(NULL);
-        *a = 1;
-    }
-
-    void Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeStackOverflowCrash(JNIEnv* env, jobject obj) {
-        Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeStackOverflowCrash(env,
-                                                                                                 obj);
-
-    }
-
-    void Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeOutOfMemoryCrash(JNIEnv* env, jobject obj) {
-        uint size = UINT_MAX;
-        int* array = new int[size];
-    }
+}
+#pragma clang diagnostic pop
 
 #ifdef __cplusplus
 }

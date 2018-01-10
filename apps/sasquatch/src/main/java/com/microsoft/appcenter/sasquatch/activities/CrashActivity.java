@@ -28,13 +28,6 @@ public class CrashActivity extends AppCompatActivity {
     private boolean mCrashSuperPauseNotCalled;
 
     private boolean mCrashSuperDestroyNotCalled;
-
-    private native void nativeDivideByZeroCrash();
-
-    private native void nativeStackOverflowCrash();
-
-    private native void nativeOutOfMemoryCrash();
-
     private final List<Crash> sCrashes = Arrays.asList(
             new Crash(R.string.title_test_crash, R.string.description_test_crash, new Runnable() {
 
@@ -48,7 +41,7 @@ public class CrashActivity extends AppCompatActivity {
 
                 @Override
                 public void run() {
-                    nativeDivideByZeroCrash();
+                    nativeDereferenceNullPointer();
                 }
             }),
             new Crash(R.string.title_crash_divide_by_0, R.string.description_crash_divide_by_0, new Runnable() {
@@ -150,6 +143,12 @@ public class CrashActivity extends AppCompatActivity {
                 }
             })
     );
+
+    private native void nativeDereferenceNullPointer();
+
+    private native void nativeStackOverflowCrash();
+
+    private native void nativeOutOfMemoryCrash();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
