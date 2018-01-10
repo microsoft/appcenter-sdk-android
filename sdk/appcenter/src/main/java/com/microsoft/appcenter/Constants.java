@@ -16,18 +16,27 @@ public class Constants {
      * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
      */
     public static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
+
     /**
      * Number of metrics queue items which will trigger synchronization.
      */
     static final int DEFAULT_TRIGGER_COUNT = 50;
+
     /**
      * Maximum number of requests being sent for the group.
      */
     static final int DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
+
     /**
      * Path where crash logs and temporary files are stored.
      */
     public static String FILES_PATH = null;
+
+    /**
+     * Constant used to add NDK identity to native crash logs.
+     */
+    public static final String WRAPPER_SDK_NAME_NDK = "appcenter.ndk";
+
     /**
      * Flag indicates whether the host application is debuggable or not.
      */
@@ -53,6 +62,7 @@ public class Constants {
     private static void loadFilesPath(Context context) {
         if (context != null) {
             try {
+
                 /*
                  * The file shouldn't be null, but apparently it still can happen, see
                  * http://code.google.com/p/android/issues/detail?id=8886, Fixed in API 19.

@@ -439,7 +439,7 @@ public class AppCenter {
                 finishConfiguration();
             }
         });
-        AppCenterLog.logAssert(LOG_TAG, "App Center SDK configured successfully.");
+        AppCenterLog.info(LOG_TAG, "App Center SDK configured successfully.");
         return true;
     }
 

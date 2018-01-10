@@ -13,6 +13,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -131,5 +132,34 @@ public class StorageHelperTest {
         when(dir.listFiles(filter)).thenReturn(new File[]{file1, file3, file2});
 
         assertEquals(file3, StorageHelper.InternalStorage.lastModifiedFile(dir, filter));
+    }
+
+    @Test
+    public void readBytesError() throws Exception {
+        mockStatic(AppCenterLog.class);
+        FileInputStream fileInputStream = mock(FileInputStream.class);
+        whenNew(FileInputStream.class).withAnyArguments().thenReturn(fileInputStream);
+        DataInputStream dataInputStream = mock(DataInputStream.class);
+        whenNew(DataInputStream.class).withAnyArguments().thenReturn(dataInputStream);
+        doThrow(new IOException("mock")).when(dataInputStream).readFully(any(byte[].class));
+        assertNull(StorageHelper.InternalStorage.readBytes(new File("")));
+        verify(fileInputStream).close();
+        verifyStatic();
+        AppCenterLog.error(anyString(), anyString(), any(IOException.class));
+    }
+
+    @Test
+    public void readBytesErrorAndCloseError() throws Exception {
+        mockStatic(AppCenterLog.class);
+        FileInputStream fileInputStream = mock(FileInputStream.class);
+        whenNew(FileInputStream.class).withAnyArguments().thenReturn(fileInputStream);
+        doThrow(new IOException("mock close")).when(fileInputStream).close();
+        DataInputStream dataInputStream = mock(DataInputStream.class);
+        whenNew(DataInputStream.class).withAnyArguments().thenReturn(dataInputStream);
+        doThrow(new IOException("mock")).when(dataInputStream).readFully(any(byte[].class));
+        assertNull(StorageHelper.InternalStorage.readBytes(new File("")));
+        verify(fileInputStream).close();
+        verifyStatic();
+        AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
 }

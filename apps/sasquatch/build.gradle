@@ -8,6 +8,15 @@ android {
 
     flavorDimensions "dependency", "pushLibrary"
 
+    defaultConfig {
+        externalNativeBuild {
+            ndkBuild {
+                arguments "NDK_APPLICATION_MK=Application.mk", "V=1"
+                abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            }
+        }
+    }
+
     productFlavors {
         projectDependency {
             dimension "dependency"
@@ -30,6 +39,12 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             matchingFallbacks = ['release']
+        }
+    }
+
+    externalNativeBuild {
+        ndkBuild {
+            path "Android.mk"
         }
     }
 }
@@ -60,8 +75,8 @@ dependencies {
     //noinspection GradleDependency
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
 
-    firebaseCompile "com.google.firebase:firebase-core:${rootProject.ext.firebaseLibVersion}"
-    firebaseCompile "com.google.firebase:firebase-messaging:${rootProject.ext.firebaseLibVersion}"
+    firebaseImplementation "com.google.firebase:firebase-core:${rootProject.ext.firebaseLibVersion}"
+    firebaseImplementation "com.google.firebase:firebase-messaging:${rootProject.ext.firebaseLibVersion}"
 
     /* Force usage this version of support annotations to avoid conflict. */
     androidTestImplementation "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"

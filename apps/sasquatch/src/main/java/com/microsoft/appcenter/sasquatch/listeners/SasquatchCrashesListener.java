@@ -32,38 +32,35 @@ import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 public class SasquatchCrashesListener extends AbstractCrashesListener {
 
-    private final Context context;
-    
-    private String textAttachment;
-
-    private Uri fileAttachment;
-
     @VisibleForTesting
     public static final CountingIdlingResource crashesIdlingResource = new CountingIdlingResource("crashes");
+    private final Context mContext;
+    private String mTextAttachment;
+    private Uri mFileAttachment;
 
     public SasquatchCrashesListener(Context context) {
-        this.context = context;
+        this.mContext = context;
     }
 
     public String getTextAttachment() {
-        return textAttachment;
+        return mTextAttachment;
     }
 
     public void setTextAttachment(String textAttachment) {
-        this.textAttachment = textAttachment;
+        this.mTextAttachment = textAttachment;
     }
 
     public Uri getFileAttachment() {
-        return fileAttachment;
+        return mFileAttachment;
     }
 
     public void setFileAttachment(Uri fileAttachment) {
-        this.fileAttachment = fileAttachment;
+        this.mFileAttachment = fileAttachment;
     }
 
     @Override
     public boolean shouldAwaitUserConfirmation() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
         builder
                 .setTitle(R.string.crash_confirmation_dialog_title)
                 .setMessage(R.string.crash_confirmation_dialog_message)
@@ -94,7 +91,7 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
         List<ErrorAttachmentLog> attachments = new LinkedList<>();
 
         /* Attach app icon to test binary. */
-        if (fileAttachment != null) {
+        if (mFileAttachment != null) {
             try {
                 byte[] data = getFileAttachmentData();
                 String name = getFileAttachmentDisplayName();
@@ -110,8 +107,8 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
         }
 
         /* Attach some text. */
-        if (!TextUtils.isEmpty(textAttachment)) {
-            ErrorAttachmentLog textLog = ErrorAttachmentLog.attachmentWithText(textAttachment, "text.txt");
+        if (!TextUtils.isEmpty(mTextAttachment)) {
+            ErrorAttachmentLog textLog = ErrorAttachmentLog.attachmentWithText(mTextAttachment, "text.txt");
             attachments.add(textLog);
         }
 
@@ -121,30 +118,30 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
 
     @Override
     public void onBeforeSending(ErrorReport report) {
-        Toast.makeText(context, R.string.crash_before_sending, Toast.LENGTH_SHORT).show();
+        Toast.makeText(mContext, R.string.crash_before_sending, Toast.LENGTH_SHORT).show();
         crashesIdlingResource.increment();
     }
 
     @Override
     public void onSendingFailed(ErrorReport report, Exception e) {
-        Toast.makeText(context, R.string.crash_sent_failed, Toast.LENGTH_SHORT).show();
+        Toast.makeText(mContext, R.string.crash_sent_failed, Toast.LENGTH_SHORT).show();
         crashesIdlingResource.decrement();
     }
 
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     @Override
     public void onSendingSucceeded(ErrorReport report) {
-        String message = String.format("%s\nCrash ID: %s", context.getString(R.string.crash_sent_succeeded), report.getId());
+        String message = String.format("%s\nCrash ID: %s", mContext.getString(R.string.crash_sent_succeeded), report.getId());
         if (report.getThrowable() != null) {
             message += String.format("\nThrowable: %s", report.getThrowable().toString());
         }
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
         crashesIdlingResource.decrement();
     }
 
     public String getFileAttachmentDisplayName() throws SecurityException {
-        Cursor cursor = context.getContentResolver()
-                .query(fileAttachment, null, null, null, null);
+        Cursor cursor = mContext.getContentResolver()
+                .query(mFileAttachment, null, null, null, null);
         try {
             if (cursor != null && cursor.moveToFirst()) {
                 int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
@@ -161,13 +158,13 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
     }
 
     public String getFileAttachmentSize() throws SecurityException {
-        Cursor cursor = context.getContentResolver()
-                .query(fileAttachment, null, null, null, null);
+        Cursor cursor = mContext.getContentResolver()
+                .query(mFileAttachment, null, null, null, null);
         try {
             if (cursor != null && cursor.moveToFirst()) {
                 int sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
                 if (!cursor.isNull(sizeIndex)) {
-                    return Formatter.formatFileSize(context, cursor.getLong(sizeIndex));
+                    return Formatter.formatFileSize(mContext, cursor.getLong(sizeIndex));
                 }
             }
         } finally {
@@ -182,7 +179,7 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
         InputStream inputStream = null;
         ByteArrayOutputStream outputStream = null;
         try {
-            inputStream = context.getContentResolver().openInputStream(fileAttachment);
+            inputStream = mContext.getContentResolver().openInputStream(mFileAttachment);
             if (inputStream == null) {
                 return null;
             }
@@ -213,10 +210,10 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
 
     private String getFileAttachmentMimeType() {
         String mimeType;
-        if (fileAttachment.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
-            mimeType = context.getContentResolver().getType(fileAttachment);
+        if (mFileAttachment.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+            mimeType = mContext.getContentResolver().getType(mFileAttachment);
         } else {
-            String fileExtension = MimeTypeMap.getFileExtensionFromUrl(fileAttachment.toString());
+            String fileExtension = MimeTypeMap.getFileExtensionFromUrl(mFileAttachment.toString());
             mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.toLowerCase());
         }
         return mimeType;
