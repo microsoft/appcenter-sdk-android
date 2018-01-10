@@ -1,0 +1,7 @@
+project.description = 'This package contains functionalities to deploy your application in cloud and deliver updates for it.'
+evaluationDependsOn(':sdk')
+
+dependencies {
+    compile project(':sdk:appcenter')
+    compile "com.google.code.gson:gson:2.8.1"
+}
