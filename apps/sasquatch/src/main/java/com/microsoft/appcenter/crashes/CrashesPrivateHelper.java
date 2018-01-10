@@ -8,7 +8,10 @@ public final class CrashesPrivateHelper {
     }
 
     public static void trackException(Throwable throwable, Map<String, String> properties) {
-        Crashes.trackException(throwable, properties);
+        try {
+            Crashes.class.getMethod("trackException", Throwable.class, Map.class).invoke(null, throwable, properties);
+        } catch (Exception ignored) {
+        }
     }
 
     public static void saveUncaughtException(Thread thread, Throwable exception) {
