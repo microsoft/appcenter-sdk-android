@@ -50,8 +50,11 @@ google-services.json
 # Localization
 localization/*.zip
 localization/unzip/
+.externalNativeBuild
 
 # VS Code + Java extension follows Eclipse conventions
 .settings
 .project
 .classpath
+
+/Configure

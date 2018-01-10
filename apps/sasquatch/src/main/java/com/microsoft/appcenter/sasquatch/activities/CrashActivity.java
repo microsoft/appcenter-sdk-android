@@ -28,7 +28,6 @@ public class CrashActivity extends AppCompatActivity {
     private boolean mCrashSuperPauseNotCalled;
 
     private boolean mCrashSuperDestroyNotCalled;
-
     private final List<Crash> sCrashes = Arrays.asList(
             new Crash(R.string.title_test_crash, R.string.description_test_crash, new Runnable() {
 
@@ -120,8 +119,38 @@ public class CrashActivity extends AppCompatActivity {
                 public void run() {
                     startActivity(new Intent(CrashActivity.this, CrashSubActivity2.class));
                 }
+            }),
+
+            /* NDK crashes */
+            new Crash(R.string.title_test_native_crash, R.string.description_test_native_crash, new Runnable() {
+
+                @Override
+                public void run() {
+                    nativeDereferenceNullPointer();
+                }
+            }),
+            new Crash(R.string.title_native_stack_overflow_crash, R.string.description_native_stack_overflow_crash, new Runnable() {
+
+                @Override
+                @SuppressWarnings("InfiniteRecursion")
+                public void run() {
+                    nativeStackOverflowCrash();
+                }
+            }),
+            new Crash(R.string.title_native_abort_crash, R.string.description_native_abort_crash, new Runnable() {
+
+                @Override
+                public void run() {
+                    nativeAbortCall();
+                }
             })
     );
+
+    private native void nativeDereferenceNullPointer();
+
+    private native void nativeStackOverflowCrash();
+
+    private native void nativeAbortCall();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
