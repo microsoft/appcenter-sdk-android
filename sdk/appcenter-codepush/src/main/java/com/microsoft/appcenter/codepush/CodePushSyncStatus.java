@@ -1,4 +1,4 @@
-package com.microsoft.codepush.react.enums;
+package com.microsoft.appcenter.codepush.enums;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -62,9 +62,11 @@ public enum CodePushSyncStatus {
     INSTALLING_UPDATE(8);
 
     private final int value;
+
     CodePushSyncStatus(int value) {
         this.value = value;
     }
+    
     public int getValue() {
         return this.value;
     }

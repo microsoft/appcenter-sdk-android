@@ -50,3 +50,11 @@ google-services.json
 # Localization
 localization/*.zip
 localization/unzip/
+sdk/appcenter-codepush/gradlew.bat
+sdk/appcenter-codepush/gradlew
+sdk/appcenter-codepush/gradle/wrapper/gradle-wrapper.properties
+sdk/appcenter-codepush/gradle/wrapper/gradle-wrapper.jar
+sdk/appcenter-analytics/gradlew.bat
+sdk/appcenter-analytics/gradlew
+sdk/appcenter-analytics/gradle/wrapper/gradle-wrapper.properties
+sdk/appcenter-analytics/gradle/wrapper/gradle-wrapper.jar

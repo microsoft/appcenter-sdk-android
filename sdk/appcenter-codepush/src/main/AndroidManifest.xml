@@ -1,0 +1,9 @@
+﻿<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.microsoft.appcenter.codepush">
+
+
+    <application>
+        <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" />
+    </application>
+
+</manifest>

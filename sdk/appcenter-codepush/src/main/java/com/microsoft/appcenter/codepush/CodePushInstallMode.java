@@ -1,4 +1,4 @@
-package com.microsoft.codepush.react.enums;
+package com.microsoft.appcenter.codepush.enums;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -20,7 +20,7 @@ public enum CodePushInstallMode {
     ON_NEXT_RESTART(1),
 
     /**
-     * The next time application enters the screen (resumes) .
+     * The next time application enters the screen (resumes).
      */
     @SerializedName("2")
     ON_NEXT_RESUME(2),
@@ -32,9 +32,11 @@ public enum CodePushInstallMode {
     ON_NEXT_SUSPEND(3);
 
     private final int value;
+
     CodePushInstallMode(int value) {
         this.value = value;
     }
+    
     public int getValue() {
         return this.value;
     }

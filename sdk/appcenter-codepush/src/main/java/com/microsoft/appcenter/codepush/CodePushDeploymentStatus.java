@@ -1,4 +1,4 @@
-package com.microsoft.codepush.react.enums;
+package com.microsoft.appcenter.codepush.enums;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -20,9 +20,11 @@ public enum CodePushDeploymentStatus {
     FAILED("DeploymentFailed");
 
     private final String value;
+
     CodePushDeploymentStatus(String value) {
         this.value = value;
     }
+    
     public String getValue() {
         return this.value;
     }
