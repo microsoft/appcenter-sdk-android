@@ -3,18 +3,18 @@ package com.microsoft.appcenter.codepush.enums;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * A enum defining the deployment status.
+ * Indicates the status of a deployment (after installing and restarting).
  */
 public enum CodePushDeploymentStatus {
 
     /**
-     * Deployment process have been performed successfully.
+     * The deployment succeeded.
      */
     @SerializedName("DeploymentSucceeded")
     SUCCEEDED("DeploymentSucceeded"),
 
     /**
-     * Deployment process have been performed with errors.
+     * The deployment failed (and was rolled back).
      */
     @SerializedName("DeploymentFailed")
     FAILED("DeploymentFailed");
@@ -24,7 +24,7 @@ public enum CodePushDeploymentStatus {
     CodePushDeploymentStatus(String value) {
         this.value = value;
     }
-    
+
     public String getValue() {
         return this.value;
     }

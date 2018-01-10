@@ -3,25 +3,25 @@ package com.microsoft.appcenter.codepush.enums;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * A enum defining when an update check should happen. 
-*/
+ * Indicates when you would like to check for (and install) updates from the CodePush server.
+ */
 public enum CodePushCheckFrequency {
 
-    /** 
-     * Update check happens on application start.
+    /**
+     * When the app is fully initialized (or more specifically, when the root component is mounted).
      */
     @SerializedName("0")
     ON_APP_START(0),
 
     /**
-     * Update check happens every time the application enters the screen (resumes).
-    */
+     * When the app re-enters the foreground.
+     */
     @SerializedName("1")
     ON_APP_RESUME(1),
 
     /**
-     * Update check is performed manually when the developer finds necessary.
-    */
+     * Don't automatically check for updates, but only do it when codePush.sync() is manully called inside app code.
+     */
     @SerializedName("2")
     MANUAL(2);
 
@@ -30,9 +30,8 @@ public enum CodePushCheckFrequency {
     CodePushCheckFrequency(int value) {
         this.value = value;
     }
-    
+
     public int getValue() {
         return this.value;
     }
 }
-
