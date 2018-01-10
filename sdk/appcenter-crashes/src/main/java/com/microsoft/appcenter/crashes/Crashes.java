@@ -241,11 +241,13 @@ public class Crashes extends AbstractAppCenterService {
 
     /**
      * Get the path where NDK minidump files should be created.
+     * <p>
+     * TODO this API is yet not public as backend is not ready for this feature.
      *
      * @return path where minidump files should be created.
      */
     @SuppressWarnings("unusued")
-    public static AppCenterFuture<String> getMinidumpDirectory() {
+    protected static AppCenterFuture<String> getMinidumpDirectory() {
         return getInstance().getNewMinidumpDirectoryAsync();
     }
 
