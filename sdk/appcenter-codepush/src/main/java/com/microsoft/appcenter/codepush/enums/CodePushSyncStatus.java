@@ -16,7 +16,7 @@ public enum CodePushSyncStatus {
     /**
      * An available update has been installed and will be run either immediately after the
      * <code>syncStatusChangedCallback</code> function returns or the next time the app resumes/restarts,
-     * depending on the {@link CodePushInstallMode} specified in {@link com.microsoft.appcenter.codepush.datacontracts.CodePushSyncOptions}.
+     * depending on the {@link CodePushInstallMode} specified in CodePushSyncOptions.
      */
     @SerializedName("1")
     UPDATE_INSTALLED(1),
