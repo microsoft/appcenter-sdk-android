@@ -27,6 +27,7 @@ public enum CodePushDeploymentStatus {
 
     /**
      * Gets the assigned enum value.
+     *
      * @return string assigned to enum item.
      */
     public String getValue() {

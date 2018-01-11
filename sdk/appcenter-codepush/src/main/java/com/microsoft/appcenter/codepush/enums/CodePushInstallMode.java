@@ -42,6 +42,7 @@ public enum CodePushInstallMode {
 
     /**
      * Gets the assigned enum value.
+     *
      * @return integer assigned to enum item.
      */
     public int getValue() {
