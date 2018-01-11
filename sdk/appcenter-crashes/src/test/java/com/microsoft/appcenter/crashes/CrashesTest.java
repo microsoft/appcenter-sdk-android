@@ -7,6 +7,7 @@ import android.os.SystemClock;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.Constants;
+import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.HandledErrorLog;
@@ -16,6 +17,7 @@ import com.microsoft.appcenter.crashes.ingestion.models.json.ErrorAttachmentLogF
 import com.microsoft.appcenter.crashes.ingestion.models.json.HandledErrorLogFactory;
 import com.microsoft.appcenter.crashes.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
+import com.microsoft.appcenter.crashes.model.NativeException;
 import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.models.Device;
@@ -23,6 +25,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.UUIDUtils;
@@ -46,6 +49,7 @@ import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.powermock.reflect.Whitebox;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -1180,5 +1184,92 @@ public class CrashesTest {
 
         /* No log sent. */
         verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
+    }
+
+    private ManagedErrorLog testNativeCrashLog(long appStartTime, long crashTime, boolean correlateSession) throws Exception {
+
+        /* Setup mock for a crash in disk. */
+        File minidumpFile = mock(File.class);
+        when(minidumpFile.getName()).thenReturn("mockFile");
+        when(minidumpFile.lastModified()).thenReturn(crashTime);
+        mockStatic(SessionContext.class);
+        SessionContext sessionContext = mock(SessionContext.class);
+        when(SessionContext.getInstance()).thenReturn(sessionContext);
+        if (correlateSession) {
+            SessionContext.SessionInfo sessionInfo = mock(SessionContext.SessionInfo.class);
+            when(sessionContext.getSessionAt(crashTime)).thenReturn(sessionInfo);
+            when(sessionInfo.getAppLaunchTimestamp()).thenReturn(appStartTime);
+        }
+        mockStatic(DeviceInfoHelper.class);
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mock(Device.class));
+        ErrorReport report = new ErrorReport();
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(mock(File.class));
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{minidumpFile});
+        File pendingDir = mock(File.class);
+        Whitebox.setInternalState(pendingDir, "path", "");
+        when(ErrorLogHelper.getPendingMinidumpDirectory()).thenReturn(pendingDir);
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report);
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
+        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new NativeException());
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        ArgumentCaptor<Log> log = ArgumentCaptor.forClass(Log.class);
+        when(logSerializer.serializeLog(log.capture())).thenReturn("{}");
+        when(logSerializer.deserializeLog(anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+
+            @Override
+            public ManagedErrorLog answer(InvocationOnMock invocation) throws Throwable {
+                ManagedErrorLog log = mock(ManagedErrorLog.class);
+                when(log.getId()).thenReturn(UUID.randomUUID());
+                return log;
+            }
+        });
+
+        /* Start crashes. */
+        Crashes crashes = Crashes.getInstance();
+        crashes.setLogSerializer(logSerializer);
+        crashes.onStarting(mAppCenterHandler);
+        crashes.onStarted(mock(Context.class), "", mock(Channel.class));
+
+        /* Verify timestamps on the crash log. */
+        assertTrue(Crashes.hasCrashedInLastSession().get());
+        assertTrue(log.getValue() instanceof ManagedErrorLog);
+        return (ManagedErrorLog) log.getValue();
+    }
+
+    @Test
+    @PrepareForTest({SessionContext.class, DeviceInfoHelper.class})
+    public void minidumpAppLaunchTimestampFromSessionContext() throws Exception {
+        long appStartTime = 99L;
+        long crashTime = 123L;
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true);
+        assertEquals(new Date(crashTime), crashLog.getTimestamp());
+        assertEquals(new Date(appStartTime), crashLog.getAppLaunchTimestamp());
+    }
+
+    @Test
+    @PrepareForTest({SessionContext.class, DeviceInfoHelper.class})
+    public void minidumpAppLaunchTimestampFromSessionContextInFuture() throws Exception {
+        long appStartTime = 101L;
+        long crashTime = 100L;
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true);
+
+        /* Verify we fall back to crash time for app start time. */
+        assertEquals(new Date(crashTime), crashLog.getTimestamp());
+        assertEquals(new Date(crashTime), crashLog.getAppLaunchTimestamp());
+    }
+
+    @Test
+    @PrepareForTest({SessionContext.class, DeviceInfoHelper.class})
+    public void minidumpAppLaunchTimestampFromSessionContextNotFound() throws Exception {
+        long appStartTime = 99L;
+        long crashTime = 123L;
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, false);
+
+        /* Verify we fall back to crash time for app start time. */
+        assertEquals(new Date(crashTime), crashLog.getTimestamp());
+        assertEquals(new Date(crashTime), crashLog.getAppLaunchTimestamp());
     }
 }
