@@ -530,6 +530,7 @@ public class CrashesTest {
         crashes.onStarted(mock(Context.class), "", mockChannel);
         Crashes.trackException(EXCEPTION);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage());
@@ -543,6 +544,7 @@ public class CrashesTest {
             put("1", null);
         }});
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
@@ -556,6 +558,7 @@ public class CrashesTest {
             }
         }});
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
@@ -568,6 +571,7 @@ public class CrashesTest {
             put(longerMapItem, longerMapItem);
         }});
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
             @Override
             public boolean matches(Object item) {
                 if (item instanceof HandledErrorLog) {
@@ -626,6 +630,7 @@ public class CrashesTest {
         crashes.onStarted(mock(Context.class), "", mockChannel);
         WrapperSdkExceptionManager.trackException(exception);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException());
@@ -639,6 +644,7 @@ public class CrashesTest {
             put("1", null);
         }});
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
@@ -652,6 +658,7 @@ public class CrashesTest {
             }
         }});
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
@@ -664,6 +671,7 @@ public class CrashesTest {
             put(longerMapItem, longerMapItem);
         }});
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
             @Override
             public boolean matches(Object item) {
                 if (item instanceof HandledErrorLog) {
