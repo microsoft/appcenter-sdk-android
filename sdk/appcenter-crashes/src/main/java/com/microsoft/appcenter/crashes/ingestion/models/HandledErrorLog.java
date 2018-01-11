@@ -1,6 +1,6 @@
 package com.microsoft.appcenter.crashes.ingestion.models;
 
-import com.microsoft.appcenter.ingestion.models.AbstractLog;
+import com.microsoft.appcenter.ingestion.models.LogWithProperties;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,7 +13,7 @@ import static com.microsoft.appcenter.ingestion.models.CommonProperties.ID;
 /**
  * Handled Error log for managed platforms (such as Xamarin, Unity, Android Dalvik/ART).
  */
-public class HandledErrorLog extends AbstractLog {
+public class HandledErrorLog extends LogWithProperties {
 
     /**
      * Log type.

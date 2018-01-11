@@ -59,11 +59,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -79,6 +81,7 @@ import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -205,7 +208,8 @@ public class CrashesTest {
         /* Just check log is discarded without throwing any exception. */
         Crashes.notifyUserConfirmation(Crashes.SEND);
         Crashes.trackException(EXCEPTION);
-        verifyStatic(times(2));
+        Crashes.trackException(EXCEPTION, new HashMap<String, String>());
+        verifyStatic(times(3));
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
@@ -536,6 +540,57 @@ public class CrashesTest {
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage());
             }
         }), eq(crashes.getGroupName()));
+        reset(mockChannel);
+        Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
+            put(null, null);
+            put("", null);
+            put(generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
+            put("1", null);
+        }});
+        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
+                        && ((HandledErrorLog) item).getProperties().size() == 0;
+            }
+        }), eq(crashes.getGroupName()));
+        reset(mockChannel);
+        Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
+            for (int i = 0; i < 10; i++) {
+                put("valid" + i, "valid");
+            }
+        }});
+        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
+                        && ((HandledErrorLog) item).getProperties().size() == 5;
+            }
+        }), eq(crashes.getGroupName()));
+        reset(mockChannel);
+        final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
+        Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
+            put(longerMapItem, longerMapItem);
+        }});
+        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof HandledErrorLog) {
+                    HandledErrorLog errorLog = (HandledErrorLog) item;
+                    if (EXCEPTION.getMessage().equals((errorLog.getException().getMessage()))) {
+                        if (errorLog.getProperties().size() == 1) {
+                            Map.Entry<String, String> entry = errorLog.getProperties().entrySet().iterator().next();
+                            String truncatedMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH, '*');
+                            return entry.getKey().length() == ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH && entry.getValue().length() == ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH;
+                        }
+                    }
+                }
+                return false;
+            }
+        }), eq(crashes.getGroupName()));
 
         HandledErrorLog mockLog = mock(HandledErrorLog.class);
         CrashesListener mockListener = mock(CrashesListener.class);
@@ -583,6 +638,57 @@ public class CrashesTest {
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException());
+            }
+        }), eq(crashes.getGroupName()));
+        reset(mockChannel);
+        WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
+            put(null, null);
+            put("", null);
+            put(generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
+            put("1", null);
+        }});
+        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
+                        && ((HandledErrorLog) item).getProperties().size() == 0;
+            }
+        }), eq(crashes.getGroupName()));
+        reset(mockChannel);
+        WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
+            for (int i = 0; i < 10; i++) {
+                put("valid" + i, "valid");
+            }
+        }});
+        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
+                        && ((HandledErrorLog) item).getProperties().size() == 5;
+            }
+        }), eq(crashes.getGroupName()));
+        reset(mockChannel);
+        final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
+        WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
+            put(longerMapItem, longerMapItem);
+        }});
+        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof HandledErrorLog) {
+                    HandledErrorLog errorLog = (HandledErrorLog) item;
+                    if (exception.equals((errorLog.getException()))) {
+                        if (errorLog.getProperties().size() == 1) {
+                            Map.Entry<String, String> entry = errorLog.getProperties().entrySet().iterator().next();
+                            String truncatedMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH, '*');
+                            return entry.getKey().length() == ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH && entry.getValue().length() == ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH;
+                        }
+                    }
+                }
+                return false;
             }
         }), eq(crashes.getGroupName()));
     }

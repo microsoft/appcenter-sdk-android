@@ -217,7 +217,24 @@ public class Crashes extends AbstractAppCenterService {
      */
     @SuppressWarnings("SameParameterValue")
     static void trackException(@NonNull Throwable throwable) {
-        getInstance().queueException(throwable);
+        trackException(throwable, null);
+    }
+
+    /**
+     * Track a custom exception with name and optional properties.
+     * The name parameter can not be null or empty. Maximum allowed length = 256.
+     * The properties parameter maximum item count = 5.
+     * The properties keys can not be null or empty, maximum allowed key length = 64.
+     * The properties values can not be null, maximum allowed value length = 64.
+     * Any length of name/keys/values that are longer than each limit will be truncated.
+     * TODO the backend does not support that service yet, will be public method later.
+     *
+     * @param throwable An exception.
+     * @param properties Optional properties.
+     */
+    static void trackException(@NonNull Throwable throwable, Map<String, String> properties) {
+        Map<String, String> validatedProperties = ErrorLogHelper.validateProperties(properties, "HandledError");
+        getInstance().queueException(throwable, validatedProperties);
     }
 
     /**
@@ -483,33 +500,35 @@ public class Crashes extends AbstractAppCenterService {
      * Send an handled exception.
      *
      * @param throwable An handled exception.
+     * @param properties optional properties.
      */
-    private synchronized void queueException(@NonNull final Throwable throwable) {
+    private synchronized void queueException(@NonNull final Throwable throwable, Map<String, String> properties) {
         queueException(new ExceptionModelBuilder() {
 
             @Override
             public com.microsoft.appcenter.crashes.ingestion.models.Exception buildExceptionModel() {
                 return ErrorLogHelper.getModelExceptionFromThrowable(throwable);
             }
-        });
+        }, properties);
     }
 
     /**
      * Send an handled exception (used by wrapper SDKs).
      *
      * @param modelException An handled exception already in JSON model form.
+     * @param properties optional properties.
      */
-    synchronized void queueException(@NonNull final com.microsoft.appcenter.crashes.ingestion.models.Exception modelException) {
+    synchronized void queueException(@NonNull final com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, Map<String, String> properties) {
         queueException(new ExceptionModelBuilder() {
 
             @Override
             public com.microsoft.appcenter.crashes.ingestion.models.Exception buildExceptionModel() {
                 return modelException;
             }
-        });
+        }, properties);
     }
 
-    private synchronized void queueException(@NonNull final ExceptionModelBuilder exceptionModelBuilder) {
+    private synchronized void queueException(@NonNull final ExceptionModelBuilder exceptionModelBuilder, final Map<String, String> properties) {
         post(new Runnable() {
 
             @Override
@@ -517,6 +536,7 @@ public class Crashes extends AbstractAppCenterService {
                 HandledErrorLog errorLog = new HandledErrorLog();
                 errorLog.setId(UUID.randomUUID());
                 errorLog.setException(exceptionModelBuilder.buildExceptionModel());
+                errorLog.setProperties(properties);
                 mChannel.enqueue(errorLog, ERROR_GROUP);
             }
         });

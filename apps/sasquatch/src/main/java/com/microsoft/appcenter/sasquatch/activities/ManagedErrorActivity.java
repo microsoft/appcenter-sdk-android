@@ -15,6 +15,7 @@ import com.microsoft.appcenter.crashes.CrashesPrivateHelper;
 import com.microsoft.appcenter.sasquatch.R;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 public class ManagedErrorActivity extends AppCompatActivity {
@@ -68,7 +69,11 @@ public class ManagedErrorActivity extends AppCompatActivity {
                 try {
                     @SuppressWarnings("unchecked")
                     Class<? extends Throwable> clazz = (Class<? extends Throwable>) parent.getItemAtPosition(position);
-                    CrashesPrivateHelper.trackException(clazz.getConstructor(String.class).newInstance("Test Exception"));
+                    CrashesPrivateHelper.trackException(clazz.getConstructor(String.class).newInstance("Test Exception"),
+                            new HashMap<String, String>() {{
+                                put("prop1", "value1");
+                                put("prop2", "value2");
+                            }});
                 } catch (Exception e) {
 
                     /* This is not expected behavior so let the application crashes. */
