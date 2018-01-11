@@ -15,6 +15,6 @@ public class CodePushAndroidTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.microsoft.appcenter.codepush", appContext.getPackageName());
+        assertEquals("com.microsoft.appcenter.codepush.test", appContext.getPackageName());
     }
 }
