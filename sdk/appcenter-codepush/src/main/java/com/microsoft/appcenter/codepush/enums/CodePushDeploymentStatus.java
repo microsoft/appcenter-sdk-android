@@ -25,6 +25,10 @@ public enum CodePushDeploymentStatus {
         this.value = value;
     }
 
+    /**
+     * Gets the assigned enum value.
+     * @return string assigned to enum item.
+     */
     public String getValue() {
         return this.value;
     }

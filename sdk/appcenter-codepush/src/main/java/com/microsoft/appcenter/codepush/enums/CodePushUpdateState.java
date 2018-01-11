@@ -14,7 +14,7 @@ public enum CodePushUpdateState {
     @SerializedName("0")
     RUNNING(0),
 
-     /**
+    /**
      * Indicates than an update has been installed, but the
      * app hasn't been restarted yet in order to apply it.
      */
@@ -29,11 +29,15 @@ public enum CodePushUpdateState {
     LATEST(2);
 
     private final int value;
-    
+
     CodePushUpdateState(int value) {
         this.value = value;
     }
 
+    /**
+     * Gets the assigned enum value.
+     * @return integer assigned to enum item.
+     */
     public int getValue() {
         return this.value;
     }

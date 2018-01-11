@@ -70,7 +70,11 @@ public enum CodePushSyncStatus {
     CodePushSyncStatus(int value) {
         this.value = value;
     }
-    
+
+    /**
+     * Gets the assigned enum value.
+     * @return integer assigned to enum item.
+     */
     public int getValue() {
         return this.value;
     }
