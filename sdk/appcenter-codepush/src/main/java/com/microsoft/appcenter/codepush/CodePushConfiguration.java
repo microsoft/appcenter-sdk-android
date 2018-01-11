@@ -41,7 +41,7 @@ public final class CodePushConfiguration {
     }
 
     /**
-     * Get the clientUniqueId value
+     * Get the clientUniqueId value.
      *
      * @return the clientUniqueId value
      */
@@ -50,7 +50,7 @@ public final class CodePushConfiguration {
     }
 
     /**
-     * Get the deploymentKey value
+     * Get the deploymentKey value.
      *
      * @return the deploymentKey value
      */
@@ -59,7 +59,7 @@ public final class CodePushConfiguration {
     }
 
     /**
-     * Get the serverUrl value
+     * Get the serverUrl value.
      *
      * @return the serverUrl value
      */
@@ -68,7 +68,7 @@ public final class CodePushConfiguration {
     }
 
     /**
-     * Get the packageHash value
+     * Get the packageHash value.
      *
      * @return the packageHash value
      */
