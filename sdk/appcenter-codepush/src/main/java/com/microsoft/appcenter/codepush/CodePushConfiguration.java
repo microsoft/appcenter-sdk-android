@@ -34,7 +34,7 @@ public final class CodePushConfiguration {
     /**
      * Get the appVersion value.
      *
-     * @return appVersion value
+     * @return appVersion value.
      */
     public String getAppVersion() {
         return this.appVersion;
@@ -43,7 +43,7 @@ public final class CodePushConfiguration {
     /**
      * Get the clientUniqueId value.
      *
-     * @return the clientUniqueId value
+     * @return the clientUniqueId value.
      */
     public String getClientUniqueId() {
         return this.clientUniqueId;
@@ -52,7 +52,7 @@ public final class CodePushConfiguration {
     /**
      * Get the deploymentKey value.
      *
-     * @return the deploymentKey value
+     * @return the deploymentKey value.
      */
     public String getDeploymentKey() {
         return this.deploymentKey;
@@ -61,7 +61,7 @@ public final class CodePushConfiguration {
     /**
      * Get the serverUrl value.
      *
-     * @return the serverUrl value
+     * @return the serverUrl value.
      */
     public String getServerUrl() {
         return this.serverUrl;
@@ -70,7 +70,7 @@ public final class CodePushConfiguration {
     /**
      * Get the packageHash value.
      *
-     * @return the packageHash value
+     * @return the packageHash value.
      */
     public String getPackageHash() {
         return this.packageHash;
@@ -79,7 +79,7 @@ public final class CodePushConfiguration {
     /**
      * Set the appVersion value.
      *
-     * @param appVersion the appVersion value to set
+     * @param appVersion the appVersion value to set.
      */
     @SuppressWarnings("WeakerAccess")
     public void setAppVersion(String appVersion) {
@@ -89,7 +89,7 @@ public final class CodePushConfiguration {
     /**
      * Set the clientUniqueId value.
      *
-     * @param clientUniqueId the clientUniqueId value to set
+     * @param clientUniqueId the clientUniqueId value to set.
      */
     @SuppressWarnings("WeakerAccess")
     public void setClientUniqueId(String clientUniqueId) {
@@ -99,7 +99,7 @@ public final class CodePushConfiguration {
     /**
      * Set the deploymentKey value.
      *
-     * @param deploymentKey the deploymentKey value to set
+     * @param deploymentKey the deploymentKey value to set.
      */
     @SuppressWarnings("WeakerAccess")
     public void setDeploymentKey(String deploymentKey) {
@@ -109,7 +109,7 @@ public final class CodePushConfiguration {
     /**
      * Set the serverUrl value.
      *
-     * @param serverUrl the serverUrl value to set
+     * @param serverUrl the serverUrl value to set.
      */
     @SuppressWarnings("WeakerAccess")
     public void setServerUrl(String serverUrl) {
@@ -119,7 +119,7 @@ public final class CodePushConfiguration {
     /**
      * Set the packageHash value.
      *
-     * @param packageHash the serverUrl value to set
+     * @param packageHash the serverUrl value to set.
      */
     @SuppressWarnings("WeakerAccess")
     public void setPackageHash(String packageHash) {
