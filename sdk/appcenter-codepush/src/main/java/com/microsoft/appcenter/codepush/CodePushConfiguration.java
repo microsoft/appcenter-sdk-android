@@ -36,7 +36,7 @@ public final class CodePushConfiguration {
      *
      * @return appVersion value
      */
-    public String getAppVersion(){
+    public String getAppVersion() {
         return this.appVersion;
     }
 
