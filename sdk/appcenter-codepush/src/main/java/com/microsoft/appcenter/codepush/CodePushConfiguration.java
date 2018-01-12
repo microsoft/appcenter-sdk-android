@@ -1,6 +1,5 @@
 package com.microsoft.appcenter.codepush;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 /**
@@ -85,7 +84,7 @@ public final class CodePushConfiguration {
      * @param appVersion the appVersion value to set.
      * @return this instance.
      */
-    public CodePushConfiguration setAppVersion(String appVersion) {
+    public CodePushConfiguration setAppVersion(final String appVersion) {
         if (appVersion != null) {
             this.appVersion = appVersion;
         } else {
@@ -100,7 +99,7 @@ public final class CodePushConfiguration {
      * @param clientUniqueId the clientUniqueId value to set.
      * @return this instance.
      */
-    public CodePushConfiguration setClientUniqueId(String clientUniqueId) {
+    public CodePushConfiguration setClientUniqueId(final String clientUniqueId) {
         if (clientUniqueId != null) {
             this.clientUniqueId = clientUniqueId;
         } else {
@@ -115,7 +114,7 @@ public final class CodePushConfiguration {
      * @param deploymentKey the deploymentKey value to set.
      * @return this instance.
      */
-    public CodePushConfiguration setDeploymentKey(String deploymentKey) {
+    public CodePushConfiguration setDeploymentKey(final String deploymentKey) {
         if (deploymentKey != null) {
             this.deploymentKey = deploymentKey;
         } else {
@@ -130,7 +129,7 @@ public final class CodePushConfiguration {
      * @param serverUrl the serverUrl value to set.
      * @return this instance.
      */
-    public CodePushConfiguration setServerUrl(String serverUrl) {
+    public CodePushConfiguration setServerUrl(final String serverUrl) {
         if (serverUrl != null) {
             this.serverUrl = serverUrl;
         } else {
@@ -145,7 +144,7 @@ public final class CodePushConfiguration {
      * @param packageHash the serverUrl value to set.
      * @return this instance.
      */
-    public CodePushConfiguration setPackageHash(String packageHash) {
+    public CodePushConfiguration setPackageHash(final String packageHash) {
         this.packageHash = packageHash;
         return this;
     }
