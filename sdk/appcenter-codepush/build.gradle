@@ -1,0 +1,7 @@
+project.description = 'A cloud service that enables developers to deploy mobile app updates directly to their users` devices.'
+evaluationDependsOn(':sdk')
+
+dependencies {
+    compile project(':sdk:appcenter')
+    compile 'com.google.code.gson:gson:2.8.2'
+}
