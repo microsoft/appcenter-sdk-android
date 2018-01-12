@@ -42,46 +42,47 @@ public class CodePushDownloadStatusReport {
         return codePushDownloadStatusReport;
     }
 
+
     /**
-     * Gets the value of clientUniqueId and returns it.
+     * Gets the id of the device and returns it.
      *
-     * @return clientUniqueId.
+     * @return the id of the device.
      */
     public String getClientUniqueId() {
         return clientUniqueId;
     }
 
     /**
-     * Gets the value of deploymentKey and returns it.
+     * Gets the deployment key to use to query the CodePush server for an update and returns it.
      *
-     * @return deploymentKey.
+     * @return the deployment key to use to query the CodePush server for an update.
      */
     public String getDeploymentKey() {
         return deploymentKey;
     }
 
     /**
-     * Gets the value of label and returns it.
+     * Gets the internal label automatically given to the update by the CodePush server and returns it.
      *
-     * @return label.
+     * @return the internal label automatically given to the update by the CodePush server.
      */
     public String getLabel() {
         return label;
     }
 
     /**
-     * Sets the label.
+     * Sets the internal label automatically given to the update by the CodePush server.
      *
-     * @param label new value.
+     * @param label the internal label automatically given to the update by the CodePush server.
      */
     public void setLabel(String label) {
         this.label = label;
     }
 
     /**
-     * Sets the clientUniqueId.
+     * Sets the id of the device.
      *
-     * @param clientUniqueId new value.
+     * @param clientUniqueId the id of the device.
      */
     @SuppressWarnings("WeakerAccess")
     public void setClientUniqueId(String clientUniqueId) {
@@ -89,9 +90,9 @@ public class CodePushDownloadStatusReport {
     }
 
     /**
-     * Sets the deploymentKey.
+     * Sets the deployment key to use to query the CodePush server for an update.
      *
-     * @param deploymentKey new value.
+     * @param deploymentKey the deployment key to use to query the CodePush server for an update.
      */
     @SuppressWarnings("WeakerAccess")
     public void setDeploymentKey(String deploymentKey) {

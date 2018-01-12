@@ -86,36 +86,40 @@ public class CodePushUpdateDialog {
     }
 
     /**
-     * Gets the value of appendReleaseDescription and returns it.
+     * Gets whether you would like to append the description of an available release to the
+     * notification message which is displayed to the end user and returns it.
      *
-     * @return appendReleaseDescription.
+     * @return whether you would like to append the description of an available release to the
+     * notification message which is displayed to the end user.
      */
     public boolean getAppendReleaseDescription() {
         return appendReleaseDescription;
     }
 
     /**
-     * Sets the appendReleaseDescription.
+     * Sets whether you would like to append the description of an available release to the
+     * notification message which is displayed to the end user.
      *
-     * @param appendReleaseDescription new value.
+     * @param appendReleaseDescription whether you would like to append the description of an available release to the
+     *                                 notification message which is displayed to the end user.
      */
     public void setAppendReleaseDescription(boolean appendReleaseDescription) {
         this.appendReleaseDescription = appendReleaseDescription;
     }
 
     /**
-     * Gets the value of descriptionPrefix and returns it.
+     * Gets the string you would like to prefix the release description with.
      *
-     * @return descriptionPrefix.
+     * @return the string you would like to prefix the release description with.
      */
     public String getDescriptionPrefix() {
         return descriptionPrefix;
     }
 
     /**
-     * Sets the descriptionPrefix.
+     * Sets the string you would like to prefix the release description with.
      *
-     * @param descriptionPrefix new value.
+     * @param descriptionPrefix the string you would like to prefix the release description with.
      */
     @SuppressWarnings("WeakerAccess")
     public void setDescriptionPrefix(String descriptionPrefix) {
@@ -123,18 +127,18 @@ public class CodePushUpdateDialog {
     }
 
     /**
-     * Gets the value of mandatoryContinueButtonLabel and returns it.
+     * Gets the text to use for the button the end user must press in order to install a mandatory update and returns it.
      *
-     * @return mandatoryContinueButtonLabel.
+     * @return the text to use for the button the end user must press in order to install a mandatory update.
      */
     public String getMandatoryContinueButtonLabel() {
         return mandatoryContinueButtonLabel;
     }
 
     /**
-     * Sets the mandatoryContinueButtonLabel.
+     * Sets the text to use for the button the end user must press in order to install a mandatory update.
      *
-     * @param mandatoryContinueButtonLabel new value.
+     * @param mandatoryContinueButtonLabel the text to use for the button the end user must press in order to install a mandatory update.
      */
     @SuppressWarnings("WeakerAccess")
     public void setMandatoryContinueButtonLabel(String mandatoryContinueButtonLabel) {
@@ -142,18 +146,18 @@ public class CodePushUpdateDialog {
     }
 
     /**
-     * Gets the value of mandatoryUpdateMessage and returns it.
+     * Gets the text used as the body of an update notification, when the update is specified as mandatory and returns it.
      *
-     * @return mandatoryUpdateMessage.
+     * @return the text used as the body of an update notification, when the update is specified as mandatory.
      */
     public String getMandatoryUpdateMessage() {
         return mandatoryUpdateMessage;
     }
 
     /**
-     * Sets the mandatoryUpdateMessage.
+     * Sets the text used as the body of an update notification, when the update is specified as mandatory.
      *
-     * @param mandatoryUpdateMessage new value.
+     * @param mandatoryUpdateMessage the text used as the body of an update notification, when the update is specified as mandatory.
      */
     @SuppressWarnings("WeakerAccess")
     public void setMandatoryUpdateMessage(String mandatoryUpdateMessage) {
@@ -161,18 +165,18 @@ public class CodePushUpdateDialog {
     }
 
     /**
-     * Gets the value of optionalIgnoreButtonLabel and returns it.
+     * Gets the text to use for the button the end user can press in order to ignore an optional update that is available and returns it.
      *
-     * @return optionalIgnoreButtonLabel.
+     * @return the text to use for the button the end user can press in order to ignore an optional update that is available.
      */
     public String getOptionalIgnoreButtonLabel() {
         return optionalIgnoreButtonLabel;
     }
 
     /**
-     * Sets the optionalIgnoreButtonLabel.
+     * Sets the text to use for the button the end user can press in order to ignore an optional update that is available.
      *
-     * @param optionalIgnoreButtonLabel new value.
+     * @param optionalIgnoreButtonLabel the text to use for the button the end user can press in order to ignore an optional update that is available.
      */
     @SuppressWarnings("WeakerAccess")
     public void setOptionalIgnoreButtonLabel(String optionalIgnoreButtonLabel) {
@@ -180,18 +184,18 @@ public class CodePushUpdateDialog {
     }
 
     /**
-     * Gets the value of optionalInstallButtonLabel and returns it.
+     * Gets the text to use for the button the end user can press in order to install an optional update and returns it.
      *
-     * @return optionalInstallButtonLabel.
+     * @return the text to use for the button the end user can press in order to install an optional update.
      */
     public String getOptionalInstallButtonLabel() {
         return optionalInstallButtonLabel;
     }
 
     /**
-     * Sets the optionalInstallButtonLabel.
+     * Sets the text to use for the button the end user can press in order to install an optional update.
      *
-     * @param optionalInstallButtonLabel new value.
+     * @param optionalInstallButtonLabel the text to use for the button the end user can press in order to install an optional update.
      */
     @SuppressWarnings("WeakerAccess")
     public void setOptionalInstallButtonLabel(String optionalInstallButtonLabel) {
@@ -199,18 +203,18 @@ public class CodePushUpdateDialog {
     }
 
     /**
-     * Gets the value of optionalUpdateMessage and returns it.
+     * Gets the text used as the body of an update notification, when the update is optional and returns it.
      *
-     * @return optionalUpdateMessage.
+     * @return the text used as the body of an update notification, when the update is optional.
      */
     public String getOptionalUpdateMessage() {
         return optionalUpdateMessage;
     }
 
     /**
-     * Sets the optionalUpdateMessage.
+     * Sets the text used as the body of an update notification, when the update is optional.
      *
-     * @param optionalUpdateMessage new value.
+     * @param optionalUpdateMessage the text used as the body of an update notification, when the update is optional.
      */
     @SuppressWarnings("WeakerAccess")
     public void setOptionalUpdateMessage(String optionalUpdateMessage) {
@@ -218,18 +222,18 @@ public class CodePushUpdateDialog {
     }
 
     /**
-     * Gets the value of title and returns it.
+     * Gets the text used as the header of an update notification that is displayed to the end user.
      *
-     * @return title.
+     * @return the text used as the header of an update notification that is displayed to the end user.
      */
     public String getTitle() {
         return title;
     }
 
     /**
-     * Sets the title.
+     * Sets the text used as the header of an update notification that is displayed to the end user.
      *
-     * @param title new value.
+     * @param title the text used as the header of an update notification that is displayed to the end user.
      */
     public void setTitle(String title) {
         this.title = title;

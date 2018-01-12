@@ -32,72 +32,72 @@ public class CodePushDeploymentStatusReport extends CodePushDownloadStatusReport
     private String status;
 
     /**
-     * Gets the value of appVersion and returns it.
+     * Gets the version of the app that was deployed and returns it.
      *
-     * @return appVersion.
+     * @return the version of the app that was deployed.
      */
     public String getAppVersion() {
         return appVersion;
     }
 
     /**
-     * Sets the appVersion.
+     * Sets the version of the app that was deployed.
      *
-     * @param appVersion new value.
+     * @param appVersion the version of the app that was deployed.
      */
     public void setAppVersion(String appVersion) {
         this.appVersion = appVersion;
     }
 
     /**
-     * Gets the value of previousDeploymentKey and returns it.
+     * Gets deployment key used when deploying the previous package and returns it.
      *
-     * @return previousDeploymentKey.
+     * @return deployment key used when deploying the previous package.
      */
     public String getPreviousDeploymentKey() {
         return previousDeploymentKey;
     }
 
     /**
-     * Sets the previousDeploymentKey.
+     * Sets deployment key used when deploying the previous package.
      *
-     * @param previousDeploymentKey new value.
+     * @param previousDeploymentKey deployment key used when deploying the previous package.
      */
     public void setPreviousDeploymentKey(String previousDeploymentKey) {
         this.previousDeploymentKey = previousDeploymentKey;
     }
 
     /**
-     * Gets the value of previousLabelOrAppVersion and returns it.
+     * Gets the label (v#) of the package that was upgraded from and returns it.
      *
-     * @return previousLabelOrAppVersion.
+     * @return the label (v#) of the package that was upgraded from.
      */
     public String getPreviousLabelOrAppVersion() {
         return previousLabelOrAppVersion;
     }
 
     /**
-     * Sets the previousLabelOrAppVersion.
+     * Sets the label (v#) of the package that was upgraded from.
      *
-     * @param previousLabelOrAppVersion new value.
+     * @param previousLabelOrAppVersion the label (v#) of the package that was upgraded from.
      */
     public void setPreviousLabelOrAppVersion(String previousLabelOrAppVersion) {
         this.previousLabelOrAppVersion = previousLabelOrAppVersion;
     }
 
     /**
-     * Gets the value of status and returns it.
+     * Gets whether the deployment succeeded or failed and returns it.
      *
-     * @return status.
+     * @return whether the deployment succeeded or failed.
      */
     public String getStatus() {
         return status;
     }
 
     /**
-     * Sets the status.
+     * Sets whether the deployment succeeded or failed.
      *
-     * @param status new value.
+     * @param status whether the deployment succeeded or failed.
      */
     public void setStatus(String status) {
         this.status = status;

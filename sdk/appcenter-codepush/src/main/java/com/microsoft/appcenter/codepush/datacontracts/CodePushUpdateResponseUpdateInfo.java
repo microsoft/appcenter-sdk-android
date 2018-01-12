@@ -72,9 +72,9 @@ public class CodePushUpdateResponseUpdateInfo {
     private boolean shouldRunBinaryVersion;
 
     /**
-     * Gets the value of downloadUrl and returns it.
+     * Gets url to access package on server and returns it.
      *
-     * @return downloadUrl.
+     * @return url to access package on server.
      */
     @SuppressWarnings("WeakerAccess")
     public String getDownloadUrl() {
@@ -82,18 +82,18 @@ public class CodePushUpdateResponseUpdateInfo {
     }
 
     /**
-     * Sets the downloadUrl.
+     * Sets url to access package on server.
      *
-     * @param downloadUrl new value.
+     * @param downloadUrl url to access package on server.
      */
     public void setDownloadUrl(String downloadUrl) {
         this.downloadUrl = downloadUrl;
     }
 
     /**
-     * Gets the value of description and returns it.
+     * Gets the description of the update and returns it.
      *
-     * @return description.
+     * @return the description of the update.
      */
     @SuppressWarnings("WeakerAccess")
     public String getDescription() {
@@ -101,36 +101,36 @@ public class CodePushUpdateResponseUpdateInfo {
     }
 
     /**
-     * Sets the description.
+     * Sets the description of the update.
      *
-     * @param description new value.
+     * @param description the description of the update.
      */
     public void setDescription(String description) {
         this.description = description;
     }
 
     /**
-     * Gets the value of isAvailable and returns it.
+     * Gets whether the package is available and returns it.
      *
-     * @return isAvailable.
+     * @return whether the package is available.
      */
     public boolean isAvailable() {
         return isAvailable;
     }
 
     /**
-     * Sets the isAvailable.
+     * Sets whether the package is available.
      *
-     * @param available new value.
+     * @param available whether the package is available.
      */
     public void setAvailable(boolean available) {
         isAvailable = available;
     }
 
     /**
-     * Gets the value of isMandatory and returns it.
+     * Gets whether the update is considered mandatory and returns it.
      *
-     * @return isMandatory.
+     * @return whether the update is considered mandatory.
      */
     @SuppressWarnings("WeakerAccess")
     public boolean isMandatory() {
@@ -138,54 +138,54 @@ public class CodePushUpdateResponseUpdateInfo {
     }
 
     /**
-     * Sets the isMandatory.
+     * Sets whether the update is considered mandatory.
      *
-     * @param mandatory new value.
+     * @param mandatory whether the update is considered mandatory.
      */
     public void setMandatory(boolean mandatory) {
         isMandatory = mandatory;
     }
 
     /**
-     * Gets the value of appVersion and returns it.
+     * Gets the app binary version that this update is dependent on.
      *
-     * @return appVersion.
+     * @return the app binary version that this update is dependent on.
      */
     public String getAppVersion() {
         return appVersion;
     }
 
     /**
-     * Sets the appVersion.
+     * Sets the app binary version that this update is dependent on.
      *
-     * @param appVersion new value.
+     * @param appVersion the app binary version that this update is dependent on.
      */
     public void setAppVersion(String appVersion) {
         this.appVersion = appVersion;
     }
 
     /**
-     * Gets the value of packageHash and returns it.
+     * Gets the SHA hash value of the update and returns it.
      *
-     * @return packageHash.
+     * @return the SHA hash value of the update.
      */
     public String getPackageHash() {
         return packageHash;
     }
 
     /**
-     * Sets the packageHash.
+     * Sets the SHA hash value of the update.
      *
-     * @param packageHash new value.
+     * @param packageHash the SHA hash value of the update.
      */
     public void setPackageHash(String packageHash) {
         this.packageHash = packageHash;
     }
 
     /**
-     * Gets the value of label and returns it.
+     * Gets the internal label automatically given to the update by the CodePush server and returns it.
      *
-     * @return label.
+     * @return the internal label automatically given to the update by the CodePush server.
      */
     @SuppressWarnings("WeakerAccess")
     public String getLabel() {
@@ -193,18 +193,18 @@ public class CodePushUpdateResponseUpdateInfo {
     }
 
     /**
-     * Sets the label.
+     * Sets the internal label automatically given to the update by the CodePush server.
      *
-     * @param label new value.
+     * @param label the internal label automatically given to the update by the CodePush server.
      */
     public void setLabel(String label) {
         this.label = label;
     }
 
     /**
-     * Gets the value of packageSize and returns it.
+     * Gets size of the package and returns it.
      *
-     * @return packageSize.
+     * @return size of the package.
      */
     @SuppressWarnings("WeakerAccess")
     public long getPackageSize() {
@@ -212,18 +212,18 @@ public class CodePushUpdateResponseUpdateInfo {
     }
 
     /**
-     * Sets the packageSize.
+     * Sets size of the package.
      *
-     * @param packageSize new value.
+     * @param packageSize size of the package.
      */
     public void setPackageSize(long packageSize) {
         this.packageSize = packageSize;
     }
 
     /**
-     * Gets the value of updateAppVersion and returns it.
+     * Gets whether the client should trigger a store update and returns it.
      *
-     * @return updateAppVersion.
+     * @return whether the client should trigger a store update.
      */
     @SuppressWarnings("WeakerAccess")
     public boolean isUpdateAppVersion() {
@@ -231,27 +231,27 @@ public class CodePushUpdateResponseUpdateInfo {
     }
 
     /**
-     * Sets the updateAppVersion.
+     * Sets whether the client should trigger a store update.
      *
-     * @param updateAppVersion new value.
+     * @param updateAppVersion whether the client should trigger a store update.
      */
     public void setUpdateAppVersion(boolean updateAppVersion) {
         this.updateAppVersion = updateAppVersion;
     }
 
     /**
-     * Gets the value of shouldRunBinaryVersion and returns it.
+     * Gets whether the update directs to use the binary version of the application and returns it.
      *
-     * @return shouldRunBinaryVersion.
+     * @return whether the update directs to use the binary version of the application.
      */
     public boolean isShouldRunBinaryVersion() {
         return shouldRunBinaryVersion;
     }
 
     /**
-     * Sets the shouldRunBinaryVersion.
+     * Sets whether the update directs to use the binary version of the application.
      *
-     * @param shouldRunBinaryVersion new value.
+     * @param shouldRunBinaryVersion whether the update directs to use the binary version of the application.
      */
     public void setShouldRunBinaryVersion(boolean shouldRunBinaryVersion) {
         this.shouldRunBinaryVersion = shouldRunBinaryVersion;

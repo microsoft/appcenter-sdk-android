@@ -14,18 +14,18 @@ public class CodePushUpdateResponse {
     private CodePushUpdateResponseUpdateInfo updateInfo;
 
     /**
-     * Gets the value of updateInfo and returns it.
+     * Gets the information about the existing update and returns it.
      *
-     * @return updateInfo.
+     * @return information about the existing update.
      */
     public CodePushUpdateResponseUpdateInfo getUpdateInfo() {
         return updateInfo;
     }
 
     /**
-     * Sets the updateInfo.
+     * Sets the information about the existing update.
      *
-     * @param updateInfo new value.
+     * @param updateInfo information about the existing update.
      */
     public void setUpdateInfo(CodePushUpdateResponseUpdateInfo updateInfo) {
         this.updateInfo = updateInfo;

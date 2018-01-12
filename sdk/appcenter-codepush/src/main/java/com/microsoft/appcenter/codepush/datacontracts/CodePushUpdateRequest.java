@@ -62,90 +62,90 @@ public class CodePushUpdateRequest {
     }
 
     /**
-     * Gets the value of deploymentKey and returns it.
+     * Gets the deployment key you want to query for an update against and returns it.
      *
-     * @return deploymentKey.
+     * @return the deployment key you want to query for an update against.
      */
     public String getDeploymentKey() {
         return deploymentKey;
     }
 
     /**
-     * Sets the deploymentKey.
+     * Sets the deployment key you want to query for an update against.
      *
-     * @param deploymentKey new value.
+     * @param deploymentKey the deployment key you want to query for an update against.
      */
     public void setDeploymentKey(String deploymentKey) {
         this.deploymentKey = deploymentKey;
     }
 
     /**
-     * Gets the value of appVersion and returns it.
+     * Gets the current app version and returns it.
      *
-     * @return appVersion.
+     * @return the current app version.
      */
     public String getAppVersion() {
         return appVersion;
     }
 
     /**
-     * Sets the appVersion.
+     * Sets the current app version.
      *
-     * @param appVersion new value.
+     * @param appVersion the current app version.
      */
     public void setAppVersion(String appVersion) {
         this.appVersion = appVersion;
     }
 
     /**
-     * Gets the value of packageHash and returns it.
+     * Gets the current local package hash and returns it.
      *
-     * @return packageHash.
+     * @return the current local package hash.
      */
     public String getPackageHash() {
         return packageHash;
     }
 
     /**
-     * Sets the packageHash.
+     * Sets the current local package hash.
      *
-     * @param packageHash new value.
+     * @param packageHash the current local package hash.
      */
     public void setPackageHash(String packageHash) {
         this.packageHash = packageHash;
     }
 
     /**
-     * Gets the value of isCompanion and returns it.
+     * Gets whether to ignore the application version and returns it.
      *
-     * @return isCompanion.
+     * @return whether to ignore the application version.
      */
     public boolean isCompanion() {
         return isCompanion;
     }
 
     /**
-     * Sets the isCompanion.
+     * Sets whether to ignore the application version.
      *
-     * @param companion new value.
+     * @param companion whether to ignore the application version.
      */
     public void setCompanion(boolean companion) {
         isCompanion = companion;
     }
 
     /**
-     * Gets the value of label and returns it.
+     * Gets the current package label and returns it.
      *
-     * @return label.
+     * @return the current package label.
      */
     public String getLabel() {
         return label;
     }
 
     /**
-     * Sets the label.
+     * Sets the current package label.
      *
-     * @param label new value.
+     * @param label the current package label.
      */
     @SuppressWarnings("WeakerAccess")
     public void setLabel(String label) {
@@ -153,18 +153,18 @@ public class CodePushUpdateRequest {
     }
 
     /**
-     * Gets the value of clientUniqueId and returns it.
+     * Gets device id and returns it.
      *
-     * @return clientUniqueId.
+     * @return device id.
      */
     public String getClientUniqueId() {
         return clientUniqueId;
     }
 
     /**
-     * Sets the clientUniqueId.
+     * Sets device id.
      *
-     * @param clientUniqueId new value.
+     * @param clientUniqueId device id.
      */
     @SuppressWarnings("WeakerAccess")
     public void setClientUniqueId(String clientUniqueId) {

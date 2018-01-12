@@ -72,18 +72,18 @@ public class CodePushLocalPackage extends CodePushPackage {
     }
 
     /**
-     * Gets the value of IsPending and returns it.
+     * Gets whether this update is in a "pending" state and returns it.
      *
-     * @return isPending.
+     * @return whether this update is in a "pending" state.
      */
     public boolean isPending() {
         return isPending;
     }
 
     /**
-     * Sets the IsPending.
+     * Sets whether this update is in a "pending" state.
      *
-     * @param pending new value.
+     * @param pending whether this update is in a "pending" state.
      */
     @SuppressWarnings("WeakerAccess")
     public void setPending(boolean pending) {
@@ -91,18 +91,18 @@ public class CodePushLocalPackage extends CodePushPackage {
     }
 
     /**
-     * Gets the value of isFirstRun and returns it.
+     * Gets whether this is the first time the update has been run after being installed and returns it.
      *
-     * @return isFirstRun.
+     * @return whether this is the first time the update has been run after being installed.
      */
     public boolean isFirstRun() {
         return isFirstRun;
     }
 
     /**
-     * Sets the isFirstRun.
+     * Sets whether this is the first time the update has been run after being installed.
      *
-     * @param firstRun new value.
+     * @param firstRun whether this is the first time the update has been run after being installed.
      */
     @SuppressWarnings("WeakerAccess")
     public void setFirstRun(boolean firstRun) {
@@ -110,18 +110,18 @@ public class CodePushLocalPackage extends CodePushPackage {
     }
 
     /**
-     * Gets the value of isDebugOnly and returns it.
+     * Gets whether this package is intended for debug mode and returns it.
      *
-     * @return isDebugOnly.
+     * @return whether this package is intended for debug mode.
      */
     public boolean isDebugOnly() {
         return isDebugOnly;
     }
 
     /**
-     * Sets the isDebugOnly.
+     * Sets whether this package is intended for debug mode.
      *
-     * @param debugOnly new value.
+     * @param debugOnly whether this package is intended for debug mode.
      */
     @SuppressWarnings("WeakerAccess")
     public void setDebugOnly(boolean debugOnly) {
@@ -129,18 +129,18 @@ public class CodePushLocalPackage extends CodePushPackage {
     }
 
     /**
-     * Gets the value of downloadException and returns it.
+     * Gets the an exception that has occurred during downloading (can be null if package has been successfully downloaded).
      *
-     * @return downloadException.
+     * @return exception that has occurred during downloading (can be null if package has been successfully downloaded).
      */
     public Exception getDownloadException() {
         return downloadException;
     }
 
     /**
-     * Sets the downloadException.
+     * Sets the exception that has occurred during downloading (can be null if package has been successfully downloaded).
      *
-     * @param downloadException new value.
+     * @param downloadException exception that has occurred during downloading (can be null if package has been successfully downloaded).
      */
     @SuppressWarnings("WeakerAccess")
     public void setDownloadException(Exception downloadException) {

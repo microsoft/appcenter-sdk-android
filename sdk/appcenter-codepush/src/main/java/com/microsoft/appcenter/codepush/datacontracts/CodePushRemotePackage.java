@@ -87,18 +87,18 @@ public class CodePushRemotePackage extends CodePushPackage {
     }
 
     /**
-     * Gets the value of downloadUrl and returns it.
+     * Gets url to access package on server and returns it.
      *
-     * @return downloadUrl.
+     * @return url to access package on server.
      */
     public String getDownloadUrl() {
         return downloadUrl;
     }
 
     /**
-     * Sets the downloadUrl.
+     * Sets url to access package on server.
      *
-     * @param downloadUrl new value.
+     * @param downloadUrl url to access package on server.
      */
     @SuppressWarnings("WeakerAccess")
     public void setDownloadUrl(String downloadUrl) {
@@ -106,18 +106,18 @@ public class CodePushRemotePackage extends CodePushPackage {
     }
 
     /**
-     * Gets the value of packageSize and returns it.
+     * Gets size of the package and returns it.
      *
-     * @return packageSize.
+     * @return size of the package.
      */
     public long getPackageSize() {
         return packageSize;
     }
 
     /**
-     * Sets the packageSize.
+     * Sets size of the package.
      *
-     * @param packageSize new value.
+     * @param packageSize size of the package.
      */
     @SuppressWarnings("WeakerAccess")
     public void setPackageSize(long packageSize) {
@@ -125,18 +125,18 @@ public class CodePushRemotePackage extends CodePushPackage {
     }
 
     /**
-     * Gets the value of updateAppVersion and returns it.
+     * Gets whether the client should trigger a store update and returns it.
      *
-     * @return updateAppVersion.
+     * @return whether the client should trigger a store update.
      */
     public boolean isUpdateAppVersion() {
         return updateAppVersion;
     }
 
     /**
-     * Sets the updateAppVersion.
+     * Sets whether the client should trigger a store update.
      *
-     * @param updateAppVersion new value.
+     * @param updateAppVersion whether the client should trigger a store update.
      */
     @SuppressWarnings("WeakerAccess")
     public void setUpdateAppVersion(boolean updateAppVersion) {

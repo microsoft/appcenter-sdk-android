@@ -82,36 +82,36 @@ public class CodePushSyncOptions {
     }
 
     /**
-     * Gets the value of deploymentKey and returns it.
+     * Gets the deployment key you want to query for an update against and returns it.
      *
-     * @return deploymentKey.
+     * @return the deployment key you want to query for an update against.
      */
     public String getDeploymentKey() {
         return deploymentKey;
     }
 
     /**
-     * Sets the deploymentKey.
+     * Sets the deployment key you want to query for an update against.
      *
-     * @param deploymentKey new value.
+     * @param deploymentKey the deployment key you want to query for an update against.
      */
     public void setDeploymentKey(String deploymentKey) {
         this.deploymentKey = deploymentKey;
     }
 
     /**
-     * Gets the value of installMode and returns it.
+     * Gets when you would like to install optional updates.
      *
-     * @return installMode.
+     * @return when you would like to install optional updates.
      */
     public CodePushInstallMode getInstallMode() {
         return installMode;
     }
 
     /**
-     * Sets the installMode.
+     * Sets when you would like to install optional updates.
      *
-     * @param installMode new value.
+     * @param installMode when you would like to install optional updates.
      */
     @SuppressWarnings("WeakerAccess")
     public void setInstallMode(CodePushInstallMode installMode) {
@@ -119,18 +119,18 @@ public class CodePushSyncOptions {
     }
 
     /**
-     * Gets the value of mandatoryInstallMode and returns it.
+     * Gets specifies when you would like to install updates which are marked as mandatory and returns it.
      *
-     * @return mandatoryInstallMode.
+     * @return specifies when you would like to install updates which are marked as mandatory.
      */
     public CodePushInstallMode getMandatoryInstallMode() {
         return mandatoryInstallMode;
     }
 
     /**
-     * Sets the mandatoryInstallMode.
+     * Sets specifies when you would like to install updates which are marked as mandatory.
      *
-     * @param mandatoryInstallMode new value.
+     * @param mandatoryInstallMode specifies when you would like to install updates which are marked as mandatory.
      */
     @SuppressWarnings("WeakerAccess")
     public void setMandatoryInstallMode(CodePushInstallMode mandatoryInstallMode) {
@@ -138,18 +138,18 @@ public class CodePushSyncOptions {
     }
 
     /**
-     * Gets the value of minimumBackgroundDuration and returns it.
+     * Gets the minimum number of seconds that the app needs to have been in the background before restarting the app.
      *
-     * @return minimumBackgroundDuration.
+     * @return the minimum number of seconds that the app needs to have been in the background before restarting the app.
      */
     public int getMinimumBackgroundDuration() {
         return minimumBackgroundDuration;
     }
 
     /**
-     * Sets the minimumBackgroundDuration.
+     * Sets the minimum number of seconds that the app needs to have been in the background before restarting the app.
      *
-     * @param minimumBackgroundDuration new value.
+     * @param minimumBackgroundDuration the minimum number of seconds that the app needs to have been in the background before restarting the app.
      */
     @SuppressWarnings("WeakerAccess")
     public void setMinimumBackgroundDuration(int minimumBackgroundDuration) {
@@ -157,54 +157,54 @@ public class CodePushSyncOptions {
     }
 
     /**
-     * Gets the value of ignoreFailedUpdates and returns it.
+     * Gets whether to ignore failed updates and returns it.
      *
-     * @return ignoreFailedUpdates.
+     * @return whether to ignore failed updates.
      */
     public boolean getIgnoreFailedUpdates() {
         return ignoreFailedUpdates;
     }
 
     /**
-     * Sets the ignoreFailedUpdates.
+     * Sets whether to ignore failed updates.
      *
-     * @param ignoreFailedUpdates new value.
+     * @param ignoreFailedUpdates whether to ignore failed updates.
      */
     public void setIgnoreFailedUpdates(boolean ignoreFailedUpdates) {
         this.ignoreFailedUpdates = ignoreFailedUpdates;
     }
 
     /**
-     * Gets the value of updateDialog and returns it.
+     * Gets whether to ignore failed updates and returns it.
      *
-     * @return updateDialog.
+     * @return whether to ignore failed updates.
      */
     public CodePushUpdateDialog getUpdateDialog() {
         return updateDialog;
     }
 
     /**
-     * Sets the updateDialog.
+     * Sets whether to ignore failed updates.
      *
-     * @param updateDialog new value.
+     * @param updateDialog whether to ignore failed updates.
      */
     public void setUpdateDialog(CodePushUpdateDialog updateDialog) {
         this.updateDialog = updateDialog;
     }
 
     /**
-     * Gets the value of checkFrequency and returns it.
+     * Gets when you would like to synchronize updates with the CodePush server and returns it.
      *
-     * @return checkFrequency.
+     * @return when you would like to synchronize updates with the CodePush server.
      */
     public CodePushCheckFrequency getCheckFrequency() {
         return checkFrequency;
     }
 
     /**
-     * Sets the checkFrequency.
+     * Sets when you would like to synchronize updates with the CodePush server.
      *
-     * @param checkFrequency new value.
+     * @param checkFrequency when you would like to synchronize updates with the CodePush server.
      */
     public void setCheckFrequency(CodePushCheckFrequency checkFrequency) {
         this.checkFrequency = checkFrequency;
