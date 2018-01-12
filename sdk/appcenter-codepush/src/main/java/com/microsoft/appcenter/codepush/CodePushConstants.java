@@ -6,7 +6,7 @@ package com.microsoft.appcenter.codepush;
 public final class CodePushConstants {
 
     /**
-     * Key from build.gradle file for TimeStamp value.
+     * Key from <code>build.gradle</code> file for TimeStamp value.
      * TimeStamp represents the time when binary package has been build.
      */
     public static final String BINARY_MODIFIED_TIME_KEY = "binaryModifiedTime";
@@ -124,7 +124,7 @@ public final class CodePushConstants {
     public static final String UNZIPPED_FOLDER_NAME = "unzipped";
 
     /**
-     * Key for getting binary resources modified time from build.gradle file.
+     * Key for getting binary resources modified time from <code>build.gradle</code> file.
      */
     public static final String CODE_PUSH_APK_BUILD_TIME_KEY = "CODE_PUSH_APK_BUILD_TIME";
 
