@@ -6,7 +6,7 @@ package com.microsoft.appcenter.codepush;
 public final class CodePushConstants {
 
     /**
-     * Key from build.gradle file for TimeStamp value.
+     * Key from <code>build.gradle</code> file for TimeStamp value.
      * TimeStamp represents the time when binary package has been build.
      */
     public static final String BINARY_MODIFIED_TIME_KEY = "binaryModifiedTime";
@@ -36,7 +36,6 @@ public final class CodePushConstants {
      */
     public static final String CURRENT_PACKAGE_KEY = "currentPackage";
 
-
     /**
      * File name for diff manifest that distributes with CodePush updates.
      */
@@ -64,7 +63,7 @@ public final class CodePushConstants {
     public static final String DOWNLOAD_PROGRESS_EVENT_NAME = "CodePushDownloadProgress";
 
     /**
-     * Event name for dispatching to JavaScript CodePush update package that target to other binary version.
+     * Event name for dispatching to JavaScript CodePush update package that targets to other binary version.
      */
     public static final String BINARY_VERSION_MISMATCH_EVENT_NAME = "CodePushBinaryVersionMismatch";
 
@@ -124,7 +123,7 @@ public final class CodePushConstants {
     public static final String UNZIPPED_FOLDER_NAME = "unzipped";
 
     /**
-     * Key for getting binary resources modified time from build.gradle file.
+     * Key for getting binary resources modified time from <code>build.gradle</code> file.
      */
     public static final String CODE_PUSH_APK_BUILD_TIME_KEY = "CODE_PUSH_APK_BUILD_TIME";
 
