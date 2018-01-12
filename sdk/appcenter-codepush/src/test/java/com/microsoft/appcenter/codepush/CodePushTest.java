@@ -69,11 +69,11 @@ public class CodePushTest {
     @Test
     public void dataContractsTest() throws Exception {
 
-        /*Check download report. */
+        /* Check download report. */
         CodePushDownloadStatusReport codePushDownloadStatusReport = CodePushDownloadStatusReport.createReport(clientUniqueId, deploymentKey, label);
         checkDownloadReport(codePushDownloadStatusReport);
 
-        /*Check deployment report. */
+        /* Check deployment report. */
         CodePushDeploymentStatusReport codePushDeploymentStatusReport = new CodePushDeploymentStatusReport();
         codePushDeploymentStatusReport.setClientUniqueId(clientUniqueId);
         codePushDeploymentStatusReport.setDeploymentKey(deploymentKey);
@@ -84,7 +84,7 @@ public class CodePushTest {
         codePushDeploymentStatusReport.setStatus(status);
         checkDeploymentReport(codePushDeploymentStatusReport);
 
-        /*Check update response info. */
+        /* Check update response info. */
         CodePushUpdateResponseUpdateInfo codePushUpdateResponseUpdateInfo = new CodePushUpdateResponseUpdateInfo();
         codePushUpdateResponseUpdateInfo.setAppVersion(appVersion);
         codePushUpdateResponseUpdateInfo.setAvailable(isAvailable);
@@ -98,12 +98,12 @@ public class CodePushTest {
         codePushUpdateResponseUpdateInfo.setUpdateAppVersion(updateAppVersion);
         checkUpdateResponse(codePushUpdateResponseUpdateInfo);
 
-        /*Check update response. */
+        /* Check update response. */
         CodePushUpdateResponse codePushUpdateResponse = new CodePushUpdateResponse();
         codePushUpdateResponse.setUpdateInfo(codePushUpdateResponseUpdateInfo);
         assertEquals(codePushUpdateResponseUpdateInfo, codePushUpdateResponse.getUpdateInfo());
 
-        /*Check package. */
+        /* Check package. */
         CodePushPackage codePushPackage = new CodePushPackage();
         codePushPackage.setAppVersion(appVersion);
         codePushPackage.setDeploymentKey(deploymentKey);
@@ -114,13 +114,13 @@ public class CodePushTest {
         codePushPackage.setPackageHash(packageHash);
         checkPackage(codePushPackage);
 
-        /*Check local package. */
+        /* Check local package. */
         CodePushLocalPackage codePushLocalPackage = CodePushLocalPackage.createLocalPackage(failedInstall, isFirstRun, isPending, isDebugOnly, codePushPackage);
         checkLocalPackage(codePushLocalPackage);
         CodePushLocalPackage failedPackage = CodePushLocalPackage.createFailedLocalPackage(new Exception(error));
         assertEquals(error, failedPackage.getDownloadException().getMessage());
 
-        /*Check remote package. */
+        /* Check remote package. */
         CodePushRemotePackage codePushDefaultRemotePackage = CodePushRemotePackage.createDefaultRemotePackage(appVersion, updateAppVersion);
         assertEquals(appVersion, codePushDefaultRemotePackage.getAppVersion());
         assertEquals(updateAppVersion, codePushDefaultRemotePackage.isUpdateAppVersion());
@@ -129,7 +129,7 @@ public class CodePushTest {
         CodePushRemotePackage codePushUpdateRemotePackage = CodePushRemotePackage.createRemotePackageFromUpdateInfo(deploymentKey, codePushUpdateResponseUpdateInfo);
         checkRemotePackage(codePushUpdateRemotePackage);
 
-        /*Check update request. */
+        /* Check update request. */
         CodePushUpdateRequest codePushUpdateRequest = CodePushUpdateRequest.createUpdateRequest(deploymentKey, codePushLocalPackage, clientUniqueId);
         assertEquals(deploymentKey, codePushUpdateRequest.getDeploymentKey());
         assertEquals(clientUniqueId, codePushUpdateRequest.getClientUniqueId());
@@ -137,7 +137,7 @@ public class CodePushTest {
         assertEquals(codePushLocalPackage.getLabel(), codePushUpdateRequest.getLabel());
         assertEquals(codePushLocalPackage.getPackageHash(), codePushUpdateRequest.getPackageHash());
 
-        /*Check update dialog. */
+        /* Check update dialog. */
         CodePushUpdateDialog codePushUpdateDialog = CodePushUpdateDialog.getDefaultDialog();
         assertEquals("An update is available that must be installed.", codePushUpdateDialog.getMandatoryUpdateMessage());
         assertEquals("Description: ", codePushUpdateDialog.getDescriptionPrefix());
@@ -147,7 +147,7 @@ public class CodePushTest {
         assertEquals("Update available", codePushUpdateDialog.getTitle());
         assertEquals(false, codePushUpdateDialog.getAppendReleaseDescription());
 
-        /*Check sync options. */
+        /* Check sync options. */
         CodePushSyncOptions codePushSyncOptions = CodePushSyncOptions.getDefaultSyncOptions(deploymentKey);
         codePushSyncOptions.setUpdateDialog(codePushUpdateDialog);
         assertEquals(deploymentKey, codePushSyncOptions.getDeploymentKey());
