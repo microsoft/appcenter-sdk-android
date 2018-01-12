@@ -108,7 +108,9 @@ public final class CodePushConstants {
     public static final String PREVIOUS_PACKAGE_KEY = "previousPackage";
 
     /**
-     * Key for specifying app entry point (JS bundle in React Native, <code>index.js</code> for Cordova).
+     * Key for specifying app entry point.
+     * For example, it could be JS bundle path for React Native.
+     * Or path to <code>index.js</code> for Cordova.
      */
     public static final String APP_ENTRY_POINT_PATH_KEY = "appEntryPoint";
 
