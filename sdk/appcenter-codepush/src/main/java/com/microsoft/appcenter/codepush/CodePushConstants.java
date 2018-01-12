@@ -36,7 +36,6 @@ public final class CodePushConstants {
      */
     public static final String CURRENT_PACKAGE_KEY = "currentPackage";
 
-
     /**
      * File name for diff manifest that distributes with CodePush updates.
      */
@@ -64,7 +63,7 @@ public final class CodePushConstants {
     public static final String DOWNLOAD_PROGRESS_EVENT_NAME = "CodePushDownloadProgress";
 
     /**
-     * Event name for dispatching to JavaScript CodePush update package that target to other binary version.
+     * Event name for dispatching to JavaScript CodePush update package that targets to other binary version.
      */
     public static final String BINARY_VERSION_MISMATCH_EVENT_NAME = "CodePushBinaryVersionMismatch";
 
