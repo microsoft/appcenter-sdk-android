@@ -20,7 +20,7 @@ public enum CodePushCheckFrequency {
     ON_APP_RESUME(1),
 
     /**
-     * Don't automatically check for updates, but only do it when <code>codePush.sync()</code> is manully called inside app code.
+     * Don't automatically check for updates, but only do it when <code>codePush.sync()</code> is manually called inside app code.
      */
     @SerializedName("2")
     MANUAL(2);
