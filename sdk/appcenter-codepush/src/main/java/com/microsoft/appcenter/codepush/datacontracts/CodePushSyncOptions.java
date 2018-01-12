@@ -68,17 +68,14 @@ public class CodePushSyncOptions {
      * Creates default instance of sync options.
      *
      * @param deploymentKey the deployment key you want to query for an update against.
-     * @return instance of the {@link CodePushSyncOptions}.
      */
-    public static CodePushSyncOptions getDefaultSyncOptions(String deploymentKey) {
-        CodePushSyncOptions codePushSyncOptions = new CodePushSyncOptions();
-        codePushSyncOptions.setDeploymentKey(deploymentKey);
-        codePushSyncOptions.setInstallMode(CodePushInstallMode.ON_NEXT_RESTART);
-        codePushSyncOptions.setMandatoryInstallMode(CodePushInstallMode.IMMEDIATE);
-        codePushSyncOptions.setMinimumBackgroundDuration(0);
-        codePushSyncOptions.setIgnoreFailedUpdates(true);
-        codePushSyncOptions.setCheckFrequency(CodePushCheckFrequency.ON_APP_START);
-        return codePushSyncOptions;
+    public CodePushSyncOptions(String deploymentKey) {
+        setDeploymentKey(deploymentKey);
+        setInstallMode(CodePushInstallMode.ON_NEXT_RESTART);
+        setMandatoryInstallMode(CodePushInstallMode.IMMEDIATE);
+        setMinimumBackgroundDuration(0);
+        setIgnoreFailedUpdates(true);
+        setCheckFrequency(CodePushCheckFrequency.ON_APP_START);
     }
 
     /**

@@ -1,6 +1,8 @@
 package com.microsoft.appcenter.codepush.datacontracts;
 
 import com.google.gson.annotations.SerializedName;
+import com.microsoft.appcenter.codepush.CodePush;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 /**
  * A response class containing info about the update.
@@ -28,6 +30,10 @@ public class CodePushUpdateResponse {
      * @param updateInfo information about the existing update.
      */
     public void setUpdateInfo(CodePushUpdateResponseUpdateInfo updateInfo) {
-        this.updateInfo = updateInfo;
+        if (updateInfo != null) {
+            this.updateInfo = updateInfo;
+        } else {
+            AppCenterLog.error(CodePush.LOG_TAG, "\"updateInfo\" property cannot be null.");
+        }
     }
 }

@@ -70,19 +70,15 @@ public class CodePushUpdateDialog {
 
     /**
      * Creates default dialog with default button labels and messages.
-     *
-     * @return instance of the {@link CodePushUpdateDialog}.
      */
-    public static CodePushUpdateDialog getDefaultDialog() {
-        CodePushUpdateDialog codePushUpdateDialog = new CodePushUpdateDialog();
-        codePushUpdateDialog.setDescriptionPrefix("Description: ");
-        codePushUpdateDialog.setMandatoryContinueButtonLabel("Continue");
-        codePushUpdateDialog.setMandatoryUpdateMessage("An update is available that must be installed.");
-        codePushUpdateDialog.setOptionalIgnoreButtonLabel("Ignore");
-        codePushUpdateDialog.setOptionalInstallButtonLabel("Install");
-        codePushUpdateDialog.setOptionalUpdateMessage("An update is available. Would you like to install it?");
-        codePushUpdateDialog.setTitle("Update available");
-        return codePushUpdateDialog;
+    public CodePushUpdateDialog() {
+        setDescriptionPrefix("Description: ");
+        setMandatoryContinueButtonLabel("Continue");
+        setMandatoryUpdateMessage("An update is available that must be installed.");
+        setOptionalIgnoreButtonLabel("Ignore");
+        setOptionalInstallButtonLabel("Install");
+        setOptionalUpdateMessage("An update is available. Would you like to install it?");
+        setTitle("Update available");
     }
 
     /**

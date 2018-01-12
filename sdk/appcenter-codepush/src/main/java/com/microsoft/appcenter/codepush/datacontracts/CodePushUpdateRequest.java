@@ -1,6 +1,8 @@
 package com.microsoft.appcenter.codepush.datacontracts;
 
 import com.google.gson.annotations.SerializedName;
+import com.microsoft.appcenter.codepush.CodePush;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 /**
  * A request class for querying for updates.
@@ -76,7 +78,11 @@ public class CodePushUpdateRequest {
      * @param deploymentKey the deployment key you want to query for an update against.
      */
     public void setDeploymentKey(String deploymentKey) {
-        this.deploymentKey = deploymentKey;
+        if (deploymentKey != null) {
+            this.deploymentKey = deploymentKey;
+        } else {
+            AppCenterLog.error(CodePush.LOG_TAG, "\"deploymentKey\" property cannot be null.");
+        }
     }
 
     /**
@@ -94,7 +100,11 @@ public class CodePushUpdateRequest {
      * @param appVersion the current app version.
      */
     public void setAppVersion(String appVersion) {
-        this.appVersion = appVersion;
+        if (appVersion != null) {
+            this.appVersion = appVersion;
+        } else {
+            AppCenterLog.error(CodePush.LOG_TAG, "\"appVersion\" property cannot be null.");
+        }
     }
 
     /**

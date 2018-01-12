@@ -138,7 +138,7 @@ public class CodePushTest {
         assertEquals(codePushLocalPackage.getPackageHash(), codePushUpdateRequest.getPackageHash());
 
         /* Check update dialog. */
-        CodePushUpdateDialog codePushUpdateDialog = CodePushUpdateDialog.getDefaultDialog();
+        CodePushUpdateDialog codePushUpdateDialog = new CodePushUpdateDialog();
         assertEquals("An update is available that must be installed.", codePushUpdateDialog.getMandatoryUpdateMessage());
         assertEquals("Description: ", codePushUpdateDialog.getDescriptionPrefix());
         assertEquals("Continue", codePushUpdateDialog.getMandatoryContinueButtonLabel());
@@ -148,7 +148,7 @@ public class CodePushTest {
         assertEquals(false, codePushUpdateDialog.getAppendReleaseDescription());
 
         /* Check sync options. */
-        CodePushSyncOptions codePushSyncOptions = CodePushSyncOptions.getDefaultSyncOptions(deploymentKey);
+        CodePushSyncOptions codePushSyncOptions = new CodePushSyncOptions(deploymentKey);
         codePushSyncOptions.setUpdateDialog(codePushUpdateDialog);
         assertEquals(deploymentKey, codePushSyncOptions.getDeploymentKey());
         assertEquals(0, codePushSyncOptions.getMinimumBackgroundDuration());

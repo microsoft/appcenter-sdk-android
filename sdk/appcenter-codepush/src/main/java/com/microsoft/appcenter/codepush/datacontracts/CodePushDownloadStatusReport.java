@@ -1,6 +1,8 @@
 package com.microsoft.appcenter.codepush.datacontracts;
 
 import com.google.gson.annotations.SerializedName;
+import com.microsoft.appcenter.codepush.CodePush;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 /**
  * Represents a report sent after downloading package.
@@ -76,7 +78,11 @@ public class CodePushDownloadStatusReport {
      * @param label the internal label automatically given to the update by the CodePush server.
      */
     public void setLabel(String label) {
-        this.label = label;
+        if (label != null) {
+            this.label = label;
+        } else {
+            AppCenterLog.error(CodePush.LOG_TAG, "\"label\" property cannot be null.");
+        }
     }
 
     /**
@@ -86,7 +92,11 @@ public class CodePushDownloadStatusReport {
      */
     @SuppressWarnings("WeakerAccess")
     public void setClientUniqueId(String clientUniqueId) {
-        this.clientUniqueId = clientUniqueId;
+        if (clientUniqueId != null) {
+            this.clientUniqueId = clientUniqueId;
+        } else {
+            AppCenterLog.error(CodePush.LOG_TAG, "\"clientUniqueId\" property cannot be null.");
+        }
     }
 
     /**
@@ -96,6 +106,10 @@ public class CodePushDownloadStatusReport {
      */
     @SuppressWarnings("WeakerAccess")
     public void setDeploymentKey(String deploymentKey) {
-        this.deploymentKey = deploymentKey;
+        if (deploymentKey != null) {
+            this.deploymentKey = deploymentKey;
+        } else {
+            AppCenterLog.error(CodePush.LOG_TAG, "\"deploymentKey\" property cannot be null.");
+        }
     }
 }

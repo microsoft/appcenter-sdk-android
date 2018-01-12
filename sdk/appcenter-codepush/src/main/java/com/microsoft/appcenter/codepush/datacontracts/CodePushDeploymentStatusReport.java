@@ -1,6 +1,8 @@
 package com.microsoft.appcenter.codepush.datacontracts;
 
 import com.google.gson.annotations.SerializedName;
+import com.microsoft.appcenter.codepush.CodePush;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 /**
  * Represents a report about the deployment.
@@ -46,7 +48,11 @@ public class CodePushDeploymentStatusReport extends CodePushDownloadStatusReport
      * @param appVersion the version of the app that was deployed.
      */
     public void setAppVersion(String appVersion) {
-        this.appVersion = appVersion;
+        if (appVersion != null) {
+            this.appVersion = appVersion;
+        } else {
+            AppCenterLog.error(CodePush.LOG_TAG, "\"appVersion\" property cannot be null.");
+        }
     }
 
     /**
@@ -64,7 +70,11 @@ public class CodePushDeploymentStatusReport extends CodePushDownloadStatusReport
      * @param previousDeploymentKey deployment key used when deploying the previous package.
      */
     public void setPreviousDeploymentKey(String previousDeploymentKey) {
-        this.previousDeploymentKey = previousDeploymentKey;
+        if (previousDeploymentKey != null) {
+            this.previousDeploymentKey = previousDeploymentKey;
+        } else {
+            AppCenterLog.error(CodePush.LOG_TAG, "\"previousDeploymentKey\" property cannot be null.");
+        }
     }
 
     /**
