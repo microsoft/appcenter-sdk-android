@@ -85,12 +85,11 @@ public final class CodePushConfiguration {
      * @param appVersion the appVersion value to set.
      * @return this instance.
      */
-    @SuppressWarnings("WeakerAccess")
     public CodePushConfiguration setAppVersion(String appVersion) {
         if (appVersion != null) {
             this.appVersion = appVersion;
         } else {
-            AppCenterLog.error(AppCenter.LOG_TAG, "\"appVersion\" property cannot be null.");
+            AppCenterLog.error(CodePush.LOG_TAG, "\"appVersion\" property cannot be null.");
         }
         return this;
     }
@@ -101,12 +100,11 @@ public final class CodePushConfiguration {
      * @param clientUniqueId the clientUniqueId value to set.
      * @return this instance.
      */
-    @SuppressWarnings("WeakerAccess")
     public CodePushConfiguration setClientUniqueId(String clientUniqueId) {
         if (clientUniqueId != null) {
             this.clientUniqueId = clientUniqueId;
         } else {
-            AppCenterLog.error(AppCenter.LOG_TAG, "\"clientUniqueId\" property cannot be null.");
+            AppCenterLog.error(CodePush.LOG_TAG, "\"clientUniqueId\" property cannot be null.");
         }
         return this;
     }
@@ -117,12 +115,11 @@ public final class CodePushConfiguration {
      * @param deploymentKey the deploymentKey value to set.
      * @return this instance.
      */
-    @SuppressWarnings("WeakerAccess")
     public CodePushConfiguration setDeploymentKey(String deploymentKey) {
         if (deploymentKey != null) {
             this.deploymentKey = deploymentKey;
         } else {
-            AppCenterLog.error(AppCenter.LOG_TAG, "\"deploymentKey\" property cannot be null.");
+            AppCenterLog.error(CodePush.LOG_TAG, "\"deploymentKey\" property cannot be null.");
         }
         return this;
     }
@@ -133,12 +130,11 @@ public final class CodePushConfiguration {
      * @param serverUrl the serverUrl value to set.
      * @return this instance.
      */
-    @SuppressWarnings("WeakerAccess")
     public CodePushConfiguration setServerUrl(String serverUrl) {
         if (serverUrl != null) {
             this.serverUrl = serverUrl;
         } else {
-            AppCenterLog.error(AppCenter.LOG_TAG, "\"serverUrl\" property cannot be null.");
+            AppCenterLog.error(CodePush.LOG_TAG, "\"serverUrl\" property cannot be null.");
         }
         return this;
     }
@@ -149,7 +145,6 @@ public final class CodePushConfiguration {
      * @param packageHash the serverUrl value to set.
      * @return this instance.
      */
-    @SuppressWarnings("WeakerAccess")
     public CodePushConfiguration setPackageHash(String packageHash) {
         this.packageHash = packageHash;
         return this;
