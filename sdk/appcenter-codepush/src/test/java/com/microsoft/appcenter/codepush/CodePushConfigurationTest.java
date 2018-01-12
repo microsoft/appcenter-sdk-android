@@ -23,7 +23,6 @@ public class CodePushConfigurationTest {
         mockStatic(AppCenterLog.class);
     }
 
-
     @Test
     public void correctConfigurationTest() {
         CodePushConfiguration correctConfig = new CodePushConfiguration();
@@ -32,15 +31,17 @@ public class CodePushConfigurationTest {
                 .setDeploymentKey("deploymentKey")
                 .setPackageHash("packageHash")
                 .setServerUrl("serverUrl");
-
         assertEquals("1.0.0", correctConfig.getAppVersion());
         assertEquals("clientUniqueId", correctConfig.getClientUniqueId());
         assertEquals("deploymentKey", correctConfig.getDeploymentKey());
         assertEquals("packageHash", correctConfig.getPackageHash());
         assertEquals("serverUrl", correctConfig.getServerUrl());
 
+        /* Package hash can be null. */
         correctConfig.setPackageHash(null);
         assertEquals(null, correctConfig.getPackageHash());
+        verifyStatic(times(0));
+        AppCenterLog.error(eq(CodePush.LOG_TAG), anyString());
     }
 
     @Test
@@ -50,7 +51,6 @@ public class CodePushConfigurationTest {
                 .setClientUniqueId(null)
                 .setDeploymentKey(null)
                 .setServerUrl(null);
-
         assertEquals(null, wrongConfig.getAppVersion());
         assertEquals(null, wrongConfig.getClientUniqueId());
         assertEquals(null, wrongConfig.getDeploymentKey());
