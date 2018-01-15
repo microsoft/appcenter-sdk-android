@@ -1,6 +1,7 @@
 // sdk modules
 include ':sdk'
 include ':sdk:appcenter'
+include ':sdk:appcenter-codepush'
 include ':sdk:appcenter-crashes'
 include ':sdk:appcenter-analytics'
 include ':sdk:appcenter-distribute'
