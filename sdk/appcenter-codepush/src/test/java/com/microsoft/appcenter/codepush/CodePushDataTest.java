@@ -15,13 +15,19 @@ import com.microsoft.appcenter.codepush.enums.CodePushDeploymentStatus;
 import com.microsoft.appcenter.codepush.enums.CodePushInstallMode;
 import com.microsoft.appcenter.codepush.enums.CodePushSyncStatus;
 import com.microsoft.appcenter.codepush.enums.CodePushUpdateState;
+import com.microsoft.appcenter.codepush.utils.CodePushDownloadPackageResult;
+import com.microsoft.appcenter.codepush.utils.DownloadProgress;
 
 import org.junit.Test;
 
+import java.io.File;
+
 import static org.junit.Assert.assertEquals;
 
-public class CodePushTest {
-
+/**
+ * Tests all the data classes.
+ */
+public class CodePushDataTest {
     private String clientUniqueId = "YHFv65";
     private String deploymentKey = "ABC123";
     private String previousDeploymentKey = "prevABC123";
@@ -64,6 +70,26 @@ public class CodePushTest {
         CodePushUpdateState codePushUpdateState = CodePushUpdateState.LATEST;
         int updateStateValue = codePushUpdateState.getValue();
         assertEquals(2, updateStateValue);
+    }
+
+    @Test
+    public void dataClassesTest() throws Exception {
+
+        /* Checks download progress work. */
+        long received = 1024;
+        long total = 1024 * 1024;
+        DownloadProgress downloadProgress = DownloadProgress.newProgress(total, received);
+        assertEquals(received, downloadProgress.getReceivedBytes());
+        assertEquals(total, downloadProgress.getTotalBytes());
+        assertEquals(false, downloadProgress.isCompleted());
+        downloadProgress.setReceivedBytes(total);
+        assertEquals(true, downloadProgress.isCompleted());
+
+        /* Checks DownloadPackageResult work.*/
+        File file = new File("/");
+        CodePushDownloadPackageResult codePushDownloadPackageResult = new CodePushDownloadPackageResult(file, false);
+        assertEquals(false, codePushDownloadPackageResult.isZip());
+        assertEquals(file, codePushDownloadPackageResult.getDownloadFile());
     }
 
     @Test

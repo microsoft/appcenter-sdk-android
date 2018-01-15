@@ -35,7 +35,9 @@ public class CodePushRemotePackage extends CodePushPackage {
      * @param codePushPackage  basic package containing the information.
      * @return instance of the {@link CodePushRemotePackage}.
      */
-    public static CodePushRemotePackage createRemotePackage(final boolean failedInstall, final long packageSize, final String downloadUrl, final boolean updateAppVersion, final CodePushPackage codePushPackage) {
+    public static CodePushRemotePackage createRemotePackage(final boolean failedInstall, final long packageSize,
+                                                            final String downloadUrl, final boolean updateAppVersion,
+                                                            final CodePushPackage codePushPackage) {
         CodePushRemotePackage codePushRemotePackage = new CodePushRemotePackage();
         codePushRemotePackage.setAppVersion(codePushPackage.getAppVersion());
         codePushRemotePackage.setDeploymentKey(codePushPackage.getDeploymentKey());

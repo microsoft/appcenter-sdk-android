@@ -56,7 +56,9 @@ public class CodePushLocalPackage extends CodePushPackage {
      * @param codePushPackage basic package containing the information.
      * @return instance of the {@link CodePushLocalPackage}.
      */
-    public static CodePushLocalPackage createLocalPackage(final boolean failedInstall, final boolean isFirstRun, final boolean isPending, final boolean isDebugOnly, final CodePushPackage codePushPackage) {
+    public static CodePushLocalPackage createLocalPackage(final boolean failedInstall, final boolean isFirstRun,
+                                                          final boolean isPending, final boolean isDebugOnly,
+                                                          final CodePushPackage codePushPackage) {
         CodePushLocalPackage codePushLocalPackage = new CodePushLocalPackage();
         codePushLocalPackage.setAppVersion(codePushPackage.getAppVersion());
         codePushLocalPackage.setDeploymentKey(codePushPackage.getDeploymentKey());

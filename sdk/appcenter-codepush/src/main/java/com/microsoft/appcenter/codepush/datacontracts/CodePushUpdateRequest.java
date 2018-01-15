@@ -53,7 +53,8 @@ public class CodePushUpdateRequest {
      * @param clientUniqueId  id of the device.
      * @return instance of the {@link CodePushUpdateRequest}.
      */
-    public static CodePushUpdateRequest createUpdateRequest(final String deploymentKey, final CodePushLocalPackage codePushPackage, final String clientUniqueId) {
+    public static CodePushUpdateRequest createUpdateRequest(final String deploymentKey,
+                                                            final CodePushLocalPackage codePushPackage, final String clientUniqueId) {
         CodePushUpdateRequest codePushUpdateRequest = new CodePushUpdateRequest();
         codePushUpdateRequest.setAppVersion(codePushPackage.getAppVersion());
         codePushUpdateRequest.setDeploymentKey(deploymentKey);
