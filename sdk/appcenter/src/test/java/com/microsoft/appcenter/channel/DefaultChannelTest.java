@@ -803,6 +803,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Log log = mock(Log.class);
         channel.enqueue(log, TEST_GROUP);
         verify(listener).onEnqueuingLog(log, TEST_GROUP);
+        verify(listener).onFilteringLog(log);
 
         /* Check no more calls after removing listener. */
         log = mock(Log.class);
@@ -827,6 +828,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Log log = mock(Log.class);
         channel.enqueue(log, TEST_GROUP);
         verify(listener).onEnqueuingLog(log, TEST_GROUP);
+        verify(listener, never()).onFilteringLog(log);
         verify(persistence, never()).putLog(TEST_GROUP, log);
     }
 

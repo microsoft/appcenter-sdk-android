@@ -114,10 +114,10 @@ public class DefaultChannel implements Channel {
     /**
      * Creates and initializes a new instance.
      *
-     * @param context           The context.
-     * @param appSecret         The application secret.
-     * @param logSerializer     The log serializer.
-     * @param appCenterHandler  App Center looper thread handler.
+     * @param context          The context.
+     * @param appSecret        The application secret.
+     * @param logSerializer    The log serializer.
+     * @param appCenterHandler App Center looper thread handler.
      */
     public DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler) {
         this(context, appSecret, buildDefaultPersistence(logSerializer), new IngestionHttp(context, logSerializer), appCenterHandler);
@@ -545,20 +545,30 @@ public class DefaultChannel implements Channel {
             log.setTimestamp(new Date());
         }
 
-        /* Persist log. */
-        try {
+        /* Call listeners so that they can filter the log. */
+        boolean filteredOut = false;
+        for (Listener listener : mListeners) {
+            filteredOut = filteredOut || listener.onFilteringLog(log);
+        }
 
-            /* Increment counters and schedule ingestion if we are enabled. */
-            mPersistence.putLog(groupName, log);
-            groupState.mPendingLogCount++;
-            AppCenterLog.debug(LOG_TAG, "enqueue(" + groupState.mName + ") pendingLogCount=" + groupState.mPendingLogCount);
-            if (mEnabled) {
-                checkPendingLogs(groupState.mName);
-            } else {
-                AppCenterLog.warn(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
+        /* Persist log if not filtered out. */
+        if (filteredOut) {
+            AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "' was filtered out by listener(s)");
+        } else {
+            try {
+
+                /* Increment counters and schedule ingestion if we are enabled. */
+                mPersistence.putLog(groupName, log);
+                groupState.mPendingLogCount++;
+                AppCenterLog.debug(LOG_TAG, "enqueue(" + groupState.mName + ") pendingLogCount=" + groupState.mPendingLogCount);
+                if (mEnabled) {
+                    checkPendingLogs(groupState.mName);
+                } else {
+                    AppCenterLog.warn(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
+                }
+            } catch (Persistence.PersistenceException e) {
+                AppCenterLog.error(LOG_TAG, "Error persisting log with exception: " + e.toString());
             }
-        } catch (Persistence.PersistenceException e) {
-            AppCenterLog.error(LOG_TAG, "Error persisting log with exception: " + e.toString());
         }
     }
 

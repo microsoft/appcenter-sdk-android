@@ -106,6 +106,13 @@ public class SessionTracker implements Channel.Listener {
         }
     }
 
+    @Override
+    public boolean onFilteringLog(@NonNull Log log) {
+
+        /* No filtering. */
+        return false;
+    }
+
     /**
      * Generate a new session identifier if the first time or
      * we went in background for more X seconds or
