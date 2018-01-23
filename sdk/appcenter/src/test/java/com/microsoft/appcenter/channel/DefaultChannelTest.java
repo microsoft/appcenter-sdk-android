@@ -2,6 +2,7 @@ package com.microsoft.appcenter.channel;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.CancellationException;
@@ -12,6 +13,7 @@ import com.microsoft.appcenter.ingestion.IngestionHttp;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
+import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
@@ -167,7 +169,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         IngestionHttp mockIngestion = mock(IngestionHttp.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
-        when(mockPersistence.getLogs(any(String.class), anyInt(), Matchers.<ArrayList<Log>> any())).then(getGetLogsAnswer(40));
+        when(mockPersistence.getLogs(any(String.class), anyInt(), Matchers.<ArrayList<Log>>any())).then(getGetLogsAnswer(40));
 
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
@@ -967,5 +969,77 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.shutdown();
         verify(mockListener, never()).onFailure(any(Log.class), any(Exception.class));
         verify(mockPersistence).clearPendingLogState();
+    }
+
+    @Test
+    public void filter() throws Persistence.PersistenceException {
+
+        /* Given a mock channel. */
+        Persistence persistence = mock(Persistence.class);
+
+        @SuppressWarnings("ConstantConditions")
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, mock(IngestionHttp.class), mCoreHandler);
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+
+        /* Given we add mock listeners. */
+        Channel.Listener listener1 = mock(Channel.Listener.class);
+        channel.addListener(listener1);
+        Channel.Listener listener2 = mock(Channel.Listener.class);
+        channel.addListener(listener2);
+
+        /* Given 1 log. */
+        {
+            /* Given the second listener filtering out logs. */
+            Log log = mock(Log.class);
+            when(listener2.shouldFilter(log)).thenReturn(true);
+
+            /* When we enqueue that log. */
+            channel.enqueue(log, TEST_GROUP);
+
+            /* Then except the following. behaviors. */
+            verify(listener1).onEnqueuingLog(log, TEST_GROUP);
+            verify(listener1).shouldFilter(log);
+            verify(listener2).onEnqueuingLog(log, TEST_GROUP);
+            verify(listener2).shouldFilter(log);
+            verify(persistence, never()).putLog(TEST_GROUP, log);
+        }
+
+        /* Given 1 log. */
+        {
+            /* Given the first listener filtering out logs. */
+            Log log = mock(Log.class);
+            when(listener1.shouldFilter(log)).thenReturn(true);
+            when(listener2.shouldFilter(log)).thenReturn(false);
+
+            /* When we enqueue that log. */
+            channel.enqueue(log, TEST_GROUP);
+
+            /* Then except the following. behaviors. */
+            verify(listener1).onEnqueuingLog(log, TEST_GROUP);
+            verify(listener1).shouldFilter(log);
+            verify(listener2).onEnqueuingLog(log, TEST_GROUP);
+
+            /* Second listener skipped since first listener filtered out. */
+            verify(listener2, never()).shouldFilter(log);
+            verify(persistence, never()).putLog(TEST_GROUP, log);
+        }
+
+        /* Given 1 log. */
+        {
+            /* Given no listener filtering out logs. */
+            Log log = mock(Log.class);
+            when(listener1.shouldFilter(log)).thenReturn(false);
+            when(listener2.shouldFilter(log)).thenReturn(false);
+
+            /* When we enqueue that log. */
+            channel.enqueue(log, TEST_GROUP);
+
+            /* Then except the following. behaviors. */
+            verify(listener1).onEnqueuingLog(log, TEST_GROUP);
+            verify(listener1).shouldFilter(log);
+            verify(listener2).onEnqueuingLog(log, TEST_GROUP);
+            verify(listener2).shouldFilter(log);
+            verify(persistence).putLog(TEST_GROUP, log);
+        }
     }
 }
