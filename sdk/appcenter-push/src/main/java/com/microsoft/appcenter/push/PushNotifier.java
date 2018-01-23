@@ -211,15 +211,12 @@ class PushNotifier {
                 }
             }
         }
-        if (iconResourceId == 0) {
-            AppCenterLog.debug(LOG_TAG,
-                    "Using application icon as notification icon.");
-            iconResourceId = context.getApplicationInfo().icon;
+        if (iconResourceId != 0) {
+            iconResourceId = validateIcon(context, iconResourceId);
         }
-        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O && context.getDrawable(iconResourceId) instanceof AdaptiveIconDrawable) {
-            AppCenterLog.error(LOG_TAG, "Adaptive icons make Notification center crash (system process) on Android 8.0 (was fixed on Android 8.1), " +
-                    "please update your icon to use to be non adaptive or please use another icon to push.");
-            iconResourceId = 0;
+        if (iconResourceId == 0) {
+            AppCenterLog.debug(LOG_TAG, "Using application icon as notification icon.");
+            iconResourceId = validateIcon(context, context.getApplicationInfo().icon);
         }
 
         /* Fall back to a 1 pixel icon if icon invalid. */
@@ -228,6 +225,15 @@ class PushNotifier {
             iconResourceId = R.drawable.ic_stat_notify_dot;
         }
         builder.setSmallIcon(iconResourceId);
+    }
+
+    private static int validateIcon(Context context, int iconResourceId) {
+        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O && context.getDrawable(iconResourceId) instanceof AdaptiveIconDrawable) {
+            AppCenterLog.error(LOG_TAG, "Adaptive icons make Notification center crash (system process) on Android 8.0 (was fixed on Android 8.1), " +
+                    "please update your icon to be non adaptive or please use another icon to push.");
+            iconResourceId = 0;
+        }
+        return iconResourceId;
     }
 }
 

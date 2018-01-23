@@ -223,6 +223,27 @@ public class PushNotifierTest {
     }
 
     @Test
+    public void handleNotificationWithIconFromMipmapAdaptiveAndroid26() throws Exception {
+
+        /* Adaptive icon makes notification system crash in a loop on Android 8.0. */
+        setVersionSdkInt(Build.VERSION_CODES.O);
+        String iconString = "picture";
+        int resourceId = 4;
+        Resources resourcesMock = mock(Resources.class);
+        when(mContextMock.getResources()).thenReturn(resourcesMock);
+        when(resourcesMock.getIdentifier(eq(iconString), eq("drawable"), anyString())).thenReturn(0);
+        when(resourcesMock.getIdentifier(eq(iconString), eq("mipmap"), anyString())).thenReturn(resourceId);
+        when(PushIntentUtils.getIcon(any(Intent.class))).thenReturn(iconString);
+        when(mContextMock.getDrawable(resourceId)).thenReturn(mock(AdaptiveIconDrawable.class));
+        PushNotifier.handleNotification(mContextMock, new Intent());
+
+        /* Fall back on app icon. */
+        //noinspection ResourceType
+        verify(mNotificationBuilderMock).setSmallIcon(mIconId);
+        verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
+    }
+
+    @Test
     public void handleNotificationWithAppIcon() throws Exception {
         String iconString = "picture";
         Resources resourcesMock = mock(Resources.class);
@@ -269,6 +290,27 @@ public class PushNotifierTest {
         PushNotifier.handleNotification(mContextMock, new Intent());
         //noinspection ResourceType
         verify(mNotificationBuilderMock).setSmallIcon(mIconId);
+        verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
+    }
+
+    @Test
+    public void handleNotificationWithIconFromMipmapAndAppIconAdaptiveAndroid26() throws Exception {
+
+        /* Adaptive icon makes notification system crash in a loop on Android 8.0. */
+        setVersionSdkInt(Build.VERSION_CODES.O);
+        String iconString = "picture";
+        int resourceId = 4;
+        Resources resourcesMock = mock(Resources.class);
+        when(mContextMock.getResources()).thenReturn(resourcesMock);
+        when(resourcesMock.getIdentifier(eq(iconString), eq("drawable"), anyString())).thenReturn(0);
+        when(resourcesMock.getIdentifier(eq(iconString), eq("mipmap"), anyString())).thenReturn(resourceId);
+        when(PushIntentUtils.getIcon(any(Intent.class))).thenReturn(iconString);
+        when(mContextMock.getDrawable(anyInt())).thenReturn(mock(AdaptiveIconDrawable.class));
+        PushNotifier.handleNotification(mContextMock, new Intent());
+
+        /* Fall back on dot as both app icon and custom icon are adaptive and Android 8. */
+        //noinspection ResourceType
+        verify(mNotificationBuilderMock).setSmallIcon(R.drawable.ic_stat_notify_dot);
         verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);
     }
 
