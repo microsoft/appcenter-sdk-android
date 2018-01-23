@@ -45,6 +45,10 @@ public class SettingsActivity extends AppCompatActivity {
 
     private static final int FILE_ATTACHMENT_DIALOG_ID = 1;
 
+    private static boolean sRumStarted;
+
+    private static boolean sTrasmissionStarted;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -195,14 +199,53 @@ public class SettingsActivity extends AppCompatActivity {
 
             /* Real User Measurements. */
             try {
-                @SuppressWarnings("unchecked")
-                Class<? extends AppCenterService> rum = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.rum.RealUserMeasurements");
+                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> rum = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.rum.RealUserMeasurements");
                 final Method isEnabled = rum.getMethod("isEnabled");
                 final Method setEnabled = rum.getMethod("setEnabled", boolean.class);
                 initCheckBoxSetting(R.string.appcenter_rum_state_key, R.string.appcenter_rum_state_summary_enabled, R.string.appcenter_rum_state_summary_disabled, new HasEnabled() {
 
                     @Override
                     public void setEnabled(boolean enabled) {
+                        try {
+                            if (!sRumStarted) {
+                                rum.getMethod("setRumKey", String.class).invoke(null, getString(R.string.rum_key));
+                                AppCenter.start(rum);
+                                sRumStarted = true;
+                            }
+                            setEnabled.invoke(null, enabled);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    public boolean isEnabled() {
+                        try {
+                            return sRumStarted && ((AppCenterFuture<Boolean>) isEnabled.invoke(null)).get();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                getPreferenceScreen().removePreference(findPreference(getString(R.string.real_user_measurements_key)));
+            }
+
+
+            /* Transmission. */
+            try {
+                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> transmission = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.sasquatch.transmission.Transmission");
+                final Method isEnabled = transmission.getMethod("isEnabled");
+                final Method setEnabled = transmission.getMethod("setEnabled", boolean.class);
+                initCheckBoxSetting(R.string.appcenter_transmission_state_key, R.string.appcenter_transmission_state_summary_enabled, R.string.appcenter_transmission_state_summary_disabled, new HasEnabled() {
+
+                    @Override
+                    public void setEnabled(boolean enabled) {
+                        if (!sTrasmissionStarted) {
+                            AppCenter.start(transmission);
+                            sTrasmissionStarted = true;
+                        }
                         try {
                             setEnabled.invoke(null, enabled);
                         } catch (Exception e) {
@@ -214,15 +257,17 @@ public class SettingsActivity extends AppCompatActivity {
                     @SuppressWarnings("unchecked")
                     public boolean isEnabled() {
                         try {
-                            return ((AppCenterFuture<Boolean>) isEnabled.invoke(null)).get();
+                            return sTrasmissionStarted && ((AppCenterFuture<Boolean>) isEnabled.invoke(null)).get();
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                     }
                 });
             } catch (Exception e) {
-                getPreferenceScreen().removePreference(findPreference(getString(R.string.real_user_measurements_key)));
+                getPreferenceScreen().removePreference(findPreference(getString(R.string.transmission_key)));
             }
+
+            /* Auto page tracking. */
             initCheckBoxSetting(R.string.appcenter_auto_page_tracking_key, R.string.appcenter_auto_page_tracking_enabled, R.string.appcenter_auto_page_tracking_disabled, new HasEnabled() {
 
                 @Override
