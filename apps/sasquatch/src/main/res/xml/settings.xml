@@ -10,7 +10,7 @@
         <CheckBoxPreference
             android:dependency="@string/appcenter_state_key"
             android:key="@string/appcenter_analytics_state_key"
-            android:title="@string/appcenter_analytics_state_title"/>
+            android:title="@string/appcenter_analytics_state_title" />
         <CheckBoxPreference
             android:key="@string/appcenter_auto_page_tracking_key"
             android:title="@string/appcenter_auto_page_tracking_title" />
@@ -22,26 +22,26 @@
         <CheckBoxPreference
             android:dependency="@string/appcenter_state_key"
             android:key="@string/appcenter_crashes_state_key"
-            android:title="@string/appcenter_crashes_state_title"/>
+            android:title="@string/appcenter_crashes_state_title" />
         <EditTextPreference
             android:dependency="@string/appcenter_crashes_state_key"
-            android:title="@string/appcenter_crashes_text_attachment_title"
-            android:key="@string/appcenter_crashes_text_attachment_key"
             android:inputType="textMultiLine"
-            android:singleLine="false"/>
+            android:key="@string/appcenter_crashes_text_attachment_key"
+            android:singleLine="false"
+            android:title="@string/appcenter_crashes_text_attachment_title" />
         <Preference
             android:dependency="@string/appcenter_crashes_state_key"
-            android:title="@string/appcenter_crashes_file_attachment_title"
-            android:key="@string/appcenter_crashes_file_attachment_key"/>
+            android:key="@string/appcenter_crashes_file_attachment_key"
+            android:title="@string/appcenter_crashes_file_attachment_title" />
     </PreferenceCategory>
-    
+
     <PreferenceCategory
         android:key="@string/distribute_key"
         android:title="@string/distribute_title">
         <CheckBoxPreference
             android:dependency="@string/appcenter_state_key"
             android:key="@string/appcenter_distribute_state_key"
-            android:title="@string/appcenter_distribute_state_title"/>
+            android:title="@string/appcenter_distribute_state_title" />
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -50,10 +50,10 @@
         <CheckBoxPreference
             android:dependency="@string/appcenter_state_key"
             android:key="@string/appcenter_push_state_key"
-            android:title="@string/appcenter_push_state_title"/>
+            android:title="@string/appcenter_push_state_title" />
         <CheckBoxPreference
             android:key="@string/appcenter_push_firebase_state_key"
-            android:title="@string/appcenter_push_firebase_state_title"/>
+            android:title="@string/appcenter_push_firebase_state_title" />
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -63,6 +63,15 @@
             android:dependency="@string/appcenter_state_key"
             android:key="@string/appcenter_rum_state_key"
             android:title="@string/appcenter_rum_state_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="@string/event_filter"
+        android:title="@string/event_filter_title">
+        <CheckBoxPreference
+            android:dependency="@string/appcenter_state_key"
+            android:key="@string/appcenter_event_filter_state_key"
+            android:title="@string/appcenter_event_filter_state_title" />
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -84,6 +93,6 @@
             android:title="@string/clear_crash_user_confirmation_title" />
         <Preference
             android:key="@string/log_url_key"
-            android:title="@string/log_url_title"/>
+            android:title="@string/log_url_title" />
     </PreferenceCategory>
 </PreferenceScreen>

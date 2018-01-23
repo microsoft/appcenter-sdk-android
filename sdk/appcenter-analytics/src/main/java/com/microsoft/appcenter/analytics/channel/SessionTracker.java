@@ -6,6 +6,7 @@ import android.support.annotation.NonNull;
 import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
+import com.microsoft.appcenter.channel.AbstractChannelListener;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
@@ -18,7 +19,7 @@ import java.util.UUID;
 /**
  * Decorator for channel, adding session semantic to logs.
  */
-public class SessionTracker implements Channel.Listener {
+public class SessionTracker extends AbstractChannelListener {
 
     /**
      * Default session timeout in milliseconds.

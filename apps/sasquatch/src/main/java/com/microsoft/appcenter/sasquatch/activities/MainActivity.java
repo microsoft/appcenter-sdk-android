@@ -16,7 +16,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.AppCenterService;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
@@ -140,17 +139,6 @@ public class MainActivity extends AppCompatActivity {
 
         /* Attach NDK Crash Handler (if available) after SDK is initialized. */
         initializeBreakpad();
-
-        /* If rum available, use it. */
-        try {
-            @SuppressWarnings("unchecked")
-            Class<? extends AppCenterService> rum = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.rum.RealUserMeasurements");
-            rum.getMethod("setRumKey", String.class).invoke(null, getString(R.string.rum_key));
-
-            /* Start rum. */
-            AppCenter.start(rum);
-        } catch (Exception ignore) {
-        }
 
         /* Use some App Center getters. */
         AppCenter.getInstallId().thenAccept(new AppCenterConsumer<UUID>() {
