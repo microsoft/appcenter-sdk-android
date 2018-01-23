@@ -548,7 +548,7 @@ public class DefaultChannel implements Channel {
         /* Call listeners so that they can filter the log. */
         boolean filteredOut = false;
         for (Listener listener : mListeners) {
-            filteredOut = filteredOut || listener.onFilteringLog(log);
+            filteredOut = filteredOut || listener.shouldFilter(log);
         }
 
         /* Persist log if not filtered out. */

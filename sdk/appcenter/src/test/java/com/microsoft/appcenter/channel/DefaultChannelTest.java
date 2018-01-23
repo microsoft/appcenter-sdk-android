@@ -45,6 +45,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.spy;
 
 @SuppressWarnings("unused")
 public class DefaultChannelTest extends AbstractDefaultChannelTest {
@@ -798,12 +799,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         @SuppressWarnings("ConstantConditions")
         DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mock(Persistence.class), mock(IngestionHttp.class), mCoreHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
-        Channel.Listener listener = mock(Channel.Listener.class);
+        Channel.Listener listener = spy(new AbstractChannelListener());
         channel.addListener(listener);
         Log log = mock(Log.class);
         channel.enqueue(log, TEST_GROUP);
         verify(listener).onEnqueuingLog(log, TEST_GROUP);
-        verify(listener).onFilteringLog(log);
+        verify(listener).shouldFilter(log);
 
         /* Check no more calls after removing listener. */
         log = mock(Log.class);
@@ -828,7 +829,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Log log = mock(Log.class);
         channel.enqueue(log, TEST_GROUP);
         verify(listener).onEnqueuingLog(log, TEST_GROUP);
-        verify(listener, never()).onFilteringLog(log);
+        verify(listener, never()).shouldFilter(log);
         verify(persistence, never()).putLog(TEST_GROUP, log);
     }
 
