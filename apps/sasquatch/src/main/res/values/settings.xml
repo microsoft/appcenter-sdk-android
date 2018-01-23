@@ -64,13 +64,13 @@
     <string name="appcenter_rum_state_summary_enabled" tools:ignore="MissingTranslation">RUM is enabled</string>
     <string name="appcenter_rum_state_summary_disabled" tools:ignore="MissingTranslation">RUM is disabled</string>
 
-    <string name="transmission_key" tools:ignore="MissingTranslation">appcenter_transmission</string>
-    <string name="transmission_title" tools:ignore="MissingTranslation">Transmission</string>
+    <string name="event_filter" tools:ignore="MissingTranslation">appcenter_event_filter</string>
+    <string name="event_filter_title" tools:ignore="MissingTranslation">Event Filter</string>
 
-    <string name="appcenter_transmission_state_key" tools:ignore="MissingTranslation">appcenter_transmission_state_key</string>
-    <string name="appcenter_transmission_state_title" tools:ignore="MissingTranslation">Transmission state</string>
-    <string name="appcenter_transmission_state_summary_enabled" tools:ignore="MissingTranslation">Transmission is enabled</string>
-    <string name="appcenter_transmission_state_summary_disabled" tools:ignore="MissingTranslation">Transmission is disabled</string>
+    <string name="appcenter_event_filter_state_key" tools:ignore="MissingTranslation">appcenter_event_filter_state_key</string>
+    <string name="appcenter_event_filter_state_title" tools:ignore="MissingTranslation">Event Filter state</string>
+    <string name="appcenter_event_filter_state_summary_enabled" tools:ignore="MissingTranslation">Event Filter is enabled</string>
+    <string name="appcenter_event_filter_state_summary_disabled" tools:ignore="MissingTranslation">Event Filter is disabled</string>
 
     <string name="application_info_key" tools:ignore="MissingTranslation">application_info</string>
     <string name="application_info_title" tools:ignore="MissingTranslation">Application Information</string>

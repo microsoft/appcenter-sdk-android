@@ -1,4 +1,4 @@
-package com.microsoft.appcenter.sasquatch.transmission;
+package com.microsoft.appcenter.sasquatch.eventfilter;
 
 import android.support.annotation.NonNull;
 
@@ -10,14 +10,14 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 /**
- * Fake App Center module to show how to write a transmission module.
+ * Fake App Center module to show how to write an event filter module.
  */
-public class Transmission extends AbstractAppCenterService {
+public class EventFilter extends AbstractAppCenterService {
 
     /**
      * Name of the service.
      */
-    private static final String SERVICE_NAME = "Transmission";
+    private static final String SERVICE_NAME = "EventFilter";
 
     /**
      * TAG used in logging for this service.
@@ -27,7 +27,7 @@ public class Transmission extends AbstractAppCenterService {
     /**
      * Shared instance.
      */
-    private static Transmission sInstance = null;
+    private static EventFilter sInstance = null;
 
     /**
      * Channel listener.
@@ -40,15 +40,15 @@ public class Transmission extends AbstractAppCenterService {
      * @return shared instance.
      */
     @SuppressWarnings("WeakerAccess")
-    public static synchronized Transmission getInstance() {
+    public static synchronized EventFilter getInstance() {
         if (sInstance == null) {
-            sInstance = new Transmission();
+            sInstance = new EventFilter();
         }
         return sInstance;
     }
 
     /**
-     * Check whether Transmission service is enabled or not.
+     * Check whether EventFilter service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
@@ -59,7 +59,7 @@ public class Transmission extends AbstractAppCenterService {
     }
 
     /**
-     * Enable or disable Transmission service.
+     * Enable or disable EventFilter service.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.

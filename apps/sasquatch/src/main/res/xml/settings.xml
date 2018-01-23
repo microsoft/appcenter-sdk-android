@@ -66,12 +66,12 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:key="@string/transmission_key"
-        android:title="@string/transmission_title">
+        android:key="@string/event_filter"
+        android:title="@string/event_filter_title">
         <CheckBoxPreference
             android:dependency="@string/appcenter_state_key"
-            android:key="@string/appcenter_transmission_state_key"
-            android:title="@string/appcenter_transmission_state_title" />
+            android:key="@string/appcenter_event_filter_state_key"
+            android:title="@string/appcenter_event_filter_state_title" />
     </PreferenceCategory>
 
     <PreferenceCategory
