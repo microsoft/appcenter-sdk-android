@@ -48,21 +48,23 @@ public class Transmission extends AbstractAppCenterService {
     }
 
     /**
-     * Check whether Analytics service is enabled or not.
+     * Check whether Transmission service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
+    @SuppressWarnings("unused")
     public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
 
     /**
-     * Enable or disable Analytics service.
+     * Enable or disable Transmission service.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
+    @SuppressWarnings("unused")
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
