@@ -2,7 +2,6 @@ package com.microsoft.appcenter.channel;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.net.wifi.p2p.WifiP2pManager;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.CancellationException;
@@ -13,7 +12,6 @@ import com.microsoft.appcenter.ingestion.IngestionHttp;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
-import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
