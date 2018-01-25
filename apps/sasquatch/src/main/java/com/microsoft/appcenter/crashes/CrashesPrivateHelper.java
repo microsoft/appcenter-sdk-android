@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.crashes;
 
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
+
 import java.util.Map;
 
 public final class CrashesPrivateHelper {
@@ -8,13 +10,14 @@ public final class CrashesPrivateHelper {
     }
 
     public static void trackException(Throwable throwable, Map<String, String> properties) {
-        try {
-            Crashes.class.getMethod("trackException", Throwable.class, Map.class).invoke(null, throwable, properties);
-        } catch (Exception ignored) {
-        }
+        Crashes.trackException(throwable, properties);
     }
 
     public static void saveUncaughtException(Thread thread, Throwable exception) {
         Crashes.getInstance().saveUncaughtException(thread, exception);
+    }
+
+    public static AppCenterFuture<String> getMinidumpDirectory() {
+        return Crashes.getMinidumpDirectory();
     }
 }
