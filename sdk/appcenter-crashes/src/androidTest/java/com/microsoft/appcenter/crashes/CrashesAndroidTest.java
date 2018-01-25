@@ -4,12 +4,14 @@ import android.annotation.SuppressLint;
 import android.app.Application;
 import android.support.test.InstrumentationRegistry;
 
-import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterPrivateHelper;
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
+import com.microsoft.appcenter.crashes.model.NativeException;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.utils.HandlerUtils;
@@ -26,7 +28,9 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -40,6 +44,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -58,6 +63,15 @@ public class CrashesAndroidTest {
 
     private Channel mChannel;
 
+    /* Filter out the minidump folder. */
+    private FileFilter mMinidumpFilter = new FileFilter() {
+
+        @Override
+        public boolean accept(File file) {
+            return !file.isDirectory();
+        }
+    };
+
     @BeforeClass
     public static void setUpClass() {
         sDefaultCrashHandler = Thread.getDefaultUncaughtExceptionHandler();
@@ -71,7 +85,15 @@ public class CrashesAndroidTest {
         Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
         StorageHelper.PreferencesStorage.clear();
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
-            assertTrue(logFile.delete());
+            if (logFile.isDirectory()) {
+                for (File dumpDir : logFile.listFiles()) {
+                    for (File dumpFile : dumpDir.listFiles()) {
+                        assertTrue(dumpFile.delete());
+                    }
+                }
+            } else {
+                assertTrue(logFile.delete());
+            }
         }
         mChannel = mock(Channel.class);
     }
@@ -145,6 +167,64 @@ public class CrashesAndroidTest {
     }
 
     @Test
+    public void getLastSessionCrashReportNative() throws Exception {
+
+        /* Null before start. */
+        Crashes.unsetInstance();
+        assertNull(Crashes.getLastSessionCrashReport().get());
+        assertFalse(Crashes.hasCrashedInLastSession().get());
+        assertNull(Crashes.getMinidumpDirectory().get());
+
+        /* Simulate we have a minidump. */
+        File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
+        File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
+        StorageHelper.InternalStorage.write(minidumpFile, "mock minidump");
+
+        /* Start crashes now. */
+        startFresh(null);
+
+        /* We can access directory now. */
+        assertEquals(newMinidumpDirectory.getAbsolutePath(), Crashes.getMinidumpDirectory().get());
+        ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
+        assertNotNull(errorReport);
+        assertTrue(Crashes.hasCrashedInLastSession().get());
+        assertTrue(errorReport.getThrowable() instanceof NativeException);
+
+        /* File has been deleted. */
+        assertFalse(minidumpFile.exists());
+
+        /* After restart, it's processed. */
+        Crashes.unsetInstance();
+        startFresh(null);
+        assertNull(Crashes.getLastSessionCrashReport().get());
+        assertFalse(Crashes.hasCrashedInLastSession().get());
+    }
+
+    @Test
+    public void failedToMoveMinidump() throws Exception {
+
+        /* Simulate we have a minidump. */
+        File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
+        File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
+        StorageHelper.InternalStorage.write(minidumpFile, "mock minidump");
+
+        /* Make moving fail. */
+        assertTrue(ErrorLogHelper.getPendingMinidumpDirectory().delete());
+
+        /* Start crashes now. */
+        try {
+            startFresh(null);
+
+            /* If failed to process minidump, delete entire crash. */
+            assertNull(Crashes.getLastSessionCrashReport().get());
+            assertFalse(Crashes.hasCrashedInLastSession().get());
+            assertFalse(minidumpFile.exists());
+        } finally {
+            assertTrue(ErrorLogHelper.getPendingMinidumpDirectory().mkdir());
+        }
+    }
+
+    @Test
     public void testNoDuplicateCallbacksOrSending() throws Exception {
 
         /* Crash on 1st process. */
@@ -178,7 +258,7 @@ public class CrashesAndroidTest {
         thread.join();
         assertEquals(ErrorLogHelper.FRAME_LIMIT, exception.getStackTrace().length);
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
-        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verifyZeroInteractions(crashesListener);
 
         /* Second process: enqueue log but network is down... */
@@ -218,7 +298,7 @@ public class CrashesAndroidTest {
             }
         };
         verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString());
-        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verify(crashesListener).shouldProcess(any(ErrorReport.class));
         verify(crashesListener).shouldAwaitUserConfirmation();
         verifyNoMoreInteractions(crashesListener);
@@ -237,7 +317,7 @@ public class CrashesAndroidTest {
         assertTrue(Crashes.isEnabled().get());
         verify(mChannel).enqueue(argThat(matchCrashLog), anyString());
         assertNotNull(log.get());
-        assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
 
         verify(crashesListener).getErrorAttachments(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);
@@ -271,7 +351,7 @@ public class CrashesAndroidTest {
         });
         semaphore.acquire();
 
-        assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString());
         verify(crashesListener).onBeforeSending(any(ErrorReport.class));
         verify(crashesListener).onSendingSucceeded(any(ErrorReport.class));
@@ -283,6 +363,85 @@ public class CrashesAndroidTest {
         assertNotNull(errorLog.getException());
         assertNotNull(errorLog.getException().getFrames());
         assertEquals(ErrorLogHelper.FRAME_LIMIT, errorLog.getException().getFrames().size());
+    }
+
+    @Test
+    public void processingWithMinidump() throws Exception {
+
+        /* Simulate we have a minidump. */
+        File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
+        File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
+        StorageHelper.InternalStorage.write(minidumpFile, "mock minidump");
+
+        /* Set up crash listener. */
+        CrashesListener crashesListener = mock(CrashesListener.class);
+        when(crashesListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
+        when(crashesListener.shouldAwaitUserConfirmation()).thenReturn(true);
+        ErrorAttachmentLog textAttachment = ErrorAttachmentLog.attachmentWithText("Hello", "hello.txt");
+        when(crashesListener.getErrorAttachments(any(ErrorReport.class))).thenReturn(Collections.singletonList(textAttachment));
+        startFresh(crashesListener);
+
+        /* Check last session error report. */
+        assertTrue(Crashes.hasCrashedInLastSession().get());
+
+        /* Wait U.I. thread callback (shouldAwaitUserConfirmation). */
+        final Semaphore semaphore = new Semaphore(0);
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                semaphore.release();
+            }
+        });
+        semaphore.acquire();
+
+        /* Waiting user confirmation so no log sent yet. */
+        ArgumentMatcher<Log> matchCrashLog = new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object o) {
+                return o instanceof ManagedErrorLog;
+            }
+        };
+        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString());
+        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
+        verify(crashesListener).shouldProcess(any(ErrorReport.class));
+        verify(crashesListener).shouldAwaitUserConfirmation();
+        verifyNoMoreInteractions(crashesListener);
+
+        /* Confirm to resume processing. */
+        final AtomicReference<Log> log = new AtomicReference<>();
+        doAnswer(new Answer() {
+
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                log.set((Log) invocationOnMock.getArguments()[0]);
+                return null;
+            }
+        }).when(mChannel).enqueue(argThat(matchCrashLog), anyString());
+        Crashes.notifyUserConfirmation(Crashes.SEND);
+        assertTrue(Crashes.isEnabled().get());
+        verify(mChannel).enqueue(argThat(matchCrashLog), anyString());
+        assertNotNull(log.get());
+        assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
+        verify(crashesListener).getErrorAttachments(any(ErrorReport.class));
+        verifyNoMoreInteractions(crashesListener);
+
+        /* Verify automatic minidump attachment. */
+        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                if (argument instanceof ErrorAttachmentLog) {
+                    ErrorAttachmentLog log = (ErrorAttachmentLog) argument;
+                    return "application/octet-stream".equals(log.getContentType()) && "minidump.dmp".equals(log.getFileName());
+                }
+                return false;
+            }
+        }), anyString());
+
+        /* Verify custom text attachment. */
+        verify(mChannel).enqueue(eq(textAttachment), anyString());
     }
 
     @Test
@@ -305,12 +464,12 @@ public class CrashesAndroidTest {
         thread.start();
         thread.join();
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
-        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
 
         /* Disable, test waiting for disable to finish. */
         Crashes.setEnabled(false).get();
         assertFalse(Crashes.isEnabled().get());
-        assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
     }
 
     @Test
@@ -336,7 +495,7 @@ public class CrashesAndroidTest {
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
 
         /* Check there are only 2 files: the throwable and the json one. */
-        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles().length);
+        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
     }
 
     private Error generateStackOverflowError() {

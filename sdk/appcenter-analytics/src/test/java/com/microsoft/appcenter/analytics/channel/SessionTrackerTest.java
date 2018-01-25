@@ -3,6 +3,7 @@ package com.microsoft.appcenter.analytics.channel;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 
+import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.appcenter.channel.Channel;
@@ -30,6 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anySetOf;
@@ -48,7 +50,7 @@ import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
-@PrepareForTest({SessionTracker.class, StorageHelper.PreferencesStorage.class, SystemClock.class})
+@PrepareForTest({SessionTracker.class, SessionContext.class, StorageHelper.PreferencesStorage.class, SystemClock.class})
 public class SessionTrackerTest {
 
     private final static String TEST_GROUP = "group_test";
@@ -94,6 +96,7 @@ public class SessionTrackerTest {
         }).when(StorageHelper.PreferencesStorage.class);
         StorageHelper.PreferencesStorage.putStringSet(anyString(), anySetOf(String.class));
         when(StorageHelper.PreferencesStorage.getStringSet(anyString())).thenReturn(null);
+        SessionContext.unsetInstance();
         spendTime(1000);
         mChannel = mock(Channel.class);
         mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);
@@ -410,13 +413,18 @@ public class SessionTrackerTest {
 
     @Test
     public void maxOutStoredSessions() {
-        mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
+        SessionContext.getInstance();
+        spendTime(1000);
         Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
         assertNotNull(sessions);
         assertEquals(1, sessions.size());
-        spendTime(30000);
         String firstSession = sessions.iterator().next();
-        for (int i = 2; i <= 5; i++) {
+        mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
+        sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+        assertNotNull(sessions);
+        assertEquals(2, sessions.size());
+        spendTime(30000);
+        for (int i = 3; i <= 10; i++) {
             mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
             Set<String> intermediateSessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
             assertNotNull(intermediateSessions);
@@ -426,7 +434,7 @@ public class SessionTrackerTest {
         mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
         Set<String> finalSessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
         assertNotNull(finalSessions);
-        assertEquals(5, finalSessions.size());
+        assertEquals(10, finalSessions.size());
         assertFalse(finalSessions.contains(firstSession));
     }
 
@@ -450,12 +458,12 @@ public class SessionTrackerTest {
             assertEquals(currentSid, log.getSid());
         }
 
-        /* Past log: correlation will fail and use current session. */
+        /* Past log: correlation will fail and thus use no session. */
         {
             Log log = newEvent();
             log.setTimestamp(new Date(123L));
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            assertEquals(currentSid, log.getSid());
+            assertNull(log.getSid());
         }
 
         /* No usage from background for a long time, should produce a new session but we'll correlate, correlation does not trigger a new session. */
@@ -504,15 +512,15 @@ public class SessionTrackerTest {
             assertEquals(2, sessions.size());
         }
 
-        /* Failed correlation without an active session will start a new session. */
+        /* Failed correlation without an active session will not start a new session. */
         {
             Log log = newEvent();
             log.setTimestamp(new Date(1));
             mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            assertNotNull(log.getSid());
+            assertNull(log.getSid());
             Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
             assertNotNull(sessions);
-            assertEquals(3, sessions.size());
+            assertEquals(2, sessions.size());
         }
 
         /* Clear sessions. */
@@ -522,13 +530,18 @@ public class SessionTrackerTest {
     }
 
     @Test
-    public void invalidStorage() {
+    public void partiallyInvalidStorage() {
         Set<String> sessions = new LinkedHashSet<>();
-        sessions.add("100/10abd355-40a5-4b51-8071-cb5a4c338531");
+        sessions.add("100/10abd355-40a5-4b51-8071-cb5a4c338531/99");
         sessions.add("200/invalid");
         sessions.add("300/10abd355-40a5-4b51-8071-cb5a4c338533/garbage");
         sessions.add("400");
         sessions.add("500a/10abd355-40a5-4b51-8071-cb5a4c338535");
+        sessions.add("600/10abd355-40a5-4b51-8071-cb5a4c338533/599/extracontent");
+        sessions.add("700/10abd355-40a5-4b51-8071-cb5a4c338533");
+        sessions.add("800/");
+        sessions.add("900//899");
+        sessions.add("999//");
         when(StorageHelper.PreferencesStorage.getStringSet(anyString())).thenReturn(sessions);
         mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);
 
@@ -538,12 +551,33 @@ public class SessionTrackerTest {
         /* Check sessions in store. */
         sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
         assertNotNull(sessions);
-        assertEquals(3, sessions.size());
-        assertTrue(sessions.contains("100/10abd355-40a5-4b51-8071-cb5a4c338531"));
+        assertEquals(6, sessions.size());
+        assertTrue(sessions.contains("100/10abd355-40a5-4b51-8071-cb5a4c338531/99"));
         assertFalse(sessions.contains("200/invalid"));
-        assertTrue(sessions.contains("300/10abd355-40a5-4b51-8071-cb5a4c338533"));
+
+        /* This one fails to parse app launch timestamp, so we drop the entire session. */
+        assertFalse(sessions.contains("300/10abd355-40a5-4b51-8071-cb5a4c338533"));
+
+        /* Invalid because no session id. */
         assertFalse(sessions.contains("400"));
+
+        /* Invalid timestamp. */
         assertFalse(sessions.contains("500a/10abd355-40a5-4b51-8071-cb5a4c338535"));
+
+        /* Valid with app launch timestamp specified. */
+        assertTrue(sessions.contains("600/10abd355-40a5-4b51-8071-cb5a4c338533/599"));
+
+        /* Valid without app launch timestamp, falling back to timestamp. */
+        assertTrue(sessions.contains("700/10abd355-40a5-4b51-8071-cb5a4c338533/700"));
+
+        /* Null session id + fallback on app launch timestamp. */
+        assertTrue(sessions.contains("800//800"));
+
+        /* Null session id + specified app launch timestamp. */
+        assertTrue(sessions.contains("900//899"));
+
+        /* Invalid app launch timestamp. */
+        assertFalse(sessions.contains("999//"));
     }
 
     @Test
@@ -552,5 +586,40 @@ public class SessionTrackerTest {
         mSessionTracker.onEnqueuingLog(startServiceLog, TEST_GROUP);
         verify(mChannel, never()).enqueue(any(Log.class), anyString());
         verify(startServiceLog, never()).setSid(any(UUID.class));
+    }
+
+    @Test
+    public void correlateLogAfterRestartBeforeNewSession() {
+
+        /* Init app launch time within session storage. */
+        long appLaunchTime = mMockTime;
+        SessionContext.getInstance();
+
+        /* Make a log later so that times are different in the test and verify basics. */
+        spendTime(1000);
+        UUID firstSid;
+        long firstSessionTime = mMockTime;
+        Log log = newEvent();
+        mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+        assertNotNull(log.getSid());
+
+        /* Get session and check it after reset (simulate a restart). */
+        spendTime(1000);
+        SessionContext.unsetInstance();
+        SessionContext.SessionInfo session = SessionContext.getInstance().getSessionAt(firstSessionTime);
+        assertNotNull(session);
+        assertEquals(session.getSessionId(), log.getSid());
+        assertEquals(appLaunchTime, session.getAppLaunchTimestamp());
+
+        /* Make a new log with explicit timestamp now: it must not correlate to previous session as we restarted process. */
+        SessionContext.unsetInstance();
+        spendTime(1000);
+        mChannel = mock(Channel.class);
+        mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);
+        Log log2 = newEvent();
+        log2.setTimestamp(new Date(mMockTime));
+        mSessionTracker.onEnqueuingLog(log2, TEST_GROUP);
+        assertNotEquals(log.getSid(), log2.getSid());
+        assertNull(log2.getSid());
     }
 }

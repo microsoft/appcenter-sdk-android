@@ -16,8 +16,8 @@ import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.ingestion.models.StackFrame;
 import com.microsoft.appcenter.crashes.ingestion.models.Thread;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
-import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
@@ -26,6 +26,7 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -44,6 +45,21 @@ public class ErrorLogHelper {
      * Error log file extension for the serialized throwable for client side inspection.
      */
     public static final String THROWABLE_FILE_EXTENSION = ".throwable";
+
+    /**
+     * Directory under the FILES_PATH containing minidump files.
+     */
+    private static final String MINIDUMP_DIRECTORY = "minidump";
+
+    /**
+     * Directory under the MINIDUMP_DIRECTORY for new dump files.
+     */
+    private static final String NEW_MINIDUMP_DIRECTORY = "new";
+
+    /**
+     * Directory under the MINIDUMP_DIRECTORY for pending dump files.
+     */
+    private static final String PENDING_MINIDUMP_DIRECTORY = "pending";
 
     /**
      * For huge stack traces such as giant StackOverflowError, we keep only beginning and end of frames according to this limit.
@@ -67,9 +83,29 @@ public class ErrorLogHelper {
      */
     private static File sErrorLogDirectory;
 
+    /**
+     * Max number of properties.
+     */
+    public static final int MAX_PROPERTY_COUNT = 5;
+
+    /**
+     * Max length of properties.
+     */
+    public static final int MAX_PROPERTY_ITEM_LENGTH = 64;
+
+    /**
+     * Directory for new minidump files.
+     */
+    private static File sNewMinidumpDirectory;
+
+    /**
+     * Directory for pending minidump files.
+     */
+    private static File sPendingMinidumpDirectory;
+
     @NonNull
-    public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Throwable throwable, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp, boolean fatal) {
-        return createErrorLog(context, thread, getModelExceptionFromThrowable(throwable), allStackTraces, initializeTimestamp, fatal);
+    public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Throwable throwable, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
+        return createErrorLog(context, thread, getModelExceptionFromThrowable(throwable), allStackTraces, initializeTimestamp, true);
     }
 
     @NonNull
@@ -149,6 +185,28 @@ public class ErrorLogHelper {
     }
 
     @NonNull
+    public static synchronized File getNewMinidumpDirectory() {
+        if (sNewMinidumpDirectory == null) {
+            File errorStorageDirectory = getErrorStorageDirectory();
+            File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
+            sNewMinidumpDirectory = new File(minidumpDirectory, NEW_MINIDUMP_DIRECTORY);
+            StorageHelper.InternalStorage.mkdir(sNewMinidumpDirectory.getPath());
+        }
+        return sNewMinidumpDirectory;
+    }
+
+    @NonNull
+    public static synchronized File getPendingMinidumpDirectory() {
+        if (sPendingMinidumpDirectory == null) {
+            File errorStorageDirectory = getErrorStorageDirectory();
+            File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
+            sPendingMinidumpDirectory = new File(minidumpDirectory, PENDING_MINIDUMP_DIRECTORY);
+            StorageHelper.InternalStorage.mkdir(sPendingMinidumpDirectory.getPath());
+        }
+        return sPendingMinidumpDirectory;
+    }
+
+    @NonNull
     public static File[] getStoredErrorLogFiles() {
         File[] files = getErrorStorageDirectory().listFiles(new FilenameFilter() {
             @Override
@@ -156,8 +214,13 @@ public class ErrorLogHelper {
                 return filename.endsWith(ERROR_LOG_FILE_EXTENSION);
             }
         });
+        return files != null ? files : new File[0];
+    }
 
-        return files != null && files.length > 0 ? files : new File[0];
+    @NonNull
+    public static File[] getNewMinidumpFiles() {
+        File[] files = getNewMinidumpDirectory().listFiles();
+        return files != null ? files : new File[0];
     }
 
     @Nullable
@@ -275,5 +338,51 @@ public class ErrorLogHelper {
         stackFrame.setLineNumber(stackTraceElement.getLineNumber());
         stackFrame.setFileName(stackTraceElement.getFileName());
         return stackFrame;
+    }
+
+    /**
+     * Validates properties.
+     *
+     * @param properties Properties collection to validate.
+     * @param logType    Log type.
+     * @return valid properties collection with maximum size of 5.
+     */
+    public static Map<String, String> validateProperties(Map<String, String> properties, String logType) {
+        if (properties == null) {
+            return null;
+        }
+        String message;
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<String, String> property : properties.entrySet()) {
+            String key = property.getKey();
+            String value = property.getValue();
+            if (result.size() >= MAX_PROPERTY_COUNT) {
+                message = String.format("%s : properties cannot contain more than %s items. Skipping other properties.", logType, MAX_PROPERTY_COUNT);
+                AppCenterLog.warn(Crashes.LOG_TAG, message);
+                break;
+            }
+            if (key == null || key.isEmpty()) {
+                message = String.format("%s : a property key cannot be null or empty. Property will be skipped.", logType);
+                AppCenterLog.warn(Crashes.LOG_TAG, message);
+                continue;
+            }
+            if (value == null) {
+                message = String.format("%s : property '%s' : property value cannot be null. Property '%s' will be skipped.", logType, key, key);
+                AppCenterLog.warn(Crashes.LOG_TAG, message);
+                continue;
+            }
+            if (key.length() > MAX_PROPERTY_ITEM_LENGTH) {
+                message = String.format("%s : property '%s' : property key length cannot be longer than %s characters. Property key will be truncated.", logType, key, MAX_PROPERTY_ITEM_LENGTH);
+                AppCenterLog.warn(Crashes.LOG_TAG, message);
+                key = key.substring(0, MAX_PROPERTY_ITEM_LENGTH);
+            }
+            if (value.length() > MAX_PROPERTY_ITEM_LENGTH) {
+                message = String.format("%s : property '%s' : property value cannot be longer than %s characters. Property value will be truncated.", logType, key, MAX_PROPERTY_ITEM_LENGTH);
+                AppCenterLog.warn(Crashes.LOG_TAG, message);
+                value = value.substring(0, MAX_PROPERTY_ITEM_LENGTH);
+            }
+            result.put(key, value);
+        }
+        return result;
     }
 }

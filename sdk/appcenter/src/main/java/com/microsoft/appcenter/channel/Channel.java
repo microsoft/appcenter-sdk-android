@@ -95,12 +95,22 @@ public interface Channel {
 
         /**
          * Called whenever a log is enqueued.
+         * This is used to alter some log properties if needed.
+         * The channel might alter log furthermore between this event and the next one: {@link #shouldFilter}.
          *
          * @param log       log being enqueued.
          * @param groupName group of the log.
          */
-        @SuppressWarnings("UnusedParameters")
         void onEnqueuingLog(@NonNull Log log, @NonNull String groupName);
+
+        /**
+         * Called after a log has been fully prepared and properties are now final.
+         * The specified log can be filtered out by listeners if at least one of them returns true.
+         *
+         * @param log log to filter out.
+         * @return true to filter out the log, false to let it being stored and sent by the channel.
+         */
+        boolean shouldFilter(@NonNull Log log);
     }
 
     /**

@@ -8,24 +8,28 @@ import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Constants;
+import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
+import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.ingestion.models.HandledErrorLog;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.ingestion.models.json.ErrorAttachmentLogFactory;
 import com.microsoft.appcenter.crashes.ingestion.models.json.HandledErrorLogFactory;
 import com.microsoft.appcenter.crashes.ingestion.models.json.ManagedErrorLogFactory;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
+import com.microsoft.appcenter.crashes.model.NativeException;
 import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
@@ -35,6 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -212,7 +217,24 @@ public class Crashes extends AbstractAppCenterService {
      */
     @SuppressWarnings("SameParameterValue")
     static void trackException(@NonNull Throwable throwable) {
-        getInstance().queueException(throwable);
+        trackException(throwable, null);
+    }
+
+    /**
+     * Track a custom exception with name and optional properties.
+     * The name parameter can not be null or empty. Maximum allowed length = 256.
+     * The properties parameter maximum item count = 5.
+     * The properties keys can not be null or empty, maximum allowed key length = 64.
+     * The properties values can not be null, maximum allowed value length = 64.
+     * Any length of name/keys/values that are longer than each limit will be truncated.
+     * TODO the backend does not support that service yet, will be public method later.
+     *
+     * @param throwable An exception.
+     * @param properties Optional properties.
+     */
+    static void trackException(@NonNull Throwable throwable, Map<String, String> properties) {
+        Map<String, String> validatedProperties = ErrorLogHelper.validateProperties(properties, "HandledError");
+        getInstance().queueException(throwable, validatedProperties);
     }
 
     /**
@@ -233,6 +255,18 @@ public class Crashes extends AbstractAppCenterService {
      */
     public static void setListener(CrashesListener listener) {
         getInstance().setInstanceListener(listener);
+    }
+
+    /**
+     * Get the path where NDK minidump files should be created.
+     * <p>
+     * TODO this API is yet not public as backend is not ready for this feature.
+     *
+     * @return path where minidump files should be created.
+     */
+    @SuppressWarnings("unusued")
+    protected static AppCenterFuture<String> getMinidumpDirectory() {
+        return getInstance().getNewMinidumpDirectoryAsync();
     }
 
     /**
@@ -265,6 +299,21 @@ public class Crashes extends AbstractAppCenterService {
      */
     public static AppCenterFuture<ErrorReport> getLastSessionCrashReport() {
         return getInstance().getInstanceLastSessionCrashReport();
+    }
+
+    /**
+     * Implements {@link #getMinidumpDirectory()} at instance level.
+     */
+    private synchronized AppCenterFuture<String> getNewMinidumpDirectoryAsync() {
+        final DefaultAppCenterFuture<String> future = new DefaultAppCenterFuture<>();
+        postAsyncGetter(new Runnable() {
+
+            @Override
+            public void run() {
+                future.complete(ErrorLogHelper.getNewMinidumpDirectory().getAbsolutePath());
+            }
+        }, future, null);
+        return future;
     }
 
     /**
@@ -314,8 +363,8 @@ public class Crashes extends AbstractAppCenterService {
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
-        super.onStarted(context, appSecret, channel);
         mContext = context;
+        super.onStarted(context, appSecret, channel);
         if (isInstanceEnabled()) {
             processPendingErrors();
         } else {
@@ -420,7 +469,7 @@ public class Crashes extends AbstractAppCenterService {
             }
 
             @Override
-            public void onFailure(Log log, final Exception e) {
+            public void onFailure(Log log, final java.lang.Exception e) {
                 processCallback(log, new CallbackProcessor() {
 
                     @Override
@@ -451,33 +500,35 @@ public class Crashes extends AbstractAppCenterService {
      * Send an handled exception.
      *
      * @param throwable An handled exception.
+     * @param properties optional properties.
      */
-    private synchronized void queueException(@NonNull final Throwable throwable) {
+    private synchronized void queueException(@NonNull final Throwable throwable, Map<String, String> properties) {
         queueException(new ExceptionModelBuilder() {
 
             @Override
             public com.microsoft.appcenter.crashes.ingestion.models.Exception buildExceptionModel() {
                 return ErrorLogHelper.getModelExceptionFromThrowable(throwable);
             }
-        });
+        }, properties);
     }
 
     /**
      * Send an handled exception (used by wrapper SDKs).
      *
      * @param modelException An handled exception already in JSON model form.
+     * @param properties optional properties.
      */
-    synchronized void queueException(@NonNull final com.microsoft.appcenter.crashes.ingestion.models.Exception modelException) {
+    synchronized void queueException(@NonNull final com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, Map<String, String> properties) {
         queueException(new ExceptionModelBuilder() {
 
             @Override
             public com.microsoft.appcenter.crashes.ingestion.models.Exception buildExceptionModel() {
                 return modelException;
             }
-        });
+        }, properties);
     }
 
-    private synchronized void queueException(@NonNull final ExceptionModelBuilder exceptionModelBuilder) {
+    private synchronized void queueException(@NonNull final ExceptionModelBuilder exceptionModelBuilder, final Map<String, String> properties) {
         post(new Runnable() {
 
             @Override
@@ -485,6 +536,7 @@ public class Crashes extends AbstractAppCenterService {
                 HandledErrorLog errorLog = new HandledErrorLog();
                 errorLog.setId(UUID.randomUUID());
                 errorLog.setException(exceptionModelBuilder.buildExceptionModel());
+                errorLog.setProperties(properties);
                 mChannel.enqueue(errorLog, ERROR_GROUP);
             }
         });
@@ -499,9 +551,76 @@ public class Crashes extends AbstractAppCenterService {
                 mUncaughtExceptionHandler = null;
             }
         } else {
+
+            /* Register Java crash handler. */
             mUncaughtExceptionHandler = new UncaughtExceptionHandler();
             mUncaughtExceptionHandler.register();
-            final File logFile = ErrorLogHelper.getLastErrorLogFile();
+
+            /* Convert minidump files to App Center crash files. */
+            for (File logFile : ErrorLogHelper.getNewMinidumpFiles()) {
+
+                /* Create missing files from the native crash that we detected. */
+                AppCenterLog.debug(LOG_TAG, "Process pending minidump file: " + logFile);
+                long minidumpDate = logFile.lastModified();
+                File dest = new File(ErrorLogHelper.getPendingMinidumpDirectory(), logFile.getName());
+                NativeException nativeException = new NativeException();
+                Exception modelException = new Exception();
+                modelException.setType("minidump");
+                modelException.setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
+                modelException.setStackTrace(dest.getPath());
+                ManagedErrorLog errorLog = new ManagedErrorLog();
+                errorLog.setException(modelException);
+                errorLog.setTimestamp(new Date(minidumpDate));
+                errorLog.setFatal(true);
+                errorLog.setId(UUID.randomUUID());
+
+                /* Lookup app launch timestamp in session history. */
+                SessionContext.SessionInfo session = SessionContext.getInstance().getSessionAt(minidumpDate);
+                if (session != null && session.getAppLaunchTimestamp() <= minidumpDate) {
+                    errorLog.setAppLaunchTimestamp(new Date(session.getAppLaunchTimestamp()));
+                } else {
+
+                    /*
+                     * Fall back to log date if app launch timestamp information lost
+                     * or in the future compared to crash time.
+                     * This also covers the case where app launches then crashes within 1s:
+                     * app launch timestamp would have ms accuracy while minidump file is without
+                     * ms, in that case we also falls back to log timestamp
+                     * (this would be same result as truncating ms).
+                     */
+                    errorLog.setAppLaunchTimestamp(errorLog.getTimestamp());
+                }
+
+                /*
+                 * TODO The following properties are placeholders because fields are required.
+                 * They should be removed from schema as not used by server.
+                 */
+                errorLog.setProcessId(0);
+                errorLog.setProcessName("");
+
+                /*
+                 * TODO device properties are read after restart contrary to Java crashes.
+                 * We should have a device property history like we did for session to fix that issue.
+                 * The main issue with the current code is that app version can change between crash and reporting.
+                 */
+                try {
+                    errorLog.setDevice(DeviceInfoHelper.getDeviceInfo(mContext));
+                    errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
+                    saveErrorLogFiles(nativeException, errorLog);
+                    if (!logFile.renameTo(dest)) {
+                        throw new IOException("Failed to move file");
+                    }
+                } catch (java.lang.Exception e) {
+
+                    //noinspection ResultOfMethodCallIgnored
+                    logFile.delete();
+                    removeAllStoredErrorLogFiles(errorLog.getId());
+                    AppCenterLog.error(LOG_TAG, "Failed to process new minidump file: " + logFile, e);
+                }
+            }
+
+            /* Check last session crash. */
+            File logFile = ErrorLogHelper.getLastErrorLogFile();
             if (logFile != null) {
                 AppCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
                 String logFileContents = StorageHelper.InternalStorage.read(logFile);
@@ -552,7 +671,6 @@ public class Crashes extends AbstractAppCenterService {
             /* Proceed to check if user confirmation is needed. */
             sendCrashReportsOrAwaitUserConfirmation();
         }
-
     }
 
     /**
@@ -689,10 +807,29 @@ public class Crashes extends AbstractAppCenterService {
                     Iterator<Map.Entry<UUID, ErrorLogReport>> unprocessedIterator = mUnprocessedErrorReports.entrySet().iterator();
                     while (unprocessedIterator.hasNext()) {
 
-                        /* Send report. */
+                        /* If native crash, send dump as attachment and remove the fake stack trace. */
+                        File dumpFile = null;
+                        ErrorAttachmentLog dumpAttachment = null;
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
+                        if (errorLogReport.report.getThrowable() instanceof NativeException) {
+                            Exception exception = errorLogReport.log.getException();
+                            dumpFile = new File(exception.getStackTrace());
+                            exception.setStackTrace(null);
+                            byte[] logfileContents = StorageHelper.InternalStorage.readBytes(dumpFile);
+                            dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
+                        }
+
+                        /* Send report. */
                         mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
+
+                        /* Send dump attachment and remove file. */
+                        if (dumpAttachment != null) {
+                            sendErrorAttachment(errorLogReport.log.getId(), Collections.singleton(dumpAttachment));
+
+                            //noinspection ResultOfMethodCallIgnored
+                            dumpFile.delete();
+                        }
 
                         /* Get attachments from callback in automatic processing. */
                         if (mAutomaticProcessing) {
@@ -786,6 +923,11 @@ public class Crashes extends AbstractAppCenterService {
 
         /* Save error log. */
         ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mContext, thread, modelException, Thread.getAllStackTraces(), mInitializeTimestamp, true);
+        return saveErrorLogFiles(throwable, errorLog);
+    }
+
+    @NonNull
+    private UUID saveErrorLogFiles(Throwable throwable, ManagedErrorLog errorLog) throws JSONException, IOException {
         File errorStorageDirectory = ErrorLogHelper.getErrorStorageDirectory();
         UUID errorLogId = errorLog.getId();
         String filename = errorLogId.toString();

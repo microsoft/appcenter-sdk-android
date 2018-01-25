@@ -19,10 +19,19 @@ import java.util.concurrent.RejectedExecutionException;
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static java.lang.Math.max;
 
+/**
+ * Default HTTP client without the additional behaviors.
+ */
 public class DefaultHttpClient implements HttpClient {
 
+    /**
+     * HTTP GET method.
+     */
     public static final String METHOD_GET = "GET";
 
+    /**
+     * HTTP POST method.
+     */
     public static final String METHOD_POST = "POST";
 
     /**
@@ -214,6 +223,12 @@ public class DefaultHttpClient implements HttpClient {
     public void close() throws IOException {
 
         /* No-op. A decorator can take care of tracking calls to cancel. */
+    }
+
+    @Override
+    public void reopen() {
+
+        /* Nothing to do. */
     }
 
     @VisibleForTesting

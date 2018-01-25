@@ -16,6 +16,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.Closeable;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -328,6 +329,7 @@ public class StorageHelper {
             try {
                 BufferedReader reader = new BufferedReader(new FileReader(file));
                 StringBuilder contents;
+
                 //noinspection TryFinallyCanBeTryWithResources (requires min API level 19)
                 try {
                     String line;
@@ -337,10 +339,36 @@ public class StorageHelper {
                         contents.append(line).append(lineSeparator);
                     }
                 } finally {
+
                     //noinspection ThrowFromFinallyBlock
                     reader.close();
                 }
                 return contents.toString();
+            } catch (IOException e) {
+                AppCenterLog.error(AppCenter.LOG_TAG, "Could not read file " + file.getAbsolutePath(), e);
+            }
+            return null;
+        }
+
+        /**
+         * Read contents from a file into byte array.
+         *
+         * @param file The file to read from.
+         * @return The contents of the file.
+         */
+        public static byte[] readBytes(@NonNull File file) {
+            byte fileContents[] = new byte[(int) file.length()];
+            try {
+                FileInputStream fileStream = new FileInputStream(file);
+
+                //noinspection TryFinallyCanBeTryWithResources
+                try {
+                    DataInputStream dataInputStream = new DataInputStream(fileStream);
+                    dataInputStream.readFully(fileContents);
+                    return fileContents;
+                } finally {
+                    fileStream.close();
+                }
             } catch (IOException e) {
                 AppCenterLog.error(AppCenter.LOG_TAG, "Could not read file " + file.getAbsolutePath(), e);
             }
@@ -411,10 +439,12 @@ public class StorageHelper {
          */
         public static <T extends Serializable> void writeObject(@NonNull File file, @NonNull T object) throws IOException {
             ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(file));
+
             //noinspection TryFinallyCanBeTryWithResources
             try {
                 outputStream.writeObject(object);
             } finally {
+
                 //noinspection ThrowFromFinallyBlock
                 outputStream.close();
             }
@@ -570,6 +600,7 @@ public class StorageHelper {
                                                          @IntRange(from = 0) int maxRecords,
                                                          final DatabaseErrorListener listener) {
             return new DatabaseStorage(new DatabaseManager(sContext, database, table, version, schema, maxRecords, new DatabaseManager.ErrorListener() {
+
                 @Override
                 public void onError(String operation, RuntimeException e) {
                     listener.onError(operation, e);

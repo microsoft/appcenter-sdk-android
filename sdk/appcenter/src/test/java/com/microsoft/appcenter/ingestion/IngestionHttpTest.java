@@ -99,6 +99,10 @@ public class IngestionHttpTest {
         /* Verify close. */
         ingestionHttp.close();
         verify(httpClient).close();
+
+        /* Verify reopen. */
+        ingestionHttp.reopen();
+        verify(httpClient).reopen();
     }
 
     @Test

@@ -7,8 +7,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
-import android.support.test.espresso.idling.CountingIdlingResource;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
@@ -18,7 +16,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.AppCenterService;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
@@ -35,9 +32,10 @@ import com.microsoft.appcenter.sasquatch.features.TestFeaturesListAdapter;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchAnalyticsListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
-import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -48,19 +46,13 @@ public class MainActivity extends AppCompatActivity {
 
     static final String LOG_URL_KEY = "logUrl";
 
-    static final String SENDER_ID = "177539951155";
-
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
 
-    static final String TEXT_ATTACHMENT_KEY = "textAttachment";
+    private static final String SENDER_ID = "177539951155";
 
-    static final String FILE_ATTACHMENT_KEY = "fileAttachment";
+    private static final String TEXT_ATTACHMENT_KEY = "textAttachment";
 
-    @VisibleForTesting
-    static final CountingIdlingResource analyticsIdlingResource = new CountingIdlingResource("analytics");
-
-    @VisibleForTesting
-    static final CountingIdlingResource crashesIdlingResource = new CountingIdlingResource("crashes");
+    private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
 
     static SharedPreferences sSharedPreferences;
 
@@ -69,6 +61,34 @@ public class MainActivity extends AppCompatActivity {
     static SasquatchCrashesListener sCrashesListener;
 
     static SasquatchPushListener sPushListener;
+
+    static {
+        System.loadLibrary("SasquatchBreakpad");
+    }
+
+    public static void setTextAttachment(String textAttachment) {
+        SharedPreferences.Editor editor = sSharedPreferences.edit();
+        if (textAttachment == null) {
+            editor.remove(TEXT_ATTACHMENT_KEY);
+        } else {
+            editor.putString(TEXT_ATTACHMENT_KEY, textAttachment);
+        }
+        editor.apply();
+        sCrashesListener.setTextAttachment(textAttachment);
+    }
+
+    public static void setFileAttachment(Uri fileAttachment) {
+        SharedPreferences.Editor editor = sSharedPreferences.edit();
+        if (fileAttachment == null) {
+            editor.remove(FILE_ATTACHMENT_KEY);
+        } else {
+            editor.putString(FILE_ATTACHMENT_KEY, fileAttachment.toString());
+        }
+        editor.apply();
+        sCrashesListener.setFileAttachment(fileAttachment);
+    }
+
+    native void setupNativeCrashesListener(String path);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,11 +120,7 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
         }
-        try {
-            Push.class.getMethod("setSenderId", String.class).invoke(null, SENDER_ID);
-        } catch (Exception e) {
-            AppCenterLog.error(LOG_TAG, "Push.setSenderdId method not available.");
-        }
+        Push.setSenderId(SENDER_ID);
 
         /* Set crash attachments. */
         sCrashesListener.setTextAttachment(sSharedPreferences.getString(TEXT_ATTACHMENT_KEY, null));
@@ -121,16 +137,8 @@ public class MainActivity extends AppCompatActivity {
         /* Start App Center. */
         AppCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
 
-        /* If rum available, use it. */
-        try {
-            @SuppressWarnings("unchecked")
-            Class<? extends AppCenterService> rum = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.rum.RealUserMeasurements");
-            rum.getMethod("setRumKey", String.class).invoke(null, getString(R.string.rum_key));
-
-            /* Start rum. */
-            AppCenter.start(rum);
-        } catch (Exception ignore) {
-        }
+        /* Attach NDK Crash Handler (if available) after SDK is initialized. */
+        initializeBreakpad();
 
         /* Use some App Center getters. */
         AppCenter.getInstallId().thenAccept(new AppCenterConsumer<UUID>() {
@@ -165,6 +173,26 @@ public class MainActivity extends AppCompatActivity {
         ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initializeBreakpad() {
+        try {
+            Method method = Crashes.class.getDeclaredMethod("getMinidumpDirectory");
+            method.setAccessible(true);
+            ((AppCenterFuture<String>) method.invoke(null)).thenAccept(new AppCenterConsumer<String>() {
+
+                @Override
+                public void accept(String path) {
+
+                    /* Path is null when Crashes is disabled. */
+                    if (path != null) {
+                        setupNativeCrashesListener(path);
+                    }
+                }
+            });
+        } catch (Exception ignore) {
+        }
     }
 
     @Override
@@ -212,28 +240,6 @@ public class MainActivity extends AppCompatActivity {
             sPushListener = new SasquatchPushListener();
         }
         return sPushListener;
-    }
-
-    public static void setTextAttachment(String textAttachment) {
-        SharedPreferences.Editor editor = sSharedPreferences.edit();
-        if (textAttachment == null) {
-            editor.remove(TEXT_ATTACHMENT_KEY);
-        } else {
-            editor.putString(TEXT_ATTACHMENT_KEY, textAttachment);
-        }
-        editor.apply();
-        sCrashesListener.setTextAttachment(textAttachment);
-    }
-
-    public static void setFileAttachment(Uri fileAttachment) {
-        SharedPreferences.Editor editor = sSharedPreferences.edit();
-        if (fileAttachment == null) {
-            editor.remove(FILE_ATTACHMENT_KEY);
-        } else {
-            editor.putString(FILE_ATTACHMENT_KEY, fileAttachment.toString());
-        }
-        editor.apply();
-        sCrashesListener.setFileAttachment(fileAttachment);
     }
 
 }

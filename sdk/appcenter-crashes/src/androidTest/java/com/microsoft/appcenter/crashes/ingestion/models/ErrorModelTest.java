@@ -30,8 +30,8 @@ public class ErrorModelTest {
 
     private static void checkSerialization(Log log, LogSerializer serializer) throws JSONException {
         String payload = serializer.serializeLog(log);
-        Log deserializedLog = serializer.deserializeLog(payload);
-        checkEquals(log, deserializedLog);
+        Log deSerializedLog = serializer.deserializeLog(payload);
+        checkEquals(log, deSerializedLog);
     }
 
     private static void checkSerializationThrowsException(Log log, LogSerializer serializer, Class expectedException) {

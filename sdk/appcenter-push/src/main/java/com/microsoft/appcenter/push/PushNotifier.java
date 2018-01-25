@@ -10,8 +10,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.drawable.AdaptiveIconDrawable;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
@@ -19,6 +21,7 @@ import com.microsoft.appcenter.utils.AppNameHelper;
 import java.util.Map;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
+import static com.microsoft.appcenter.push.Push.LOG_TAG;
 
 class PushNotifier {
 
@@ -45,7 +48,7 @@ class PushNotifier {
         /* Generate notification identifier using the hash of the Google message id. */
         String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
         if (messageId == null) {
-            AppCenterLog.error(Push.getInstance().getLoggerTag(), "Push notification did not" +
+            AppCenterLog.error(LOG_TAG, "Push notification did not" +
                     "contain Google message ID; aborting notification processing.");
             return;
         }
@@ -76,7 +79,25 @@ class PushNotifier {
             notificationTitle = AppNameHelper.getAppName(context);
         }
         String notificationMessage = PushIntentUtils.getMessage(pushIntent);
-        Notification.Builder builder = new Notification.Builder(context);
+
+        /* Start building notification. */
+        Notification.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && context.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.O) {
+
+            /* Get channel. */
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+                    CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+
+            /* Create or update channel. */
+            //noinspection ConstantConditions
+            notificationManager.createNotificationChannel(channel);
+
+            /* And associate to notification. */
+            builder = new Notification.Builder(context, channel.getId());
+        } else {
+            builder = getOldNotificationBuilder(context);
+        }
 
         /* Set color. */
         setColor(pushIntent, builder);
@@ -97,32 +118,29 @@ class PushNotifier {
                 actionIntent, 0);
         builder.setContentIntent(contentIntent);
 
-        /* Manage notification channel on Android O. */
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                && context.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.O) {
-
-            /* Get channel. */
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                    CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-
-            /* Create or update channel. */
-            //noinspection ConstantConditions
-            notificationManager.createNotificationChannel(channel);
-
-            /* And associate to notification. */
-            builder.setChannelId(channel.getId());
-        }
-        Notification notification;
-
         /* Build method depends on versions. */
+        Notification notification;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             notification = builder.build();
         } else {
-            notification = builder.getNotification();
+            notification = getOldNotification(builder);
         }
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
+
         //noinspection ConstantConditions
         notificationManager.notify(notificationId, notification);
+    }
+
+    @NonNull
+    @SuppressWarnings("deprecation")
+    private static Notification.Builder getOldNotificationBuilder(Context context) {
+        return new Notification.Builder(context);
+    }
+
+    @NonNull
+    @SuppressWarnings("deprecation")
+    private static Notification getOldNotification(Notification.Builder builder) {
+        return builder.getNotification();
     }
 
     /**
@@ -143,10 +161,12 @@ class PushNotifier {
 
     /**
      * Sets the sound in the notification builder if the property is set in the intent.
+     * This is effective only for devices running or targeting an Android version lower than 8.
      *
      * @param pushIntent The push intent.
      * @param builder    The builder to modify.
      */
+    @SuppressWarnings("deprecation")
     private static void setSound(Context context, Intent pushIntent, Notification.Builder builder) {
         String sound = PushIntentUtils.getSound(pushIntent);
         if (sound != null) {
@@ -161,8 +181,7 @@ class PushNotifier {
                         .build();
                 builder.setSound(soundUri);
             } catch (Resources.NotFoundException e) {
-                AppCenterLog.warn(Push.getInstance().getLoggerTag(),
-                        "Sound file '" + sound + "' not found; falling back to default.");
+                AppCenterLog.warn(LOG_TAG, "Sound file '" + sound + "' not found; falling back to default.");
                 builder.setDefaults(Notification.DEFAULT_SOUND);
             }
         }
@@ -177,28 +196,44 @@ class PushNotifier {
      * @param builder    The builder to modify.
      */
     private static void setIcon(Context context, Intent pushIntent, Notification.Builder builder) {
+        int iconResourceId = 0;
         String iconString = PushIntentUtils.getIcon(pushIntent);
         if (iconString != null) {
             Resources resources = context.getResources();
             String packageName = context.getPackageName();
-            int iconResourceId = resources.getIdentifier(iconString, "drawable", packageName);
+            iconResourceId = resources.getIdentifier(iconString, "drawable", packageName);
             if (iconResourceId != 0) {
-                AppCenterLog.debug(Push.getInstance().getLoggerTag(),
-                        "Found icon resource in 'drawable'.");
-                builder.setSmallIcon(iconResourceId);
-                return;
-            }
-            iconResourceId = resources.getIdentifier(iconString, "mipmap", packageName);
-            if (iconResourceId != 0) {
-                AppCenterLog.debug(Push.getInstance().getLoggerTag(),
-                        "Found icon resource in 'mipmap'.");
-                builder.setSmallIcon(iconResourceId);
-                return;
+                AppCenterLog.debug(LOG_TAG, "Found icon resource in 'drawable'.");
+            } else {
+                iconResourceId = resources.getIdentifier(iconString, "mipmap", packageName);
+                if (iconResourceId != 0) {
+                    AppCenterLog.debug(LOG_TAG, "Found icon resource in 'mipmap'.");
+                }
             }
         }
-        AppCenterLog.debug(Push.getInstance().getLoggerTag(),
-                "Using application icon as notification icon.");
-        builder.setSmallIcon(context.getApplicationInfo().icon);
+        if (iconResourceId != 0) {
+            iconResourceId = validateIcon(context, iconResourceId);
+        }
+        if (iconResourceId == 0) {
+            AppCenterLog.debug(LOG_TAG, "Using application icon as notification icon.");
+            iconResourceId = validateIcon(context, context.getApplicationInfo().icon);
+        }
+
+        /* Fall back to a 1 pixel icon if icon invalid. */
+        if (iconResourceId == 0) {
+            AppCenterLog.warn(LOG_TAG, "Using 1 pixel icon as fallback for notification.");
+            iconResourceId = R.drawable.ic_stat_notify_dot;
+        }
+        builder.setSmallIcon(iconResourceId);
+    }
+
+    private static int validateIcon(Context context, int iconResourceId) {
+        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O && context.getDrawable(iconResourceId) instanceof AdaptiveIconDrawable) {
+            AppCenterLog.error(LOG_TAG, "Adaptive icons make Notification center crash (system process) on Android 8.0 (was fixed on Android 8.1), " +
+                    "please update your icon to be non adaptive or please use another icon to push.");
+            iconResourceId = 0;
+        }
+        return iconResourceId;
     }
 }
 

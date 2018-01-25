@@ -143,6 +143,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify release hash was not even considered. */
+        //noinspection ResultOfMethodCallIgnored
         verify(releaseDetails, never()).getReleaseHash();
     }
 

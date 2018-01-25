@@ -19,6 +19,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
+import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
@@ -90,7 +91,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         Thread.class,
         ShutdownHelper.class,
         CustomProperties.class,
-        InstrumentationRegistryHelper.class
+        InstrumentationRegistryHelper.class,
+        NetworkStateHelper.class
 })
 public class AppCenterTest {
 
@@ -106,12 +108,21 @@ public class AppCenterTest {
     private DefaultChannel mChannel;
 
     @Mock
+    private NetworkStateHelper mNetworkStateHelper;
+
+    @Mock
     private StartServiceLog mStartServiceLog;
 
     @Mock
     private Application mApplication;
 
     private ApplicationInfo mApplicationInfo;
+
+    private static void AddArgumentToRegistry(String key, String value) {
+        Bundle mockBundle = mock(Bundle.class);
+        when(mockBundle.getString(key)).thenReturn(value);
+        when(InstrumentationRegistryHelper.getArguments()).thenReturn(mockBundle);
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -137,6 +148,7 @@ public class AppCenterTest {
         mockStatic(ShutdownHelper.class);
         mockStatic(DeviceInfoHelper.class);
         mockStatic(InstrumentationRegistryHelper.class);
+        mockStatic(NetworkStateHelper.class);
 
         /* Mock handlers. */
         Handler handler = mock(Handler.class);
@@ -178,6 +190,9 @@ public class AppCenterTest {
         StorageHelper.DatabaseStorage.DatabaseScanner databaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
         when(databaseStorage.getScanner(anyString(), anyObject())).thenReturn(databaseScanner);
         when(databaseScanner.iterator()).thenReturn(mDataBaseScannerIterator);
+
+        /* Mock network state helper. */
+        when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);
     }
 
     @After
@@ -236,6 +251,37 @@ public class AppCenterTest {
         verify(mChannel).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
         List<String> services = new ArrayList<>();
         services.add(service.getServiceName());
+        verify(mStartServiceLog).setServices(eq(services));
+    }
+
+    @Test
+    public void useDummyServiceWhenDisablePersisted() {
+        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
+        AppCenter appCenter = AppCenter.getInstance();
+        DummyService service = DummyService.getInstance();
+        AnotherDummyService anotherService = AnotherDummyService.getInstance();
+
+        /* Start. */
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
+        assertFalse(AppCenter.isEnabled().get());
+        assertEquals(1, AppCenter.getInstance().getServices().size());
+        assertTrue(appCenter.getServices().contains(service));
+        verify(mChannel, never()).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
+
+        /* Start another service. */
+        AppCenter.start(AnotherDummyService.class);
+        assertFalse(AppCenter.isEnabled().get());
+        assertEquals(2, AppCenter.getInstance().getServices().size());
+        assertTrue(appCenter.getServices().contains(anotherService));
+        verify(mChannel, never()).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
+
+        /* Enable. */
+        AppCenter.setEnabled(true);
+        assertTrue(AppCenter.isEnabled().get());
+        verify(mChannel).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
+        List<String> services = new ArrayList<>();
+        services.add(service.getServiceName());
+        services.add(anotherService.getServiceName());
         verify(mStartServiceLog).setServices(eq(services));
     }
 
@@ -486,6 +532,8 @@ public class AppCenterTest {
         verify(dummyService, never()).setInstanceEnabled(anyBoolean());
         verify(anotherDummyService, never()).setInstanceEnabled(anyBoolean());
         verify(mChannel, times(2)).setEnabled(true);
+        verify(mNetworkStateHelper, never()).close();
+        verify(mNetworkStateHelper, never()).reopen();
 
         /* Verify disabling base disables all services */
         AppCenter.setEnabled(false);
@@ -496,6 +544,8 @@ public class AppCenterTest {
         verify(dummyService).setInstanceEnabled(false);
         verify(anotherDummyService).setInstanceEnabled(false);
         verify(mChannel).setEnabled(false);
+        verify(mNetworkStateHelper).close();
+        verify(mNetworkStateHelper, never()).reopen();
 
         /* Verify re-enabling base re-enables all services */
         AppCenter.setEnabled(true);
@@ -508,6 +558,7 @@ public class AppCenterTest {
         verify(mApplication, times(1)).registerActivityLifecycleCallbacks(dummyService);
         verify(mApplication, times(1)).registerActivityLifecycleCallbacks(anotherDummyService);
         verify(mChannel, times(3)).setEnabled(true);
+        verify(mNetworkStateHelper).reopen();
 
         /* Verify that disabling one service leaves base and other services enabled */
         dummyService.setInstanceEnabledAsync(false);
@@ -524,6 +575,7 @@ public class AppCenterTest {
         verify(dummyService, times(2)).setInstanceEnabled(true);
         verify(anotherDummyService).setInstanceEnabled(true);
         verify(mChannel, times(4)).setEnabled(true);
+        verify(mNetworkStateHelper, times(1)).reopen();
 
         /* Enable service after the SDK is disabled. */
         AppCenter.setEnabled(false);
@@ -537,6 +589,7 @@ public class AppCenterTest {
         AppCenterLog.error(eq(LOG_TAG), anyString());
         assertFalse(AppCenter.isEnabled().get());
         verify(mChannel, times(2)).setEnabled(false);
+        verify(mNetworkStateHelper, times(2)).close();
 
         /* Disable back via main class. */
         AppCenter.setEnabled(false);
@@ -545,6 +598,7 @@ public class AppCenterTest {
             assertFalse(service.isInstanceEnabled());
         }
         verify(mChannel, times(3)).setEnabled(false);
+        verify(mNetworkStateHelper, times(2)).close();
 
         /* Check factories / channel only once interactions. */
         verify(dummyService).getLogFactories();
@@ -554,7 +608,30 @@ public class AppCenterTest {
     }
 
     @Test
+    public void disableBetweenStartCalls() {
+        DummyService dummyService = DummyService.getInstance();
+        AnotherDummyService anotherDummyService = AnotherDummyService.getInstance();
+
+        /* Start App Center SDK with one service. */
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
+        assertTrue(AppCenter.isEnabled().get());
+        assertTrue(dummyService.isInstanceEnabled());
+
+        /* Disable. */
+        AppCenter.setEnabled(false);
+        assertFalse(AppCenter.isEnabled().get());
+        assertFalse(dummyService.isInstanceEnabled());
+
+        /* Start another one service. */
+        AppCenter.start(AnotherDummyService.class);
+        assertFalse(AppCenter.isEnabled().get());
+        assertFalse(dummyService.isInstanceEnabled());
+        assertFalse(anotherDummyService.isInstanceEnabled());
+    }
+
+    @Test
     public void enableBeforeConfiguredTest() {
+
         /* Test isEnabled and setEnabled before configure */
         assertFalse(AppCenter.isEnabled().get());
         AppCenter.setEnabled(true);
@@ -566,22 +643,28 @@ public class AppCenterTest {
     @Test
     public void disablePersisted() {
         when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
+        when(StorageHelper.PreferencesStorage.getBoolean(AnotherDummyService.getInstance().getEnabledPreferenceKey(), true)).thenReturn(false);
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class, AnotherDummyService.class);
         AppCenter appCenter = AppCenter.getInstance();
 
         /* Verify services are disabled by default if App Center is disabled. */
         assertFalse(AppCenter.isEnabled().get());
         for (AppCenterService service : appCenter.getServices()) {
-            assertFalse(((AbstractAppCenterService) service).isInstanceEnabledAsync().get());
+            assertFalse(service.isInstanceEnabled());
+            verify((AbstractAppCenterService) service).applyEnabledState(eq(false));
+            verify((AbstractAppCenterService) service, never()).applyEnabledState(eq(true));
             verify(mApplication).registerActivityLifecycleCallbacks(service);
         }
+        verify(mNetworkStateHelper).close();
 
         /* Verify we can enable back. */
         AppCenter.setEnabled(true);
         assertTrue(AppCenter.isEnabled().get());
         for (AppCenterService service : appCenter.getServices()) {
-            assertTrue(((AbstractAppCenterService) service).isInstanceEnabledAsync().get());
+            assertTrue(service.isInstanceEnabled());
+            verify((AbstractAppCenterService) service).applyEnabledState(eq(true));
         }
+        verify(mNetworkStateHelper).reopen();
     }
 
     @Test
@@ -685,7 +768,6 @@ public class AppCenterTest {
         verify(mChannel).invalidateDeviceCache();
     }
 
-
     @Test
     public void setDefaultLogLevelRelease() {
         mApplicationInfo.flags = 0;
@@ -702,7 +784,7 @@ public class AppCenterTest {
     }
 
     @Test
-    public void dontSetDefaultLogLevel() {
+    public void doNotSetDefaultLogLevel() {
         AppCenter.setLogLevel(android.util.Log.VERBOSE);
         verifyStatic();
         AppCenterLog.setLogLevel(android.util.Log.VERBOSE);
@@ -959,12 +1041,6 @@ public class AppCenterTest {
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
-    }
-
-    private static void AddArgumentToRegistry(String key, String value) {
-        Bundle mockBundle = mock(Bundle.class);
-        when(mockBundle.getString(key)).thenReturn(value);
-        when(InstrumentationRegistryHelper.getArguments()).thenReturn(mockBundle);
     }
 
     private static class DummyService extends AbstractAppCenterService {

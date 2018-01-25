@@ -1,41 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="title_test_crash">Test crash</string>
-    <string name="description_test_crash">Using Crash.generateTestCrash() API</string>
-    <string name="title_crash_divide_by_0">Divide by 0</string>
-    <string name="description_crash_divide_by_0">Divide by 0</string>
-    <string name="title_test_ui_crash">Test some UI crash</string>
-    <string name="description_test_ui_crash">A UI coding mistake, has inner exception</string>
-    <string name="title_stack_overflow_crash">Stack overflow crash</string>
-    <string name="description_stack_overflow_crash">Caused by infinite recursion</string>
-    <string name="title_memory_crash">Out of memory crash</string>
-    <string name="description_memory_crash">Allocating a huge array</string>
-    <string name="title_memory_crash2">Out of memory crash 2</string>
-    <string name="description_memory_crash2">Allocating a huge string builder in another class</string>
-    <string name="title_variable_message">Crash with a variable message</string>
-    <string name="description_variable_message">Reading a non existing resource with random id</string>
-    <string name="title_variable_message2">Crash with a variable message in another activity</string>
-    <string name="description_variable_message2">Same bug but in another class</string>
-    <string name="title_super_not_called_exception">SuperNotCalledException</string>
-    <string name="description_super_not_called_exception">Not calling super method in onPause()</string>
-    <string name="title_super_not_called_exception2">SuperNotCalledException 2</string>
-    <string name="description_super_not_called_exception2">Not calling super method in onDestroy()</string>
-    <string name="title_super_not_called_exception3">SuperNotCalledException 3</string>
-    <string name="description_super_not_called_exception3">Not calling super method in onResume() in sub activity</string>
-    <string name="title_super_not_called_exception4">SuperNotCalledException 4</string>
-    <string name="description_super_not_called_exception4">Not calling super method in onResume() in another sub activity</string>
-    <string name="crash_confirmation_dialog_title">Unexpected crash found</string>
-    <string name="crash_confirmation_dialog_message">Would you like to send an anonymous report so we can fix the problem?</string>
-    <string name="crash_confirmation_dialog_not_send_button">Don\'t Send</string>
-    <string name="crash_confirmation_dialog_always_send_button">Always Send</string>
-    <string name="crash_confirmation_dialog_send_button">Send</string>
-    <string name="crash_before_sending">Sending Crash reports.</string>
-    <string name="crash_sent_succeeded">Crash reports delivered successfully.</string>
-    <string name="crash_sent_failed">Failed to deliver Crash reports.</string>
-    <string name="event_before_sending">Sending Event.</string>
-    <string name="event_sent_succeeded">Event delivered successfully.</string>
-    <string name="event_sent_failed">Failed to deliver Event.</string>
-    <string name="page_before_sending">Sending Page.</string>
-    <string name="page_sent_succeeded">Page delivered successfully.</string>
-    <string name="page_sent_failed">Failed to deliver Page.</string>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="title_test_crash" tools:ignore="MissingTranslation">Test crash</string>
+    <string name="description_test_crash" tools:ignore="MissingTranslation">Using Crash.generateTestCrash() API</string>
+    <string name="title_crash_divide_by_0" tools:ignore="MissingTranslation">Divide by 0</string>
+    <string name="description_crash_divide_by_0" tools:ignore="MissingTranslation">Divide by 0</string>
+    <string name="title_test_ui_crash" tools:ignore="MissingTranslation">Test some UI crash</string>
+    <string name="description_test_ui_crash" tools:ignore="MissingTranslation">A UI coding mistake, has inner exception</string>
+    <string name="title_stack_overflow_crash" tools:ignore="MissingTranslation">Stack overflow crash</string>
+    <string name="description_stack_overflow_crash" tools:ignore="MissingTranslation">Caused by infinite recursion</string>
+    <string name="title_memory_crash" tools:ignore="MissingTranslation">Out of memory crash</string>
+    <string name="description_memory_crash" tools:ignore="MissingTranslation">Allocating a huge array</string>
+    <string name="title_memory_crash2" tools:ignore="MissingTranslation">Out of memory crash 2</string>
+    <string name="description_memory_crash2" tools:ignore="MissingTranslation">Allocating a huge string builder in another class</string>
+    <string name="title_variable_message" tools:ignore="MissingTranslation">Crash with a variable message</string>
+    <string name="description_variable_message" tools:ignore="MissingTranslation">Reading a non existing resource with random id</string>
+    <string name="title_variable_message2" tools:ignore="MissingTranslation">Crash with a variable message in another activity</string>
+    <string name="description_variable_message2" tools:ignore="MissingTranslation">Same bug but in another class</string>
+    <string name="title_super_not_called_exception" tools:ignore="MissingTranslation">SuperNotCalledException</string>
+    <string name="description_super_not_called_exception" tools:ignore="MissingTranslation">Not calling super method in onPause()</string>
+    <string name="title_super_not_called_exception2" tools:ignore="MissingTranslation">SuperNotCalledException 2</string>
+    <string name="description_super_not_called_exception2" tools:ignore="MissingTranslation">Not calling super method in onDestroy()</string>
+    <string name="title_super_not_called_exception3" tools:ignore="MissingTranslation">SuperNotCalledException 3</string>
+    <string name="description_super_not_called_exception3" tools:ignore="MissingTranslation">Not calling super method in onResume() in sub activity</string>
+    <string name="title_super_not_called_exception4" tools:ignore="MissingTranslation">SuperNotCalledException 4</string>
+    <string name="description_super_not_called_exception4" tools:ignore="MissingTranslation">Not calling super method in onResume() in another sub activity</string>
+    <string name="title_test_native_crash" tools:ignore="MissingTranslation">NDK crash null</string>
+    <string name="description_test_native_crash" tools:ignore="MissingTranslation">Dereference a null pointer.</string>
+    <string name="title_native_stack_overflow_crash" tools:ignore="MissingTranslation">NDK stack overflow crash</string>
+    <string name="description_native_stack_overflow_crash" tools:ignore="MissingTranslation">Caused by infinite recursion</string>
+    <string name="title_native_abort_crash">NDK call abort()</string>
+    <string name="description_native_abort_crash">Simply call abort() to terminate</string>
+    <string name="crash_confirmation_dialog_title" tools:ignore="MissingTranslation">Unexpected crash found</string>
+    <string name="crash_confirmation_dialog_message" tools:ignore="MissingTranslation">Would you like to send an anonymous report so we can fix the problem?</string>
+    <string name="crash_confirmation_dialog_not_send_button" tools:ignore="MissingTranslation">Don\'t Send</string>
+    <string name="crash_confirmation_dialog_always_send_button" tools:ignore="MissingTranslation">Always Send</string>
+    <string name="crash_confirmation_dialog_send_button" tools:ignore="MissingTranslation">Send</string>
+    <string name="crash_before_sending" tools:ignore="MissingTranslation">Sending Crash reports.</string>
+    <string name="crash_sent_succeeded" tools:ignore="MissingTranslation">Crash reports delivered successfully.</string>
+    <string name="crash_sent_failed" tools:ignore="MissingTranslation">Failed to deliver Crash reports.</string>
+    <string name="event_before_sending" tools:ignore="MissingTranslation">Sending Event.</string>
+    <string name="event_sent_succeeded" tools:ignore="MissingTranslation">Event delivered successfully.</string>
+    <string name="event_sent_failed" tools:ignore="MissingTranslation">Failed to deliver Event.</string>
+    <string name="page_before_sending" tools:ignore="MissingTranslation">Sending Page.</string>
+    <string name="page_sent_succeeded" tools:ignore="MissingTranslation">Page delivered successfully.</string>
+    <string name="page_sent_failed" tools:ignore="MissingTranslation">Failed to deliver Page.</string>
 </resources>

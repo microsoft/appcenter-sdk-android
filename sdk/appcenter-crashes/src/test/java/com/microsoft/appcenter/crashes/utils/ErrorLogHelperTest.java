@@ -32,7 +32,10 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
+import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -102,7 +105,7 @@ public class ErrorLogHelperTest {
 
         /* Test. */
         long launchTimeStamp = 2000;
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new IOException(new TestCrashException())), java.lang.Thread.getAllStackTraces(), launchTimeStamp, true);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new IOException(new TestCrashException())), java.lang.Thread.getAllStackTraces(), launchTimeStamp);
         assertNotNull(errorLog);
         assertNotNull(errorLog.getId());
         assertEquals(logTimestamp, errorLog.getTimestamp());
@@ -192,7 +195,7 @@ public class ErrorLogHelperTest {
 
         /* Test. */
         long launchTimeStamp = 2000;
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new java.lang.Exception(), java.lang.Thread.getAllStackTraces(), launchTimeStamp, true);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new java.lang.Exception(), java.lang.Thread.getAllStackTraces(), launchTimeStamp);
         assertNotNull(errorLog);
         assertNotNull(errorLog.getId());
         assertEquals(logTimestamp, errorLog.getTimestamp());
@@ -232,7 +235,7 @@ public class ErrorLogHelperTest {
         TestUtils.setInternalState(Build.class, "SUPPORTED_ABIS", new String[]{"armeabi-v7a", "arm"});
 
         /* Create an error log. */
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new TestCrashException()), java.lang.Thread.getAllStackTraces(), 900, true);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new TestCrashException()), java.lang.Thread.getAllStackTraces(), 900);
         assertNotNull(errorLog);
 
         /* Test. */
@@ -266,5 +269,33 @@ public class ErrorLogHelperTest {
 
         /* Clean up. */
         ErrorLogHelper.setErrorLogDirectory(null);
+    }
+
+    @Test
+    public void validateProperties() {
+        String logType = "HandledError";
+        HashMap<String, String> properties = new HashMap<String, String>() {{
+            put(null, null);
+            put("", null);
+            put(generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
+            put("1", null);
+        }};
+        assertEquals(0, ErrorLogHelper.validateProperties(properties, logType).size());
+
+        properties = new HashMap<String, String>() {{
+            for (int i = 0; i < 10; i++) {
+                put("valid" + i, "valid");
+            }
+        }};
+        assertEquals(5, ErrorLogHelper.validateProperties(properties, logType).size());
+
+        final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
+        properties = new HashMap<String, String>() {{
+            put(longerMapItem, longerMapItem);
+        }};
+        Map<String, String> actualProperties = ErrorLogHelper.validateProperties(properties, logType);
+        String truncatedMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH, '*');
+        assertEquals(1, actualProperties.size());
+        assertEquals(truncatedMapItem, actualProperties.get(truncatedMapItem));
     }
 }
