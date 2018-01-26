@@ -28,6 +28,7 @@ import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
@@ -47,7 +48,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private static boolean sRumStarted;
 
-    private static boolean sEventFilter;
+    private static boolean sEventFilterStarted;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -232,40 +233,24 @@ public class SettingsActivity extends AppCompatActivity {
                 getPreferenceScreen().removePreference(findPreference(getString(R.string.real_user_measurements_key)));
             }
 
-
             /* EventFilter. */
-            try {
-                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> eventFilter = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.sasquatch.eventfilter.EventFilter");
-                final Method isEnabled = eventFilter.getMethod("isEnabled");
-                final Method setEnabled = eventFilter.getMethod("setEnabled", boolean.class);
-                initCheckBoxSetting(R.string.appcenter_event_filter_state_key, R.string.appcenter_event_filter_state_summary_enabled, R.string.appcenter_event_filter_state_summary_disabled, new HasEnabled() {
+            initCheckBoxSetting(R.string.appcenter_event_filter_state_key, R.string.appcenter_event_filter_state_summary_enabled, R.string.appcenter_event_filter_state_summary_disabled, new HasEnabled() {
 
-                    @Override
-                    public void setEnabled(boolean enabled) {
-                        if (!sEventFilter) {
-                            AppCenter.start(eventFilter);
-                            sEventFilter = true;
-                        }
-                        try {
-                            setEnabled.invoke(null, enabled);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
+                @Override
+                public void setEnabled(boolean enabled) {
+                    if (!sEventFilterStarted) {
+                        AppCenter.start(EventFilter.class);
+                        sEventFilterStarted = true;
                     }
+                    EventFilter.setEnabled(enabled);
+                }
 
-                    @Override
-                    @SuppressWarnings("unchecked")
-                    public boolean isEnabled() {
-                        try {
-                            return sEventFilter && ((AppCenterFuture<Boolean>) isEnabled.invoke(null)).get();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-            } catch (Exception e) {
-                getPreferenceScreen().removePreference(findPreference(getString(R.string.event_filter)));
-            }
+                @Override
+                @SuppressWarnings("unchecked")
+                public boolean isEnabled() {
+                    return sEventFilterStarted && EventFilter.isEnabled().get();
+                }
+            });
 
             /* Auto page tracking. */
             initCheckBoxSetting(R.string.appcenter_auto_page_tracking_key, R.string.appcenter_auto_page_tracking_enabled, R.string.appcenter_auto_page_tracking_disabled, new HasEnabled() {
