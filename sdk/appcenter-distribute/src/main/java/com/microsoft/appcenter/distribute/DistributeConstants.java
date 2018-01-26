@@ -107,6 +107,11 @@ final class DistributeConstants {
     static final String PARAMETER_UPDATE_SETUP_FAILED = "update_setup_failed";
 
     /**
+     * API parameter for update setup failed key.
+     */
+    static final String PARAMETER_INSTALL_ID = "install_id";
+
+    /**
      * Header used to pass token when checking latest release.
      */
     static final String HEADER_API_TOKEN = "x-api-token";
