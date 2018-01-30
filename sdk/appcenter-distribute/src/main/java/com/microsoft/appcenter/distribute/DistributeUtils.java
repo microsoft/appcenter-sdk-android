@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -16,9 +17,11 @@ import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
 
+import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_INSTALL_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_PLATFORM;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_PLATFORM_VALUE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REDIRECT_ID;
@@ -102,7 +105,7 @@ class DistributeUtils {
      * @param appSecret   application secret.
      * @param packageInfo package info.
      */
-    static void updateSetupUsingBrowser(Activity activity, String installUrl, String appSecret, PackageInfo packageInfo) {
+    static void updateSetupUsingBrowser(Activity activity, String installUrl, String appSecret, PackageInfo packageInfo, Boolean isDebugApp) {
 
         /*
          * If network is disconnected, browser will fail so wait.
@@ -130,6 +133,12 @@ class DistributeUtils {
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
+
+        /* Add install_id flagged for usage with debug app only. */
+        if (isDebugApp) {
+            url += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get().toString();
+        }
+
         AppCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
 
         /* Store request id. */

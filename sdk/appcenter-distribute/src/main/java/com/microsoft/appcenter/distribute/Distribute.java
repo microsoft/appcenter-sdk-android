@@ -30,6 +30,7 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
@@ -77,6 +78,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.DistributeConstants.NOTIFICATION_CHANNEL_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_INSTALL_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_UPDATE_SETUP_FAILED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
@@ -554,9 +556,10 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void resumeDistributeWorkflow() {
         if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
+            Boolean isDebugApp = (mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE;
 
             /* Don't go any further it this is a debug app. */
-            if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {
+            if (isDebugApp) {
                 AppCenterLog.info(LOG_TAG, "Not checking in app updates in debug.");
                 mWorkflowCompleted = true;
                 return;
@@ -730,7 +733,7 @@ public class Distribute extends AbstractAppCenterService {
 
              /* If not, open browser to update setup. */
             if (!mBrowserOpenedOrAborted) {
-                DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret, mPackageInfo);
+                DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret, mPackageInfo, isDebugApp);
                 mBrowserOpenedOrAborted = true;
             }
         }
@@ -863,6 +866,14 @@ public class Distribute extends AbstractAppCenterService {
         } else {
             url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash);
         }
+
+        /* TODO: implement sending install id once upon in-app update */
+        Boolean isDebugApp = (mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE;
+        if(isDebugApp) {
+            String installId = AppCenter.getInstallId().get().toString();
+            url += "&" + PARAMETER_INSTALL_ID + "=" + installId;
+        }
+
         Map<String, String> headers = new HashMap<>();
         if (updateToken != null) {
             headers.put(HEADER_API_TOKEN, updateToken);
