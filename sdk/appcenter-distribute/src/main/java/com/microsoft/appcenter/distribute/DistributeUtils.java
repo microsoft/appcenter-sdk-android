@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -133,9 +134,9 @@ class DistributeUtils {
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
 
-        /* Add fake install_id flagged for usage with debug app only. */
+        /* Add install_id flagged for usage with debug app only. */
         if (isDebugApp) {
-            url += "&" + PARAMETER_INSTALL_ID + "=" + "fake_install_id";
+            url += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get().toString();
         }
 
         AppCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);

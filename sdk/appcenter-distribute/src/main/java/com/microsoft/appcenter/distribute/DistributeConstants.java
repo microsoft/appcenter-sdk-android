@@ -48,7 +48,7 @@ final class DistributeConstants {
     /**
      * Base URL to call server to check latest release.
      */
-    static final String DEFAULT_API_URL = "https://api.appcenter.ms/v0.1";
+    static final String DEFAULT_API_URL = "http://127.0.0.1:1700/v0.1";
 
     /**
      * Update setup URL path. Contains the app secret variable to replace.
@@ -107,9 +107,14 @@ final class DistributeConstants {
     static final String PARAMETER_UPDATE_SETUP_FAILED = "update_setup_failed";
 
     /**
-     * API parameter for update setup failed key.
+     * API parameter for install identifier.
      */
     static final String PARAMETER_INSTALL_ID = "install_id";
+
+    /**
+     * API parameter for last installed release identifier.
+     */
+    static final String PARAMETER_LAST_INSTALLED_RELEASE_ID = "last_installed_release_id";
 
     /**
      * Header used to pass token when checking latest release.

@@ -30,6 +30,7 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
@@ -869,7 +870,8 @@ public class Distribute extends AbstractAppCenterService {
         /* TODO: implement sending install id once upon in-app update */
         Boolean isDebugApp = (mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE;
         if(isDebugApp) {
-            url += "&" + PARAMETER_INSTALL_ID + "=" + "fake_install_id";
+            String installId = AppCenter.getInstallId().get().toString();
+            url += "&" + PARAMETER_INSTALL_ID + "=" + installId;
         }
 
         Map<String, String> headers = new HashMap<>();
