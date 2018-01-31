@@ -119,7 +119,7 @@ class DistributeUtils {
         url += "&" + PARAMETER_REDIRECT_ID + "=" + activity.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
-        url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
+        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         AppCenterLog.debug(LOG_TAG, "No token, need to open tester app to url=" + url);
 
         /* Store request id. */
