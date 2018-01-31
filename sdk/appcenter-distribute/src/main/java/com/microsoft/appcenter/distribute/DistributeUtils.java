@@ -99,12 +99,11 @@ class DistributeUtils {
      * Update setup using native tester app.
      *
      * @param activity    activity from which to start tester app.
-     * @param appSecret   application secret.
      * @param packageInfo package info.
      *
      * @return whether the tester app was opened or not.
      */
-    static boolean updateSetupUsingTesterApp(Activity activity, String appSecret, PackageInfo packageInfo) {
+    static boolean updateSetupUsingTesterApp(Activity activity, PackageInfo packageInfo) {
 
         /* Compute hash. */
         String releaseHash = computeReleaseHash(packageInfo);
@@ -113,8 +112,7 @@ class DistributeUtils {
         String requestId = UUIDUtils.randomUUID().toString();
 
         /* Build URL. */
-        String url = "ms-actesterapp://";
-        url += String.format(UPDATE_SETUP_PATH_FORMAT, appSecret);
+        String url = "ms-actesterapp://update-setup";
         url += "?" + PARAMETER_RELEASE_HASH + "=" + releaseHash;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + activity.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
