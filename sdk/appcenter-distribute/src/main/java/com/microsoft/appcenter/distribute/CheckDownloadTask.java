@@ -9,8 +9,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.NoSuchElementException;
@@ -158,8 +158,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                     }
 
                     /* Add downloaded release hash to report later if feature flag is enabled */
-                    String shouldUseInstallIdFeature = mContext.getString(R.string.install_id_feature_enabled);
-                    if(shouldUseInstallIdFeature != null && shouldUseInstallIdFeature.equals("True")) {
+                    if (Boolean.parseBoolean(mContext.getString(R.string.install_id_feature_enabled))) {
                         AppCenterLog.debug(LOG_TAG, "Install id feature enabled, adding downloaded release hash for later reporting.");
                         StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH, mReleaseDetails.getReleaseHash());
                     } else {

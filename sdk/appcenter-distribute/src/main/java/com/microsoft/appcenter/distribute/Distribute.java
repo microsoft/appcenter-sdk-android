@@ -868,11 +868,10 @@ public class Distribute extends AbstractAppCenterService {
         }
 
         /* Send install id once upon in-app update if feature flag is enabled */
-        String shouldUseInstallIdFeature = mContext.getString(R.string.install_id_feature_enabled);
-        if(shouldUseInstallIdFeature != null && shouldUseInstallIdFeature.equals("True")) {
+        if (Boolean.parseBoolean(mContext.getString(R.string.install_id_feature_enabled))) {
             AppCenterLog.debug(LOG_TAG, "Install id feature is enabled, check if we need to report..");
             String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
-            if(!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
+            if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Looks like current install id was not reported yet, reporting..");
                 String installId = AppCenter.getInstallId().get().toString();
                 url += "&" + PARAMETER_INSTALL_ID + "=" + installId;

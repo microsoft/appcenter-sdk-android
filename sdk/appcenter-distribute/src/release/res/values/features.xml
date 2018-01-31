@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="TypographyDashes">
-    <string name="install_id_feature_enabled" tools:ignore="MissingTranslation">True</string>
+    <string name="install_id_feature_enabled" tools:ignore="MissingTranslation">false</string>
 </resources>
