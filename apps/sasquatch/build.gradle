@@ -61,7 +61,7 @@ dependencies {
 
     projectDependencyImplementation project(':sdk:appcenter-analytics')
     projectDependencyImplementation project(':sdk:appcenter-crashes')
-    projectDependencyImplementation project(':sdk:appcenter-distribute')
+    compile project(':sdk:appcenter-distribute')
     projectDependencyImplementation project(':sdk:appcenter-push')
     projectDependencyImplementation project(':sdk:appcenter-rum')
 
@@ -71,7 +71,7 @@ dependencies {
     //noinspection GradleDependency
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
     //noinspection GradleDependency
-    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
+    //jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
     //noinspection GradleDependency
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
 
