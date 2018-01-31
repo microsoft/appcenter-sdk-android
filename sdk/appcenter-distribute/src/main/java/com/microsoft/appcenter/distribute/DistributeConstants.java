@@ -43,7 +43,7 @@ final class DistributeConstants {
     /**
      * Base URL used to open browser to check install and get API token to check latest release.
      */
-    static final String DEFAULT_INSTALL_URL = "https://install.appcenter.ms";
+    static final String DEFAULT_INSTALL_URL = "https://install.asgard-int.trafficmanager.net";
 
     /**
      * Base URL to call server to check latest release.
