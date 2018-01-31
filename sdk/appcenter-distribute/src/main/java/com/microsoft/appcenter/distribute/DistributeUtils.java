@@ -105,7 +105,7 @@ class DistributeUtils {
      * @param appSecret   application secret.
      * @param packageInfo package info.
      */
-    static void updateSetupUsingBrowser(Activity activity, String installUrl, String appSecret, PackageInfo packageInfo, Boolean isDebugApp) {
+    static void updateSetupUsingBrowser(Activity activity, String installUrl, String appSecret, PackageInfo packageInfo) {
 
         /*
          * If network is disconnected, browser will fail so wait.
@@ -135,7 +135,8 @@ class DistributeUtils {
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
 
         /* Add install_id flagged for usage with debug app only. */
-        if (isDebugApp) {
+        String shouldUseInstallIdFeature = activity.getString(R.string.install_id_feature_enabled);
+        if(shouldUseInstallIdFeature != null && shouldUseInstallIdFeature.equals("True")) {
             url += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get().toString();
         }
 

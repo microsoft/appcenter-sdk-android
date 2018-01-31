@@ -556,10 +556,8 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void resumeDistributeWorkflow() {
         if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
-            Boolean isDebugApp = (mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE;
-
             /* Don't go any further it this is a debug app. */
-            if (isDebugApp) {
+            if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {
                 AppCenterLog.info(LOG_TAG, "Not checking in app updates in debug.");
                 mWorkflowCompleted = true;
                 return;
@@ -733,7 +731,7 @@ public class Distribute extends AbstractAppCenterService {
 
              /* If not, open browser to update setup. */
             if (!mBrowserOpenedOrAborted) {
-                DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret, mPackageInfo, isDebugApp);
+                DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret, mPackageInfo);
                 mBrowserOpenedOrAborted = true;
             }
         }
@@ -868,8 +866,8 @@ public class Distribute extends AbstractAppCenterService {
         }
 
         /* TODO: implement sending install id once upon in-app update */
-        Boolean isDebugApp = (mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE;
-        if(isDebugApp) {
+        String shouldUseInstallIdFeature = mContext.getString(R.string.install_id_feature_enabled);
+        if(shouldUseInstallIdFeature != null && shouldUseInstallIdFeature.equals("True")) {
             String installId = AppCenter.getInstallId().get().toString();
             url += "&" + PARAMETER_INSTALL_ID + "=" + installId;
         }
