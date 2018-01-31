@@ -114,7 +114,7 @@ final class DistributeConstants {
     /**
      * API parameter for last installed release hash.
      */
-    static final String PARAMETER_LAST_INSTALLED_RELEASE_HASH = "last_installed_release_hash";
+    static final String PARAMETER_LAST_DOWNLOADED_RELEASE_HASH = "last_downloaded_release_hash";
 
     /**
      * Header used to pass token when checking latest release.
@@ -209,7 +209,7 @@ final class DistributeConstants {
     /**
      * Preference key to store latest installed release hash.
      */
-    static final String PREFERENCE_KEY_LAST_INSTALLED_RELEASE_HASH = PREFERENCE_PREFIX + PARAMETER_LAST_INSTALLED_RELEASE_HASH;
+    static final String PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH = PREFERENCE_PREFIX + PARAMETER_LAST_DOWNLOADED_RELEASE_HASH;
 
     /**
      * Preference key to store distribution group identifier.

@@ -86,7 +86,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_LAST_INSTALLED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
@@ -871,15 +871,16 @@ public class Distribute extends AbstractAppCenterService {
         String shouldUseInstallIdFeature = mContext.getString(R.string.install_id_feature_enabled);
         if(shouldUseInstallIdFeature != null && shouldUseInstallIdFeature.equals("True")) {
             AppCenterLog.debug(LOG_TAG, "Install id feature is enabled, check if we need to report..");
-            String lastInstalledReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_LAST_INSTALLED_RELEASE_HASH);
-            if(TextUtils.isEmpty(lastInstalledReleaseHash) || !lastInstalledReleaseHash.equals(releaseHash)) {
+            String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
+            if(!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Looks like current install id was not reported yet, reporting..");
                 String installId = AppCenter.getInstallId().get().toString();
                 url += "&" + PARAMETER_INSTALL_ID + "=" + installId;
+                AppCenterLog.debug(LOG_TAG, "Reported install id for downloaded release hash (" + releaseHash + "), removed from store.");
+                PreferencesStorage.remove(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
             } else {
                 AppCenterLog.debug(LOG_TAG, "Looks like current install id was already reported, skip reporting.");
             }
-
         } else {
             AppCenterLog.debug(LOG_TAG, "Install id feature is disabled.");
         }
@@ -1011,9 +1012,6 @@ public class Distribute extends AbstractAppCenterService {
                         }
                         return;
                     }
-
-                    /* Save last installed release hash if update is running */
-                    PreferencesStorage.putString(PREFERENCE_KEY_LAST_INSTALLED_RELEASE_HASH, releaseDetails.getReleaseHash());
 
                     /* Show update dialog. */
                     mReleaseDetails = releaseDetails;

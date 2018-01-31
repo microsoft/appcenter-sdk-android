@@ -133,7 +133,7 @@ class DistributeUtils {
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
 
-        /* Add install_id flagged for usage with debug app only. */
+        /* Report install id if feature flag is enabled. */
         String shouldUseInstallIdFeature = activity.getString(R.string.install_id_feature_enabled);
         if(shouldUseInstallIdFeature != null && shouldUseInstallIdFeature.equals("True")) {
             AppCenterLog.debug(LOG_TAG, "Install id feature is enabled, reporting..");
