@@ -2,6 +2,7 @@ package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
 import android.app.Notification;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
@@ -92,6 +93,47 @@ class DistributeUtils {
     @NonNull
     static String computeReleaseHash(@NonNull PackageInfo packageInfo) {
         return HashUtils.sha256(packageInfo.packageName + ":" + packageInfo.versionName + ":" + packageInfo.versionCode);
+    }
+
+    /**
+     * Update setup using native tester app.
+     *
+     * @param activity    activity from which to start tester app.
+     * @param appSecret   application secret.
+     * @param packageInfo package info.
+     *
+     * @return whether the tester app was opened or not.
+     */
+    static boolean updateSetupUsingTesterApp(Activity activity, String appSecret, PackageInfo packageInfo) {
+
+        /* Compute hash. */
+        String releaseHash = computeReleaseHash(packageInfo);
+
+        /* Generate request identifier. */
+        String requestId = UUIDUtils.randomUUID().toString();
+
+        /* Build URL. */
+        String url = "ms-actesterapp://";
+        url += String.format(UPDATE_SETUP_PATH_FORMAT, appSecret);
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + releaseHash;
+        url += "&" + PARAMETER_REDIRECT_ID + "=" + activity.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
+        url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
+        AppCenterLog.debug(LOG_TAG, "No token, need to open tester app to url=" + url);
+
+        /* Store request id. */
+        StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
+
+        /* Open the native tester app */
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        try {
+            activity.startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            AppCenterLog.error(LOG_TAG, "The tester app could not be opened with url=" + url);
+            return false;
+        }
+        return true;
     }
 
     /**

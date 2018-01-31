@@ -87,6 +87,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
@@ -136,6 +137,11 @@ public class Distribute extends AbstractAppCenterService {
      * If not null we are in foreground inside this activity.
      */
     private Activity mForegroundActivity;
+
+    /**
+     * Remember if we already tried to open the native tester app to update setup.
+     */
+    private boolean mTesterAppOpenedOrAborted;
 
     /**
      * Remember if we already tried to open the browser to update setup.
@@ -400,6 +406,7 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.info(LOG_TAG, "Launcher activity restarted.");
             if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
                 mWorkflowCompleted = false;
+                mTesterAppOpenedOrAborted = false;
                 mBrowserOpenedOrAborted = false;
             }
         }
@@ -434,6 +441,7 @@ public class Distribute extends AbstractAppCenterService {
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
+            mTesterAppOpenedOrAborted = false;
             mBrowserOpenedOrAborted = false;
             mWorkflowCompleted = false;
             cancelPreviousTasks();
@@ -728,12 +736,28 @@ public class Distribute extends AbstractAppCenterService {
                 }
             }
 
-             /* If not, open browser to update setup. */
-            if (!mBrowserOpenedOrAborted) {
+            /* If not, open native app (if installed) to update setup, unless it already failed. */
+            String testerAppUpdateSetupFailedMessage = PreferencesStorage.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+            boolean testerAppUpdateSetupFailed = testerAppUpdateSetupFailedMessage == null || testerAppUpdateSetupFailedMessage.isEmpty();
+            if (isAppCenterTesterAppInstalled() && !mTesterAppOpenedOrAborted && !testerAppUpdateSetupFailed) {
+                mTesterAppOpenedOrAborted = DistributeUtils.updateSetupUsingTesterApp(mForegroundActivity, mAppSecret, mPackageInfo);
+            }
+
+            /* If the native app could not be opened, use the browser to update setup. */
+            if (!mBrowserOpenedOrAborted && (!mTesterAppOpenedOrAborted || testerAppUpdateSetupFailed)) {
                 DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret, mPackageInfo);
                 mBrowserOpenedOrAborted = true;
             }
         }
+    }
+
+    private boolean isAppCenterTesterAppInstalled() {
+        try {
+            mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+        }
+        return false;
     }
 
     private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId, boolean mobileCenterFailOver) {
@@ -813,6 +837,16 @@ public class Distribute extends AbstractAppCenterService {
         if (requestId.equals(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
             AppCenterLog.debug(LOG_TAG, "Stored update setup failed parameter.");
             PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, updateSetupFailed);
+        }
+    }
+
+    /**
+     * Store a flag for failure to enable updates from the tester apps, to later reattempt using the
+     */
+    synchronized void storeTesterAppUpdateSetupFailedParameter(@NonNull String requestId, @NonNull String updateSetupFailed) {
+        if (requestId.equals(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
+            AppCenterLog.debug(LOG_TAG, "Stored tester app update setup failed parameter.");
+            PreferencesStorage.putString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY, updateSetupFailed);
         }
     }
 

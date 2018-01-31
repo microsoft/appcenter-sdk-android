@@ -8,6 +8,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.EXTRA_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.EXTRA_REQUEST_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.EXTRA_TESTER_APP_UPDATE_SETUP_FAILED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.EXTRA_UPDATE_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.EXTRA_UPDATE_SETUP_FAILED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
@@ -27,11 +28,13 @@ public class DeepLinkActivity extends Activity {
         String distributionGroupId = intent.getStringExtra(EXTRA_DISTRIBUTION_GROUP_ID);
         String updateToken = intent.getStringExtra(EXTRA_UPDATE_TOKEN);
         String updateSetupFailed = intent.getStringExtra(EXTRA_UPDATE_SETUP_FAILED);
+        String testerAppUpdateSetupFailed = intent.getStringExtra(EXTRA_TESTER_APP_UPDATE_SETUP_FAILED);
         AppCenterLog.debug(LOG_TAG, getLocalClassName() + ".getIntent()=" + intent);
         AppCenterLog.debug(LOG_TAG, "Intent requestId=" + requestId);
         AppCenterLog.debug(LOG_TAG, "Intent distributionGroupId=" + distributionGroupId);
         AppCenterLog.debug(LOG_TAG, "Intent updateToken passed=" + (updateToken != null));
         AppCenterLog.debug(LOG_TAG, "Intent updateSetupFailed passed=" + (updateSetupFailed != null));
+        AppCenterLog.debug(LOG_TAG, "Intent testerAppUpdateSetupFailed passed=" + (testerAppUpdateSetupFailed != null));
 
         /* Store redirection parameters if both required values were passed. */
         if (requestId != null && distributionGroupId != null) {
@@ -41,6 +44,9 @@ public class DeepLinkActivity extends Activity {
             /* Otherwise just store error message to show update failure dialog in future. */
             Distribute.getInstance().storeUpdateSetupFailedParameter(requestId, updateSetupFailed);
         }
+
+        /* If tester app update setup failed, store that info to later retry using the browser update setup */
+        Distribute.getInstance().storeTesterAppUpdateSetupFailedParameter(requestId, testerAppUpdateSetupFailed);
 
         /*
          * Resume app exactly where it was before with no activity duplicate, or starting the
