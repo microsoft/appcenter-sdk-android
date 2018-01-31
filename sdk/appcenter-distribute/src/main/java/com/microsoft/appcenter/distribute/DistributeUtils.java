@@ -17,7 +17,6 @@ import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
 
-import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
@@ -137,7 +136,10 @@ class DistributeUtils {
         /* Add install_id flagged for usage with debug app only. */
         String shouldUseInstallIdFeature = activity.getString(R.string.install_id_feature_enabled);
         if(shouldUseInstallIdFeature != null && shouldUseInstallIdFeature.equals("True")) {
+            AppCenterLog.debug(LOG_TAG, "Install id feature is enabled, reporting..");
             url += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get().toString();
+        } else {
+            AppCenterLog.debug(LOG_TAG, "Install id feature is disabled.");
         }
 
         AppCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
