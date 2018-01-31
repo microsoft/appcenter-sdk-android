@@ -738,7 +738,7 @@ public class Distribute extends AbstractAppCenterService {
 
             /* If not, open native app (if installed) to update setup, unless it already failed. */
             String testerAppUpdateSetupFailedMessage = PreferencesStorage.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-            boolean testerAppUpdateSetupFailed = testerAppUpdateSetupFailedMessage == null || testerAppUpdateSetupFailedMessage.isEmpty();
+            boolean testerAppUpdateSetupFailed = testerAppUpdateSetupFailedMessage != null && !testerAppUpdateSetupFailedMessage.isEmpty();
             if (isAppCenterTesterAppInstalled() && !mTesterAppOpenedOrAborted && !testerAppUpdateSetupFailed) {
                 mTesterAppOpenedOrAborted = DistributeUtils.updateSetupUsingTesterApp(mForegroundActivity, mPackageInfo);
             }
