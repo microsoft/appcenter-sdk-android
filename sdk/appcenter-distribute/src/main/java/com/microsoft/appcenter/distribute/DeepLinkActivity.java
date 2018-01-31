@@ -46,7 +46,9 @@ public class DeepLinkActivity extends Activity {
         }
 
         /* If tester app update setup failed, store that info to later retry using the browser update setup */
-        Distribute.getInstance().storeTesterAppUpdateSetupFailedParameter(requestId, testerAppUpdateSetupFailed);
+        if (requestId != null && testerAppUpdateSetupFailed != null) {
+            Distribute.getInstance().storeTesterAppUpdateSetupFailedParameter(requestId, testerAppUpdateSetupFailed);
+        }
 
         /*
          * Resume app exactly where it was before with no activity duplicate, or starting the
