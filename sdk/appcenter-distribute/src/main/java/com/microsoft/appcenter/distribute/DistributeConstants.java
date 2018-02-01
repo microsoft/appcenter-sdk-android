@@ -36,6 +36,11 @@ final class DistributeConstants {
     static final String EXTRA_DISTRIBUTION_GROUP_ID = "distribution_group_id";
 
     /**
+     * Used for download count reporting API, string field for distribution group identifier.
+     */
+    static final String PARAMETER_DISTRIBUTION_GROUP_ID = "distribution_group_id";
+
+    /**
      * Used for deep link intent from browser, string field for update setup failed identifier.
      */
     static final String EXTRA_UPDATE_SETUP_FAILED = "update_setup_failed";
@@ -59,7 +64,7 @@ final class DistributeConstants {
     /**
      * Check latest private release API URL path. Contains the app secret variable to replace.
      */
-    static final String GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT = "/sdk/apps/%s/releases/latest?release_hash=%s";
+    static final String GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT = "/sdk/apps/%s/releases/latest?release_hash=%s%s";
 
     /**
      * Check latest public release API URL path. Contains the app secret variable to replace.
@@ -114,7 +119,7 @@ final class DistributeConstants {
     /**
      * API parameter for last installed release hash.
      */
-    static final String PARAMETER_LAST_DOWNLOADED_RELEASE_HASH = "last_downloaded_release_hash";
+    static final String PARAMETER_LAST_DOWNLOADED_RELEASE_HASH = "downloaded_release_hash";
 
     /**
      * Header used to pass token when checking latest release.

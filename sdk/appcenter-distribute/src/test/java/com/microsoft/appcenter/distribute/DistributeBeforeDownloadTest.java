@@ -5,9 +5,11 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -16,6 +18,8 @@ import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import org.junit.After;
 import org.junit.Test;
@@ -28,6 +32,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.HashMap;
+import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -35,6 +40,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_ST
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
@@ -59,6 +65,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
+@PrepareForTest({DistributeUtils.class})
 public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
     @Test
@@ -92,6 +99,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify on incompatible version we complete workflow. */
+        verifyStatic(never());
+        PreferencesStorage.remove(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDialogBuilder, never()).create();
@@ -831,6 +840,114 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mActivity, times(2)).startActivity(intent);
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), eq(exception));
+    }
+
+    @Test
+    public void shouldRemoveReleaseHashStorageIfReportedSuccessfully() throws Exception {
+
+        /* Mock release hash storage */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-hash");
+
+        /* Mock install id from AppCenter */
+        final UUID installId = UUID.randomUUID();
+        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
+            @Override
+            public UUID get() {
+                return installId;
+            }
+
+            @Override
+            public void thenAccept(AppCenterConsumer<UUID> function) {
+            }
+
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+        });
+
+        /* Mock we already have token and no group. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                return mock(ServiceCall.class);
+            }
+        });
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn(4);
+        when(releaseDetails.getVersion()).thenReturn(6);
+        when(releaseDetails.getReleaseHash()).thenReturn(TEST_HASH);
+        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+
+        /* Trigger call. */
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
+    }
+
+    @Test
+    public void shouldNotRemoveReleaseHashStorageIfHashesDontMatch() throws Exception {
+
+        /* Mock release hash storage */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-old-hash");
+
+        /* Mock install id from AppCenter */
+        final UUID installId = UUID.randomUUID();
+        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
+            @Override
+            public UUID get() {
+                return installId;
+            }
+
+            @Override
+            public void thenAccept(AppCenterConsumer<UUID> function) {
+            }
+
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+        });
+
+        /* Mock we already have token and no group. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                return mock(ServiceCall.class);
+            }
+        });
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn(4);
+        when(releaseDetails.getVersion()).thenReturn(6);
+        when(releaseDetails.getReleaseHash()).thenReturn(TEST_HASH);
+        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+
+        /* Trigger call. */
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        verifyStatic(never());
+        PreferencesStorage.remove(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
     }
 
     /**

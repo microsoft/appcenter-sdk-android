@@ -40,6 +40,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOW
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -293,6 +294,10 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
+        /* Verify no release hash was saved */
+        verifyStatic(never());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH), anyString());
+
         /* Verify enabling triggers update dialog again. */
         verify(mDialog).show();
         Distribute.setEnabled(true);
@@ -317,6 +322,10 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verify(mContext).startActivity(installIntent);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+
+        /* Verify release hash was saved */
+        verifyStatic();
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH), anyString());
         verifyNoMoreInteractions(mNotificationManager);
         verify(cursor).close();
     }
@@ -375,6 +384,10 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verify(mContext, never()).startActivity(any(Intent.class));
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+
+        /* Verify no release hash was saved */
+        verifyStatic(never());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH), anyString());
         verifyZeroInteractions(mNotificationManager);
     }
 

@@ -132,14 +132,7 @@ class DistributeUtils {
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
-
-        /* Report install id if feature flag is enabled. */
-        if (Boolean.parseBoolean(activity.getString(R.string.install_id_feature_enabled))) {
-            AppCenterLog.debug(LOG_TAG, "Install id feature is enabled, reporting..");
-            url += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get().toString();
-        } else {
-            AppCenterLog.debug(LOG_TAG, "Install id feature is disabled.");
-        }
+        url += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get().toString();
 
         AppCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
 

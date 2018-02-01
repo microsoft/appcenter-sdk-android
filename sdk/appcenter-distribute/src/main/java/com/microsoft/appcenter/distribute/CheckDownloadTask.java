@@ -157,13 +157,9 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                         distribute.completeWorkflow(mReleaseDetails);
                     }
 
-                    /* Add downloaded release hash to report later if feature flag is enabled */
-                    if (Boolean.parseBoolean(mContext.getString(R.string.install_id_feature_enabled))) {
-                        AppCenterLog.debug(LOG_TAG, "Install id feature enabled, adding downloaded release hash for later reporting.");
-                        StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH, mReleaseDetails.getReleaseHash());
-                    } else {
-                        AppCenterLog.debug(LOG_TAG, "Install id feature disabled, skip reporting downloaded release.");
-                    }
+                    /* Add downloaded release hash to report after installation */
+                    AppCenterLog.debug(LOG_TAG, "Adding downloaded release hash for later reporting.");
+                    StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH, mReleaseDetails.getReleaseHash());
                 }
             } finally {
                 cursor.close();

@@ -11,6 +11,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
@@ -20,6 +21,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 
 import org.json.JSONException;
@@ -44,6 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLPeerUnverifiedException;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_INSTALL_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_PLATFORM;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_PLATFORM_VALUE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REDIRECT_ID;
@@ -53,6 +56,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_R
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
@@ -93,6 +97,24 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         ComponentName componentName = mock(ComponentName.class);
         when(intent.resolveActivity(mPackageManager)).thenReturn(componentName);
         when(componentName.getClassName()).thenReturn(activity.getClass().getName());
+
+        /* Mock install id from AppCenter */
+        final UUID installId = UUID.randomUUID();
+        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
+            @Override
+            public UUID get() {
+                return installId;
+            }
+
+            @Override
+            public void thenAccept(AppCenterConsumer<UUID> function) {
+            }
+
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+        });
         Distribute.getInstance().onActivityPaused(activity);
         Distribute.getInstance().onActivityStopped(activity);
         Distribute.getInstance().onActivityDestroyed(activity);
@@ -445,6 +467,24 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
 
+        /* Mock install id from AppCenter */
+        final UUID installId = UUID.randomUUID();
+        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
+            @Override
+            public UUID get() {
+                return installId;
+            }
+
+            @Override
+            public void thenAccept(AppCenterConsumer<UUID> function) {
+            }
+
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+        });
+
         /* Start and resume: open browser. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
@@ -457,6 +497,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
+        url += "&" + PARAMETER_INSTALL_ID + "=" + installId.toString();
         BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
@@ -564,6 +605,24 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
 
+        /* Mock install id from AppCenter */
+        final UUID installId = UUID.randomUUID();
+        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
+            @Override
+            public UUID get() {
+                return installId;
+            }
+
+            @Override
+            public void thenAccept(AppCenterConsumer<UUID> function) {
+            }
+
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+        });
+
         /* Start and resume: open browser. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
@@ -576,6 +635,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
+        url += "&" + PARAMETER_INSTALL_ID + "=" + installId.toString();
         BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
@@ -683,6 +743,24 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
 
+        /* Mock install id from AppCenter */
+        final UUID installId = UUID.randomUUID();
+        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
+            @Override
+            public UUID get() {
+                return installId;
+            }
+
+            @Override
+            public void thenAccept(AppCenterConsumer<UUID> function) {
+            }
+
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+        });
+
         /* Start and resume: open browser. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
@@ -695,6 +773,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
+        url += "&" + PARAMETER_INSTALL_ID + "=" + installId.toString();
         BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
@@ -718,6 +797,24 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Mock package manager. */
         when(mPackageManager.getPackageInfo("com.contoso", 0)).thenThrow(new PackageManager.NameNotFoundException());
 
+        /* Mock install id from AppCenter */
+        final UUID installId = UUID.randomUUID();
+        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
+            @Override
+            public UUID get() {
+                return installId;
+            }
+
+            @Override
+            public void thenAccept(AppCenterConsumer<UUID> function) {
+            }
+
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+        });
+
         /* Start and resume: open browser. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
@@ -738,6 +835,25 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Start and resume: open browser. */
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
+
+        /* Mock install id from AppCenter */
+        final UUID installId = UUID.randomUUID();
+        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
+            @Override
+            public UUID get() {
+                return installId;
+            }
+
+            @Override
+            public void thenAccept(AppCenterConsumer<UUID> function) {
+            }
+
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+        });
+
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
@@ -749,6 +865,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
+        url += "&" + PARAMETER_INSTALL_ID + "=" + installId.toString();
         BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
@@ -1086,5 +1203,91 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.putString(eq(PREFERENCE_KEY_UPDATE_TOKEN), anyString());
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "some group MC");
+    }
+
+    @Test
+    public void willNotReportReleaseInstallForPrivateGroupWithoutStoredReleaseHash() throws Exception {
+        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
+        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("some group MC");
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token MC");
+
+        /* Primary storage will be missing data. */
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        ArgumentMatcher<String> urlArg = new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().matches("^https://.*?/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "$");
+            }
+        };
+        verify(httpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void willNotReportReleaseInstallForPrivateGroupWhenReleaseHashesDontMatch() throws Exception {
+        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
+        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("fake-distribution-id");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-release-hash");
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token MC");
+
+        /* Primary storage will be missing data. */
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        ArgumentMatcher<String> urlArg = new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().matches("^https://.*?/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "$");
+            }
+        };
+        verify(httpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void reportReleaseInstallForPrivateGroupWhenReleaseHashesMatch() throws Exception {
+        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
+        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("fake-distribution-id");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH)).thenReturn(TEST_HASH);
+
+        /* Mock install id from AppCenter */
+        final UUID installId = UUID.randomUUID();
+        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
+            @Override
+            public UUID get() {
+                return installId;
+            }
+
+            @Override
+            public void thenAccept(AppCenterConsumer<UUID> function) {
+            }
+
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+        });
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token MC");
+
+        /* Primary storage will be missing data. */
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        ArgumentMatcher<String> urlArg = new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().matches("^https://.*?/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "&install_id=" + installId + "&distribution_group_id=fake-distribution-id$");
+            }
+        };
+        verify(httpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 }

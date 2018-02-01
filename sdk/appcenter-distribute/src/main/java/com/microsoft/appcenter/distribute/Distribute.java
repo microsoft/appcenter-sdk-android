@@ -78,6 +78,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.DistributeConstants.NOTIFICATION_CHANNEL_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_INSTALL_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_UPDATE_SETUP_FAILED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
@@ -864,24 +865,7 @@ public class Distribute extends AbstractAppCenterService {
         if (updateToken == null) {
             url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, distributionGroupId, releaseHash);
         } else {
-            url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash);
-        }
-
-        /* Send install id once upon in-app update if feature flag is enabled */
-        if (Boolean.parseBoolean(mContext.getString(R.string.install_id_feature_enabled))) {
-            AppCenterLog.debug(LOG_TAG, "Install id feature is enabled, check if we need to report..");
-            String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
-            if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
-                AppCenterLog.debug(LOG_TAG, "Looks like current install id was not reported yet, reporting..");
-                String installId = AppCenter.getInstallId().get().toString();
-                url += "&" + PARAMETER_INSTALL_ID + "=" + installId;
-                AppCenterLog.debug(LOG_TAG, "Reported install id for downloaded release hash (" + releaseHash + "), removed from store.");
-                PreferencesStorage.remove(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
-            } else {
-                AppCenterLog.debug(LOG_TAG, "Looks like current install id was already reported, skip reporting.");
-            }
-        } else {
-            AppCenterLog.debug(LOG_TAG, "Install id feature is disabled.");
+            url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getParametersForReleaseInstallation(releaseHash, distributionGroupId));
         }
 
         Map<String, String> headers = new HashMap<>();
@@ -986,6 +970,11 @@ public class Distribute extends AbstractAppCenterService {
      * Handle API call success.
      */
     private synchronized void handleApiCallSuccess(Object releaseCallId, String rawReleaseDetails, ReleaseDetails releaseDetails) {
+        String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
+        if (!TextUtils.isEmpty(lastDownloadedReleaseHash) && lastDownloadedReleaseHash.equals(DistributeUtils.computeReleaseHash(mPackageInfo))) {
+            AppCenterLog.debug(LOG_TAG, "Successfully reported in-app update for downloaded release hash (" + lastDownloadedReleaseHash + "), removing from store..");
+            PreferencesStorage.remove(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
+        }
 
         /* Check if state did not change. */
         if (mCheckReleaseCallId == releaseCallId) {
@@ -1028,6 +1017,32 @@ public class Distribute extends AbstractAppCenterService {
             /* If update dialog was not shown or scheduled, complete workflow. */
             completeWorkflow();
         }
+    }
+
+    /**
+     * Get reporting parameters for new release installation.
+     *
+     * @param releaseHash         current installed release hash.
+     * @param distributionGroupId distribution group id.
+     */
+    @NonNull
+    private String getParametersForReleaseInstallation(String releaseHash, String distributionGroupId) {
+        AppCenterLog.debug(LOG_TAG, "Check if we need to report release installation..");
+        String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
+        if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
+            if (lastDownloadedReleaseHash.equals(releaseHash)) {
+                AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");
+                String installId = AppCenter.getInstallId().get().toString();
+                return "&" + PARAMETER_INSTALL_ID + "=" + installId + "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
+            } else {
+                AppCenterLog.debug(LOG_TAG, "New release was downloaded but not installed yet, skip reporting.");
+            }
+        } else {
+            AppCenterLog.debug(LOG_TAG, "Current release was already reported, skip reporting.");
+        }
+
+        /* No release installation will be reported */
+        return "";
     }
 
     /**
