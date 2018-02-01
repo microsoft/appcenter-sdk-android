@@ -65,7 +65,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest({DistributeUtils.class})
+@PrepareForTest(DistributeUtils.class)
 public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
     @Test
