@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
@@ -235,6 +236,11 @@ public class Distribute extends AbstractAppCenterService {
     private String mLauncherActivityClassName;
 
     /**
+     * Channel listener which adds extra fields to logs.
+     */
+    private DistributeInfoTracker mDistributeInfoTracker;
+
+    /**
      * Custom listener if any.
      */
     private DistributeListener mListener;
@@ -424,6 +430,11 @@ public class Distribute extends AbstractAppCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
+
+            /* Enable the distribute info tracker. */
+            String distributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
+            mDistributeInfoTracker = new DistributeInfoTracker(distributionGroupId);
+            mChannel.addListener(mDistributeInfoTracker);
             HandlerUtils.runOnUiThread(new Runnable() {
 
                 @Override
@@ -441,6 +452,10 @@ public class Distribute extends AbstractAppCenterService {
             PreferencesStorage.remove(PREFERENCE_KEY_POSTPONE_TIME);
             PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
             PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+
+            /* Disable the distribute info tracker. */
+            mChannel.removeListener(mDistributeInfoTracker);
+            mDistributeInfoTracker = null;
         }
     }
 
@@ -759,6 +774,7 @@ public class Distribute extends AbstractAppCenterService {
         /* If the group was from Mobile Center storage, save it in the new storage. */
         if (mobileCenterFailOver) {
             PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
+            mDistributeInfoTracker.updateDistributionGroupId(distributionGroupId);
         }
 
         /* Check latest release. */
@@ -837,6 +853,7 @@ public class Distribute extends AbstractAppCenterService {
             PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
             AppCenterLog.debug(LOG_TAG, "Stored redirection parameters.");
             PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+            mDistributeInfoTracker.updateDistributionGroupId(distributionGroupId);
             cancelPreviousTasks();
             getLatestReleaseDetails(distributionGroupId, updateToken);
         } else {
@@ -956,6 +973,7 @@ public class Distribute extends AbstractAppCenterService {
                     AppCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
                     PreferencesStorage.remove(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
                     PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+                    mDistributeInfoTracker.removeDistributionGroupId();
                 }
             }
         }

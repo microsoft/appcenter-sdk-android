@@ -14,6 +14,7 @@ import android.widget.Toast;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
@@ -102,6 +103,9 @@ public class AbstractDistributeTest {
     @Mock
     private AppCenterFuture<Boolean> mBooleanAppCenterFuture;
 
+    @Mock
+    DistributeInfoTracker mDistributeInfoTracker;
+
     @Before
     @SuppressLint("ShowToast")
     @SuppressWarnings("ResourceType")
@@ -119,6 +123,7 @@ public class AbstractDistributeTest {
                 return null;
             }
         }).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
+        whenNew(DistributeInfoTracker.class).withAnyArguments().thenReturn(mDistributeInfoTracker);
 
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
         mockStatic(PreferencesStorage.class);
