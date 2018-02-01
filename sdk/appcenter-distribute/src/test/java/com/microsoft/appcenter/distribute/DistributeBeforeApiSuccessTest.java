@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.HttpException;
@@ -242,6 +243,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -275,6 +277,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         HashMap<String, String> headers = new HashMap<>();
         verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
@@ -483,6 +486,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
@@ -508,6 +512,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
@@ -532,6 +537,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
@@ -602,6 +608,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         HashMap<String, String> headers = new HashMap<>();
         verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
@@ -626,6 +633,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
@@ -650,6 +658,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
@@ -1066,6 +1075,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token MC");
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "some group MC");
+        verify(mDistributeInfoTracker).updateDistributionGroupId("some group MC");
     }
 
     @Test
@@ -1086,5 +1096,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PreferencesStorage.putString(eq(PREFERENCE_KEY_UPDATE_TOKEN), anyString());
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "some group MC");
+        verify(mDistributeInfoTracker).updateDistributionGroupId("some group MC");
     }
 }

@@ -15,6 +15,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
 
+import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.ServiceCall;
