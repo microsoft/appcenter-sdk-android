@@ -87,7 +87,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
@@ -970,10 +970,10 @@ public class Distribute extends AbstractAppCenterService {
      * Handle API call success.
      */
     private synchronized void handleApiCallSuccess(Object releaseCallId, String rawReleaseDetails, ReleaseDetails releaseDetails) {
-        String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
+        String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
         if (!TextUtils.isEmpty(lastDownloadedReleaseHash) && lastDownloadedReleaseHash.equals(DistributeUtils.computeReleaseHash(mPackageInfo))) {
             AppCenterLog.debug(LOG_TAG, "Successfully reported in-app update for downloaded release hash (" + lastDownloadedReleaseHash + "), removing from store..");
-            PreferencesStorage.remove(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
+            PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
         }
 
         /* Check if state did not change. */
@@ -1028,7 +1028,7 @@ public class Distribute extends AbstractAppCenterService {
     @NonNull
     private String getParametersForReleaseInstallation(String releaseHash, String distributionGroupId) {
         AppCenterLog.debug(LOG_TAG, "Check if we need to report release installation..");
-        String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
+        String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
         if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
             if (lastDownloadedReleaseHash.equals(releaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");

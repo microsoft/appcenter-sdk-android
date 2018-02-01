@@ -40,7 +40,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_ST
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
@@ -100,7 +100,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify on incompatible version we complete workflow. */
         verifyStatic(never());
-        PreferencesStorage.remove(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDialogBuilder, never()).create();
@@ -846,27 +846,15 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     public void shouldRemoveReleaseHashStorageIfReportedSuccessfully() throws Exception {
 
         /* Mock release hash storage */
-        when(PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-hash");
 
         /* Mock install id from AppCenter */
         final UUID installId = UUID.randomUUID();
-        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
-            @Override
-            public UUID get() {
-                return installId;
-            }
-
-            @Override
-            public void thenAccept(AppCenterConsumer<UUID> function) {
-            }
-
-            @Override
-            public boolean isDone() {
-                return false;
-            }
-        });
+        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
+        when(appCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
 
         /* Mock we already have token and no group. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -893,34 +881,22 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
     }
 
     @Test
     public void shouldNotRemoveReleaseHashStorageIfHashesDontMatch() throws Exception {
 
         /* Mock release hash storage */
-        when(PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-old-hash");
 
         /* Mock install id from AppCenter */
         final UUID installId = UUID.randomUUID();
-        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
-            @Override
-            public UUID get() {
-                return installId;
-            }
-
-            @Override
-            public void thenAccept(AppCenterConsumer<UUID> function) {
-            }
-
-            @Override
-            public boolean isDone() {
-                return false;
-            }
-        });
+        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
+        when(appCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
 
         /* Mock we already have token and no group. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -947,7 +923,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         verifyStatic(never());
-        PreferencesStorage.remove(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH);
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
     }
 
     /**

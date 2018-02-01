@@ -28,6 +28,7 @@ import org.json.JSONException;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Matchers;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -56,7 +57,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_R
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
@@ -100,21 +101,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock install id from AppCenter */
         final UUID installId = UUID.randomUUID();
-        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
-            @Override
-            public UUID get() {
-                return installId;
-            }
-
-            @Override
-            public void thenAccept(AppCenterConsumer<UUID> function) {
-            }
-
-            @Override
-            public boolean isDone() {
-                return false;
-            }
-        });
+        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
+        when(appCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
         Distribute.getInstance().onActivityPaused(activity);
         Distribute.getInstance().onActivityStopped(activity);
         Distribute.getInstance().onActivityDestroyed(activity);
@@ -469,21 +458,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock install id from AppCenter */
         final UUID installId = UUID.randomUUID();
-        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
-            @Override
-            public UUID get() {
-                return installId;
-            }
-
-            @Override
-            public void thenAccept(AppCenterConsumer<UUID> function) {
-            }
-
-            @Override
-            public boolean isDone() {
-                return false;
-            }
-        });
+        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
+        when(appCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
 
         /* Start and resume: open browser. */
         start();
@@ -607,21 +584,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock install id from AppCenter */
         final UUID installId = UUID.randomUUID();
-        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
-            @Override
-            public UUID get() {
-                return installId;
-            }
-
-            @Override
-            public void thenAccept(AppCenterConsumer<UUID> function) {
-            }
-
-            @Override
-            public boolean isDone() {
-                return false;
-            }
-        });
+        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
+        when(appCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
 
         /* Start and resume: open browser. */
         start();
@@ -745,21 +710,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock install id from AppCenter */
         final UUID installId = UUID.randomUUID();
-        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
-            @Override
-            public UUID get() {
-                return installId;
-            }
-
-            @Override
-            public void thenAccept(AppCenterConsumer<UUID> function) {
-            }
-
-            @Override
-            public boolean isDone() {
-                return false;
-            }
-        });
+        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
+        when(appCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
 
         /* Start and resume: open browser. */
         start();
@@ -799,21 +752,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock install id from AppCenter */
         final UUID installId = UUID.randomUUID();
-        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
-            @Override
-            public UUID get() {
-                return installId;
-            }
-
-            @Override
-            public void thenAccept(AppCenterConsumer<UUID> function) {
-            }
-
-            @Override
-            public boolean isDone() {
-                return false;
-            }
-        });
+        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
+        when(appCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
 
         /* Start and resume: open browser. */
         start();
@@ -838,22 +779,11 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock install id from AppCenter */
         final UUID installId = UUID.randomUUID();
-        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
-            @Override
-            public UUID get() {
-                return installId;
-            }
+        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
+        when(appCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
 
-            @Override
-            public void thenAccept(AppCenterConsumer<UUID> function) {
-            }
-
-            @Override
-            public boolean isDone() {
-                return false;
-            }
-        });
-
+        /* Start and resume: open browser. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
@@ -1231,7 +1161,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     public void willNotReportReleaseInstallForPrivateGroupWhenReleaseHashesDontMatch() throws Exception {
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("fake-distribution-id");
-        when(PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-release-hash");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-release-hash");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();
@@ -1254,25 +1184,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     public void reportReleaseInstallForPrivateGroupWhenReleaseHashesMatch() throws Exception {
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("fake-distribution-id");
-        when(PreferencesStorage.getString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH)).thenReturn(TEST_HASH);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn(TEST_HASH);
 
         /* Mock install id from AppCenter */
         final UUID installId = UUID.randomUUID();
-        when(AppCenter.getInstallId()).thenReturn(new AppCenterFuture<UUID>() {
-            @Override
-            public UUID get() {
-                return installId;
-            }
-
-            @Override
-            public void thenAccept(AppCenterConsumer<UUID> function) {
-            }
-
-            @Override
-            public boolean isDone() {
-                return false;
-            }
-        });
+        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
+        when(appCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();

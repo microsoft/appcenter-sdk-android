@@ -18,7 +18,7 @@ import java.util.NoSuchElementException;
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 
 /**
  * Inspect a pending or completed download.
@@ -159,7 +159,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
 
                     /* Add downloaded release hash to report after installation */
                     AppCenterLog.debug(LOG_TAG, "Adding downloaded release hash for later reporting.");
-                    StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH, mReleaseDetails.getReleaseHash());
+                    StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, mReleaseDetails.getReleaseHash());
                 }
             } finally {
                 cursor.close();

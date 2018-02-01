@@ -117,11 +117,6 @@ final class DistributeConstants {
     static final String PARAMETER_INSTALL_ID = "install_id";
 
     /**
-     * API parameter for last installed release hash.
-     */
-    static final String PARAMETER_LAST_DOWNLOADED_RELEASE_HASH = "downloaded_release_hash";
-
-    /**
      * Header used to pass token when checking latest release.
      */
     static final String HEADER_API_TOKEN = "x-api-token";
@@ -186,6 +181,11 @@ final class DistributeConstants {
     static final String NOTIFICATION_CHANNEL_ID = "appcenter.distribute";
 
     /**
+     * Previous name of preferences, used for fail-over logic for missing token/distribution group.
+     */
+    static final String PREFERENCES_NAME_MOBILE_CENTER = "MobileCenter";
+
+    /**
      * Base key for stored preferences.
      */
     private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
@@ -212,9 +212,9 @@ final class DistributeConstants {
     static final String PREFERENCE_KEY_UPDATE_TOKEN = PREFERENCE_PREFIX + EXTRA_UPDATE_TOKEN;
 
     /**
-     * Preference key to store latest installed release hash.
+     * Preference key to store latest downloaded release hash.
      */
-    static final String PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH = PREFERENCE_PREFIX + PARAMETER_LAST_DOWNLOADED_RELEASE_HASH;
+    static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH = PREFERENCE_PREFIX + "downloaded_release_hash";
 
     /**
      * Preference key to store distribution group identifier.
@@ -225,11 +225,6 @@ final class DistributeConstants {
      * Preference key to store release details.
      */
     static final String PREFERENCE_KEY_RELEASE_DETAILS = PREFERENCE_PREFIX + "release_details";
-
-    /**
-     * Previous name of preferences, used for fail-over logic for missing token/distribution group.
-     */
-    static final String PREFERENCES_NAME_MOBILE_CENTER = "MobileCenter";
 
     /**
      * Preference key to store download start time. Used to avoid showing install U.I. of a completed

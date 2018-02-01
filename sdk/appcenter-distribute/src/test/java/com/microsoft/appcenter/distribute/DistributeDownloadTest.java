@@ -40,7 +40,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOW
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -296,7 +296,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Verify no release hash was saved */
         verifyStatic(never());
-        PreferencesStorage.putString(eq(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH), anyString());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
 
         /* Verify enabling triggers update dialog again. */
         verify(mDialog).show();
@@ -325,7 +325,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Verify release hash was saved */
         verifyStatic();
-        PreferencesStorage.putString(eq(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH), anyString());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
         verifyNoMoreInteractions(mNotificationManager);
         verify(cursor).close();
     }
@@ -387,7 +387,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Verify no release hash was saved */
         verifyStatic(never());
-        PreferencesStorage.putString(eq(PREFERENCE_KEY_LAST_DOWNLOADED_RELEASE_HASH), anyString());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
         verifyZeroInteractions(mNotificationManager);
     }
 
