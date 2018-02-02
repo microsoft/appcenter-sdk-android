@@ -439,6 +439,32 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void testerAppNotInstalled() throws Exception {
+
+        /* Setup mock. */
+        UUID requestId = UUID.randomUUID();
+        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+        when(mContext.getPackageManager().getPackageInfo("com.microsoft.hockeyapp.testerapp", 0)).thenThrow(new PackageManager.NameNotFoundException());
+
+        /* Start and resume: open browser. */
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verifyStatic();
+        String url = DistributeConstants.DEFAULT_INSTALL_URL;
+        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
+        url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
+        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
+        BrowserUtils.openBrowser(url, mActivity);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
+    }
+
+    @Test
     public void happyPathUsingTesterAppUpdateSetup() throws Exception {
 
         /* Setup mock. */
