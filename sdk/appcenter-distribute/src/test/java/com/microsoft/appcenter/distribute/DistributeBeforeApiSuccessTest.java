@@ -439,6 +439,117 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void happyPathUsingTesterAppUpdateSetup() throws Exception {
+
+        /* Setup mock. */
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        UUID requestId = UUID.randomUUID();
+        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn(null);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+        whenNew(Intent.class).withArguments(Intent.ACTION_VIEW).thenReturn(mock(Intent.class));
+        when(mContext.getPackageManager().getPackageInfo("com.microsoft.hockeyapp.testerapp", 0)).thenReturn(mock(PackageInfo.class));
+
+        /* Start and resume: open tester app. */
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        String url = "ms-actesterapp://update-setup";
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
+        url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
+        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        verify(mActivity).startActivity(intent);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
+
+        /* Store token. */
+        Distribute.getInstance().storeRedirectionParameters(requestId.toString(), "g", "some token");
+
+        /* Verify behavior. */
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
+            }
+        }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* If call already made, activity changed must not recall it. */
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Verify behavior. */
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
+            }
+        }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Call is still in progress. If we restart app, nothing happens we still wait. */
+        restartResumeLauncher(mActivity);
+
+        /* Verify behavior not changed. */
+        verify(mActivity).startActivity(intent);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
+            }
+        }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* If process is restarted, a new call will be made. Need to mock storage for that. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("g");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verify(httpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
+            }
+        }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
     public void happyPathUntilHangingCallWithToken() throws Exception {
 
         /* Setup mock. */
