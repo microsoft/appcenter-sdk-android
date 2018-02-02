@@ -839,7 +839,7 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Store a flag for failure to enable updates from the tester apps, to later reattempt using the
+     * Store a flag for failure to enable updates from the tester apps, to later reattempt using the browser update setup.
      */
     synchronized void storeTesterAppUpdateSetupFailedParameter(@NonNull String requestId, @NonNull String updateSetupFailed) {
         if (requestId.equals(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
