@@ -755,7 +755,7 @@ public class Distribute extends AbstractAppCenterService {
         try {
             PackageInfo testerApp = mContext.getPackageManager().getPackageInfo("com.microsoft.hockeyapp.testerapp", 0);
             return testerApp != null;
-        } catch (PackageManager.NameNotFoundException e) {
+        } catch (PackageManager.NameNotFoundException ignored) {
             return false;
         }
     }
