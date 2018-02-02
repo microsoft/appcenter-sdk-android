@@ -180,8 +180,8 @@ public class AbstractDistributeTest {
 
             @Override
             public Boolean answer(InvocationOnMock invocation) throws Throwable {
-            CharSequence str = (CharSequence) invocation.getArguments()[0];
-            return str == null || str.length() == 0;
+                CharSequence str = (CharSequence) invocation.getArguments()[0];
+                return str == null || str.length() == 0;
             }
         });
 
@@ -200,7 +200,7 @@ public class AbstractDistributeTest {
 
             @Override
             public String answer(InvocationOnMock invocation) throws Throwable {
-            return invocation.getArguments()[0].toString();
+                return invocation.getArguments()[0].toString();
             }
         });
 
@@ -211,16 +211,16 @@ public class AbstractDistributeTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-            when(mDialog.isShowing()).thenReturn(true);
-            return null;
+                when(mDialog.isShowing()).thenReturn(true);
+                return null;
             }
         }).when(mDialog).show();
         doAnswer(new Answer<Void>() {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-            when(mDialog.isShowing()).thenReturn(false);
-            return null;
+                when(mDialog.isShowing()).thenReturn(false);
+                return null;
             }
         }).when(mDialog).hide();
 
@@ -234,8 +234,8 @@ public class AbstractDistributeTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-            ((Runnable) invocation.getArguments()[0]).run();
-            return null;
+                ((Runnable) invocation.getArguments()[0]).run();
+                return null;
             }
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));

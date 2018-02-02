@@ -69,12 +69,17 @@ final class DistributeConstants {
     /**
      * Check latest public release API URL path. Contains the app secret variable to replace.
      */
-    static final String GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT = "/public/sdk/apps/%s/distribution_groups/%s/releases/latest?release_hash=%s";
+    static final String GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT = "/public/sdk/apps/%s/distribution_groups/%s/releases/latest?release_hash=%s%s";
 
     /**
      * API parameter for release hash.
      */
     static final String PARAMETER_RELEASE_HASH = "release_hash";
+
+    /**
+     * API parameter for release hash.
+     */
+    static final String PARAMETER_RELEASE_ID = "release_id";
 
     /**
      * API parameter for redirect URL.
@@ -215,6 +220,11 @@ final class DistributeConstants {
      * Preference key to store latest downloaded release hash.
      */
     static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH = PREFERENCE_PREFIX + "downloaded_release_hash";
+
+    /**
+     * Preference key to store latest downloaded release id.
+     */
+    static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_ID = PREFERENCE_PREFIX + "downloaded_release_id";
 
     /**
      * Preference key to store distribution group identifier.

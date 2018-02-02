@@ -18,13 +18,13 @@ import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
-import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import org.junit.After;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -39,8 +39,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
@@ -67,6 +68,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest(DistributeUtils.class)
 public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
+    @Mock
+    AppCenterFuture<UUID> mAppCenterFuture;
 
     @Test
     public void moreRecentWithIncompatibleMinApiLevel() throws Exception {
@@ -851,10 +854,9 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-hash");
 
         /* Mock install id from AppCenter */
-        final UUID installId = UUID.randomUUID();
-        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
-        when(appCenterFuture.get()).thenReturn(installId);
-        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
+        UUID installId = UUID.randomUUID();
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
         /* Mock we already have token and no group. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -868,8 +870,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
                 return mock(ServiceCall.class);
             }
         });
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(6);
@@ -882,6 +882,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
     }
 
     @Test
@@ -893,10 +895,9 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-old-hash");
 
         /* Mock install id from AppCenter */
-        final UUID installId = UUID.randomUUID();
-        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
-        when(appCenterFuture.get()).thenReturn(installId);
-        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
+        UUID installId = UUID.randomUUID();
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
         /* Mock we already have token and no group. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -910,8 +911,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
                 return mock(ServiceCall.class);
             }
         });
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(6);
@@ -924,6 +923,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         verifyStatic(never());
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
+        verifyStatic(never());
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
     }
 
     /**

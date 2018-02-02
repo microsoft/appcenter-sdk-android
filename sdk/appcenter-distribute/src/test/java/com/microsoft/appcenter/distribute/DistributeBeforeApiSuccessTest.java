@@ -28,7 +28,7 @@ import org.json.JSONException;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
-import org.mockito.Matchers;
+import org.mockito.Mock;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -55,9 +55,10 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_R
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REQUEST_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
@@ -88,6 +89,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
  */
 @PrepareForTest({ErrorDetails.class, DistributeUtils.class})
 public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
+    @Mock
+    AppCenterFuture<UUID> mAppCenterFuture;
 
     /**
      * Shared code to mock a restart of an activity considered to be the launcher.
@@ -100,10 +103,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(componentName.getClassName()).thenReturn(activity.getClass().getName());
 
         /* Mock install id from AppCenter */
-        final UUID installId = UUID.randomUUID();
-        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
-        when(appCenterFuture.get()).thenReturn(installId);
-        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
+        UUID installId = UUID.randomUUID();
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
         Distribute.getInstance().onActivityPaused(activity);
         Distribute.getInstance().onActivityStopped(activity);
         Distribute.getInstance().onActivityDestroyed(activity);
@@ -457,10 +459,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
 
         /* Mock install id from AppCenter */
-        final UUID installId = UUID.randomUUID();
-        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
-        when(appCenterFuture.get()).thenReturn(installId);
-        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
+        UUID installId = UUID.randomUUID();
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
         /* Start and resume: open browser. */
         start();
@@ -583,10 +584,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
 
         /* Mock install id from AppCenter */
-        final UUID installId = UUID.randomUUID();
-        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
-        when(appCenterFuture.get()).thenReturn(installId);
-        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
+        UUID installId = UUID.randomUUID();
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
         /* Start and resume: open browser. */
         start();
@@ -709,10 +709,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
 
         /* Mock install id from AppCenter */
-        final UUID installId = UUID.randomUUID();
-        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
-        when(appCenterFuture.get()).thenReturn(installId);
-        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
+        UUID installId = UUID.randomUUID();
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
         /* Start and resume: open browser. */
         start();
@@ -751,10 +750,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(mPackageManager.getPackageInfo("com.contoso", 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Mock install id from AppCenter */
-        final UUID installId = UUID.randomUUID();
-        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
-        when(appCenterFuture.get()).thenReturn(installId);
-        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
+        UUID installId = UUID.randomUUID();
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
         /* Start and resume: open browser. */
         start();
@@ -778,10 +776,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
 
         /* Mock install id from AppCenter */
-        final UUID installId = UUID.randomUUID();
-        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
-        when(appCenterFuture.get()).thenReturn(installId);
-        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
+        UUID installId = UUID.randomUUID();
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
         /* Start and resume: open browser. */
         start();
@@ -1137,14 +1134,16 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void willNotReportReleaseInstallForPrivateGroupWithoutStoredReleaseHash() throws Exception {
-        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
-        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("some group MC");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some encrypted token");
+        when(mCryptoUtils.decrypt(eq("some encrypted token"), anyBoolean())).thenReturn(new CryptoUtils.DecryptedData("some token", "some better encrypted token"));
+
+        /* Mock httpClient. */
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token MC");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
-        /* Primary storage will be missing data. */
+        /* Trigger call. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         ArgumentMatcher<String> urlArg = new ArgumentMatcher<String>() {
@@ -1162,6 +1161,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("fake-distribution-id");
         when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-release-hash");
+
+        /* Mock httpClient. */
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();
@@ -1182,15 +1183,18 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void reportReleaseInstallForPrivateGroupWhenReleaseHashesMatch() throws Exception {
+        final String distributionGroupId = "fake-distribution-id";
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
-        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("fake-distribution-id");
+        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn(distributionGroupId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn(TEST_HASH);
+        when(PreferencesStorage.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID)).thenReturn(4);
 
         /* Mock install id from AppCenter */
         final UUID installId = UUID.randomUUID();
-        AppCenterFuture<UUID> appCenterFuture = mock(AppCenterFuture.class);
-        when(appCenterFuture.get()).thenReturn(installId);
-        when(AppCenter.getInstallId()).thenReturn(appCenterFuture);
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
+
+        /* Mock httpClient. */
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();
@@ -1203,7 +1207,37 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
             @Override
             public boolean matches(Object argument) {
-                return argument.toString().matches("^https://.*?/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "&install_id=" + installId + "&distribution_group_id=fake-distribution-id$");
+                return argument.toString().matches("^https://.*?/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "&distribution_group_id=" + distributionGroupId + "&release_id=4$");
+            }
+        };
+        verify(httpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void reportReleaseInstallForPublicGroupWhenReleaseHashesMatch() throws Exception {
+        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn(null);
+        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("fake-distribution-id");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn(TEST_HASH);
+        when(PreferencesStorage.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID)).thenReturn(4);
+
+        /* Mock install id from AppCenter */
+        final UUID installId = UUID.randomUUID();
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
+
+        /* Mock httpClient. */
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        HashMap<String, String> headers = new HashMap<>();
+
+        /* Primary storage will be missing data. */
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        ArgumentMatcher<String> urlArg = new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().matches("^https://.*?/public/sdk/apps/a/distribution_groups/fake-distribution-id/releases/latest\\?release_hash=" + TEST_HASH + "&install_id=" + installId + "&release_id=4$");
             }
         };
         verify(httpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
