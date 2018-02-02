@@ -139,9 +139,9 @@ public class Distribute extends AbstractAppCenterService {
     private Activity mForegroundActivity;
 
     /**
-     * Remember if we should first try to open the native tester app before browser to update setup.
+     * Remember if we already tried to open the tester app to update setup.
      */
-    private boolean mShouldUseTesterAppForUpdateSetup;
+    private boolean mTesterAppOpenedOrAborted;
 
     /**
      * Remember if we already tried to open the browser to update setup.
@@ -406,7 +406,7 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.info(LOG_TAG, "Launcher activity restarted.");
             if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
                 mWorkflowCompleted = false;
-                mShouldUseTesterAppForUpdateSetup = false;
+                mTesterAppOpenedOrAborted = false;
                 mBrowserOpenedOrAborted = false;
             }
         }
@@ -441,7 +441,7 @@ public class Distribute extends AbstractAppCenterService {
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
-            mShouldUseTesterAppForUpdateSetup = false;
+            mTesterAppOpenedOrAborted = false;
             mBrowserOpenedOrAborted = false;
             mWorkflowCompleted = false;
             cancelPreviousTasks();
@@ -736,15 +736,13 @@ public class Distribute extends AbstractAppCenterService {
                 }
             }
 
-            /* If not, open native app (if installed) to update setup, unless it already failed. */
+            /* If not, open native app (if installed) to update setup, unless it already failed. Otherwise, use the browser. */
             String testerAppUpdateSetupFailedMessage = PreferencesStorage.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-            mShouldUseTesterAppForUpdateSetup = isAppCenterTesterAppInstalled() && (testerAppUpdateSetupFailedMessage == null || testerAppUpdateSetupFailedMessage.isEmpty());
-            if (mShouldUseTesterAppForUpdateSetup) {
-                mShouldUseTesterAppForUpdateSetup = DistributeUtils.updateSetupUsingTesterApp(mForegroundActivity, mPackageInfo);
-            }
-
-            /* If the native app could not be opened, use the browser to update setup. */
-            if (!mBrowserOpenedOrAborted && !mShouldUseTesterAppForUpdateSetup) {
+            boolean shouldUseTesterAppForUpdateSetup = isAppCenterTesterAppInstalled() && (testerAppUpdateSetupFailedMessage == null || testerAppUpdateSetupFailedMessage.isEmpty());
+            if (shouldUseTesterAppForUpdateSetup && !mTesterAppOpenedOrAborted) {
+                DistributeUtils.updateSetupUsingTesterApp(mForegroundActivity, mPackageInfo);
+                mTesterAppOpenedOrAborted = true;
+            } else if (!mBrowserOpenedOrAborted) {
                 DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret, mPackageInfo);
                 mBrowserOpenedOrAborted = true;
             }

@@ -103,7 +103,7 @@ class DistributeUtils {
      *
      * @return whether the tester app was opened or not.
      */
-    static boolean updateSetupUsingTesterApp(Activity activity, PackageInfo packageInfo) {
+    static void updateSetupUsingTesterApp(Activity activity, PackageInfo packageInfo) {
 
         /* Compute hash. */
         String releaseHash = computeReleaseHash(packageInfo);
@@ -125,13 +125,7 @@ class DistributeUtils {
 
         /* Open the native tester app */
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-        try {
-            activity.startActivity(intent);
-        } catch (ActivityNotFoundException e) {
-            AppCenterLog.error(LOG_TAG, "The tester app could not be opened with url=" + url);
-            return false;
-        }
-        return true;
+        activity.startActivity(intent);
     }
 
     /**
