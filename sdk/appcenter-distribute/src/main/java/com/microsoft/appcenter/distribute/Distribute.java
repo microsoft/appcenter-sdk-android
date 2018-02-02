@@ -139,9 +139,9 @@ public class Distribute extends AbstractAppCenterService {
     private Activity mForegroundActivity;
 
     /**
-     * Remember if we already tried to open the native tester app to update setup.
+     * Remember if we should first try to open the native tester app before browser to update setup.
      */
-    private boolean mTesterAppOpenedOrAborted;
+    private boolean mShouldUseTesterAppForUpdateSetup;
 
     /**
      * Remember if we already tried to open the browser to update setup.
@@ -406,7 +406,7 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.info(LOG_TAG, "Launcher activity restarted.");
             if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
                 mWorkflowCompleted = false;
-                mTesterAppOpenedOrAborted = false;
+                mShouldUseTesterAppForUpdateSetup = false;
                 mBrowserOpenedOrAborted = false;
             }
         }
@@ -441,7 +441,7 @@ public class Distribute extends AbstractAppCenterService {
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
-            mTesterAppOpenedOrAborted = false;
+            mShouldUseTesterAppForUpdateSetup = false;
             mBrowserOpenedOrAborted = false;
             mWorkflowCompleted = false;
             cancelPreviousTasks();
@@ -738,13 +738,13 @@ public class Distribute extends AbstractAppCenterService {
 
             /* If not, open native app (if installed) to update setup, unless it already failed. */
             String testerAppUpdateSetupFailedMessage = PreferencesStorage.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-            boolean testerAppUpdateSetupFailed = testerAppUpdateSetupFailedMessage != null && !testerAppUpdateSetupFailedMessage.isEmpty();
-            if (isAppCenterTesterAppInstalled() && !mTesterAppOpenedOrAborted && !testerAppUpdateSetupFailed) {
-                mTesterAppOpenedOrAborted = DistributeUtils.updateSetupUsingTesterApp(mForegroundActivity, mPackageInfo);
+            mShouldUseTesterAppForUpdateSetup = isAppCenterTesterAppInstalled() && (testerAppUpdateSetupFailedMessage == null || testerAppUpdateSetupFailedMessage.isEmpty());
+            if (mShouldUseTesterAppForUpdateSetup) {
+                mShouldUseTesterAppForUpdateSetup = DistributeUtils.updateSetupUsingTesterApp(mForegroundActivity, mPackageInfo);
             }
 
             /* If the native app could not be opened, use the browser to update setup. */
-            if (!mBrowserOpenedOrAborted && (!mTesterAppOpenedOrAborted || testerAppUpdateSetupFailed)) {
+            if (!mBrowserOpenedOrAborted && !mShouldUseTesterAppForUpdateSetup) {
                 DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret, mPackageInfo);
                 mBrowserOpenedOrAborted = true;
             }
@@ -756,8 +756,8 @@ public class Distribute extends AbstractAppCenterService {
             PackageInfo testerApp = mContext.getPackageManager().getPackageInfo("com.microsoft.hockeyapp.testerapp", 0);
             return testerApp != null;
         } catch (PackageManager.NameNotFoundException e) {
+            return false;
         }
-        return false;
     }
 
     private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId, boolean mobileCenterFailOver) {
