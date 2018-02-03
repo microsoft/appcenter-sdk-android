@@ -406,7 +406,6 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.info(LOG_TAG, "Launcher activity restarted.");
             if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
                 mWorkflowCompleted = false;
-                mTesterAppOpenedOrAborted = false;
                 mBrowserOpenedOrAborted = false;
             }
         }
