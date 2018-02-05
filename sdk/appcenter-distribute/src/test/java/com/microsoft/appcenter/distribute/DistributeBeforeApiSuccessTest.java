@@ -445,7 +445,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
-        when(mContext.getPackageManager().getPackageInfo("com.microsoft.hockeyapp.testerapp", 0)).thenThrow(new PackageManager.NameNotFoundException());
+        when(mContext.getPackageManager().getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */
         start();
@@ -474,18 +474,18 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn(null);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
-        whenNew(Intent.class).withArguments(Intent.ACTION_VIEW).thenReturn(mock(Intent.class));
-        when(mContext.getPackageManager().getPackageInfo("com.microsoft.hockeyapp.testerapp", 0)).thenReturn(mock(PackageInfo.class));
-
-        /* Start and resume: open tester app. */
-        start();
-        Distribute.getInstance().onActivityResumed(mActivity);
         String url = "ms-actesterapp://update-setup";
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        whenNew(Intent.class).withArguments(Intent.ACTION_VIEW, Uri.parse(url)).thenReturn(mock(Intent.class));
+        when(mContext.getPackageManager().getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenReturn(mock(PackageInfo.class));
+
+        /* Start and resume: open tester app. */
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         verify(mActivity).startActivity(intent);
         verifyStatic();

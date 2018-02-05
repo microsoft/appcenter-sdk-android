@@ -8,6 +8,7 @@ import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -37,6 +38,12 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_SETU
  * Some static util methods to avoid the main file getting too big.
  */
 class DistributeUtils {
+
+    /**
+     * Scheme used to open the native Android tester app.
+     */
+    @VisibleForTesting
+    static final String TESTER_APP_URL_SCHEME = "com.microsoft.hockeyapp.testerapp";
 
     /**
      * Get the intent used to open installation U.I.
