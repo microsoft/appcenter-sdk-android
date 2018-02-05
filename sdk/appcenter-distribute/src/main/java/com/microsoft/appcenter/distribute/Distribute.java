@@ -750,11 +750,11 @@ public class Distribute extends AbstractAppCenterService {
 
     private boolean isAppCenterTesterAppInstalled() {
         try {
-            PackageInfo testerApp = mContext.getPackageManager().getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0);
-            return testerApp != null;
+            mContext.getPackageManager().getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0);
         } catch (PackageManager.NameNotFoundException ignored) {
             return false;
         }
+        return true;
     }
 
     private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId, boolean mobileCenterFailOver) {
