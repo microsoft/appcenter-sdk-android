@@ -12,7 +12,6 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 import com.microsoft.appcenter.channel.Channel;
-import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.HttpException;
