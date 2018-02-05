@@ -158,7 +158,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                         distribute.completeWorkflow(mReleaseDetails);
                     }
 
-                    /* Add downloaded release hash to report after installation */
+                    /* Add downloaded release hash to report after installation. */
                     if (mReleaseDetails != null) {
                         AppCenterLog.debug(LOG_TAG, "Store downloaded release hash and id for later reporting.");
                         StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, mReleaseDetails.getReleaseHash());

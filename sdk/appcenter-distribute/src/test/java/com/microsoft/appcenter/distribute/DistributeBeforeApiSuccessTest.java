@@ -102,7 +102,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(intent.resolveActivity(mPackageManager)).thenReturn(componentName);
         when(componentName.getClassName()).thenReturn(activity.getClass().getName());
 
-        /* Mock install id from AppCenter */
+        /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
@@ -458,7 +458,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
 
-        /* Mock install id from AppCenter */
+        /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
@@ -583,7 +583,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
 
-        /* Mock install id from AppCenter */
+        /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
@@ -708,7 +708,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
 
-        /* Mock install id from AppCenter */
+        /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
@@ -749,7 +749,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Mock package manager. */
         when(mPackageManager.getPackageInfo("com.contoso", 0)).thenThrow(new PackageManager.NameNotFoundException());
 
-        /* Mock install id from AppCenter */
+        /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
@@ -775,7 +775,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
 
-        /* Mock install id from AppCenter */
+        /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
@@ -1189,7 +1189,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn(TEST_HASH);
         when(PreferencesStorage.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID)).thenReturn(4);
 
-        /* Mock install id from AppCenter */
+        /* Mock install id from AppCenter. */
         final UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
@@ -1220,7 +1220,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn(TEST_HASH);
         when(PreferencesStorage.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID)).thenReturn(4);
 
-        /* Mock install id from AppCenter */
+        /* Mock install id from AppCenter. */
         final UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);

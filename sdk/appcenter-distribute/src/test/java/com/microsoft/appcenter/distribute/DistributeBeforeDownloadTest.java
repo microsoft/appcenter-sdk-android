@@ -848,12 +848,12 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void shouldRemoveReleaseHashStorageIfReportedSuccessfully() throws Exception {
 
-        /* Mock release hash storage */
+        /* Mock release hash storage. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-hash");
 
-        /* Mock install id from AppCenter */
+        /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
@@ -889,12 +889,12 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void shouldNotRemoveReleaseHashStorageIfHashesDontMatch() throws Exception {
 
-        /* Mock release hash storage */
+        /* Mock release hash storage. */
         when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-old-hash");
 
-        /* Mock install id from AppCenter */
+        /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);

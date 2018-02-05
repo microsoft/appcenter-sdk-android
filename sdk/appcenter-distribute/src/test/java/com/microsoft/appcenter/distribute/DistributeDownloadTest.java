@@ -294,7 +294,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
-        /* Verify no release hash was saved */
+        /* Verify no release hash was saved. */
         verifyStatic(never());
         PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
 
@@ -323,7 +323,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
-        /* Verify release hash was saved */
+        /* Verify release hash was saved. */
         verifyStatic();
         PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
         verifyNoMoreInteractions(mNotificationManager);
@@ -385,7 +385,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
-        /* Verify no release hash was saved */
+        /* Verify no release hash was saved. */
         verifyStatic(never());
         PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
         verifyZeroInteractions(mNotificationManager);

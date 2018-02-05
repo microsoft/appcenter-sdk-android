@@ -1030,7 +1030,7 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param isPublic            are the parameters for public group or not.
      *                            For public group we report install_id and release_id.
-     *                            For private group we report distribution_group_id and release_id
+     *                            For private group we report distribution_group_id and release_id.
      * @param distributionGroupId distribution group id.
      */
     @NonNull
