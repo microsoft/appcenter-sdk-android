@@ -284,6 +284,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void postponeBrowserIfNoNetwork() throws Exception {
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Check browser not opened if no network. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
@@ -584,6 +585,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */
         start();
@@ -703,6 +705,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */
         start();
@@ -822,6 +825,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */
         start();
@@ -873,7 +877,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void disableBeforeStoreToken() {
+    public void disableBeforeStoreToken() throws Exception {
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */
         UUID requestId = UUID.randomUUID();
