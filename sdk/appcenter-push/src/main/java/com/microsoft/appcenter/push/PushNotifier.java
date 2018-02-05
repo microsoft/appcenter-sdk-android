@@ -14,6 +14,7 @@ import android.graphics.drawable.AdaptiveIconDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
@@ -108,7 +109,7 @@ class PushNotifier {
         /* Set sound. */
         setSound(context, pushIntent, builder);
 
-        /* Texts */
+        /* Set texts. */
         builder.setContentTitle(notificationTitle).
                 setContentText(notificationMessage).
                 setWhen(System.currentTimeMillis());
@@ -196,9 +197,18 @@ class PushNotifier {
      * @param builder    The builder to modify.
      */
     private static void setIcon(Context context, Intent pushIntent, Notification.Builder builder) {
-        int iconResourceId = 0;
+
+        /* Check custom icon from intent. */
         String iconString = PushIntentUtils.getIcon(pushIntent);
-        if (iconString != null) {
+
+        /* Check custom default icon. */
+        if (iconString == null) {
+            iconString = context.getString(R.string.appcenter_push_default_icon);
+        }
+
+        /* Try to get resource identifier. */
+        int iconResourceId = 0;
+        if (!TextUtils.isEmpty(iconString)) {
             Resources resources = context.getResources();
             String packageName = context.getPackageName();
             iconResourceId = resources.getIdentifier(iconString, "drawable", packageName);
@@ -214,6 +224,8 @@ class PushNotifier {
         if (iconResourceId != 0) {
             iconResourceId = validateIcon(context, iconResourceId);
         }
+
+        /* If no custom icon specified use application icon. */
         if (iconResourceId == 0) {
             AppCenterLog.debug(LOG_TAG, "Using application icon as notification icon.");
             iconResourceId = validateIcon(context, context.getApplicationInfo().icon);
