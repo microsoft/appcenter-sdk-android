@@ -9,14 +9,17 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.HandlerUtils;
+import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.NoSuchElementException;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
 
 /**
  * Inspect a pending or completed download.
@@ -153,6 +156,15 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                         distribute.setInstalling(mReleaseDetails);
                     } else {
                         distribute.completeWorkflow(mReleaseDetails);
+                    }
+
+                    /* Add downloaded release hash to report after installation. */
+                    if (mReleaseDetails != null) {
+                        AppCenterLog.debug(LOG_TAG, "Store downloaded release hash and id for later reporting.");
+                        StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, mReleaseDetails.getReleaseHash());
+                        StorageHelper.PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, mReleaseDetails.getId());
+                    } else {
+                        AppCenterLog.debug(LOG_TAG, "Release details are missing or broken, will not store release hash and id for reporting.");
                     }
                 }
             } finally {
