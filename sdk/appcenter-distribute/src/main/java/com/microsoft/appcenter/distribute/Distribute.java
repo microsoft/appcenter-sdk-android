@@ -865,9 +865,9 @@ public class Distribute extends AbstractAppCenterService {
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
-            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, distributionGroupId, releaseHash, getReportingParametersForNewInstallation(true, ""));
+            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, distributionGroupId, releaseHash, getReportingParametersForUpdatedRelease(true, ""));
         } else {
-            url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForNewInstallation(false, distributionGroupId));
+            url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false, distributionGroupId));
         }
         Map<String, String> headers = new HashMap<>();
         if (updateToken != null) {
@@ -1026,7 +1026,7 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Get reporting parameters for new release installation.
+     * Get reporting parameters for updated release.
      *
      * @param isPublic            are the parameters for public group or not.
      *                            For public group we report install_id and release_id.
@@ -1034,7 +1034,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param distributionGroupId distribution group id.
      */
     @NonNull
-    private String getReportingParametersForNewInstallation(boolean isPublic, String distributionGroupId) {
+    private String getReportingParametersForUpdatedRelease(boolean isPublic, String distributionGroupId) {
         String reportingParameters = "";
         AppCenterLog.debug(LOG_TAG, "Check if we need to report release installation..");
         String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
@@ -1047,7 +1047,7 @@ public class Distribute extends AbstractAppCenterService {
                 } else {
                     reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
                 }
-                Integer lastDownloadedReleaseId = PreferencesStorage.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
+                int lastDownloadedReleaseId = PreferencesStorage.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
                 reportingParameters += "&" + PARAMETER_RELEASE_ID + "=" + lastDownloadedReleaseId;
             } else {
                 AppCenterLog.debug(LOG_TAG, "New release was downloaded but not installed yet, skip reporting.");

@@ -68,8 +68,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest(DistributeUtils.class)
 public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
+
     @Mock
-    AppCenterFuture<UUID> mAppCenterFuture;
+    private AppCenterFuture<UUID> mAppCenterFuture;
 
     @Test
     public void moreRecentWithIncompatibleMinApiLevel() throws Exception {

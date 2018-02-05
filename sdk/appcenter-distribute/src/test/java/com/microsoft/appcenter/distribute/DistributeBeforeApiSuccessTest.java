@@ -89,8 +89,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
  */
 @PrepareForTest({ErrorDetails.class, DistributeUtils.class})
 public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
+
     @Mock
-    AppCenterFuture<UUID> mAppCenterFuture;
+    private AppCenterFuture<UUID> mAppCenterFuture;
 
     /**
      * Shared code to mock a restart of an activity considered to be the launcher.
