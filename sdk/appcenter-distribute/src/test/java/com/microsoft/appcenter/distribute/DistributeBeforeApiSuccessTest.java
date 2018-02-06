@@ -207,6 +207,17 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void storeTesterAppUpdateSetupFailedParameterBeforeStart() throws Exception {
+
+        /* Setup mock. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
+        start();
+        Distribute.getInstance().storeTesterAppUpdateSetupFailedParameter("r", "error_message");
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY, "error_message");
+    }
+
+    @Test
     public void storeUpdateSetupFailedParameterWithIncorrectRequestIdBeforeStart() throws Exception {
 
         /* Setup mock. */
