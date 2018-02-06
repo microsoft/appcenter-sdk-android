@@ -475,6 +475,11 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
+        /* Mock install id from AppCenter. */
+        UUID installId = UUID.randomUUID();
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
+
         /* Start and resume: open browser. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
@@ -487,6 +492,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
+        url += "&" + PARAMETER_INSTALL_ID + "=" + installId.toString();
         BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
         PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
