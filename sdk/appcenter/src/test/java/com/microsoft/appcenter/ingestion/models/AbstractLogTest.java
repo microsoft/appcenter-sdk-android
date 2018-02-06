@@ -62,6 +62,16 @@ public class AbstractLogTest {
         b.setSid(sid1);
         checkEquals(a, b);
 
+        /* Distribution group ID. */
+        String distributionGroupId1 = UUID.randomUUID().toString();
+        String distributionGroupId2 = UUID.randomUUID().toString();
+        a.setDistributionGroupId(distributionGroupId1);
+        checkNotEquals(a, b);
+        b.setDistributionGroupId(distributionGroupId2);
+        checkNotEquals(a, b);
+        b.setDistributionGroupId(distributionGroupId1);
+        checkEquals(a, b);
+
         /* Device. */
         Device d1 = new Device();
         d1.setLocale("a");
@@ -87,21 +97,26 @@ public class AbstractLogTest {
     public void readWithoutOptionalPropertiesTest() throws JSONException {
         AbstractLog mockLog = new MockLogWithType();
         UUID uuid = UUID.randomUUID();
+        String distributionGroupId = UUID.randomUUID().toString();
 
         JSONObject mockJsonObject = mock(JSONObject.class);
         when(mockJsonObject.getString(CommonProperties.TYPE)).thenReturn(mockLog.getType());
         when(mockJsonObject.getString(AbstractLog.TIMESTAMP)).thenReturn("2017-07-08T01:17:43.245Z");
         when(mockJsonObject.has(AbstractLog.SID)).thenReturn(false).thenReturn(true);
+        when(mockJsonObject.has(AbstractLog.DISTRIBUTION_GROUP_ID)).thenReturn(false).thenReturn(true);
         when(mockJsonObject.has(AbstractLog.DEVICE)).thenReturn(false).thenReturn(true);
         when(mockJsonObject.getString(AbstractLog.SID)).thenReturn(uuid.toString());
+        when(mockJsonObject.getString(AbstractLog.DISTRIBUTION_GROUP_ID)).thenReturn(distributionGroupId);
         when(mockJsonObject.getJSONObject(AbstractLog.DEVICE)).thenReturn(mock(JSONObject.class));
 
         mockLog.read(mockJsonObject);
         assertNull(mockLog.getSid());
+        assertNull(mockLog.getDistributionGroupId());
         assertNull(mockLog.getDevice());
 
         mockLog.read(mockJsonObject);
         assertEquals(uuid, mockLog.getSid());
+        assertEquals(distributionGroupId, mockLog.getDistributionGroupId());
         assertNotNull(mockLog.getDevice());
     }
 
