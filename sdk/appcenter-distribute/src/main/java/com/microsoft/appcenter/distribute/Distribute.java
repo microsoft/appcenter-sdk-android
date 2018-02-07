@@ -465,6 +465,7 @@ public class Distribute extends AbstractAppCenterService {
             PreferencesStorage.remove(PREFERENCE_KEY_POSTPONE_TIME);
             PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
             PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+            PreferencesStorage.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
 
             /* Disable the distribute info tracker. */
             mChannel.removeListener(mDistributeInfoTracker);
@@ -611,6 +612,7 @@ public class Distribute extends AbstractAppCenterService {
                     AppCenterLog.info(LOG_TAG, "Re-attempting in-app updates setup and cleaning up failure info from storage.");
                     PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
                     PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+                    PreferencesStorage.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
                 }
             }
 
@@ -1288,6 +1290,7 @@ public class Distribute extends AbstractAppCenterService {
 
             /* Clear the update setup failure info from storage, to re-attempt setup on reinstall. */
             PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+            PreferencesStorage.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
         } else {
             showDisabledToast();
         }
