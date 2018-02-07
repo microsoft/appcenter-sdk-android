@@ -516,19 +516,31 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+        String url = "ms-actesterapp://update-setup";
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
+        url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
+        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        whenNew(Intent.class).withArguments(Intent.ACTION_VIEW, Uri.parse(url)).thenReturn(mock(Intent.class));
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenReturn(mock(PackageInfo.class));
-        when(PreferencesStorage.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("true");
 
         /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
-        /* Start and resume: open browser. */
+        /* Start and resume: open tester app. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
-        verifyStatic();
-        String url = DistributeConstants.DEFAULT_INSTALL_URL;
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        verify(mActivity).startActivity(intent);
+
+        /* Start and resume: open browser. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("true");
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
+        url = DistributeConstants.DEFAULT_INSTALL_URL;
         url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
@@ -537,9 +549,15 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         url += "&" + PARAMETER_INSTALL_ID + "=" + installId.toString();
-        BrowserUtils.openBrowser(url, mActivity);
         verifyStatic();
-        PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
+        BrowserUtils.openBrowser(url, mActivity);
+
+        /* Start and resume: open browser. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn(null);
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verifyStatic();
+        BrowserUtils.openBrowser(url, mActivity);
     }
 
     @Test
