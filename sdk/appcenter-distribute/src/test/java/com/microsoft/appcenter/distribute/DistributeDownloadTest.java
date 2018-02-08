@@ -37,10 +37,11 @@ import static android.app.DownloadManager.EXTRA_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -294,9 +295,11 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
-        /* Verify no release hash was saved. */
+        /* Verify no release hash+id were saved. */
         verifyStatic(never());
         PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
+        verifyStatic(never());
+        PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
 
         /* Verify enabling triggers update dialog again. */
         verify(mDialog).show();
@@ -323,9 +326,11 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
-        /* Verify release hash was saved. */
+        /* Verify release hash+id were saved. */
         verifyStatic();
         PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
+        verifyStatic();
+        PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
         verifyNoMoreInteractions(mNotificationManager);
         verify(cursor).close();
     }
@@ -385,9 +390,11 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
-        /* Verify no release hash was saved. */
+        /* Verify no release hash+id were saved. */
         verifyStatic(never());
         PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
+        verifyStatic(never());
+        PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
         verifyZeroInteractions(mNotificationManager);
     }
 
