@@ -77,9 +77,9 @@ final class DistributeConstants {
     static final String PARAMETER_RELEASE_HASH = "release_hash";
 
     /**
-     * API parameter for release hash.
+     * API parameter for release identifier.
      */
-    static final String PARAMETER_RELEASE_ID = "release_id";
+    static final String PARAMETER_RELEASE_ID = "downloaded_release_id";
 
     /**
      * API parameter for redirect URL.
