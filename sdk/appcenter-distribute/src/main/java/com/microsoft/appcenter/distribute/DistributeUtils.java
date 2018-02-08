@@ -108,8 +108,6 @@ class DistributeUtils {
      *
      * @param activity    activity from which to start tester app.
      * @param packageInfo package info.
-     *
-     * @return whether the tester app was opened or not.
      */
     static void updateSetupUsingTesterApp(Activity activity, PackageInfo packageInfo) {
 
