@@ -2,7 +2,6 @@ package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
 import android.app.Notification;
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
