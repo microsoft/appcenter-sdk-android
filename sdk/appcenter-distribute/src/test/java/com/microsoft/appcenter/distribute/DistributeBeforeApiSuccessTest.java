@@ -321,7 +321,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void postponeBrowserIfNoNetwork() throws Exception {
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Check browser not opened if no network. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
@@ -483,7 +483,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
@@ -509,6 +509,28 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void useBrowserUpdateSetupIfAppIsTesterApp() throws Exception {
+
+        /* Setup mock. */
+        UUID requestId = UUID.randomUUID();
+        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenReturn(mock(PackageInfo.class));
+        when(mContext.getPackageName()).thenReturn(DistributeUtils.TESTER_APP_PACKAGE_NAME);
+
+        /* Mock install id from AppCenter. */
+        UUID installId = UUID.randomUUID();
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
+
+        /* Start and resume: open browser. */
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verifyStatic();
+        BrowserUtils.openBrowser(anyString(), any(Activity.class));
+    }
+
+    @Test
     public void testerAppUpdateSetupFailed() throws Exception {
 
         /* Setup mock. */
@@ -522,7 +544,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         whenNew(Intent.class).withArguments(Intent.ACTION_VIEW, Uri.parse(url)).thenReturn(mock(Intent.class));
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenReturn(mock(PackageInfo.class));
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenReturn(mock(PackageInfo.class));
 
         /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
@@ -576,7 +598,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         whenNew(Intent.class).withArguments(Intent.ACTION_VIEW, Uri.parse(url)).thenReturn(mock(Intent.class));
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenReturn(mock(PackageInfo.class));
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenReturn(mock(PackageInfo.class));
 
         /* Start and resume: open tester app. */
         start();
@@ -679,7 +701,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
@@ -808,7 +830,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
@@ -937,7 +959,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
@@ -1001,7 +1023,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void disableBeforeStoreToken() throws Exception {
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */
         UUID requestId = UUID.randomUUID();

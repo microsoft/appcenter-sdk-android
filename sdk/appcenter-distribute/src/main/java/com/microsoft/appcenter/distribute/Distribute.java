@@ -760,7 +760,7 @@ public class Distribute extends AbstractAppCenterService {
 
             /* If not, open native app (if installed) to update setup, unless it already failed. Otherwise, use the browser. */
             String testerAppUpdateSetupFailedMessage = PreferencesStorage.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-            boolean shouldUseTesterAppForUpdateSetup = isAppCenterTesterAppInstalled() && TextUtils.isEmpty(testerAppUpdateSetupFailedMessage);
+            boolean shouldUseTesterAppForUpdateSetup = isAppCenterTesterAppInstalled() && TextUtils.isEmpty(testerAppUpdateSetupFailedMessage) && !mContext.getPackageName().equals(DistributeUtils.TESTER_APP_PACKAGE_NAME);
             if (shouldUseTesterAppForUpdateSetup && !mTesterAppOpenedOrAborted) {
                 DistributeUtils.updateSetupUsingTesterApp(mForegroundActivity, mPackageInfo);
                 mTesterAppOpenedOrAborted = true;
@@ -773,7 +773,7 @@ public class Distribute extends AbstractAppCenterService {
 
     private boolean isAppCenterTesterAppInstalled() {
         try {
-            mContext.getPackageManager().getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0);
+            mContext.getPackageManager().getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0);
         } catch (PackageManager.NameNotFoundException ignored) {
             return false;
         }
