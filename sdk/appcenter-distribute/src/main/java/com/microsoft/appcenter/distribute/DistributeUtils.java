@@ -7,6 +7,7 @@ import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -38,6 +39,12 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_SETU
  * Some static util methods to avoid the main file getting too big.
  */
 class DistributeUtils {
+
+    /**
+     * Scheme used to open the native Android tester app.
+     */
+    @VisibleForTesting
+    static final String TESTER_APP_URL_SCHEME = "com.microsoft.hockeyapp.testerapp";
 
     /**
      * Get the intent used to open installation U.I.
@@ -94,6 +101,38 @@ class DistributeUtils {
     @NonNull
     static String computeReleaseHash(@NonNull PackageInfo packageInfo) {
         return HashUtils.sha256(packageInfo.packageName + ":" + packageInfo.versionName + ":" + packageInfo.versionCode);
+    }
+
+    /**
+     * Update setup using native tester app.
+     *
+     * @param activity    activity from which to start tester app.
+     * @param packageInfo package info.
+     */
+    static void updateSetupUsingTesterApp(Activity activity, PackageInfo packageInfo) {
+
+        /* Compute hash. */
+        String releaseHash = computeReleaseHash(packageInfo);
+
+        /* Generate request identifier. */
+        String requestId = UUIDUtils.randomUUID().toString();
+
+        /* Build URL. */
+        String url = "ms-actesterapp://update-setup";
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + releaseHash;
+        url += "&" + PARAMETER_REDIRECT_ID + "=" + activity.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
+        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        AppCenterLog.debug(LOG_TAG, "No token, need to open tester app to url=" + url);
+
+        /* Store request id. */
+        StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
+
+        /* Open the native tester app */
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activity.startActivity(intent);
     }
 
     /**

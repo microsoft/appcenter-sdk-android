@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 
 import com.microsoft.appcenter.AppCenter;
@@ -60,6 +61,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
@@ -218,6 +220,17 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void storeTesterAppUpdateSetupFailedParameterBeforeStart() throws Exception {
+
+        /* Setup mock. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
+        start();
+        Distribute.getInstance().storeTesterAppUpdateSetupFailedParameter("r", "error_message");
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY, "error_message");
+    }
+
+    @Test
     public void storeUpdateSetupFailedParameterWithIncorrectRequestIdBeforeStart() throws Exception {
 
         /* Setup mock. */
@@ -226,6 +239,17 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.getInstance().storeUpdateSetupFailedParameter("r2", "error_message");
         verifyStatic(never());
         PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, "error_message");
+    }
+
+    @Test
+    public void storeTesterAppUpdateSetupFailedParameterWithIncorrectRequestIdBeforeStart() throws Exception {
+
+        /* Setup mock. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
+        start();
+        Distribute.getInstance().storeTesterAppUpdateSetupFailedParameter("r2", "error_message");
+        verifyStatic(never());
+        PreferencesStorage.putString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY, "error_message");
     }
 
     @Test
@@ -297,6 +321,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void postponeBrowserIfNoNetwork() throws Exception {
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Check browser not opened if no network. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
@@ -452,6 +477,200 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void testerAppNotInstalled() throws Exception {
+
+        /* Setup mock. */
+        UUID requestId = UUID.randomUUID();
+        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+
+        /* Mock install id from AppCenter. */
+        UUID installId = UUID.randomUUID();
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
+
+        /* Start and resume: open browser. */
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verifyStatic();
+        String url = DistributeConstants.DEFAULT_INSTALL_URL;
+        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
+        url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
+        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
+        url += "&" + PARAMETER_INSTALL_ID + "=" + installId.toString();
+        BrowserUtils.openBrowser(url, mActivity);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
+    }
+
+    @Test
+    public void testerAppUpdateSetupFailed() throws Exception {
+
+        /* Setup mock. */
+        UUID requestId = UUID.randomUUID();
+        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+        String url = "ms-actesterapp://update-setup";
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
+        url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
+        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        whenNew(Intent.class).withArguments(Intent.ACTION_VIEW, Uri.parse(url)).thenReturn(mock(Intent.class));
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenReturn(mock(PackageInfo.class));
+
+        /* Mock install id from AppCenter. */
+        UUID installId = UUID.randomUUID();
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
+
+        /* Start and resume: open tester app. */
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        verify(mActivity).startActivity(intent);
+
+        /* Start and resume: open browser. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("true");
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
+        url = DistributeConstants.DEFAULT_INSTALL_URL;
+        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
+        url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
+        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
+        url += "&" + PARAMETER_INSTALL_ID + "=" + installId.toString();
+        verifyStatic();
+        BrowserUtils.openBrowser(url, mActivity);
+
+        /* Start and resume: open browser. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn(null);
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verifyStatic();
+        BrowserUtils.openBrowser(url, mActivity);
+    }
+
+    @Test
+    public void happyPathUsingTesterAppUpdateSetup() throws Exception {
+
+        /* Setup mock. */
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        UUID requestId = UUID.randomUUID();
+        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn(null);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+        String url = "ms-actesterapp://update-setup";
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
+        url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
+        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        whenNew(Intent.class).withArguments(Intent.ACTION_VIEW, Uri.parse(url)).thenReturn(mock(Intent.class));
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenReturn(mock(PackageInfo.class));
+
+        /* Start and resume: open tester app. */
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        verify(mActivity).startActivity(intent);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
+
+        /* Store token. */
+        Distribute.getInstance().storeRedirectionParameters(requestId.toString(), "g", "some token");
+
+        /* Verify behavior. */
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
+            }
+        }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* If call already made, activity changed must not recall it. */
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Verify behavior. */
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
+            }
+        }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Call is still in progress. If we restart app, nothing happens we still wait. */
+        restartResumeLauncher(mActivity);
+
+        /* Verify behavior not changed. */
+        verify(mActivity).startActivity(intent);
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
+            }
+        }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* If process is restarted, a new call will be made. Need to mock storage for that. */
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("g");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        restartProcessAndSdk();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verify(httpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().startsWith(DistributeConstants.DEFAULT_API_URL);
+            }
+        }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
     public void happyPathUntilHangingCallWithToken() throws Exception {
 
         /* Setup mock. */
@@ -460,6 +679,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
@@ -588,6 +808,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
@@ -716,6 +937,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Mock install id from AppCenter. */
         UUID installId = UUID.randomUUID();
@@ -778,7 +1000,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void disableBeforeStoreToken() {
+    public void disableBeforeStoreToken() throws Exception {
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_URL_SCHEME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */
         UUID requestId = UUID.randomUUID();

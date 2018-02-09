@@ -46,6 +46,11 @@ final class DistributeConstants {
     static final String EXTRA_UPDATE_SETUP_FAILED = "update_setup_failed";
 
     /**
+     * Used for deep link intent from browser, string field for tester app update setup failed identifier.
+     */
+    static final String EXTRA_TESTER_APP_UPDATE_SETUP_FAILED = "tester_app_update_setup_failed";
+
+    /**
      * Base URL used to open browser to check install and get API token to check latest release.
      */
     static final String DEFAULT_INSTALL_URL = "https://install.appcenter.ms";
@@ -260,6 +265,11 @@ final class DistributeConstants {
      * Preference key for update setup failure error message.
      */
     static final String PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY = PREFERENCE_PREFIX + "update_setup_failed_message";
+
+    /**
+     * Preference key for tester app update setup failure error message.
+     */
+    static final String PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY = PREFERENCE_PREFIX + "tester_app_update_setup_failed_message";
 
     @VisibleForTesting
     DistributeConstants() {
