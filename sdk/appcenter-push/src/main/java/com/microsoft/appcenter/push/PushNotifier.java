@@ -179,16 +179,7 @@ class PushNotifier {
         }
 
         /* Check default color. */
-        int colorResourceId = 0;
-        Bundle metaData = null;
-        try {
-            metaData = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA).metaData;
-        } catch (PackageManager.NameNotFoundException e) {
-            AppCenterLog.error(LOG_TAG, "Package name not found.", e);
-        }
-        if (metaData != null) {
-            colorResourceId = metaData.getInt(DEFAULT_COLOR_METADATA_NAME);
-        }
+        int colorResourceId = getResourceIdFromMetadata(context, DEFAULT_ICON_METADATA_NAME);
         if (colorResourceId != 0) {
             AppCenterLog.debug(LOG_TAG, "Using color specified in meta-data for notification.");
             builder.setColor(getColor(context, colorResourceId));
@@ -260,15 +251,7 @@ class PushNotifier {
 
         /* Check default icon. */
         if (iconResourceId == 0) {
-            Bundle metaData = null;
-            try {
-                metaData = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA).metaData;
-            } catch (PackageManager.NameNotFoundException e) {
-                AppCenterLog.error(LOG_TAG, "Package name not found.", e);
-            }
-            if (metaData != null) {
-                iconResourceId = metaData.getInt(DEFAULT_ICON_METADATA_NAME);
-            }
+            iconResourceId = getResourceIdFromMetadata(context, DEFAULT_ICON_METADATA_NAME);
             if (iconResourceId != 0) {
                 AppCenterLog.debug(LOG_TAG, "Using icon specified in meta-data for notification.");
                 iconResourceId = validateIcon(context, iconResourceId);
@@ -299,6 +282,19 @@ class PushNotifier {
             iconResourceId = 0;
         }
         return iconResourceId;
+    }
+
+    private static int getResourceIdFromMetadata(Context context, String metadataName) {
+        Bundle metaData = null;
+        try {
+            metaData = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA).metaData;
+        } catch (PackageManager.NameNotFoundException e) {
+            AppCenterLog.error(LOG_TAG, "Package name not found.", e);
+        }
+        if (metaData != null) {
+            return metaData.getInt(metadataName);
+        }
+        return 0;
     }
 
     private static int getColor(Context context, int colorResourceId) {
