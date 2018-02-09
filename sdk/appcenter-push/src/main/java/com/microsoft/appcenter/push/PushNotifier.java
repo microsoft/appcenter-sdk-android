@@ -13,6 +13,7 @@ import android.graphics.Color;
 import android.graphics.drawable.AdaptiveIconDrawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
@@ -35,6 +36,11 @@ class PushNotifier {
      * Default channel name on Android 8.
      */
     private static final String CHANNEL_NAME = "Push";
+
+    /**
+     * Default icon meta-data name.
+     */
+    private static final String DEFAULT_ICON_METADATA_NAME = "com.microsoft.appcenter.push.default_notification_icon";
 
     /**
      * Builds a push notification using the given context and intent.
@@ -201,11 +207,6 @@ class PushNotifier {
         /* Check custom icon from intent. */
         String iconString = PushIntentUtils.getIcon(pushIntent);
 
-        /* Check custom default icon. */
-        if (iconString == null) {
-            iconString = context.getString(R.string.appcenter_push_default_icon);
-        }
-
         /* Try to get resource identifier. */
         int iconResourceId = 0;
         if (!TextUtils.isEmpty(iconString)) {
@@ -225,7 +226,24 @@ class PushNotifier {
             iconResourceId = validateIcon(context, iconResourceId);
         }
 
-        /* If no custom icon specified use application icon. */
+        /* Check default icon. */
+        if (iconResourceId == 0) {
+            Bundle metaData = null;
+            try {
+                metaData = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA).metaData;
+            } catch (PackageManager.NameNotFoundException e) {
+                AppCenterLog.error(LOG_TAG, "Package name not found.", e);
+            }
+            if (metaData != null) {
+                iconResourceId = metaData.getInt(DEFAULT_ICON_METADATA_NAME);
+            }
+            if (iconResourceId != 0) {
+                AppCenterLog.debug(LOG_TAG, "Using icon specified in meta-data for notification.");
+                iconResourceId = validateIcon(context, iconResourceId);
+            }
+        }
+
+        /* If no icon specified use application icon. */
         if (iconResourceId == 0) {
             AppCenterLog.debug(LOG_TAG, "Using application icon as notification icon.");
             iconResourceId = validateIcon(context, context.getApplicationInfo().icon);
@@ -240,6 +258,9 @@ class PushNotifier {
     }
 
     private static int validateIcon(Context context, int iconResourceId) {
+        if (iconResourceId == 0) {
+            return iconResourceId;
+        }
         if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O && context.getDrawable(iconResourceId) instanceof AdaptiveIconDrawable) {
             AppCenterLog.error(LOG_TAG, "Adaptive icons make Notification center crash (system process) on Android 8.0 (was fixed on Android 8.1), " +
                     "please update your icon to be non adaptive or please use another icon to push.");
