@@ -44,7 +44,7 @@ class DistributeUtils {
      * Scheme used to open the native Android tester app.
      */
     @VisibleForTesting
-    static final String TESTER_APP_URL_SCHEME = "com.microsoft.hockeyapp.testerapp";
+    static final String TESTER_APP_PACKAGE_NAME = "com.microsoft.hockeyapp.testerapp";
 
     /**
      * Get the intent used to open installation U.I.
