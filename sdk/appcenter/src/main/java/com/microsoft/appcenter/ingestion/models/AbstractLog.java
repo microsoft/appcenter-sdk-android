@@ -33,6 +33,12 @@ public abstract class AbstractLog implements Log {
     static final String SID = "sid";
 
     /**
+     * Distribution group ID property.
+     */
+    @VisibleForTesting
+    static final String DISTRIBUTION_GROUP_ID = "distributionGroupId";
+
+    /**
      * device property.
      */
     @VisibleForTesting
@@ -47,6 +53,11 @@ public abstract class AbstractLog implements Log {
      * The session identifier that was provided when the session was started.
      */
     private UUID sid;
+
+    /**
+     * Optional distribution group ID value.
+     */
+    private String distributionGroupId;
 
     /**
      * Device characteristics associated to this log.
@@ -82,6 +93,24 @@ public abstract class AbstractLog implements Log {
     }
 
     /**
+     * Get the distributionGroupId value.
+     *
+     * @return the distributionGroupId value.
+     */
+    public String getDistributionGroupId() {
+        return this.distributionGroupId;
+    }
+
+    /**
+     * Set the distributionGroupId value.
+     *
+     * @param distributionGroupId the distributionGroupId value to set.
+     */
+    public void setDistributionGroupId(String distributionGroupId) {
+        this.distributionGroupId = distributionGroupId;
+    }
+
+    /**
      * Get the device value.
      *
      * @return the device value
@@ -104,6 +133,7 @@ public abstract class AbstractLog implements Log {
         JSONUtils.write(writer, TYPE, getType());
         writer.key(TIMESTAMP).value(JSONDateUtils.toString(getTimestamp()));
         JSONUtils.write(writer, SID, getSid());
+        JSONUtils.write(writer, DISTRIBUTION_GROUP_ID, getDistributionGroupId());
         if (getDevice() != null) {
             writer.key(DEVICE).object();
             getDevice().write(writer);
@@ -119,6 +149,9 @@ public abstract class AbstractLog implements Log {
         setTimestamp(JSONDateUtils.toDate(object.getString(TIMESTAMP)));
         if (object.has(SID)) {
             setSid(UUID.fromString(object.getString(SID)));
+        }
+        if (object.has(DISTRIBUTION_GROUP_ID)) {
+            setDistributionGroupId(object.getString(DISTRIBUTION_GROUP_ID));
         }
         if (object.has(DEVICE)) {
             Device device = new Device();
@@ -143,6 +176,9 @@ public abstract class AbstractLog implements Log {
         if (sid != null ? !sid.equals(that.sid) : that.sid != null) {
             return false;
         }
+        if (distributionGroupId != null ? !distributionGroupId.equals(that.distributionGroupId) : that.distributionGroupId != null) {
+            return false;
+        }
         return device != null ? device.equals(that.device) : that.device == null;
     }
 
@@ -150,6 +186,7 @@ public abstract class AbstractLog implements Log {
     public int hashCode() {
         int result = timestamp != null ? timestamp.hashCode() : 0;
         result = 31 * result + (sid != null ? sid.hashCode() : 0);
+        result = 31 * result + (distributionGroupId != null ? distributionGroupId.hashCode() : 0);
         result = 31 * result + (device != null ? device.hashCode() : 0);
         return result;
     }

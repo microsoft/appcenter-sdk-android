@@ -7,9 +7,11 @@ import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.utils.HashUtils;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
@@ -19,13 +21,14 @@ import org.json.JSONException;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_INSTALL_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_PLATFORM;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_PLATFORM_VALUE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REDIRECT_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REDIRECT_SCHEME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REQUEST_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
@@ -36,6 +39,12 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_SETU
  * Some static util methods to avoid the main file getting too big.
  */
 class DistributeUtils {
+
+    /**
+     * Scheme used to open the native Android tester app.
+     */
+    @VisibleForTesting
+    static final String TESTER_APP_PACKAGE_NAME = "com.microsoft.hockeyapp.testerapp";
 
     /**
      * Get the intent used to open installation U.I.
@@ -95,6 +104,38 @@ class DistributeUtils {
     }
 
     /**
+     * Update setup using native tester app.
+     *
+     * @param activity    activity from which to start tester app.
+     * @param packageInfo package info.
+     */
+    static void updateSetupUsingTesterApp(Activity activity, PackageInfo packageInfo) {
+
+        /* Compute hash. */
+        String releaseHash = computeReleaseHash(packageInfo);
+
+        /* Generate request identifier. */
+        String requestId = UUIDUtils.randomUUID().toString();
+
+        /* Build URL. */
+        String url = "ms-actesterapp://update-setup";
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + releaseHash;
+        url += "&" + PARAMETER_REDIRECT_ID + "=" + activity.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
+        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        AppCenterLog.debug(LOG_TAG, "No token, need to open tester app to url=" + url);
+
+        /* Store request id. */
+        StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
+
+        /* Open the native tester app */
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activity.startActivity(intent);
+    }
+
+    /**
      * Update setup using browser.
      *
      * @param activity    activity from which to start browser.
@@ -130,6 +171,8 @@ class DistributeUtils {
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
+        url += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get().toString();
+
         AppCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
 
         /* Store request id. */

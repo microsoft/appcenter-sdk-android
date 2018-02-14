@@ -36,9 +36,19 @@ final class DistributeConstants {
     static final String EXTRA_DISTRIBUTION_GROUP_ID = "distribution_group_id";
 
     /**
+     * Used for download count reporting API, string field for distribution group identifier.
+     */
+    static final String PARAMETER_DISTRIBUTION_GROUP_ID = "distribution_group_id";
+
+    /**
      * Used for deep link intent from browser, string field for update setup failed identifier.
      */
     static final String EXTRA_UPDATE_SETUP_FAILED = "update_setup_failed";
+
+    /**
+     * Used for deep link intent from browser, string field for tester app update setup failed identifier.
+     */
+    static final String EXTRA_TESTER_APP_UPDATE_SETUP_FAILED = "tester_app_update_setup_failed";
 
     /**
      * Base URL used to open browser to check install and get API token to check latest release.
@@ -59,17 +69,22 @@ final class DistributeConstants {
     /**
      * Check latest private release API URL path. Contains the app secret variable to replace.
      */
-    static final String GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT = "/sdk/apps/%s/releases/latest?release_hash=%s";
+    static final String GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT = "/sdk/apps/%s/releases/latest?release_hash=%s%s";
 
     /**
      * Check latest public release API URL path. Contains the app secret variable to replace.
      */
-    static final String GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT = "/public/sdk/apps/%s/distribution_groups/%s/releases/latest?release_hash=%s";
+    static final String GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT = "/public/sdk/apps/%s/distribution_groups/%s/releases/latest?release_hash=%s%s";
 
     /**
      * API parameter for release hash.
      */
     static final String PARAMETER_RELEASE_HASH = "release_hash";
+
+    /**
+     * API parameter for release identifier.
+     */
+    static final String PARAMETER_RELEASE_ID = "downloaded_release_id";
 
     /**
      * API parameter for redirect URL.
@@ -105,6 +120,11 @@ final class DistributeConstants {
      * API parameter for update setup failed key.
      */
     static final String PARAMETER_UPDATE_SETUP_FAILED = "update_setup_failed";
+
+    /**
+     * API parameter for install identifier.
+     */
+    static final String PARAMETER_INSTALL_ID = "install_id";
 
     /**
      * Header used to pass token when checking latest release.
@@ -171,6 +191,11 @@ final class DistributeConstants {
     static final String NOTIFICATION_CHANNEL_ID = "appcenter.distribute";
 
     /**
+     * Previous name of preferences, used for fail-over logic for missing token/distribution group.
+     */
+    static final String PREFERENCES_NAME_MOBILE_CENTER = "MobileCenter";
+
+    /**
      * Base key for stored preferences.
      */
     private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
@@ -197,6 +222,16 @@ final class DistributeConstants {
     static final String PREFERENCE_KEY_UPDATE_TOKEN = PREFERENCE_PREFIX + EXTRA_UPDATE_TOKEN;
 
     /**
+     * Preference key to store latest downloaded release hash.
+     */
+    static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH = PREFERENCE_PREFIX + "downloaded_release_hash";
+
+    /**
+     * Preference key to store latest downloaded release id.
+     */
+    static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_ID = PREFERENCE_PREFIX + "downloaded_release_id";
+
+    /**
      * Preference key to store distribution group identifier.
      */
     static final String PREFERENCE_KEY_DISTRIBUTION_GROUP_ID = PREFERENCE_PREFIX + EXTRA_DISTRIBUTION_GROUP_ID;
@@ -205,11 +240,6 @@ final class DistributeConstants {
      * Preference key to store release details.
      */
     static final String PREFERENCE_KEY_RELEASE_DETAILS = PREFERENCE_PREFIX + "release_details";
-
-    /**
-     * Previous name of preferences, used for fail-over logic for missing token/distribution group.
-     */
-    static final String PREFERENCES_NAME_MOBILE_CENTER = "MobileCenter";
 
     /**
      * Preference key to store download start time. Used to avoid showing install U.I. of a completed
@@ -235,6 +265,11 @@ final class DistributeConstants {
      * Preference key for update setup failure error message.
      */
     static final String PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY = PREFERENCE_PREFIX + "update_setup_failed_message";
+
+    /**
+     * Preference key for tester app update setup failure error message.
+     */
+    static final String PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY = PREFERENCE_PREFIX + "tester_app_update_setup_failed_message";
 
     @VisibleForTesting
     DistributeConstants() {

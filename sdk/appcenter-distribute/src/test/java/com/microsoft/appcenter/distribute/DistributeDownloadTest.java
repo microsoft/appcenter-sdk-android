@@ -37,6 +37,8 @@ import static android.app.DownloadManager.EXTRA_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
@@ -293,6 +295,12 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
+        /* Verify no release hash+id were saved. */
+        verifyStatic(never());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
+        verifyStatic(never());
+        PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
+
         /* Verify enabling triggers update dialog again. */
         verify(mDialog).show();
         Distribute.setEnabled(true);
@@ -317,6 +325,12 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verify(mContext).startActivity(installIntent);
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+
+        /* Verify release hash+id were saved. */
+        verifyStatic();
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
+        verifyStatic();
+        PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
         verifyNoMoreInteractions(mNotificationManager);
         verify(cursor).close();
     }
@@ -375,6 +389,12 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verify(mContext, never()).startActivity(any(Intent.class));
         verifyStatic();
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+
+        /* Verify no release hash+id were saved. */
+        verifyStatic(never());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
+        verifyStatic(never());
+        PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
         verifyZeroInteractions(mNotificationManager);
     }
 

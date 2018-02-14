@@ -95,6 +95,27 @@ public class DeepLinkActivityTest {
     }
 
     @Test
+    public void validWithTesterAppUpdateSetupFailedAndNoTaskRoot() {
+
+         /* Build valid intent. */
+        Intent intent = mock(Intent.class);
+        when(intent.getStringExtra(DistributeConstants.EXTRA_REQUEST_ID)).thenReturn("mock1");
+        when(intent.getStringExtra(DistributeConstants.EXTRA_TESTER_APP_UPDATE_SETUP_FAILED)).thenReturn("mock2");
+        when(intent.getFlags()).thenReturn(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
+
+        /* Start activity. */
+        DeepLinkActivity activity = spy(new DeepLinkActivity());
+        when(activity.getIntent()).thenReturn(intent);
+        activity.onCreate(null);
+
+         /* Verify interactions. */
+        verify(activity, never()).startActivity(any(Intent.class));
+        verify(mDistribute, never()).storeRedirectionParameters(anyString(), anyString(), anyString());
+        verify(activity).finish();
+        verify(mDistribute).storeTesterAppUpdateSetupFailedParameter("mock1", "mock2");
+    }
+
+    @Test
     public void validAndNoTaskRoot() {
 
         /* Build valid intent. */
