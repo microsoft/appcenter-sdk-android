@@ -13,7 +13,9 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.HttpException;
@@ -72,6 +74,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
@@ -89,7 +92,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 /**
  * Cover scenarios that are happening before we see an API call success for latest release.
  */
-@PrepareForTest({ErrorDetails.class, DistributeUtils.class})
+@PrepareForTest({ErrorDetails.class, DistributeUtils.class, SessionContext.class})
 public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Mock
@@ -1497,5 +1500,63 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
             }
         };
         verify(httpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void enqueueDistributionStartSessionLogAfterEnablingUpdates() throws Exception {
+
+        /* Setup mock. */
+        mockStatic(SessionContext.class);
+        SessionContext sessionContext = mock(SessionContext.class);
+        when(SessionContext.getInstance()).thenReturn(sessionContext);
+        SessionContext.SessionInfo sessionInfo = mock(SessionContext.SessionInfo.class);
+        when(sessionContext.getSessionAt(anyLong())).thenReturn(sessionInfo);
+        when(sessionInfo.getSessionId()).thenReturn(UUID.randomUUID());
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
+
+        /* Enable in-app updates. */
+        start();
+        Distribute.getInstance().storeRedirectionParameters("r", "g", null);
+
+        /* Verify the log was sent. */
+        verify(mChannel).enqueue(any(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()));
+    }
+
+    @Test
+    public void dontEnqueueDistributionStartSessionLogIfLastSessionIdIsNull() throws Exception {
+
+        /* Setup mock. */
+        mockStatic(SessionContext.class);
+        SessionContext sessionContext = mock(SessionContext.class);
+        when(SessionContext.getInstance()).thenReturn(sessionContext);
+        SessionContext.SessionInfo sessionInfo = mock(SessionContext.SessionInfo.class);
+        when(sessionContext.getSessionAt(anyLong())).thenReturn(sessionInfo);
+        when(sessionInfo.getSessionId()).thenReturn(null);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
+
+        /* Enable in-app updates. */
+        start();
+        Distribute.getInstance().storeRedirectionParameters("r", "g", null);
+
+        /* Verify the log was sent. */
+        verify(mChannel, never()).enqueue(any(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()));
+    }
+
+    @Test
+    public void dontEnqueueDistributionStartSessionLogIfNoSessionsWereLoggedBefore() throws Exception {
+
+        /* Setup mock. */
+        mockStatic(SessionContext.class);
+        SessionContext sessionContext = mock(SessionContext.class);
+        when(SessionContext.getInstance()).thenReturn(sessionContext);
+        when(sessionContext.getSessionAt(anyLong())).thenReturn(null);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
+
+        /* Enable in-app updates. */
+        start();
+        Distribute.getInstance().storeRedirectionParameters("r", "g", null);
+
+        /* Verify the log was sent. */
+        verify(mChannel, never()).enqueue(any(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()));
     }
 }
