@@ -1122,7 +1122,7 @@ public class Distribute extends AbstractAppCenterService {
             return;
         }
         String currentDistributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
-        if (lastDownloadedDistributionGroupId.equals(currentDistributionGroupId)) {
+        if (currentDistributionGroupId != null && lastDownloadedDistributionGroupId.equals(currentDistributionGroupId)) {
             return;
         }
 
