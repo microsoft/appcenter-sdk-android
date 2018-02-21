@@ -30,6 +30,8 @@ public class ReleaseDetails {
 
     private static final String PACKAGE_HASHES = "package_hashes";
 
+    private static final String DISTRIBUTION_GROUP_ID = "distribution_group_id";
+
     /**
      * ID identifying this unique release.
      */
@@ -80,6 +82,11 @@ public class ReleaseDetails {
     private String releaseHash;
 
     /**
+     * Distribution group identifier.
+     */
+    private String distributionGroupId;
+
+    /**
      * Parse a JSON string describing release details.
      *
      * @param json a string.
@@ -102,6 +109,7 @@ public class ReleaseDetails {
         }
         releaseDetails.mandatoryUpdate = object.getBoolean(MANDATORY_UPDATE);
         releaseDetails.releaseHash = object.getJSONArray(PACKAGE_HASHES).getString(0);
+        releaseDetails.distributionGroupId = object.getString(DISTRIBUTION_GROUP_ID);
         return releaseDetails;
     }
 
@@ -190,5 +198,14 @@ public class ReleaseDetails {
     @NonNull
     String getReleaseHash() {
         return releaseHash;
+    }
+
+    /**
+     * Get the distribution group identifier value.
+     *
+     * @return the distributionGroupId value
+     */
+    String getDistributionGroupId() {
+        return distributionGroupId;
     }
 }

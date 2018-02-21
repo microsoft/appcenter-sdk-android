@@ -232,6 +232,11 @@ final class DistributeConstants {
     static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_ID = PREFERENCE_PREFIX + "downloaded_release_id";
 
     /**
+     * Preference key to store distribution group identifier of latest downloaded release.
+     */
+    static final String PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID = PREFERENCE_PREFIX + "downloaded_distribution_group_id";
+
+    /**
      * Preference key to store distribution group identifier.
      */
     static final String PREFERENCE_KEY_DISTRIBUTION_GROUP_ID = PREFERENCE_PREFIX + EXTRA_DISTRIBUTION_GROUP_ID;

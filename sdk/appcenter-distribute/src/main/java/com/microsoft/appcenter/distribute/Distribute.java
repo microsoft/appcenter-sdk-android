@@ -86,6 +86,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_U
 import static com.microsoft.appcenter.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
@@ -442,6 +443,7 @@ public class Distribute extends AbstractAppCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
+            changeDistributionGroupIdAfterAppUpdateIfNeeded();
 
             /* Enable the distribute info tracker. */
             String distributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
@@ -1024,7 +1026,7 @@ public class Distribute extends AbstractAppCenterService {
     private synchronized void handleApiCallSuccess(Object releaseCallId, String rawReleaseDetails, ReleaseDetails releaseDetails) {
         String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
         if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
-            if (lastDownloadedReleaseHash.equals(DistributeUtils.computeReleaseHash(mPackageInfo))) {
+            if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Successfully reported app update for downloaded release hash (" + lastDownloadedReleaseHash + "), removing from store..");
                 PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
                 PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
@@ -1090,8 +1092,7 @@ public class Distribute extends AbstractAppCenterService {
         AppCenterLog.debug(LOG_TAG, "Check if we need to report release installation..");
         String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
         if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
-            String currentInstalledReleaseHash = computeReleaseHash(mPackageInfo);
-            if (lastDownloadedReleaseHash.equals(currentInstalledReleaseHash)) {
+            if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");
                 if (isPublic) {
                     reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get();
@@ -1107,6 +1108,47 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.debug(LOG_TAG, "Current release was already reported, skip reporting.");
         }
         return reportingParameters;
+    }
+
+    /**
+     * Check if an updated release has different group ID and update current group ID if needed.
+     * Group ID may change if one user is added to different distribution groups and a new release
+     * was distributed to another group.
+     */
+    private void changeDistributionGroupIdAfterAppUpdateIfNeeded() {
+        String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
+        String lastDownloadedDistributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
+        if (!isCurrentReleaseWasUpdated(lastDownloadedReleaseHash) || TextUtils.isEmpty(lastDownloadedDistributionGroupId)) {
+            return;
+        }
+        String currentDistributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
+        if (lastDownloadedDistributionGroupId.equals(currentDistributionGroupId)) {
+            return;
+        }
+
+        /* Set group ID from downloaded release details. */
+        AppCenterLog.debug(LOG_TAG, "Current group ID doesn't match the group ID of downloaded release, updating current group id=" + lastDownloadedDistributionGroupId);
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, lastDownloadedDistributionGroupId);
+
+        /* Remove saved downloaded group ID. */
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
+    }
+
+    /**
+     * Check if latest downloaded release was installed (app was updated).
+     *
+     * @param lastDownloadedReleaseHash hash of the last downloaded release.
+     * @return true if current release was updated.
+     */
+    private boolean isCurrentReleaseWasUpdated(String lastDownloadedReleaseHash) {
+        if (lastDownloadedReleaseHash == null || mPackageInfo == null) {
+            return false;
+        }
+        String currentInstalledReleaseHash = computeReleaseHash(mPackageInfo);
+        if (!currentInstalledReleaseHash.equals(lastDownloadedReleaseHash)) {
+            return false;
+        }
+        return true;
     }
 
     /**
