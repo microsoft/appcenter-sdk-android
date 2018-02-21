@@ -1012,6 +1012,21 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
     }
 
+    @Test
+    public void shouldNotChangeDistributionGroupIdIfCurrentPackageInfoIsNull() throws Exception {
+
+        /* Mock release details. */
+        mockStatic(DistributeUtils.class);
+        when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenReturn(null);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
+
+        /* Verify group ID. */
+        verifyStatic(never());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID), anyString());
+        verifyStatic(never());
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
+    }
+
     /**
      * Mock some storage calls.
      */

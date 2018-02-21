@@ -203,7 +203,7 @@ public class ReleaseDetails {
     /**
      * Get the distribution group identifier value.
      *
-     * @return the distributionGroupId value
+     * @return the distributionGroupId value.
      */
     String getDistributionGroupId() {
         return distributionGroupId;

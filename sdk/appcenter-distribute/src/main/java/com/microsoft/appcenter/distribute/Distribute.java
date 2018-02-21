@@ -1141,7 +1141,7 @@ public class Distribute extends AbstractAppCenterService {
      * @return true if current release was updated.
      */
     private boolean isCurrentReleaseWasUpdated(String lastDownloadedReleaseHash) {
-        if (lastDownloadedReleaseHash == null || mPackageInfo == null) {
+        if (mPackageInfo == null || TextUtils.isEmpty(lastDownloadedReleaseHash)) {
             return false;
         }
         String currentInstalledReleaseHash = computeReleaseHash(mPackageInfo);
