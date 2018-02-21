@@ -414,8 +414,7 @@ public class ReleaseDetailsTest {
         ReleaseDetails.parse(json);
     }
 
-    @Test(expected = JSONException.class)
-    public void missingDistributionGroupId() throws JSONException {
+    public void nullDistributionGroupId() throws JSONException {
         String json = "{" +
                 "id: 42," +
                 "version: '14'," +
@@ -426,7 +425,19 @@ public class ReleaseDetailsTest {
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
+        assertNotNull(releaseDetails);
+        assertEquals(42, releaseDetails.getId());
+        assertEquals(14, releaseDetails.getVersion());
+        assertEquals("2.1.5", releaseDetails.getShortVersion());
+        assertEquals("Fix a critical bug, this text was entered in App Center portal.", releaseDetails.getReleaseNotes());
+        assertEquals(Uri.parse("https://mock/"), releaseDetails.getReleaseNotesUrl());
+        assertEquals(19, releaseDetails.getMinApiLevel());
+        assertEquals(Uri.parse("http://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
+        assertFalse(releaseDetails.isMandatoryUpdate());
+        assertEquals("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60", releaseDetails.getReleaseHash());
+        assertNull(releaseDetails.getDistributionGroupId());
     }
 }

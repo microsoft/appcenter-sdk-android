@@ -109,7 +109,7 @@ public class ReleaseDetails {
         }
         releaseDetails.mandatoryUpdate = object.getBoolean(MANDATORY_UPDATE);
         releaseDetails.releaseHash = object.getJSONArray(PACKAGE_HASHES).getString(0);
-        releaseDetails.distributionGroupId = object.getString(DISTRIBUTION_GROUP_ID);
+        releaseDetails.distributionGroupId = object.isNull(DISTRIBUTION_GROUP_ID) ? null : object.getString(DISTRIBUTION_GROUP_ID);
         return releaseDetails;
     }
 
