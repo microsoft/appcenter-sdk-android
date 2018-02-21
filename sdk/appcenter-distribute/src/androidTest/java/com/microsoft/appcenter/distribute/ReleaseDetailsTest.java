@@ -414,6 +414,7 @@ public class ReleaseDetailsTest {
         ReleaseDetails.parse(json);
     }
 
+    @Test
     public void nullDistributionGroupId() throws JSONException {
         String json = "{" +
                 "id: 42," +
@@ -424,8 +425,7 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
-                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
         assertNotNull(releaseDetails);
