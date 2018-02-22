@@ -31,8 +31,11 @@ import android.widget.Toast;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
+import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
+import com.microsoft.appcenter.distribute.ingestion.models.json.DistributionStartSessionLogFactory;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
@@ -41,6 +44,7 @@ import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
@@ -115,6 +119,11 @@ public class Distribute extends AbstractAppCenterService {
      */
     @SuppressLint("StaticFieldLeak")
     private static Distribute sInstance;
+
+    /**
+     * Log factories managed by this service.
+     */
+    private final Map<String, LogFactory> mFactories;
 
     /**
      * Current install base URL.
@@ -272,6 +281,14 @@ public class Distribute extends AbstractAppCenterService {
     private SharedPreferences mMobileCenterPreferenceStorage;
 
     /**
+     * Init.
+     */
+    private Distribute() {
+        mFactories = new HashMap<>();
+        mFactories.put(DistributionStartSessionLog.TYPE, new DistributionStartSessionLogFactory());
+    }
+
+    /**
      * Get shared instance.
      *
      * @return shared instance.
@@ -355,7 +372,7 @@ public class Distribute extends AbstractAppCenterService {
 
     @Override
     protected String getGroupName() {
-        return null;
+        return DISTRIBUTE_GROUP;
     }
 
     @Override
@@ -367,6 +384,21 @@ public class Distribute extends AbstractAppCenterService {
     protected String getLoggerTag() {
         return LOG_TAG;
     }
+
+    @Override
+    protected int getTriggerCount() {
+        return 1;
+    }
+
+    @Override
+    public Map<String, LogFactory> getLogFactories() {
+        return mFactories;
+    }
+
+    /**
+     * Constant marking event of the distribute group.
+     */
+    private static final String DISTRIBUTE_GROUP = "group_distribute";
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
@@ -895,6 +927,7 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.debug(LOG_TAG, "Stored redirection parameters.");
             PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
             mDistributeInfoTracker.updateDistributionGroupId(distributionGroupId);
+            enqueueDistributionStartSessionLog();
             cancelPreviousTasks();
             getLatestReleaseDetails(distributionGroupId, updateToken);
         } else {
@@ -1806,5 +1839,32 @@ public class Distribute extends AbstractAppCenterService {
             cancelNotification();
             PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
         }
+    }
+
+    /**
+     * Send distribution start session log after enabling in-app updates (first app launch after installation).
+     */
+    private synchronized void enqueueDistributionStartSessionLog() {
+
+        /*
+         * Session starts before in-app updates setup (using browser) so the first start session log
+         * is sent without distributionGroupId value.
+         *
+         * Send the distribution start session log if start session log without distributionGroupId
+         * value was sent before
+         */
+        SessionContext.SessionInfo lastSession = SessionContext.getInstance().getSessionAt(System.currentTimeMillis());
+        if (lastSession == null || lastSession.getSessionId() == null) {
+            AppCenterLog.debug(DistributeConstants.LOG_TAG, "No sessions were logged before, ignore sending of the distribution start session log.");
+            return;
+        }
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                DistributionStartSessionLog log = new DistributionStartSessionLog();
+                mChannel.enqueue(log, DISTRIBUTE_GROUP);
+            }
+        });
     }
 }
