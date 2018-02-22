@@ -1145,10 +1145,7 @@ public class Distribute extends AbstractAppCenterService {
             return false;
         }
         String currentInstalledReleaseHash = computeReleaseHash(mPackageInfo);
-        if (!currentInstalledReleaseHash.equals(lastDownloadedReleaseHash)) {
-            return false;
-        }
-        return true;
+        return currentInstalledReleaseHash.equals(lastDownloadedReleaseHash);
     }
 
     /**

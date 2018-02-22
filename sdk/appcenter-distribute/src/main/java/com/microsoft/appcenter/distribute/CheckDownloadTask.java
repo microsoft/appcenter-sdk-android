@@ -196,7 +196,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
         }
         String groupId = mReleaseDetails.getDistributionGroupId();
         String releaseHash = mReleaseDetails.getReleaseHash();
-        int releaseId= mReleaseDetails.getId();
+        int releaseId = mReleaseDetails.getId();
         AppCenterLog.debug(LOG_TAG, "Store downloaded group id=" + groupId + " release hash=" + releaseHash + " release id=" + releaseId);
         StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
         StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);
