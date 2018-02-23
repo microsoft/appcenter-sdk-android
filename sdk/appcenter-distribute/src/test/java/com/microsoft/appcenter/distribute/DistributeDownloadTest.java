@@ -39,6 +39,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_ST
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
@@ -300,6 +301,8 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
         verifyStatic(never());
         PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
+        verifyStatic(never());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID), anyString());
 
         /* Verify enabling triggers update dialog again. */
         verify(mDialog).show();
@@ -331,6 +334,8 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
         verifyStatic();
         PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
+        verifyStatic();
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID), anyString());
         verifyNoMoreInteractions(mNotificationManager);
         verify(cursor).close();
     }
@@ -395,6 +400,8 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
         verifyStatic(never());
         PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
+        verifyStatic(never());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID), anyString());
         verifyZeroInteractions(mNotificationManager);
     }
 

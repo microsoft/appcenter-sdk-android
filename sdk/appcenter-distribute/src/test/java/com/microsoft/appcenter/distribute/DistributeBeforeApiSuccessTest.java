@@ -58,6 +58,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_R
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REQUEST_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
@@ -1558,5 +1559,102 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Verify the log was sent. */
         verify(mChannel, never()).enqueue(any(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()));
+    }
+
+    @Test
+    public void shouldChangeDistributionGroupIdIfStoredIdDoesntMatchDownloadedId() throws Exception {
+
+        /* Mock release details. */
+        String downloadedDistributionGroupId = "fake-downloaded-id";
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-hash");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("fake-id");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID)).thenReturn(downloadedDistributionGroupId);
+
+        /* Trigger call. */
+        start();
+
+        /* Verify group ID. */
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, downloadedDistributionGroupId);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
+    }
+
+    @Test
+    public void shouldChangeDistributionGroupIdIfStoredIdIsNull() throws Exception {
+
+        /* Mock release details. */
+        String downloadedDistributionGroupId = "fake-downloaded-id";
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-hash");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn(null);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID)).thenReturn(downloadedDistributionGroupId);
+
+        /* Trigger call. */
+        start();
+
+        /* Verify group ID. */
+        verifyStatic();
+        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, downloadedDistributionGroupId);
+        verifyStatic();
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
+    }
+
+    @Test
+    public void shouldNotChangeDistributionGroupIdIfStoredIdMatchDownloadedId() throws Exception {
+
+        /* Mock release details. */
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-hash");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("fake-id");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID)).thenReturn("fake-id");
+
+        /* Trigger call. */
+        start();
+
+        /* Verify group ID. */
+        verifyStatic(never());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID), anyString());
+        verifyStatic(never());
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
+    }
+
+    @Test
+    public void shouldNotChangeDistributionGroupIdIfAppWasntUpdated() throws Exception {
+
+        /* Mock release details. */
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-hash");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn(null);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("fake-id");
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID)).thenReturn(null);
+
+        /* Trigger call. */
+        start();
+
+        /* Verify group ID. */
+        verifyStatic(never());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID), anyString());
+        verifyStatic(never());
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
+    }
+
+    @Test
+    public void shouldNotChangeDistributionGroupIdIfCurrentPackageInfoIsNull() throws Exception {
+
+        /* Mock release details. */
+        mockStatic(DistributeUtils.class);
+        when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenReturn(null);
+        when(PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
+
+        /* Verify group ID. */
+        verifyStatic(never());
+        PreferencesStorage.putString(eq(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID), anyString());
+        verifyStatic(never());
+        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
     }
 }
