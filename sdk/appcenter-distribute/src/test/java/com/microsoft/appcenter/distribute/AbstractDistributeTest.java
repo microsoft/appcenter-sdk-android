@@ -98,6 +98,9 @@ public class AbstractDistributeTest {
     AppCenterHandler mAppCenterHandler;
 
     @Mock
+    Channel mChannel;
+
+    @Mock
     SharedPreferences mMobileCenterPreferencesStorage;
 
     @Mock
@@ -253,6 +256,6 @@ public class AbstractDistributeTest {
 
     void start() {
         Distribute.getInstance().onStarting(mAppCenterHandler);
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onStarted(mContext, "a", mChannel);
     }
 }

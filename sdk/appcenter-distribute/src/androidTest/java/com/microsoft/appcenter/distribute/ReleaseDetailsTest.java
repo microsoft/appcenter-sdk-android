@@ -24,7 +24,8 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
         assertNotNull(releaseDetails);
@@ -37,6 +38,7 @@ public class ReleaseDetailsTest {
         assertEquals(Uri.parse("http://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
         assertFalse(releaseDetails.isMandatoryUpdate());
         assertEquals("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60", releaseDetails.getReleaseHash());
+        assertEquals("fd37a4b1-4937-45ef-97fb-b864154371f0", releaseDetails.getDistributionGroupId());
     }
 
     @Test(expected = JSONException.class)
@@ -48,7 +50,8 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -63,7 +66,8 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -78,7 +82,8 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
         assertNotNull(releaseDetails);
@@ -102,7 +107,8 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -117,7 +123,8 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -131,7 +138,8 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -145,7 +153,8 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "download_url: 'https://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
         assertNotNull(releaseDetails);
@@ -170,7 +179,8 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "download_url: 'https://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
         assertNotNull(releaseDetails);
@@ -197,7 +207,8 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "download_url: 'https://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
         assertNotNull(releaseDetails);
@@ -221,7 +232,8 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -236,7 +248,8 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: '19'," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
         assertNotNull(releaseDetails);
@@ -261,7 +274,8 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: '4.0.3'," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -274,7 +288,8 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19" +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -289,7 +304,8 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "download_url: 'someFile'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -304,7 +320,8 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "download_url: 'ftp://someFile'," +
                 "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -319,7 +336,8 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: true," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
         assertNotNull(releaseDetails);
@@ -343,7 +361,8 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -358,6 +377,7 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "mandatory_update: false," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'" +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -372,7 +392,8 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
-                "package_hashes: []" +
+                "package_hashes: []," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
     }
@@ -388,7 +409,35 @@ public class ReleaseDetailsTest {
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
                 "package_hashes: '9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60'" +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
+    }
+
+    @Test
+    public void nullDistributionGroupId() throws JSONException {
+        String json = "{" +
+                "id: 42," +
+                "version: '14'," +
+                "short_version: '2.1.5'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
+                "release_notes_url: 'https://mock/'," +
+                "android_min_api_level: 19," +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "mandatory_update: false," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
+                "}";
+        ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
+        assertNotNull(releaseDetails);
+        assertEquals(42, releaseDetails.getId());
+        assertEquals(14, releaseDetails.getVersion());
+        assertEquals("2.1.5", releaseDetails.getShortVersion());
+        assertEquals("Fix a critical bug, this text was entered in App Center portal.", releaseDetails.getReleaseNotes());
+        assertEquals(Uri.parse("https://mock/"), releaseDetails.getReleaseNotesUrl());
+        assertEquals(19, releaseDetails.getMinApiLevel());
+        assertEquals(Uri.parse("http://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
+        assertFalse(releaseDetails.isMandatoryUpdate());
+        assertEquals("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60", releaseDetails.getReleaseHash());
+        assertNull(releaseDetails.getDistributionGroupId());
     }
 }

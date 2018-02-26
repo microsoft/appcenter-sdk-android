@@ -18,6 +18,7 @@ import java.util.NoSuchElementException;
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
 
@@ -157,15 +158,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                     } else {
                         distribute.completeWorkflow(mReleaseDetails);
                     }
-
-                    /* Add downloaded release hash to report after installation. */
-                    if (mReleaseDetails != null) {
-                        AppCenterLog.debug(LOG_TAG, "Store downloaded release hash and id for later reporting.");
-                        StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, mReleaseDetails.getReleaseHash());
-                        StorageHelper.PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, mReleaseDetails.getId());
-                    } else {
-                        AppCenterLog.debug(LOG_TAG, "Release details are missing or broken, will not store release hash and id for reporting.");
-                    }
+                    storeDownloadedReleaseDetails();
                 }
             } finally {
                 cursor.close();
@@ -190,5 +183,23 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                 }
             });
         }
+    }
+
+    /**
+     * Store details about downloaded release.
+     * After app update and restart, this info is used to report new download and to update group ID (if it's changed).
+     */
+    private void storeDownloadedReleaseDetails() {
+        if (mReleaseDetails == null) {
+            AppCenterLog.debug(LOG_TAG, "Downloaded release details are missing or broken, won't store.");
+            return;
+        }
+        String groupId = mReleaseDetails.getDistributionGroupId();
+        String releaseHash = mReleaseDetails.getReleaseHash();
+        int releaseId = mReleaseDetails.getId();
+        AppCenterLog.debug(LOG_TAG, "Store downloaded group id=" + groupId + " release hash=" + releaseHash + " release id=" + releaseId);
+        StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
+        StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);
+        StorageHelper.PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, releaseId);
     }
 }
