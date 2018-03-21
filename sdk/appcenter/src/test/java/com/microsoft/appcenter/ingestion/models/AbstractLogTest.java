@@ -15,6 +15,7 @@ import static com.microsoft.appcenter.test.TestUtils.checkNotEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -83,6 +84,22 @@ public class AbstractLogTest {
         checkNotEquals(a, b);
         b.setDevice(d1);
         checkEquals(a, b);
+    }
+
+    @Test
+    public void testTenants() {
+        final String tenantId = UUID.randomUUID().toString();
+        final AbstractLog log = new MockLog();
+        assertEquals(0, log.getTenants().size());
+
+        /* Add first tenant */
+        log.addTenant(tenantId);
+        assertTrue(log.getTenants().contains(tenantId));
+        assertEquals(1, log.getTenants().size());
+
+        /* Ignore duplicate tenants */
+        log.addTenant(tenantId);
+        assertEquals(1, log.getTenants().size());
     }
 
     @Test(expected = JSONException.class)
