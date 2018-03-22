@@ -4,12 +4,12 @@ import com.microsoft.appcenter.analytics.Analytics;
 
 import java.util.Map;
 
-public class Tenant extends Object {
+public class TransmissionTarget {
 
-    public String tenantId;
+    public String transmissionTargetToken;
 
-    public Tenant(String tenantId) {
-        this.tenantId = tenantId;
+    public TransmissionTarget(String transmissionTargetToken) {
+        this.transmissionTargetToken = transmissionTargetToken;
     }
 
     /**

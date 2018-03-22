@@ -34,9 +34,9 @@ public abstract class AbstractAppCenterService implements AppCenterService {
     protected Channel mChannel;
 
     /**
-     * The default tenant's id.
+     * The default transmission target's token.
      */
-    protected String mDefaultTenantId = null;
+    protected String mDefaultTransmissionTargetToken = null;
 
     /**
      * Background thread handler.
@@ -181,7 +181,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel, String tenantId) {
+    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel, String transmissionTargetToken) {
         String groupName = getGroupName();
         boolean enabled = isInstanceEnabled();
         if (groupName != null) {
@@ -198,7 +198,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
             }
         }
         mChannel = channel;
-        mDefaultTenantId = tenantId;
+        mDefaultTransmissionTargetToken = transmissionTargetToken;
         applyEnabledState(enabled);
     }
 

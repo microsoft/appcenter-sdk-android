@@ -7,7 +7,7 @@ import android.support.annotation.WorkerThread;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
-import com.microsoft.appcenter.analytics.channel.Tenant;
+import com.microsoft.appcenter.analytics.channel.TransmissionTarget;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
 import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
@@ -73,14 +73,14 @@ public class Analytics extends AbstractAppCenterService {
     private static Analytics sInstance = null;
 
     /**
-     * The default tenant.
+     * The default transmission target.
      */
-    private static Tenant sDefaultTenant = null;
+    private static TransmissionTarget sDefaultTransmissionTarget = null;
 
     /**
-     * The map of tenants.
+     * The map of transmission targets.
      */
-    private static Map<String, Tenant> sTenants;
+    private static Map<String, TransmissionTarget> sTransmissionTargets;
 
     /**
      * Log factories managed by this service.
@@ -116,7 +116,7 @@ public class Analytics extends AbstractAppCenterService {
         mFactories.put(StartSessionLog.TYPE, new StartSessionLogFactory());
         mFactories.put(PageLog.TYPE, new PageLogFactory());
         mFactories.put(EventLog.TYPE, new EventLogFactory());
-        sTenants = new HashMap<>();
+        sTransmissionTargets = new HashMap<>();
     }
 
     /**
@@ -259,18 +259,18 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
-     * Track a custom event with name and tenant.
+     * Track a custom event with name and transmissionTarget.
      *
      * @param name A page name.
-     * @param tenant The tenant for this event.
+     * @param transmissionTarget The transmissionTarget for this event.
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
-    public static void trackEvent(String name, Tenant tenant) {
-        trackEvent(name, null, tenant);
+    public static void trackEvent(String name, TransmissionTarget transmissionTarget) {
+        trackEvent(name, null, transmissionTarget);
     }
 
     /**
-     * Track a custom event with name and optional properties and optional tenant.
+     * Track a custom event with name and optional properties and optional transmissionTarget.
      * The name parameter can not be null or empty. Maximum allowed length = 256.
      * The properties parameter maximum item count = 5.
      * The properties keys can not be null or empty, maximum allowed key length = 64.
@@ -279,29 +279,29 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @param name       An event name.
      * @param properties Optional properties.
-     * @param tenant Optional tenant.
+     * @param transmissionTarget Optional transmissionTarget.
      */
     @SuppressWarnings("WeakerAccess")
-    public static void trackEvent(String name, Map<String, String> properties, Tenant tenant) {
+    public static void trackEvent(String name, Map<String, String> properties, TransmissionTarget transmissionTarget) {
         final String logType = "Event";
         name = validateName(name, logType);
         if (name != null) {
             Map<String, String> validatedProperties = validateProperties(properties, name, logType);
-            getInstance().trackEventAsync(name, validatedProperties, tenant);
+            getInstance().trackEventAsync(name, validatedProperties, transmissionTarget);
         }
     }
 
-    public static Tenant getTenant(String tenantId) {
-        if(tenantId != null && tenantId.length() > 0) {
-            Tenant tenant = sTenants.get(tenantId);
-            if(tenant != null) {
-                AppCenterLog.debug(LOG_TAG, "Returning tenant found with id " + tenantId);
-                return tenant;
+    public static TransmissionTarget getTransmissionTarget(String transmissionTargetToken) {
+        if(transmissionTargetToken != null && transmissionTargetToken.length() > 0) {
+            TransmissionTarget transmissionTarget = sTransmissionTargets.get(transmissionTargetToken);
+            if(transmissionTarget != null) {
+                AppCenterLog.debug(LOG_TAG, "Returning transmissionTarget found with id " + transmissionTargetToken);
+                return transmissionTarget;
             }
-            tenant = new Tenant(tenantId);
-            AppCenterLog.debug(LOG_TAG, "Created tenant with id " + tenantId);
-            sTenants.put(tenantId, tenant);
-            return tenant;
+            transmissionTarget = new TransmissionTarget(transmissionTargetToken);
+            AppCenterLog.debug(LOG_TAG, "Created transmissionTarget with id " + transmissionTargetToken);
+            sTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
+            return transmissionTarget;
         }
         else {
             return null;
@@ -550,19 +550,19 @@ public class Analytics extends AbstractAppCenterService {
      * @param name       event name.
      * @param properties optional properties.
      */
-    private synchronized void trackEventAsync(final String name, final Map<String, String> properties, final Tenant tenant) {
+    private synchronized void trackEventAsync(final String name, final Map<String, String> properties, final TransmissionTarget transmissionTarget) {
         post(new Runnable() {
 
             @Override
             public void run() {
-                Tenant aTenant = (tenant == null) ? sDefaultTenant : tenant;
+                TransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? sDefaultTransmissionTarget : transmissionTarget;
 
                 EventLog eventLog = new EventLog();
                 eventLog.setId(UUIDUtils.randomUUID());
                 eventLog.setName(name);
                 eventLog.setProperties(properties);
-                if(aTenant != null) {
-                    eventLog.addTenant(aTenant.tenantId);
+                if(aTransmissionTarget != null) {
+                    eventLog.addTransmissionTarget(aTransmissionTarget.transmissionTargetToken);
                 }
                 mChannel.enqueue(eventLog, ANALYTICS_GROUP);
             }

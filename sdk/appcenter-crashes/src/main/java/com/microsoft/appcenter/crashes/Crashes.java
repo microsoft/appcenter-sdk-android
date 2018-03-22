@@ -362,9 +362,9 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel, String tenantId) {
+    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel, String transmissionTargetToken) {
         mContext = context;
-        super.onStarted(context, appSecret, channel, tenantId);
+        super.onStarted(context, appSecret, channel, transmissionTargetToken);
         if (isInstanceEnabled()) {
             processPendingErrors();
         } else {

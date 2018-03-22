@@ -68,9 +68,9 @@ public abstract class AbstractLog implements Log {
     private Device device;
 
     /**
-     * Collection of tenants that this log should be sent to.
+     * Collection of transmissionTargets that this log should be sent to.
      */
-    private final Set<String> tenants = new LinkedHashSet<>();
+    private final Set<String> transmissionTargets = new LinkedHashSet<>();
 
     @Override
     public Date getTimestamp() {
@@ -137,23 +137,23 @@ public abstract class AbstractLog implements Log {
     }
 
     /**
-     * Adds a tenant that this log should be sent to.
+     * Adds a transmission target that this log should be sent to.
      *
-     * @param tenant the identifier of the tenant.
+     * @param transmissionTargetToken the identifier of the transmission target.
      */
     @Override
-    public synchronized void addTenant(String tenant) {
-        tenants.add(tenant);
+    public synchronized void addTransmissionTarget(String transmissionTargetToken) {
+        transmissionTargets.add(transmissionTargetToken);
     }
 
     /**
-     * Gets all tenants that this log should be sent to.
+     * Gets all transmissionTargets that this log should be sent to.
      *
-     * @return Collection of tenants that this log should be sent to.
+     * @return Collection of transmissionTargets that this log should be sent to.
      */
     @Override
-    public synchronized Set<String> getTenants() {
-        return Collections.unmodifiableSet(tenants);
+    public synchronized Set<String> getTransmissionTargets() {
+        return Collections.unmodifiableSet(transmissionTargets);
     }
 
     @Override
