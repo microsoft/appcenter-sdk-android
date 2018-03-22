@@ -170,7 +170,7 @@ public class AnalyticsTest {
         /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
 
         /* Test resume/pause. */
         analytics.onActivityResumed(activity);
@@ -211,7 +211,7 @@ public class AnalyticsTest {
         assertFalse(Analytics.isAutoPageTrackingEnabled());
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         analytics.onActivityResumed(new MyActivity());
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -248,7 +248,7 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         Analytics.trackEvent(null, null);
         verify(channel, never()).enqueue(any(Log.class), anyString());
         reset(channel);
@@ -337,7 +337,7 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         Analytics.trackPage(null, null);
         verify(channel, never()).enqueue(any(Log.class), anyString());
         reset(channel);
@@ -434,7 +434,7 @@ public class AnalyticsTest {
         /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         verify(channel).removeGroup(eq(analytics.getGroupName()));
         verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), any(Channel.GroupListener.class));
         verify(channel).addListener(any(Channel.Listener.class));
@@ -496,7 +496,7 @@ public class AnalyticsTest {
         /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         verify(channel, never()).removeListener(any(Channel.Listener.class));
         verify(channel, never()).addListener(any(Channel.Listener.class));
     }
@@ -511,7 +511,7 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         Analytics.setEnabled(false);
 
         /* App in foreground: no log yet, we are disabled. */
@@ -556,7 +556,7 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         Analytics.setEnabled(false);
 
         /* App in foreground: no log yet, we are disabled. */
@@ -576,7 +576,7 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         final ArgumentCaptor<Channel.GroupListener> captor = ArgumentCaptor.forClass(Channel.GroupListener.class);
         verify(channel).addGroup(anyString(), anyInt(), anyLong(), anyInt(), captor.capture());
         doAnswer(new Answer<Void>() {
