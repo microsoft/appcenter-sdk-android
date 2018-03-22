@@ -295,11 +295,11 @@ public class Analytics extends AbstractAppCenterService {
         if(transmissionTargetToken != null && transmissionTargetToken.length() > 0) {
             TransmissionTarget transmissionTarget = sTransmissionTargets.get(transmissionTargetToken);
             if(transmissionTarget != null) {
-                AppCenterLog.debug(LOG_TAG, "Returning transmissionTarget found with id " + transmissionTargetToken);
+                AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
                 return transmissionTarget;
             }
             transmissionTarget = new TransmissionTarget(transmissionTargetToken);
-            AppCenterLog.debug(LOG_TAG, "Created transmissionTarget with id " + transmissionTargetToken);
+            AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
             sTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
             return transmissionTarget;
         }

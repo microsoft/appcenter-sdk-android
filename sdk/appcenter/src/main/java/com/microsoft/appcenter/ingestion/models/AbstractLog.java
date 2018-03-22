@@ -68,9 +68,9 @@ public abstract class AbstractLog implements Log {
     private Device device;
 
     /**
-     * Collection of transmissionTargets that this log should be sent to.
+     * Collection of transmissionTargetTokens that this log should be sent to.
      */
-    private final Set<String> transmissionTargets = new LinkedHashSet<>();
+    private final Set<String> transmissionTargetTokens = new LinkedHashSet<>();
 
     @Override
     public Date getTimestamp() {
@@ -143,17 +143,17 @@ public abstract class AbstractLog implements Log {
      */
     @Override
     public synchronized void addTransmissionTarget(String transmissionTargetToken) {
-        transmissionTargets.add(transmissionTargetToken);
+        transmissionTargetTokens.add(transmissionTargetToken);
     }
 
     /**
-     * Gets all transmissionTargets that this log should be sent to.
+     * Gets all transmissionTargetTokens that this log should be sent to.
      *
-     * @return Collection of transmissionTargets that this log should be sent to.
+     * @return Collection of transmissionTargetTokens that this log should be sent to.
      */
     @Override
-    public synchronized Set<String> getTransmissionTargets() {
-        return Collections.unmodifiableSet(transmissionTargets);
+    public synchronized Set<String> getTransmissionTargetTokens() {
+        return Collections.unmodifiableSet(transmissionTargetTokens);
     }
 
     @Override

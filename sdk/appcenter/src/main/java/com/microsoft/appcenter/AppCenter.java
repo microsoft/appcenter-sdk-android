@@ -107,7 +107,7 @@ public class AppCenter {
     private String mAppSecret;
 
     /**
-     * Default transmission token.
+     * Default transmission target's token.
      */
     private String mDefaultTransmissionToken;
 

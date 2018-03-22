@@ -84,5 +84,5 @@ public interface Log extends Model {
      * @return Collection of transmission targets that this log should be sent to.
      */
     @SuppressWarnings("unused")
-    Set<String> getTransmissionTargets();
+    Set<String> getTransmissionTargetTokens();
 }

@@ -90,16 +90,16 @@ public class AbstractLogTest {
     public void testTransmissionTargets() {
         final String transmissionTargetToken = UUID.randomUUID().toString();
         final AbstractLog log = new MockLog();
-        assertEquals(0, log.getTransmissionTargets().size());
+        assertEquals(0, log.getTransmissionTargetTokens().size());
 
         /* Add first transmission target */
         log.addTransmissionTarget(transmissionTargetToken);
-        assertTrue(log.getTransmissionTargets().contains(transmissionTargetToken));
-        assertEquals(1, log.getTransmissionTargets().size());
+        assertTrue(log.getTransmissionTargetTokens().contains(transmissionTargetToken));
+        assertEquals(1, log.getTransmissionTargetTokens().size());
 
         /* Ignore duplicate transmission targets */
         log.addTransmissionTarget(transmissionTargetToken);
-        assertEquals(1, log.getTransmissionTargets().size());
+        assertEquals(1, log.getTransmissionTargetTokens().size());
     }
 
     @Test(expected = JSONException.class)
