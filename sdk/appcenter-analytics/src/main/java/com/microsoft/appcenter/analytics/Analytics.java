@@ -7,6 +7,7 @@ import android.support.annotation.WorkerThread;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
+import com.microsoft.appcenter.analytics.channel.Tenant;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
 import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
@@ -72,6 +73,16 @@ public class Analytics extends AbstractAppCenterService {
     private static Analytics sInstance = null;
 
     /**
+     * The default tenant.
+     */
+    private static Tenant sDefaultTenant = null;
+
+    /**
+     * The map of tenants.
+     */
+    private static Map<String, Tenant> sTenants;
+
+    /**
      * Log factories managed by this service.
      */
     private final Map<String, LogFactory> mFactories;
@@ -105,6 +116,7 @@ public class Analytics extends AbstractAppCenterService {
         mFactories.put(StartSessionLog.TYPE, new StartSessionLogFactory());
         mFactories.put(PageLog.TYPE, new PageLogFactory());
         mFactories.put(EventLog.TYPE, new EventLogFactory());
+        sTenants = new HashMap<>();
     }
 
     /**
@@ -227,7 +239,7 @@ public class Analytics extends AbstractAppCenterService {
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public static void trackEvent(String name) {
-        trackEvent(name, null);
+        trackEvent(name, null, null);
     }
 
     /**
@@ -243,13 +255,59 @@ public class Analytics extends AbstractAppCenterService {
      */
     @SuppressWarnings("WeakerAccess")
     public static void trackEvent(String name, Map<String, String> properties) {
+        trackEvent(name, properties, null);
+    }
+
+    /**
+     * Track a custom event with name and tenant.
+     *
+     * @param name A page name.
+     * @param tenant The tenant for this event.
+     */
+    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
+    public static void trackEvent(String name, Tenant tenant) {
+        trackEvent(name, null, tenant);
+    }
+
+    /**
+     * Track a custom event with name and optional properties and optional tenant.
+     * The name parameter can not be null or empty. Maximum allowed length = 256.
+     * The properties parameter maximum item count = 5.
+     * The properties keys can not be null or empty, maximum allowed key length = 64.
+     * The properties values can not be null, maximum allowed value length = 64.
+     * Any length of name/keys/values that are longer than each limit will be truncated.
+     *
+     * @param name       An event name.
+     * @param properties Optional properties.
+     * @param tenant Optional tenant.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static void trackEvent(String name, Map<String, String> properties, Tenant tenant) {
         final String logType = "Event";
         name = validateName(name, logType);
         if (name != null) {
             Map<String, String> validatedProperties = validateProperties(properties, name, logType);
-            getInstance().trackEventAsync(name, validatedProperties);
+            getInstance().trackEventAsync(name, validatedProperties, tenant);
         }
     }
+
+    public static Tenant getTenant(String tenantId) {
+        if(tenantId != null && tenantId.length() > 0) {
+            Tenant tenant = sTenants.get(tenantId);
+            if(tenant != null) {
+                AppCenterLog.debug(LOG_TAG, "Returning tenant found with id " + tenantId);
+                return tenant;
+            }
+            tenant = new Tenant(tenantId);
+            AppCenterLog.debug(LOG_TAG, "Created tenant with id " + tenantId);
+            sTenants.put(tenantId, tenant);
+            return tenant;
+        }
+        else {
+            return null;
+        }
+    }
+
 
     /**
      * Generate a page name for an activity.
@@ -492,15 +550,20 @@ public class Analytics extends AbstractAppCenterService {
      * @param name       event name.
      * @param properties optional properties.
      */
-    private synchronized void trackEventAsync(final String name, final Map<String, String> properties) {
+    private synchronized void trackEventAsync(final String name, final Map<String, String> properties, final Tenant tenant) {
         post(new Runnable() {
 
             @Override
             public void run() {
+                Tenant aTenant = (tenant == null) ? sDefaultTenant : tenant;
+
                 EventLog eventLog = new EventLog();
                 eventLog.setId(UUIDUtils.randomUUID());
                 eventLog.setName(name);
                 eventLog.setProperties(properties);
+                if(aTenant != null) {
+                    eventLog.addTenant(aTenant.tenantId);
+                }
                 mChannel.enqueue(eventLog, ANALYTICS_GROUP);
             }
         });

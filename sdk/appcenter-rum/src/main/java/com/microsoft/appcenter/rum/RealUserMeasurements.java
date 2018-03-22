@@ -190,9 +190,9 @@ public class RealUserMeasurements extends AbstractAppCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
+    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel, String tenantId) {
         mContext = context;
-        super.onStarted(context, appSecret, channel);
+        super.onStarted(context, appSecret, channel, tenantId);
     }
 
     /**

@@ -249,17 +249,17 @@ public class AnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", channel);
-        Analytics.trackEvent(null, null);
+        Analytics.trackEvent(null, (Map<String, String>) null);
         verify(channel, never()).enqueue(any(Log.class), anyString());
         reset(channel);
-        Analytics.trackEvent("", null);
+        Analytics.trackEvent("", (Map<String, String>) null);
         verify(channel, never()).enqueue(any(Log.class), anyString());
         reset(channel);
-        Analytics.trackEvent(" ", null);
+        Analytics.trackEvent(" ", (Map<String, String>) null);
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
         reset(channel);
         final String maxName = generateString(Analytics.MAX_NAME_LENGTH, '*');
-        Analytics.trackEvent(maxName + "*", null);
+        Analytics.trackEvent(maxName + "*", (Map<String, String>) null);
         verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
@@ -272,7 +272,7 @@ public class AnalyticsTest {
             }
         }), anyString());
         reset(channel);
-        Analytics.trackEvent(maxName, null);
+        Analytics.trackEvent(maxName, (Map<String, String>) null);
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
         reset(channel);
         Analytics.trackEvent("eventName", new HashMap<String, String>() {{

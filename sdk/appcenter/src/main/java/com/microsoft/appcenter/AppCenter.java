@@ -107,6 +107,11 @@ public class AppCenter {
     private String mAppSecret;
 
     /**
+     * Default tenant Id.
+     */
+    private String mDefaultTenantId;
+
+    /**
      * Handler for uncaught exceptions.
      */
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
@@ -417,6 +422,7 @@ public class AppCenter {
         /* Store state. */
         mApplication = application;
         mAppSecret = appSecret;
+        mDefaultTenantId = null; //TODO parse tenantId
 
         /* Start looper. */
         mHandlerThread = new HandlerThread("AppCenter.Looper");
@@ -579,7 +585,7 @@ public class AppCenter {
             if (!enabled && service.isInstanceEnabled()) {
                 service.setInstanceEnabled(false);
             }
-            service.onStarted(mApplication, mAppSecret, mChannel);
+            service.onStarted(mApplication, mAppSecret, mChannel, mDefaultTenantId);
             AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
             serviceNames.add(service.getServiceName());
         }

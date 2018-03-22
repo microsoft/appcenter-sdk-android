@@ -34,6 +34,11 @@ public abstract class AbstractAppCenterService implements AppCenterService {
     protected Channel mChannel;
 
     /**
+     * The default tenant's id.
+     */
+    protected String mDefaultTenantId = null;
+
+    /**
      * Background thread handler.
      */
     private AppCenterHandler mHandler;
@@ -176,7 +181,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
+    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel, String tenantId) {
         String groupName = getGroupName();
         boolean enabled = isInstanceEnabled();
         if (groupName != null) {
@@ -193,6 +198,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
             }
         }
         mChannel = channel;
+        mDefaultTenantId = tenantId;
         applyEnabledState(enabled);
     }
 
