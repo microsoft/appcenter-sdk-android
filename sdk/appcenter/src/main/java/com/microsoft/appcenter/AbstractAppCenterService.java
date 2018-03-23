@@ -175,7 +175,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
 
         /*
          * The method is final just to avoid a sub-class start using the handler now,
-         * it is not supported and could cause null pointer exception.
+         * it is not supported and could cause a null pointer exception.
          */
         mHandler = handler;
     }
