@@ -132,7 +132,7 @@ public class AbstractAppCenterServiceTest {
             }
         }).when(appCenterHandler).post(any(Runnable.class), any(Runnable.class));
         mService.onStarting(appCenterHandler);
-        mService.onStarted(mock(Context.class), "", mock(Channel.class));
+        mService.onStarted(mock(Context.class), "", null, mock(Channel.class));
 
         /* Enabled at first. */
         assertTrue(mService.isInstanceEnabledAsync().get());
@@ -186,7 +186,7 @@ public class AbstractAppCenterServiceTest {
             }
         }).when(appCenterHandler).post(any(Runnable.class), any(Runnable.class));
         mService.onStarting(appCenterHandler);
-        mService.onStarted(mock(Context.class), "", mock(Channel.class));
+        mService.onStarted(mock(Context.class), "", null, mock(Channel.class));
 
         /* Whatever we do it stays disabled. */
         assertFalse(mService.isInstanceEnabledAsync().get());
@@ -206,7 +206,7 @@ public class AbstractAppCenterServiceTest {
     @Test
     public void onChannelReadyEnabledThenDisable() {
         Channel channel = mock(Channel.class);
-        mService.onStarted(mock(Context.class), "", channel);
+        mService.onStarted(mock(Context.class), "", null, channel);
         verify(channel).removeGroup(mService.getGroupName());
         verify(channel).addGroup(mService.getGroupName(), mService.getTriggerCount(), mService.getTriggerInterval(), mService.getTriggerMaxParallelRequests(), mService.getChannelListener());
         verifyNoMoreInteractions(channel);
@@ -221,7 +221,7 @@ public class AbstractAppCenterServiceTest {
     @Test
     public void onChannelReadyDisabledThenEnable() {
         Channel channel = mock(Channel.class);
-        mService.onStarted(mock(Context.class), "", channel);
+        mService.onStarted(mock(Context.class), "", null, channel);
         verify(channel).removeGroup(mService.getGroupName());
         verify(channel).addGroup(eq(mService.getGroupName()), anyInt(), anyLong(), anyInt(), any(Channel.GroupListener.class));
         mService.setInstanceEnabled(false);
@@ -259,7 +259,7 @@ public class AbstractAppCenterServiceTest {
             }
         };
         Channel channel = mock(Channel.class);
-        mService.onStarted(mock(Context.class), "", channel);
+        mService.onStarted(mock(Context.class), "", null, channel);
         mService.setInstanceEnabled(false);
         mService.setInstanceEnabled(true);
         verifyZeroInteractions(channel);

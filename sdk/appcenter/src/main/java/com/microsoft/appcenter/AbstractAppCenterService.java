@@ -181,7 +181,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, String transmissionTargetToken, @NonNull Channel channel) {
+    public synchronized void onStarted(@NonNull Context context, String appSecret, String transmissionTargetToken, @NonNull Channel channel) {
         String groupName = getGroupName();
         boolean enabled = isInstanceEnabled();
         if (groupName != null) {

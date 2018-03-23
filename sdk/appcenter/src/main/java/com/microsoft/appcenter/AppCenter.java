@@ -9,6 +9,7 @@ import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.microsoft.appcenter.channel.Channel;
@@ -76,6 +77,30 @@ public class AppCenter {
     static final String DISABLE_ALL_SERVICES = "All";
 
     /**
+     *  Delimiter between two key value pairs.
+     */
+    @VisibleForTesting
+    static final char PAIR_DELIMITER = ';';
+
+    /**
+     *  Delimiter between key and its value.
+     */
+    @VisibleForTesting
+    static final char KEY_VALUE_DELIMITER = '=';
+
+    /**
+     * Application secret key.
+     */
+    @VisibleForTesting
+    static final String APP_SECRET_KEY = "appsecret";
+
+    /**
+     * Transmission target token key.
+     */
+    @VisibleForTesting
+    static final String TRANSMISSION_TARGET_TOKEN_KEY = "target";
+
+    /**
      * Shutdown timeout in millis.
      */
     private static final int SHUTDOWN_TIMEOUT = 5000;
@@ -107,9 +132,9 @@ public class AppCenter {
     private String mAppSecret;
 
     /**
-     * Default transmission target's token.
+     * Transmission target token.
      */
-    private String mDefaultTransmissionToken;
+    private String mTransmissionTargetToken;
 
     /**
      * Handler for uncaught exceptions.
@@ -422,7 +447,36 @@ public class AppCenter {
         /* Store state. */
         mApplication = application;
         mAppSecret = appSecret; //TODO parse app secret
-        mDefaultTransmissionToken = null; //TODO parse token
+
+        /* Init parsing, the app secret string can contain other secrets.  */
+        TextUtils.SimpleStringSplitter pairSplitter = new TextUtils.SimpleStringSplitter(PAIR_DELIMITER);
+        TextUtils.SimpleStringSplitter keyValueSplitter = new TextUtils.SimpleStringSplitter(KEY_VALUE_DELIMITER);
+        pairSplitter.setString(appSecret);
+
+        /* Split by pairs. */
+        for (String keyValue : pairSplitter) {
+
+            /* Split key and value. */
+            keyValueSplitter.setString(keyValue);
+            String key = keyValueSplitter.next();
+
+            /* A value with no key is default to the app secret. */
+            if (!keyValueSplitter.hasNext()){
+                if (keyValue.indexOf(KEY_VALUE_DELIMITER) == -1){
+                    mAppSecret = key;
+                }
+                continue;
+            }
+            String value = keyValueSplitter.next();
+
+            /* Ignore unknown keys. */
+            if (APP_SECRET_KEY.equals(key) ) {
+                mAppSecret = value;
+            }
+            else if (TRANSMISSION_TARGET_TOKEN_KEY.equals(key)){
+                mTransmissionTargetToken = value;
+            }
+        }
 
         /* Start looper. */
         mHandlerThread = new HandlerThread("AppCenter.Looper");
@@ -585,7 +639,7 @@ public class AppCenter {
             if (!enabled && service.isInstanceEnabled()) {
                 service.setInstanceEnabled(false);
             }
-            service.onStarted(mApplication, mAppSecret, mDefaultTransmissionToken, mChannel);
+            service.onStarted(mApplication, mAppSecret, mTransmissionTargetToken, mChannel);
             AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
             serviceNames.add(service.getServiceName());
         }
