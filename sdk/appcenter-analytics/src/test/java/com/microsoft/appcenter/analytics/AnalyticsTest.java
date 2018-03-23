@@ -44,6 +44,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.microsoft.appcenter.analytics.Analytics.trackEvent;
 import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -143,8 +144,8 @@ public class AnalyticsTest {
     public void notInit() {
 
         /* Just check log is discarded without throwing any exception. */
-        Analytics.trackEvent("test");
-        Analytics.trackEvent("test", new HashMap<String, String>());
+        trackEvent("test");
+        trackEvent("test", new HashMap<String, String>());
         Analytics.trackPage("test");
         Analytics.trackPage("test", new HashMap<String, String>());
 
@@ -249,17 +250,17 @@ public class AnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", null, channel);
-        Analytics.trackEvent(null, null);
+        trackEvent(null, (Map <String, String>) null);
         verify(channel, never()).enqueue(any(Log.class), anyString());
         reset(channel);
-        Analytics.trackEvent("", (Map<String, String>) null);
+        trackEvent("", (Map<String, String>) null);
         verify(channel, never()).enqueue(any(Log.class), anyString());
         reset(channel);
-        Analytics.trackEvent(" ", (Map<String, String>) null);
+        trackEvent(" ", (Map<String, String>) null);
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
         reset(channel);
         final String maxName = generateString(Analytics.MAX_NAME_LENGTH, '*');
-        Analytics.trackEvent(maxName + "*", (Map<String, String>) null);
+        trackEvent(maxName + "*", (Map<String, String>) null);
         verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
@@ -272,10 +273,10 @@ public class AnalyticsTest {
             }
         }), anyString());
         reset(channel);
-        Analytics.trackEvent(maxName, (Map<String, String>) null);
+        trackEvent(maxName, (Map<String, String>) null);
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
         reset(channel);
-        Analytics.trackEvent("eventName", new HashMap<String, String>() {{
+        trackEvent("eventName", new HashMap<String, String>() {{
             put(null, null);
             put("", null);
             put(generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
@@ -294,7 +295,7 @@ public class AnalyticsTest {
         }), anyString());
         reset(channel);
         final String validMapItem = "valid";
-        Analytics.trackEvent("eventName", new HashMap<String, String>() {{
+        trackEvent("eventName", new HashMap<String, String>() {{
             for (int i = 0; i < 10; i++) {
                 put(validMapItem + i, validMapItem);
             }
@@ -312,7 +313,7 @@ public class AnalyticsTest {
         }), anyString());
         reset(channel);
         final String longerMapItem = generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
-        Analytics.trackEvent("eventName", new HashMap<String, String>() {{
+        trackEvent("eventName", new HashMap<String, String>() {{
             put(longerMapItem, longerMapItem);
         }});
         verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
@@ -451,7 +452,7 @@ public class AnalyticsTest {
         verifyStatic();
         StorageHelper.PreferencesStorage.remove("sessions");
 
-        Analytics.trackEvent("test");
+        trackEvent("test");
         Analytics.trackPage("test");
         analytics.onActivityResumed(new Activity());
         analytics.onActivityPaused(new Activity());
@@ -472,14 +473,14 @@ public class AnalyticsTest {
         /* Test double call to setEnabled true. */
         Analytics.setEnabled(true);
         assertTrue(Analytics.isEnabled().get());
-        Analytics.trackEvent("test");
+        trackEvent("test");
         Analytics.trackPage("test");
         verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
         /* Disable again. */
         Analytics.setEnabled(false);
         assertFalse(Analytics.isEnabled().get());
-        Analytics.trackEvent("test");
+        trackEvent("test");
         Analytics.trackPage("test");
         analytics.onActivityResumed(new Activity());
         analytics.onActivityPaused(new Activity());
@@ -589,7 +590,7 @@ public class AnalyticsTest {
                 return null;
             }
         }).when(channel).enqueue(any(Log.class), anyString());
-        Analytics.trackEvent("name");
+        trackEvent("name");
         verify(listener).onBeforeSending(notNull(Log.class));
         verify(listener).onSendingSucceeded(notNull(Log.class));
         verify(listener).onSendingFailed(notNull(Log.class), notNull(Exception.class));
