@@ -428,7 +428,7 @@ public class AppCenter {
             AppCenterLog.error(LOG_TAG, "application may not be null");
             return false;
         }
-        if (appSecret == null || appSecret.isEmpty()) {
+        if (appSecret.isEmpty()) {
             AppCenterLog.error(LOG_TAG, "appSecret may not be null or empty");
             return false;
         }
