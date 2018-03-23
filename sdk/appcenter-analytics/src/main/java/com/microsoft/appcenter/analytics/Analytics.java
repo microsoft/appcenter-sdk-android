@@ -555,14 +555,15 @@ public class Analytics extends AbstractAppCenterService {
 
             @Override
             public void run() {
-                TransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? sDefaultTransmissionTarget : transmissionTarget;
-
                 EventLog eventLog = new EventLog();
                 eventLog.setId(UUIDUtils.randomUUID());
                 eventLog.setName(name);
                 eventLog.setProperties(properties);
+                eventLog.addTransmissionTarget(mDefaultTransmissionTargetToken);
+                TransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? sDefaultTransmissionTarget : transmissionTarget;
                 if(aTransmissionTarget != null) {
                     eventLog.addTransmissionTarget(aTransmissionTarget.transmissionTargetToken);
+                    // TODO add multiple targets
                 }
                 mChannel.enqueue(eventLog, ANALYTICS_GROUP);
             }
