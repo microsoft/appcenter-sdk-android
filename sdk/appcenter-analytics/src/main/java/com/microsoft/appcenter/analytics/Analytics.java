@@ -1,6 +1,8 @@
 package com.microsoft.appcenter.analytics;
 
 import android.app.Activity;
+import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
@@ -559,7 +561,6 @@ public class Analytics extends AbstractAppCenterService {
                 eventLog.setId(UUIDUtils.randomUUID());
                 eventLog.setName(name);
                 eventLog.setProperties(properties);
-                eventLog.addTransmissionTarget(mDefaultTransmissionTargetToken);
                 TransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? sDefaultTransmissionTarget : transmissionTarget;
                 if(aTransmissionTarget != null) {
                     eventLog.addTransmissionTarget(aTransmissionTarget.transmissionTargetToken);
@@ -594,5 +595,13 @@ public class Analytics extends AbstractAppCenterService {
     @VisibleForTesting
     WeakReference<Activity> getCurrentActivity() {
         return mCurrentActivity;
+    }
+
+    @Override
+    public synchronized void onStarted(@NonNull Context context, String appSecret, String transmissionTargetToken, @NonNull Channel channel) {
+        super.onStarted(context, appSecret, transmissionTargetToken, channel);
+
+        // Initialize a default transmission target if a token has been provided.
+        sDefaultTransmissionTarget = getTransmissionTarget(transmissionTargetToken);
     }
 }

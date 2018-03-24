@@ -34,11 +34,6 @@ public abstract class AbstractAppCenterService implements AppCenterService {
     protected Channel mChannel;
 
     /**
-     * The default transmission target's token.
-     */
-    protected String mDefaultTransmissionTargetToken = null;
-
-    /**
      * Background thread handler.
      */
     private AppCenterHandler mHandler;
@@ -198,7 +193,6 @@ public abstract class AbstractAppCenterService implements AppCenterService {
             }
         }
         mChannel = channel;
-        mDefaultTransmissionTargetToken = transmissionTargetToken;
         applyEnabledState(enabled);
     }
 
