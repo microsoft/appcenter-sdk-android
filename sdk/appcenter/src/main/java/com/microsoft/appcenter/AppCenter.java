@@ -446,7 +446,6 @@ public class AppCenter {
 
         /* Store state. */
         mApplication = application;
-        mAppSecret = appSecret; //TODO parse app secret
 
         /* Init parsing, the app secret string can contain other secrets.  */
         TextUtils.SimpleStringSplitter pairSplitter = new TextUtils.SimpleStringSplitter(PAIR_DELIMITER);
