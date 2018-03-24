@@ -229,6 +229,9 @@ public class DefaultChannel implements Channel {
 
     @Override
     public void setLogUrl(String logUrl) {
+        if(mIngestion == null) {
+            return;
+        }
         mIngestion.setLogUrl(logUrl);
     }
 
@@ -416,6 +419,9 @@ public class DefaultChannel implements Channel {
     @MainThread
     private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId) {
         if (checkStateDidNotChange(groupState, currentState)) {
+            if(mIngestion == null) {
+                return;
+            }
 
             /* Send logs. */
             LogContainer logContainer = new LogContainer();
@@ -528,8 +534,10 @@ public class DefaultChannel implements Channel {
         /* Check group name is registered. */
         final GroupState groupState = mGroupStates.get(groupName);
         if (groupState == null) {
-            AppCenterLog.error(LOG_TAG, "Invalid group name:" + groupName);
-            return;
+            if((mPersistence != null) && (mIngestion != null)) {
+                AppCenterLog.error(LOG_TAG, "Invalid group name:" + groupName);
+                return;
+            }
         }
 
         /* Check if disabled with discarding logs. */
