@@ -616,14 +616,21 @@ public class AnalyticsTest {
     }
 
     @Test
-    public void testTransmissionTarget() {
+    public void testGetTransmissionTarget() {
+        assertNull(Analytics.getTransmissionTarget(""));
+        assertNotNull(Analytics.getTransmissionTarget("token"));
+    }
+
+    @Test
+    public void testTrackEventWithTransmissionTarget() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), null, "token", channel);
-        assertNull(Analytics.getTransmissionTarget(""));
         TransmissionTarget target = Analytics.getTransmissionTarget("token");
         assertNotNull(target);
+
+        /* Track event with transmission target. */
         trackEvent("name", target);
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -637,6 +644,8 @@ public class AnalyticsTest {
             }
         }), anyString());
         reset(channel);
+
+        /* Track event via transmission target method. */
         target.trackEvent("name");
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -650,6 +659,8 @@ public class AnalyticsTest {
             }
         }), anyString());
         reset(channel);
+
+        /* Track event via transmission target method with properties. */
         target.trackEvent("name", new HashMap<String, String>() {{
             put("valid", "valid");
         }});
