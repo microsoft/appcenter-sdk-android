@@ -461,9 +461,7 @@ public class AppCenter {
 
             /* A value with no key is default to the app secret. */
             if (!keyValueSplitter.hasNext()) {
-                if (keyValue.indexOf(KEY_VALUE_DELIMITER) == -1) {
-                    mAppSecret = key;
-                }
+                mAppSecret = key;
                 continue;
             }
             String value = keyValueSplitter.next();
