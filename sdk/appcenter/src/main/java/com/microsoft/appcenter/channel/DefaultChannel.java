@@ -134,7 +134,7 @@ public class DefaultChannel implements Channel {
      */
     @VisibleForTesting
     DefaultChannel(@NonNull Context context, String appSecret, Persistence persistence, Ingestion ingestion, @NonNull Handler appCenterHandler) {
-        boolean appSecretNullOrEmpty = (appSecret == null) || appSecret.isEmpty();
+        boolean appSecretNullOrEmpty = appSecret == null || appSecret.isEmpty();
         mContext = context;
         mAppSecret = appSecret;
         mInstallId = IdHelper.getInstallId();
@@ -584,7 +584,7 @@ public class DefaultChannel implements Channel {
         }
 
         /* No persistence and/or no ingestion mean that no app secret has been provided. */
-        boolean noAppSecretProvided = (mPersistence == null) || (mIngestion == null);
+        boolean noAppSecretProvided = mPersistence == null || mIngestion == null;
 
         if (filteredOut) {
             AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "' was filtered out by listener(s)");

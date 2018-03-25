@@ -50,8 +50,6 @@ import static org.powermock.api.mockito.PowerMockito.spy;
 @SuppressWarnings("unused")
 public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
-    private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
-
     @Test
     public void invalidGroup() throws Persistence.PersistenceException {
         Persistence persistence = mock(Persistence.class);
@@ -158,7 +156,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mHandler, times(3)).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
         verify(mHandler).removeCallbacks(any(Runnable.class));
 
-        /* Check channel clear clear */
+        /* Check channel clear. */
         channel.clear(TEST_GROUP);
         verify(mockPersistence).deleteLogs(eq(TEST_GROUP));
     }
@@ -978,7 +976,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Persistence persistence = mock(Persistence.class);
 
         @SuppressWarnings("ConstantConditions")
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), DUMMY_APP_SECRET, persistence, mock(IngestionHttp.class), mCoreHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(IngestionHttp.class), mCoreHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
         /* Given we add mock listeners. */
@@ -1048,15 +1046,27 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Given a mock channel. */
         Persistence persistence = mock(Persistence.class);
+        Ingestion ingestion = mock(Ingestion.class);
 
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, mock(IngestionHttp.class), mCoreHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, ingestion, mCoreHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
-        /* When we enqueue that log. */
+        /* Check log url. */
+        String logUrl = "http://mockUrl";
+        channel.setLogUrl(logUrl);
+        verify(ingestion, never()).setLogUrl(logUrl);
+
+        /* Check enqueue. */
         Log log = mock(Log.class);
         channel.enqueue(log, TEST_GROUP);
-
-        /* Then except the following. behaviors. */
         verify(persistence, never()).putLog(TEST_GROUP, log);
+
+        /* Check clear. */
+        channel.clear(TEST_GROUP);
+        verify(persistence, never()).deleteLogs(eq(TEST_GROUP));
+
+        /* Check shutdown. */
+        channel.shutdown();
+        verify(persistence, never()).clearPendingLogState();
     }
 }

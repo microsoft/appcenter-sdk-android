@@ -7,6 +7,7 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
+import com.microsoft.appcenter.analytics.channel.TransmissionTarget;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
 import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
@@ -612,6 +613,57 @@ public class AnalyticsTest {
         verify(analyticsListener, never()).onBeforeSending(any(EventLog.class));
         verify(analyticsListener, never()).onSendingSucceeded(any(EventLog.class));
         verify(analyticsListener, never()).onSendingFailed(any(EventLog.class), any(Exception.class));
+    }
+
+    @Test
+    public void testTransmissionTarget() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), null, "token", channel);
+        assertNull(Analytics.getTransmissionTarget(""));
+        TransmissionTarget target = Analytics.getTransmissionTarget("token");
+        assertNotNull(target);
+        trackEvent("name", target);
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    return eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                }
+                return false;
+            }
+        }), anyString());
+        reset(channel);
+        target.trackEvent("name");
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    return eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                }
+                return false;
+            }
+        }), anyString());
+        reset(channel);
+        target.trackEvent("name", new HashMap<String, String>() {{
+            put("valid", "valid");
+        }});
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    return eventLog.getName().equals("name") && eventLog.getProperties().size() == 1;
+                }
+                return false;
+            }
+        }), anyString());
     }
 
     /**
