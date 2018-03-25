@@ -10,9 +10,6 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.text.TextUtils;
 
-import org.junit.runner.RunWith; //TODO remove
-
-
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.DefaultChannel;
 import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
@@ -30,6 +27,7 @@ import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
@@ -38,7 +36,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -101,15 +99,12 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         NetworkStateHelper.class,
         TextUtils.SimpleStringSplitter.class
         })
-@RunWith(PowerMockRunner.class)//TODO remove
-
 public class AppCenterTest {
 
     private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
 
-    //TODO restore
-//    @Rule
-//    public PowerMockRule mPowerMockRule = new PowerMockRule();
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
     private Iterator<ContentValues> mDataBaseScannerIterator;
