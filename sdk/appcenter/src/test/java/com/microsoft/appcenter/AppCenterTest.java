@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.text.TextUtils;
+
 import org.junit.runner.RunWith; //TODO remove
 
 
@@ -94,8 +96,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         ShutdownHelper.class,
         CustomProperties.class,
         InstrumentationRegistryHelper.class,
-        NetworkStateHelper.class
-})
+        NetworkStateHelper.class,
+        TextUtils.SimpleStringSplitter.class
+        })
 @RunWith(PowerMockRunner.class)//TODO remove
 
 public class AppCenterTest {
@@ -200,6 +203,12 @@ public class AppCenterTest {
 
         /* Mock network state helper. */
         when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);
+
+        /* Mock string splitter. */
+        TextUtils.SimpleStringSplitter stringSplitter = mock(TextUtils.SimpleStringSplitter.class);
+        whenNew(TextUtils.SimpleStringSplitter.class).withAnyArguments().thenReturn(stringSplitter);
+        when(stringSplitter.iterator()).thenReturn(stringSplitter);
+        when(stringSplitter.hasNext()).thenReturn(false);
     }
 
     @After

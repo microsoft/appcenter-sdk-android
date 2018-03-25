@@ -447,7 +447,7 @@ public class AppCenter {
         /* Store state. */
         mApplication = application;
 
-        /* Init parsing, the app secret string can contain other secrets.  */
+        /* Init parsing, the app secret string can contain other secrets. */
         TextUtils.SimpleStringSplitter pairSplitter = new TextUtils.SimpleStringSplitter(PAIR_DELIMITER);
         TextUtils.SimpleStringSplitter keyValueSplitter = new TextUtils.SimpleStringSplitter(KEY_VALUE_DELIMITER);
         pairSplitter.setString(appSecret);
@@ -460,8 +460,8 @@ public class AppCenter {
             String key = keyValueSplitter.next();
 
             /* A value with no key is default to the app secret. */
-            if (!keyValueSplitter.hasNext()){
-                if (keyValue.indexOf(KEY_VALUE_DELIMITER) == -1){
+            if (!keyValueSplitter.hasNext()) {
+                if (keyValue.indexOf(KEY_VALUE_DELIMITER) == -1) {
                     mAppSecret = key;
                 }
                 continue;
@@ -469,10 +469,10 @@ public class AppCenter {
             String value = keyValueSplitter.next();
 
             /* Ignore unknown keys. */
-            if (APP_SECRET_KEY.equals(key) ) {
+            if (APP_SECRET_KEY.equals(key)) {
                 mAppSecret = value;
             }
-            else if (TRANSMISSION_TARGET_TOKEN_KEY.equals(key)){
+            else if (TRANSMISSION_TARGET_TOKEN_KEY.equals(key)) {
                 mTransmissionTargetToken = value;
             }
         }
