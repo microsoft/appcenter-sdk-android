@@ -41,7 +41,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -209,29 +209,15 @@ public class AppCenterTest {
 
             @Override
             public TextUtils.SimpleStringSplitter answer(InvocationOnMock invocation) throws Throwable {
-                final Character delimiter = (Character) invocation.getArguments()[0];
                 final TextUtils.SimpleStringSplitter stringSplitter = mock(TextUtils.SimpleStringSplitter.class);
-                when(stringSplitter.hasNext()).thenAnswer(new Answer<Boolean>() {
-
-                    @Override
-                    public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                        return stringSplitter.iterator().hasNext();
-                    }
-                });
-                when(stringSplitter.next()).thenAnswer(new Answer<String>() {
-
-                    @Override
-                    public String answer(InvocationOnMock invocation) throws Throwable {
-                        return stringSplitter.iterator().next();
-                    }
-                });
                 Mockito.doAnswer(new Answer() {
 
                     @Override
                     public Object answer(InvocationOnMock invocation) throws Throwable {
-                        final String string = (String) invocation.getArguments()[0];
-                        final Iterator<String> iterator = Arrays.asList(string.split(delimiter.toString())).iterator();
-                        when(stringSplitter.iterator()).thenReturn(iterator);
+                        String string = (String) invocation.getArguments()[0];
+                        when(stringSplitter.iterator()).thenReturn(Collections.singletonList(string).iterator());
+                        when(stringSplitter.hasNext()).thenReturn(false);
+                        when(stringSplitter.next()).thenReturn(string);
                         return null;
                     }
                 }).when(stringSplitter).setString(anyString());
