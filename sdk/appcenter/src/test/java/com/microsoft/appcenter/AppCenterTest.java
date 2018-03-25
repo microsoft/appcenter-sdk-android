@@ -33,6 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -40,6 +41,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -205,10 +207,39 @@ public class AppCenterTest {
         when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);
 
         /* Mock string splitter. */
-        TextUtils.SimpleStringSplitter stringSplitter = mock(TextUtils.SimpleStringSplitter.class);
-        whenNew(TextUtils.SimpleStringSplitter.class).withAnyArguments().thenReturn(stringSplitter);
-        when(stringSplitter.iterator()).thenReturn(stringSplitter);
-        when(stringSplitter.hasNext()).thenReturn(false);
+        whenNew(TextUtils.SimpleStringSplitter.class).withAnyArguments().then(new Answer<TextUtils.SimpleStringSplitter>() {
+
+            @Override
+            public TextUtils.SimpleStringSplitter answer(InvocationOnMock invocation) throws Throwable {
+                final Character delimiter = (Character) invocation.getArguments()[0];
+                final TextUtils.SimpleStringSplitter stringSplitter = mock(TextUtils.SimpleStringSplitter.class);
+                when(stringSplitter.hasNext()).thenAnswer(new Answer<Boolean>() {
+
+                    @Override
+                    public Boolean answer(InvocationOnMock invocation) throws Throwable {
+                        return stringSplitter.iterator().hasNext();
+                    }
+                });
+                when(stringSplitter.next()).thenAnswer(new Answer<String>() {
+
+                    @Override
+                    public String answer(InvocationOnMock invocation) throws Throwable {
+                        return stringSplitter.iterator().next();
+                    }
+                });
+                Mockito.doAnswer(new Answer() {
+
+                    @Override
+                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                        final String string = (String) invocation.getArguments()[0];
+                        final Iterator<String> iterator = Arrays.asList(string.split(delimiter.toString())).iterator();
+                        when(stringSplitter.iterator()).thenReturn(iterator);
+                        return null;
+                    }
+                }).when(stringSplitter).setString(anyString());
+                return stringSplitter;
+            }
+        });
     }
 
     @After
@@ -793,7 +824,7 @@ public class AppCenterTest {
     public void targetTokenTest() {
         String secret = AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
         AppCenter.start(mApplication, secret, DummyService.class);
-        verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
+        verify(DummyService.getInstance()).onStarted(any(Context.class), isNull(String.class), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
     }
 
     @Test
