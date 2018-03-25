@@ -28,15 +28,26 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 @SuppressWarnings("unused")
 public class AppCenterAndroidTest {
+
+    private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
+
+    private static final String DUMMY_TRANSMISSION_TARGET_TOKEN = "snfbse234jknf";
 
     private Application mApplication;
 
     @Before
     public void setUp() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
         AppCenter.unsetInstance();
+        DummyService.sharedInstance = null;
         Constants.APPLICATION_DEBUGGABLE = false;
         mApplication = Instrumentation.newApplication(Application.class, InstrumentationRegistry.getTargetContext());
     }
@@ -83,9 +94,73 @@ public class AppCenterAndroidTest {
         assertEquals(Log.WARN, AppCenter.getLogLevel());
     }
 
-    private static class DummyService extends AbstractAppCenterService {
+    @Test
+    public void appSecretWithDelimiter() {
+        String secret = DUMMY_APP_SECRET + AppCenter.PAIR_DELIMITER;
+        AppCenter.start(mApplication, secret, DummyService.class);
+        assertTrue(AppCenter.isEnabled().get());
+        verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), isNull(String.class), any(Channel.class));
+    }
 
-        private static final DummyService sInstance = new DummyService();
+    @Test
+    public void appSecretWithTargetTokenTest() {
+        String secret = DUMMY_APP_SECRET + AppCenter.PAIR_DELIMITER + AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
+        AppCenter.start(mApplication, secret, DummyService.class);
+        assertTrue(AppCenter.isEnabled().get());
+        verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
+    }
+
+    @Test
+    public void keyedAppSecretTest() {
+        String secret = AppCenter.APP_SECRET_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_APP_SECRET;
+        AppCenter.start(mApplication, secret, DummyService.class);
+        assertTrue(AppCenter.isEnabled().get());
+        verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), isNull(String.class), any(Channel.class));
+    }
+
+    @Test
+    public void keyedAppSecretWithDelimiterTest() {
+        String secret = AppCenter.APP_SECRET_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_APP_SECRET + AppCenter.PAIR_DELIMITER;
+        AppCenter.start(mApplication, secret, DummyService.class);
+        assertTrue(AppCenter.isEnabled().get());
+        verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), isNull(String.class), any(Channel.class));
+    }
+
+    @Test
+    public void keyedAppSecretWithTargetTokenTest() {
+        String secret = AppCenter.APP_SECRET_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_APP_SECRET + AppCenter.PAIR_DELIMITER + AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
+        AppCenter.start(mApplication, secret, DummyService.class);
+        assertTrue(AppCenter.isEnabled().get());
+        verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
+    }
+
+    @Test
+    public void targetTokenTest() {
+        String secret = AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
+        AppCenter.start(mApplication, secret, DummyService.class);
+        assertTrue(AppCenter.isEnabled().get());
+        verify(DummyService.getInstance()).onStarted(any(Context.class), isNull(String.class), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
+    }
+
+    @Test
+    public void targetTokenWithAppSecretTest() {
+        String secret = AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN + AppCenter.PAIR_DELIMITER + DUMMY_APP_SECRET;
+        AppCenter.start(mApplication, secret, DummyService.class);
+        assertTrue(AppCenter.isEnabled().get());
+        verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
+    }
+
+    @Test
+    public void targetTokenWithUnKeyedAppSecretTest() {
+        String secret = AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN +  AppCenter.PAIR_DELIMITER + AppCenter.APP_SECRET_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_APP_SECRET;
+        AppCenter.start(mApplication, secret, DummyService.class);
+        assertTrue(AppCenter.isEnabled().get());
+        verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
+    }
+
+    public static class DummyService extends AbstractAppCenterService {
+
+        private static DummyService sharedInstance;
 
         private static UUID mInstallId;
 
@@ -101,8 +176,12 @@ public class AppCenterAndroidTest {
             return future;
         }
 
+        @SuppressWarnings("WeakerAccess")
         public static DummyService getInstance() {
-            return sInstance;
+            if (sharedInstance == null) {
+                sharedInstance = spy(new DummyService());
+            }
+            return sharedInstance;
         }
 
         @Override
