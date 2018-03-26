@@ -318,7 +318,7 @@ public class DefaultChannel implements Channel {
     }
 
     private void cancelTimer(GroupState groupState) {
-        if (mIngestion == null || mIngestionHandler == null) {
+        if (mIngestion == null) {
             return;
         }
         if (groupState.mScheduled) {
@@ -470,9 +470,7 @@ public class DefaultChannel implements Channel {
     private synchronized void handleSendingSuccess(@NonNull final GroupState groupState, int currentState, @NonNull final String batchId) {
         if (checkStateDidNotChange(groupState, currentState)) {
             String groupName = groupState.mName;
-            if (mPersistence != null) {
-                mPersistence.deleteLogs(groupName, batchId);
-            }
+            mPersistence.deleteLogs(groupName, batchId);
             List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
             GroupListener groupListener = groupState.mListener;
             if (groupListener != null) {
@@ -619,9 +617,7 @@ public class DefaultChannel implements Channel {
             triggerIngestion(groupName);
         } else if (pendingLogCount > 0 && !groupState.mScheduled) {
             groupState.mScheduled = true;
-            if (mIngestionHandler != null) {
-                mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
-            }
+            mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
         }
     }
 
