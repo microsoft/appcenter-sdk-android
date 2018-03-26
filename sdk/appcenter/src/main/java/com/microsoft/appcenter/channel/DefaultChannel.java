@@ -218,7 +218,9 @@ public class DefaultChannel implements Channel {
             mEnabled = true;
             mDiscardLogs = false;
             mCurrentState++;
-            mIngestion.reopen();
+            if (mIngestion != null) {
+                mIngestion.reopen();
+            }
             for (String groupName : mGroupStates.keySet()) {
                 checkPendingLogs(groupName);
             }
@@ -282,7 +284,6 @@ public class DefaultChannel implements Channel {
             }
         }
         try {
-
             if (mIngestion != null) {
                 mIngestion.close();
             }
@@ -301,9 +302,6 @@ public class DefaultChannel implements Channel {
     }
 
     private void deleteLogsOnSuspended(final GroupState groupState) {
-        if (mPersistence == null) {
-            return;
-        }
         final List<Log> logs = new ArrayList<>();
         mPersistence.getLogs(groupState.mName, CLEAR_BATCH_SIZE, logs);
         if (logs.size() > 0 && groupState.mListener != null) {
@@ -344,9 +342,6 @@ public class DefaultChannel implements Channel {
      * @param groupName the group name
      */
     private synchronized void triggerIngestion(final @NonNull String groupName) {
-        if (mIngestion == null || mPersistence == null) {
-            return;
-        }
         if (!mEnabled) {
             return;
         }
@@ -419,9 +414,6 @@ public class DefaultChannel implements Channel {
     @MainThread
     private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId) {
         if (checkStateDidNotChange(groupState, currentState)) {
-            if (mIngestion == null) {
-                return;
-            }
 
             /* Send logs. */
             LogContainer logContainer = new LogContainer();
