@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
     static SasquatchPushListener sPushListener;
 
-    public enum START_TYPE {
+    public enum StartType {
         APP_SECRET, TENANT_ID, BOTH
     }
 
@@ -142,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* Start App Center. */
-        START_TYPE startType = START_TYPE.valueOf(sSharedPreferences.getString(APPCENTER_START_TYPE, START_TYPE.APP_SECRET.toString()));
+        StartType startType = StartType.valueOf(sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString()));
         startAppCenter(startType);
 
         /* Attach NDK Crash Handler (if available) after SDK is initialized. */
@@ -240,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
         return sPushListener;
     }
 
-    private void startAppCenter(START_TYPE startType) {
+    private void startAppCenter(StartType startType) {
         String appId = sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret));
         String tenantId = sSharedPreferences.getString(TENANT_ID_KEY, getString(R.string.tenant_id));
         String appIdArg = "";

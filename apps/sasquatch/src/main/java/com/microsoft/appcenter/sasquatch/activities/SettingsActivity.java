@@ -36,7 +36,7 @@ import com.microsoft.appcenter.utils.storage.StorageHelper;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
-import com.microsoft.appcenter.sasquatch.activities.MainActivity.START_TYPE;
+import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
 
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APP_SECRET_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APPCENTER_START_TYPE;
@@ -336,7 +336,8 @@ public class SettingsActivity extends AppCompatActivity {
             });
 
             /* Miscellaneous. */
-            initChangeableSetting(R.string.appcenter_start_type_key, MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, START_TYPE.APP_SECRET.toString()), new Preference.OnPreferenceChangeListener() {
+            initChangeableSetting(R.string.appcenter_start_type_key, MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString()), new Preference.OnPreferenceChangeListener() {
+
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     setKeyValue(APPCENTER_START_TYPE, (String) newValue);
