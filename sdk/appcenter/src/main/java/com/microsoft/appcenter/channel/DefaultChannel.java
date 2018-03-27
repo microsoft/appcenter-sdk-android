@@ -282,7 +282,6 @@ public class DefaultChannel implements Channel {
             }
         }
         try {
-
             if(mIngestion != null) {
                 mIngestion.close();
             }
@@ -591,7 +590,7 @@ public class DefaultChannel implements Channel {
         } else {
             if(noAppSecretProvided) {
 
-                /* Log was not filtered out but no app secret has been provided. Do nothing in this case*/
+                /* Log was not filtered out but no app secret has been provided. Do nothing in this case. */
                 AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "'was not filtered out by listener(s) but no app secret was provided. Not persisting/sending the log.");
                 return;
             }

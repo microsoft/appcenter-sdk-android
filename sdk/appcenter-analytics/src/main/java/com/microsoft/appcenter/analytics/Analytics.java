@@ -77,12 +77,12 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * The default transmission target.
      */
-    private static TransmissionTarget sDefaultTransmissionTarget = null;
+    private TransmissionTarget mDefaultTransmissionTarget;
 
     /**
      * The map of transmission targets.
      */
-    private static Map<String, TransmissionTarget> sTransmissionTargets;
+    private Map<String, TransmissionTarget> mTransmissionTargets;
 
     /**
      * Log factories managed by this service.
@@ -118,7 +118,7 @@ public class Analytics extends AbstractAppCenterService {
         mFactories.put(StartSessionLog.TYPE, new StartSessionLogFactory());
         mFactories.put(PageLog.TYPE, new PageLogFactory());
         mFactories.put(EventLog.TYPE, new EventLogFactory());
-        sTransmissionTargets = new HashMap<>();
+        mTransmissionTargets = new HashMap<>();
     }
 
     /**
@@ -293,21 +293,37 @@ public class Analytics extends AbstractAppCenterService {
         }
     }
 
+    /**
+     * Get a transmission target to use to track events. Will create a new transmission target if necessary.
+     *
+     * @param transmissionTargetToken A string to identify a transmission target.
+     * @return a transmission target.
+     */
     public static TransmissionTarget getTransmissionTarget(String transmissionTargetToken) {
-        if(transmissionTargetToken != null && transmissionTargetToken.length() > 0) {
-            TransmissionTarget transmissionTarget = sTransmissionTargets.get(transmissionTargetToken);
-            if(transmissionTarget != null) {
-                AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
-                return transmissionTarget;
-            }
-            transmissionTarget = new TransmissionTarget(transmissionTargetToken);
-            AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
-            sTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
-            return transmissionTarget;
-        }
-        else {
+        if(transmissionTargetToken == null && transmissionTargetToken.isEmpty()) {
             return null;
         }
+        else {
+            return getInstance().getTransTarget(transmissionTargetToken);
+        }
+    }
+
+    /**
+     * Get a transmission target to use to track events. Will create a new transmission target if necessary.
+     *
+     * @param transmissionTargetToken A string to identify a transmission target.
+     * @return a transmission target.
+     */
+    private synchronized TransmissionTarget getTransTarget(@NonNull String transmissionTargetToken) {
+        TransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);
+        if(transmissionTarget != null) {
+            AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
+            return transmissionTarget;
+        }
+        transmissionTarget = new TransmissionTarget(transmissionTargetToken);
+        AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
+        mTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
+        return transmissionTarget;
     }
 
 
@@ -561,9 +577,9 @@ public class Analytics extends AbstractAppCenterService {
                 eventLog.setId(UUIDUtils.randomUUID());
                 eventLog.setName(name);
                 eventLog.setProperties(properties);
-                TransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? sDefaultTransmissionTarget : transmissionTarget;
+                TransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? mDefaultTransmissionTarget : transmissionTarget;
                 if(aTransmissionTarget != null) {
-                    eventLog.addTransmissionTarget(aTransmissionTarget.transmissionTargetToken);
+                    eventLog.addTransmissionTarget(aTransmissionTarget.mTransmissionTargetToken);
                     // TODO add multiple targets
                 }
                 mChannel.enqueue(eventLog, ANALYTICS_GROUP);
@@ -601,7 +617,7 @@ public class Analytics extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, String appSecret, String transmissionTargetToken, @NonNull Channel channel) {
         super.onStarted(context, appSecret, transmissionTargetToken, channel);
 
-        // Initialize a default transmission target if a token has been provided.
-        sDefaultTransmissionTarget = getTransmissionTarget(transmissionTargetToken);
+        /* Initialize a default transmission target if a token has been provided. */
+        mDefaultTransmissionTarget = getTransmissionTarget(transmissionTargetToken);
     }
 }

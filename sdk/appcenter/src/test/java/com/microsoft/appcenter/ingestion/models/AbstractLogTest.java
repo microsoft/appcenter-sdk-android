@@ -92,12 +92,12 @@ public class AbstractLogTest {
         final AbstractLog log = new MockLog();
         assertEquals(0, log.getTransmissionTargetTokens().size());
 
-        /* Add first transmission target */
+        /* Add first transmission target. */
         log.addTransmissionTarget(transmissionTargetToken);
         assertTrue(log.getTransmissionTargetTokens().contains(transmissionTargetToken));
         assertEquals(1, log.getTransmissionTargetTokens().size());
 
-        /* Ignore duplicate transmission targets */
+        /* Ignore duplicate transmission targets. */
         log.addTransmissionTarget(transmissionTargetToken);
         assertEquals(1, log.getTransmissionTargetTokens().size());
     }
