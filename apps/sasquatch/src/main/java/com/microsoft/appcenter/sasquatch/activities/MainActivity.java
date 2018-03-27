@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
     static final String APP_SECRET_KEY = "appSecret";
 
-    static final String TENANT_ID_KEY = "tenantId";
+    static final String TARGET_KEY = "target";
 
     static final String APPCENTER_START_TYPE = "appCenterStartType";
 
@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
     static SasquatchPushListener sPushListener;
 
     public enum StartType {
-        APP_SECRET, TENANT_ID, BOTH
+        APP_SECRET, TARGET, BOTH
     }
 
     static {
@@ -242,17 +242,17 @@ public class MainActivity extends AppCompatActivity {
 
     private void startAppCenter(StartType startType) {
         String appId = sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret));
-        String tenantId = sSharedPreferences.getString(TENANT_ID_KEY, getString(R.string.tenant_id));
+        String targetId = sSharedPreferences.getString(TARGET_KEY, getString(R.string.target_id));
         String appIdArg = "";
         switch (startType) {
             case APP_SECRET:
                 appIdArg = appId;
                 break;
-            case TENANT_ID:
-                appIdArg = String.format("tenantId=%s", tenantId);
+            case TARGET:
+                appIdArg = String.format("target=%s", targetId);
                 break;
             case BOTH:
-                appIdArg = String.format("%s;tenantId=%s", appId, tenantId);
+                appIdArg = String.format("%s;target=%s", appId, targetId);
                 break;
         }
         AppCenter.start(getApplication(), appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);

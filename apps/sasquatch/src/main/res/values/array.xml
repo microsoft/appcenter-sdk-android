@@ -2,7 +2,7 @@
 <resources>
     <string-array name="appcenter_start_type_values">
         <item>APP_SECRET</item>
-        <item>TENANT_ID</item>
+        <item>TARGET</item>
         <item>BOTH</item>
     </string-array>
 </resources>

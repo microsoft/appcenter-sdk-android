@@ -94,8 +94,8 @@
             android:entries="@array/appcenter_start_type_values"
             android:entryValues="@array/appcenter_start_type_values" />
         <Preference
-            android:key="@string/tenant_id_key"
-            android:title="@string/tenant_id_title" />
+            android:key="@string/target_id_key"
+            android:title="@string/target_id_title" />
         <Preference
             android:key="@string/clear_crash_user_confirmation_key"
             android:title="@string/clear_crash_user_confirmation_title" />
