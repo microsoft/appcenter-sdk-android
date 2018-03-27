@@ -138,7 +138,6 @@ public class DefaultChannel implements Channel {
         mEnabled = true;
     }
 
-
     /**
      * Init Persistence for default constructor.
      */
