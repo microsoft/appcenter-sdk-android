@@ -10,7 +10,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.ingestion.models.CommonProperties.TYPE;
@@ -63,6 +66,11 @@ public abstract class AbstractLog implements Log {
      * Device characteristics associated to this log.
      */
     private Device device;
+
+    /**
+     * Collection of tenants that this log should be sent to.
+     */
+    private final Set<String> tenants = new LinkedHashSet<>();
 
     @Override
     public Date getTimestamp() {
@@ -126,6 +134,26 @@ public abstract class AbstractLog implements Log {
      */
     public void setDevice(Device device) {
         this.device = device;
+    }
+
+    /**
+     * Adds a tenant that this log should be sent to.
+     *
+     * @param tenant the identifier of the tenant.
+     */
+    @Override
+    public synchronized void addTenant(String tenant) {
+        tenants.add(tenant);
+    }
+
+    /**
+     * Gets all tenants that this log should be sent to.
+     *
+     * @return Collection of tenants that this log should be sent to.
+     */
+    @Override
+    public synchronized Set<String> getTenants() {
+        return Collections.unmodifiableSet(tenants);
     }
 
     @Override

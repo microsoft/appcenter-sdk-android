@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.ingestion.models;
 
 import java.util.Date;
+import java.util.Set;
 import java.util.UUID;
 
 public interface Log extends Model {
@@ -68,4 +69,20 @@ public interface Log extends Model {
      * @param device the device value to set
      */
     void setDevice(Device device);
+
+    /**
+     * Adds a tenant that this log should be sent to.
+     *
+     * @param tenant the identifier of the tenant.
+     */
+    @SuppressWarnings("unused")
+    void addTenant(String tenant);
+
+    /**
+     * Gets all tenants that this log should be sent to.
+     *
+     * @return Collection of tenants that this log should be sent to.
+     */
+    @SuppressWarnings("unused")
+    Set<String> getTenants();
 }
