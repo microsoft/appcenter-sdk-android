@@ -6,7 +6,6 @@ import android.os.Looper;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
-
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -24,15 +23,7 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
@@ -142,7 +133,7 @@ public class DefaultChannel implements Channel {
         mGroupStates = new HashMap<>();
         mListeners = new LinkedHashSet<>();
         mPersistence = appSecretNullOrEmpty ? null : persistence;
-        mIngestion = appSecretNullOrEmpty? null : ingestion;
+        mIngestion = appSecretNullOrEmpty ? null : ingestion;
         mAppCenterHandler = appCenterHandler;
         mEnabled = true;
     }
@@ -173,7 +164,7 @@ public class DefaultChannel implements Channel {
 
     @Override
     public synchronized void addGroup(final String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
-        if(mPersistence == null) {
+        if (mPersistence == null) {
             return;
         }
 
@@ -229,7 +220,7 @@ public class DefaultChannel implements Channel {
 
     @Override
     public void setLogUrl(String logUrl) {
-        if(mIngestion == null) {
+        if (mIngestion == null) {
             return;
         }
         mIngestion.setLogUrl(logUrl);
@@ -242,7 +233,7 @@ public class DefaultChannel implements Channel {
      */
     @Override
     public synchronized void clear(String groupName) {
-        if(mPersistence == null) {
+        if (mPersistence == null) {
             return;
         }
         mPersistence.deleteLogs(groupName);
@@ -282,7 +273,7 @@ public class DefaultChannel implements Channel {
             }
         }
         try {
-            if(mIngestion != null) {
+            if (mIngestion != null) {
                 mIngestion.close();
             }
         } catch (IOException e) {
@@ -293,14 +284,14 @@ public class DefaultChannel implements Channel {
                 deleteLogsOnSuspended(groupState);
             }
         } else {
-            if(mPersistence != null) {
+            if (mPersistence != null) {
                 mPersistence.clearPendingLogState();
             }
         }
     }
 
     private void deleteLogsOnSuspended(final GroupState groupState) {
-        if(mPersistence == null)  {
+        if (mPersistence == null) {
             return;
         }
         final List<Log> logs = new ArrayList<>();
@@ -319,7 +310,7 @@ public class DefaultChannel implements Channel {
     }
 
     private void cancelTimer(GroupState groupState) {
-        if((mIngestion == null)|| (mIngestionHandler == null)) {
+        if ((mIngestion == null) || (mIngestionHandler == null)) {
             return;
         }
         if (groupState.mScheduled) {
@@ -343,7 +334,7 @@ public class DefaultChannel implements Channel {
      * @param groupName the group name
      */
     private synchronized void triggerIngestion(final @NonNull String groupName) {
-        if((mIngestion == null) || (mPersistence == null)) {
+        if ((mIngestion == null) || (mPersistence == null)) {
             return;
         }
         if (!mEnabled) {
@@ -418,7 +409,7 @@ public class DefaultChannel implements Channel {
     @MainThread
     private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId) {
         if (checkStateDidNotChange(groupState, currentState)) {
-            if(mIngestion == null) {
+            if (mIngestion == null) {
                 return;
             }
 
@@ -477,7 +468,7 @@ public class DefaultChannel implements Channel {
     private synchronized void handleSendingSuccess(@NonNull final GroupState groupState, int currentState, @NonNull final String batchId) {
         if (checkStateDidNotChange(groupState, currentState)) {
             String groupName = groupState.mName;
-            if(mPersistence != null) {
+            if (mPersistence != null) {
                 mPersistence.deleteLogs(groupName, batchId);
             }
             List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
@@ -533,7 +524,7 @@ public class DefaultChannel implements Channel {
         /* Check group name is registered. */
         final GroupState groupState = mGroupStates.get(groupName);
         if (groupState == null) {
-            if((mPersistence != null) && (mIngestion != null)) {
+            if ((mPersistence != null) && (mIngestion != null)) {
                 AppCenterLog.error(LOG_TAG, "Invalid group name:" + groupName);
                 return;
             }
@@ -588,7 +579,7 @@ public class DefaultChannel implements Channel {
         if (filteredOut) {
             AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "' was filtered out by listener(s)");
         } else {
-            if(noAppSecretProvided) {
+            if (noAppSecretProvided) {
 
                 /* Log was not filtered out but no app secret has been provided. Do nothing in this case. */
                 AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "'was not filtered out by listener(s) but no app secret was provided. Not persisting/sending the log.");
@@ -626,7 +617,7 @@ public class DefaultChannel implements Channel {
             triggerIngestion(groupName);
         } else if (pendingLogCount > 0 && !groupState.mScheduled) {
             groupState.mScheduled = true;
-            if(mIngestionHandler != null) {
+            if (mIngestionHandler != null) {
                 mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
             }
         }

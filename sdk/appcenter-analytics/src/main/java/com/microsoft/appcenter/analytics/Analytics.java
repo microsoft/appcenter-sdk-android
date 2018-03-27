@@ -5,7 +5,6 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
-
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
@@ -33,6 +32,18 @@ import java.util.Map;
 public class Analytics extends AbstractAppCenterService {
 
     /**
+     * Max length of event/page name.
+     */
+    @VisibleForTesting
+    static final int MAX_NAME_LENGTH = 256;
+
+    /**
+     * Max length of properties.
+     */
+    @VisibleForTesting
+    static final int MAX_PROPERTY_ITEM_LENGTH = 64;
+
+    /**
      * Name of the service.
      */
     private static final String SERVICE_NAME = "Analytics";
@@ -58,21 +69,14 @@ public class Analytics extends AbstractAppCenterService {
     private static final int MAX_PROPERTY_COUNT = 5;
 
     /**
-     * Max length of event/page name.
-     */
-    @VisibleForTesting
-    static final int MAX_NAME_LENGTH = 256;
-
-    /**
-     * Max length of properties.
-     */
-    @VisibleForTesting
-    static final int MAX_PROPERTY_ITEM_LENGTH = 64;
-
-    /**
      * Shared instance.
      */
     private static Analytics sInstance = null;
+
+    /**
+     * Log factories managed by this service.
+     */
+    private final Map<String, LogFactory> mFactories;
 
     /**
      * The default transmission target.
@@ -83,11 +87,6 @@ public class Analytics extends AbstractAppCenterService {
      * The map of transmission targets.
      */
     private Map<String, TransmissionTarget> mTransmissionTargets;
-
-    /**
-     * Log factories managed by this service.
-     */
-    private final Map<String, LogFactory> mFactories;
 
     /**
      * Current activity to replay onResume when enabled in foreground.
@@ -263,7 +262,7 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Track a custom event with name and transmissionTarget.
      *
-     * @param name A page name.
+     * @param name               A page name.
      * @param transmissionTarget The transmissionTarget for this event.
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
@@ -279,8 +278,8 @@ public class Analytics extends AbstractAppCenterService {
      * The properties values can not be null, maximum allowed value length = 64.
      * Any length of name/keys/values that are longer than each limit will be truncated.
      *
-     * @param name       An event name.
-     * @param properties Optional properties.
+     * @param name               An event name.
+     * @param properties         Optional properties.
      * @param transmissionTarget Optional transmissionTarget.
      */
     @SuppressWarnings("WeakerAccess")
@@ -300,32 +299,12 @@ public class Analytics extends AbstractAppCenterService {
      * @return a transmission target.
      */
     public static TransmissionTarget getTransmissionTarget(String transmissionTargetToken) {
-        if(transmissionTargetToken == null && transmissionTargetToken.isEmpty()) {
+        if (transmissionTargetToken == null && transmissionTargetToken.isEmpty()) {
             return null;
-        }
-        else {
+        } else {
             return getInstance().getTransTarget(transmissionTargetToken);
         }
     }
-
-    /**
-     * Get a transmission target to use to track events. Will create a new transmission target if necessary.
-     *
-     * @param transmissionTargetToken A string to identify a transmission target.
-     * @return a transmission target.
-     */
-    private synchronized TransmissionTarget getTransTarget(@NonNull String transmissionTargetToken) {
-        TransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);
-        if(transmissionTarget != null) {
-            AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
-            return transmissionTarget;
-        }
-        transmissionTarget = new TransmissionTarget(transmissionTargetToken);
-        AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
-        mTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
-        return transmissionTarget;
-    }
-
 
     /**
      * Generate a page name for an activity.
@@ -407,6 +386,24 @@ public class Analytics extends AbstractAppCenterService {
             result.put(key, value);
         }
         return result;
+    }
+
+    /**
+     * Get a transmission target to use to track events. Will create a new transmission target if necessary.
+     *
+     * @param transmissionTargetToken A string to identify a transmission target.
+     * @return a transmission target.
+     */
+    private synchronized TransmissionTarget getTransTarget(@NonNull String transmissionTargetToken) {
+        TransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);
+        if (transmissionTarget != null) {
+            AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
+            return transmissionTarget;
+        }
+        transmissionTarget = new TransmissionTarget(transmissionTargetToken);
+        AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
+        mTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
+        return transmissionTarget;
     }
 
     @Override
@@ -578,7 +575,7 @@ public class Analytics extends AbstractAppCenterService {
                 eventLog.setName(name);
                 eventLog.setProperties(properties);
                 TransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? mDefaultTransmissionTarget : transmissionTarget;
-                if(aTransmissionTarget != null) {
+                if (aTransmissionTarget != null) {
                     eventLog.addTransmissionTarget(aTransmissionTarget.mTransmissionTargetToken);
                     // TODO add multiple targets
                 }
