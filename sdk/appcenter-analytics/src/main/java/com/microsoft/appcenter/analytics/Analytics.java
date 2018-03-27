@@ -8,7 +8,6 @@ import android.support.annotation.WorkerThread;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
-import com.microsoft.appcenter.analytics.channel.TransmissionTarget;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
 import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
@@ -86,7 +85,7 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * The map of transmission targets.
      */
-    private Map<String, TransmissionTarget> mTransmissionTargets;
+    private final Map<String, TransmissionTarget> mTransmissionTargets;
 
     /**
      * Current activity to replay onResume when enabled in foreground.
@@ -266,7 +265,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param transmissionTarget The transmissionTarget for this event.
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
-    public static void trackEvent(String name, TransmissionTarget transmissionTarget) {
+    static void trackEvent(String name, TransmissionTarget transmissionTarget) {
         trackEvent(name, null, transmissionTarget);
     }
 
@@ -299,7 +298,7 @@ public class Analytics extends AbstractAppCenterService {
      * @return a transmission target.
      */
     public static TransmissionTarget getTransmissionTarget(String transmissionTargetToken) {
-        if (transmissionTargetToken == null && transmissionTargetToken.isEmpty()) {
+        if (transmissionTargetToken == null || transmissionTargetToken.isEmpty()) {
             return null;
         } else {
             return getInstance().getTransTarget(transmissionTargetToken);

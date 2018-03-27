@@ -1,6 +1,4 @@
-package com.microsoft.appcenter.analytics.channel;
-
-import com.microsoft.appcenter.analytics.Analytics;
+package com.microsoft.appcenter.analytics;
 
 import java.util.Map;
 
