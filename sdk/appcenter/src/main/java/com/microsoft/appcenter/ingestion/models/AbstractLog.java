@@ -2,19 +2,13 @@ package com.microsoft.appcenter.ingestion.models;
 
 
 import android.support.annotation.VisibleForTesting;
-
 import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static com.microsoft.appcenter.ingestion.models.CommonProperties.TYPE;
 
@@ -48,6 +42,11 @@ public abstract class AbstractLog implements Log {
     static final String DEVICE = "device";
 
     /**
+     * Collection of transmissionTargetTokens that this log should be sent to.
+     */
+    private final Set<String> transmissionTargetTokens = new LinkedHashSet<>();
+
+    /**
      * Log timestamp.
      */
     private Date timestamp;
@@ -66,11 +65,6 @@ public abstract class AbstractLog implements Log {
      * Device characteristics associated to this log.
      */
     private Device device;
-
-    /**
-     * Collection of transmissionTargetTokens that this log should be sent to.
-     */
-    private final Set<String> transmissionTargetTokens = new LinkedHashSet<>();
 
     @Override
     public Date getTimestamp() {

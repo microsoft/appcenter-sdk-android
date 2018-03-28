@@ -6,7 +6,6 @@ import android.os.Looper;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
-
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -24,15 +23,7 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
@@ -146,7 +137,6 @@ public class DefaultChannel implements Channel {
         mAppCenterHandler = appCenterHandler;
         mEnabled = true;
     }
-
 
     /**
      * Init Persistence for default constructor.

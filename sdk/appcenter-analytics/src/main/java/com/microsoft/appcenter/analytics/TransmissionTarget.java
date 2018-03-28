@@ -1,15 +1,13 @@
-package com.microsoft.appcenter.analytics.channel;
-
-import com.microsoft.appcenter.analytics.Analytics;
+package com.microsoft.appcenter.analytics;
 
 import java.util.Map;
 
 public class TransmissionTarget {
 
-    public String transmissionTargetToken;
+    public String mTransmissionTargetToken;
 
     public TransmissionTarget(String transmissionTargetToken) {
-        this.transmissionTargetToken = transmissionTargetToken;
+        mTransmissionTargetToken = transmissionTargetToken;
     }
 
     /**

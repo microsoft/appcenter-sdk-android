@@ -1,7 +1,6 @@
 package com.microsoft.appcenter.ingestion.models;
 
 import com.microsoft.appcenter.test.TestUtils;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
@@ -12,15 +11,9 @@ import java.util.UUID;
 
 import static com.microsoft.appcenter.test.TestUtils.checkEquals;
 import static com.microsoft.appcenter.test.TestUtils.checkNotEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings("unused")
 public class AbstractLogTest {
@@ -92,12 +85,12 @@ public class AbstractLogTest {
         final AbstractLog log = new MockLog();
         assertEquals(0, log.getTransmissionTargetTokens().size());
 
-        /* Add first transmission target */
+        /* Add first transmission target. */
         log.addTransmissionTarget(transmissionTargetToken);
         assertTrue(log.getTransmissionTargetTokens().contains(transmissionTargetToken));
         assertEquals(1, log.getTransmissionTargetTokens().size());
 
-        /* Ignore duplicate transmission targets */
+        /* Ignore duplicate transmission targets. */
         log.addTransmissionTarget(transmissionTargetToken);
         assertEquals(1, log.getTransmissionTargetTokens().size());
     }
