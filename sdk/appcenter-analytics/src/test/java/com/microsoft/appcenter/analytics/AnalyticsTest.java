@@ -6,7 +6,6 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
-import com.microsoft.appcenter.analytics.channel.TransmissionTarget;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
 import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
