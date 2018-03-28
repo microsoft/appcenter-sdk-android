@@ -252,7 +252,7 @@ public class MainActivity extends AppCompatActivity {
                 appIdArg = String.format("target=%s", targetId);
                 break;
             case BOTH:
-                appIdArg = String.format("%s;target=%s", appId, targetId);
+                appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
                 break;
         }
         AppCenter.start(getApplication(), appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
