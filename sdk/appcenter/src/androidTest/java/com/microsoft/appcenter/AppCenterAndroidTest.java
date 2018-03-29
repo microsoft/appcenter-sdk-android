@@ -22,6 +22,10 @@ import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.microsoft.appcenter.AppCenter.APP_SECRET_KEY;
+import static com.microsoft.appcenter.AppCenter.KEY_VALUE_DELIMITER;
+import static com.microsoft.appcenter.AppCenter.PAIR_DELIMITER;
+import static com.microsoft.appcenter.AppCenter.TRANSMISSION_TARGET_TOKEN_KEY;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -52,7 +56,7 @@ public class AppCenterAndroidTest {
     }
 
     @Test
-    public void getInstallId() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+    public void getInstallId() {
         assertNull(AppCenter.getInstallId().get());
         StorageHelper.initialize(mApplication);
         StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
@@ -82,7 +86,7 @@ public class AppCenterAndroidTest {
     }
 
     @Test
-    public void setDefaultLogLevelDebug() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+    public void setDefaultLogLevelDebug() {
         AppCenterLog.setLogLevel(Log.ASSERT);
         AppCenter.start(mApplication, UUIDUtils.randomUUID().toString());
         assertEquals(Log.WARN, AppCenter.getLogLevel());
@@ -90,7 +94,7 @@ public class AppCenterAndroidTest {
 
     @Test
     public void appSecretWithDelimiter() {
-        String secret = DUMMY_APP_SECRET + AppCenter.PAIR_DELIMITER;
+        String secret = DUMMY_APP_SECRET + PAIR_DELIMITER;
         AppCenter.start(mApplication, secret, DummyService.class);
         assertTrue(AppCenter.isEnabled().get());
         verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), isNull(String.class), any(Channel.class));
@@ -98,7 +102,7 @@ public class AppCenterAndroidTest {
 
     @Test
     public void appSecretWithTargetTokenTest() {
-        String secret = DUMMY_APP_SECRET + AppCenter.PAIR_DELIMITER + AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
+        String secret = DUMMY_APP_SECRET + PAIR_DELIMITER + TRANSMISSION_TARGET_TOKEN_KEY + KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
         AppCenter.start(mApplication, secret, DummyService.class);
         assertTrue(AppCenter.isEnabled().get());
         verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
@@ -106,7 +110,7 @@ public class AppCenterAndroidTest {
 
     @Test
     public void keyedAppSecretTest() {
-        String secret = AppCenter.APP_SECRET_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_APP_SECRET;
+        String secret = APP_SECRET_KEY + KEY_VALUE_DELIMITER + DUMMY_APP_SECRET;
         AppCenter.start(mApplication, secret, DummyService.class);
         assertTrue(AppCenter.isEnabled().get());
         verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), isNull(String.class), any(Channel.class));
@@ -114,7 +118,7 @@ public class AppCenterAndroidTest {
 
     @Test
     public void keyedAppSecretWithDelimiterTest() {
-        String secret = AppCenter.APP_SECRET_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_APP_SECRET + AppCenter.PAIR_DELIMITER;
+        String secret = APP_SECRET_KEY + KEY_VALUE_DELIMITER + DUMMY_APP_SECRET + PAIR_DELIMITER;
         AppCenter.start(mApplication, secret, DummyService.class);
         assertTrue(AppCenter.isEnabled().get());
         verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), isNull(String.class), any(Channel.class));
@@ -122,8 +126,8 @@ public class AppCenterAndroidTest {
 
     @Test
     public void keyedAppSecretWithTargetTokenTest() {
-        String secret = AppCenter.APP_SECRET_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_APP_SECRET + AppCenter.PAIR_DELIMITER +
-                AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
+        String secret = APP_SECRET_KEY + KEY_VALUE_DELIMITER + DUMMY_APP_SECRET + PAIR_DELIMITER +
+                TRANSMISSION_TARGET_TOKEN_KEY + KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
         AppCenter.start(mApplication, secret, DummyService.class);
         assertTrue(AppCenter.isEnabled().get());
         verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
@@ -131,7 +135,7 @@ public class AppCenterAndroidTest {
 
     @Test
     public void targetTokenTest() {
-        String secret = AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
+        String secret = TRANSMISSION_TARGET_TOKEN_KEY + KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
         AppCenter.start(mApplication, secret, DummyService.class);
         assertTrue(AppCenter.isEnabled().get());
         verify(DummyService.getInstance()).onStarted(any(Context.class), isNull(String.class), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
@@ -139,7 +143,7 @@ public class AppCenterAndroidTest {
 
     @Test
     public void targetTokenWithAppSecretTest() {
-        String secret = AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN + AppCenter.PAIR_DELIMITER + DUMMY_APP_SECRET;
+        String secret = TRANSMISSION_TARGET_TOKEN_KEY + KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN + PAIR_DELIMITER + DUMMY_APP_SECRET;
         AppCenter.start(mApplication, secret, DummyService.class);
         assertTrue(AppCenter.isEnabled().get());
         verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
@@ -147,7 +151,7 @@ public class AppCenterAndroidTest {
 
     @Test
     public void targetTokenWithUnKeyedAppSecretTest() {
-        String secret = AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN +  AppCenter.PAIR_DELIMITER + AppCenter.APP_SECRET_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_APP_SECRET;
+        String secret = TRANSMISSION_TARGET_TOKEN_KEY + KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN + PAIR_DELIMITER + APP_SECRET_KEY + KEY_VALUE_DELIMITER + DUMMY_APP_SECRET;
         AppCenter.start(mApplication, secret, DummyService.class);
         assertTrue(AppCenter.isEnabled().get());
         verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
@@ -155,9 +159,9 @@ public class AppCenterAndroidTest {
 
     @Test
     public void unknownKeyTest() {
-        String secret = AppCenter.APP_SECRET_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_APP_SECRET + AppCenter.PAIR_DELIMITER +
-                AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN + AppCenter.PAIR_DELIMITER +
-                "unknown" + AppCenter.KEY_VALUE_DELIMITER + "value";
+        String secret = APP_SECRET_KEY + KEY_VALUE_DELIMITER + DUMMY_APP_SECRET + PAIR_DELIMITER +
+                TRANSMISSION_TARGET_TOKEN_KEY + KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN + PAIR_DELIMITER +
+                "unknown" + KEY_VALUE_DELIMITER + "value";
         AppCenter.start(mApplication, secret, DummyService.class);
         assertTrue(AppCenter.isEnabled().get());
         verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
