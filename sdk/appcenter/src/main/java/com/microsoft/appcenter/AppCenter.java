@@ -409,7 +409,7 @@ public class AppCenter {
             AppCenterLog.error(LOG_TAG, "application may not be null");
             return false;
         }
-        if (appSecret.isEmpty()) {
+        if (appSecret == null || appSecret.isEmpty()) {
             AppCenterLog.error(LOG_TAG, "appSecret may not be null or empty");
             return false;
         }
@@ -428,7 +428,7 @@ public class AppCenter {
         /* Store state. */
         mApplication = application;
 
-        /* Init parsing, the app secret string can contain other secrets.  */
+        /* Init parsing, the app secret string can contain other secrets. */
         TextUtils.SimpleStringSplitter pairSplitter = new TextUtils.SimpleStringSplitter(PAIR_DELIMITER);
         TextUtils.SimpleStringSplitter keyValueSplitter = new TextUtils.SimpleStringSplitter(KEY_VALUE_DELIMITER);
         pairSplitter.setString(appSecret);
@@ -442,9 +442,7 @@ public class AppCenter {
 
             /* A value with no key is default to the app secret. */
             if (!keyValueSplitter.hasNext()) {
-                if (keyValue.indexOf(KEY_VALUE_DELIMITER) == -1) {
-                    mAppSecret = key;
-                }
+                mAppSecret = key;
                 continue;
             }
             String value = keyValueSplitter.next();

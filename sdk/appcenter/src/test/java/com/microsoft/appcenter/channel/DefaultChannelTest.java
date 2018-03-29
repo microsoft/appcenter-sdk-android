@@ -156,7 +156,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mHandler, times(3)).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
         verify(mHandler).removeCallbacks(any(Runnable.class));
 
-        /* Check channel clear clear */
+        /* Check channel clear. */
         channel.clear(TEST_GROUP);
         verify(mockPersistence).deleteLogs(eq(TEST_GROUP));
     }
@@ -976,7 +976,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Persistence persistence = mock(Persistence.class);
 
         @SuppressWarnings("ConstantConditions")
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, mock(IngestionHttp.class), mCoreHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(IngestionHttp.class), mCoreHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
         /* Given we add mock listeners. */
@@ -1039,5 +1039,71 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
             verify(listener2).shouldFilter(log);
             verify(persistence).putLog(TEST_GROUP, log);
         }
+    }
+
+    @Test
+    public void nullAppSecretProvided() throws Persistence.PersistenceException {
+        testChannelWithoutAppSecret(null);
+    }
+
+    @Test
+    public void emptyAppSecretProvided() throws Persistence.PersistenceException {
+        testChannelWithoutAppSecret("");
+    }
+
+    public void testChannelWithoutAppSecret(String appSecret) throws Persistence.PersistenceException {
+
+        /* Given a mock channel. */
+        Persistence persistence = mock(Persistence.class);
+        Ingestion ingestion = mock(Ingestion.class);
+
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), appSecret, persistence, ingestion, mCoreHandler);
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+
+        /* Check log url. */
+        String logUrl = "http://mockUrl";
+        channel.setLogUrl(logUrl);
+        verify(ingestion, never()).setLogUrl(logUrl);
+
+        /* Check enqueue. */
+        Log log = mock(Log.class);
+        channel.enqueue(log, TEST_GROUP);
+        verify(persistence, never()).putLog(TEST_GROUP, log);
+        channel.enqueue(mock(Log.class), "other");
+        verify(persistence, never()).putLog(anyString(), any(Log.class));
+
+        /* Check clear. */
+        channel.clear(TEST_GROUP);
+        verify(persistence, never()).deleteLogs(eq(TEST_GROUP));
+
+        /* Check shutdown. */
+        channel.shutdown();
+        verify(persistence, never()).clearPendingLogState();
+    }
+
+    @Test
+    public void withoutIngestion() {
+        Persistence persistence = mock(Persistence.class);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, null, mCoreHandler);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+        channel.enqueue(mock(Log.class), TEST_GROUP);
+        channel.enqueue(mock(Log.class), "other");
+        channel.setEnabled(false);
+        channel.setEnabled(true);
+
+        /* No exceptions. */
+    }
+
+    @Test
+    public void withoutPersistence() {
+        Ingestion ingestion = mock(Ingestion.class);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), null, ingestion, mCoreHandler);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+        channel.enqueue(mock(Log.class), TEST_GROUP);
+        channel.enqueue(mock(Log.class), "other");
+        channel.setEnabled(false);
+        channel.setEnabled(true);
+
+        /* No exceptions. */
     }
 }
