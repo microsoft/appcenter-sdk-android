@@ -9,7 +9,6 @@ import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.microsoft.appcenter.channel.Channel;
@@ -80,13 +79,13 @@ public class AppCenter {
      *  Delimiter between two key value pairs.
      */
     @VisibleForTesting
-    static final char PAIR_DELIMITER = ';';
+    static final String PAIR_DELIMITER = ";";
 
     /**
      *  Delimiter between key and its value.
      */
     @VisibleForTesting
-    static final char KEY_VALUE_DELIMITER = '=';
+    static final String KEY_VALUE_DELIMITER = "=";
 
     /**
      * Application secret key.
@@ -446,36 +445,40 @@ public class AppCenter {
 
         /* Store state. */
         mApplication = application;
-        mAppSecret = appSecret;
 
         /* Init parsing, the app secret string can contain other secrets.  */
-        TextUtils.SimpleStringSplitter pairSplitter = new TextUtils.SimpleStringSplitter(PAIR_DELIMITER);
-        TextUtils.SimpleStringSplitter keyValueSplitter = new TextUtils.SimpleStringSplitter(KEY_VALUE_DELIMITER);
-        pairSplitter.setString(appSecret);
+        String[] pairs = appSecret.split(PAIR_DELIMITER);
 
         /* Split by pairs. */
-        for (String keyValue : pairSplitter) {
+        for (String pair : pairs) {
 
             /* Split key and value. */
-            keyValueSplitter.setString(keyValue);
-            String key = keyValueSplitter.next();
+            String[] keyValue = pair.split(KEY_VALUE_DELIMITER);
+            String key = keyValue[0];
 
             /* A value with no key is default to the app secret. */
-            if (!keyValueSplitter.hasNext()){
-                if (keyValue.indexOf(KEY_VALUE_DELIMITER) == -1){
+            if (keyValue.length == 1){
+                if (pair.indexOf(KEY_VALUE_DELIMITER) == -1 && !key.isEmpty()){
                     mAppSecret = key;
                 }
                 continue;
-            }
-            String value = keyValueSplitter.next();
+            }else if (!keyValue[1].isEmpty()){
+                String value = keyValue[1];
 
-            /* Ignore unknown keys. */
-            if (APP_SECRET_KEY.equals(key) ) {
-                mAppSecret = value;
+                /* Ignore unknown keys. */
+                if (APP_SECRET_KEY.equals(key) ) {
+                    mAppSecret = value;
+                }
+                else if (TRANSMISSION_TARGET_TOKEN_KEY.equals(key)){
+                    mTransmissionTargetToken = value;
+                }
             }
-            else if (TRANSMISSION_TARGET_TOKEN_KEY.equals(key)){
-                mTransmissionTargetToken = value;
-            }
+        }
+
+        /* At least one secret. */
+        if ((mAppSecret == null || mAppSecret.isEmpty()) && (mTransmissionTargetToken == null || mTransmissionTargetToken.isEmpty())) {
+            AppCenterLog.error(LOG_TAG, "At least either the appSecret or the transmission target token needs to be set");
+            return false;
         }
 
         /* Start looper. */
