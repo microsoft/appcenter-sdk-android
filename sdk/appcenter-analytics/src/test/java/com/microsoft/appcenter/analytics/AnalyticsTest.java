@@ -614,6 +614,68 @@ public class AnalyticsTest {
         verify(analyticsListener, never()).onSendingFailed(any(EventLog.class), any(Exception.class));
     }
 
+    @Test
+    public void testGetTransmissionTarget() {
+        assertNull(Analytics.getTransmissionTarget(""));
+        assertNotNull(Analytics.getTransmissionTarget("token"));
+    }
+
+    @Test
+    public void testTrackEventWithTransmissionTarget() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), null, "token", channel);
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
+        assertNotNull(target);
+
+        /* Track event with transmission target. */
+        trackEvent("name", target);
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    return eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                }
+                return false;
+            }
+        }), anyString());
+        reset(channel);
+
+        /* Track event via transmission target method. */
+        target.trackEvent("name");
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    return eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                }
+                return false;
+            }
+        }), anyString());
+        reset(channel);
+
+        /* Track event via transmission target method with properties. */
+        target.trackEvent("name", new HashMap<String, String>() {{
+            put("valid", "valid");
+        }});
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    return eventLog.getName().equals("name") && eventLog.getProperties().size() == 1;
+                }
+                return false;
+            }
+        }), anyString());
+    }
+
     /**
      * Activity with page name automatically resolving to "My" (no "Activity" suffix).
      */
