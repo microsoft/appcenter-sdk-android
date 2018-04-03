@@ -6,6 +6,7 @@ import android.os.Looper;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
+
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -23,7 +24,15 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
@@ -125,7 +134,7 @@ public class DefaultChannel implements Channel {
      */
     @VisibleForTesting
     DefaultChannel(@NonNull Context context, String appSecret, Persistence persistence, Ingestion ingestion, @NonNull Handler appCenterHandler) {
-        boolean appSecretNullOrEmpty = (appSecret == null) || appSecret.isEmpty();
+        boolean appSecretNullOrEmpty = appSecret == null || appSecret.isEmpty();
         mContext = context;
         mAppSecret = appSecret;
         mInstallId = IdHelper.getInstallId();
@@ -309,7 +318,7 @@ public class DefaultChannel implements Channel {
     }
 
     private void cancelTimer(GroupState groupState) {
-        if ((mIngestion == null) || (mIngestionHandler == null)) {
+        if (mIngestion == null || mIngestionHandler == null) {
             return;
         }
         if (groupState.mScheduled) {
@@ -333,7 +342,7 @@ public class DefaultChannel implements Channel {
      * @param groupName the group name
      */
     private synchronized void triggerIngestion(final @NonNull String groupName) {
-        if ((mIngestion == null) || (mPersistence == null)) {
+        if (mIngestion == null || mPersistence == null) {
             return;
         }
         if (!mEnabled) {
@@ -523,7 +532,7 @@ public class DefaultChannel implements Channel {
         /* Check group name is registered. */
         final GroupState groupState = mGroupStates.get(groupName);
         if (groupState == null) {
-            if ((mPersistence != null) && (mIngestion != null)) {
+            if (mPersistence != null && mIngestion != null) {
                 AppCenterLog.error(LOG_TAG, "Invalid group name:" + groupName);
                 return;
             }
@@ -573,7 +582,7 @@ public class DefaultChannel implements Channel {
         }
 
         /* No persistence and/or no ingestion mean that no app secret has been provided. */
-        boolean noAppSecretProvided = (mPersistence == null) || (mIngestion == null);
+        boolean noAppSecretProvided = mPersistence == null || mIngestion == null;
 
         if (filteredOut) {
             AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "' was filtered out by listener(s)");
