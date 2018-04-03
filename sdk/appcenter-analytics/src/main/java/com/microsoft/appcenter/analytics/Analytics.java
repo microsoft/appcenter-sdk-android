@@ -282,7 +282,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param transmissionTarget Optional transmissionTarget.
      */
     @SuppressWarnings("WeakerAccess")
-    public static void trackEvent(String name, Map<String, String> properties, TransmissionTarget transmissionTarget) {
+    static void trackEvent(String name, Map<String, String> properties, TransmissionTarget transmissionTarget) {
         final String logType = "Event";
         name = validateName(name, logType);
         if (name != null) {
