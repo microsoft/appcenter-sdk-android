@@ -2,13 +2,19 @@ package com.microsoft.appcenter.ingestion.models;
 
 
 import android.support.annotation.VisibleForTesting;
+
 import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.UUID;
 
 import static com.microsoft.appcenter.ingestion.models.CommonProperties.TYPE;
 
