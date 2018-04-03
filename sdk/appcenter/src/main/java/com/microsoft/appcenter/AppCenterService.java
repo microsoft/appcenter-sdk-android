@@ -57,10 +57,10 @@ public interface AppCenterService extends Application.ActivityLifecycleCallbacks
     /**
      * Called when the service is started (disregarding if enabled or disabled).
      *
-     * @param context                   application context.
-     * @param appSecret                 application secret.
-     * @param transmissionTargetToken   transmission target token.
-     * @param channel                   channel.
+     * @param context                 application context.
+     * @param appSecret               application secret.
+     * @param transmissionTargetToken transmission target token.
+     * @param channel                 channel.
      */
     @WorkerThread
     void onStarted(@NonNull Context context, String appSecret, String transmissionTargetToken, @NonNull Channel channel);

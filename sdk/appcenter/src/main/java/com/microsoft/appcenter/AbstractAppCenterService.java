@@ -335,7 +335,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
      * Use this for example to manage life cycle callbacks to make sure SDK is started and that
      * every operation runs in order.
      * <p>
-     * This method will not SDK is disabled, the purpose is for internal commands, not APIs.
+     * This method will not run the command if the SDK is disabled, the purpose is for internal commands, not APIs.
      *
      * @param runnable command to run.
      */

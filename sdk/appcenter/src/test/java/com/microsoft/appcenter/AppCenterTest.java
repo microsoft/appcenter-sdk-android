@@ -729,26 +729,20 @@ public class AppCenterTest {
     @Test
     public void nullAppSecretTest() {
         AppCenter.start(mApplication, null, DummyService.class);
-        verify(DummyService.getInstance(), never()).onStarted(any(Context.class), anyString(), anyString(), any(Channel.class));
-        PowerMockito.verifyStatic();
-        AppCenterLog.error(eq(LOG_TAG), anyString());
+        verify(DummyService.getInstance()).onStarted(any(Context.class), isNull(String.class), isNull(String.class), any(Channel.class));
     }
 
     @Test
     public void emptyAppSecretTest() {
         AppCenter.start(mApplication, "", DummyService.class);
-        verify(DummyService.getInstance(), never()).onStarted(any(Context.class), anyString(), anyString(), any(Channel.class));
-        PowerMockito.verifyStatic();
-        AppCenterLog.error(eq(LOG_TAG), anyString());
+        verify(DummyService.getInstance()).onStarted(any(Context.class), isNull(String.class), isNull(String.class), any(Channel.class));
     }
 
     @Test
     public void appSecretKeyWithoutAppSecretTest() {
         String secret = AppCenter.APP_SECRET_KEY + AppCenter.KEY_VALUE_DELIMITER;
         AppCenter.start(mApplication, secret, DummyService.class);
-        verify(DummyService.getInstance(), never()).onStarted(any(Context.class), anyString(), anyString(), any(Channel.class));
-        PowerMockito.verifyStatic();
-        AppCenterLog.error(eq(LOG_TAG), anyString());
+        verify(DummyService.getInstance()).onStarted(any(Context.class), isNull(String.class), isNull(String.class), any(Channel.class));
     }
 
     @Test
@@ -802,8 +796,18 @@ public class AppCenterTest {
 
     @Test
     public void targetTokenWithUnKeyedAppSecretTest() {
-        String secret = AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN +  AppCenter.PAIR_DELIMITER + AppCenter.APP_SECRET_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_APP_SECRET;
+        String secret = AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN + AppCenter.PAIR_DELIMITER + AppCenter.APP_SECRET_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_APP_SECRET;
         AppCenter.start(mApplication, secret, DummyService.class);
+        verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
+    }
+
+    @Test
+    public void unknownKeyTest() {
+        String secret = DUMMY_APP_SECRET + AppCenter.PAIR_DELIMITER +
+                AppCenter.TRANSMISSION_TARGET_TOKEN_KEY + AppCenter.KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN + AppCenter.PAIR_DELIMITER +
+                "unknown" + AppCenter.KEY_VALUE_DELIMITER + "value";
+        AppCenter.start(mApplication, secret, DummyService.class);
+        assertTrue(AppCenter.isEnabled().get());
         verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
     }
 

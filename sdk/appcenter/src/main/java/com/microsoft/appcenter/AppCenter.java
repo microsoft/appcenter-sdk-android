@@ -10,12 +10,13 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
+
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.DefaultChannel;
 import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
-import com.microsoft.appcenter.ingestion.models.json.*;
+import com.microsoft.appcenter.ingestion.models.json.CustomPropertiesLogFactory;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
@@ -26,18 +27,26 @@ import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
-import com.microsoft.appcenter.utils.*;
+import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
-import static com.microsoft.appcenter.Constants.*;
+import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_COUNT;
+import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_INTERVAL;
+import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
 import static com.microsoft.appcenter.utils.AppCenterLog.NONE;
 
 public class AppCenter {
@@ -407,6 +416,7 @@ public class AppCenter {
      *
      * @param application application context.
      * @param appSecret   a unique and secret key used to identify the application.
+     *                    It can be null since a transmission target token can be set later.
      * @return true if configuration was successful, false otherwise.
      */
     /* UncaughtExceptionHandler is used by PowerMock but lint does not detect it. */
@@ -416,10 +426,6 @@ public class AppCenter {
         /* Check parameters. */
         if (application == null) {
             AppCenterLog.error(LOG_TAG, "application may not be null");
-            return false;
-        }
-        if (appSecret == null || appSecret.isEmpty()) {
-            AppCenterLog.error(LOG_TAG, "appSecret may not be null or empty");
             return false;
         }
 
@@ -437,39 +443,37 @@ public class AppCenter {
         /* Store state. */
         mApplication = application;
 
-        /* Init parsing, the app secret string can contain other secrets.  */
-        String[] pairs = appSecret.split(PAIR_DELIMITER);
+        /* A null secret is still valid since transmission target token can be set later. */
+        if (appSecret != null && !appSecret.isEmpty()) {
 
-        /* Split by pairs. */
-        for (String pair : pairs) {
+            /* Init parsing, the app secret string can contain other secrets.  */
+            String[] pairs = appSecret.split(PAIR_DELIMITER);
+
+            /* Split by pairs. */
+            for (String pair : pairs) {
 
             /* Split key and value. */
-            String[] keyValue = pair.split(KEY_VALUE_DELIMITER);
-            String key = keyValue[0];
+                String[] keyValue = pair.split(KEY_VALUE_DELIMITER);
+                String key = keyValue[0];
 
             /* A value with no key is default to the app secret. */
-            if (keyValue.length == 1){
-                if (pair.indexOf(KEY_VALUE_DELIMITER) == -1 && !key.isEmpty()){
-                    mAppSecret = key;
-                }
-                continue;
-            }else if (!keyValue[1].isEmpty()){
-                String value = keyValue[1];
+                if (keyValue.length == 1) {
+                    if (pair.indexOf(KEY_VALUE_DELIMITER) == -1 && !key.isEmpty()) {
+                        mAppSecret = key;
+                    }
+                    continue;
+                } else if (!keyValue[1].isEmpty()) {
+                    String value = keyValue[1];
 
                 /* Ignore unknown keys. */
-                if (APP_SECRET_KEY.equals(key) ) {
-                    mAppSecret = value;
-                }
-                else if (TRANSMISSION_TARGET_TOKEN_KEY.equals(key)){
-                    mTransmissionTargetToken = value;
+                    if (APP_SECRET_KEY.equals(key)) {
+                        mAppSecret = value;
+                    } else if (TRANSMISSION_TARGET_TOKEN_KEY.equals(key)) {
+                        mTransmissionTargetToken = value;
+                    }
                 }
             }
         }
-
-        /* At least one secret. */
-        if ((mAppSecret == null || mAppSecret.isEmpty()) && (mTransmissionTargetToken == null || mTransmissionTargetToken.isEmpty())) {
-            AppCenterLog.error(LOG_TAG, "At least either the appSecret or the transmission target token needs to be set");
-            return false;        }
 
         /* Start looper. */
         mHandlerThread = new HandlerThread("AppCenter.Looper");
