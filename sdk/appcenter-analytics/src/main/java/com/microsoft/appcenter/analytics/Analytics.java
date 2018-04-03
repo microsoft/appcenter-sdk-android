@@ -1,6 +1,8 @@
 package com.microsoft.appcenter.analytics;
 
 import android.app.Activity;
+import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
@@ -30,6 +32,18 @@ import java.util.Map;
 public class Analytics extends AbstractAppCenterService {
 
     /**
+     * Max length of event/page name.
+     */
+    @VisibleForTesting
+    static final int MAX_NAME_LENGTH = 256;
+
+    /**
+     * Max length of properties.
+     */
+    @VisibleForTesting
+    static final int MAX_PROPERTY_ITEM_LENGTH = 64;
+
+    /**
      * Name of the service.
      */
     private static final String SERVICE_NAME = "Analytics";
@@ -55,18 +69,6 @@ public class Analytics extends AbstractAppCenterService {
     private static final int MAX_PROPERTY_COUNT = 5;
 
     /**
-     * Max length of event/page name.
-     */
-    @VisibleForTesting
-    static final int MAX_NAME_LENGTH = 256;
-
-    /**
-     * Max length of properties.
-     */
-    @VisibleForTesting
-    static final int MAX_PROPERTY_ITEM_LENGTH = 64;
-
-    /**
      * Shared instance.
      */
     private static Analytics sInstance = null;
@@ -75,7 +77,14 @@ public class Analytics extends AbstractAppCenterService {
      * Log factories managed by this service.
      */
     private final Map<String, LogFactory> mFactories;
-
+    /**
+     * The map of transmission targets.
+     */
+    private final Map<String, AnalyticsTransmissionTarget> mTransmissionTargets;
+    /**
+     * The default transmission target.
+     */
+    private AnalyticsTransmissionTarget mDefaultTransmissionTarget;
     /**
      * Current activity to replay onResume when enabled in foreground.
      */
@@ -105,6 +114,7 @@ public class Analytics extends AbstractAppCenterService {
         mFactories.put(StartSessionLog.TYPE, new StartSessionLogFactory());
         mFactories.put(PageLog.TYPE, new PageLogFactory());
         mFactories.put(EventLog.TYPE, new EventLogFactory());
+        mTransmissionTargets = new HashMap<>();
     }
 
     /**
@@ -227,7 +237,7 @@ public class Analytics extends AbstractAppCenterService {
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public static void trackEvent(String name) {
-        trackEvent(name, null);
+        trackEvent(name, null, null);
     }
 
     /**
@@ -243,12 +253,50 @@ public class Analytics extends AbstractAppCenterService {
      */
     @SuppressWarnings("WeakerAccess")
     public static void trackEvent(String name, Map<String, String> properties) {
+        trackEvent(name, properties, null);
+    }
+
+    /**
+     * Track a custom event with name and transmissionTarget.
+     *
+     * @param name               A page name.
+     * @param transmissionTarget The transmissionTarget for this event.
+     */
+    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
+    static void trackEvent(String name, AnalyticsTransmissionTarget transmissionTarget) {
+        trackEvent(name, null, transmissionTarget);
+    }
+
+    /**
+     * Track a custom event with name and optional properties and optional transmissionTarget.
+     * The name parameter can not be null or empty. Maximum allowed length = 256.
+     * The properties parameter maximum item count = 5.
+     * The properties keys can not be null or empty, maximum allowed key length = 64.
+     * The properties values can not be null, maximum allowed value length = 64.
+     * Any length of name/keys/values that are longer than each limit will be truncated.
+     *
+     * @param name               An event name.
+     * @param properties         Optional properties.
+     * @param transmissionTarget Optional transmissionTarget.
+     */
+    @SuppressWarnings("WeakerAccess")
+    static void trackEvent(String name, Map<String, String> properties, AnalyticsTransmissionTarget transmissionTarget) {
         final String logType = "Event";
         name = validateName(name, logType);
         if (name != null) {
             Map<String, String> validatedProperties = validateProperties(properties, name, logType);
-            getInstance().trackEventAsync(name, validatedProperties);
+            getInstance().trackEventAsync(name, validatedProperties, transmissionTarget);
         }
+    }
+
+    /**
+     * Get a transmission target to use to track events. Will create a new transmission target if necessary.
+     *
+     * @param transmissionTargetToken A string to identify a transmission target.
+     * @return a transmission target.
+     */
+    public static AnalyticsTransmissionTarget getTransmissionTarget(String transmissionTargetToken) {
+        return getInstance().getInstanceTransmissionTarget(transmissionTargetToken);
     }
 
     /**
@@ -331,6 +379,28 @@ public class Analytics extends AbstractAppCenterService {
             result.put(key, value);
         }
         return result;
+    }
+
+    /**
+     * Get a transmission target to use to track events. Will create a new transmission target if necessary.
+     *
+     * @param transmissionTargetToken A string to identify a transmission target.
+     * @return a transmission target.
+     */
+    private synchronized AnalyticsTransmissionTarget getInstanceTransmissionTarget(@NonNull String transmissionTargetToken) {
+        if (transmissionTargetToken == null || transmissionTargetToken.isEmpty()) {
+            return null;
+        } else {
+            AnalyticsTransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);
+            if (transmissionTarget != null) {
+                AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
+                return transmissionTarget;
+            }
+            transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken);
+            AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
+            mTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
+            return transmissionTarget;
+        }
     }
 
     @Override
@@ -492,7 +562,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param name       event name.
      * @param properties optional properties.
      */
-    private synchronized void trackEventAsync(final String name, final Map<String, String> properties) {
+    private synchronized void trackEventAsync(final String name, final Map<String, String> properties, final AnalyticsTransmissionTarget transmissionTarget) {
         post(new Runnable() {
 
             @Override
@@ -501,6 +571,11 @@ public class Analytics extends AbstractAppCenterService {
                 eventLog.setId(UUIDUtils.randomUUID());
                 eventLog.setName(name);
                 eventLog.setProperties(properties);
+                AnalyticsTransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? mDefaultTransmissionTarget : transmissionTarget;
+                if (aTransmissionTarget != null) {
+                    eventLog.addTransmissionTarget(aTransmissionTarget.mTransmissionTargetToken);
+                    // TODO add multiple targets
+                }
                 mChannel.enqueue(eventLog, ANALYTICS_GROUP);
             }
         });
@@ -530,5 +605,13 @@ public class Analytics extends AbstractAppCenterService {
     @VisibleForTesting
     WeakReference<Activity> getCurrentActivity() {
         return mCurrentActivity;
+    }
+
+    @Override
+    public synchronized void onStarted(@NonNull Context context, String appSecret, String transmissionTargetToken, @NonNull Channel channel) {
+        super.onStarted(context, appSecret, transmissionTargetToken, channel);
+
+        /* Initialize a default transmission target if a token has been provided. */
+        mDefaultTransmissionTarget = getInstanceTransmissionTarget(transmissionTargetToken);
     }
 }

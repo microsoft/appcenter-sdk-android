@@ -10,13 +10,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
-
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.DefaultChannel;
 import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
-import com.microsoft.appcenter.ingestion.models.json.CustomPropertiesLogFactory;
+import com.microsoft.appcenter.ingestion.models.json.*;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
@@ -27,26 +26,18 @@ import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
-import com.microsoft.appcenter.utils.ShutdownHelper;
+import com.microsoft.appcenter.utils.*;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
-import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_COUNT;
-import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_INTERVAL;
-import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
+import static com.microsoft.appcenter.Constants.*;
 import static com.microsoft.appcenter.utils.AppCenterLog.NONE;
 
 public class AppCenter {
@@ -76,13 +67,13 @@ public class AppCenter {
     static final String DISABLE_ALL_SERVICES = "All";
 
     /**
-     *  Delimiter between two key value pairs.
+     * Delimiter between two key value pairs.
      */
     @VisibleForTesting
     static final String PAIR_DELIMITER = ";";
 
     /**
-     *  Delimiter between key and its value.
+     * Delimiter between key and its value.
      */
     @VisibleForTesting
     static final String KEY_VALUE_DELIMITER = "=";
@@ -478,8 +469,7 @@ public class AppCenter {
         /* At least one secret. */
         if ((mAppSecret == null || mAppSecret.isEmpty()) && (mTransmissionTargetToken == null || mTransmissionTargetToken.isEmpty())) {
             AppCenterLog.error(LOG_TAG, "At least either the appSecret or the transmission target token needs to be set");
-            return false;
-        }
+            return false;        }
 
         /* Start looper. */
         mHandlerThread = new HandlerThread("AppCenter.Looper");

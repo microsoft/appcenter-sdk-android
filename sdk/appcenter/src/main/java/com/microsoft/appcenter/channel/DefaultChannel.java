@@ -119,7 +119,7 @@ public class DefaultChannel implements Channel {
      * @param logSerializer    The log serializer.
      * @param appCenterHandler App Center looper thread handler.
      */
-    public DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler) {
+    public DefaultChannel(@NonNull Context context, String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler) {
         this(context, appSecret, buildDefaultPersistence(logSerializer), new IngestionHttp(context, logSerializer), appCenterHandler);
     }
 
@@ -133,15 +133,16 @@ public class DefaultChannel implements Channel {
      * @param appCenterHandler App Center looper thread handler.
      */
     @VisibleForTesting
-    DefaultChannel(@NonNull Context context, @NonNull String appSecret, @NonNull Persistence persistence, @NonNull Ingestion ingestion, @NonNull Handler appCenterHandler) {
+    DefaultChannel(@NonNull Context context, String appSecret, Persistence persistence, Ingestion ingestion, @NonNull Handler appCenterHandler) {
+        boolean appSecretNullOrEmpty = appSecret == null || appSecret.isEmpty();
         mContext = context;
         mAppSecret = appSecret;
         mInstallId = IdHelper.getInstallId();
         mIngestionHandler = new Handler(Looper.getMainLooper());
         mGroupStates = new HashMap<>();
         mListeners = new LinkedHashSet<>();
-        mPersistence = persistence;
-        mIngestion = ingestion;
+        mPersistence = appSecretNullOrEmpty ? null : persistence;
+        mIngestion = appSecretNullOrEmpty ? null : ingestion;
         mAppCenterHandler = appCenterHandler;
         mEnabled = true;
     }
@@ -171,6 +172,9 @@ public class DefaultChannel implements Channel {
 
     @Override
     public synchronized void addGroup(final String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
+        if (mPersistence == null) {
+            return;
+        }
 
         /* Init group. */
         AppCenterLog.debug(LOG_TAG, "addGroup(" + groupName + ")");
@@ -224,6 +228,9 @@ public class DefaultChannel implements Channel {
 
     @Override
     public void setLogUrl(String logUrl) {
+        if (mIngestion == null) {
+            return;
+        }
         mIngestion.setLogUrl(logUrl);
     }
 
@@ -234,6 +241,9 @@ public class DefaultChannel implements Channel {
      */
     @Override
     public synchronized void clear(String groupName) {
+        if (mPersistence == null) {
+            return;
+        }
         mPersistence.deleteLogs(groupName);
     }
 
@@ -271,7 +281,9 @@ public class DefaultChannel implements Channel {
             }
         }
         try {
-            mIngestion.close();
+            if (mIngestion != null) {
+                mIngestion.close();
+            }
         } catch (IOException e) {
             AppCenterLog.error(LOG_TAG, "Failed to close ingestion", e);
         }
@@ -280,11 +292,16 @@ public class DefaultChannel implements Channel {
                 deleteLogsOnSuspended(groupState);
             }
         } else {
-            mPersistence.clearPendingLogState();
+            if (mPersistence != null) {
+                mPersistence.clearPendingLogState();
+            }
         }
     }
 
     private void deleteLogsOnSuspended(final GroupState groupState) {
+        if (mPersistence == null) {
+            return;
+        }
         final List<Log> logs = new ArrayList<>();
         mPersistence.getLogs(groupState.mName, CLEAR_BATCH_SIZE, logs);
         if (logs.size() > 0 && groupState.mListener != null) {
@@ -301,6 +318,9 @@ public class DefaultChannel implements Channel {
     }
 
     private void cancelTimer(GroupState groupState) {
+        if (mIngestion == null || mIngestionHandler == null) {
+            return;
+        }
         if (groupState.mScheduled) {
             groupState.mScheduled = false;
             mIngestionHandler.removeCallbacks(groupState.mRunnable);
@@ -322,6 +342,9 @@ public class DefaultChannel implements Channel {
      * @param groupName the group name
      */
     private synchronized void triggerIngestion(final @NonNull String groupName) {
+        if (mIngestion == null || mPersistence == null) {
+            return;
+        }
         if (!mEnabled) {
             return;
         }
@@ -394,6 +417,9 @@ public class DefaultChannel implements Channel {
     @MainThread
     private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId) {
         if (checkStateDidNotChange(groupState, currentState)) {
+            if (mIngestion == null) {
+                return;
+            }
 
             /* Send logs. */
             LogContainer logContainer = new LogContainer();
@@ -450,7 +476,9 @@ public class DefaultChannel implements Channel {
     private synchronized void handleSendingSuccess(@NonNull final GroupState groupState, int currentState, @NonNull final String batchId) {
         if (checkStateDidNotChange(groupState, currentState)) {
             String groupName = groupState.mName;
-            mPersistence.deleteLogs(groupName, batchId);
+            if (mPersistence != null) {
+                mPersistence.deleteLogs(groupName, batchId);
+            }
             List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
             GroupListener groupListener = groupState.mListener;
             if (groupListener != null) {
@@ -504,8 +532,10 @@ public class DefaultChannel implements Channel {
         /* Check group name is registered. */
         final GroupState groupState = mGroupStates.get(groupName);
         if (groupState == null) {
-            AppCenterLog.error(LOG_TAG, "Invalid group name:" + groupName);
-            return;
+            if (mPersistence != null && mIngestion != null) {
+                AppCenterLog.error(LOG_TAG, "Invalid group name:" + groupName);
+                return;
+            }
         }
 
         /* Check if disabled with discarding logs. */
@@ -551,10 +581,20 @@ public class DefaultChannel implements Channel {
             filteredOut = filteredOut || listener.shouldFilter(log);
         }
 
-        /* Persist log if not filtered out. */
+        /* No persistence and/or no ingestion mean that no app secret has been provided. */
+        boolean noAppSecretProvided = mPersistence == null || mIngestion == null;
+
         if (filteredOut) {
             AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "' was filtered out by listener(s)");
         } else {
+            if (noAppSecretProvided) {
+
+                /* Log was not filtered out but no app secret has been provided. Do nothing in this case. */
+                AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "'was not filtered out by listener(s) but no app secret was provided. Not persisting/sending the log.");
+                return;
+            }
+
+            /* Persist log if not filtered out. */
             try {
 
                 /* Increment counters and schedule ingestion if we are enabled. */
@@ -585,7 +625,9 @@ public class DefaultChannel implements Channel {
             triggerIngestion(groupName);
         } else if (pendingLogCount > 0 && !groupState.mScheduled) {
             groupState.mScheduled = true;
-            mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
+            if (mIngestionHandler != null) {
+                mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
+            }
         }
     }
 

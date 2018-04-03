@@ -7,18 +7,18 @@ import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.Map;
 
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_COUNT;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_INTERVAL;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
-import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
 
 public abstract class AbstractAppCenterService implements AppCenterService {
@@ -170,7 +170,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
 
         /*
          * The method is final just to avoid a sub-class start using the handler now,
-         * it is not supported and could cause null pointer exception.
+         * it is not supported and could cause a null pointer exception.
          */
         mHandler = handler;
     }
@@ -334,7 +334,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
      * Like {{@link #post(Runnable)}} but also post back in U.I. thread.
      * Use this for example to manage life cycle callbacks to make sure SDK is started and that
      * every operation runs in order.
-     *
+     * <p>
      * This method will not SDK is disabled, the purpose is for internal commands, not APIs.
      *
      * @param runnable command to run.

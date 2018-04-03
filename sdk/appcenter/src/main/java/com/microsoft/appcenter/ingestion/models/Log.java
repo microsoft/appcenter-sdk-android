@@ -71,18 +71,18 @@ public interface Log extends Model {
     void setDevice(Device device);
 
     /**
-     * Adds a tenant that this log should be sent to.
+     * Adds a transmissionTargetToken that this log should be sent to.
      *
-     * @param tenant the identifier of the tenant.
+     * @param transmissionTargetToken the identifier of the transmissionTargetToken.
      */
     @SuppressWarnings("unused")
-    void addTenant(String tenant);
+    void addTransmissionTarget(String transmissionTargetToken);
 
     /**
-     * Gets all tenants that this log should be sent to.
+     * Gets all transmission targets that this log should be sent to.
      *
-     * @return Collection of tenants that this log should be sent to.
+     * @return Collection of transmission targets that this log should be sent to.
      */
     @SuppressWarnings("unused")
-    Set<String> getTenants();
+    Set<String> getTransmissionTargetTokens();
 }
