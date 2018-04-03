@@ -9,7 +9,6 @@ import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
-import android.text.TextUtils;
 import android.util.Log;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.DefaultChannel;
@@ -17,6 +16,16 @@ import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
 import com.microsoft.appcenter.ingestion.models.json.*;
+import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
+import com.microsoft.appcenter.ingestion.models.json.LogFactory;
+import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
+import com.microsoft.appcenter.utils.IdHelper;
+import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
+import com.microsoft.appcenter.utils.NetworkStateHelper;
+import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.*;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
@@ -61,13 +70,13 @@ public class AppCenter {
      * Delimiter between two key value pairs.
      */
     @VisibleForTesting
-    static final char PAIR_DELIMITER = ';';
+    static final String PAIR_DELIMITER = ";";
 
     /**
      * Delimiter between key and its value.
      */
     @VisibleForTesting
-    static final char KEY_VALUE_DELIMITER = '=';
+    static final String KEY_VALUE_DELIMITER = "=";
 
     /**
      * Application secret key.
@@ -409,7 +418,7 @@ public class AppCenter {
             AppCenterLog.error(LOG_TAG, "application may not be null");
             return false;
         }
-        if (appSecret.isEmpty()) {
+        if (appSecret == null || appSecret.isEmpty()) {
             AppCenterLog.error(LOG_TAG, "appSecret may not be null or empty");
             return false;
         }
@@ -429,33 +438,38 @@ public class AppCenter {
         mApplication = application;
 
         /* Init parsing, the app secret string can contain other secrets.  */
-        TextUtils.SimpleStringSplitter pairSplitter = new TextUtils.SimpleStringSplitter(PAIR_DELIMITER);
-        TextUtils.SimpleStringSplitter keyValueSplitter = new TextUtils.SimpleStringSplitter(KEY_VALUE_DELIMITER);
-        pairSplitter.setString(appSecret);
+        String[] pairs = appSecret.split(PAIR_DELIMITER);
 
         /* Split by pairs. */
-        for (String keyValue : pairSplitter) {
+        for (String pair : pairs) {
 
             /* Split key and value. */
-            keyValueSplitter.setString(keyValue);
-            String key = keyValueSplitter.next();
+            String[] keyValue = pair.split(KEY_VALUE_DELIMITER);
+            String key = keyValue[0];
 
             /* A value with no key is default to the app secret. */
-            if (!keyValueSplitter.hasNext()) {
-                if (keyValue.indexOf(KEY_VALUE_DELIMITER) == -1) {
+            if (keyValue.length == 1){
+                if (pair.indexOf(KEY_VALUE_DELIMITER) == -1 && !key.isEmpty()){
                     mAppSecret = key;
                 }
                 continue;
-            }
-            String value = keyValueSplitter.next();
+            }else if (!keyValue[1].isEmpty()){
+                String value = keyValue[1];
 
-            /* Ignore unknown keys. */
-            if (APP_SECRET_KEY.equals(key)) {
-                mAppSecret = value;
-            } else if (TRANSMISSION_TARGET_TOKEN_KEY.equals(key)) {
-                mTransmissionTargetToken = value;
+                /* Ignore unknown keys. */
+                if (APP_SECRET_KEY.equals(key) ) {
+                    mAppSecret = value;
+                }
+                else if (TRANSMISSION_TARGET_TOKEN_KEY.equals(key)){
+                    mTransmissionTargetToken = value;
+                }
             }
         }
+
+        /* At least one secret. */
+        if ((mAppSecret == null || mAppSecret.isEmpty()) && (mTransmissionTargetToken == null || mTransmissionTargetToken.isEmpty())) {
+            AppCenterLog.error(LOG_TAG, "At least either the appSecret or the transmission target token needs to be set");
+            return false;        }
 
         /* Start looper. */
         mHandlerThread = new HandlerThread("AppCenter.Looper");
