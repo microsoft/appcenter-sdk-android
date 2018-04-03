@@ -5,6 +5,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
+
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
@@ -76,17 +77,14 @@ public class Analytics extends AbstractAppCenterService {
      * Log factories managed by this service.
      */
     private final Map<String, LogFactory> mFactories;
-
-    /**
-     * The default transmission target.
-     */
-    private TransmissionTarget mDefaultTransmissionTarget;
-
     /**
      * The map of transmission targets.
      */
     private final Map<String, TransmissionTarget> mTransmissionTargets;
-
+    /**
+     * The default transmission target.
+     */
+    private TransmissionTarget mDefaultTransmissionTarget;
     /**
      * Current activity to replay onResume when enabled in foreground.
      */
@@ -298,11 +296,7 @@ public class Analytics extends AbstractAppCenterService {
      * @return a transmission target.
      */
     public static TransmissionTarget getTransmissionTarget(String transmissionTargetToken) {
-        if (transmissionTargetToken == null || transmissionTargetToken.isEmpty()) {
-            return null;
-        } else {
-            return getInstance().getTransTarget(transmissionTargetToken);
-        }
+        return getInstance().getInstanceTransmissionTarget(transmissionTargetToken);
     }
 
     /**
@@ -393,16 +387,20 @@ public class Analytics extends AbstractAppCenterService {
      * @param transmissionTargetToken A string to identify a transmission target.
      * @return a transmission target.
      */
-    private synchronized TransmissionTarget getTransTarget(@NonNull String transmissionTargetToken) {
-        TransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);
-        if (transmissionTarget != null) {
-            AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
+    private synchronized TransmissionTarget getInstanceTransmissionTarget(@NonNull String transmissionTargetToken) {
+        if (transmissionTargetToken == null || transmissionTargetToken.isEmpty()) {
+            return null;
+        } else {
+            TransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);
+            if (transmissionTarget != null) {
+                AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
+                return transmissionTarget;
+            }
+            transmissionTarget = new TransmissionTarget(transmissionTargetToken);
+            AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
+            mTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
             return transmissionTarget;
         }
-        transmissionTarget = new TransmissionTarget(transmissionTargetToken);
-        AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
-        mTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
-        return transmissionTarget;
     }
 
     @Override
@@ -614,6 +612,6 @@ public class Analytics extends AbstractAppCenterService {
         super.onStarted(context, appSecret, transmissionTargetToken, channel);
 
         /* Initialize a default transmission target if a token has been provided. */
-        mDefaultTransmissionTarget = getTransmissionTarget(transmissionTargetToken);
+        mDefaultTransmissionTarget = getInstanceTransmissionTarget(transmissionTargetToken);
     }
 }
