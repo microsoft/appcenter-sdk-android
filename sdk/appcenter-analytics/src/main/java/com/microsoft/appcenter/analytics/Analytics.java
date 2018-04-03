@@ -80,11 +80,11 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * The map of transmission targets.
      */
-    private final Map<String, TransmissionTarget> mTransmissionTargets;
+    private final Map<String, AnalyticsTransmissionTarget> mTransmissionTargets;
     /**
      * The default transmission target.
      */
-    private TransmissionTarget mDefaultTransmissionTarget;
+    private AnalyticsTransmissionTarget mDefaultTransmissionTarget;
     /**
      * Current activity to replay onResume when enabled in foreground.
      */
@@ -263,7 +263,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param transmissionTarget The transmissionTarget for this event.
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
-    static void trackEvent(String name, TransmissionTarget transmissionTarget) {
+    static void trackEvent(String name, AnalyticsTransmissionTarget transmissionTarget) {
         trackEvent(name, null, transmissionTarget);
     }
 
@@ -280,7 +280,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param transmissionTarget Optional transmissionTarget.
      */
     @SuppressWarnings("WeakerAccess")
-    static void trackEvent(String name, Map<String, String> properties, TransmissionTarget transmissionTarget) {
+    static void trackEvent(String name, Map<String, String> properties, AnalyticsTransmissionTarget transmissionTarget) {
         final String logType = "Event";
         name = validateName(name, logType);
         if (name != null) {
@@ -295,7 +295,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param transmissionTargetToken A string to identify a transmission target.
      * @return a transmission target.
      */
-    public static TransmissionTarget getTransmissionTarget(String transmissionTargetToken) {
+    public static AnalyticsTransmissionTarget getTransmissionTarget(String transmissionTargetToken) {
         return getInstance().getInstanceTransmissionTarget(transmissionTargetToken);
     }
 
@@ -387,16 +387,16 @@ public class Analytics extends AbstractAppCenterService {
      * @param transmissionTargetToken A string to identify a transmission target.
      * @return a transmission target.
      */
-    private synchronized TransmissionTarget getInstanceTransmissionTarget(@NonNull String transmissionTargetToken) {
+    private synchronized AnalyticsTransmissionTarget getInstanceTransmissionTarget(@NonNull String transmissionTargetToken) {
         if (transmissionTargetToken == null || transmissionTargetToken.isEmpty()) {
             return null;
         } else {
-            TransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);
+            AnalyticsTransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);
             if (transmissionTarget != null) {
                 AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
                 return transmissionTarget;
             }
-            transmissionTarget = new TransmissionTarget(transmissionTargetToken);
+            transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken);
             AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
             mTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
             return transmissionTarget;
@@ -562,7 +562,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param name       event name.
      * @param properties optional properties.
      */
-    private synchronized void trackEventAsync(final String name, final Map<String, String> properties, final TransmissionTarget transmissionTarget) {
+    private synchronized void trackEventAsync(final String name, final Map<String, String> properties, final AnalyticsTransmissionTarget transmissionTarget) {
         post(new Runnable() {
 
             @Override
@@ -571,7 +571,7 @@ public class Analytics extends AbstractAppCenterService {
                 eventLog.setId(UUIDUtils.randomUUID());
                 eventLog.setName(name);
                 eventLog.setProperties(properties);
-                TransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? mDefaultTransmissionTarget : transmissionTarget;
+                AnalyticsTransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? mDefaultTransmissionTarget : transmissionTarget;
                 if (aTransmissionTarget != null) {
                     eventLog.addTransmissionTarget(aTransmissionTarget.mTransmissionTargetToken);
                     // TODO add multiple targets

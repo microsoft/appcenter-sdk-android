@@ -2,11 +2,11 @@ package com.microsoft.appcenter.analytics;
 
 import java.util.Map;
 
-public class TransmissionTarget {
+public class AnalyticsTransmissionTarget {
 
     public String mTransmissionTargetToken;
 
-    public TransmissionTarget(String transmissionTargetToken) {
+    public AnalyticsTransmissionTarget(String transmissionTargetToken) {
         mTransmissionTargetToken = transmissionTargetToken;
     }
 
