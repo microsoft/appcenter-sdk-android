@@ -131,6 +131,11 @@ public class AnalyticsTest {
     }
 
     @Test
+    public void isAppSecretRequired() {
+        assertFalse(Analytics.getInstance().isAppSecretRequired());
+    }
+
+    @Test
     public void checkFactories() {
         Map<String, LogFactory> factories = Analytics.getInstance().getLogFactories();
         assertNotNull(factories);
