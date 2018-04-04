@@ -298,7 +298,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param transmissionTargetToken A string to identify a transmission target.
      * @return a transmission target.
      */
-    public static AnalyticsTransmissionTarget getTransmissionTarget(@NonNull String transmissionTargetToken) {
+    public static AnalyticsTransmissionTarget getTransmissionTarget(String transmissionTargetToken) {
         return getInstance().getInstanceTransmissionTarget(transmissionTargetToken);
     }
 
