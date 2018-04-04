@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.analytics;
 
+import android.support.annotation.NonNull;
+
 import java.util.Map;
 
 /**
@@ -14,7 +16,7 @@ public class AnalyticsTransmissionTarget {
      *
      * @param transmissionTargetToken The token for this transmission target.
      */
-    AnalyticsTransmissionTarget(String transmissionTargetToken) {
+    AnalyticsTransmissionTarget(@NonNull String transmissionTargetToken) {
         mTransmissionTargetToken = transmissionTargetToken;
     }
 
