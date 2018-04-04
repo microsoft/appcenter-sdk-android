@@ -77,14 +77,17 @@ public class Analytics extends AbstractAppCenterService {
      * Log factories managed by this service.
      */
     private final Map<String, LogFactory> mFactories;
+
     /**
      * The map of transmission targets.
      */
     private final Map<String, AnalyticsTransmissionTarget> mTransmissionTargets;
+
     /**
      * The default transmission target.
      */
     private AnalyticsTransmissionTarget mDefaultTransmissionTarget;
+
     /**
      * Current activity to replay onResume when enabled in foreground.
      */
@@ -388,7 +391,7 @@ public class Analytics extends AbstractAppCenterService {
      * @return a transmission target.
      */
     private synchronized AnalyticsTransmissionTarget getInstanceTransmissionTarget(@NonNull String transmissionTargetToken) {
-        if (transmissionTargetToken == null || transmissionTargetToken.isEmpty()) {
+        if (transmissionTargetToken.isEmpty()) {
             return null;
         } else {
             AnalyticsTransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);
@@ -573,8 +576,8 @@ public class Analytics extends AbstractAppCenterService {
                 eventLog.setProperties(properties);
                 AnalyticsTransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? mDefaultTransmissionTarget : transmissionTarget;
                 if (aTransmissionTarget != null) {
-                    eventLog.addTransmissionTarget(aTransmissionTarget.mTransmissionTargetToken);
-                    // TODO add multiple targets
+                    eventLog.addTransmissionTarget(aTransmissionTarget.getTransmissionTargetToken());
+                    /* TODO add multiple targets */
                 }
                 mChannel.enqueue(eventLog, ANALYTICS_GROUP);
             }

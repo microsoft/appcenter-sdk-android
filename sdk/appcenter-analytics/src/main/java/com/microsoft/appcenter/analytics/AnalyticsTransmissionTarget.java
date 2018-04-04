@@ -4,9 +4,9 @@ import java.util.Map;
 
 public class AnalyticsTransmissionTarget {
 
-    public String mTransmissionTargetToken;
+    private String mTransmissionTargetToken;
 
-    public AnalyticsTransmissionTarget(String transmissionTargetToken) {
+    AnalyticsTransmissionTarget(String transmissionTargetToken) {
         mTransmissionTargetToken = transmissionTargetToken;
     }
 
@@ -35,4 +35,14 @@ public class AnalyticsTransmissionTarget {
     public void trackEvent(String name, Map<String, String> properties) {
         Analytics.trackEvent(name, properties, this);
     }
+
+    /**
+     * Getter for transmission target token.
+     *
+     * @return the transmission target token.
+     */
+    String getTransmissionTargetToken() {
+        return mTransmissionTargetToken;
+    }
+
 }
