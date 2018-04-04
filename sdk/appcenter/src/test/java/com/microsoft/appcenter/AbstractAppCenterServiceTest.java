@@ -46,7 +46,7 @@ public class AbstractAppCenterServiceTest {
     private AbstractAppCenterService mService;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         mService = new AbstractAppCenterService() {
 
             @Override
@@ -74,7 +74,7 @@ public class AbstractAppCenterServiceTest {
         PowerMockito.doAnswer(new Answer<Object>() {
 
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
@@ -126,7 +126,7 @@ public class AbstractAppCenterServiceTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 ((Runnable) invocation.getArguments()[0]).run();
                 return null;
             }
@@ -177,7 +177,7 @@ public class AbstractAppCenterServiceTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 Object disabledRunnable = invocation.getArguments()[1];
                 if (disabledRunnable instanceof Runnable) {
                     ((Runnable) disabledRunnable).run();
