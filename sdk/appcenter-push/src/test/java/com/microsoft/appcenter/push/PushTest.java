@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -24,7 +25,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+import org.mockito.internal.util.collections.Sets;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -46,7 +49,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -367,12 +372,48 @@ public class PushTest {
     }
 
     @Test
-    public void receivedPushInBackgroundWithoutFirebase() {
+    public void receivedPushInBackgroundWithoutFirebaseWithDebugLog() {
         IllegalStateException exception = new IllegalStateException();
         when(FirebaseInstanceId.getInstance()).thenThrow(exception);
-        Push.getInstance().onMessageReceived(mock(Context.class), mock(Intent.class));
+        Intent pushIntent = mock(Intent.class);
+        Bundle extras = mock(Bundle.class);
+        when(pushIntent.getExtras()).thenReturn(extras);
+        when(extras.keySet()).thenReturn(Sets.newSet("key1"));
+        when(extras.get("key1")).thenReturn("val1");
+        Push.getInstance().onMessageReceived(mock(Context.class), pushIntent);
         verifyStatic();
-        PushNotifier.handleNotification(any(Context.class), any(Intent.class));
+        PushNotifier.handleNotification(any(Context.class), same(pushIntent));
+        verifyStatic();
+        AppCenterLog.debug(eq(Push.LOG_TAG), argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().contains("key1=val1");
+            }
+        }));
+    }
+
+    @Test
+    public void receivedPushInBackgroundWithoutFirebaseWithoutDebugLog() {
+        when(AppCenterLog.getLogLevel()).thenReturn(Log.INFO);
+        IllegalStateException exception = new IllegalStateException();
+        when(FirebaseInstanceId.getInstance()).thenThrow(exception);
+        Intent pushIntent = mock(Intent.class);
+        Bundle extras = mock(Bundle.class);
+        when(pushIntent.getExtras()).thenReturn(extras);
+        when(extras.keySet()).thenReturn(Sets.newSet("key1"));
+        when(extras.get("key1")).thenReturn("val1");
+        Push.getInstance().onMessageReceived(mock(Context.class), pushIntent);
+        verifyStatic();
+        PushNotifier.handleNotification(any(Context.class), same(pushIntent));
+        verifyStatic(never());
+        AppCenterLog.debug(eq(Push.LOG_TAG), argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().contains("key1=val1");
+            }
+        }));
     }
 
     @Test
