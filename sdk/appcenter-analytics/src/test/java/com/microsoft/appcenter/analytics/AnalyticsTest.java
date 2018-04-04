@@ -37,7 +37,6 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -92,7 +91,7 @@ public class AnalyticsTest {
         Answer<Void> runNow = new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 ((Runnable) invocation.getArguments()[0]).run();
                 return null;
             }
@@ -109,7 +108,7 @@ public class AnalyticsTest {
         /* Then simulate further changes to state. */
         PowerMockito.doAnswer(new Answer<Object>() {
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
@@ -571,7 +570,7 @@ public class AnalyticsTest {
     }
 
     @Test
-    public void analyticsListener() throws IOException, ClassNotFoundException {
+    public void analyticsListener() {
         AnalyticsListener listener = mock(AnalyticsListener.class);
         Analytics.setListener(listener);
         Analytics analytics = Analytics.getInstance();
@@ -583,7 +582,7 @@ public class AnalyticsTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 captor.getValue().onBeforeSending((Log) invocation.getArguments()[0]);
                 captor.getValue().onSuccess((Log) invocation.getArguments()[0]);
                 captor.getValue().onFailure((Log) invocation.getArguments()[0], new Exception());
