@@ -750,8 +750,22 @@ public class AppCenterTest {
     }
 
     @Test
-    public void appSecretWithDelimiter() {
+    public void appSecretWithKeyValueDelimiter() {
+        String secret = KEY_VALUE_DELIMITER + DUMMY_APP_SECRET;
+        AppCenter.start(mApplication, secret, DummyService.class);
+        verify(DummyService.getInstance()).onStarted(any(Context.class), isNull(String.class), isNull(String.class), any(Channel.class));
+    }
+
+    @Test
+    public void appSecretWithPairDelimiterAfter() {
         String secret = DUMMY_APP_SECRET + PAIR_DELIMITER;
+        AppCenter.start(mApplication, secret, DummyService.class);
+        verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), isNull(String.class), any(Channel.class));
+    }
+
+    @Test
+    public void appSecretWithPairDelimiterBefore() {
+        String secret = PAIR_DELIMITER + DUMMY_APP_SECRET;
         AppCenter.start(mApplication, secret, DummyService.class);
         verify(DummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), isNull(String.class), any(Channel.class));
     }

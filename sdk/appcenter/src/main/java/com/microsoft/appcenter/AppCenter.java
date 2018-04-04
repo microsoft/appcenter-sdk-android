@@ -453,12 +453,12 @@ public class AppCenter {
             for (String pair : pairs) {
 
                 /* Split key and value. */
-                String[] keyValue = pair.split(KEY_VALUE_DELIMITER);
+                String[] keyValue = pair.split(KEY_VALUE_DELIMITER, -1);
                 String key = keyValue[0];
 
                 /* A value with no key is default to the app secret. */
                 if (keyValue.length == 1) {
-                    if (!pair.contains(KEY_VALUE_DELIMITER) && !key.isEmpty()) {
+                    if (!key.isEmpty()) {
                         mAppSecret = key;
                     }
                 } else if (!keyValue[1].isEmpty()) {
