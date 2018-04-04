@@ -390,8 +390,8 @@ public class Analytics extends AbstractAppCenterService {
      * @param transmissionTargetToken A string to identify a transmission target.
      * @return a transmission target.
      */
-    private synchronized AnalyticsTransmissionTarget getInstanceTransmissionTarget(@NonNull String transmissionTargetToken) {
-        if (transmissionTargetToken.isEmpty()) {
+    private synchronized AnalyticsTransmissionTarget getInstanceTransmissionTarget(String transmissionTargetToken) {
+        if (transmissionTargetToken == null || transmissionTargetToken.isEmpty()) {
             return null;
         } else {
             AnalyticsTransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);
