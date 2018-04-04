@@ -41,7 +41,7 @@ public class PushIntentUtilsTest {
         extras.put(PushIntentUtils.EXTRA_MESSAGE, "val");
         extras.put(PushIntentUtils.EXTRA_SOUND, "val");
         extras.put(PushIntentUtils.EXTRA_TITLE, "val");
-        extras.put(PushIntentUtils.EXTRA_GOOGLE_PREFIX + ".ttl", "val");
+        extras.put(PushIntentUtils.EXTRA_GOOGLE_PREFIX + "ttl", "val");
         for (String key : PushIntentUtils.EXTRA_STANDARD_KEYS) {
             extras.put(key, "val");
         }

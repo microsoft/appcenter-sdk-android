@@ -22,6 +22,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
@@ -35,6 +37,7 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -116,8 +119,9 @@ public class PushNotifierTest {
     @Test
     public void handlePushWithNoMessageId() {
         when(PushIntentUtils.getGoogleMessageId(any(Intent.class))).thenReturn(null);
-        PushNotifier.handleNotification(mContextMock, new Intent());
-        verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
+        Intent pushIntent = new Intent();
+        PushNotifier.handleNotification(mContextMock, pushIntent);
+        verify(mNotificationManagerMock).notify(eq(pushIntent.hashCode()), any(Notification.class));
     }
 
     @Test
@@ -391,5 +395,48 @@ public class PushNotifierTest {
 
         /* Intent being invalid, we don't put extras in that case, it will never be listened. */
         verify(intent, never()).putExtra(anyString(), anyString());
+    }
+
+    @Test
+    public void handlePushDuplicates() {
+
+        /* Send 2 pushes with duplicates. */
+        Intent push1 = mock(Intent.class);
+        Intent push2 = mock(Intent.class);
+        when(PushIntentUtils.getGoogleMessageId(any(Intent.class))).then(new Answer<String>() {
+
+            @Override
+            public String answer(InvocationOnMock invocation) {
+
+                /* It uses identity hash code which is enough for our test uniqueness. */
+                return String.valueOf(System.identityHashCode(invocation.getArguments()[0]));
+            }
+        });
+        PushNotifier.handleNotification(mContextMock, push1);
+        PushNotifier.handleNotification(mContextMock, push1);
+        PushNotifier.handleNotification(mContextMock, push2);
+        PushNotifier.handleNotification(mContextMock, push1);
+        PushNotifier.handleNotification(mContextMock, push2);
+
+        /* Verify only 1 notification per message identifier. */
+        verify(mNotificationManagerMock).notify(eq(String.valueOf(System.identityHashCode(push1)).hashCode()), any(Notification.class));
+        verify(mNotificationManagerMock).notify(eq(String.valueOf(System.identityHashCode(push2)).hashCode()), any(Notification.class));
+
+        /* Test cache is limited in size. */
+        for (int i = 0; i < 10; i++) {
+            Intent push = mock(Intent.class);
+            PushNotifier.handleNotification(mContextMock, push);
+            verify(mNotificationManagerMock).notify(eq(String.valueOf(System.identityHashCode(push)).hashCode()), any(Notification.class));
+        }
+
+        /* By now cache should have evicted our first 2 pushes, retry some duplicates it should push 1 of each identifier again. */
+        PushNotifier.handleNotification(mContextMock, push1);
+        PushNotifier.handleNotification(mContextMock, push1);
+        PushNotifier.handleNotification(mContextMock, push1);
+        PushNotifier.handleNotification(mContextMock, push2);
+        PushNotifier.handleNotification(mContextMock, push2);
+        PushNotifier.handleNotification(mContextMock, push2);
+        verify(mNotificationManagerMock, times(2)).notify(eq(String.valueOf(System.identityHashCode(push1)).hashCode()), any(Notification.class));
+        verify(mNotificationManagerMock, times(2)).notify(eq(String.valueOf(System.identityHashCode(push2)).hashCode()), any(Notification.class));
     }
 }
