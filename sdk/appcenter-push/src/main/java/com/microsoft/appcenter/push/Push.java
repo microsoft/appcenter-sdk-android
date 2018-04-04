@@ -363,7 +363,7 @@ public class Push extends AbstractAppCenterService {
      */
     private synchronized void checkPushInIntent(Intent intent) {
         if (mInstanceListener != null) {
-            String googleMessageId = PushIntentUtils.getGoogleMessageId(intent);
+            String googleMessageId = PushIntentUtils.getMessageId(intent);
             if (googleMessageId != null && !googleMessageId.equals(mLastGoogleMessageId)
                     && !googleMessageId.equals(mFirstGoogleMessageId)) {
                 if (mFirstGoogleMessageId == null) {

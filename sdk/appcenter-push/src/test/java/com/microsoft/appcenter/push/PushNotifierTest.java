@@ -38,6 +38,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
@@ -78,7 +79,7 @@ public class PushNotifierTest {
         setVersionSdkInt(Build.VERSION_CODES.O);
         mockStatic(PushIntentUtils.class);
         when(PushIntentUtils.getMessage(any(Intent.class))).thenReturn("message");
-        when(PushIntentUtils.getGoogleMessageId(any(Intent.class))).thenReturn(mDummyGoogleMessageId);
+        when(PushIntentUtils.getMessageId(any(Intent.class))).thenReturn(mDummyGoogleMessageId);
         when(PushIntentUtils.getCustomData(any(Intent.class))).thenReturn(new HashMap<String, String>());
 
         when(mNotificationBuilderMock.setContentTitle(anyString())).thenReturn(mNotificationBuilderMock);
@@ -114,10 +115,11 @@ public class PushNotifierTest {
 
     @Test
     public void handlePushWithNoMessageId() {
-        when(PushIntentUtils.getGoogleMessageId(any(Intent.class))).thenReturn(null);
-        Intent pushIntent = new Intent();
-        PushNotifier.handleNotification(mContextMock, pushIntent);
-        verify(mNotificationManagerMock).notify(eq(pushIntent.hashCode()), any(Notification.class));
+        when(PushIntentUtils.getMessageId(any(Intent.class))).thenReturn(null);
+        PushNotifier.handleNotification(mContextMock, new Intent());
+        verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
+        verifyStatic();
+        PushIntentUtils.setMessageId(anyString(), any(Intent.class));
     }
 
     @Test
@@ -125,6 +127,8 @@ public class PushNotifierTest {
         setVersionSdkInt(Build.VERSION_CODES.JELLY_BEAN);
         PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
+        verifyStatic();
+        PushIntentUtils.setMessageId(eq(mDummyGoogleMessageId), any(Intent.class));
     }
 
     @Test
@@ -132,6 +136,8 @@ public class PushNotifierTest {
         setVersionSdkInt(Build.VERSION_CODES.ICE_CREAM_SANDWICH);
         PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
+        verifyStatic();
+        PushIntentUtils.setMessageId(eq(mDummyGoogleMessageId), any(Intent.class));
     }
 
     @Test
@@ -139,6 +145,8 @@ public class PushNotifierTest {
         mApplicationInfoMock.targetSdkVersion = Build.VERSION_CODES.N;
         PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
+        verifyStatic();
+        PushIntentUtils.setMessageId(eq(mDummyGoogleMessageId), any(Intent.class));
     }
 
     @SuppressLint("InlinedApi")

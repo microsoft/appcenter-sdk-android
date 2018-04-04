@@ -14,12 +14,11 @@ import android.graphics.drawable.AdaptiveIconDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
+import com.microsoft.appcenter.utils.UUIDUtils;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
@@ -47,12 +46,13 @@ class PushNotifier {
         context = context.getApplicationContext();
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
 
-        /* Generate notification identifier using the hash of the Google message id. */
-        String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
+        /* Generate notification identifier using the hash of the message id. */
+        String messageId = PushIntentUtils.getMessageId(pushIntent);
         if (messageId == null) {
-            AppCenterLog.warn(LOG_TAG, "Push notification did not contain identifier.");
+            AppCenterLog.warn(LOG_TAG, "Push notification did not contain identifier, generate one.");
+            messageId = UUIDUtils.randomUUID().toString();
         }
-        int notificationId = messageId == null ? pushIntent.hashCode() : messageId.hashCode();
+        int notificationId = messageId.hashCode();
 
         /* Click action. */
         PackageManager packageManager = context.getPackageManager();
@@ -65,7 +65,7 @@ class PushNotifier {
             }
 
             /* Set the message ID in the intent. */
-            PushIntentUtils.setGoogleMessageId(messageId, actionIntent);
+            PushIntentUtils.setMessageId(messageId, actionIntent);
         } else {
 
             /* If no launcher, just create a placeholder action as the field is mandatory. */

@@ -98,22 +98,22 @@ class PushIntentUtils {
     }
 
     /**
-     * Gets the Google Message ID of the push from an intent.
+     * Gets the message ID of the push from an intent.
      *
      * @param pushIntent The push intent.
      * @return The message ID.
      */
-    static String getGoogleMessageId(Intent pushIntent) {
+    static String getMessageId(Intent pushIntent) {
         return pushIntent.getStringExtra(EXTRA_GOOGLE_MESSAGE_ID);
     }
 
     /**
-     * Sets the Google Message ID for an intent.
+     * Sets the message ID for an intent.
      *
      * @param messageId  The message ID to set.
      * @param pushIntent The push intent.
      */
-    static void setGoogleMessageId(String messageId, Intent pushIntent) {
+    static void setMessageId(String messageId, Intent pushIntent) {
         pushIntent.putExtra(EXTRA_GOOGLE_MESSAGE_ID, messageId);
     }
 

@@ -91,7 +91,7 @@ public class PushIntentUtilsTest {
         String messageId = "message id";
         Intent pushIntent = mock(Intent.class);
         mockPutExtra(pushIntent, PushIntentUtils.EXTRA_GOOGLE_MESSAGE_ID, messageId);
-        String retrievedMessageId = PushIntentUtils.getGoogleMessageId(pushIntent);
+        String retrievedMessageId = PushIntentUtils.getMessageId(pushIntent);
         assertEquals(messageId, retrievedMessageId);
     }
 
@@ -99,7 +99,7 @@ public class PushIntentUtilsTest {
     public void setGoogleMessageId() {
         String messageId = "message id";
         Intent pushIntent = mock(Intent.class);
-        PushIntentUtils.setGoogleMessageId(messageId, pushIntent);
+        PushIntentUtils.setMessageId(messageId, pushIntent);
         verify(pushIntent).putExtra(PushIntentUtils.EXTRA_GOOGLE_MESSAGE_ID, messageId);
     }
 

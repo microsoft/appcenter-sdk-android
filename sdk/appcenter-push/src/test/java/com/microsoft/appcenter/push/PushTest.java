@@ -439,7 +439,7 @@ public class PushTest {
         customMap.put("custom", "data");
         customMap.put("b", "c");
         Intent intent = createPushIntent(null, null, customMap);
-        when(PushIntentUtils.getGoogleMessageId(intent)).thenReturn("reserved value by google");
+        when(PushIntentUtils.getMessageId(intent)).thenReturn("reserved value by google");
         when(activity.getIntent()).thenReturn(intent);
 
         /* Simulate we detect push in onCreate. */
@@ -461,7 +461,7 @@ public class PushTest {
         push.onActivityPaused(activity);
         activity = mock(Activity.class);
         when(activity.getIntent()).thenReturn(intent);
-        when(PushIntentUtils.getGoogleMessageId(intent)).thenReturn("new id");
+        when(PushIntentUtils.getMessageId(intent)).thenReturn("new id");
         Push.setEnabled(false);
         push.onActivityResumed(activity);
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
@@ -499,9 +499,9 @@ public class PushTest {
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
 
         /* Receiving push with the same id as first push should do nothing. */
-        when(PushIntentUtils.getGoogleMessageId(intent)).thenReturn("a new id");
+        when(PushIntentUtils.getMessageId(intent)).thenReturn("a new id");
         push.onActivityResumed(activity);
-        when(PushIntentUtils.getGoogleMessageId(intent)).thenReturn("reserved value by google");
+        when(PushIntentUtils.getMessageId(intent)).thenReturn("reserved value by google");
         push.onActivityResumed(activity);
         verify(pushListener, times(1)).onPushNotificationReceived(eq(activity), any(PushNotification.class));
     }
@@ -518,7 +518,7 @@ public class PushTest {
         start(contextMock, push, channel);
         Activity activity = mock(Activity.class);
         Intent intent = createPushIntent(null, null, null);
-        when(PushIntentUtils.getGoogleMessageId(intent)).thenReturn("some id");
+        when(PushIntentUtils.getMessageId(intent)).thenReturn("some id");
         when(activity.getIntent()).thenReturn(intent);
 
         /* Disable while posting the command to the U.I. thread. */
@@ -556,7 +556,7 @@ public class PushTest {
         customMap.put("custom", "data");
         customMap.put("b", "c");
         Intent intent = createPushIntent(null, null, customMap);
-        when(PushIntentUtils.getGoogleMessageId(intent)).thenReturn("some id");
+        when(PushIntentUtils.getMessageId(intent)).thenReturn("some id");
 
         /* Simulate we detect push in onCreate. */
         Push.checkLaunchedFromNotification(activity, intent);
