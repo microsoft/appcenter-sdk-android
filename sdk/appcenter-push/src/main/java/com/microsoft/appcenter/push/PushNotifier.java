@@ -38,22 +38,6 @@ class PushNotifier {
     private static final String CHANNEL_NAME = "Push";
 
     /**
-     * Cache of received pushes for managing duplicates.
-     */
-    private static final LinkedHashMap<String, String> sReceivedPushes = new LinkedHashMap<String, String>(0, 0.75f, true) {
-
-        @Override
-        protected boolean removeEldestEntry(Entry<String, String> eldest) {
-            return size() > 10;
-        }
-    };
-
-    @VisibleForTesting
-    static void clearCache() {
-        sReceivedPushes.clear();
-    }
-
-    /**
      * Builds a push notification using the given context and intent.
      *
      * @param context    The current context.
@@ -67,9 +51,6 @@ class PushNotifier {
         String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
         if (messageId == null) {
             AppCenterLog.warn(LOG_TAG, "Push notification did not contain identifier.");
-        } else if (sReceivedPushes.put(messageId, messageId) != null) {
-            AppCenterLog.warn(LOG_TAG, "Ignore duplicate notification id=" + messageId);
-            return;
         }
         int notificationId = messageId == null ? pushIntent.hashCode() : messageId.hashCode();
 
@@ -85,7 +66,6 @@ class PushNotifier {
 
             /* Set the message ID in the intent. */
             PushIntentUtils.setGoogleMessageId(messageId, actionIntent);
-
         } else {
 
             /* If no launcher, just create a placeholder action as the field is mandatory. */
