@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -26,7 +25,7 @@ public class PushIntentUtilsTest {
 
     @Test
     public void coverInit() {
-        assertNotNull(new PushIntentUtils());
+        new PushIntentUtils();
     }
 
     @Test
@@ -34,8 +33,7 @@ public class PushIntentUtilsTest {
         Map<String, String> customData = new HashMap<>();
         customData.put("some key", "some value");
         customData.put("some key2", "some value2");
-        final Map<String, String> extras = new HashMap<>();
-        extras.putAll(customData);
+        final Map<String, String> extras = new HashMap<>(customData);
         extras.put(PushIntentUtils.EXTRA_COLOR, "val");
         extras.put(PushIntentUtils.EXTRA_SOUND_ALT, "val");
         extras.put(PushIntentUtils.EXTRA_GOOGLE_MESSAGE_ID, "val");
@@ -43,6 +41,7 @@ public class PushIntentUtilsTest {
         extras.put(PushIntentUtils.EXTRA_MESSAGE, "val");
         extras.put(PushIntentUtils.EXTRA_SOUND, "val");
         extras.put(PushIntentUtils.EXTRA_TITLE, "val");
+        extras.put(PushIntentUtils.EXTRA_GOOGLE_PREFIX + ".ttl", "val");
         for (String key : PushIntentUtils.EXTRA_STANDARD_KEYS) {
             extras.put(key, "val");
         }
@@ -51,8 +50,9 @@ public class PushIntentUtilsTest {
         Bundle mockBundle = mock(Bundle.class);
         when(mockBundle.keySet()).thenReturn(extras.keySet());
         when(mockBundle.get(anyString())).thenAnswer(new Answer<Object>() {
+
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
                 String key = (String) invocation.getArguments()[0];
                 return extras.get(key);
             }

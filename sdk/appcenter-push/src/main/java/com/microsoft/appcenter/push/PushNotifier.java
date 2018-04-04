@@ -14,10 +14,12 @@ import android.graphics.drawable.AdaptiveIconDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
@@ -36,6 +38,22 @@ class PushNotifier {
     private static final String CHANNEL_NAME = "Push";
 
     /**
+     * Cache of received pushes for managing duplicates.
+     */
+    private static final LinkedHashMap<String, String> sReceivedPushes = new LinkedHashMap<String, String>(0, 0.75f, true) {
+
+        @Override
+        protected boolean removeEldestEntry(Entry<String, String> eldest) {
+            return size() > 10;
+        }
+    };
+
+    @VisibleForTesting
+    static void clearCache() {
+        sReceivedPushes.clear();
+    }
+
+    /**
      * Builds a push notification using the given context and intent.
      *
      * @param context    The current context.
@@ -48,11 +66,12 @@ class PushNotifier {
         /* Generate notification identifier using the hash of the Google message id. */
         String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
         if (messageId == null) {
-            AppCenterLog.error(LOG_TAG, "Push notification did not" +
-                    "contain Google message ID; aborting notification processing.");
+            AppCenterLog.warn(LOG_TAG, "Push notification did not contain identifier.");
+        } else if (sReceivedPushes.put(messageId, messageId) != null) {
+            AppCenterLog.warn(LOG_TAG, "Ignore duplicate notification id=" + messageId);
             return;
         }
-        int notificationId = messageId.hashCode();
+        int notificationId = messageId == null ? pushIntent.hashCode() : messageId.hashCode();
 
         /* Click action. */
         PackageManager packageManager = context.getPackageManager();

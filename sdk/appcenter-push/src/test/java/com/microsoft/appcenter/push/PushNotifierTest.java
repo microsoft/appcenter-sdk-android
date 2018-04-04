@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
@@ -76,6 +75,7 @@ public class PushNotifierTest {
 
     @Before
     public void setUp() throws Exception {
+        PushNotifier.clearCache();
         setVersionSdkInt(Build.VERSION_CODES.O);
         mockStatic(PushIntentUtils.class);
         when(PushIntentUtils.getMessage(any(Intent.class))).thenReturn("message");
@@ -110,14 +110,14 @@ public class PushNotifierTest {
 
     @Test
     public void coverInit() {
-        assertNotNull(new PushNotifier());
+        new PushNotifier();
     }
 
     @Test
-    public void handlePushWithNoMessageId() throws Exception {
+    public void handlePushWithNoMessageId() {
         when(PushIntentUtils.getGoogleMessageId(any(Intent.class))).thenReturn(null);
         PushNotifier.handleNotification(mContextMock, new Intent());
-        verify(mNotificationManagerMock, never()).notify(anyInt(), any(Notification.class));
+        verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
     }
 
     @Test
@@ -135,7 +135,7 @@ public class PushNotifierTest {
     }
 
     @Test
-    public void handlePushTargetN() throws Exception {
+    public void handlePushTargetN() {
         mApplicationInfoMock.targetSdkVersion = Build.VERSION_CODES.N;
         PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
@@ -143,7 +143,7 @@ public class PushNotifierTest {
 
     @SuppressLint("InlinedApi")
     @Test
-    public void handleNotificationWithColor() throws Exception {
+    public void handleNotificationWithColor() {
         String colorString = "#331144";
         when(PushIntentUtils.getColor(any(Intent.class))).thenReturn(colorString);
         PushNotifier.handleNotification(mContextMock, new Intent());
@@ -163,7 +163,7 @@ public class PushNotifierTest {
     }
 
     @Test
-    public void handleNotificationWithTitle() throws Exception {
+    public void handleNotificationWithTitle() {
         String title = "title";
         when(PushIntentUtils.getTitle(any(Intent.class))).thenReturn(title);
         PushNotifier.handleNotification(mContextMock, new Intent());
@@ -172,7 +172,7 @@ public class PushNotifierTest {
     }
 
     @Test
-    public void handleNotificationWithNullTitle() throws Exception {
+    public void handleNotificationWithNullTitle() {
         String appName = "app-name";
         mockStatic(AppNameHelper.class);
         when(AppNameHelper.getAppName(mContextMock)).thenReturn(appName);
@@ -183,7 +183,7 @@ public class PushNotifierTest {
     }
 
     @Test
-    public void handleNotificationWithEmptyTitle() throws Exception {
+    public void handleNotificationWithEmptyTitle() {
         String appName = "app-name";
         mockStatic(AppNameHelper.class);
         when(AppNameHelper.getAppName(mContextMock)).thenReturn(appName);
@@ -193,7 +193,7 @@ public class PushNotifierTest {
     }
 
     @Test
-    public void handleNotificationWithIconFromDrawable() throws Exception {
+    public void handleNotificationWithIconFromDrawable() {
         String iconString = "picture";
         int resourceId = 4;
         Resources resourcesMock = mock(Resources.class);
@@ -208,7 +208,7 @@ public class PushNotifierTest {
     }
 
     @Test
-    public void handleNotificationWithIconFromMipmap() throws Exception {
+    public void handleNotificationWithIconFromMipmap() {
         String iconString = "picture";
         int resourceId = 4;
         Resources resourcesMock = mock(Resources.class);
@@ -244,7 +244,7 @@ public class PushNotifierTest {
     }
 
     @Test
-    public void handleNotificationWithAppIcon() throws Exception {
+    public void handleNotificationWithAppIcon() {
         String iconString = "picture";
         Resources resourcesMock = mock(Resources.class);
         when(mContextMock.getResources()).thenReturn(resourcesMock);
@@ -315,7 +315,7 @@ public class PushNotifierTest {
     }
 
     @Test
-    public void handleNotificationWithCustomData() throws Exception {
+    public void handleNotificationWithCustomData() {
 
         Map<String, String> customData = new HashMap<>();
         customData.put("key", "val");
@@ -353,7 +353,7 @@ public class PushNotifierTest {
     }
 
     @Test
-    public void handleNotificationWithInvalidCustomSound() throws Exception {
+    public void handleNotificationWithInvalidCustomSound() {
         String customSoundString = "default";
         int resourceId = 2;
         when(PushIntentUtils.getSound(any(Intent.class))).thenReturn(customSoundString);
@@ -366,7 +366,7 @@ public class PushNotifierTest {
     }
 
     @Test
-    public void handleNotificationWithLauncherActivityHasRightFlags() throws Exception {
+    public void handleNotificationWithLauncherActivityHasRightFlags() {
         PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mActionIntentMock).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         verify(mNotificationManagerMock).notify(mDummyGoogleMessageId.hashCode(), mNotificationMock);

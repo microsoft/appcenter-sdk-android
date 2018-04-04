@@ -15,9 +15,6 @@ import static com.microsoft.appcenter.push.Push.LOG_TAG;
 
 class PushIntentUtils {
 
-    /**
-     * Intent keys.
-     */
     private static final String EXTRA_GCM_PREFIX = "gcm.notification.";
 
     @VisibleForTesting
@@ -41,14 +38,15 @@ class PushIntentUtils {
     @VisibleForTesting
     static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
 
+    @VisibleForTesting
+    static final String EXTRA_GOOGLE_PREFIX = "google.";
+
     /**
      * Intent extras not part of custom data.
      */
     @VisibleForTesting
     static final Set<String> EXTRA_STANDARD_KEYS = new HashSet<String>() {
         {
-            add(EXTRA_GOOGLE_MESSAGE_ID);
-            add("google.sent_time");
             add("collapse_key");
             add("from");
         }
@@ -67,7 +65,7 @@ class PushIntentUtils {
         if (intentExtras != null) {
             for (String key : intentExtras.keySet()) {
                 String value = String.valueOf(intentExtras.get(key));
-                if (key.startsWith(EXTRA_GCM_PREFIX) || EXTRA_STANDARD_KEYS.contains(key)) {
+                if (key.startsWith(EXTRA_GCM_PREFIX) || key.startsWith(EXTRA_GOOGLE_PREFIX) || EXTRA_STANDARD_KEYS.contains(key)) {
                     standardData.put(key, value);
                 } else {
                     customData.put(key, value);
