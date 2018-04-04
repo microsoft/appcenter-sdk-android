@@ -65,10 +65,6 @@ public class MainActivity extends AppCompatActivity {
 
     static SasquatchPushListener sPushListener;
 
-    public enum StartType {
-        APP_SECRET, TARGET, BOTH
-    }
-
     static {
         System.loadLibrary("SasquatchBreakpad");
     }
@@ -256,5 +252,11 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
         AppCenter.start(getApplication(), appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
+    }
+
+    public enum StartType {
+        APP_SECRET,
+        TARGET,
+        BOTH
     }
 }
