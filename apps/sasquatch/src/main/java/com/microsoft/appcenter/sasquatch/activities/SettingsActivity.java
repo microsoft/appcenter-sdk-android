@@ -36,9 +36,13 @@ import com.microsoft.appcenter.utils.storage.StorageHelper;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
+import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
+
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APP_SECRET_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APPCENTER_START_TYPE;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FIREBASE_ENABLED_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_URL_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.TARGET_KEY;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -332,6 +336,51 @@ public class SettingsActivity extends AppCompatActivity {
             });
 
             /* Miscellaneous. */
+            initChangeableSetting(R.string.appcenter_start_type_key, MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString()), new Preference.OnPreferenceChangeListener() {
+
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    setKeyValue(APPCENTER_START_TYPE, (String) newValue);
+                    preference.setSummary(MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, null));
+                    return true;
+                }
+            });
+            initClickableSetting(R.string.target_id_key, MainActivity.sSharedPreferences.getString(TARGET_KEY, getString(R.string.target_id)), new Preference.OnPreferenceClickListener() {
+
+                @Override
+                public boolean onPreferenceClick(final Preference preference) {
+                    final EditText input = new EditText(getActivity());
+                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                    input.setText(MainActivity.sSharedPreferences.getString(TARGET_KEY, getString(R.string.target_id)));
+
+                    new AlertDialog.Builder(getActivity()).setTitle(R.string.target_id_title).setView(input)
+                            .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    String targetId = input.getText().toString();
+                                    if (!TextUtils.isEmpty(targetId)) {
+                                        setKeyValue(TARGET_KEY, targetId);
+                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.target_id_changed_format), targetId), Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Toast.makeText(getActivity(), R.string.target_id_invalid, Toast.LENGTH_SHORT).show();
+                                    }
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(TARGET_KEY, null));
+                                }
+                            })
+                            .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    String defaultTargetId = getString(R.string.target_id);
+                                    setKeyValue(TARGET_KEY, defaultTargetId);
+                                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.target_id_changed_format), defaultTargetId), Toast.LENGTH_SHORT).show();
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(TARGET_KEY, null));
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .create().show();
+                    return true;
+                }
+            });
             initClickableSetting(R.string.clear_crash_user_confirmation_key, new Preference.OnPreferenceClickListener() {
 
                 @Override

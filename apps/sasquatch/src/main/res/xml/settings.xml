@@ -88,6 +88,14 @@
     <PreferenceCategory
         android:key="@string/miscellaneous_key"
         android:title="@string/miscellaneous_title">
+        <ListPreference
+            android:key="@string/appcenter_start_type_key"
+            android:title="@string/appcenter_start_type_title"
+            android:entries="@array/appcenter_start_type_values"
+            android:entryValues="@array/appcenter_start_type_values" />
+        <Preference
+            android:key="@string/target_id_key"
+            android:title="@string/target_id_title" />
         <Preference
             android:key="@string/clear_crash_user_confirmation_key"
             android:title="@string/clear_crash_user_confirmation_title" />

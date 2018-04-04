@@ -43,6 +43,10 @@ public class MainActivity extends AppCompatActivity {
 
     static final String APP_SECRET_KEY = "appSecret";
 
+    static final String TARGET_KEY = "target";
+
+    static final String APPCENTER_START_TYPE = "appCenterStartType";
+
     static final String LOG_URL_KEY = "logUrl";
 
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
@@ -60,6 +64,10 @@ public class MainActivity extends AppCompatActivity {
     static SasquatchCrashesListener sCrashesListener;
 
     static SasquatchPushListener sPushListener;
+
+    public enum StartType {
+        APP_SECRET, TARGET, BOTH
+    }
 
     static {
         System.loadLibrary("SasquatchBreakpad");
@@ -134,7 +142,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* Start App Center. */
-        AppCenter.start(getApplication(), sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), Analytics.class, Crashes.class, Distribute.class, Push.class);
+        StartType startType = StartType.valueOf(sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString()));
+        startAppCenter(startType);
 
         /* Attach NDK Crash Handler (if available) after SDK is initialized. */
         CrashesPrivateHelper.getMinidumpDirectory().thenAccept(new AppCenterConsumer<String>() {
@@ -231,4 +240,21 @@ public class MainActivity extends AppCompatActivity {
         return sPushListener;
     }
 
+    private void startAppCenter(StartType startType) {
+        String appId = sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret));
+        String targetId = sSharedPreferences.getString(TARGET_KEY, getString(R.string.target_id));
+        String appIdArg = "";
+        switch (startType) {
+            case APP_SECRET:
+                appIdArg = appId;
+                break;
+            case TARGET:
+                appIdArg = String.format("target=%s", targetId);
+                break;
+            case BOTH:
+                appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
+                break;
+        }
+        AppCenter.start(getApplication(), appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
+    }
 }
