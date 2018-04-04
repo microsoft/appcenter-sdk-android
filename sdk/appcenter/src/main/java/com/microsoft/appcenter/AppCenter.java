@@ -593,6 +593,8 @@ public class AppCenter {
                         AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
                     } else if (shouldDisable(serviceInstance.getServiceName())) {
                         AppCenterLog.debug(LOG_TAG, "Instrumentation variable to disable service has been set; not starting service " + service.getName() + ".");
+                    } else if (mAppSecret == null && serviceInstance.isAppSecretRequired()) {
+                        AppCenterLog.warn(LOG_TAG, "App Center was started without app secret, but the service requires it; not starting service " + service.getName() + ".");
                     } else {
 
                         /* Share handler now with service while starting. */

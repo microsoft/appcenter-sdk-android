@@ -32,6 +32,13 @@ public interface AppCenterService extends Application.ActivityLifecycleCallbacks
     void setInstanceEnabled(boolean enabled);
 
     /**
+     * Checks if the service needs application secret.
+     *
+     * @return <code>true</code> if application secret is required, <code>false</code> otherwise.
+     */
+    boolean isAppSecretRequired();
+
+    /**
      * Gets a name of the service.
      *
      * @return The name of the service.
