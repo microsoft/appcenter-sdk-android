@@ -2,10 +2,18 @@ package com.microsoft.appcenter.analytics;
 
 import java.util.Map;
 
+/**
+ * Target for advanced transmission target usage.
+ */
 public class AnalyticsTransmissionTarget {
 
     private String mTransmissionTargetToken;
 
+    /**
+     * Create a new instance.
+     *
+     * @param transmissionTargetToken The token for this transmission target.
+     */
     AnalyticsTransmissionTarget(String transmissionTargetToken) {
         mTransmissionTargetToken = transmissionTargetToken;
     }
