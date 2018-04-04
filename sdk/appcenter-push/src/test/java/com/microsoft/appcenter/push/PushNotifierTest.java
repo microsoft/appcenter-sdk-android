@@ -34,6 +34,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -119,7 +120,7 @@ public class PushNotifierTest {
         PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
         verifyStatic();
-        PushIntentUtils.setMessageId(anyString(), any(Intent.class));
+        PushIntentUtils.setMessageId(anyString(), same(mActionIntentMock));
     }
 
     @Test
@@ -128,7 +129,7 @@ public class PushNotifierTest {
         PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
         verifyStatic();
-        PushIntentUtils.setMessageId(eq(mDummyGoogleMessageId), any(Intent.class));
+        PushIntentUtils.setMessageId(eq(mDummyGoogleMessageId), same(mActionIntentMock));
     }
 
     @Test
@@ -137,7 +138,7 @@ public class PushNotifierTest {
         PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
         verifyStatic();
-        PushIntentUtils.setMessageId(eq(mDummyGoogleMessageId), any(Intent.class));
+        PushIntentUtils.setMessageId(eq(mDummyGoogleMessageId), same(mActionIntentMock));
     }
 
     @Test
@@ -146,7 +147,7 @@ public class PushNotifierTest {
         PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
         verifyStatic();
-        PushIntentUtils.setMessageId(eq(mDummyGoogleMessageId), any(Intent.class));
+        PushIntentUtils.setMessageId(eq(mDummyGoogleMessageId), same(mActionIntentMock));
     }
 
     @SuppressLint("InlinedApi")
