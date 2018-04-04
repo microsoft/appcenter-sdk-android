@@ -452,20 +452,19 @@ public class AppCenter {
             /* Split by pairs. */
             for (String pair : pairs) {
 
-            /* Split key and value. */
+                /* Split key and value. */
                 String[] keyValue = pair.split(KEY_VALUE_DELIMITER);
                 String key = keyValue[0];
 
-            /* A value with no key is default to the app secret. */
+                /* A value with no key is default to the app secret. */
                 if (keyValue.length == 1) {
-                    if (pair.indexOf(KEY_VALUE_DELIMITER) == -1 && !key.isEmpty()) {
+                    if (!pair.contains(KEY_VALUE_DELIMITER) && !key.isEmpty()) {
                         mAppSecret = key;
                     }
-                    continue;
                 } else if (!keyValue[1].isEmpty()) {
                     String value = keyValue[1];
 
-                /* Ignore unknown keys. */
+                    /* Ignore unknown keys. */
                     if (APP_SECRET_KEY.equals(key)) {
                         mAppSecret = value;
                     } else if (TRANSMISSION_TARGET_TOKEN_KEY.equals(key)) {
