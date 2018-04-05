@@ -166,6 +166,11 @@ public abstract class AbstractAppCenterService implements AppCenterService {
     }
 
     @Override
+    public boolean isAppSecretRequired() {
+        return true;
+    }
+
+    @Override
     public final synchronized void onStarting(@NonNull AppCenterHandler handler) {
 
         /*

@@ -235,6 +235,11 @@ public class AbstractAppCenterServiceTest {
     }
 
     @Test
+    public void isAppSecretRequired() {
+        Assert.assertTrue(mService.isAppSecretRequired());
+    }
+
+    @Test
     public void getGroupName() {
         Assert.assertEquals("group_test", mService.getGroupName());
     }

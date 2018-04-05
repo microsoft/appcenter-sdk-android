@@ -407,6 +407,11 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     @Override
+    public boolean isAppSecretRequired() {
+        return false;
+    }
+
+    @Override
     protected String getGroupName() {
         return ANALYTICS_GROUP;
     }

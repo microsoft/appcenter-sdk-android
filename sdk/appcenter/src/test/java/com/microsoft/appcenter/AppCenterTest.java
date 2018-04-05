@@ -802,8 +802,9 @@ public class AppCenterTest {
     @Test
     public void targetTokenTest() {
         String secret = TRANSMISSION_TARGET_TOKEN_KEY + KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
-        AppCenter.start(mApplication, secret, DummyService.class);
+        AppCenter.start(mApplication, secret, DummyService.class, AnotherDummyService.class);
         verify(DummyService.getInstance()).onStarted(any(Context.class), isNull(String.class), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
+        verify(AnotherDummyService.getInstance(), never()).onStarted(any(Context.class), isNull(String.class), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
     }
 
     @Test
@@ -1151,6 +1152,11 @@ public class AppCenterTest {
 
         static AppCenterFuture<Boolean> isEnabled() {
             return getInstance().isInstanceEnabledAsync();
+        }
+
+        @Override
+        public boolean isAppSecretRequired() {
+            return false;
         }
 
         @Override
