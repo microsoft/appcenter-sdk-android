@@ -41,7 +41,7 @@ public class Analytics extends AbstractAppCenterService {
      * Max length of properties.
      */
     @VisibleForTesting
-    static final int MAX_PROPERTY_ITEM_LENGTH = 64;
+    static final int MAX_PROPERTY_ITEM_LENGTH = 125;
 
     /**
      * Name of the service.
@@ -66,7 +66,7 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Max number of properties.
      */
-    private static final int MAX_PROPERTY_COUNT = 5;
+    private static final int MAX_PROPERTY_COUNT = 20;
 
     /**
      * Shared instance.
