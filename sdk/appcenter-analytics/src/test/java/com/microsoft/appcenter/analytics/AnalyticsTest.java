@@ -16,8 +16,8 @@ import com.microsoft.appcenter.analytics.ingestion.models.json.StartSessionLogFa
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -37,13 +37,13 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.microsoft.appcenter.analytics.Analytics.trackEvent;
 import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -91,7 +91,7 @@ public class AnalyticsTest {
         Answer<Void> runNow = new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 ((Runnable) invocation.getArguments()[0]).run();
                 return null;
             }
@@ -108,7 +108,7 @@ public class AnalyticsTest {
         /* Then simulate further changes to state. */
         PowerMockito.doAnswer(new Answer<Object>() {
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
@@ -143,8 +143,8 @@ public class AnalyticsTest {
     public void notInit() {
 
         /* Just check log is discarded without throwing any exception. */
-        Analytics.trackEvent("test");
-        Analytics.trackEvent("test", new HashMap<String, String>());
+        trackEvent("test");
+        trackEvent("test", new HashMap<String, String>());
         Analytics.trackPage("test");
         Analytics.trackPage("test", new HashMap<String, String>());
 
@@ -170,7 +170,7 @@ public class AnalyticsTest {
         /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
 
         /* Test resume/pause. */
         analytics.onActivityResumed(activity);
@@ -211,7 +211,7 @@ public class AnalyticsTest {
         assertFalse(Analytics.isAutoPageTrackingEnabled());
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         analytics.onActivityResumed(new MyActivity());
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -248,18 +248,18 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
-        Analytics.trackEvent(null, null);
+        analytics.onStarted(mock(Context.class), "", null, channel);
+        trackEvent(null, (Map<String, String>) null);
         verify(channel, never()).enqueue(any(Log.class), anyString());
         reset(channel);
-        Analytics.trackEvent("", null);
+        trackEvent("", (Map<String, String>) null);
         verify(channel, never()).enqueue(any(Log.class), anyString());
         reset(channel);
-        Analytics.trackEvent(" ", null);
+        trackEvent(" ", (Map<String, String>) null);
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
         reset(channel);
         final String maxName = generateString(Analytics.MAX_NAME_LENGTH, '*');
-        Analytics.trackEvent(maxName + "*", null);
+        trackEvent(maxName + "*", (Map<String, String>) null);
         verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
@@ -272,10 +272,10 @@ public class AnalyticsTest {
             }
         }), anyString());
         reset(channel);
-        Analytics.trackEvent(maxName, null);
+        trackEvent(maxName, (Map<String, String>) null);
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
         reset(channel);
-        Analytics.trackEvent("eventName", new HashMap<String, String>() {{
+        trackEvent("eventName", new HashMap<String, String>() {{
             put(null, null);
             put("", null);
             put(generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
@@ -294,7 +294,7 @@ public class AnalyticsTest {
         }), anyString());
         reset(channel);
         final String validMapItem = "valid";
-        Analytics.trackEvent("eventName", new HashMap<String, String>() {{
+        trackEvent("eventName", new HashMap<String, String>() {{
             for (int i = 0; i < 10; i++) {
                 put(validMapItem + i, validMapItem);
             }
@@ -312,7 +312,7 @@ public class AnalyticsTest {
         }), anyString());
         reset(channel);
         final String longerMapItem = generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
-        Analytics.trackEvent("eventName", new HashMap<String, String>() {{
+        trackEvent("eventName", new HashMap<String, String>() {{
             put(longerMapItem, longerMapItem);
         }});
         verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
@@ -337,7 +337,7 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         Analytics.trackPage(null, null);
         verify(channel, never()).enqueue(any(Log.class), anyString());
         reset(channel);
@@ -434,7 +434,7 @@ public class AnalyticsTest {
         /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         verify(channel).removeGroup(eq(analytics.getGroupName()));
         verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), any(Channel.GroupListener.class));
         verify(channel).addListener(any(Channel.Listener.class));
@@ -451,7 +451,7 @@ public class AnalyticsTest {
         verifyStatic();
         StorageHelper.PreferencesStorage.remove("sessions");
 
-        Analytics.trackEvent("test");
+        trackEvent("test");
         Analytics.trackPage("test");
         analytics.onActivityResumed(new Activity());
         analytics.onActivityPaused(new Activity());
@@ -472,14 +472,14 @@ public class AnalyticsTest {
         /* Test double call to setEnabled true. */
         Analytics.setEnabled(true);
         assertTrue(Analytics.isEnabled().get());
-        Analytics.trackEvent("test");
+        trackEvent("test");
         Analytics.trackPage("test");
         verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
         /* Disable again. */
         Analytics.setEnabled(false);
         assertFalse(Analytics.isEnabled().get());
-        Analytics.trackEvent("test");
+        trackEvent("test");
         Analytics.trackPage("test");
         analytics.onActivityResumed(new Activity());
         analytics.onActivityPaused(new Activity());
@@ -496,7 +496,7 @@ public class AnalyticsTest {
         /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         verify(channel, never()).removeListener(any(Channel.Listener.class));
         verify(channel, never()).addListener(any(Channel.Listener.class));
     }
@@ -511,7 +511,7 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         Analytics.setEnabled(false);
 
         /* App in foreground: no log yet, we are disabled. */
@@ -556,7 +556,7 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         Analytics.setEnabled(false);
 
         /* App in foreground: no log yet, we are disabled. */
@@ -570,26 +570,26 @@ public class AnalyticsTest {
     }
 
     @Test
-    public void analyticsListener() throws IOException, ClassNotFoundException {
+    public void analyticsListener() {
         AnalyticsListener listener = mock(AnalyticsListener.class);
         Analytics.setListener(listener);
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", channel);
+        analytics.onStarted(mock(Context.class), "", null, channel);
         final ArgumentCaptor<Channel.GroupListener> captor = ArgumentCaptor.forClass(Channel.GroupListener.class);
         verify(channel).addGroup(anyString(), anyInt(), anyLong(), anyInt(), captor.capture());
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 captor.getValue().onBeforeSending((Log) invocation.getArguments()[0]);
                 captor.getValue().onSuccess((Log) invocation.getArguments()[0]);
                 captor.getValue().onFailure((Log) invocation.getArguments()[0], new Exception());
                 return null;
             }
         }).when(channel).enqueue(any(Log.class), anyString());
-        Analytics.trackEvent("name");
+        trackEvent("name");
         verify(listener).onBeforeSending(notNull(Log.class));
         verify(listener).onSendingSucceeded(notNull(Log.class));
         verify(listener).onSendingFailed(notNull(Log.class), notNull(Exception.class));
@@ -611,6 +611,68 @@ public class AnalyticsTest {
         verify(analyticsListener, never()).onBeforeSending(any(EventLog.class));
         verify(analyticsListener, never()).onSendingSucceeded(any(EventLog.class));
         verify(analyticsListener, never()).onSendingFailed(any(EventLog.class), any(Exception.class));
+    }
+
+    @Test
+    public void testGetTransmissionTarget() {
+        assertNull(Analytics.getTransmissionTarget(""));
+        assertNotNull(Analytics.getTransmissionTarget("token"));
+    }
+
+    @Test
+    public void testTrackEventWithTransmissionTarget() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), null, "token", channel);
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
+        assertNotNull(target);
+
+        /* Track event with transmission target. */
+        trackEvent("name", target);
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    return eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                }
+                return false;
+            }
+        }), anyString());
+        reset(channel);
+
+        /* Track event via transmission target method. */
+        target.trackEvent("name");
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    return eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                }
+                return false;
+            }
+        }), anyString());
+        reset(channel);
+
+        /* Track event via transmission target method with properties. */
+        target.trackEvent("name", new HashMap<String, String>() {{
+            put("valid", "valid");
+        }});
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    return eventLog.getName().equals("name") && eventLog.getProperties().size() == 1;
+                }
+                return false;
+            }
+        }), anyString());
     }
 
     /**

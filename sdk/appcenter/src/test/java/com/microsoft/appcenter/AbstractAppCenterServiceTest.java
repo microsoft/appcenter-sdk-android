@@ -46,7 +46,7 @@ public class AbstractAppCenterServiceTest {
     private AbstractAppCenterService mService;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         mService = new AbstractAppCenterService() {
 
             @Override
@@ -74,7 +74,7 @@ public class AbstractAppCenterServiceTest {
         PowerMockito.doAnswer(new Answer<Object>() {
 
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
@@ -126,13 +126,13 @@ public class AbstractAppCenterServiceTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 ((Runnable) invocation.getArguments()[0]).run();
                 return null;
             }
         }).when(appCenterHandler).post(any(Runnable.class), any(Runnable.class));
         mService.onStarting(appCenterHandler);
-        mService.onStarted(mock(Context.class), "", mock(Channel.class));
+        mService.onStarted(mock(Context.class), "", null, mock(Channel.class));
 
         /* Enabled at first. */
         assertTrue(mService.isInstanceEnabledAsync().get());
@@ -177,7 +177,7 @@ public class AbstractAppCenterServiceTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 Object disabledRunnable = invocation.getArguments()[1];
                 if (disabledRunnable instanceof Runnable) {
                     ((Runnable) disabledRunnable).run();
@@ -186,7 +186,7 @@ public class AbstractAppCenterServiceTest {
             }
         }).when(appCenterHandler).post(any(Runnable.class), any(Runnable.class));
         mService.onStarting(appCenterHandler);
-        mService.onStarted(mock(Context.class), "", mock(Channel.class));
+        mService.onStarted(mock(Context.class), "", null, mock(Channel.class));
 
         /* Whatever we do it stays disabled. */
         assertFalse(mService.isInstanceEnabledAsync().get());
@@ -206,7 +206,7 @@ public class AbstractAppCenterServiceTest {
     @Test
     public void onChannelReadyEnabledThenDisable() {
         Channel channel = mock(Channel.class);
-        mService.onStarted(mock(Context.class), "", channel);
+        mService.onStarted(mock(Context.class), "", null, channel);
         verify(channel).removeGroup(mService.getGroupName());
         verify(channel).addGroup(mService.getGroupName(), mService.getTriggerCount(), mService.getTriggerInterval(), mService.getTriggerMaxParallelRequests(), mService.getChannelListener());
         verifyNoMoreInteractions(channel);
@@ -221,7 +221,7 @@ public class AbstractAppCenterServiceTest {
     @Test
     public void onChannelReadyDisabledThenEnable() {
         Channel channel = mock(Channel.class);
-        mService.onStarted(mock(Context.class), "", channel);
+        mService.onStarted(mock(Context.class), "", null, channel);
         verify(channel).removeGroup(mService.getGroupName());
         verify(channel).addGroup(eq(mService.getGroupName()), anyInt(), anyLong(), anyInt(), any(Channel.GroupListener.class));
         mService.setInstanceEnabled(false);
@@ -259,7 +259,7 @@ public class AbstractAppCenterServiceTest {
             }
         };
         Channel channel = mock(Channel.class);
-        mService.onStarted(mock(Context.class), "", channel);
+        mService.onStarted(mock(Context.class), "", null, channel);
         mService.setInstanceEnabled(false);
         mService.setInstanceEnabled(true);
         verifyZeroInteractions(channel);
