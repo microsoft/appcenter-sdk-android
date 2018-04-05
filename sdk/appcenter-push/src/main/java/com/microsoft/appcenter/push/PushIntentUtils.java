@@ -36,10 +36,11 @@ class PushIntentUtils {
     static final String EXTRA_ICON = EXTRA_GCM_PREFIX + "icon";
 
     @VisibleForTesting
-    static final String EXTRA_GOOGLE_MESSAGE_ID = "google.message_id";
+    static final String EXTRA_GOOGLE_PREFIX = "google.";
 
     @VisibleForTesting
-    static final String EXTRA_GOOGLE_PREFIX = "google.";
+    static final String EXTRA_GOOGLE_MESSAGE_ID = EXTRA_GOOGLE_PREFIX + "message_id";
+
 
     /**
      * Intent extras not part of custom data.
