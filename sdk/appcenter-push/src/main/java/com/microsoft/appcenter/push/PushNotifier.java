@@ -19,6 +19,7 @@ import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
+import com.microsoft.appcenter.utils.UUIDUtils;
 
 import java.util.Map;
 
@@ -57,12 +58,11 @@ class PushNotifier {
         context = context.getApplicationContext();
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
 
-        /* Generate notification identifier using the hash of the Google message id. */
-        String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
+        /* Generate notification identifier using the hash of the message id. */
+        String messageId = PushIntentUtils.getMessageId(pushIntent);
         if (messageId == null) {
-            AppCenterLog.error(LOG_TAG, "Push notification did not" +
-                    "contain Google message ID; aborting notification processing.");
-            return;
+            AppCenterLog.warn(LOG_TAG, "Push notification did not contain identifier, generate one.");
+            messageId = UUIDUtils.randomUUID().toString();
         }
         int notificationId = messageId.hashCode();
 
@@ -77,8 +77,7 @@ class PushNotifier {
             }
 
             /* Set the message ID in the intent. */
-            PushIntentUtils.setGoogleMessageId(messageId, actionIntent);
-
+            PushIntentUtils.setMessageId(messageId, actionIntent);
         } else {
 
             /* If no launcher, just create a placeholder action as the field is mandatory. */

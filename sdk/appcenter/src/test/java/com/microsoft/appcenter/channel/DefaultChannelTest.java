@@ -69,7 +69,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void analyticsSuccess() throws Persistence.PersistenceException, InterruptedException {
+    public void analyticsSuccess() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
         IngestionHttp mockIngestion = mock(IngestionHttp.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
@@ -156,7 +156,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mHandler, times(3)).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
         verify(mHandler).removeCallbacks(any(Runnable.class));
 
-        /* Check channel clear clear */
+        /* Check channel clear. */
         channel.clear(TEST_GROUP);
         verify(mockPersistence).deleteLogs(eq(TEST_GROUP));
     }
@@ -195,7 +195,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mHandler.postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL))).then(new Answer<Boolean>() {
 
             @Override
-            public Boolean answer(InvocationOnMock invocation) throws Throwable {
+            public Boolean answer(InvocationOnMock invocation) {
                 runnable.set((Runnable) invocation.getArguments()[0]);
                 return true;
             }
@@ -214,7 +214,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         final List<ServiceCallback> callbacks = new ArrayList<>();
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
                 if (args[3] instanceof ServiceCallback) {
                     callbacks.add((ServiceCallback) invocation.getArguments()[3]);
@@ -266,7 +266,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         final List<ServiceCallback> callbacks = new ArrayList<>();
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
                 if (args[3] instanceof ServiceCallback) {
                     callbacks.add((ServiceCallback) invocation.getArguments()[3]);
@@ -311,7 +311,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void analyticsRecoverable() throws Persistence.PersistenceException, InterruptedException {
+    public void analyticsRecoverable() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
         IngestionHttp mockIngestion = mock(IngestionHttp.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
@@ -512,7 +512,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void errorLogRecoverable() throws Persistence.PersistenceException, InterruptedException {
+    public void errorLogRecoverable() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
         Ingestion mockIngestion = mock(Ingestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
@@ -589,14 +589,14 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 /* Simulate waiting for response for the first batch. */
                 .then(new Answer<Object>() {
                     @Override
-                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                    public Object answer(InvocationOnMock invocation) {
                         return null;
                     }
                 })
                 /* Simulate waiting for response for the second batch. */
                 .then(new Answer<Object>() {
                     @Override
-                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                    public Object answer(InvocationOnMock invocation) {
                         return null;
                     }
                 })
@@ -624,14 +624,14 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 /* Simulate waiting for response for the first batch. */
                 .then(new Answer<Object>() {
                     @Override
-                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                    public Object answer(InvocationOnMock invocation) {
                         return null;
                     }
                 })
                 /* Simulate waiting for response for the second batch. */
                 .then(new Answer<Object>() {
                     @Override
-                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                    public Object answer(InvocationOnMock invocation) {
                         return null;
                     }
                 })
@@ -668,7 +668,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void setEnabled() throws IOException, InterruptedException {
+    public void setEnabled() throws IOException {
 
         /* Send a log. */
         Ingestion ingestion = mock(Ingestion.class);
@@ -699,14 +699,14 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void disableBeforeCheckingPendingLogs() throws IOException {
+    public void disableBeforeCheckingPendingLogs() {
         Ingestion ingestion = mock(Ingestion.class);
         Persistence persistence = mock(Persistence.class);
         final DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mCoreHandler);
         when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(1));
         when(ingestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).thenAnswer(new Answer<Void>() {
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
 
                 /* Simulate a service disabled in the middle of network transaction. */
                 ServiceCallback callback = (ServiceCallback) invocation.getArguments()[3];
@@ -733,7 +733,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void initialLogs() throws IOException, InterruptedException {
+    public void initialLogs() throws IOException {
         AtomicReference<Runnable> runnable = catchPostRunnable();
         Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
@@ -753,7 +753,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void initialLogsMoreThan1Batch() throws IOException, InterruptedException {
+    public void initialLogsMoreThan1Batch() throws IOException {
         AtomicReference<Runnable> runnable = catchPostRunnable();
         Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
@@ -773,7 +773,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void initialLogsThenDisable() throws IOException, InterruptedException {
+    public void initialLogsThenDisable() throws IOException {
         AtomicReference<Runnable> runnable = catchPostRunnable();
         Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
@@ -794,7 +794,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    public void listener() throws Persistence.PersistenceException {
+    public void listener() {
 
         @SuppressWarnings("ConstantConditions")
         DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mock(Persistence.class), mock(IngestionHttp.class), mCoreHandler);
@@ -835,7 +835,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void somehowDatabaseEmptiedAfterTimer() throws IOException, InterruptedException {
+    public void somehowDatabaseEmptiedAfterTimer() throws IOException {
 
         /* Cover the if (batchId != null) test though it could happen only if the database content disappear after the timer... */
         AtomicReference<Runnable> runnable = catchPostRunnable();
@@ -856,7 +856,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void invokeCallbacksAfterSuspendFatal() throws Exception {
+    public void invokeCallbacksAfterSuspendFatal() {
         Persistence mockPersistence = mock(Persistence.class);
         IngestionHttp mockIngestion = mock(IngestionHttp.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
@@ -887,7 +887,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void invokeCallbacksAfterSuspendFatalNoListener() throws Exception {
+    public void invokeCallbacksAfterSuspendFatalNoListener() {
         Persistence mockPersistence = mock(Persistence.class);
         IngestionHttp mockIngestion = mock(IngestionHttp.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
@@ -919,7 +919,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void invokeCallbacksAfterSuspendRecoverable() throws Exception {
+    public void invokeCallbacksAfterSuspendRecoverable() {
         Persistence mockPersistence = mock(Persistence.class);
         IngestionHttp mockIngestion = mock(IngestionHttp.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
@@ -949,7 +949,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    public void shutdown() throws Exception {
+    public void shutdown() {
         Persistence mockPersistence = mock(Persistence.class);
         IngestionHttp mockIngestion = mock(IngestionHttp.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
@@ -976,7 +976,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Persistence persistence = mock(Persistence.class);
 
         @SuppressWarnings("ConstantConditions")
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, mock(IngestionHttp.class), mCoreHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(IngestionHttp.class), mCoreHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
 
         /* Given we add mock listeners. */
@@ -1039,5 +1039,71 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
             verify(listener2).shouldFilter(log);
             verify(persistence).putLog(TEST_GROUP, log);
         }
+    }
+
+    @Test
+    public void nullAppSecretProvided() throws Persistence.PersistenceException {
+        testChannelWithoutAppSecret(null);
+    }
+
+    @Test
+    public void emptyAppSecretProvided() throws Persistence.PersistenceException {
+        testChannelWithoutAppSecret("");
+    }
+
+    private void testChannelWithoutAppSecret(String appSecret) throws Persistence.PersistenceException {
+
+        /* Given a mock channel. */
+        Persistence persistence = mock(Persistence.class);
+        Ingestion ingestion = mock(Ingestion.class);
+
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), appSecret, persistence, ingestion, mCoreHandler);
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+
+        /* Check log url. */
+        String logUrl = "http://mockUrl";
+        channel.setLogUrl(logUrl);
+        verify(ingestion, never()).setLogUrl(logUrl);
+
+        /* Check enqueue. */
+        Log log = mock(Log.class);
+        channel.enqueue(log, TEST_GROUP);
+        verify(persistence, never()).putLog(TEST_GROUP, log);
+        channel.enqueue(mock(Log.class), "other");
+        verify(persistence, never()).putLog(anyString(), any(Log.class));
+
+        /* Check clear. */
+        channel.clear(TEST_GROUP);
+        verify(persistence, never()).deleteLogs(eq(TEST_GROUP));
+
+        /* Check shutdown. */
+        channel.shutdown();
+        verify(persistence, never()).clearPendingLogState();
+    }
+
+    @Test
+    public void withoutIngestion() {
+        Persistence persistence = mock(Persistence.class);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, null, mCoreHandler);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+        channel.enqueue(mock(Log.class), TEST_GROUP);
+        channel.enqueue(mock(Log.class), "other");
+        channel.setEnabled(false);
+        channel.setEnabled(true);
+
+        /* No exceptions. */
+    }
+
+    @Test
+    public void withoutPersistence() {
+        Ingestion ingestion = mock(Ingestion.class);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), null, ingestion, mCoreHandler);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+        channel.enqueue(mock(Log.class), TEST_GROUP);
+        channel.enqueue(mock(Log.class), "other");
+        channel.setEnabled(false);
+        channel.setEnabled(true);
+
+        /* No exceptions. */
     }
 }

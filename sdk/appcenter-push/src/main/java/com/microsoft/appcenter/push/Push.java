@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.channel.Channel;
@@ -281,9 +282,9 @@ public class Push extends AbstractAppCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull String appSecret, @NonNull Channel channel) {
+    public synchronized void onStarted(@NonNull Context context, String appSecret, String transmissionTargetToken, @NonNull Channel channel) {
         mContext = context;
-        super.onStarted(context, appSecret, channel);
+        super.onStarted(context, appSecret, transmissionTargetToken, channel);
         if (FirebaseUtils.isFirebaseAvailable() && !mFirebaseAnalyticsEnabled) {
             AppCenterLog.debug(LOG_TAG, "Disabling Firebase analytics collection by default.");
             setFirebaseAnalyticsEnabled(context, false);
@@ -362,7 +363,7 @@ public class Push extends AbstractAppCenterService {
      */
     private synchronized void checkPushInIntent(Intent intent) {
         if (mInstanceListener != null) {
-            String googleMessageId = PushIntentUtils.getGoogleMessageId(intent);
+            String googleMessageId = PushIntentUtils.getMessageId(intent);
             if (googleMessageId != null && !googleMessageId.equals(mLastGoogleMessageId)
                     && !googleMessageId.equals(mFirstGoogleMessageId)) {
                 if (mFirstGoogleMessageId == null) {
@@ -383,21 +384,42 @@ public class Push extends AbstractAppCenterService {
      * @param pushIntent intent from push.
      */
     synchronized void onMessageReceived(Context context, final Intent pushIntent) {
-        if (mActivity == null) {
-            if (!FirebaseUtils.isFirebaseAvailable()) {
+
+        /* Log message. */
+        boolean isBackground = mActivity == null;
+        if (AppCenterLog.getLogLevel() <= Log.DEBUG) {
+            StringBuilder message = new StringBuilder("Received push intent=");
+            message.append(pushIntent);
+            message.append(" background=").append(isBackground);
+            Bundle intentExtras = pushIntent.getExtras();
+            if (intentExtras != null) {
+                message.append('\n');
+                for (String key : intentExtras.keySet()) {
+                    message.append(key).append("=").append(intentExtras.get(key)).append('\n');
+                }
+            }
+            AppCenterLog.debug(LOG_TAG, message.toString());
+        }
+
+        /* Check if background. */
+        if (isBackground) {
+
+            /* If background and Firebase SDK is active, it will already generate a notification. */
+            if (FirebaseUtils.isFirebaseAvailable()) {
+                AppCenterLog.debug(LOG_TAG, "Background notifications are handled by Firebase SDK when integrated.");
+            } else {
                 PushNotifier.handleNotification(context, pushIntent);
             }
-            return;
+        } else {
+            final PushNotification notification = new PushNotification(pushIntent);
+            postOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    handleOnMessageReceived(notification);
+                }
+            });
         }
-        String messageId = PushIntentUtils.getGoogleMessageId(pushIntent);
-        final PushNotification notification = new PushNotification(pushIntent);
-        AppCenterLog.info(LOG_TAG, "Received push message in foreground id=" + messageId);
-        postOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                handleOnMessageReceived(notification);
-            }
-        });
     }
 
     /**

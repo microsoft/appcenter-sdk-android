@@ -72,6 +72,14 @@
     <string name="appcenter_event_filter_state_summary_enabled" tools:ignore="MissingTranslation">Event Filter is enabled</string>
     <string name="appcenter_event_filter_state_summary_disabled" tools:ignore="MissingTranslation">Event Filter is disabled</string>
 
+    <string name="appcenter_start_type_key" tools:ignore="MissingTranslation">appcenter_start_type_key</string>
+    <string name="appcenter_start_type_title" tools:ignore="MissingTranslation">Start type</string>
+
+    <string name="target_id_key" tools:ignore="MissingTranslation">target_id_key</string>
+    <string name="target_id_title" tools:ignore="MissingTranslation">Target Id</string>
+    <string name="target_id_changed_format" tools:ignore="MissingTranslation">Target Id has been changed to %s successfully. Please close the application completely and relaunch again.</string>
+    <string name="target_id_invalid" tools:ignore="MissingTranslation">Target Id is not valid.</string>
+
     <string name="application_info_key" tools:ignore="MissingTranslation">application_info</string>
     <string name="application_info_title" tools:ignore="MissingTranslation">Application Information</string>
 

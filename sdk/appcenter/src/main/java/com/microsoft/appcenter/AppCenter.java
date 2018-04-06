@@ -76,6 +76,30 @@ public class AppCenter {
     static final String DISABLE_ALL_SERVICES = "All";
 
     /**
+     * Delimiter between two key value pairs.
+     */
+    @VisibleForTesting
+    static final String PAIR_DELIMITER = ";";
+
+    /**
+     * Delimiter between key and its value.
+     */
+    @VisibleForTesting
+    static final String KEY_VALUE_DELIMITER = "=";
+
+    /**
+     * Application secret key.
+     */
+    @VisibleForTesting
+    static final String APP_SECRET_KEY = "appsecret";
+
+    /**
+     * Transmission target token key.
+     */
+    @VisibleForTesting
+    static final String TRANSMISSION_TARGET_TOKEN_KEY = "target";
+
+    /**
      * Shutdown timeout in millis.
      */
     private static final int SHUTDOWN_TIMEOUT = 5000;
@@ -105,6 +129,11 @@ public class AppCenter {
      * Application secret.
      */
     private String mAppSecret;
+
+    /**
+     * Transmission target token.
+     */
+    private String mTransmissionTargetToken;
 
     /**
      * Handler for uncaught exceptions.
@@ -387,6 +416,7 @@ public class AppCenter {
      *
      * @param application application context.
      * @param appSecret   a unique and secret key used to identify the application.
+     *                    It can be null since a transmission target token can be set later.
      * @return true if configuration was successful, false otherwise.
      */
     /* UncaughtExceptionHandler is used by PowerMock but lint does not detect it. */
@@ -396,10 +426,6 @@ public class AppCenter {
         /* Check parameters. */
         if (application == null) {
             AppCenterLog.error(LOG_TAG, "application may not be null");
-            return false;
-        }
-        if (appSecret == null || appSecret.isEmpty()) {
-            AppCenterLog.error(LOG_TAG, "appSecret may not be null or empty");
             return false;
         }
 
@@ -416,7 +442,37 @@ public class AppCenter {
 
         /* Store state. */
         mApplication = application;
-        mAppSecret = appSecret;
+
+        /* A null secret is still valid since transmission target token can be set later. */
+        if (appSecret != null && !appSecret.isEmpty()) {
+
+            /* Init parsing, the app secret string can contain other secrets.  */
+            String[] pairs = appSecret.split(PAIR_DELIMITER);
+
+            /* Split by pairs. */
+            for (String pair : pairs) {
+
+                /* Split key and value. */
+                String[] keyValue = pair.split(KEY_VALUE_DELIMITER, -1);
+                String key = keyValue[0];
+
+                /* A value with no key is default to the app secret. */
+                if (keyValue.length == 1) {
+                    if (!key.isEmpty()) {
+                        mAppSecret = key;
+                    }
+                } else if (!keyValue[1].isEmpty()) {
+                    String value = keyValue[1];
+
+                    /* Ignore unknown keys. */
+                    if (APP_SECRET_KEY.equals(key)) {
+                        mAppSecret = value;
+                    } else if (TRANSMISSION_TARGET_TOKEN_KEY.equals(key)) {
+                        mTransmissionTargetToken = value;
+                    }
+                }
+            }
+        }
 
         /* Start looper. */
         mHandlerThread = new HandlerThread("AppCenter.Looper");
@@ -537,6 +593,8 @@ public class AppCenter {
                         AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
                     } else if (shouldDisable(serviceInstance.getServiceName())) {
                         AppCenterLog.debug(LOG_TAG, "Instrumentation variable to disable service has been set; not starting service " + service.getName() + ".");
+                    } else if (mAppSecret == null && serviceInstance.isAppSecretRequired()) {
+                        AppCenterLog.warn(LOG_TAG, "App Center was started without app secret, but the service requires it; not starting service " + service.getName() + ".");
                     } else {
 
                         /* Share handler now with service while starting. */
@@ -579,7 +637,7 @@ public class AppCenter {
             if (!enabled && service.isInstanceEnabled()) {
                 service.setInstanceEnabled(false);
             }
-            service.onStarted(mApplication, mAppSecret, mChannel);
+            service.onStarted(mApplication, mAppSecret, mTransmissionTargetToken, mChannel);
             AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
             serviceNames.add(service.getServiceName());
         }

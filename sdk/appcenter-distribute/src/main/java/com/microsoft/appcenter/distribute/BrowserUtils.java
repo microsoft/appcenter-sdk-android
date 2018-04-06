@@ -109,7 +109,6 @@ class BrowserUtils {
      *
      * @param uri         initial uri.
      * @param appendQuery parameter to append.
-     *
      * @return uri string with appended query item.
      */
     static String appendUri(@NonNull String uri, @NonNull String appendQuery) throws URISyntaxException {

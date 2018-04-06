@@ -26,7 +26,7 @@ public class PushReceiverTest {
     private Push mPush;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         mockStatic(Push.class);
         when(Push.getInstance()).thenReturn(mPush);
     }
