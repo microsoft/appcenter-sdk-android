@@ -13,6 +13,8 @@ import android.graphics.Color;
 import android.graphics.drawable.AdaptiveIconDrawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
+import android.text.TextUtils;
 
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AppNameHelper;
@@ -22,6 +24,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
@@ -44,7 +48,12 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings({"unused", "deprecation"})
-@PrepareForTest({PushIntentUtils.class, PushNotifier.class, AppNameHelper.class})
+@PrepareForTest({
+        PushIntentUtils.class,
+        PushNotifier.class,
+        AppNameHelper.class,
+        TextUtils.class
+})
 public class PushNotifierTest {
 
     private final String mDummyGoogleMessageId = "messageId";
@@ -69,6 +78,9 @@ public class PushNotifierTest {
     @Mock
     private Intent mActionIntentMock;
 
+    @Mock
+    private PackageManager mPackageManagerMock;
+
     private ApplicationInfo mApplicationInfoMock;
 
     private static void setVersionSdkInt(int versionSdkInt) throws Exception {
@@ -92,16 +104,27 @@ public class PushNotifierTest {
         when(mNotificationBuilderMock.getNotification()).thenReturn(mNotificationMock);
         whenNew(Notification.Builder.class).withArguments(mContextMock).thenReturn(mNotificationBuilderMock);
 
-        PackageManager packageManagerMock = mock(PackageManager.class);
-        when(packageManagerMock.getLaunchIntentForPackage(anyString())).thenReturn(mActionIntentMock);
-        when(mContextMock.getPackageManager()).thenReturn(packageManagerMock);
-        when(mContextMock.getApplicationContext()).thenReturn(mContextMock);
-        when(mContextMock.getSystemService(NOTIFICATION_SERVICE)).thenReturn(mNotificationManagerMock);
-
         mApplicationInfoMock = new ApplicationInfo();
         mApplicationInfoMock.icon = mIconId;
         mApplicationInfoMock.targetSdkVersion = Build.VERSION_CODES.O;
+        mApplicationInfoMock.metaData = new Bundle();
+
+        when(mContextMock.getPackageManager()).thenReturn(mPackageManagerMock);
+        when(mContextMock.getApplicationContext()).thenReturn(mContextMock);
+        when(mContextMock.getSystemService(NOTIFICATION_SERVICE)).thenReturn(mNotificationManagerMock);
         when(mContextMock.getApplicationInfo()).thenReturn(mApplicationInfoMock);
+
+        when(mPackageManagerMock.getLaunchIntentForPackage(anyString())).thenReturn(mActionIntentMock);
+        when(mPackageManagerMock.getApplicationInfo(anyString(), eq(PackageManager.GET_META_DATA))).thenReturn(mApplicationInfoMock);
+
+        mockStatic(TextUtils.class);
+        when(TextUtils.isEmpty(any(CharSequence.class))).then(new Answer<Boolean>() {
+            @Override
+            public Boolean answer(InvocationOnMock invocation) throws Throwable {
+                CharSequence str = (CharSequence) invocation.getArguments()[0];
+                return str == null || str.length() == 0;
+            }
+        });
     }
 
     @After
@@ -387,7 +410,7 @@ public class PushNotifierTest {
         /* Override set up mock to return null for launcher activity. */
         Intent intent = mock(Intent.class);
         whenNew(Intent.class).withNoArguments().thenReturn(intent);
-        when(mContextMock.getPackageManager()).thenReturn(mock(PackageManager.class));
+        when(mPackageManagerMock.getLaunchIntentForPackage(anyString())).thenReturn(null);
         String title = "title";
         when(PushIntentUtils.getTitle(any(Intent.class))).thenReturn(title);
         Map<String, String> customData = new HashMap<>();
