@@ -15,6 +15,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -41,12 +42,14 @@ class PushNotifier {
     /**
      * Default notification icon meta-data name.
      */
-    private static final String DEFAULT_ICON_METADATA_NAME = "com.microsoft.appcenter.push.default_notification_icon";
+    @VisibleForTesting
+    static final String DEFAULT_ICON_METADATA_NAME = "com.microsoft.appcenter.push.default_notification_icon";
 
     /**
      * Default notification color meta-data name.
      */
-    private static final String DEFAULT_COLOR_METADATA_NAME = "com.microsoft.appcenter.push.default_notification_color";
+    @VisibleForTesting
+    static final String DEFAULT_COLOR_METADATA_NAME = "com.microsoft.appcenter.push.default_notification_color";
 
     /**
      * Builds a push notification using the given context and intent.
@@ -178,7 +181,7 @@ class PushNotifier {
         }
 
         /* Check default color. */
-        int colorResourceId = getResourceIdFromMetadata(context, DEFAULT_ICON_METADATA_NAME);
+        int colorResourceId = getResourceIdFromMetadata(context, DEFAULT_COLOR_METADATA_NAME);
         if (colorResourceId != 0) {
             AppCenterLog.debug(LOG_TAG, "Using color specified in meta-data for notification.");
             builder.setColor(getColor(context, colorResourceId));
