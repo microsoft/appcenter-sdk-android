@@ -582,8 +582,6 @@ public class Analytics extends AbstractAppCenterService {
                 AnalyticsTransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? mDefaultTransmissionTarget : transmissionTarget;
                 if (aTransmissionTarget != null) {
                     eventLog.addTransmissionTarget(aTransmissionTarget.getTransmissionTargetToken());
-
-                    /* TODO add multiple targets */
                 }
                 mChannel.enqueue(eventLog, ANALYTICS_GROUP);
             }
