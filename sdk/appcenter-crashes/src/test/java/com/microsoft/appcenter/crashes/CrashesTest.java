@@ -557,7 +557,7 @@ public class CrashesTest {
         }), eq(crashes.getGroupName()));
         reset(mockChannel);
         Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 30; i++) {
                 put("valid" + i, "valid");
             }
         }});
@@ -566,7 +566,7 @@ public class CrashesTest {
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
-                        && ((HandledErrorLog) item).getProperties().size() == 5;
+                        && ((HandledErrorLog) item).getProperties().size() == 20;
             }
         }), eq(crashes.getGroupName()));
         reset(mockChannel);
@@ -657,7 +657,7 @@ public class CrashesTest {
         }), eq(crashes.getGroupName()));
         reset(mockChannel);
         WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 30; i++) {
                 put("valid" + i, "valid");
             }
         }});
@@ -666,7 +666,7 @@ public class CrashesTest {
             @Override
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
-                        && ((HandledErrorLog) item).getProperties().size() == 5;
+                        && ((HandledErrorLog) item).getProperties().size() == 20;
             }
         }), eq(crashes.getGroupName()));
         reset(mockChannel);

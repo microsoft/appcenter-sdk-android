@@ -41,7 +41,7 @@ public class Analytics extends AbstractAppCenterService {
      * Max length of properties.
      */
     @VisibleForTesting
-    static final int MAX_PROPERTY_ITEM_LENGTH = 64;
+    static final int MAX_PROPERTY_ITEM_LENGTH = 125;
 
     /**
      * Name of the service.
@@ -66,7 +66,7 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Max number of properties.
      */
-    private static final int MAX_PROPERTY_COUNT = 5;
+    private static final int MAX_PROPERTY_COUNT = 20;
 
     /**
      * Shared instance.
@@ -213,9 +213,9 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Track a custom page with name and optional properties.
      * The name parameter can not be null or empty. Maximum allowed length = 256.
-     * The properties parameter maximum item count = 5.
-     * The properties keys can not be null or empty, maximum allowed key length = 64.
-     * The properties values can not be null, maximum allowed value length = 64.
+     * The properties parameter maximum item count = 20.
+     * The properties keys can not be null or empty, maximum allowed key length = 125.
+     * The properties values can not be null, maximum allowed value length = 125.
      * Any length of name/keys/values that are longer than each limit will be truncated.
      * <p>
      * TODO the backend does not support that service yet, will be public method later.
@@ -246,9 +246,9 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Track a custom event with name and optional properties.
      * The name parameter can not be null or empty. Maximum allowed length = 256.
-     * The properties parameter maximum item count = 5.
-     * The properties keys can not be null or empty, maximum allowed key length = 64.
-     * The properties values can not be null, maximum allowed value length = 64.
+     * The properties parameter maximum item count = 20.
+     * The properties keys can not be null or empty, maximum allowed key length = 125.
+     * The properties values can not be null, maximum allowed value length = 125.
      * Any length of name/keys/values that are longer than each limit will be truncated.
      *
      * @param name       An event name.
@@ -273,9 +273,9 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Track a custom event with name and optional properties and optional transmissionTarget.
      * The name parameter can not be null or empty. Maximum allowed length = 256.
-     * The properties parameter maximum item count = 5.
-     * The properties keys can not be null or empty, maximum allowed key length = 64.
-     * The properties values can not be null, maximum allowed value length = 64.
+     * The properties parameter maximum item count = 20.
+     * The properties keys can not be null or empty, maximum allowed key length = 125.
+     * The properties values can not be null, maximum allowed value length = 125.
      * Any length of name/keys/values that are longer than each limit will be truncated.
      *
      * @param name               An event name.
@@ -343,7 +343,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param properties Properties collection to validate.
      * @param logName    Log name.
      * @param logType    Log type.
-     * @return valid properties collection with maximum size of 5.
+     * @return valid properties collection with maximum size of 20.
      */
     private static Map<String, String> validateProperties(Map<String, String> properties, String logName, String logType) {
         if (properties == null) {

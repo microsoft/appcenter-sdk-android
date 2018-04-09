@@ -300,7 +300,7 @@ public class AnalyticsTest {
         reset(channel);
         final String validMapItem = "valid";
         trackEvent("eventName", new HashMap<String, String>() {{
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 30; i++) {
                 put(validMapItem + i, validMapItem);
             }
         }});
@@ -310,7 +310,7 @@ public class AnalyticsTest {
             public boolean matches(Object item) {
                 if (item instanceof EventLog) {
                     EventLog eventLog = (EventLog) item;
-                    return eventLog.getProperties().size() == 5;
+                    return eventLog.getProperties().size() == 20;
                 }
                 return false;
             }
@@ -389,7 +389,7 @@ public class AnalyticsTest {
         reset(channel);
         final String validMapItem = "valid";
         Analytics.trackPage("pageName", new HashMap<String, String>() {{
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 30; i++) {
                 put(validMapItem + i, validMapItem);
             }
         }});
@@ -399,7 +399,7 @@ public class AnalyticsTest {
             public boolean matches(Object item) {
                 if (item instanceof PageLog) {
                     PageLog pageLog = (PageLog) item;
-                    return pageLog.getProperties().size() == 5;
+                    return pageLog.getProperties().size() == 20;
                 }
                 return false;
             }

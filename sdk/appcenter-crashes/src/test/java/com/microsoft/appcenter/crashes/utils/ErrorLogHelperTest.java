@@ -283,11 +283,11 @@ public class ErrorLogHelperTest {
         assertEquals(0, ErrorLogHelper.validateProperties(properties, logType).size());
 
         properties = new HashMap<String, String>() {{
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 30; i++) {
                 put("valid" + i, "valid");
             }
         }};
-        assertEquals(5, ErrorLogHelper.validateProperties(properties, logType).size());
+        assertEquals(20, ErrorLogHelper.validateProperties(properties, logType).size());
 
         final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
         properties = new HashMap<String, String>() {{
