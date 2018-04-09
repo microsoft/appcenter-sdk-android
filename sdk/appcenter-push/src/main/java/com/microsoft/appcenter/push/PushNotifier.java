@@ -176,7 +176,7 @@ class PushNotifier {
                 builder.setColor(Color.parseColor(colorString));
                 return;
             } catch (IllegalArgumentException e) {
-                AppCenterLog.error(LOG_TAG, "Invalid color sting.", e);
+                AppCenterLog.error(LOG_TAG, "Invalid color string received in push payload.", e);
             }
         }
 
@@ -299,11 +299,11 @@ class PushNotifier {
         return 0;
     }
 
+    @SuppressWarnings("deprecation")
     private static int getColor(Context context, int colorResourceId) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             return context.getColor(colorResourceId);
         } else {
-            //noinspection deprecation
             return context.getResources().getColor(colorResourceId);
         }
     }

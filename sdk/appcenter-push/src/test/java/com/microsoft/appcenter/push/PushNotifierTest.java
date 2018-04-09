@@ -117,8 +117,9 @@ public class PushNotifierTest {
         mockStatic(Color.class);
         mockStatic(TextUtils.class);
         when(TextUtils.isEmpty(any(CharSequence.class))).then(new Answer<Boolean>() {
+
             @Override
-            public Boolean answer(InvocationOnMock invocation) throws Throwable {
+            public Boolean answer(InvocationOnMock invocation) {
                 CharSequence str = (CharSequence) invocation.getArguments()[0];
                 return str == null || str.length() == 0;
             }
