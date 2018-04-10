@@ -13,7 +13,10 @@ import android.graphics.Color;
 import android.graphics.drawable.AdaptiveIconDrawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
+import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
@@ -35,6 +38,18 @@ class PushNotifier {
      * Default channel name on Android 8.
      */
     private static final String CHANNEL_NAME = "Push";
+
+    /**
+     * Default notification icon meta-data name.
+     */
+    @VisibleForTesting
+    static final String DEFAULT_ICON_METADATA_NAME = "com.microsoft.appcenter.push.default_notification_icon";
+
+    /**
+     * Default notification color meta-data name.
+     */
+    @VisibleForTesting
+    static final String DEFAULT_COLOR_METADATA_NAME = "com.microsoft.appcenter.push.default_notification_color";
 
     /**
      * Builds a push notification using the given context and intent.
@@ -99,7 +114,7 @@ class PushNotifier {
         }
 
         /* Set color. */
-        setColor(pushIntent, builder);
+        setColor(context, pushIntent, builder);
 
         /* Set icon. */
         setIcon(context, pushIntent, builder);
@@ -107,7 +122,7 @@ class PushNotifier {
         /* Set sound. */
         setSound(context, pushIntent, builder);
 
-        /* Texts */
+        /* Set texts. */
         builder.setContentTitle(notificationTitle).
                 setContentText(notificationMessage).
                 setWhen(System.currentTimeMillis());
@@ -145,15 +160,31 @@ class PushNotifier {
     /**
      * Sets the color in the notification builder if the property is set in the intent.
      *
+     * @param context    The current context.
      * @param pushIntent The push intent.
      * @param builder    The builder to modify.
      */
-    private static void setColor(Intent pushIntent, Notification.Builder builder) {
+    private static void setColor(Context context, Intent pushIntent, Notification.Builder builder) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return;
+        }
+
+        /* Check custom color from intent. */
         String colorString = PushIntentUtils.getColor(pushIntent);
         if (colorString != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            try {
                 builder.setColor(Color.parseColor(colorString));
+                return;
+            } catch (IllegalArgumentException e) {
+                AppCenterLog.error(LOG_TAG, "Invalid color string received in push payload.", e);
             }
+        }
+
+        /* Check default color. */
+        int colorResourceId = getResourceIdFromMetadata(context, DEFAULT_COLOR_METADATA_NAME);
+        if (colorResourceId != 0) {
+            AppCenterLog.debug(LOG_TAG, "Using color specified in meta-data for notification.");
+            builder.setColor(getColor(context, colorResourceId));
         }
     }
 
@@ -162,6 +193,7 @@ class PushNotifier {
      * Sets the sound in the notification builder if the property is set in the intent.
      * This is effective only for devices running or targeting an Android version lower than 8.
      *
+     * @param context    The current context.
      * @param pushIntent The push intent.
      * @param builder    The builder to modify.
      */
@@ -191,13 +223,18 @@ class PushNotifier {
      * Sets the icon for the notification builder if the property is set in the intent, if no custom
      * icon is provided as an extra, the app icon is used.
      *
+     * @param context    The current context.
      * @param pushIntent The push intent.
      * @param builder    The builder to modify.
      */
     private static void setIcon(Context context, Intent pushIntent, Notification.Builder builder) {
-        int iconResourceId = 0;
+
+        /* Check custom icon from intent. */
         String iconString = PushIntentUtils.getIcon(pushIntent);
-        if (iconString != null) {
+
+        /* Try to get resource identifier. */
+        int iconResourceId = 0;
+        if (!TextUtils.isEmpty(iconString)) {
             Resources resources = context.getResources();
             String packageName = context.getPackageName();
             iconResourceId = resources.getIdentifier(iconString, "drawable", packageName);
@@ -213,6 +250,17 @@ class PushNotifier {
         if (iconResourceId != 0) {
             iconResourceId = validateIcon(context, iconResourceId);
         }
+
+        /* Check default icon. */
+        if (iconResourceId == 0) {
+            iconResourceId = getResourceIdFromMetadata(context, DEFAULT_ICON_METADATA_NAME);
+            if (iconResourceId != 0) {
+                AppCenterLog.debug(LOG_TAG, "Using icon specified in meta-data for notification.");
+                iconResourceId = validateIcon(context, iconResourceId);
+            }
+        }
+
+        /* If no icon specified use application icon. */
         if (iconResourceId == 0) {
             AppCenterLog.debug(LOG_TAG, "Using application icon as notification icon.");
             iconResourceId = validateIcon(context, context.getApplicationInfo().icon);
@@ -227,12 +275,37 @@ class PushNotifier {
     }
 
     private static int validateIcon(Context context, int iconResourceId) {
+        if (iconResourceId == 0) {
+            return iconResourceId;
+        }
         if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O && context.getDrawable(iconResourceId) instanceof AdaptiveIconDrawable) {
             AppCenterLog.error(LOG_TAG, "Adaptive icons make Notification center crash (system process) on Android 8.0 (was fixed on Android 8.1), " +
                     "please update your icon to be non adaptive or please use another icon to push.");
             iconResourceId = 0;
         }
         return iconResourceId;
+    }
+
+    private static int getResourceIdFromMetadata(Context context, String metadataName) {
+        Bundle metaData = null;
+        try {
+            metaData = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA).metaData;
+        } catch (PackageManager.NameNotFoundException e) {
+            AppCenterLog.error(LOG_TAG, "Package name not found.", e);
+        }
+        if (metaData != null) {
+            return metaData.getInt(metadataName);
+        }
+        return 0;
+    }
+
+    @SuppressWarnings("deprecation")
+    private static int getColor(Context context, int colorResourceId) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return context.getColor(colorResourceId);
+        } else {
+            return context.getResources().getColor(colorResourceId);
+        }
     }
 }
 
