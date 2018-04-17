@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.ingestion.models;
 
 import java.util.Date;
+import java.util.Set;
 import java.util.UUID;
 
 public interface Log extends Model {
@@ -68,4 +69,20 @@ public interface Log extends Model {
      * @param device the device value to set
      */
     void setDevice(Device device);
+
+    /**
+     * Adds a transmissionTargetToken that this log should be sent to.
+     *
+     * @param transmissionTargetToken the identifier of the transmissionTargetToken.
+     */
+    @SuppressWarnings("unused")
+    void addTransmissionTarget(String transmissionTargetToken);
+
+    /**
+     * Gets all transmission targets that this log should be sent to.
+     *
+     * @return Collection of transmission targets that this log should be sent to.
+     */
+    @SuppressWarnings("unused")
+    Set<String> getTransmissionTargetTokens();
 }

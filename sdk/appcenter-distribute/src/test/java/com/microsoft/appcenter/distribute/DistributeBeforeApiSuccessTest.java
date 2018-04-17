@@ -362,7 +362,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         HandlerUtils.runOnUiThread(any(Runnable.class));
         Distribute.getInstance().onStarting(mAppCenterHandler);
         Distribute.getInstance().onActivityResumed(mActivity);
-        Distribute.getInstance().onStarted(mContext, "a", mock(Channel.class));
+        Distribute.getInstance().onStarted(mContext, "a", null, mock(Channel.class));
 
         /* Disable and test async behavior of setEnabled. */
         final CountDownLatch latch = new CountDownLatch(1);

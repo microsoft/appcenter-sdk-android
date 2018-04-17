@@ -86,12 +86,12 @@ public class ErrorLogHelper {
     /**
      * Max number of properties.
      */
-    public static final int MAX_PROPERTY_COUNT = 5;
+    public static final int MAX_PROPERTY_COUNT = 20;
 
     /**
      * Max length of properties.
      */
-    public static final int MAX_PROPERTY_ITEM_LENGTH = 64;
+    public static final int MAX_PROPERTY_ITEM_LENGTH = 125;
 
     /**
      * Directory for new minidump files.

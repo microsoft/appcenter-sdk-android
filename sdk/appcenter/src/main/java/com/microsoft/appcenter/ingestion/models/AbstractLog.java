@@ -10,7 +10,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.ingestion.models.CommonProperties.TYPE;
@@ -43,6 +46,11 @@ public abstract class AbstractLog implements Log {
      */
     @VisibleForTesting
     static final String DEVICE = "device";
+
+    /**
+     * Collection of transmissionTargetTokens that this log should be sent to.
+     */
+    private final Set<String> transmissionTargetTokens = new LinkedHashSet<>();
 
     /**
      * Log timestamp.
@@ -126,6 +134,26 @@ public abstract class AbstractLog implements Log {
      */
     public void setDevice(Device device) {
         this.device = device;
+    }
+
+    /**
+     * Adds a transmission target that this log should be sent to.
+     *
+     * @param transmissionTargetToken the identifier of the transmission target.
+     */
+    @Override
+    public synchronized void addTransmissionTarget(String transmissionTargetToken) {
+        transmissionTargetTokens.add(transmissionTargetToken);
+    }
+
+    /**
+     * Gets all transmissionTargetTokens that this log should be sent to.
+     *
+     * @return Collection of transmissionTargetTokens that this log should be sent to.
+     */
+    @Override
+    public synchronized Set<String> getTransmissionTargetTokens() {
+        return Collections.unmodifiableSet(transmissionTargetTokens);
     }
 
     @Override

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -21,14 +22,16 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+import org.mockito.internal.util.collections.Sets;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +49,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -57,10 +62,9 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-
+@RunWith(PowerMockRunner.class)
 @SuppressWarnings({"unused", "MissingPermission"})
 @PrepareForTest({
-        Push.class,
         PushNotifier.class,
         PushInstallationLog.class,
         PushIntentUtils.class,
@@ -74,10 +78,8 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class PushTest {
 
     private static final String DUMMY_APP_SECRET = "123e4567-e89b-12d3-a456-426655440000";
-    private static final String PUSH_ENABLED_KEY = KEY_ENABLED + "_" + Push.getInstance().getServiceName();
 
-    @Rule
-    public PowerMockRule mPowerMockRule = new PowerMockRule();
+    private static final String PUSH_ENABLED_KEY = KEY_ENABLED + "_" + Push.getInstance().getServiceName();
 
     @Mock
     private FirebaseInstanceId mFirebaseInstanceId;
@@ -92,7 +94,7 @@ public class PushTest {
     private AppCenterFuture<Boolean> mBooleanAppCenterFuture;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         Push.unsetInstance();
         mockStatic(AppCenterLog.class);
         mockStatic(AppCenter.class);
@@ -102,7 +104,7 @@ public class PushTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
                 if (AppCenter.isEnabled().get()) {
                     ((Runnable) args[0]).run();
@@ -120,7 +122,7 @@ public class PushTest {
         /* Then simulate further changes to state. */
         doAnswer(new Answer<Object>() {
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
@@ -143,7 +145,7 @@ public class PushTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 ((Runnable) invocation.getArguments()[0]).run();
                 return null;
             }
@@ -153,7 +155,7 @@ public class PushTest {
 
     private void start(Context contextMock, Push push, Channel channel) {
         push.onStarting(mAppCenterHandler);
-        push.onStarted(contextMock, DUMMY_APP_SECRET, channel);
+        push.onStarted(contextMock, DUMMY_APP_SECRET, null, channel);
     }
 
     @Test
@@ -170,7 +172,7 @@ public class PushTest {
     }
 
     @Test
-    public void setEnabled() throws InterruptedException, FirebaseUtils.FirebaseUnavailableException {
+    public void setEnabled() throws InterruptedException {
 
         /* Before start it's disabled. */
         assertFalse(Push.isEnabled().get());
@@ -241,7 +243,7 @@ public class PushTest {
 
     @SuppressWarnings("deprecation")
     @Test
-    public void verifyEnableFirebaseAnalytics() throws FirebaseUtils.FirebaseUnavailableException {
+    public void verifyEnableFirebaseAnalytics() {
         Context contextMock = mock(Context.class);
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
@@ -253,7 +255,7 @@ public class PushTest {
 
     @SuppressWarnings("deprecation")
     @Test
-    public void verifyEnableFirebaseAnalyticsBeforeStart() throws FirebaseUtils.FirebaseUnavailableException {
+    public void verifyEnableFirebaseAnalyticsBeforeStart() {
         Context contextMock = mock(Context.class);
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
@@ -341,7 +343,7 @@ public class PushTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 runnable.set((Runnable) invocation.getArguments()[0]);
                 return null;
             }
@@ -370,12 +372,48 @@ public class PushTest {
     }
 
     @Test
-    public void receivedPushInBackgroundWithoutFirebase() {
+    public void receivedPushInBackgroundWithoutFirebaseWithDebugLog() {
         IllegalStateException exception = new IllegalStateException();
         when(FirebaseInstanceId.getInstance()).thenThrow(exception);
-        Push.getInstance().onMessageReceived(mock(Context.class), mock(Intent.class));
+        Intent pushIntent = mock(Intent.class);
+        Bundle extras = mock(Bundle.class);
+        when(pushIntent.getExtras()).thenReturn(extras);
+        when(extras.keySet()).thenReturn(Sets.newSet("key1"));
+        when(extras.get("key1")).thenReturn("val1");
+        Push.getInstance().onMessageReceived(mock(Context.class), pushIntent);
         verifyStatic();
-        PushNotifier.handleNotification(any(Context.class), any(Intent.class));
+        PushNotifier.handleNotification(any(Context.class), same(pushIntent));
+        verifyStatic();
+        AppCenterLog.debug(eq(Push.LOG_TAG), argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().contains("key1=val1");
+            }
+        }));
+    }
+
+    @Test
+    public void receivedPushInBackgroundWithoutFirebaseWithoutDebugLog() {
+        when(AppCenterLog.getLogLevel()).thenReturn(Log.INFO);
+        IllegalStateException exception = new IllegalStateException();
+        when(FirebaseInstanceId.getInstance()).thenThrow(exception);
+        Intent pushIntent = mock(Intent.class);
+        Bundle extras = mock(Bundle.class);
+        when(pushIntent.getExtras()).thenReturn(extras);
+        when(extras.keySet()).thenReturn(Sets.newSet("key1"));
+        when(extras.get("key1")).thenReturn("val1");
+        Push.getInstance().onMessageReceived(mock(Context.class), pushIntent);
+        verifyStatic();
+        PushNotifier.handleNotification(any(Context.class), same(pushIntent));
+        verifyStatic(never());
+        AppCenterLog.debug(eq(Push.LOG_TAG), argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().contains("key1=val1");
+            }
+        }));
     }
 
     @Test
@@ -401,7 +439,7 @@ public class PushTest {
         customMap.put("custom", "data");
         customMap.put("b", "c");
         Intent intent = createPushIntent(null, null, customMap);
-        when(PushIntentUtils.getGoogleMessageId(intent)).thenReturn("reserved value by google");
+        when(PushIntentUtils.getMessageId(intent)).thenReturn("reserved value by google");
         when(activity.getIntent()).thenReturn(intent);
 
         /* Simulate we detect push in onCreate. */
@@ -423,7 +461,7 @@ public class PushTest {
         push.onActivityPaused(activity);
         activity = mock(Activity.class);
         when(activity.getIntent()).thenReturn(intent);
-        when(PushIntentUtils.getGoogleMessageId(intent)).thenReturn("new id");
+        when(PushIntentUtils.getMessageId(intent)).thenReturn("new id");
         Push.setEnabled(false);
         push.onActivityResumed(activity);
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
@@ -461,9 +499,9 @@ public class PushTest {
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
 
         /* Receiving push with the same id as first push should do nothing. */
-        when(PushIntentUtils.getGoogleMessageId(intent)).thenReturn("a new id");
+        when(PushIntentUtils.getMessageId(intent)).thenReturn("a new id");
         push.onActivityResumed(activity);
-        when(PushIntentUtils.getGoogleMessageId(intent)).thenReturn("reserved value by google");
+        when(PushIntentUtils.getMessageId(intent)).thenReturn("reserved value by google");
         push.onActivityResumed(activity);
         verify(pushListener, times(1)).onPushNotificationReceived(eq(activity), any(PushNotification.class));
     }
@@ -480,7 +518,7 @@ public class PushTest {
         start(contextMock, push, channel);
         Activity activity = mock(Activity.class);
         Intent intent = createPushIntent(null, null, null);
-        when(PushIntentUtils.getGoogleMessageId(intent)).thenReturn("some id");
+        when(PushIntentUtils.getMessageId(intent)).thenReturn("some id");
         when(activity.getIntent()).thenReturn(intent);
 
         /* Disable while posting the command to the U.I. thread. */
@@ -490,7 +528,7 @@ public class PushTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 runnable.set((Runnable) invocation.getArguments()[0]);
                 return null;
             }
@@ -518,7 +556,7 @@ public class PushTest {
         customMap.put("custom", "data");
         customMap.put("b", "c");
         Intent intent = createPushIntent(null, null, customMap);
-        when(PushIntentUtils.getGoogleMessageId(intent)).thenReturn("some id");
+        when(PushIntentUtils.getMessageId(intent)).thenReturn("some id");
 
         /* Simulate we detect push in onCreate. */
         Push.checkLaunchedFromNotification(activity, intent);
@@ -644,8 +682,7 @@ public class PushTest {
         when(PushIntentUtils.getMessage(pushIntentMock)).thenReturn(message);
         if (customData != null) {
             when(PushIntentUtils.getCustomData(pushIntentMock)).thenReturn(customData);
-        }
-        else {
+        } else {
             when(PushIntentUtils.getCustomData(pushIntentMock)).thenReturn(new HashMap<String, String>());
         }
         return pushIntentMock;
