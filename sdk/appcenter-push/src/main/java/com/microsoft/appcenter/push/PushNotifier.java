@@ -43,13 +43,13 @@ class PushNotifier {
      * Default notification icon meta-data name.
      */
     @VisibleForTesting
-    static final String DEFAULT_ICON_METADATA_NAME = "com.microsoft.appcenter.push.default_notification_icon";
+    static final String DEFAULT_ICON_METADATA_NAME = "com.google.firebase.messaging.default_notification_icon";
 
     /**
      * Default notification color meta-data name.
      */
     @VisibleForTesting
-    static final String DEFAULT_COLOR_METADATA_NAME = "com.microsoft.appcenter.push.default_notification_color";
+    static final String DEFAULT_COLOR_METADATA_NAME = "com.google.firebase.messaging.default_notification_color";
 
     /**
      * Builds a push notification using the given context and intent.
