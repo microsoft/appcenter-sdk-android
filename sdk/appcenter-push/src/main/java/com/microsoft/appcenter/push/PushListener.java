@@ -1,7 +1,6 @@
 package com.microsoft.appcenter.push;
 
 import android.app.Activity;
-import android.support.annotation.UiThread;
 
 /**
  * Listener for push messages.
@@ -10,7 +9,7 @@ import android.support.annotation.UiThread;
 public interface PushListener {
 
     /**
-     * Called whenever a push notification is either clicked from system notification center or
+     * Called from UI thread whenever a push notification is either clicked from system notification center or
      * when the push is received in foreground.
      *
      * @param activity         current activity when push is received or clicked.
@@ -20,6 +19,5 @@ public interface PushListener {
      *                         If the push is received in foreground,
      *                         no notification has been generated in system notification center.
      */
-    @UiThread
     void onPushNotificationReceived(Activity activity, PushNotification pushNotification);
 }
