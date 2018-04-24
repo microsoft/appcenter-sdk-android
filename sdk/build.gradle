@@ -117,7 +117,7 @@ subprojects {
         afterEvaluate {
             source = android.sourceSets.main.java.srcDirs
             classpath += configurations.javadocDeps
-            configurations.compile.dependencies.withType(ProjectDependency).dependencyProject.buildDir.each { dir -> classpath += files("${dir}/intermediates/classes/release") }
+            configurations.api.dependencies.withType(ProjectDependency).dependencyProject.buildDir.each { dir -> classpath += files("${dir}/intermediates/classes/release") }
             //noinspection GroovyAssignabilityCheck
             classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
             javadoc.dependsOn project.assembleRelease
