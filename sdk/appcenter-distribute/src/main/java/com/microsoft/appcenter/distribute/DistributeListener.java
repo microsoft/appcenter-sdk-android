@@ -1,7 +1,6 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
-import android.support.annotation.UiThread;
 
 /**
  * Listener for the Distribute allowing customization.
@@ -10,7 +9,7 @@ import android.support.annotation.UiThread;
 public interface DistributeListener {
 
     /**
-     * Called whenever a new release is available to download and install.
+     * Called from UI thread whenever a new release is available to download and install.
      * <p>
      * If user does not action the release (either postpone or update), this callback
      * will repeat for every activity change for the same release.
@@ -22,6 +21,5 @@ public interface DistributeListener {
      * @param releaseDetails release details for the update.
      * @return the custom dialog whose visibility will be managed for you if not null.
      */
-    @UiThread
     boolean onReleaseAvailable(Activity activity, ReleaseDetails releaseDetails);
 }

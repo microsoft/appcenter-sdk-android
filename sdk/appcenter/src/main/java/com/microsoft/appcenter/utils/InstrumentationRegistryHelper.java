@@ -14,7 +14,7 @@ public class InstrumentationRegistryHelper {
      *
      * @return the instrumentation arguments
      */
-    public static Bundle getArguments() throws NoClassDefFoundError, IllegalAccessError {
+    public static Bundle getArguments() throws NoClassDefFoundError, NoSuchMethodError, IllegalAccessError {
         return InstrumentationRegistry.getArguments();
     }
 }
