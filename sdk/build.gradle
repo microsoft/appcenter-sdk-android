@@ -191,6 +191,13 @@ subprojects {
                             url ext.siteUrl
                         }
                     }
+                    whenConfigured { generatedPom ->
+
+                        // Eliminate test-scoped dependencies (no need in maven central poms).
+                        generatedPom.dependencies.removeAll { dep ->
+                            dep.scope == 'test'
+                        }
+                    }
                 }
             }
         }
