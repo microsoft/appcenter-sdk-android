@@ -2,5 +2,5 @@ project.description = 'This package contains functionalities to measure endpoint
 evaluationDependsOn(':sdk')
 
 dependencies {
-    compile project(':sdk:appcenter')
+    api project(':sdk:appcenter')
 }
