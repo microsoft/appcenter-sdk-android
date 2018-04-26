@@ -856,7 +856,7 @@ public class AppCenter {
                 }
             }
             return false;
-        } catch (NoClassDefFoundError | NoSuchMethodError | IllegalAccessError e) {
+        } catch (NoClassDefFoundError | NoSuchMethodError | IllegalAccessError | IllegalStateException e) {
             AppCenterLog.debug(LOG_TAG, "Cannot read instrumentation variables in a non-test environment.");
             return false;
         }

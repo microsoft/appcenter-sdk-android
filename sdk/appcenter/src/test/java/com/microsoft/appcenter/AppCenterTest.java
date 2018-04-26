@@ -1144,6 +1144,14 @@ public class AppCenterTest {
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
+
+        /* Throw IllegalStateException. */
+        AppCenter.unsetInstance();
+        doThrow(new IllegalStateException()).when(InstrumentationRegistryHelper.class);
+        InstrumentationRegistryHelper.getArguments();
+        AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
+        assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
+        assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
     }
 
     private static class DummyService extends AbstractAppCenterService {
