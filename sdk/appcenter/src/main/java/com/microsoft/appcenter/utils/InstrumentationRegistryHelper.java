@@ -16,9 +16,9 @@ public class InstrumentationRegistryHelper {
      * @throws NoClassDefFoundError     if the class is not found, typically no test dependencies in release.
      * @throws NoSuchMethodError        if method not found, can happen with proguard.
      * @throws IllegalAccessError       if a reflection error happens.
-     * @throws IllegalArgumentException if no argument Bundle has been registered.
+     * @throws IllegalStateException if no argument Bundle has been registered.
      */
-    public static Bundle getArguments() throws NoClassDefFoundError, NoSuchMethodError, IllegalAccessError, IllegalArgumentException {
+    public static Bundle getArguments() throws NoClassDefFoundError, NoSuchMethodError, IllegalAccessError, IllegalStateException {
         return InstrumentationRegistry.getArguments();
     }
 }
