@@ -188,7 +188,7 @@ public class HttpClientNetworkStateHandlerTest {
     }
 
     @Test
-    public void cancelRunningCall() throws InterruptedException, IOException {
+    public void cancelRunningCall() throws IOException {
 
         /* Configure mock wrapped API. */
         String url = "http://mock/call";
@@ -197,35 +197,8 @@ public class HttpClientNetworkStateHandlerTest {
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
         HttpClient httpClient = mock(HttpClient.class);
-        final AtomicReference<Thread> threadRef = new AtomicReference<>();
-        doAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(final InvocationOnMock invocationOnMock) {
-                Thread thread = new Thread() {
-
-                    @Override
-                    public void run() {
-                        try {
-                            sleep(200);
-                            ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockPayload");
-                        } catch (InterruptedException ignored) {
-                        }
-                    }
-                };
-                thread.start();
-                threadRef.set(thread);
-                return call;
-            }
-        }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
-        doAnswer(new Answer() {
-
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-                threadRef.get().interrupt();
-                return null;
-            }
-        }).when(call).cancel();
+        when(httpClient.callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class)))
+                .thenReturn(call);
 
         /* Simulate network down then becomes up. */
         NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
@@ -234,9 +207,6 @@ public class HttpClientNetworkStateHandlerTest {
         /* Test call. */
         HttpClientNetworkStateHandler decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
         ServiceCall decoratorCall = decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
-
-        /* Wait some time. */
-        Thread.sleep(100);
 
         /* Cancel. */
         decoratorCall.cancel();
