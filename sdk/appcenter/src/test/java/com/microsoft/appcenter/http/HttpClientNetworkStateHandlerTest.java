@@ -283,7 +283,7 @@ public class HttpClientNetworkStateHandlerTest {
     }
 
     @Test
-    public void networkLossDuringCall() throws InterruptedException, IOException {
+    public void networkLossDuringCall() throws IOException {
 
         /* Configure mock wrapped API. */
         String url = "http://mock/call";
@@ -292,35 +292,8 @@ public class HttpClientNetworkStateHandlerTest {
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
         HttpClient httpClient = mock(HttpClient.class);
-        final AtomicReference<Thread> threadRef = new AtomicReference<>();
-        doAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(final InvocationOnMock invocationOnMock) {
-                Thread thread = new Thread() {
-
-                    @Override
-                    public void run() {
-                        try {
-                            sleep(200);
-                            ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockPayload");
-                        } catch (InterruptedException ignore) {
-                        }
-                    }
-                };
-                thread.start();
-                threadRef.set(thread);
-                return call;
-            }
-        }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
-        doAnswer(new Answer() {
-
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-                threadRef.get().interrupt();
-                return null;
-            }
-        }).when(call).cancel();
+        when(httpClient.callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class)))
+                .thenReturn(call);
 
         /* Simulate network up then down then up again. */
         NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
@@ -329,9 +302,6 @@ public class HttpClientNetworkStateHandlerTest {
         /* Test call. */
         HttpClientNetworkStateHandler decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
         decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
-
-        /* Wait some time. */
-        Thread.sleep(100);
 
         /* Lose network. */
         decorator.onNetworkStateUpdated(false);
@@ -342,9 +312,16 @@ public class HttpClientNetworkStateHandlerTest {
         verifyNoMoreInteractions(callback);
 
         /* Then up again. */
+        doAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocationOnMock) {
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockPayload");
+                return call;
+            }
+        }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
         decorator.onNetworkStateUpdated(true);
         verify(httpClient, times(2)).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
-        Thread.sleep(300);
         verify(callback).onCallSucceeded("mockPayload");
         verifyNoMoreInteractions(callback);
 
