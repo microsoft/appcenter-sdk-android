@@ -39,7 +39,7 @@ public class HttpClientNetworkStateHandlerTest {
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[4];
                 serviceCallback.onCallSucceeded("mockPayload");
                 serviceCallback.onCallSucceeded("duplicateCallbackPayloadToIgnore");
@@ -84,7 +84,7 @@ public class HttpClientNetworkStateHandlerTest {
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[4];
                 serviceCallback.onCallFailed(new HttpException(503));
                 serviceCallback.onCallFailed(new SocketException());
@@ -121,7 +121,7 @@ public class HttpClientNetworkStateHandlerTest {
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
                 return call;
             }
@@ -162,7 +162,7 @@ public class HttpClientNetworkStateHandlerTest {
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
                 return call;
             }
@@ -201,7 +201,7 @@ public class HttpClientNetworkStateHandlerTest {
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(final InvocationOnMock invocationOnMock) throws Throwable {
+            public ServiceCall answer(final InvocationOnMock invocationOnMock) {
                 Thread thread = new Thread() {
 
                     @Override
@@ -221,7 +221,7 @@ public class HttpClientNetworkStateHandlerTest {
         doAnswer(new Answer() {
 
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
                 threadRef.get().interrupt();
                 return null;
             }
@@ -296,7 +296,7 @@ public class HttpClientNetworkStateHandlerTest {
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(final InvocationOnMock invocationOnMock) throws Throwable {
+            public ServiceCall answer(final InvocationOnMock invocationOnMock) {
                 Thread thread = new Thread() {
 
                     @Override
@@ -316,7 +316,7 @@ public class HttpClientNetworkStateHandlerTest {
         doAnswer(new Answer() {
 
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
                 threadRef.get().interrupt();
                 return null;
             }
