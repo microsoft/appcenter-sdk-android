@@ -88,7 +88,7 @@ public class NetworkStateHelper implements Closeable {
      * @param context any context.
      * @return shared instance.
      */
-    public static NetworkStateHelper getSharedInstance(Context context) {
+    public static synchronized NetworkStateHelper getSharedInstance(Context context) {
         if (sSharedInstance == null) {
             sSharedInstance = new NetworkStateHelper(context);
         }
@@ -98,7 +98,7 @@ public class NetworkStateHelper implements Closeable {
     /**
      * Make this helper active again after closing.
      */
-    public void reopen() {
+    public synchronized void reopen() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 
@@ -128,14 +128,14 @@ public class NetworkStateHelper implements Closeable {
                     @Override
                     public void onLost(Network network) {
 
-                       /*
-                        * We will have WIFI network available event before we lose mobile network.
-                        * Pending calls just before the switch might take a while to fail.
-                        * When we lose a network, but have another one available, just simulate network
-                        * down then up again to properly reset pending calls so that they are reliable
-                        * and fast. This notification scheme is similar to the old connectivity receiver
-                        * implementation.
-                        */
+                        /*
+                         * We will have WIFI network available event before we lose mobile network.
+                         * Pending calls just before the switch might take a while to fail.
+                         * When we lose a network, but have another one available, just simulate network
+                         * down then up again to properly reset pending calls so that they are reliable
+                         * and fast. This notification scheme is similar to the old connectivity receiver
+                         * implementation.
+                         */
                         Log.d(AppCenter.LOG_TAG, "Network lost netId: " + network);
                         mAvailableNetworks.remove(network);
                         Log.d(AppCenter.LOG_TAG, "Available networks netIds: " + mAvailableNetworks);
@@ -168,7 +168,7 @@ public class NetworkStateHelper implements Closeable {
      *
      * @return true for connected, false for disconnected.
      */
-    public boolean isNetworkConnected() {
+    public synchronized boolean isNetworkConnected() {
         return mNetworkType != null || !mAvailableNetworks.isEmpty();
     }
 
@@ -190,6 +190,32 @@ public class NetworkStateHelper implements Closeable {
     }
 
     /**
+     * Handle network state update on API level < 21.
+     */
+    private synchronized void handleNetworkStateUpdate() {
+
+        /*
+         * This code is used to notify listeners only when the network state goes from
+         * connected to disconnected and vice versa
+         * (without duplicate calls, the sequence will be consistent).
+         *
+         * If we switch from WIFI to Mobile and vice versa,
+         * it can take a while for pending network calls to fail because of that.
+         * We'll simulate a network state down event to the listeners to help with that scenario.
+         */
+        String previousNetworkType = mNetworkType;
+        updateNetworkType();
+        boolean networkTypeChanged = previousNetworkType == null ? mNetworkType != null : !previousNetworkType.equals(mNetworkType);
+        if (networkTypeChanged) {
+            boolean connected = isNetworkConnected();
+            if (connected && previousNetworkType != null) {
+                notifyNetworkStateUpdated(false);
+            }
+            notifyNetworkStateUpdated(connected);
+        }
+    }
+
+    /**
      * Notify listeners that the network state changed.
      *
      * @param connected whether the network is connected or not.
@@ -201,7 +227,7 @@ public class NetworkStateHelper implements Closeable {
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
             mAvailableNetworks.clear();
@@ -216,7 +242,7 @@ public class NetworkStateHelper implements Closeable {
      *
      * @param listener listener to add.
      */
-    public void addListener(Listener listener) {
+    public synchronized void addListener(Listener listener) {
         mListeners.add(listener);
     }
 
@@ -225,7 +251,7 @@ public class NetworkStateHelper implements Closeable {
      *
      * @param listener listener to remove.
      */
-    public void removeListener(Listener listener) {
+    public synchronized void removeListener(Listener listener) {
         mListeners.remove(listener);
     }
 
@@ -249,26 +275,7 @@ public class NetworkStateHelper implements Closeable {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-
-            /*
-             * This code is used to notify listeners only when the network state goes from
-             * connected to disconnected and vice versa
-             * (without duplicate calls, the sequence will be consistent).
-             *
-             * If we switch from WIFI to Mobile and vice versa,
-             * it can take a while for pending network calls to fail because of that.
-             * We'll simulate a network state down event to the listeners to help with that scenario.
-             */
-            String previousNetworkType = mNetworkType;
-            updateNetworkType();
-            boolean networkTypeChanged = previousNetworkType == null ? mNetworkType != null : !previousNetworkType.equals(mNetworkType);
-            if (networkTypeChanged) {
-                boolean connected = isNetworkConnected();
-                if (connected && previousNetworkType != null) {
-                    notifyNetworkStateUpdated(false);
-                }
-                notifyNetworkStateUpdated(connected);
-            }
+            handleNetworkStateUpdate();
         }
     }
 }
