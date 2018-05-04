@@ -112,37 +112,12 @@ public class NetworkStateHelper implements Closeable {
 
                     @Override
                     public void onAvailable(Network network) {
-                        Log.d(AppCenter.LOG_TAG, "Network available netId: " + network);
-                        mAvailableNetworks.add(network);
-                        Log.d(AppCenter.LOG_TAG, "Available networks netIds: " + mAvailableNetworks);
-
-                        /*
-                         * Trigger event only once if we gain a new network while one was already
-                         * available. Special logic is handled in network lost events.
-                         */
-                        if (mAvailableNetworks.size() == 1) {
-                            notifyNetworkStateUpdated(true);
-                        }
+                        onNetworkAvailable(network);
                     }
 
                     @Override
                     public void onLost(Network network) {
-
-                        /*
-                         * We will have WIFI network available event before we lose mobile network.
-                         * Pending calls just before the switch might take a while to fail.
-                         * When we lose a network, but have another one available, just simulate network
-                         * down then up again to properly reset pending calls so that they are reliable
-                         * and fast. This notification scheme is similar to the old connectivity receiver
-                         * implementation.
-                         */
-                        Log.d(AppCenter.LOG_TAG, "Network lost netId: " + network);
-                        mAvailableNetworks.remove(network);
-                        Log.d(AppCenter.LOG_TAG, "Available networks netIds: " + mAvailableNetworks);
-                        notifyNetworkStateUpdated(false);
-                        if (!mAvailableNetworks.isEmpty()) {
-                            notifyNetworkStateUpdated(true);
-                        }
+                        onNetworkLost(network);
                     }
                 };
 
@@ -170,6 +145,45 @@ public class NetworkStateHelper implements Closeable {
      */
     public synchronized boolean isNetworkConnected() {
         return mNetworkType != null || !mAvailableNetworks.isEmpty();
+    }
+
+    /**
+     * Handle network available update on API level >= 21.
+     */
+    private synchronized void onNetworkAvailable(Network network) {
+        Log.d(AppCenter.LOG_TAG, "Network available netId: " + network);
+        mAvailableNetworks.add(network);
+        Log.d(AppCenter.LOG_TAG, "Available networks netIds: " + mAvailableNetworks);
+
+        /*
+         * Trigger event only once if we gain a new network while one was already
+         * available. Special logic is handled in network lost events.
+         */
+        if (mAvailableNetworks.size() == 1) {
+            notifyNetworkStateUpdated(true);
+        }
+    }
+
+    /**
+     * Handle network available update on API level >= 21.
+     */
+    private synchronized void onNetworkLost(Network network) {
+
+        /*
+         * We will have WIFI network available event before we lose mobile network.
+         * Pending calls just before the switch might take a while to fail.
+         * When we lose a network, but have another one available, just simulate network
+         * down then up again to properly reset pending calls so that they are reliable
+         * and fast. This notification scheme is similar to the old connectivity receiver
+         * implementation.
+         */
+        Log.d(AppCenter.LOG_TAG, "Network lost netId: " + network);
+        mAvailableNetworks.remove(network);
+        Log.d(AppCenter.LOG_TAG, "Available networks netIds: " + mAvailableNetworks);
+        notifyNetworkStateUpdated(false);
+        if (!mAvailableNetworks.isEmpty()) {
+            notifyNetworkStateUpdated(true);
+        }
     }
 
     /**
