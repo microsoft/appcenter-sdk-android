@@ -11,6 +11,7 @@ import android.os.Looper;
 
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.DefaultChannel;
+import com.microsoft.appcenter.channel.OneCollectorChannelListener;
 import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
@@ -1160,6 +1161,19 @@ public class AppCenterTest {
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
+    }
+
+    @Test
+    public void addOneCollectorListenerOnStart() throws Exception {
+        String secret = TRANSMISSION_TARGET_TOKEN_KEY + KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
+        AppCenter.start(mApplication, secret, DummyService.class);
+        verify(mChannel).addListener(argThat(new ArgumentMatcher<Channel.Listener>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof OneCollectorChannelListener;
+            }
+        }));
     }
 
     private static class DummyService extends AbstractAppCenterService {
