@@ -175,6 +175,8 @@ public class DefaultChannel implements Channel {
         if (mPersistence == null) {
             return;
         }
+
+        /* TODO Remove this check once onGroupAdded callback is implemented. */
         if (mGroupStates.containsKey(groupName)) {
             return;
         }
