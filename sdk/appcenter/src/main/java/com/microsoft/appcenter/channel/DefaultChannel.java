@@ -176,6 +176,11 @@ public class DefaultChannel implements Channel {
             return;
         }
 
+        /* TODO Remove this check once onGroupAdded callback is implemented. */
+        if (mGroupStates.containsKey(groupName)) {
+            return;
+        }
+
         /* Init group. */
         AppCenterLog.debug(LOG_TAG, "addGroup(" + groupName + ")");
         final GroupState groupState = new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener);

@@ -1106,4 +1106,20 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* No exceptions. */
     }
+
+    @Test
+    public void multipleAddTheSameGroup() {
+        Persistence mockPersistence = mock(Persistence.class);
+        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mCoreHandler);
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+
+        /* Enqueuing an event. */
+        channel.enqueue(mock(Log.class), TEST_GROUP);
+        assertEquals(1, channel.getCounter(TEST_GROUP));
+
+        /* Verify that group state will not be lost on second add try. */
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+        assertEquals(1, channel.getCounter(TEST_GROUP));
+    }
 }
