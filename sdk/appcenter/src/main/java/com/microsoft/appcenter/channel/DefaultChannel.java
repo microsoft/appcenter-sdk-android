@@ -250,6 +250,9 @@ public class DefaultChannel implements Channel {
             return;
         }
         mPersistence.deleteLogs(groupName);
+        for (Listener listener : mListeners) {
+            listener.onClear(groupName);
+        }
     }
 
     @Override

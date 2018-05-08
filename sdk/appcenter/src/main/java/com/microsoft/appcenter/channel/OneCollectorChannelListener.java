@@ -49,6 +49,15 @@ public class OneCollectorChannelListener implements Channel.Listener {
         return false;
     }
 
+    @Override
+    public void onClear(@NonNull String groupName) {
+        if (isOneCollectorGroup(groupName)) {
+            return;
+        }
+        String oneCollectorGroupName = getOneCollectorGroupName(groupName);
+        mChannel.clear(oneCollectorGroupName);
+    }
+
     private String getOneCollectorGroupName(@NonNull String groupName) {
         return groupName + ONE_COLLECTOR_GROUP_NAME_POSTFIX;
     }
