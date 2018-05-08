@@ -112,6 +112,11 @@ public interface Channel {
          */
         boolean shouldFilter(@NonNull Log log);
 
+        /**
+         * Called when the group is cleared.
+         *
+         * @param groupName The group name.
+         */
         void onClear(@NonNull String groupName);
     }
 

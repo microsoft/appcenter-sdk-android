@@ -256,6 +256,8 @@ public class DefaultChannel implements Channel {
         }
         AppCenterLog.debug(LOG_TAG, "clear(" + groupName + ")");
         mPersistence.deleteLogs(groupName);
+
+        /* Call listeners so that they can react on group clearing. */
         for (Listener listener : mListeners) {
             listener.onClear(groupName);
         }
