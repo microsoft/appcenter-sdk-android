@@ -41,6 +41,7 @@ import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -797,20 +798,44 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     public void listener() {
 
         @SuppressWarnings("ConstantConditions")
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mock(Persistence.class), mock(IngestionHttp.class), mCoreHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(IngestionHttp.class), mCoreHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
         Channel.Listener listener = spy(new AbstractChannelListener());
         channel.addListener(listener);
+
+        /* Check enqueue. */
         Log log = mock(Log.class);
         channel.enqueue(log, TEST_GROUP);
         verify(listener).onEnqueuingLog(log, TEST_GROUP);
         verify(listener).shouldFilter(log);
+        verifyNoMoreInteractions(listener);
+
+        /* Check clear. */
+        channel.clear(TEST_GROUP);
+        verify(listener).onClear(TEST_GROUP);
+        verifyNoMoreInteractions(listener);
 
         /* Check no more calls after removing listener. */
         log = mock(Log.class);
         channel.removeListener(listener);
         channel.enqueue(log, TEST_GROUP);
         verifyNoMoreInteractions(listener);
+    }
+
+    @Test
+    public void clear() {
+        Persistence mockPersistence = mock(Persistence.class);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mock(IngestionHttp.class), mCoreHandler);
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
+
+        /* Clear an existing channel. */
+        channel.clear(TEST_GROUP);
+        verify(mockPersistence).deleteLogs(TEST_GROUP);
+        reset(mockPersistence);
+
+        /* Clear a non-existing channel. */
+        channel.clear(TEST_GROUP + "2");
+        verify(mockPersistence, never()).deleteLogs(anyString());
     }
 
     @Test

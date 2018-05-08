@@ -198,9 +198,7 @@ public class DefaultChannel implements Channel {
         }
         AppCenterLog.debug(LOG_TAG, "removeGroup(" + groupName + ")");
         GroupState groupState = mGroupStates.remove(groupName);
-        if (groupState != null) {
-            cancelTimer(groupState);
-        }
+        cancelTimer(groupState);
     }
 
     @Override
