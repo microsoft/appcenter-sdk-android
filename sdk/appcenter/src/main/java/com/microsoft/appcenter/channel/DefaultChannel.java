@@ -175,6 +175,9 @@ public class DefaultChannel implements Channel {
         if (mPersistence == null) {
             return;
         }
+        if (mGroupStates.containsKey(groupName)) {
+            return;
+        }
 
         /* Init group. */
         AppCenterLog.debug(LOG_TAG, "addGroup(" + groupName + ")");
