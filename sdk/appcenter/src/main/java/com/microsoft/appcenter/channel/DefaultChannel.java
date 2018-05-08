@@ -193,12 +193,11 @@ public class DefaultChannel implements Channel {
 
     @Override
     public synchronized void removeGroup(String groupName) {
-        if (!mGroupStates.containsKey(groupName)) {
-            return;
-        }
         AppCenterLog.debug(LOG_TAG, "removeGroup(" + groupName + ")");
         GroupState groupState = mGroupStates.remove(groupName);
-        cancelTimer(groupState);
+        if (groupState != null) {
+            cancelTimer(groupState);
+        }
     }
 
     @Override
