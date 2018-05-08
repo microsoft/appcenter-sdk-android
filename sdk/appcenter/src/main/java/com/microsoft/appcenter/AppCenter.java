@@ -581,7 +581,7 @@ public class AppCenter {
         if (mLogUrl != null) {
             mChannel.setLogUrl(mLogUrl);
         }
-        mChannel.addListener(new OneCollectorChannelListener());
+        mChannel.addListener(new OneCollectorChannelListener(mChannel));
         if (!enabled) {
             NetworkStateHelper.getSharedInstance(mApplication).close();
         }
