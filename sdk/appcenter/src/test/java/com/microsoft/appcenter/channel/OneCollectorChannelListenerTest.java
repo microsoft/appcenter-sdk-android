@@ -10,7 +10,9 @@ import static com.microsoft.appcenter.channel.OneCollectorChannelListener.ONE_CO
 import static com.microsoft.appcenter.channel.OneCollectorChannelListener.ONE_COLLECTOR_TRIGGER_INTERVAL;
 import static com.microsoft.appcenter.channel.OneCollectorChannelListener.ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class OneCollectorChannelListenerTest {
 
@@ -19,9 +21,15 @@ public class OneCollectorChannelListenerTest {
         Channel channel = mock(Channel.class);
         OneCollectorChannelListener listener = new OneCollectorChannelListener(channel);
 
+        /* Enqueuing an event. */
         Log log = mock(Log.class);
         listener.onEnqueuingLog(log, TEST_GROUP);
 
+        /* Verify group added. */
         verify(channel).addGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_POSTFIX, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, null);
+
+        /* Enqueuing an event to the one collector group. */
+        listener.onEnqueuingLog(log, TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_POSTFIX);
+        verifyNoMoreInteractions(channel);
     }
 }

@@ -25,6 +25,9 @@ public class OneCollectorChannelListener implements Channel.Listener {
 
     @Override
     public void onEnqueuingLog(@NonNull Log log, @NonNull String groupName) {
+        if (isOneCollectorGroup(groupName)) {
+            return;
+        }
         String oneCollectorGroupName = getOneCollectorGroupName(groupName);
         mChannel.addGroup(oneCollectorGroupName, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, null);
     }
@@ -36,5 +39,9 @@ public class OneCollectorChannelListener implements Channel.Listener {
 
     private String getOneCollectorGroupName(@NonNull String groupName) {
         return groupName + ONE_COLLECTOR_GROUP_NAME_POSTFIX;
+    }
+
+    private boolean isOneCollectorGroup(@NonNull String groupName) {
+        return groupName.endsWith(ONE_COLLECTOR_GROUP_NAME_POSTFIX);
     }
 }
