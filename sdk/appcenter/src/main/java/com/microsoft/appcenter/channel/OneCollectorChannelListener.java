@@ -54,6 +54,15 @@ public class OneCollectorChannelListener implements Channel.Listener {
         return false;
     }
 
+    @Override
+    public void onClear(@NonNull String groupName) {
+        if (isOneCollectorGroup(groupName)) {
+            return;
+        }
+        String oneCollectorGroupName = getOneCollectorGroupName(groupName);
+        mChannel.clear(oneCollectorGroupName);
+    }
+
     /**
      * Get One Collector's group name for original one.
      *

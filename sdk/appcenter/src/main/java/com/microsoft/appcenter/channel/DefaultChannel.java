@@ -195,6 +195,7 @@ public class DefaultChannel implements Channel {
 
     @Override
     public synchronized void removeGroup(String groupName) {
+        AppCenterLog.debug(LOG_TAG, "removeGroup(" + groupName + ")");
         GroupState groupState = mGroupStates.remove(groupName);
         if (groupState != null) {
             cancelTimer(groupState);
@@ -251,7 +252,16 @@ public class DefaultChannel implements Channel {
         if (mPersistence == null) {
             return;
         }
+        if (!mGroupStates.containsKey(groupName)) {
+            return;
+        }
+        AppCenterLog.debug(LOG_TAG, "clear(" + groupName + ")");
         mPersistence.deleteLogs(groupName);
+
+        /* Call listeners so that they can react on group clearing. */
+        for (Listener listener : mListeners) {
+            listener.onClear(groupName);
+        }
     }
 
     @Override

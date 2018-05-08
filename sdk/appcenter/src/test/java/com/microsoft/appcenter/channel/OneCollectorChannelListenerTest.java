@@ -31,4 +31,20 @@ public class OneCollectorChannelListenerTest {
         listener.onEnqueuingLog(log, TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
         verifyNoMoreInteractions(channel);
     }
+
+    @Test
+    public void clearGroupOnClear() {
+        Channel channel = mock(Channel.class);
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel);
+
+        /* Clear a group. */
+        listener.onClear(TEST_GROUP);
+
+        /* Verify group added. */
+        verify(channel).clear(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+
+        /* Clear the one collector group. */
+        listener.onClear(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        verifyNoMoreInteractions(channel);
+    }
 }

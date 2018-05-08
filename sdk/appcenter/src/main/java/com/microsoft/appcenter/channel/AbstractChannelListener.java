@@ -18,4 +18,8 @@ public class AbstractChannelListener implements Channel.Listener {
     public boolean shouldFilter(@NonNull Log log) {
         return false;
     }
+
+    @Override
+    public void onClear(@NonNull String groupName) {
+    }
 }
