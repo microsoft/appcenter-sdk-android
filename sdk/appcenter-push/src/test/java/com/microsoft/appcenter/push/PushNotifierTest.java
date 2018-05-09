@@ -56,8 +56,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         PushNotifier.class,
         AppNameHelper.class,
         Color.class,
-        TextUtils.class,
-        Notification.BigTextStyle.class
+        TextUtils.class
 })
 public class PushNotifierTest {
 
