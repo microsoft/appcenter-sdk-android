@@ -171,7 +171,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void addGroup(final String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener groupListener) {
+    public synchronized void addGroup(final String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, Ingestion ingestion, GroupListener groupListener) {
         if (mPersistence == null) {
             return;
         }
@@ -183,7 +183,7 @@ public class DefaultChannel implements Channel {
 
         /* Init group. */
         AppCenterLog.debug(LOG_TAG, "addGroup(" + groupName + ")");
-        final GroupState groupState = new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, groupListener);
+        final GroupState groupState = new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, null, groupListener);
         mGroupStates.put(groupName, groupState);
 
         /* Count pending logs. */
@@ -681,6 +681,11 @@ public class DefaultChannel implements Channel {
         final Map<String, List<Log>> mSendingBatches = new HashMap<>();
 
         /**
+         * Ingestion for the group state.
+         */
+        final Ingestion mIngestion;
+
+        /**
          * A listener for a service.
          */
         final GroupListener mListener;
@@ -716,18 +721,19 @@ public class DefaultChannel implements Channel {
 
         /**
          * Init.
-         *
          * @param name               group name.
          * @param maxLogsPerBatch    max batch size.
          * @param batchTimeInterval  batch interval in ms.
          * @param maxParallelBatches max number of parallel batches.
+         * @param ingestion          ingestion for the group state.
          * @param listener           listener for a service.
          */
-        GroupState(String name, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener listener) {
+        GroupState(String name, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, Ingestion ingestion, GroupListener listener) {
             mName = name;
             mMaxLogsPerBatch = maxLogsPerBatch;
             mBatchTimeInterval = batchTimeInterval;
             mMaxParallelBatches = maxParallelBatches;
+            mIngestion = ingestion;
             mListener = listener;
         }
     }

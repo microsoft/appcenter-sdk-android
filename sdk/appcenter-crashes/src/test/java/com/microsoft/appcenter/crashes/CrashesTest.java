@@ -249,7 +249,7 @@ public class CrashesTest {
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", null, mockChannel);
         verify(mockChannel).removeGroup(eq(crashes.getGroupName()));
-        verify(mockChannel).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
+        verify(mockChannel).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), null, any(Channel.GroupListener.class));
 
         /* Test. */
         assertTrue(Crashes.isEnabled().get());
@@ -274,7 +274,7 @@ public class CrashesTest {
         assertTrue(Thread.getDefaultUncaughtExceptionHandler() instanceof UncaughtExceptionHandler);
         Crashes.setEnabled(true);
         assertTrue(Crashes.isEnabled().get());
-        verify(mockChannel, times(2)).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
+        verify(mockChannel, times(2)).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), null, any(Channel.GroupListener.class));
         Crashes.trackException(EXCEPTION);
         verify(mockChannel, times(1)).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
     }

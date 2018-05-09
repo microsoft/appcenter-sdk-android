@@ -577,7 +577,7 @@ public class AppCenter {
         mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
         mChannel.setEnabled(enabled);
-        mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null);
+        mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
         if (mLogUrl != null) {
             mChannel.setLogUrl(mLogUrl);
         }

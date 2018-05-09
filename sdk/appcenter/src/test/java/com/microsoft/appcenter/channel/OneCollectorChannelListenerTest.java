@@ -25,7 +25,7 @@ public class OneCollectorChannelListenerTest {
         listener.onEnqueuingLog(log, TEST_GROUP);
 
         /* Verify group added. */
-        verify(channel).addGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, null);
+        verify(channel).addGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
 
         /* Enqueuing an event to the one collector group. */
         listener.onEnqueuingLog(log, TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);

@@ -327,7 +327,7 @@ public class CrashesAndroidTest {
         mChannel = mock(Channel.class);
         ArgumentCaptor<Channel.GroupListener> groupListener = ArgumentCaptor.forClass(Channel.GroupListener.class);
         startFresh(crashesListener);
-        verify(mChannel).addGroup(anyString(), anyInt(), anyInt(), anyInt(), groupListener.capture());
+        verify(mChannel).addGroup(anyString(), anyInt(), anyInt(), anyInt(), null, groupListener.capture());
         groupListener.getValue().onBeforeSending(log.get());
         groupListener.getValue().onSuccess(log.get());
 

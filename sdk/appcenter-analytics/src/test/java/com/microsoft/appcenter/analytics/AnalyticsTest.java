@@ -441,7 +441,7 @@ public class AnalyticsTest {
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", null, channel);
         verify(channel).removeGroup(eq(analytics.getGroupName()));
-        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), null, any(Channel.GroupListener.class));
         verify(channel).addListener(any(Channel.Listener.class));
 
         /* Now we can see the service enabled. */
@@ -583,7 +583,7 @@ public class AnalyticsTest {
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", null, channel);
         final ArgumentCaptor<Channel.GroupListener> captor = ArgumentCaptor.forClass(Channel.GroupListener.class);
-        verify(channel).addGroup(anyString(), anyInt(), anyLong(), anyInt(), captor.capture());
+        verify(channel).addGroup(anyString(), anyInt(), anyLong(), anyInt(), null, captor.capture());
         doAnswer(new Answer<Void>() {
 
             @Override
