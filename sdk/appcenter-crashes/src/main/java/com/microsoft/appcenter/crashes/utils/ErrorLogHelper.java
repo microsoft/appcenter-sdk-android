@@ -86,7 +86,7 @@ public class ErrorLogHelper {
     /**
      * Max number of properties.
      */
-    public static final int MAX_PROPERTY_COUNT = 20;
+    private static final int MAX_PROPERTY_COUNT = 20;
 
     /**
      * Max length of properties.
@@ -129,11 +129,22 @@ public class ErrorLogHelper {
         errorLog.setProcessId(Process.myPid());
         ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         if (activityManager != null) {
-            for (ActivityManager.RunningAppProcessInfo info : activityManager.getRunningAppProcesses()) {
-                if (info.pid == Process.myPid()) {
-                    errorLog.setProcessName(info.processName);
+            List<ActivityManager.RunningAppProcessInfo> runningAppProcesses = activityManager.getRunningAppProcesses();
+            if (runningAppProcesses != null) {
+                for (ActivityManager.RunningAppProcessInfo info : runningAppProcesses) {
+                    if (info.pid == Process.myPid()) {
+                        errorLog.setProcessName(info.processName);
+                    }
                 }
             }
+        }
+
+        /*
+         * Process name is required field for crash processing but cannot always be available,
+         * make sure we send a default value if not found.
+         */
+        if (errorLog.getProcessName() == null) {
+            errorLog.setProcessName("");
         }
 
         /* CPU architecture. */
