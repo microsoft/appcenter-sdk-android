@@ -28,10 +28,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
@@ -83,6 +85,11 @@ public class DefaultChannel implements Channel {
      * The ingestion object used to send batches to the server.
      */
     private final Ingestion mIngestion;
+
+    /**
+     * A set of ingestion objects used to send batches to the server.
+     */
+    private final Set<Ingestion> mIngestions;
 
     /**
      * App Center core handler.
@@ -143,6 +150,10 @@ public class DefaultChannel implements Channel {
         mListeners = new LinkedHashSet<>();
         mPersistence = appSecretNullOrEmpty ? null : persistence;
         mIngestion = appSecretNullOrEmpty ? null : ingestion;
+        mIngestions = new HashSet<>();
+        if (mIngestion != null) {
+            mIngestions.add(mIngestion);
+        }
         mAppCenterHandler = appCenterHandler;
         mEnabled = true;
     }
@@ -183,7 +194,11 @@ public class DefaultChannel implements Channel {
 
         /* Init group. */
         AppCenterLog.debug(LOG_TAG, "addGroup(" + groupName + ")");
-        final GroupState groupState = new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, null, groupListener);
+        ingestion = ingestion == null ? mIngestion : ingestion;
+        if (ingestion != null) {
+            mIngestions.add(ingestion);
+        }
+        final GroupState groupState = new GroupState(groupName, maxLogsPerBatch, batchTimeInterval, maxParallelBatches, ingestion, groupListener);
         mGroupStates.put(groupName, groupState);
 
         /* Count pending logs. */
@@ -223,8 +238,8 @@ public class DefaultChannel implements Channel {
             mEnabled = true;
             mDiscardLogs = false;
             mCurrentState++;
-            if (mIngestion != null) {
-                mIngestion.reopen();
+            for (Ingestion ingestion : mIngestions) {
+                ingestion.reopen();
             }
             for (String groupName : mGroupStates.keySet()) {
                 checkPendingLogs(groupName);
@@ -297,12 +312,12 @@ public class DefaultChannel implements Channel {
                 }
             }
         }
-        try {
-            if (mIngestion != null) {
-                mIngestion.close();
+        for (Ingestion ingestion : mIngestions) {
+            try {
+                ingestion.close();
+            } catch (IOException e) {
+                AppCenterLog.error(LOG_TAG, "Failed to close ingestion: " + ingestion, e);
             }
-        } catch (IOException e) {
-            AppCenterLog.error(LOG_TAG, "Failed to close ingestion", e);
         }
         if (deleteLogs) {
             for (GroupState groupState : mGroupStates.values()) {
@@ -332,7 +347,7 @@ public class DefaultChannel implements Channel {
     }
 
     private void cancelTimer(GroupState groupState) {
-        if (mIngestion == null) {
+        if (groupState.mIngestion == null) {
             return;
         }
         if (groupState.mScheduled) {
@@ -432,7 +447,7 @@ public class DefaultChannel implements Channel {
             /* Send logs. */
             LogContainer logContainer = new LogContainer();
             logContainer.setLogs(batch);
-            mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
+            groupState.mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
                 @Override
                 public void onCallSucceeded(String payload) {
@@ -721,6 +736,7 @@ public class DefaultChannel implements Channel {
 
         /**
          * Init.
+         *
          * @param name               group name.
          * @param maxLogsPerBatch    max batch size.
          * @param batchTimeInterval  batch interval in ms.
