@@ -189,9 +189,6 @@ public class ErrorLogHelperTest {
         /* Mock device. */
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new PackageManager.NameNotFoundException()));
 
-        /* Mock activity manager to return null active processes. */
-        when(mockContext.getSystemService(Context.ACTIVITY_SERVICE)).thenReturn(mock(ActivityManager.class));
-
         /* Mock architecture. */
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 15);
         TestUtils.setInternalState(Build.class, "CPU_ABI", "armeabi-v7a");
@@ -232,6 +229,11 @@ public class ErrorLogHelperTest {
 
         /* Mock device. */
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new PackageManager.NameNotFoundException()));
+
+        /* Mock activity manager to return null active processes. */
+        ActivityManager activityManager = mock(ActivityManager.class);
+        when(activityManager.getRunningAppProcesses()).thenReturn(null);
+        when(mockContext.getSystemService(Context.ACTIVITY_SERVICE)).thenReturn(activityManager);
 
         /* Mock architecture. */
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 15);
