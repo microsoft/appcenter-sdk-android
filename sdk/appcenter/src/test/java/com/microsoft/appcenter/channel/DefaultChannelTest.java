@@ -1103,26 +1103,13 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Check shutdown. */
         channel.shutdown();
-        verify(persistence, never()).clearPendingLogState();
+        verify(persistence).clearPendingLogState();
     }
 
     @Test
     public void withoutIngestion() {
         Persistence persistence = mock(Persistence.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, null, mCoreHandler);
-        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
-        channel.enqueue(mock(Log.class), TEST_GROUP);
-        channel.enqueue(mock(Log.class), "other");
-        channel.setEnabled(false);
-        channel.setEnabled(true);
-
-        /* No exceptions. */
-    }
-
-    @Test
-    public void withoutPersistence() {
-        Ingestion ingestion = mock(Ingestion.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), null, ingestion, mCoreHandler);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
         channel.enqueue(mock(Log.class), TEST_GROUP);
         channel.enqueue(mock(Log.class), "other");
