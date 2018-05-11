@@ -140,7 +140,7 @@ public class DefaultChannel implements Channel {
      * @param appCenterHandler App Center looper thread handler.
      */
     @VisibleForTesting
-    DefaultChannel(@NonNull Context context, String appSecret, Persistence persistence, Ingestion ingestion, @NonNull Handler appCenterHandler) {
+    DefaultChannel(@NonNull Context context, String appSecret, @NonNull Persistence persistence, Ingestion ingestion, @NonNull Handler appCenterHandler) {
         boolean appSecretNullOrEmpty = appSecret == null || appSecret.isEmpty();
         mContext = context;
         mAppSecret = appSecret;
@@ -148,7 +148,7 @@ public class DefaultChannel implements Channel {
         mIngestionHandler = new Handler(Looper.getMainLooper());
         mGroupStates = new HashMap<>();
         mListeners = new LinkedHashSet<>();
-        mPersistence = appSecretNullOrEmpty ? null : persistence;
+        mPersistence = persistence;
         mIngestion = appSecretNullOrEmpty ? null : ingestion;
         mIngestions = new HashSet<>();
         if (mIngestion != null) {
@@ -183,10 +183,6 @@ public class DefaultChannel implements Channel {
 
     @Override
     public synchronized void addGroup(final String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, Ingestion ingestion, GroupListener groupListener) {
-        if (mPersistence == null) {
-            return;
-        }
-
         /* TODO Remove this check once onGroupAdded callback is implemented. */
         if (mGroupStates.containsKey(groupName)) {
             return;
@@ -264,10 +260,9 @@ public class DefaultChannel implements Channel {
      */
     @Override
     public synchronized void clear(String groupName) {
-        if (mPersistence == null) {
-            return;
-        }
-        if (!mGroupStates.containsKey(groupName)) {
+
+        /* TODO replace mIngestion by mGroupState.mIngestion after merging #674. */
+        if (!mGroupStates.containsKey(groupName) || mIngestion == null) {
             return;
         }
         AppCenterLog.debug(LOG_TAG, "clear(" + groupName + ")");
@@ -324,9 +319,7 @@ public class DefaultChannel implements Channel {
                 deleteLogsOnSuspended(groupState);
             }
         } else {
-            if (mPersistence != null) {
-                mPersistence.clearPendingLogState();
-            }
+            mPersistence.clearPendingLogState();
         }
     }
 
@@ -553,10 +546,8 @@ public class DefaultChannel implements Channel {
         /* Check group name is registered. */
         final GroupState groupState = mGroupStates.get(groupName);
         if (groupState == null) {
-            if (mPersistence != null && mIngestion != null) {
-                AppCenterLog.error(LOG_TAG, "Invalid group name:" + groupName);
-                return;
-            }
+            AppCenterLog.error(LOG_TAG, "Invalid group name:" + groupName);
+            return;
         }
 
         /* Check if disabled with discarding logs. */
@@ -602,16 +593,16 @@ public class DefaultChannel implements Channel {
             filteredOut = filteredOut || listener.shouldFilter(log);
         }
 
-        /* No persistence and/or no ingestion mean that no app secret has been provided. */
-        boolean noAppSecretProvided = mPersistence == null || mIngestion == null;
-
+        /* If filtered out, nothing more to do. */
         if (filteredOut) {
             AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "' was filtered out by listener(s)");
         } else {
-            if (noAppSecretProvided) {
+
+            /* TODO change to mGroupState.mIngestion after merging with PR #674. */
+            if (mIngestion == null) {
 
                 /* Log was not filtered out but no app secret has been provided. Do nothing in this case. */
-                AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "'was not filtered out by listener(s) but no app secret was provided. Not persisting/sending the log.");
+                AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "' was not filtered out by listener(s) but no app secret was provided. Not persisting/sending the log.");
                 return;
             }
 
