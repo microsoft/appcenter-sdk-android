@@ -94,6 +94,16 @@ public interface Channel {
     interface Listener {
 
         /**
+         * Called whenever a new group is added.
+         */
+        void onGroupAdded(@NonNull String groupName);
+
+        /**
+         * Called whenever a new group is removed.
+         */
+        void onGroupRemoved(@NonNull String groupName);
+
+        /**
          * Called whenever a log is enqueued.
          * This is used to alter some log properties if needed.
          * The channel might alter log furthermore between this event and the next one: {@link #shouldFilter}.
@@ -113,7 +123,7 @@ public interface Channel {
         boolean shouldFilter(@NonNull Log log);
 
         /**
-         * Called when the group is cleared.
+         * Called when a group is cleared.
          *
          * @param groupName The group name.
          */

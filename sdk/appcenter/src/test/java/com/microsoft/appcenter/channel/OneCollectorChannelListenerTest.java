@@ -1,7 +1,5 @@
 package com.microsoft.appcenter.channel;
 
-import com.microsoft.appcenter.ingestion.models.Log;
-
 import org.junit.Test;
 
 import static com.microsoft.appcenter.channel.AbstractDefaultChannelTest.TEST_GROUP;
@@ -16,24 +14,39 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 public class OneCollectorChannelListenerTest {
 
     @Test
-    public void addGroupOnEnqueuingLog() {
+    public void addCorrespondingGroup() {
         Channel channel = mock(Channel.class);
         OneCollectorChannelListener listener = new OneCollectorChannelListener(channel);
 
-        /* Enqueuing an event. */
-        Log log = mock(Log.class);
-        listener.onEnqueuingLog(log, TEST_GROUP);
+        /* Mock group added. */
+        listener.onGroupAdded(TEST_GROUP);
 
-        /* Verify group added. */
+        /* Verify one collector group added. */
         verify(channel).addGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, null);
 
-        /* Enqueuing an event to the one collector group. */
-        listener.onEnqueuingLog(log, TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        /* Mock one collector group added callback, should not loop indefinitely. */
+        listener.onGroupAdded(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
         verifyNoMoreInteractions(channel);
     }
 
     @Test
-    public void clearGroupOnClear() {
+    public void removeCorrespondingGroup() {
+        Channel channel = mock(Channel.class);
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel);
+
+        /* Mock group removed. */
+        listener.onGroupRemoved(TEST_GROUP);
+
+        /* Verify one collector group added. */
+        verify(channel).removeGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+
+        /* Mock one collector group added callback, should not loop indefinitely. */
+        listener.onGroupRemoved(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        verifyNoMoreInteractions(channel);
+    }
+
+    @Test
+    public void clearCorrespondingGroup() {
         Channel channel = mock(Channel.class);
         OneCollectorChannelListener listener = new OneCollectorChannelListener(channel);
 
