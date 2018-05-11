@@ -126,6 +126,9 @@ class PushNotifier {
         builder.setContentTitle(notificationTitle).
                 setContentText(notificationMessage).
                 setWhen(System.currentTimeMillis());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            builder.setStyle(new Notification.BigTextStyle().bigText(notificationMessage));
+        }
 
         /* Click action. Reuse notification id for simplicity. */
         PendingIntent contentIntent = PendingIntent.getActivity(context, notificationId,
