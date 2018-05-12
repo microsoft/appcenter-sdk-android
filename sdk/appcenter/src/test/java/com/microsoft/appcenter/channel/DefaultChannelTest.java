@@ -1123,7 +1123,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     public void addRemoveGroupListener() {
         Persistence persistence = mock(Persistence.class);
         Ingestion ingestion = mock(Ingestion.class);
-        Channel.Listener listener = mock(Channel.Listener.class);
+        Channel.Listener listener = spy(new AbstractChannelListener());
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mCoreHandler);
         channel.addListener(listener);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null);
