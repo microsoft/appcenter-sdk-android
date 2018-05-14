@@ -183,10 +183,6 @@ public class DefaultChannel implements Channel {
 
     @Override
     public synchronized void addGroup(final String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, Ingestion ingestion, GroupListener groupListener) {
-        /* TODO Remove this check once onGroupAdded callback is implemented. */
-        if (mGroupStates.containsKey(groupName)) {
-            return;
-        }
 
         /* Init group. */
         AppCenterLog.debug(LOG_TAG, "addGroup(" + groupName + ")");
@@ -202,6 +198,11 @@ public class DefaultChannel implements Channel {
 
         /* Schedule sending any pending log. */
         checkPendingLogs(groupState.mName);
+
+        /* Call listeners so that they can react on group adding. */
+        for (Listener listener : mListeners) {
+            listener.onGroupAdded(groupName);
+        }
     }
 
     @Override
@@ -210,6 +211,11 @@ public class DefaultChannel implements Channel {
         GroupState groupState = mGroupStates.remove(groupName);
         if (groupState != null) {
             cancelTimer(groupState);
+        }
+
+        /* Call listeners so that they can react on group removed. */
+        for (Listener listener : mListeners) {
+            listener.onGroupRemoved(groupName);
         }
     }
 
