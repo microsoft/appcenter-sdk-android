@@ -8,7 +8,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 /**
  * One Collector channel listener used to redirect selected traffic to One Collector.
  */
-public class OneCollectorChannelListener implements Channel.Listener {
+public class OneCollectorChannelListener extends AbstractChannelListener {
 
     /**
      * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
@@ -34,19 +34,34 @@ public class OneCollectorChannelListener implements Channel.Listener {
     @VisibleForTesting
     static final String ONE_COLLECTOR_GROUP_NAME_SUFFIX = "/one";
 
+    /**
+     * Channel.
+     */
     private Channel mChannel;
 
+    /**
+     * Init with channel.
+     */
     public OneCollectorChannelListener(@NonNull Channel channel) {
         mChannel = channel;
     }
 
     @Override
-    public void onEnqueuingLog(@NonNull Log log, @NonNull String groupName) {
+    public void onGroupAdded(@NonNull String groupName) {
         if (isOneCollectorGroup(groupName)) {
             return;
         }
         String oneCollectorGroupName = getOneCollectorGroupName(groupName);
         mChannel.addGroup(oneCollectorGroupName, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, null);
+    }
+
+    @Override
+    public void onGroupRemoved(@NonNull String groupName) {
+        if (isOneCollectorGroup(groupName)) {
+            return;
+        }
+        String oneCollectorGroupName = getOneCollectorGroupName(groupName);
+        mChannel.removeGroup(oneCollectorGroupName);
     }
 
     @Override
