@@ -35,6 +35,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
@@ -985,7 +986,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mCoreHandler);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
-         /* Enqueuing 1 event. */
+        /* Enqueuing 1 event. */
         channel.enqueue(mock(Log.class), TEST_GROUP);
         verify(mockListener).onBeforeSending(notNull(Log.class));
 
@@ -1126,9 +1127,41 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Channel.Listener listener = spy(new AbstractChannelListener());
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mCoreHandler);
         channel.addListener(listener);
-        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null,null);
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         verify(listener).onGroupAdded(TEST_GROUP);
         channel.removeGroup(TEST_GROUP);
         verify(listener).onGroupRemoved(TEST_GROUP);
+    }
+
+    @Test
+    public void useAlternateIngestion() throws IOException {
+
+        /* Set up channel with an alternate ingestion. */
+        Persistence mockPersistence = mock(Persistence.class);
+        Ingestion defaultIngestion = mock(Ingestion.class);
+        Ingestion alternateIngestion = mock(Ingestion.class);
+        when(mockPersistence.getLogs(any(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, defaultIngestion, mCoreHandler);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, alternateIngestion, null);
+
+        /* Enqueuing 1 event. */
+        channel.enqueue(mock(Log.class), TEST_GROUP);
+
+        /* Verify that we have called sendAsync on the ingestion. */
+        verify(alternateIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(defaultIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+
+        /* The counter should be 0 now as we sent data. */
+        assertEquals(0, channel.getCounter(TEST_GROUP));
+
+        /* Disabling the channel should close all channels */
+        channel.setEnabled(false);
+        verify(alternateIngestion).close();
+        verify(defaultIngestion).close();
+
+        /* Enabling the channel should reopen all channels */
+        channel.setEnabled(true);
+        verify(alternateIngestion).reopen();
+        verify(defaultIngestion).reopen();
     }
 }
