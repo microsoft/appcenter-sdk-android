@@ -13,6 +13,7 @@ import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.model.NativeException;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
+import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
@@ -45,6 +46,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -238,7 +240,7 @@ public class CrashesAndroidTest {
         when(crashesListener.shouldProcess(any(ErrorReport.class))).thenAnswer(new Answer<Boolean>() {
 
             @Override
-            public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public Boolean answer(InvocationOnMock invocationOnMock) {
                 assertNotNull(AppCenter.getInstallId().get());
                 return AppCenter.isEnabled().get() && Crashes.isEnabled().get();
             }
@@ -308,7 +310,7 @@ public class CrashesAndroidTest {
         doAnswer(new Answer() {
 
             @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public Object answer(InvocationOnMock invocationOnMock) {
                 log.set((Log) invocationOnMock.getArguments()[0]);
                 return null;
             }
@@ -327,7 +329,7 @@ public class CrashesAndroidTest {
         mChannel = mock(Channel.class);
         ArgumentCaptor<Channel.GroupListener> groupListener = ArgumentCaptor.forClass(Channel.GroupListener.class);
         startFresh(crashesListener);
-        verify(mChannel).addGroup(anyString(), anyInt(), anyInt(), anyInt(), null, groupListener.capture());
+        verify(mChannel).addGroup(anyString(), anyInt(), anyInt(), anyInt(), isNull(Ingestion.class), groupListener.capture());
         groupListener.getValue().onBeforeSending(log.get());
         groupListener.getValue().onSuccess(log.get());
 
@@ -414,7 +416,7 @@ public class CrashesAndroidTest {
         doAnswer(new Answer() {
 
             @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public Object answer(InvocationOnMock invocationOnMock) {
                 log.set((Log) invocationOnMock.getArguments()[0]);
                 return null;
             }

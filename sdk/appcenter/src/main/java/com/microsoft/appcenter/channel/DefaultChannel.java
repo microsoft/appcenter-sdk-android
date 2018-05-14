@@ -260,9 +260,7 @@ public class DefaultChannel implements Channel {
      */
     @Override
     public synchronized void clear(String groupName) {
-
-        /* TODO replace mIngestion by mGroupState.mIngestion after merging #674. */
-        if (!mGroupStates.containsKey(groupName) || mIngestion == null) {
+        if (!mGroupStates.containsKey(groupName) || mGroupStates.get(groupName).mIngestion == null) {
             return;
         }
         AppCenterLog.debug(LOG_TAG, "clear(" + groupName + ")");
@@ -598,8 +596,7 @@ public class DefaultChannel implements Channel {
             AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "' was filtered out by listener(s)");
         } else {
 
-            /* TODO change to mGroupState.mIngestion after merging with PR #674. */
-            if (mIngestion == null) {
+            if (groupState.mIngestion == null) {
 
                 /* Log was not filtered out but no app secret has been provided. Do nothing in this case. */
                 AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "' was not filtered out by listener(s) but no app secret was provided. Not persisting/sending the log.");
