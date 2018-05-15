@@ -12,9 +12,11 @@ public class InstrumentationRegistryHelper {
      * Get the instrumentation arguments from the InstrumentationRegistry. Wrapper exists for unit
      * tests.
      *
-     * @return the instrumentation arguments
+     * @return the instrumentation arguments.
+     * @throws LinkageError          if the class, method is not found or does not match, typically no test dependencies in release.
+     * @throws IllegalStateException if no argument Bundle has been registered.
      */
-    public static Bundle getArguments() throws NoClassDefFoundError, IllegalAccessError {
+    public static Bundle getArguments() throws LinkageError, IllegalStateException {
         return InstrumentationRegistry.getArguments();
     }
 }

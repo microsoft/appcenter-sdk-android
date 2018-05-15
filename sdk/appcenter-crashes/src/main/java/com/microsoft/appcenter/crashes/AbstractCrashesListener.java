@@ -7,6 +7,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
  * Abstract class with default behaviors for the crashes listener.
  */
 public abstract class AbstractCrashesListener implements CrashesListener {
+
     @Override
     public boolean shouldProcess(ErrorReport report) {
         return true;

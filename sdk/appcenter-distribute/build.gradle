@@ -2,5 +2,5 @@ project.description = 'This package contains functionalities to get in-app updat
 evaluationDependsOn(':sdk')
 
 dependencies {
-    compile project(':sdk:appcenter')
+    api project(':sdk:appcenter')
 }

@@ -353,8 +353,18 @@ public class AppCenter {
      */
     private synchronized void setInstanceWrapperSdk(WrapperSdk wrapperSdk) {
         DeviceInfoHelper.setWrapperSdk(wrapperSdk);
-        if (mChannel != null) {
-            mChannel.invalidateDeviceCache();
+
+        /* If SDK already configured, reset device info cache. */
+        if (mHandler != null) {
+
+            /* Every channel operation must be in background since it uses locks and accesses disks. */
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    mChannel.invalidateDeviceCache();
+                }
+            });
         }
     }
 
@@ -373,10 +383,20 @@ public class AppCenter {
      *
      * @param logUrl log URL.
      */
-    private synchronized void setInstanceLogUrl(String logUrl) {
+    private synchronized void setInstanceLogUrl(final String logUrl) {
         mLogUrl = logUrl;
-        if (mChannel != null) {
-            mChannel.setLogUrl(logUrl);
+
+        /* If SDK already configured, set log url. */
+        if (mHandler != null) {
+
+            /* Every channel operation must be in background since it uses locks and accesses disks. */
+            mHandler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    mChannel.setLogUrl(logUrl);
+                }
+            });
         }
     }
 
@@ -856,7 +876,7 @@ public class AppCenter {
                 }
             }
             return false;
-        } catch (NoClassDefFoundError | IllegalAccessError e) {
+        } catch (LinkageError | IllegalStateException e) {
             AppCenterLog.debug(LOG_TAG, "Cannot read instrumentation variables in a non-test environment.");
             return false;
         }

@@ -1136,6 +1136,30 @@ public class AppCenterTest {
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
+
+        /* Throw NoSuchMethodError. */
+        AppCenter.unsetInstance();
+        doThrow(new NoSuchMethodError()).when(InstrumentationRegistryHelper.class);
+        InstrumentationRegistryHelper.getArguments();
+        AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
+        assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
+        assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
+
+        /* Throw LinkageError. */
+        AppCenter.unsetInstance();
+        doThrow(new LinkageError()).when(InstrumentationRegistryHelper.class);
+        InstrumentationRegistryHelper.getArguments();
+        AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
+        assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
+        assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
+
+        /* Throw IllegalStateException. */
+        AppCenter.unsetInstance();
+        doThrow(new IllegalStateException()).when(InstrumentationRegistryHelper.class);
+        InstrumentationRegistryHelper.getArguments();
+        AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
+        assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
+        assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
     }
 
     private static class DummyService extends AbstractAppCenterService {
