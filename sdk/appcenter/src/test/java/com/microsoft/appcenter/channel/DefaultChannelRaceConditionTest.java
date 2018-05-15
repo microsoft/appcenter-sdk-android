@@ -67,7 +67,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         /* Simulate enable module then disable. */
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mCoreHandler);
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
-        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, listener);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);
         channel.setEnabled(true);
 
@@ -112,7 +112,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         /* Simulate enable module then disable. */
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mCoreHandler);
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
-        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, listener);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);
         channel.setEnabled(true);
 
@@ -165,7 +165,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         /* Simulate enable module then disable. */
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mCoreHandler);
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
-        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, listener);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);
         channel.setEnabled(true);
 

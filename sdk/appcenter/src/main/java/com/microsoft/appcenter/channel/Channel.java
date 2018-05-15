@@ -2,6 +2,7 @@ package com.microsoft.appcenter.channel;
 
 import android.support.annotation.NonNull;
 
+import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 
 /**
@@ -11,14 +12,14 @@ public interface Channel {
 
     /**
      * Add a group for logs to be persisted and sent.
-     *
      * @param groupName          the name of a group.
      * @param maxLogsPerBatch    maximum log count per batch.
      * @param batchTimeInterval  time interval for a next batch.
      * @param maxParallelBatches maximum number of batches in parallel.
+     * @param ingestion          ingestion for the channel. If null then the default ingestion will be used.
      * @param groupListener      a listener for a service.
      */
-    void addGroup(String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener groupListener);
+    void addGroup(String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, Ingestion ingestion, GroupListener groupListener);
 
     /**
      * Remove a group for logs.

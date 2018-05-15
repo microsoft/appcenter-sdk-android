@@ -14,6 +14,7 @@ import com.microsoft.appcenter.analytics.ingestion.models.json.EventLogFactory;
 import com.microsoft.appcenter.analytics.ingestion.models.json.PageLogFactory;
 import com.microsoft.appcenter.analytics.ingestion.models.json.StartSessionLogFactory;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -56,6 +57,7 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -441,7 +443,7 @@ public class AnalyticsTest {
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", null, channel);
         verify(channel).removeGroup(eq(analytics.getGroupName()));
-        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         verify(channel).addListener(any(Channel.Listener.class));
 
         /* Now we can see the service enabled. */
@@ -583,7 +585,7 @@ public class AnalyticsTest {
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", null, channel);
         final ArgumentCaptor<Channel.GroupListener> captor = ArgumentCaptor.forClass(Channel.GroupListener.class);
-        verify(channel).addGroup(anyString(), anyInt(), anyLong(), anyInt(), captor.capture());
+        verify(channel).addGroup(anyString(), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), captor.capture());
         doAnswer(new Answer<Void>() {
 
             @Override

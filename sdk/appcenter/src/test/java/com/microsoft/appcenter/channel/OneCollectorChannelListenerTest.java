@@ -22,7 +22,7 @@ public class OneCollectorChannelListenerTest {
         listener.onGroupAdded(TEST_GROUP);
 
         /* Verify one collector group added. */
-        verify(channel).addGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, null);
+        verify(channel).addGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
 
         /* Mock one collector group added callback, should not loop indefinitely. */
         listener.onGroupAdded(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);

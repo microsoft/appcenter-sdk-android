@@ -3,6 +3,7 @@ package com.microsoft.appcenter;
 import android.content.Context;
 
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.Assert;
@@ -25,6 +26,7 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -208,7 +210,7 @@ public class AbstractAppCenterServiceTest {
         Channel channel = mock(Channel.class);
         mService.onStarted(mock(Context.class), "", null, channel);
         verify(channel).removeGroup(mService.getGroupName());
-        verify(channel).addGroup(mService.getGroupName(), mService.getTriggerCount(), mService.getTriggerInterval(), mService.getTriggerMaxParallelRequests(), mService.getChannelListener());
+        verify(channel).addGroup(mService.getGroupName(), mService.getTriggerCount(), mService.getTriggerInterval(), mService.getTriggerMaxParallelRequests(), null, mService.getChannelListener());
         verifyNoMoreInteractions(channel);
         assertSame(channel, mService.mChannel);
 
@@ -223,14 +225,14 @@ public class AbstractAppCenterServiceTest {
         Channel channel = mock(Channel.class);
         mService.onStarted(mock(Context.class), "", null, channel);
         verify(channel).removeGroup(mService.getGroupName());
-        verify(channel).addGroup(eq(mService.getGroupName()), anyInt(), anyLong(), anyInt(), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(mService.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         mService.setInstanceEnabled(false);
         verify(channel, times(2)).removeGroup(mService.getGroupName());
         verify(channel).clear(mService.getGroupName());
         verifyNoMoreInteractions(channel);
         assertSame(channel, mService.mChannel);
         mService.setInstanceEnabled(true);
-        verify(channel, times(2)).addGroup(mService.getGroupName(), mService.getTriggerCount(), mService.getTriggerInterval(), mService.getTriggerMaxParallelRequests(), mService.getChannelListener());
+        verify(channel, times(2)).addGroup(mService.getGroupName(), mService.getTriggerCount(), mService.getTriggerInterval(), mService.getTriggerMaxParallelRequests(), null, mService.getChannelListener());
         verifyNoMoreInteractions(channel);
     }
 
