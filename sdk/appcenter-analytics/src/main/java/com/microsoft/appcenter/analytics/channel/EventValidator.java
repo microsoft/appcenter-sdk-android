@@ -53,12 +53,11 @@ public class EventValidator extends AbstractChannelListener {
      */
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean validateLog(@NonNull AnalyticsLog log) {
-        String logType = log.getClass().getSimpleName().replace("Log", "");
-        String name = validateName(log.getName(), logType);
+        String name = validateName(log.getName(), log.getType());
         if (name == null) {
             return false;
         }
-        Map<String, String> validatedProperties = validateProperties(log.getProperties(), name, logType);
+        Map<String, String> validatedProperties = validateProperties(log.getProperties(), name, log.getType());
         log.setName(name);
         log.setProperties(validatedProperties);
         return true;
