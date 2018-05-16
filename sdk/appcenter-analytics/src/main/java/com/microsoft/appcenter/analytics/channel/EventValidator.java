@@ -3,6 +3,7 @@ package com.microsoft.appcenter.analytics.channel;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.analytics.ingestion.models.AnalyticsLog;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
 import com.microsoft.appcenter.channel.AbstractChannelListener;
@@ -36,29 +37,31 @@ public class EventValidator extends AbstractChannelListener {
     @Override
     public boolean shouldFilter(@NonNull Log log) {
         if (log instanceof EventLog) {
-            final String logType = "Event";
-            final EventLog eventLog = (EventLog) log;
-            String name = validateName(eventLog.getName(), logType);
-            if (name == null) {
-                return true;
-            }
-            Map<String, String> validatedProperties = validateProperties(eventLog.getProperties(), name, logType);
-            eventLog.setName(name);
-            eventLog.setProperties(validatedProperties);
+            return !validateLog((EventLog) log);
         } else if (log instanceof PageLog) {
-            final String logType = "Page";
-            final PageLog pageLog = (PageLog) log;
-            String name = validateName(pageLog.getName(), logType);
-            if (name == null) {
-                return true;
-            }
-            Map<String, String> validatedProperties = validateProperties(pageLog.getProperties(), name, logType);
-            pageLog.setName(name);
-            pageLog.setProperties(validatedProperties);
+            return !validateLog((PageLog) log);
         }
         return false;
     }
 
+    /**
+     * Validates log.
+     *
+     * @param log   The log.
+     * @return true if validation passed, false otherwise.
+     */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    private boolean validateLog(@NonNull AnalyticsLog log) {
+        String logType = log.getClass().getSimpleName().replace("Log", "");
+        String name = validateName(log.getName(), logType);
+        if (name == null) {
+            return false;
+        }
+        Map<String, String> validatedProperties = validateProperties(log.getProperties(), name, logType);
+        log.setName(name);
+        log.setProperties(validatedProperties);
+        return true;
+    }
 
     /**
      * Validates name.
