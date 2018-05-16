@@ -601,7 +601,6 @@ public class DefaultChannel implements Channel {
         if (filteredOut) {
             AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "' was filtered out by listener(s)");
         } else {
-
             if (groupState.mIngestion == null) {
 
                 /* Log was not filtered out but no app secret has been provided. Do nothing in this case. */
