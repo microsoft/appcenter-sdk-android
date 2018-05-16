@@ -214,7 +214,10 @@ public class Analytics extends AbstractAppCenterService {
      */
     @SuppressWarnings("WeakerAccess")
     protected static void trackPage(String name, Map<String, String> properties) {
-        getInstance().trackPageAsync(name, new HashMap<>(properties));
+        if (properties != null) {
+            properties = new HashMap<>(properties);
+        }
+        getInstance().trackPageAsync(name, properties);
     }
 
     /**
@@ -268,7 +271,10 @@ public class Analytics extends AbstractAppCenterService {
      */
     @SuppressWarnings("WeakerAccess")
     static void trackEvent(String name, Map<String, String> properties, AnalyticsTransmissionTarget transmissionTarget) {
-        getInstance().trackEventAsync(name, new HashMap<>(properties), transmissionTarget);
+        if (properties != null) {
+            properties = new HashMap<>(properties);
+        }
+        getInstance().trackEventAsync(name, properties, transmissionTarget);
     }
 
     /**

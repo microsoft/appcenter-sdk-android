@@ -12,7 +12,6 @@ import org.junit.runner.RunWith;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.microsoft.appcenter.analytics.Analytics.trackEvent;
 import static com.microsoft.appcenter.analytics.channel.EventValidator.MAX_NAME_LENGTH;
 import static com.microsoft.appcenter.analytics.channel.EventValidator.MAX_PROPERTY_COUNT;
 import static com.microsoft.appcenter.analytics.channel.EventValidator.MAX_PROPERTY_ITEM_LENGTH;
@@ -108,7 +107,7 @@ public class EventValidatorTheoriesTest {
         final String validEventName = "eventName";
         log.setName(validEventName);
         final String longerMapItem = generateString(MAX_PROPERTY_ITEM_LENGTH + 1, '*');
-        trackEvent("eventName", new HashMap<String, String>() {{
+        log.setProperties(new HashMap<String, String>() {{
             put(longerMapItem, longerMapItem);
         }});
         assertFalse(mEventValidator.shouldFilter(log));

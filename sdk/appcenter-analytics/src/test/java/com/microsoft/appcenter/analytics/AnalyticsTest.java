@@ -6,6 +6,7 @@ import android.os.SystemClock;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
+import com.microsoft.appcenter.analytics.channel.EventValidator;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
@@ -55,6 +56,7 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
@@ -284,7 +286,8 @@ public class AnalyticsTest {
         analytics.onStarted(mock(Context.class), "", null, channel);
         verify(channel).removeGroup(eq(analytics.getGroupName()));
         verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
-        verify(channel).addListener(any(Channel.Listener.class));
+        verify(channel).addListener(isA(SessionTracker.class));
+        verify(channel).addListener(isA(EventValidator.class));
 
         /* Now we can see the service enabled. */
         assertTrue(Analytics.isEnabled().get());
@@ -292,7 +295,8 @@ public class AnalyticsTest {
         /* Disable. Testing to wait setEnabled to finish while we are at it. */
         Analytics.setEnabled(false).get();
         assertFalse(Analytics.isEnabled().get());
-        verify(channel).removeListener(any(SessionTracker.class));
+        verify(channel).removeListener(isA(SessionTracker.class));
+        verify(channel).removeListener(isA(EventValidator.class));
         verify(channel, times(2)).removeGroup(analytics.getGroupName());
         verify(channel).clear(analytics.getGroupName());
         verifyStatic();
