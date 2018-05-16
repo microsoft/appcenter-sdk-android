@@ -3,7 +3,7 @@ package com.microsoft.appcenter.analytics.ingestion.models;
 /**
  * Page log.
  */
-public class PageLog extends AnalyticsLog {
+public class PageLog extends LogWithNameAndProperties {
 
     public static final String TYPE = "page";
 

@@ -1,18 +1,18 @@
 package com.microsoft.appcenter.analytics.channel;
 
-import com.microsoft.appcenter.analytics.ingestion.models.AnalyticsLog;
+import com.microsoft.appcenter.analytics.ingestion.models.LogWithNameAndProperties;
 
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
 
-public class EventValidatorTest {
+public class AnalyticsValidatorTest {
 
-    private EventValidator mEventValidator = new EventValidator();
+    private AnalyticsValidator mAnalyticsValidator = new AnalyticsValidator();
 
     @Test
     public void shouldFilterInvalidType() {
-        assertFalse(mEventValidator.shouldFilter(new AnalyticsLog() {
+        assertFalse(mAnalyticsValidator.shouldFilter(new LogWithNameAndProperties() {
 
             @Override
             public String getType() {

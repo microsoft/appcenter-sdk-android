@@ -8,7 +8,7 @@ import org.json.JSONStringer;
 
 import static com.microsoft.appcenter.ingestion.models.CommonProperties.NAME;
 
-public abstract class AnalyticsLog extends LogWithProperties {
+public abstract class LogWithNameAndProperties extends LogWithProperties {
 
     /**
      * The name.
@@ -56,8 +56,8 @@ public abstract class AnalyticsLog extends LogWithProperties {
         if (!super.equals(o)) {
             return false;
         }
-        AnalyticsLog analyticsLog = (AnalyticsLog) o;
-        return name != null ? name.equals(analyticsLog.name) : analyticsLog.name == null;
+        LogWithNameAndProperties logWithNameAndProperties = (LogWithNameAndProperties) o;
+        return name != null ? name.equals(logWithNameAndProperties.name) : logWithNameAndProperties.name == null;
     }
 
     @Override

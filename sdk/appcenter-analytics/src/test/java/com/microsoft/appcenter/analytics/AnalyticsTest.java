@@ -6,7 +6,7 @@ import android.os.SystemClock;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
-import com.microsoft.appcenter.analytics.channel.EventValidator;
+import com.microsoft.appcenter.analytics.channel.AnalyticsValidator;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
@@ -287,7 +287,7 @@ public class AnalyticsTest {
         verify(channel).removeGroup(eq(analytics.getGroupName()));
         verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         verify(channel).addListener(isA(SessionTracker.class));
-        verify(channel).addListener(isA(EventValidator.class));
+        verify(channel).addListener(isA(AnalyticsValidator.class));
 
         /* Now we can see the service enabled. */
         assertTrue(Analytics.isEnabled().get());
@@ -296,7 +296,7 @@ public class AnalyticsTest {
         Analytics.setEnabled(false).get();
         assertFalse(Analytics.isEnabled().get());
         verify(channel).removeListener(isA(SessionTracker.class));
-        verify(channel).removeListener(isA(EventValidator.class));
+        verify(channel).removeListener(isA(AnalyticsValidator.class));
         verify(channel, times(2)).removeGroup(analytics.getGroupName());
         verify(channel).clear(analytics.getGroupName());
         verifyStatic();

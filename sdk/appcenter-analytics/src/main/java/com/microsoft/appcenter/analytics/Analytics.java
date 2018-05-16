@@ -8,7 +8,7 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
-import com.microsoft.appcenter.analytics.channel.EventValidator;
+import com.microsoft.appcenter.analytics.channel.AnalyticsValidator;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
@@ -85,7 +85,7 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Event validator.
      */
-    private EventValidator mEventValidator;
+    private AnalyticsValidator mAnalyticsValidator;
 
     /**
      * Custom analytics listener.
@@ -214,9 +214,6 @@ public class Analytics extends AbstractAppCenterService {
      */
     @SuppressWarnings("WeakerAccess")
     protected static void trackPage(String name, Map<String, String> properties) {
-        if (properties != null) {
-            properties = new HashMap<>(properties);
-        }
         getInstance().trackPageAsync(name, properties);
     }
 
@@ -271,9 +268,6 @@ public class Analytics extends AbstractAppCenterService {
      */
     @SuppressWarnings("WeakerAccess")
     static void trackEvent(String name, Map<String, String> properties, AnalyticsTransmissionTarget transmissionTarget) {
-        if (properties != null) {
-            properties = new HashMap<>(properties);
-        }
         getInstance().trackEventAsync(name, properties, transmissionTarget);
     }
 
@@ -438,8 +432,8 @@ public class Analytics extends AbstractAppCenterService {
         if (enabled) {
 
             /* Enable filtering logs. */
-            mEventValidator = new EventValidator();
-            mChannel.addListener(mEventValidator);
+            mAnalyticsValidator = new AnalyticsValidator();
+            mChannel.addListener(mAnalyticsValidator);
 
             /* Start session tracker. */
             mSessionTracker = new SessionTracker(mChannel, ANALYTICS_GROUP);
@@ -451,9 +445,9 @@ public class Analytics extends AbstractAppCenterService {
                 }
             }
         } else {
-            if (mEventValidator != null) {
-                mChannel.removeListener(mEventValidator);
-                mEventValidator = null;
+            if (mAnalyticsValidator != null) {
+                mChannel.removeListener(mAnalyticsValidator);
+                mAnalyticsValidator = null;
             }
             if (mSessionTracker != null) {
                 mChannel.removeListener(mSessionTracker);
@@ -470,11 +464,14 @@ public class Analytics extends AbstractAppCenterService {
      * @param properties optional properties.
      */
     private synchronized void trackPageAsync(final String name, final Map<String, String> properties) {
+
+        /* Make a copy to prevent concurrent modification. */
+        final Map<String, String> propertiesCopy = properties != null ? new HashMap<>(properties) : null;
         post(new Runnable() {
 
             @Override
             public void run() {
-                queuePage(name, properties);
+                queuePage(name, propertiesCopy);
             }
         });
     }
@@ -497,6 +494,9 @@ public class Analytics extends AbstractAppCenterService {
      * @param properties optional properties.
      */
     private synchronized void trackEventAsync(final String name, final Map<String, String> properties, final AnalyticsTransmissionTarget transmissionTarget) {
+
+        /* Make a copy to prevent concurrent modification. */
+        final Map<String, String> propertiesCopy = properties != null ? new HashMap<>(properties) : null;
         post(new Runnable() {
 
             @Override
@@ -504,7 +504,7 @@ public class Analytics extends AbstractAppCenterService {
                 EventLog eventLog = new EventLog();
                 eventLog.setId(UUIDUtils.randomUUID());
                 eventLog.setName(name);
-                eventLog.setProperties(properties);
+                eventLog.setProperties(propertiesCopy);
                 AnalyticsTransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? mDefaultTransmissionTarget : transmissionTarget;
                 if (aTransmissionTarget != null) {
                     eventLog.addTransmissionTarget(aTransmissionTarget.getTransmissionTargetToken());

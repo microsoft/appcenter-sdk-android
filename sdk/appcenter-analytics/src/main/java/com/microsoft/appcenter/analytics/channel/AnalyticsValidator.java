@@ -3,7 +3,7 @@ package com.microsoft.appcenter.analytics.channel;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.analytics.ingestion.models.AnalyticsLog;
+import com.microsoft.appcenter.analytics.ingestion.models.LogWithNameAndProperties;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
 import com.microsoft.appcenter.channel.AbstractChannelListener;
@@ -15,7 +15,7 @@ import java.util.Map;
 
 import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
 
-public class EventValidator extends AbstractChannelListener {
+public class AnalyticsValidator extends AbstractChannelListener {
 
     /**
      * Max length of event/page name.
@@ -52,7 +52,7 @@ public class EventValidator extends AbstractChannelListener {
      * @return true if validation passed, false otherwise.
      */
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private boolean validateLog(@NonNull AnalyticsLog log) {
+    private boolean validateLog(@NonNull LogWithNameAndProperties log) {
         String name = validateName(log.getName(), log.getType());
         if (name == null) {
             return false;

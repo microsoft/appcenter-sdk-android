@@ -11,7 +11,7 @@ import static com.microsoft.appcenter.ingestion.models.CommonProperties.ID;
 /**
  * Event log.
  */
-public class EventLog extends AnalyticsLog {
+public class EventLog extends LogWithNameAndProperties {
 
     public static final String TYPE = "event";
 
