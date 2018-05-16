@@ -63,6 +63,11 @@ public abstract class CommonSchemaEventLog extends AbstractLog {
     private String iKey;
 
     /**
+     * Part A Extensions.
+     */
+    private Extension ext;
+
+    /**
      * Get common schema version.
      *
      * @return common schema version.
@@ -116,10 +121,28 @@ public abstract class CommonSchemaEventLog extends AbstractLog {
         this.iKey = iKey;
     }
 
+    /**
+     * Get Part A extensions.
+     *
+     * @return Part A extensions.
+     */
+    public Extension getExt() {
+        return ext;
+    }
+
+    /**
+     * Set Part A extensions.
+     *
+     * @param ext Part A extensions.
+     */
+    public void setExt(Extension ext) {
+        this.ext = ext;
+    }
+
     @Override
     public void read(JSONObject object) throws JSONException {
 
-        /* Override abstract log JSON since it's Common Schema and not App Center Schema. */
+        /* Override abstract log JSON since it's Common Schema and not App Center schema. */
         setVer(object.getString(VER));
         setName(object.getString(NAME));
         setTimestamp(JSONDateUtils.toDate(object.getString(TIME)));
@@ -129,10 +152,17 @@ public abstract class CommonSchemaEventLog extends AbstractLog {
     @Override
     public void write(JSONStringer writer) throws JSONException {
 
-        /* Override abstract log JSON since it's Common Schema and not App Center Schema. */
+        /* Override abstract log JSON since it's Common Schema and not App Center schema. */
+
+        /* Part A. */
         writer.key(VER).value(getVer());
         writer.key(NAME).value(getName());
         writer.key(TIME).value(JSONDateUtils.toString(getTimestamp()));
         writer.key(IKEY).value(getIKey());
+
+        /* Part A extensions. */
+        writer.key(EXT).object();
+        getExt().write(writer);
+        writer.endObject();
     }
 }
