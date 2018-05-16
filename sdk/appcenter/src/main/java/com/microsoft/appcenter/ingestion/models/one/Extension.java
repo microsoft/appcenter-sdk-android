@@ -44,7 +44,7 @@ public class Extension implements Model {
     /**
      * Device extension.
      */
-    private DeviceExtension device;
+    private ProtocolExtension device;
 
     /**
      * User extension.
@@ -76,7 +76,7 @@ public class Extension implements Model {
      *
      * @return device extension.
      */
-    public DeviceExtension getDevice() {
+    public ProtocolExtension getDevice() {
         return device;
     }
 
@@ -85,7 +85,7 @@ public class Extension implements Model {
      *
      * @param device device extension.
      */
-    public void setDevice(DeviceExtension device) {
+    public void setDevice(ProtocolExtension device) {
         this.device = device;
     }
 
@@ -103,7 +103,7 @@ public class Extension implements Model {
      *
      * @param device user extension.
      */
-    public void setUser(DeviceExtension device) {
+    public void setUser(ProtocolExtension device) {
         this.user = user;
     }
 
@@ -183,7 +183,7 @@ public class Extension implements Model {
     public void read(JSONObject object) throws JSONException {
 
         /* Device. */
-        DeviceExtension device = new DeviceExtension();
+        ProtocolExtension device = new ProtocolExtension();
         device.read(object.getJSONObject(DEVICE));
         setDevice(device);
 
