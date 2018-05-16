@@ -32,7 +32,8 @@ public class EventValidator extends AbstractChannelListener {
     /**
      * Max number of properties.
      */
-    private static final int MAX_PROPERTY_COUNT = 20;
+    @VisibleForTesting
+    static final int MAX_PROPERTY_COUNT = 20;
 
     @Override
     public boolean shouldFilter(@NonNull Log log) {
