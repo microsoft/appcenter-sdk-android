@@ -13,7 +13,7 @@ import org.json.JSONStringer;
  * Common schema has 1 log type with extensions, everything is called an event.
  * Part B can be used in the future for domain specific typing (like reflecting AppCenter log type).
  */
-public abstract class CommonSchemaEventLog extends AbstractLog {
+public abstract class CommonSchemaLog extends AbstractLog {
 
     /**
      * Common schema version property.
@@ -47,10 +47,8 @@ public abstract class CommonSchemaEventLog extends AbstractLog {
 
     /**
      * Common schema version.
-     * Defaults to a specific value when creating new logs.
-     * Existing logs in storage can have a different value.
      */
-    private String ver = "3.0";
+    private String ver;
 
     /**
      * Event name.

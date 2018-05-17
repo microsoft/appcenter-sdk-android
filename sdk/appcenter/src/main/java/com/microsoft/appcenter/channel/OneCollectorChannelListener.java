@@ -4,6 +4,10 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+
+import java.util.Collection;
 
 /**
  * One Collector channel listener used to redirect selected traffic to One Collector.
@@ -40,10 +44,16 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     private Channel mChannel;
 
     /**
+     * Log serializer.
+     */
+    private LogSerializer mLogSerializer;
+
+    /**
      * Init with channel.
      */
-    public OneCollectorChannelListener(@NonNull Channel channel) {
+    public OneCollectorChannelListener(@NonNull Channel channel, @NonNull LogSerializer logSerializer) {
         mChannel = channel;
+        mLogSerializer = logSerializer;
     }
 
     @Override
@@ -62,6 +72,11 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         }
         String oneCollectorGroupName = getOneCollectorGroupName(groupName);
         mChannel.removeGroup(oneCollectorGroupName);
+    }
+
+    @Override
+    public void onEnqueuingLog(@NonNull Log log, @NonNull String groupName) {
+        Collection<CommonSchemaLog> commonSchemaLogs = mLogSerializer.toCommonSchemaLog(log);
     }
 
     @Override

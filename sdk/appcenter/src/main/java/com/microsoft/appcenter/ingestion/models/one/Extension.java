@@ -12,11 +12,6 @@ import org.json.JSONStringer;
 public class Extension implements Model {
 
     /**
-     * Device property.
-     */
-    private static final String DEVICE = "device";
-
-    /**
      * User property.
      */
     private static final String USER = "user";
@@ -42,9 +37,14 @@ public class Extension implements Model {
     private static final String LOC = "loc";
 
     /**
-     * Device extension.
+     * Protocol property.
      */
-    private ProtocolExtension device;
+    private static final String PROTOCOL = "protocol";
+
+    /**
+     * Net property.
+     */
+    private static final String NET = "net";
 
     /**
      * User extension.
@@ -72,22 +72,14 @@ public class Extension implements Model {
     private LocExtension loc;
 
     /**
-     * Get device extension.
-     *
-     * @return device extension.
+     * Protocol extension.
      */
-    public ProtocolExtension getDevice() {
-        return device;
-    }
+    private ProtocolExtension protocol;
 
     /**
-     * Set device extension.
-     *
-     * @param device device extension.
+     * Net extension.
      */
-    public void setDevice(ProtocolExtension device) {
-        this.device = device;
-    }
+    private NetExtension net;
 
     /**
      * Get user extension.
@@ -101,9 +93,9 @@ public class Extension implements Model {
     /**
      * Set user extension.
      *
-     * @param device user extension.
+     * @param user user extension.
      */
-    public void setUser(ProtocolExtension device) {
+    public void setUser(UserExtension user) {
         this.user = user;
     }
 
@@ -179,18 +171,49 @@ public class Extension implements Model {
         this.loc = loc;
     }
 
+    /**
+     * Get loc extension.
+     *
+     * @return loc extension.
+     */
+    public ProtocolExtension getProtocol() {
+        return protocol;
+    }
+
+    /**
+     * Set protocol extension.
+     *
+     * @param protocol protocol extension.
+     */
+    public void setProtocol(ProtocolExtension protocol) {
+        this.protocol = protocol;
+    }
+
+    /**
+     * Get net extension.
+     *
+     * @return net extension.
+     */
+    public NetExtension getNet() {
+        return net;
+    }
+
+    /**
+     * Set net extension.
+     *
+     * @param net net extension.
+     */
+    public void setNet(NetExtension net) {
+        this.net = net;
+    }
+
     @Override
     public void read(JSONObject object) throws JSONException {
-
-        /* Device. */
-        ProtocolExtension device = new ProtocolExtension();
-        device.read(object.getJSONObject(DEVICE));
-        setDevice(device);
 
         /* User. */
         UserExtension user = new UserExtension();
         user.read(object.getJSONObject(USER));
-        setUser(device);
+        setUser(user);
 
         /* Os. */
         OsExtension os = new OsExtension();
@@ -211,15 +234,20 @@ public class Extension implements Model {
         LocExtension loc = new LocExtension();
         loc.read(object.getJSONObject(LOC));
         setLoc(loc);
+
+        /* Protocol. */
+        ProtocolExtension protocol = new ProtocolExtension();
+        protocol.read(object.getJSONObject(PROTOCOL));
+        setProtocol(protocol);
+
+        /* Net. */
+        NetExtension net = new NetExtension();
+        net.read(object.getJSONObject(NET));
+        setNet(net);
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-
-        /* Device. */
-        writer.key(DEVICE).object();
-        getDevice().write(writer);
-        writer.endObject();
 
         /* User. */
         writer.key(USER).object();
@@ -244,6 +272,16 @@ public class Extension implements Model {
         /* LOC. */
         writer.key(LOC).object();
         getLoc().write(writer);
+        writer.endObject();
+
+        /* Protocol. */
+        writer.key(PROTOCOL).object();
+        getProtocol().write(writer);
+        writer.endObject();
+
+        /* Net. */
+        writer.key(NET).object();
+        getNet().write(writer);
         writer.endObject();
     }
 }
