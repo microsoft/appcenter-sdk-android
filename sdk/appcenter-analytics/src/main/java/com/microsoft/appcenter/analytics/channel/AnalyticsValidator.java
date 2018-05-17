@@ -37,10 +37,9 @@ public class AnalyticsValidator extends AbstractChannelListener {
 
     @Override
     public boolean shouldFilter(@NonNull Log log) {
-        if (log instanceof EventLog) {
-            return !validateLog((EventLog) log);
-        } else if (log instanceof PageLog) {
-            return !validateLog((PageLog) log);
+        //noinspection SimplifiableIfStatement
+        if (log instanceof EventLog || log instanceof PageLog) {
+            return !validateLog((LogWithNameAndProperties) log);
         }
         return false;
     }
