@@ -28,7 +28,7 @@ public class PartAUtils {
         dest.setIKey("o:" + transmissionTarget.split("-")[0]);
 
         /* Add extension. */
-        dest.setExt(new Extension());
+        dest.setExt(new Extensions());
 
         /* Add protocol extension. */
         dest.getExt().setProtocol(new ProtocolExtension());

@@ -19,6 +19,11 @@ public class AppExtension implements Model {
     private static final String VER = "ver";
 
     /**
+     * Locale property.
+     */
+    private static final String LOCALE = "locale";
+
+    /**
      * Application identifier.
      */
     private String id;
@@ -27,6 +32,11 @@ public class AppExtension implements Model {
      * Application version.
      */
     private String ver;
+
+    /**
+     * Application locale.
+     */
+    private String locale;
 
     /**
      * Get application id.
@@ -64,15 +74,35 @@ public class AppExtension implements Model {
         this.ver = ver;
     }
 
+    /**
+     * Get application locale.
+     *
+     * @return application locale.
+     */
+    public String getLocale() {
+        return locale;
+    }
+
+    /**
+     * Set application locale.
+     *
+     * @param locale application locale.
+     */
+    public void setLocale(String locale) {
+        this.locale = locale;
+    }
+
     @Override
     public void read(JSONObject object) throws JSONException {
         setId(object.getString(ID));
         setVer(object.getString(VER));
+        setLocale(object.getString(LOCALE));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
         writer.key(ID).value(getId());
         writer.key(VER).value(getVer());
+        writer.key(LOCALE).value(getLocale());
     }
 }

@@ -40,7 +40,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
     static final String IKEY = "iKey";
 
     /**
-     * Extension property.
+     * Extensions property.
      */
     @VisibleForTesting
     static final String EXT = "ext";
@@ -63,7 +63,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
     /**
      * Part A Extensions.
      */
-    private Extension ext;
+    private Extensions ext;
 
     /**
      * Get common schema version.
@@ -124,7 +124,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
      *
      * @return Part A extensions.
      */
-    public Extension getExt() {
+    public Extensions getExt() {
         return ext;
     }
 
@@ -133,7 +133,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
      *
      * @param ext Part A extensions.
      */
-    public void setExt(Extension ext) {
+    public void setExt(Extensions ext) {
         this.ext = ext;
     }
 
@@ -141,10 +141,17 @@ public abstract class CommonSchemaLog extends AbstractLog {
     public void read(JSONObject object) throws JSONException {
 
         /* Override abstract log JSON since it's Common Schema and not App Center schema. */
+
+        /* Read top level PART A simple fields. */
         setVer(object.getString(VER));
         setName(object.getString(NAME));
         setTimestamp(JSONDateUtils.toDate(object.getString(TIME)));
         setIKey(object.getString(IKEY));
+
+        /* Read extensions. */
+        Extensions extensions = new Extensions();
+        extensions.read(object.getJSONObject(EXT));
+        setExt(extensions);
     }
 
     @Override
