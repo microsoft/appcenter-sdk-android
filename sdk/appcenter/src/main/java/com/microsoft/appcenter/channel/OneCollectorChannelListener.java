@@ -6,8 +6,12 @@ import android.support.annotation.VisibleForTesting;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.utils.UUIDUtils;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * One Collector channel listener used to redirect selected traffic to One Collector.
@@ -41,19 +45,38 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     /**
      * Channel.
      */
-    private Channel mChannel;
-
+    private final Channel mChannel;
     /**
      * Log serializer.
      */
-    private LogSerializer mLogSerializer;
+    private final LogSerializer mLogSerializer;
+    /**
+     * Install id.
+     */
+    private final UUID mInstallId;
+    /**
+     * Epochs and sequences grouped by iKey.
+     */
+    private final Map<String, EpochAndSeq> mEpochsAndSeqsByIKey = new HashMap<>();
 
     /**
      * Init with channel.
      */
-    public OneCollectorChannelListener(@NonNull Channel channel, @NonNull LogSerializer logSerializer) {
+    public OneCollectorChannelListener(@NonNull Channel channel, @NonNull LogSerializer logSerializer, @NonNull UUID installId) {
         mChannel = channel;
         mLogSerializer = logSerializer;
+        mInstallId = installId;
+    }
+
+    @Override
+    public void onGroupRemoved(@NonNull String groupName) {
+        if (isOneCollectorGroup(groupName)) {
+            return;
+        }
+        String oneCollectorGroupName = getOneCollectorGroupName(groupName);
+        mChannel.removeGroup(oneCollectorGroupName);
+
+        /* TODO: We need to reset epoch and sequence in onEnabled(false) callback. */
     }
 
     @Override
@@ -66,22 +89,42 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     }
 
     @Override
-    public void onGroupRemoved(@NonNull String groupName) {
-        if (isOneCollectorGroup(groupName)) {
-            return;
-        }
-        String oneCollectorGroupName = getOneCollectorGroupName(groupName);
-        mChannel.removeGroup(oneCollectorGroupName);
-    }
-
-    @Override
-    public void onEnqueuingLog(@NonNull Log log, @NonNull String groupName) {
-        Collection<CommonSchemaLog> commonSchemaLogs = mLogSerializer.toCommonSchemaLog(log);
-    }
-
-    @Override
     public boolean shouldFilter(@NonNull Log log) {
+        Collection<CommonSchemaLog> commonSchemaLogs = mLogSerializer.toCommonSchemaLog(log);
+
+        /* Add SDK extension part A fields. LibVer is already set. */
+        for (CommonSchemaLog commonSchemaLog : commonSchemaLogs) {
+            commonSchemaLog.getExt().getSdk().setInstallId(mInstallId);
+            EpochAndSeq epochAndSeq = mEpochsAndSeqsByIKey.get(commonSchemaLog.getIKey());
+            if (epochAndSeq == null) {
+                epochAndSeq = new EpochAndSeq(UUIDUtils.randomUUID().toString(), 0L);
+                mEpochsAndSeqsByIKey.put(commonSchemaLog.getIKey(), epochAndSeq);
+            }
+            commonSchemaLog.getExt().getSdk().setEpoch(epochAndSeq.epoch);
+            commonSchemaLog.getExt().getSdk().setSeq(++epochAndSeq.seq);
+        }
         return false;
+    }
+
+    private static class EpochAndSeq {
+
+        /**
+         * Epoch.
+         */
+        String epoch;
+
+        /**
+         * Sequence number.
+         */
+        long seq;
+
+        /**
+         * Init.
+         */
+        EpochAndSeq(String epoch, long seq) {
+            this.epoch = epoch;
+            this.seq = seq;
+        }
     }
 
     @Override

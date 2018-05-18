@@ -18,10 +18,11 @@ public class CommonSchemaEventLogFactory implements LogFactory {
 
     @Override
     public Collection<CommonSchemaLog> toCommonSchemaLogs(Log log) {
-        Collection<CommonSchemaLog> commonSchemaLogs = new LinkedList<CommonSchemaLog>();
+        Collection<CommonSchemaLog> commonSchemaLogs = new LinkedList<>();
         for (String transmissionTarget : log.getTransmissionTargetTokens()) {
             CommonSchemaEventLog commonSchemaEventLog = new CommonSchemaEventLog();
             PartAUtils.addPartAFromLog(log, commonSchemaEventLog, transmissionTarget);
+            commonSchemaLogs.add(commonSchemaEventLog);
         }
         return commonSchemaLogs;
     }
