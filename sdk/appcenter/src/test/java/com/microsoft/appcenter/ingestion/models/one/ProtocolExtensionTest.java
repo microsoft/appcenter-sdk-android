@@ -7,43 +7,35 @@ import org.junit.Test;
 import static com.microsoft.appcenter.test.TestUtils.checkEquals;
 import static com.microsoft.appcenter.test.TestUtils.checkNotEquals;
 
-public class AppExtensionTest {
+public class ProtocolExtensionTest {
 
     @Test
     public void compareDifferentType() {
-        TestUtils.compareSelfNullClass(new AppExtension());
+        TestUtils.compareSelfNullClass(new ProtocolExtension());
     }
 
     @Test
     public void equalsHashCode() {
 
         /* Empty objects. */
-        AppExtension a = new AppExtension();
-        AppExtension b = new AppExtension();
+        ProtocolExtension a = new ProtocolExtension();
+        ProtocolExtension b = new ProtocolExtension();
         checkEquals(a, b);
 
-        /* Id. */
-        a.setId("a1");
+        /* Dev make. */
+        a.setDevMake("a1");
         checkNotEquals(a, b);
-        b.setId("b1");
+        b.setDevMake("b1");
         checkNotEquals(a, b);
-        b.setId("a1");
+        b.setDevMake("a1");
         checkEquals(a, b);
 
-        /* Ver. */
-        a.setVer("a2");
+        /* Dev model. */
+        a.setDevModel("a2");
         checkNotEquals(a, b);
-        b.setVer("b2");
+        b.setDevModel("b2");
         checkNotEquals(a, b);
-        b.setVer("a2");
-        checkEquals(a, b);
-
-        /* Locale. */
-        a.setLocale("a3");
-        checkNotEquals(a, b);
-        b.setLocale("b3");
-        checkNotEquals(a, b);
-        b.setLocale("a3");
+        b.setDevModel("a2");
         checkEquals(a, b);
     }
 }

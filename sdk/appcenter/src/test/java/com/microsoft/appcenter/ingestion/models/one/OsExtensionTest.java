@@ -7,27 +7,27 @@ import org.junit.Test;
 import static com.microsoft.appcenter.test.TestUtils.checkEquals;
 import static com.microsoft.appcenter.test.TestUtils.checkNotEquals;
 
-public class AppExtensionTest {
+public class OsExtensionTest {
 
     @Test
     public void compareDifferentType() {
-        TestUtils.compareSelfNullClass(new AppExtension());
+        TestUtils.compareSelfNullClass(new OsExtension());
     }
 
     @Test
     public void equalsHashCode() {
 
         /* Empty objects. */
-        AppExtension a = new AppExtension();
-        AppExtension b = new AppExtension();
+        OsExtension a = new OsExtension();
+        OsExtension b = new OsExtension();
         checkEquals(a, b);
 
-        /* Id. */
-        a.setId("a1");
+        /* name. */
+        a.setName("a1");
         checkNotEquals(a, b);
-        b.setId("b1");
+        b.setName("b1");
         checkNotEquals(a, b);
-        b.setId("a1");
+        b.setName("a1");
         checkEquals(a, b);
 
         /* Ver. */
@@ -36,14 +36,6 @@ public class AppExtensionTest {
         b.setVer("b2");
         checkNotEquals(a, b);
         b.setVer("a2");
-        checkEquals(a, b);
-
-        /* Locale. */
-        a.setLocale("a3");
-        checkNotEquals(a, b);
-        b.setLocale("b3");
-        checkNotEquals(a, b);
-        b.setLocale("a3");
         checkEquals(a, b);
     }
 }

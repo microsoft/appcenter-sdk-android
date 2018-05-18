@@ -4,46 +4,56 @@ import com.microsoft.appcenter.test.TestUtils;
 
 import org.junit.Test;
 
+import java.util.UUID;
+
 import static com.microsoft.appcenter.test.TestUtils.checkEquals;
 import static com.microsoft.appcenter.test.TestUtils.checkNotEquals;
 
-public class AppExtensionTest {
+public class SdkExtensionTest {
 
     @Test
     public void compareDifferentType() {
-        TestUtils.compareSelfNullClass(new AppExtension());
+        TestUtils.compareSelfNullClass(new SdkExtension());
     }
 
     @Test
     public void equalsHashCode() {
 
         /* Empty objects. */
-        AppExtension a = new AppExtension();
-        AppExtension b = new AppExtension();
+        SdkExtension a = new SdkExtension();
+        SdkExtension b = new SdkExtension();
         checkEquals(a, b);
 
-        /* Id. */
-        a.setId("a1");
+        /* libVer. */
+        a.setLibVer("a1");
         checkNotEquals(a, b);
-        b.setId("b1");
+        b.setLibVer("b1");
         checkNotEquals(a, b);
-        b.setId("a1");
+        b.setLibVer("a1");
         checkEquals(a, b);
 
         /* Ver. */
-        a.setVer("a2");
+        a.setEpoch("a2");
         checkNotEquals(a, b);
-        b.setVer("b2");
+        b.setEpoch("b2");
         checkNotEquals(a, b);
-        b.setVer("a2");
+        b.setEpoch("a2");
         checkEquals(a, b);
 
-        /* Locale. */
-        a.setLocale("a3");
+        /* Seq. */
+        a.setSeq(0L);
         checkNotEquals(a, b);
-        b.setLocale("b3");
+        b.setSeq(1L);
         checkNotEquals(a, b);
-        b.setLocale("a3");
+        b.setSeq(0L);
+        checkEquals(a, b);
+
+        /* InstallId. */
+        a.setInstallId(UUID.randomUUID());
+        checkNotEquals(a, b);
+        b.setInstallId(UUID.randomUUID());
+        checkNotEquals(a, b);
+        b.setInstallId(a.getInstallId());
         checkEquals(a, b);
     }
 }
