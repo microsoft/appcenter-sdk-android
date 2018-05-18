@@ -45,4 +45,19 @@ public class LocExtension implements Model {
     public void write(JSONStringer writer) throws JSONException {
         writer.key(TZ).value(getTz());
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        LocExtension that = (LocExtension) o;
+
+        return tz != null ? tz.equals(that.tz) : that.tz == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return tz != null ? tz.hashCode() : 0;
+    }
 }

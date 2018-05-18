@@ -270,4 +270,36 @@ public abstract class CommonSchemaLog extends AbstractLog {
         getExt().write(writer);
         writer.endObject();
     }
+
+    @SuppressWarnings("SimplifiableIfStatement")
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        CommonSchemaLog that = (CommonSchemaLog) o;
+
+        if (ver != null ? !ver.equals(that.ver) : that.ver != null) return false;
+        if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        if (popSample != null ? !popSample.equals(that.popSample) : that.popSample != null)
+            return false;
+        if (iKey != null ? !iKey.equals(that.iKey) : that.iKey != null) return false;
+        if (flags != null ? !flags.equals(that.flags) : that.flags != null) return false;
+        if (cV != null ? !cV.equals(that.cV) : that.cV != null) return false;
+        return ext != null ? ext.equals(that.ext) : that.ext == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (ver != null ? ver.hashCode() : 0);
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (popSample != null ? popSample.hashCode() : 0);
+        result = 31 * result + (iKey != null ? iKey.hashCode() : 0);
+        result = 31 * result + (flags != null ? flags.hashCode() : 0);
+        result = 31 * result + (cV != null ? cV.hashCode() : 0);
+        result = 31 * result + (ext != null ? ext.hashCode() : 0);
+        return result;
+    }
 }

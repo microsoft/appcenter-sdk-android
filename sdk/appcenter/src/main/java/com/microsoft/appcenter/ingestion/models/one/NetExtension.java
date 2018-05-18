@@ -45,4 +45,19 @@ public class NetExtension implements Model {
     public void write(JSONStringer writer) throws JSONException {
         writer.key(PROVIDER).value(getProvider());
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        NetExtension that = (NetExtension) o;
+
+        return provider != null ? provider.equals(that.provider) : that.provider == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return provider != null ? provider.hashCode() : 0;
+    }
 }

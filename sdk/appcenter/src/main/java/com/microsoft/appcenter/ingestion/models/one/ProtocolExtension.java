@@ -75,4 +75,22 @@ public class ProtocolExtension implements Model {
         writer.key(DEV_MAKE).value(getDevMake());
         writer.key(DEV_MODEL).value(getDevModel());
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ProtocolExtension that = (ProtocolExtension) o;
+
+        if (devMake != null ? !devMake.equals(that.devMake) : that.devMake != null) return false;
+        return devModel != null ? devModel.equals(that.devModel) : that.devModel == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = devMake != null ? devMake.hashCode() : 0;
+        result = 31 * result + (devModel != null ? devModel.hashCode() : 0);
+        return result;
+    }
 }

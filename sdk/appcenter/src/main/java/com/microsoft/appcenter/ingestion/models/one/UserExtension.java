@@ -45,4 +45,19 @@ public class UserExtension implements Model {
     public void write(JSONStringer writer) throws JSONException {
         writer.key(LOCALE).value(getLocale());
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        UserExtension that = (UserExtension) o;
+
+        return locale != null ? locale.equals(that.locale) : that.locale == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return locale != null ? locale.hashCode() : 0;
+    }
 }

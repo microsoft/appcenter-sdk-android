@@ -284,4 +284,34 @@ public class Extensions implements Model {
         getLoc().write(writer);
         writer.endObject();
     }
+
+    @SuppressWarnings("SimplifiableIfStatement")
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Extensions that = (Extensions) o;
+
+        if (protocol != null ? !protocol.equals(that.protocol) : that.protocol != null)
+            return false;
+        if (user != null ? !user.equals(that.user) : that.user != null) return false;
+        if (os != null ? !os.equals(that.os) : that.os != null) return false;
+        if (app != null ? !app.equals(that.app) : that.app != null) return false;
+        if (net != null ? !net.equals(that.net) : that.net != null) return false;
+        if (sdk != null ? !sdk.equals(that.sdk) : that.sdk != null) return false;
+        return loc != null ? loc.equals(that.loc) : that.loc == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = protocol != null ? protocol.hashCode() : 0;
+        result = 31 * result + (user != null ? user.hashCode() : 0);
+        result = 31 * result + (os != null ? os.hashCode() : 0);
+        result = 31 * result + (app != null ? app.hashCode() : 0);
+        result = 31 * result + (net != null ? net.hashCode() : 0);
+        result = 31 * result + (sdk != null ? sdk.hashCode() : 0);
+        result = 31 * result + (loc != null ? loc.hashCode() : 0);
+        return result;
+    }
 }

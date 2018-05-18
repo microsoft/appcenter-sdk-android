@@ -137,4 +137,27 @@ public class SdkExtension implements Model {
         writer.key(SEQ).value(getSeq());
         writer.key(INSTALL_ID).value(getInstallId());
     }
+
+    @SuppressWarnings("SimplifiableIfStatement")
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SdkExtension that = (SdkExtension) o;
+
+        if (libVer != null ? !libVer.equals(that.libVer) : that.libVer != null) return false;
+        if (epoch != null ? !epoch.equals(that.epoch) : that.epoch != null) return false;
+        if (seq != null ? !seq.equals(that.seq) : that.seq != null) return false;
+        return installId != null ? installId.equals(that.installId) : that.installId == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = libVer != null ? libVer.hashCode() : 0;
+        result = 31 * result + (epoch != null ? epoch.hashCode() : 0);
+        result = 31 * result + (seq != null ? seq.hashCode() : 0);
+        result = 31 * result + (installId != null ? installId.hashCode() : 0);
+        return result;
+    }
 }

@@ -105,4 +105,25 @@ public class AppExtension implements Model {
         writer.key(VER).value(getVer());
         writer.key(LOCALE).value(getLocale());
     }
+
+    @SuppressWarnings("SimplifiableIfStatement")
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AppExtension that = (AppExtension) o;
+
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        if (ver != null ? !ver.equals(that.ver) : that.ver != null) return false;
+        return locale != null ? locale.equals(that.locale) : that.locale == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (ver != null ? ver.hashCode() : 0);
+        result = 31 * result + (locale != null ? locale.hashCode() : 0);
+        return result;
+    }
 }
