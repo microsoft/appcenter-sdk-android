@@ -6,6 +6,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+/**
+ * This is the application extension. It contains data specified by the application.
+ */
 public class AppExtension implements Model {
 
     /**

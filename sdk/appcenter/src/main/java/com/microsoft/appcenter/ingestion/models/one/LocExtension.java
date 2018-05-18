@@ -6,6 +6,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+/**
+ * Describes the location from which the event was logged.
+ */
 public class LocExtension implements Model {
 
     /**

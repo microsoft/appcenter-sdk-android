@@ -6,6 +6,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+/**
+ * The “os” extension tracks common os elements that are not available in the core envelope.
+ */
 public class OsExtension implements Model {
 
     /**

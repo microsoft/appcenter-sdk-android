@@ -8,6 +8,10 @@ import org.json.JSONStringer;
 
 import java.util.UUID;
 
+/**
+ * The SDK extension is used by platform specific library to record field that are specifically
+ * required for a specific SDK.
+ */
 public class SdkExtension implements Model {
 
     /**

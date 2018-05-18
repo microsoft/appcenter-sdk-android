@@ -6,6 +6,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+/**
+ * Extension for device specific information.
+ */
 public class ProtocolExtension implements Model {
 
     /**

@@ -6,6 +6,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+/**
+ * Extension for network connectivity information.
+ */
 public class NetExtension implements Model {
 
     /**
