@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.channel;
 
+import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+
 import org.junit.Test;
 
 import static com.microsoft.appcenter.channel.AbstractDefaultChannelTest.TEST_GROUP;
@@ -16,7 +18,7 @@ public class OneCollectorChannelListenerTest {
     @Test
     public void addCorrespondingGroup() {
         Channel channel = mock(Channel.class);
-        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel);
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, mock(LogSerializer.class));
 
         /* Mock group added. */
         listener.onGroupAdded(TEST_GROUP);
@@ -32,7 +34,7 @@ public class OneCollectorChannelListenerTest {
     @Test
     public void removeCorrespondingGroup() {
         Channel channel = mock(Channel.class);
-        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel);
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, mock(LogSerializer.class));
 
         /* Mock group removed. */
         listener.onGroupRemoved(TEST_GROUP);
@@ -48,7 +50,7 @@ public class OneCollectorChannelListenerTest {
     @Test
     public void clearCorrespondingGroup() {
         Channel channel = mock(Channel.class);
-        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel);
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, mock(LogSerializer.class));
 
         /* Clear a group. */
         listener.onClear(TEST_GROUP);

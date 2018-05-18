@@ -13,6 +13,8 @@ import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.appcenter.analytics.ingestion.models.json.EventLogFactory;
 import com.microsoft.appcenter.analytics.ingestion.models.json.PageLogFactory;
 import com.microsoft.appcenter.analytics.ingestion.models.json.StartSessionLogFactory;
+import com.microsoft.appcenter.analytics.ingestion.models.json.one.CommonSchemaEventLogFactory;
+import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -143,6 +145,7 @@ public class AnalyticsTest {
         assertTrue(factories.remove(StartSessionLog.TYPE) instanceof StartSessionLogFactory);
         assertTrue(factories.remove(PageLog.TYPE) instanceof PageLogFactory);
         assertTrue(factories.remove(EventLog.TYPE) instanceof EventLogFactory);
+        assertTrue(factories.remove(CommonSchemaEventLog.TYPE) instanceof CommonSchemaEventLogFactory);
         assertTrue(factories.isEmpty());
     }
 
