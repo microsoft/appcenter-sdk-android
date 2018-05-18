@@ -46,14 +46,17 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
      * Channel.
      */
     private final Channel mChannel;
+
     /**
      * Log serializer.
      */
     private final LogSerializer mLogSerializer;
+
     /**
      * Install id.
      */
     private final UUID mInstallId;
+
     /**
      * Epochs and sequences grouped by iKey.
      */
@@ -103,7 +106,9 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
             commonSchemaLog.getExt().getSdk().setEpoch(epochAndSeq.epoch);
             commonSchemaLog.getExt().getSdk().setSeq(++epochAndSeq.seq);
         }
-        return false;
+
+        /* Don't send the logs to AppCenter if it is being sent to OneCollector. */
+        return !commonSchemaLogs.isEmpty();
     }
 
     private static class EpochAndSeq {
