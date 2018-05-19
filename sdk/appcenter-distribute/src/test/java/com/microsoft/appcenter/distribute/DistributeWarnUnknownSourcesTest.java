@@ -59,7 +59,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @RunWith(Parameterized.class)
 public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
-    @SuppressWarnings("WeakerAccess")
     @Parameterized.Parameter
     public boolean mMandatoryUpdate;
 
@@ -85,7 +84,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
@@ -105,7 +104,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 when(mUnknownSourcesDialog.isShowing()).thenReturn(true);
                 return null;
             }
@@ -113,7 +112,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
                 return null;
             }

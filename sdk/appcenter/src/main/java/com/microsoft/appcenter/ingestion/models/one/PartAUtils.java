@@ -61,8 +61,9 @@ public class PartAUtils {
 
         /* Add loc extension. */
         dest.getExt().setLoc(new LocExtension());
-        String timezoneOffset = String.format(Locale.US,
-                "%02d:%02d", Math.abs(device.getTimeZoneOffset() / 60),
+        String timezoneOffset = String.format(Locale.US, "%s%02d:%02d",
+                device.getTimeZoneOffset() >= 0 ? "+" : "-",
+                Math.abs(device.getTimeZoneOffset() / 60),
                 Math.abs(device.getTimeZoneOffset() % 60));
         dest.getExt().getLoc().setTz(timezoneOffset);
     }

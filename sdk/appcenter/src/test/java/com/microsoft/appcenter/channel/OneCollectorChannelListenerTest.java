@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.channel;
 
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.Test;
 
@@ -18,7 +19,7 @@ public class OneCollectorChannelListenerTest {
     @Test
     public void addCorrespondingGroup() {
         Channel channel = mock(Channel.class);
-        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, mock(LogSerializer.class));
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
 
         /* Mock group added. */
         listener.onGroupAdded(TEST_GROUP);
@@ -34,7 +35,7 @@ public class OneCollectorChannelListenerTest {
     @Test
     public void removeCorrespondingGroup() {
         Channel channel = mock(Channel.class);
-        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, mock(LogSerializer.class));
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
 
         /* Mock group removed. */
         listener.onGroupRemoved(TEST_GROUP);
@@ -50,7 +51,7 @@ public class OneCollectorChannelListenerTest {
     @Test
     public void clearCorrespondingGroup() {
         Channel channel = mock(Channel.class);
-        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, mock(LogSerializer.class));
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
 
         /* Clear a group. */
         listener.onClear(TEST_GROUP);
