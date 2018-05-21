@@ -90,7 +90,6 @@ public abstract class CommonSchemaLog extends AbstractLog {
     private String cV;
 
     /**
-     * /**
      * Part A Extensions.
      */
     private Extensions ext;

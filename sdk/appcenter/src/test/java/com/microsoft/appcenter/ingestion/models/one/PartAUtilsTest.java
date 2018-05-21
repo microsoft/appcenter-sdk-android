@@ -21,15 +21,20 @@ public class PartAUtilsTest {
 
     @Test
     public void checkPartAConversionPositiveTimeZoneOffSet() {
-        checkPartAConversion("+08:00", 480);
+        checkPartAConversion(480, "+08:00");
     }
 
     @Test
     public void checkPartAConversionNegativeTimeZoneOffSet() {
-        checkPartAConversion("-08:00", -480);
+        checkPartAConversion(-480, "-08:00");
     }
 
-    private void checkPartAConversion(String commonSchemaTimeZoneOffset, int appCenterTimeZoneOffset) {
+    /**
+     * Convert to Part A and check.
+     */
+    private void checkPartAConversion(int appCenterTimeZoneOffset, String commonSchemaTimeZoneOffset) {
+
+        /* Create App Center models, starting with the device object. */
         Device device = new Device();
         device.setModel("model");
         device.setOemName("oemName");
@@ -45,16 +50,18 @@ public class PartAUtilsTest {
         device.setSdkVersion("1.5.0");
         device.setTimeZoneOffset(appCenterTimeZoneOffset);
 
+        /* App Center timestamp and transmission targets. */
         Date timestamp = new Date();
         String transmissionTarget = "T1UUID1-T2UUID2";
-
         Log log = mock(Log.class);
         when(log.getDevice()).thenReturn(device);
         when(log.getTimestamp()).thenReturn(timestamp);
 
+        /* Convert. */
         MockCommonSchemaLog commonSchemaLog = new MockCommonSchemaLog();
         PartAUtils.addPartAFromLog(log, commonSchemaLog, transmissionTarget);
 
+        /* Verify conversion. */
         assertEquals("3.0", commonSchemaLog.getVer());
         assertEquals(timestamp, commonSchemaLog.getTimestamp());
         assertEquals("o:T1UUID1", commonSchemaLog.getIKey());
