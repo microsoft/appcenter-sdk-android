@@ -1,7 +1,5 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
-import android.support.annotation.VisibleForTesting;
-
 import com.microsoft.appcenter.ingestion.models.AbstractLog;
 import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
@@ -9,6 +7,8 @@ import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
+
+import static com.microsoft.appcenter.ingestion.models.CommonProperties.TYPE;
 
 /**
  * Common schema has 1 log type with extensions, everything is called an event.
@@ -19,50 +19,42 @@ public abstract class CommonSchemaLog extends AbstractLog {
     /**
      * Common schema version property.
      */
-    @VisibleForTesting
-    static final String VER = "ver";
+    private static final String VER = "ver";
 
     /**
      * Name property.
      */
-    @VisibleForTesting
-    static final String NAME = "name";
+    private static final String NAME = "name";
 
     /**
      * Time property.
      */
-    @VisibleForTesting
-    static final String TIME = "time";
+    private static final String TIME = "time";
 
     /**
      * popSample property.
      */
-    @VisibleForTesting
-    static final String POP_SAMPLE = "popSample";
+    private static final String POP_SAMPLE = "popSample";
 
     /**
      * iKey property.
      */
-    @VisibleForTesting
-    static final String IKEY = "iKey";
+    private static final String IKEY = "iKey";
 
     /**
      * Flags property.
      */
-    @VisibleForTesting
-    static final String FLAGS = "flags";
+    private static final String FLAGS = "flags";
 
     /**
      * Flags property.
      */
-    @VisibleForTesting
-    static final String CV = "cV";
+    private static final String CV = "cV";
 
     /**
      * Extensions property.
      */
-    @VisibleForTesting
-    static final String EXT = "ext";
+    private static final String EXT = "ext";
 
     /**
      * Common schema version.
@@ -144,6 +136,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
      *
      * @return pop sample.
      */
+    @SuppressWarnings("WeakerAccess")
     public Double getPopSample() {
         return popSample;
     }
@@ -198,6 +191,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
      *
      * @return correlation vector.
      */
+    @SuppressWarnings("WeakerAccess")
     public String getCV() {
         return cV;
     }
@@ -241,14 +235,16 @@ public abstract class CommonSchemaLog extends AbstractLog {
         if (object.has(POP_SAMPLE)) {
             setPopSample(object.getDouble(POP_SAMPLE));
         }
-        setIKey(object.getString(IKEY));
+        setIKey(object.optString(IKEY, null));
         setFlags(JSONUtils.readLong(object, FLAGS));
         setCV(object.optString(CV, null));
 
         /* Read extensions. */
-        Extensions extensions = new Extensions();
-        extensions.read(object.getJSONObject(EXT));
-        setExt(extensions);
+        if (object.has(EXT)) {
+            Extensions extensions = new Extensions();
+            extensions.read(object.getJSONObject(EXT));
+            setExt(extensions);
+        }
     }
 
     @Override
@@ -256,19 +252,24 @@ public abstract class CommonSchemaLog extends AbstractLog {
 
         /* Override abstract log JSON since it's Common Schema and not App Center schema. */
 
+        /* TODO We still need type internally, for now we add it here but we'll need to migrate to Part B. */
+        JSONUtils.write(writer, TYPE, getType());
+
         /* Part A. */
         writer.key(VER).value(getVer());
         writer.key(NAME).value(getName());
         writer.key(TIME).value(JSONDateUtils.toString(getTimestamp()));
         JSONUtils.write(writer, POP_SAMPLE, getPopSample());
-        writer.key(IKEY).value(getIKey());
+        JSONUtils.write(writer, IKEY, getIKey());
         JSONUtils.write(writer, FLAGS, getFlags());
         JSONUtils.write(writer, CV, getCV());
 
         /* Part A extensions. */
-        writer.key(EXT).object();
-        getExt().write(writer);
-        writer.endObject();
+        if (getExt() != null) {
+            writer.key(EXT).object();
+            getExt().write(writer);
+            writer.endObject();
+        }
     }
 
     @SuppressWarnings("SimplifiableIfStatement")

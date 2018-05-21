@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
 import com.microsoft.appcenter.ingestion.models.Model;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,12 +42,12 @@ public class NetExtension implements Model {
 
     @Override
     public void read(JSONObject object) throws JSONException {
-        setProvider(object.getString(PROVIDER));
+        setProvider(object.optString(PROVIDER, null));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        writer.key(PROVIDER).value(getProvider());
+        JSONUtils.write(writer, PROVIDER, getProvider());
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
 import com.microsoft.appcenter.ingestion.models.Model;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,12 +42,12 @@ public class LocExtension implements Model {
 
     @Override
     public void read(JSONObject object) throws JSONException {
-        setTz(object.getString(TZ));
+        setTz(object.optString(TZ, null));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        writer.key(TZ).value(getTz());
+        JSONUtils.write(writer, TZ, getTz());
     }
 
     @Override

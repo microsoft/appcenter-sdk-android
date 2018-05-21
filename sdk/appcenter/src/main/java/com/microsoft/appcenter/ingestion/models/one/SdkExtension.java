@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
 import com.microsoft.appcenter.ingestion.models.Model;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -77,6 +78,7 @@ public class SdkExtension implements Model {
      *
      * @return SDK epoch.
      */
+    @SuppressWarnings("WeakerAccess")
     public String getEpoch() {
         return epoch;
     }
@@ -95,6 +97,7 @@ public class SdkExtension implements Model {
      *
      * @return sequence number.
      */
+    @SuppressWarnings("WeakerAccess")
     public Long getSeq() {
         return seq;
     }
@@ -128,18 +131,20 @@ public class SdkExtension implements Model {
 
     @Override
     public void read(JSONObject object) throws JSONException {
-        setLibVer(object.getString(LIB_VER));
-        setEpoch(object.getString(EPOCH));
-        setSeq(object.getLong(SEQ));
-        setInstallId(UUID.fromString(object.getString(INSTALL_ID)));
+        setLibVer(object.optString(LIB_VER, null));
+        setEpoch(object.optString(EPOCH, null));
+        setSeq(JSONUtils.readLong(object, SEQ));
+        if (object.has(INSTALL_ID)) {
+            setInstallId(UUID.fromString(object.getString(INSTALL_ID)));
+        }
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        writer.key(LIB_VER).value(getLibVer());
-        writer.key(EPOCH).value(getEpoch());
-        writer.key(SEQ).value(getSeq());
-        writer.key(INSTALL_ID).value(getInstallId());
+        JSONUtils.write(writer, LIB_VER, getLibVer());
+        JSONUtils.write(writer, EPOCH, getEpoch());
+        JSONUtils.write(writer, SEQ, getSeq());
+        JSONUtils.write(writer, INSTALL_ID, getInstallId());
     }
 
     @SuppressWarnings("SimplifiableIfStatement")

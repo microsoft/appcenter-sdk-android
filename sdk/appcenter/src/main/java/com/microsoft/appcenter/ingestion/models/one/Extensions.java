@@ -211,78 +211,106 @@ public class Extensions implements Model {
     public void read(JSONObject object) throws JSONException {
 
         /* Protocol. */
-        ProtocolExtension protocol = new ProtocolExtension();
-        protocol.read(object.getJSONObject(PROTOCOL));
-        setProtocol(protocol);
+        if (object.has(PROTOCOL)) {
+            ProtocolExtension protocol = new ProtocolExtension();
+            protocol.read(object.getJSONObject(PROTOCOL));
+            setProtocol(protocol);
+        }
 
         /* User. */
-        UserExtension user = new UserExtension();
-        user.read(object.getJSONObject(USER));
-        setUser(user);
+        if (object.has(USER)) {
+            UserExtension user = new UserExtension();
+            user.read(object.getJSONObject(USER));
+            setUser(user);
+        }
 
         /* Os. */
-        OsExtension os = new OsExtension();
-        os.read(object.getJSONObject(OS));
-        setOs(os);
+        if (object.has(OS)) {
+            OsExtension os = new OsExtension();
+            os.read(object.getJSONObject(OS));
+            setOs(os);
+        }
 
         /* App. */
-        AppExtension app = new AppExtension();
-        app.read(object.getJSONObject(APP));
-        setApp(app);
+        if (object.has(APP)) {
+            AppExtension app = new AppExtension();
+            app.read(object.getJSONObject(APP));
+            setApp(app);
+        }
 
         /* Net. */
-        NetExtension net = new NetExtension();
-        net.read(object.getJSONObject(NET));
-        setNet(net);
+        if (object.has(NET)) {
+            NetExtension net = new NetExtension();
+            net.read(object.getJSONObject(NET));
+            setNet(net);
+        }
 
         /* SDK. */
-        SdkExtension sdk = new SdkExtension();
-        sdk.read(object.getJSONObject(SDK));
-        setSdk(sdk);
+        if (object.has(SDK)) {
+            SdkExtension sdk = new SdkExtension();
+            sdk.read(object.getJSONObject(SDK));
+            setSdk(sdk);
+        }
 
         /* Loc. */
-        LocExtension loc = new LocExtension();
-        loc.read(object.getJSONObject(LOC));
-        setLoc(loc);
+        if (object.has(LOC)) {
+            LocExtension loc = new LocExtension();
+            loc.read(object.getJSONObject(LOC));
+            setLoc(loc);
+        }
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
 
         /* Protocol. */
-        writer.key(PROTOCOL).object();
-        getProtocol().write(writer);
-        writer.endObject();
+        if (getProtocol() != null) {
+            writer.key(PROTOCOL).object();
+            getProtocol().write(writer);
+            writer.endObject();
+        }
 
         /* User. */
-        writer.key(USER).object();
-        getUser().write(writer);
-        writer.endObject();
+        if (getUser() != null) {
+            writer.key(USER).object();
+            getUser().write(writer);
+            writer.endObject();
+        }
 
         /* Os. */
-        writer.key(OS).object();
-        getOs().write(writer);
-        writer.endObject();
+        if (getOs() != null) {
+            writer.key(OS).object();
+            getOs().write(writer);
+            writer.endObject();
+        }
 
         /* App. */
-        writer.key(APP).object();
-        getApp().write(writer);
-        writer.endObject();
+        if (getApp() != null) {
+            writer.key(APP).object();
+            getApp().write(writer);
+            writer.endObject();
+        }
 
         /* Net. */
-        writer.key(NET).object();
-        getNet().write(writer);
-        writer.endObject();
+        if (getNet() != null) {
+            writer.key(NET).object();
+            getNet().write(writer);
+            writer.endObject();
+        }
 
         /* SDK. */
-        writer.key(SDK).object();
-        getSdk().write(writer);
-        writer.endObject();
+        if (getSdk() != null) {
+            writer.key(SDK).object();
+            getSdk().write(writer);
+            writer.endObject();
+        }
 
         /* Loc. */
-        writer.key(LOC).object();
-        getLoc().write(writer);
-        writer.endObject();
+        if (getLoc() != null) {
+            writer.key(LOC).object();
+            getLoc().write(writer);
+            writer.endObject();
+        }
     }
 
     @SuppressWarnings("SimplifiableIfStatement")

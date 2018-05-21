@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
 import com.microsoft.appcenter.ingestion.models.Model;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -69,16 +70,17 @@ public class ProtocolExtension implements Model {
 
     @Override
     public void read(JSONObject object) throws JSONException {
-        setDevMake(object.getString(DEV_MAKE));
-        setDevModel(object.getString(DEV_MODEL));
+        setDevMake(object.optString(DEV_MAKE, null));
+        setDevModel(object.optString(DEV_MODEL, null));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        writer.key(DEV_MAKE).value(getDevMake());
-        writer.key(DEV_MODEL).value(getDevModel());
+        JSONUtils.write(writer, DEV_MAKE, getDevMake());
+        JSONUtils.write(writer, DEV_MODEL, getDevModel());
     }
 
+    @SuppressWarnings("SimplifiableIfStatement")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

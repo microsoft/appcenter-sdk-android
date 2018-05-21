@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
 import com.microsoft.appcenter.ingestion.models.Model;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -97,16 +98,16 @@ public class AppExtension implements Model {
 
     @Override
     public void read(JSONObject object) throws JSONException {
-        setId(object.getString(ID));
-        setVer(object.getString(VER));
-        setLocale(object.getString(LOCALE));
+        setId(object.optString(ID, null));
+        setVer(object.optString(VER, null));
+        setLocale(object.optString(LOCALE, null));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        writer.key(ID).value(getId());
-        writer.key(VER).value(getVer());
-        writer.key(LOCALE).value(getLocale());
+        JSONUtils.write(writer, ID, getId());
+        JSONUtils.write(writer, VER, getVer());
+        JSONUtils.write(writer, LOCALE, getLocale());
     }
 
     @SuppressWarnings("SimplifiableIfStatement")

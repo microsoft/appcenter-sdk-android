@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
 import com.microsoft.appcenter.ingestion.models.Model;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -69,14 +70,14 @@ public class OsExtension implements Model {
 
     @Override
     public void read(JSONObject object) throws JSONException {
-        setName(object.getString(NAME));
-        setVer(object.getString(VER));
+        setName(object.optString(NAME, null));
+        setVer(object.optString(VER, null));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        writer.key(NAME).value(getName());
-        writer.key(VER).value(getVer());
+        JSONUtils.write(writer, NAME, getName());
+        JSONUtils.write(writer, VER, getVer());
     }
 
     @SuppressWarnings("SimplifiableIfStatement")
