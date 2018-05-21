@@ -42,6 +42,25 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     @VisibleForTesting
     static final String ONE_COLLECTOR_GROUP_NAME_SUFFIX = "/one";
 
+    @Override
+    public void onPreparedLog(@NonNull Log log, @NonNull String groupName) {
+
+        /* Convert logs to Common Schema. */
+        Collection<CommonSchemaLog> commonSchemaLogs = mLogSerializer.toCommonSchemaLog(log);
+
+        /* Add SDK extension part A fields. LibVer is already set. */
+        for (CommonSchemaLog commonSchemaLog : commonSchemaLogs) {
+            commonSchemaLog.getExt().getSdk().setInstallId(mInstallId);
+            EpochAndSeq epochAndSeq = mEpochsAndSeqsByIKey.get(commonSchemaLog.getIKey());
+            if (epochAndSeq == null) {
+                epochAndSeq = new EpochAndSeq(UUIDUtils.randomUUID().toString(), 0L);
+                mEpochsAndSeqsByIKey.put(commonSchemaLog.getIKey(), epochAndSeq);
+            }
+            commonSchemaLog.getExt().getSdk().setEpoch(epochAndSeq.epoch);
+            commonSchemaLog.getExt().getSdk().setSeq(++epochAndSeq.seq);
+        }
+    }
+
     /**
      * Channel.
      */
@@ -93,24 +112,14 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
 
     @Override
     public boolean shouldFilter(@NonNull Log log) {
-        Collection<CommonSchemaLog> commonSchemaLogs = mLogSerializer.toCommonSchemaLog(log);
-
-        /* Add SDK extension part A fields. LibVer is already set. */
-        for (CommonSchemaLog commonSchemaLog : commonSchemaLogs) {
-            commonSchemaLog.getExt().getSdk().setInstallId(mInstallId);
-            EpochAndSeq epochAndSeq = mEpochsAndSeqsByIKey.get(commonSchemaLog.getIKey());
-            if (epochAndSeq == null) {
-                epochAndSeq = new EpochAndSeq(UUIDUtils.randomUUID().toString(), 0L);
-                mEpochsAndSeqsByIKey.put(commonSchemaLog.getIKey(), epochAndSeq);
-            }
-            commonSchemaLog.getExt().getSdk().setEpoch(epochAndSeq.epoch);
-            commonSchemaLog.getExt().getSdk().setSeq(++epochAndSeq.seq);
-        }
 
         /* Don't send the logs to AppCenter if it is being sent to OneCollector. */
-        return !commonSchemaLogs.isEmpty();
+        return !log.getTransmissionTargetTokens().isEmpty();
     }
 
+    /**
+     * Epoch and sequence number for logs.
+     */
     private static class EpochAndSeq {
 
         /**
