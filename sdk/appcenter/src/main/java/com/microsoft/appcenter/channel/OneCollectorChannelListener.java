@@ -115,6 +115,11 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     @Override
     public void onPreparedLog(@NonNull Log log, @NonNull String groupName) {
 
+        /* Nothing to do on common schema log prepared. */
+        if (log instanceof CommonSchemaLog) {
+            return;
+        }
+
         /* Convert logs to Common Schema. */
         Collection<CommonSchemaLog> commonSchemaLogs = mLogSerializer.toCommonSchemaLog(log);
 
@@ -136,7 +141,7 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     public boolean shouldFilter(@NonNull Log log) {
 
         /* Don't send the logs to AppCenter if it is being sent to OneCollector. */
-        return !log.getTransmissionTargetTokens().isEmpty() && !(log instanceof CommonSchemaLog);
+        return !(log instanceof CommonSchemaLog) && !log.getTransmissionTargetTokens().isEmpty();
     }
 
     @Override
