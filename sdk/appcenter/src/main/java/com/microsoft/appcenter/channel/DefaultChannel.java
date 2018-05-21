@@ -566,7 +566,7 @@ public class DefaultChannel implements Channel {
 
         /* Call listeners so that they can decorate the log. */
         for (Listener listener : mListeners) {
-            listener.onEnqueuingLog(log, groupName);
+            listener.onPreparingLog(log, groupName);
         }
 
         /* Attach device properties to every log if its not already attached by a service. */
@@ -589,6 +589,11 @@ public class DefaultChannel implements Channel {
         /* Set date to current if not explicitly set in the past by a module (such as a crash). */
         if (log.getTimestamp() == null) {
             log.setTimestamp(new Date());
+        }
+
+        /* Notify listeners that log is prepared and is in a final state. */
+        for (Listener listener : mListeners) {
+            listener.onPreparedLog(log, groupName);
         }
 
         /* Call listeners so that they can filter the log. */

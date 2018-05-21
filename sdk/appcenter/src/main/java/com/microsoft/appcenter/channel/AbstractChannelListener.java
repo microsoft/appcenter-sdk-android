@@ -19,7 +19,11 @@ public class AbstractChannelListener implements Channel.Listener {
     }
 
     @Override
-    public void onEnqueuingLog(@NonNull Log log, @NonNull String groupName) {
+    public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
+    }
+
+    @Override
+    public void onPreparedLog(@NonNull Log log, @NonNull String groupName) {
     }
 
     @Override
