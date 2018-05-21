@@ -807,7 +807,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Check enqueue. */
         Log log = mock(Log.class);
         channel.enqueue(log, TEST_GROUP);
-        verify(listener).onEnqueuingLog(log, TEST_GROUP);
+        verify(listener).onPreparingLog(log, TEST_GROUP);
         verify(listener).shouldFilter(log);
         verifyNoMoreInteractions(listener);
 
@@ -854,7 +854,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Enqueue a log: listener is called before but then attaching device properties fails before saving the log. */
         Log log = mock(Log.class);
         channel.enqueue(log, TEST_GROUP);
-        verify(listener).onEnqueuingLog(log, TEST_GROUP);
+        verify(listener).onPreparingLog(log, TEST_GROUP);
         verify(listener, never()).shouldFilter(log);
         verify(persistence, never()).putLog(TEST_GROUP, log);
     }
@@ -1021,9 +1021,9 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
             channel.enqueue(log, TEST_GROUP);
 
             /* Then except the following. behaviors. */
-            verify(listener1).onEnqueuingLog(log, TEST_GROUP);
+            verify(listener1).onPreparingLog(log, TEST_GROUP);
             verify(listener1).shouldFilter(log);
-            verify(listener2).onEnqueuingLog(log, TEST_GROUP);
+            verify(listener2).onPreparingLog(log, TEST_GROUP);
             verify(listener2).shouldFilter(log);
             verify(persistence, never()).putLog(TEST_GROUP, log);
         }
@@ -1039,9 +1039,9 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
             channel.enqueue(log, TEST_GROUP);
 
             /* Then except the following. behaviors. */
-            verify(listener1).onEnqueuingLog(log, TEST_GROUP);
+            verify(listener1).onPreparingLog(log, TEST_GROUP);
             verify(listener1).shouldFilter(log);
-            verify(listener2).onEnqueuingLog(log, TEST_GROUP);
+            verify(listener2).onPreparingLog(log, TEST_GROUP);
 
             /* Second listener skipped since first listener filtered out. */
             verify(listener2, never()).shouldFilter(log);
@@ -1059,9 +1059,9 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
             channel.enqueue(log, TEST_GROUP);
 
             /* Then except the following. behaviors. */
-            verify(listener1).onEnqueuingLog(log, TEST_GROUP);
+            verify(listener1).onPreparingLog(log, TEST_GROUP);
             verify(listener1).shouldFilter(log);
-            verify(listener2).onEnqueuingLog(log, TEST_GROUP);
+            verify(listener2).onPreparingLog(log, TEST_GROUP);
             verify(listener2).shouldFilter(log);
             verify(persistence).putLog(TEST_GROUP, log);
         }

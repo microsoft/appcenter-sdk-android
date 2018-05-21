@@ -566,7 +566,7 @@ public class DefaultChannel implements Channel {
 
         /* Call listeners so that they can decorate the log. */
         for (Listener listener : mListeners) {
-            listener.onEnqueuingLog(log, groupName);
+            listener.onPreparingLog(log, groupName);
         }
 
         /* Attach device properties to every log if its not already attached by a service. */

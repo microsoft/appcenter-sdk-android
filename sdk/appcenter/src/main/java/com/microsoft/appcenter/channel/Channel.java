@@ -105,14 +105,14 @@ public interface Channel {
         void onGroupRemoved(@NonNull String groupName);
 
         /**
-         * Called whenever a log is enqueued.
+         * Called whenever a log is being prepared.
          * This is used to alter some log properties if needed.
          * The channel might alter log furthermore between this event and the next one: {@link #shouldFilter}.
          *
          * @param log       log being enqueued.
          * @param groupName group of the log.
          */
-        void onEnqueuingLog(@NonNull Log log, @NonNull String groupName);
+        void onPreparingLog(@NonNull Log log, @NonNull String groupName);
 
         /**
          * Called after a log has been fully prepared and properties are now final.
