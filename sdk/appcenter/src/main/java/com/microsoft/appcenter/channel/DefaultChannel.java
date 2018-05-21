@@ -249,6 +249,11 @@ public class DefaultChannel implements Channel {
         } else {
             suspend(true, new CancellationException());
         }
+
+        /* Notify listeners that channel state has changed. */
+        for (Listener listener : mListeners) {
+            listener.onGloballyEnabled(enabled);
+        }
     }
 
     @Override

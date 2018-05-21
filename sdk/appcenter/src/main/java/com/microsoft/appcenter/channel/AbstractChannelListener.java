@@ -28,6 +28,10 @@ public class AbstractChannelListener implements Channel.Listener {
     }
 
     @Override
+    public void onGloballyEnabled(boolean isEnabled) {
+    }
+
+    @Override
     public void onClear(@NonNull String groupName) {
     }
 }
