@@ -566,7 +566,7 @@ public class DefaultChannel implements Channel {
 
         /* Call listeners so that they can decorate the log. */
         for (Listener listener : mListeners) {
-            listener.onEnqueuingLog(log, groupName);
+            listener.onPreparingLog(log, groupName);
         }
 
         /* Attach device properties to every log if its not already attached by a service. */
@@ -591,6 +591,11 @@ public class DefaultChannel implements Channel {
             log.setTimestamp(new Date());
         }
 
+        /* Notify listeners that log is prepared and is in a final state. */
+        for (Listener listener : mListeners) {
+            listener.onPreparedLog(log, groupName);
+        }
+
         /* Call listeners so that they can filter the log. */
         boolean filteredOut = false;
         for (Listener listener : mListeners) {
@@ -601,7 +606,6 @@ public class DefaultChannel implements Channel {
         if (filteredOut) {
             AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "' was filtered out by listener(s)");
         } else {
-
             if (groupState.mIngestion == null) {
 
                 /* Log was not filtered out but no app secret has been provided. Do nothing in this case. */

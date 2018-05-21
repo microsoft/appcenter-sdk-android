@@ -33,7 +33,7 @@ public class DistributeInfoTrackerTest {
         /* Distribution group ID field is added to logs. */
         {
             Log log = newLog();
-            distributeInfoTracker.onEnqueuingLog(log, TEST_GROUP);
+            distributeInfoTracker.onPreparingLog(log, TEST_GROUP);
             assertNotNull(log.getDistributionGroupId());
             assertEquals(distributionGroupId, log.getDistributionGroupId());
         }
@@ -46,7 +46,7 @@ public class DistributeInfoTrackerTest {
         /* No distribution group ID field is added to logs because value is null. */
         {
             Log log = newLog();
-            distributeInfoTracker.onEnqueuingLog(log, TEST_GROUP);
+            distributeInfoTracker.onPreparingLog(log, TEST_GROUP);
             assertNull(log.getDistributionGroupId());
         }
 
@@ -55,7 +55,7 @@ public class DistributeInfoTrackerTest {
             String distributionGroupId = UUID.randomUUID().toString();
             distributeInfoTracker.updateDistributionGroupId(distributionGroupId);
             Log log = newLog();
-            distributeInfoTracker.onEnqueuingLog(log, TEST_GROUP);
+            distributeInfoTracker.onPreparingLog(log, TEST_GROUP);
             assertEquals(distributionGroupId, log.getDistributionGroupId());
         }
 
@@ -63,7 +63,7 @@ public class DistributeInfoTrackerTest {
         {
             distributeInfoTracker.removeDistributionGroupId();
             Log log = newLog();
-            distributeInfoTracker.onEnqueuingLog(log, TEST_GROUP);
+            distributeInfoTracker.onPreparingLog(log, TEST_GROUP);
             assertNull(log.getDistributionGroupId());
         }
     }
