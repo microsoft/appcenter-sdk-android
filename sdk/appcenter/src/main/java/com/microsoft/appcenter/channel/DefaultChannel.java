@@ -591,6 +591,11 @@ public class DefaultChannel implements Channel {
             log.setTimestamp(new Date());
         }
 
+        /* Notify listeners that log is prepared and is in a final state. */
+        for (Listener listener : mListeners) {
+            listener.onPreparedLog(log, groupName);
+        }
+
         /* Call listeners so that they can filter the log. */
         boolean filteredOut = false;
         for (Listener listener : mListeners) {

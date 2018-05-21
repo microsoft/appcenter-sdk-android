@@ -23,6 +23,10 @@ public class AbstractChannelListener implements Channel.Listener {
     }
 
     @Override
+    public void onPreparedLog(@NonNull Log log, @NonNull String groupName) {
+    }
+
+    @Override
     public boolean shouldFilter(@NonNull Log log) {
         return false;
     }

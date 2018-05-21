@@ -808,6 +808,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Log log = mock(Log.class);
         channel.enqueue(log, TEST_GROUP);
         verify(listener).onPreparingLog(log, TEST_GROUP);
+        verify(listener).onPreparedLog(log, TEST_GROUP);
         verify(listener).shouldFilter(log);
         verifyNoMoreInteractions(listener);
 

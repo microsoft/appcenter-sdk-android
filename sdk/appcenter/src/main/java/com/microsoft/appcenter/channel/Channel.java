@@ -116,6 +116,14 @@ public interface Channel {
 
         /**
          * Called after a log has been fully prepared and properties are now final.
+         *
+         * @param log       prepared log.
+         * @param groupName group of the log.
+         */
+        void onPreparedLog(@NonNull Log log, @NonNull String groupName);
+
+        /**
+         * Called after a log has been fully prepared and properties are now final.
          * The specified log can be filtered out by listeners if at least one of them returns true.
          *
          * @param log log to filter out.
