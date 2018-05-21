@@ -42,25 +42,6 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     @VisibleForTesting
     static final String ONE_COLLECTOR_GROUP_NAME_SUFFIX = "/one";
 
-    @Override
-    public void onPreparedLog(@NonNull Log log, @NonNull String groupName) {
-
-        /* Convert logs to Common Schema. */
-        Collection<CommonSchemaLog> commonSchemaLogs = mLogSerializer.toCommonSchemaLog(log);
-
-        /* Add SDK extension part A fields. LibVer is already set. */
-        for (CommonSchemaLog commonSchemaLog : commonSchemaLogs) {
-            commonSchemaLog.getExt().getSdk().setInstallId(mInstallId);
-            EpochAndSeq epochAndSeq = mEpochsAndSeqsByIKey.get(commonSchemaLog.getIKey());
-            if (epochAndSeq == null) {
-                epochAndSeq = new EpochAndSeq(UUIDUtils.randomUUID().toString(), 0L);
-                mEpochsAndSeqsByIKey.put(commonSchemaLog.getIKey(), epochAndSeq);
-            }
-            commonSchemaLog.getExt().getSdk().setEpoch(epochAndSeq.epoch);
-            commonSchemaLog.getExt().getSdk().setSeq(++epochAndSeq.seq);
-        }
-    }
-
     /**
      * Channel.
      */
@@ -80,6 +61,16 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
      * Epochs and sequences grouped by iKey.
      */
     private final Map<String, EpochAndSeq> mEpochsAndSeqsByIKey = new HashMap<>();
+
+    /**
+     * Get One Collector's group name for original one.
+     *
+     * @param groupName The group name.
+     * @return The One Collector's group name.
+     */
+    private static String getOneCollectorGroupName(@NonNull String groupName) {
+        return groupName + ONE_COLLECTOR_GROUP_NAME_SUFFIX;
+    }
 
     /**
      * Init with channel.
@@ -110,11 +101,49 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         mChannel.addGroup(oneCollectorGroupName, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
     }
 
+    /**
+     * Checks if the group has One Collector's postfix.
+     *
+     * @param groupName The group name.
+     * @return true if group has One Collector's postfix, false otherwise.
+     */
+    private static boolean isOneCollectorGroup(@NonNull String groupName) {
+        return groupName.endsWith(ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+    }
+
     @Override
     public boolean shouldFilter(@NonNull Log log) {
 
         /* Don't send the logs to AppCenter if it is being sent to OneCollector. */
         return !log.getTransmissionTargetTokens().isEmpty() && !(log instanceof CommonSchemaLog);
+    }
+
+    @Override
+    public void onClear(@NonNull String groupName) {
+        if (isOneCollectorGroup(groupName)) {
+            return;
+        }
+        String oneCollectorGroupName = getOneCollectorGroupName(groupName);
+        mChannel.clear(oneCollectorGroupName);
+    }
+
+    @Override
+    public void onPreparedLog(@NonNull Log log, @NonNull String groupName) {
+
+        /* Convert logs to Common Schema. */
+        Collection<CommonSchemaLog> commonSchemaLogs = mLogSerializer.toCommonSchemaLog(log);
+
+        /* Add SDK extension part A fields. LibVer is already set. */
+        for (CommonSchemaLog commonSchemaLog : commonSchemaLogs) {
+            commonSchemaLog.getExt().getSdk().setInstallId(mInstallId);
+            EpochAndSeq epochAndSeq = mEpochsAndSeqsByIKey.get(commonSchemaLog.getIKey());
+            if (epochAndSeq == null) {
+                epochAndSeq = new EpochAndSeq(UUIDUtils.randomUUID().toString(), 0L);
+                mEpochsAndSeqsByIKey.put(commonSchemaLog.getIKey(), epochAndSeq);
+            }
+            commonSchemaLog.getExt().getSdk().setEpoch(epochAndSeq.epoch);
+            commonSchemaLog.getExt().getSdk().setSeq(++epochAndSeq.seq);
+        }
     }
 
     /**
@@ -139,34 +168,5 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
             this.epoch = epoch;
             this.seq = seq;
         }
-    }
-
-    @Override
-    public void onClear(@NonNull String groupName) {
-        if (isOneCollectorGroup(groupName)) {
-            return;
-        }
-        String oneCollectorGroupName = getOneCollectorGroupName(groupName);
-        mChannel.clear(oneCollectorGroupName);
-    }
-
-    /**
-     * Get One Collector's group name for original one.
-     *
-     * @param groupName The group name.
-     * @return The One Collector's group name.
-     */
-    private String getOneCollectorGroupName(@NonNull String groupName) {
-        return groupName + ONE_COLLECTOR_GROUP_NAME_SUFFIX;
-    }
-
-    /**
-     * Checks if the group has One Collector's postfix.
-     *
-     * @param groupName The group name.
-     * @return true if group has One Collector's postfix, false otherwise.
-     */
-    private boolean isOneCollectorGroup(@NonNull String groupName) {
-        return groupName.endsWith(ONE_COLLECTOR_GROUP_NAME_SUFFIX);
     }
 }
