@@ -811,6 +811,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(listener).shouldFilter(log);
         verifyNoMoreInteractions(listener);
 
+        /* Check enable/disable. */
+        channel.setEnabled(false);
+        verify(listener).onGloballyEnabled(false);
+        channel.setEnabled(true);
+        verify(listener).onGloballyEnabled(true);
+
         /* Check clear. */
         channel.clear(TEST_GROUP);
         verify(listener).onClear(TEST_GROUP);
