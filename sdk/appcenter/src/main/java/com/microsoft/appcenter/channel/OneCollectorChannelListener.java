@@ -114,7 +114,7 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     public boolean shouldFilter(@NonNull Log log) {
 
         /* Don't send the logs to AppCenter if it is being sent to OneCollector. */
-        return !log.getTransmissionTargetTokens().isEmpty();
+        return !log.getTransmissionTargetTokens().isEmpty() && !(log instanceof CommonSchemaLog);
     }
 
     /**
