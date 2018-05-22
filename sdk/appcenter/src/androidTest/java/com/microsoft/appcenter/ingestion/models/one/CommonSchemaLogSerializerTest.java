@@ -6,6 +6,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Test;
 
 import java.util.Date;
@@ -103,6 +104,20 @@ public class CommonSchemaLogSerializerTest {
         checkSerialization(serializer, log);
         log.getExt().getLoc().setTz("-08:00");
         checkSerialization(serializer, log);
+
+        /* Data. */
+        log.setData(new Data());
+        checkSerialization(serializer, log);
+        log.getData().getProperties().put("a", "b");
+        checkSerialization(serializer, log);
+
+        /* Check baseData and baseDataType from Part B not read into Part C. */
+        log.getData().getProperties().put("baseDataType", "custom");
+        log.getData().getProperties().put("baseData", new JSONObject());
+        Log copy = serializer.deserializeLog(serializer.serializeLog(log));
+        log.getData().getProperties().remove("baseData");
+        log.getData().getProperties().remove("baseDataType");
+        assertEquals(log, copy);
     }
 
     /**

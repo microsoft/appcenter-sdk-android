@@ -57,6 +57,11 @@ public abstract class CommonSchemaLog extends AbstractLog {
     private static final String EXT = "ext";
 
     /**
+     * Data property.
+     */
+    private static final String DATA = "data";
+
+    /**
      * Common schema version.
      */
     private String ver;
@@ -90,10 +95,14 @@ public abstract class CommonSchemaLog extends AbstractLog {
     private String cV;
 
     /**
-     * /**
      * Part A Extensions.
      */
     private Extensions ext;
+
+    /**
+     * Data (parts B and C).
+     */
+    private Data data;
 
     /**
      * Get common schema version.
@@ -155,6 +164,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
      *
      * @return instrumentation key.
      */
+    @SuppressWarnings("WeakerAccess")
     public String getIKey() {
         return iKey;
     }
@@ -223,6 +233,24 @@ public abstract class CommonSchemaLog extends AbstractLog {
         this.ext = ext;
     }
 
+    /**
+     * Get Parts B&C.
+     *
+     * @return Parts B&C.
+     */
+    public Data getData() {
+        return data;
+    }
+
+    /**
+     * Set Parts B&C.
+     *
+     * @param data Parts B&C.
+     */
+    public void setData(Data data) {
+        this.data = data;
+    }
+
     @Override
     public void read(JSONObject object) throws JSONException {
 
@@ -244,6 +272,13 @@ public abstract class CommonSchemaLog extends AbstractLog {
             Extensions extensions = new Extensions();
             extensions.read(object.getJSONObject(EXT));
             setExt(extensions);
+        }
+
+        /* Read Parts B&C. */
+        if (object.has(DATA)) {
+            Data data = new Data();
+            data.read(object.getJSONObject(DATA));
+            setData(data);
         }
     }
 
@@ -270,6 +305,13 @@ public abstract class CommonSchemaLog extends AbstractLog {
             getExt().write(writer);
             writer.endObject();
         }
+
+        /* Parts B&C. */
+        if (getData() != null) {
+            writer.key(DATA).object();
+            getData().write(writer);
+            writer.endObject();
+        }
     }
 
     @SuppressWarnings("SimplifiableIfStatement")
@@ -288,7 +330,8 @@ public abstract class CommonSchemaLog extends AbstractLog {
         if (iKey != null ? !iKey.equals(that.iKey) : that.iKey != null) return false;
         if (flags != null ? !flags.equals(that.flags) : that.flags != null) return false;
         if (cV != null ? !cV.equals(that.cV) : that.cV != null) return false;
-        return ext != null ? ext.equals(that.ext) : that.ext == null;
+        if (ext != null ? !ext.equals(that.ext) : that.ext != null) return false;
+        return data != null ? data.equals(that.data) : that.data == null;
     }
 
     @Override
@@ -301,6 +344,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
         result = 31 * result + (flags != null ? flags.hashCode() : 0);
         result = 31 * result + (cV != null ? cV.hashCode() : 0);
         result = 31 * result + (ext != null ? ext.hashCode() : 0);
+        result = 31 * result + (data != null ? data.hashCode() : 0);
         return result;
     }
 }

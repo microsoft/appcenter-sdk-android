@@ -2,6 +2,8 @@ package com.microsoft.appcenter.ingestion.models.one;
 
 import com.microsoft.appcenter.test.TestUtils;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Test;
 
 import java.util.Date;
@@ -17,7 +19,7 @@ public class CommonSchemaLogTest {
     }
 
     @Test
-    public void equalsHashCode() {
+    public void equalsHashCode() throws JSONException {
 
         /* Empty objects. */
         MockCommonSchemaLog a = new MockCommonSchemaLog();
@@ -88,6 +90,14 @@ public class CommonSchemaLogTest {
         b.setExt(new Extensions());
         checkNotEquals(a, b);
         b.setExt(a.getExt());
+        checkEquals(a, b);
+
+        /* Data. */
+        Data data = new Data();
+        data.getProperties().put("a", "b");
+        a.setData(data);
+        checkNotEquals(a, b);
+        b.setData(a.getData());
         checkEquals(a, b);
     }
 }
