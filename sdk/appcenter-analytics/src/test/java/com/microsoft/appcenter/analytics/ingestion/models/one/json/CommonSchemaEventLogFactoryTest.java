@@ -3,6 +3,7 @@ package com.microsoft.appcenter.analytics.ingestion.models.one.json;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
 import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
+import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
 
@@ -25,7 +26,9 @@ public class CommonSchemaEventLogFactoryTest {
 
     @Test
     public void createEvent() {
-        assertNotNull(new CommonSchemaEventLogFactory().create());
+        CommonSchemaEventLog eventLog = new CommonSchemaEventLogFactory().create();
+        assertNotNull(eventLog);
+        assertEquals(CommonSchemaEventLog.TYPE, eventLog.getType());
     }
 
     @Test
