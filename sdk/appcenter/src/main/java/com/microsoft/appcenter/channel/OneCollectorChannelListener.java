@@ -41,6 +41,8 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
 
     /**
      * Init with channel.
+     *
+     * @param channel channel.
      */
     public OneCollectorChannelListener(@NonNull Channel channel) {
         mChannel = channel;

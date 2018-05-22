@@ -234,18 +234,18 @@ public abstract class CommonSchemaLog extends AbstractLog {
     }
 
     /**
-     * Get Parts B&C.
+     * Get Parts B and C.
      *
-     * @return Parts B&C.
+     * @return Parts B and C.
      */
     public Data getData() {
         return data;
     }
 
     /**
-     * Set Parts B&C.
+     * Set Parts B and C.
      *
-     * @param data Parts B&C.
+     * @param data Parts B and C.
      */
     public void setData(Data data) {
         this.data = data;
