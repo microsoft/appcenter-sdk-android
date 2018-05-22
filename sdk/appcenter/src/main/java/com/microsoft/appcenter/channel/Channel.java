@@ -12,6 +12,7 @@ public interface Channel {
 
     /**
      * Add a group for logs to be persisted and sent.
+     *
      * @param groupName          the name of a group.
      * @param maxLogsPerBatch    maximum log count per batch.
      * @param batchTimeInterval  time interval for a next batch.
@@ -95,12 +96,16 @@ public interface Channel {
     interface Listener {
 
         /**
-         * Called whenever a new group is added.
+         * Called whenever a new group is added
+         *
+         * @param groupName group name.
          */
         void onGroupAdded(@NonNull String groupName);
 
         /**
          * Called whenever a new group is removed.
+         *
+         * @param groupName group name.
          */
         void onGroupRemoved(@NonNull String groupName);
 

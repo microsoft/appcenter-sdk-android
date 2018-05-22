@@ -65,6 +65,8 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
 
     /**
      * Init with channel.
+     *
+     * @param channel channel.
      */
     public OneCollectorChannelListener(@NonNull Channel channel, @NonNull LogSerializer logSerializer, @NonNull UUID installId) {
         mChannel = channel;
