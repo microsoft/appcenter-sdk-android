@@ -65,6 +65,6 @@ public class PartAUtils {
                 device.getTimeZoneOffset() >= 0 ? "+" : "-",
                 Math.abs(device.getTimeZoneOffset() / 60),
                 Math.abs(device.getTimeZoneOffset() % 60));
-        dest.getExt().getLoc().setTz(timezoneOffset);
+        dest.getExt().getLoc().setTimeZone(timezoneOffset);
     }
 }
