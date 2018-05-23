@@ -103,6 +103,16 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         return groupName.endsWith(ONE_COLLECTOR_GROUP_NAME_SUFFIX);
     }
 
+    /**
+     * Checks if the log is compatible with One Collector.
+     *
+     * @param log The log.
+     * @return true if the log is compatible with One Collector, false otherwise.
+     */
+    private static boolean isOneCollectorCompatible(@NonNull Log log) {
+        return !(log instanceof CommonSchemaLog) && !log.getTransmissionTargetTokens().isEmpty();
+    }
+
     @Override
     public void onGroupRemoved(@NonNull String groupName) {
         if (isOneCollectorGroup(groupName)) {
@@ -118,7 +128,7 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     public void onPreparedLog(@NonNull Log log, @NonNull String groupName) {
 
         /* Nothing to do on common schema log prepared. */
-        if (log instanceof CommonSchemaLog) {
+        if (!isOneCollectorCompatible(log)) {
             return;
         }
 
@@ -137,13 +147,19 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
             sdk.setSeq(++epochAndSeq.seq);
             sdk.setInstallId(mInstallId);
         }
+
+        /* Enqueue logs to one collector group. */
+        String oneCollectorGroupName = getOneCollectorGroupName(groupName);
+        for (CommonSchemaLog commonSchemaLog : commonSchemaLogs) {
+            mChannel.enqueue(commonSchemaLog, oneCollectorGroupName);
+        }
     }
 
     @Override
     public boolean shouldFilter(@NonNull Log log) {
 
         /* Don't send the logs to AppCenter if it is being sent to OneCollector. */
-        return !(log instanceof CommonSchemaLog) && !log.getTransmissionTargetTokens().isEmpty();
+        return isOneCollectorCompatible(log);
     }
 
     @Override
