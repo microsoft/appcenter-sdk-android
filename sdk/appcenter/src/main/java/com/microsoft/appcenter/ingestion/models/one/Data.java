@@ -15,12 +15,12 @@ public class Data implements Model {
     /**
      * Part B data type property.
      */
-    private static final String BASE_DATA_TYPE = "baseDataType";
+    public static final String BASE_DATA_TYPE = "baseDataType";
 
     /**
      * Part B data property.
      */
-    private static final String BASE_DATA = "baseData";
+    public static final String BASE_DATA = "baseData";
 
     /**
      * Part C properties.
