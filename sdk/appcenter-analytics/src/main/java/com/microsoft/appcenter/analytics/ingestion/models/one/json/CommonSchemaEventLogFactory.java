@@ -6,6 +6,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
+import com.microsoft.appcenter.ingestion.models.one.PartCUtils;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -39,7 +40,8 @@ public class CommonSchemaEventLogFactory implements LogFactory {
                 EventLog eventLog = (EventLog) log;
                 commonSchemaEventLog.setName(eventLog.getName());
 
-                /* TODO properties go to Part C. */
+                /* Properties go to Part C. */
+                PartCUtils.addPartCFromLog(eventLog.getProperties(), commonSchemaEventLog);
                 commonSchemaLogs.add(commonSchemaEventLog);
             }
             return commonSchemaLogs;
