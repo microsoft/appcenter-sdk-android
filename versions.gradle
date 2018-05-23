@@ -1,5 +1,4 @@
 // Version constants
-
 ext {
     versionCode = 34
     versionName = '1.5.2'
