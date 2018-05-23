@@ -82,14 +82,14 @@ public class ExtensionsTest {
         b.setSdk(a.getSdk());
         checkEquals(a, b);
 
-        /* Loc. */
-        LocExtension loc = new LocExtension();
-        loc.setTz("+02:00");
-        a.setLoc(loc);
+        /* Location. */
+        LocationExtension loc = new LocationExtension();
+        loc.setTimeZone("+02:00");
+        a.setLocation(loc);
         checkNotEquals(a, b);
-        b.setLoc(new LocExtension());
+        b.setLocation(new LocationExtension());
         checkNotEquals(a, b);
-        b.setLoc(a.getLoc());
+        b.setLocation(a.getLocation());
         checkEquals(a, b);
     }
 }

@@ -42,9 +42,9 @@ public class Extensions implements Model {
     private static final String SDK = "sdk";
 
     /**
-     * Loc property.
+     * Location property.
      */
-    private static final String LOC = "loc";
+    private static final String LOCATION = "location";
 
     /**
      * Protocol extension.
@@ -79,7 +79,7 @@ public class Extensions implements Model {
     /**
      * Loc extension.
      */
-    private LocExtension loc;
+    private LocationExtension location;
 
     /**
      * Get protocol extension.
@@ -190,21 +190,21 @@ public class Extensions implements Model {
     }
 
     /**
-     * Get loc extension.
+     * Get location extension.
      *
-     * @return loc extension.
+     * @return location extension.
      */
-    public LocExtension getLoc() {
-        return loc;
+    public LocationExtension getLocation() {
+        return location;
     }
 
     /**
-     * Set loc extension.
+     * Set location extension.
      *
-     * @param loc loc extension.
+     * @param location location extension.
      */
-    public void setLoc(LocExtension loc) {
-        this.loc = loc;
+    public void setLocation(LocationExtension location) {
+        this.location = location;
     }
 
     @Override
@@ -252,11 +252,11 @@ public class Extensions implements Model {
             setSdk(sdk);
         }
 
-        /* Loc. */
-        if (object.has(LOC)) {
-            LocExtension loc = new LocExtension();
-            loc.read(object.getJSONObject(LOC));
-            setLoc(loc);
+        /* Location. */
+        if (object.has(LOCATION)) {
+            LocationExtension loc = new LocationExtension();
+            loc.read(object.getJSONObject(LOCATION));
+            setLocation(loc);
         }
     }
 
@@ -305,10 +305,10 @@ public class Extensions implements Model {
             writer.endObject();
         }
 
-        /* Loc. */
-        if (getLoc() != null) {
-            writer.key(LOC).object();
-            getLoc().write(writer);
+        /* Location. */
+        if (getLocation() != null) {
+            writer.key(LOCATION).object();
+            getLocation().write(writer);
             writer.endObject();
         }
     }
@@ -328,7 +328,7 @@ public class Extensions implements Model {
         if (app != null ? !app.equals(that.app) : that.app != null) return false;
         if (net != null ? !net.equals(that.net) : that.net != null) return false;
         if (sdk != null ? !sdk.equals(that.sdk) : that.sdk != null) return false;
-        return loc != null ? loc.equals(that.loc) : that.loc == null;
+        return location != null ? location.equals(that.location) : that.location == null;
     }
 
     @Override
@@ -339,7 +339,7 @@ public class Extensions implements Model {
         result = 31 * result + (app != null ? app.hashCode() : 0);
         result = 31 * result + (net != null ? net.hashCode() : 0);
         result = 31 * result + (sdk != null ? sdk.hashCode() : 0);
-        result = 31 * result + (loc != null ? loc.hashCode() : 0);
+        result = 31 * result + (location != null ? location.hashCode() : 0);
         return result;
     }
 }

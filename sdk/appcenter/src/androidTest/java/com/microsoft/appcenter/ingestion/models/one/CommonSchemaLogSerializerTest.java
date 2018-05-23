@@ -99,10 +99,10 @@ public class CommonSchemaLogSerializerTest {
         log.getExt().getSdk().setInstallId(UUIDUtils.randomUUID());
         checkSerialization(serializer, log);
 
-        /* Loc extension. */
-        log.getExt().setLoc(new LocExtension());
+        /* Location extension. */
+        log.getExt().setLocation(new LocationExtension());
         checkSerialization(serializer, log);
-        log.getExt().getLoc().setTz("-08:00");
+        log.getExt().getLocation().setTimeZone("-08:00");
         checkSerialization(serializer, log);
 
         /* Data. */

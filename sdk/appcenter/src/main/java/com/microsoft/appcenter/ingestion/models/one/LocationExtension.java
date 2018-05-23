@@ -10,44 +10,44 @@ import org.json.JSONStringer;
 /**
  * Describes the location from which the event was logged.
  */
-public class LocExtension implements Model {
+public class LocationExtension implements Model {
 
     /**
      * Time zone property.
      */
-    private static final String TZ = "tz";
+    private static final String TIMEZONE = "timeZone";
 
     /**
      * Time zone on the device.
      */
-    private String tz;
+    private String timeZone;
 
     /**
      * Get device time zone.
      *
      * @return device time zone.
      */
-    public String getTz() {
-        return tz;
+    public String getTimeZone() {
+        return timeZone;
     }
 
     /**
      * Set device time zone.
      *
-     * @param tz device time zone.
+     * @param timeZone device time zone.
      */
-    public void setTz(String tz) {
-        this.tz = tz;
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
     }
 
     @Override
     public void read(JSONObject object) throws JSONException {
-        setTz(object.optString(TZ, null));
+        setTimeZone(object.optString(TIMEZONE, null));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        JSONUtils.write(writer, TZ, getTz());
+        JSONUtils.write(writer, TIMEZONE, getTimeZone());
     }
 
     @Override
@@ -55,13 +55,13 @@ public class LocExtension implements Model {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        LocExtension that = (LocExtension) o;
+        LocationExtension that = (LocationExtension) o;
 
-        return tz != null ? tz.equals(that.tz) : that.tz == null;
+        return timeZone != null ? timeZone.equals(that.timeZone) : that.timeZone == null;
     }
 
     @Override
     public int hashCode() {
-        return tz != null ? tz.hashCode() : 0;
+        return timeZone != null ? timeZone.hashCode() : 0;
     }
 }
