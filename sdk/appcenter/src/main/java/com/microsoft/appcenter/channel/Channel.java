@@ -6,7 +6,7 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 
 /**
- * The interface for Channel
+ * The interface for Channel.
  */
 public interface Channel {
 
@@ -32,8 +32,8 @@ public interface Channel {
     /**
      * Add Log to queue to be persisted and sent.
      *
-     * @param log       the Log to be enqueued
-     * @param groupName the group to use
+     * @param log       the Log to be enqueued.
+     * @param groupName the group to use.
      */
     void enqueue(@NonNull Log log, @NonNull String groupName);
 
@@ -96,7 +96,7 @@ public interface Channel {
     interface Listener {
 
         /**
-         * Called whenever a new group is added
+         * Called whenever a new group is added.
          *
          * @param groupName group name.
          */
@@ -135,6 +135,13 @@ public interface Channel {
          * @return true to filter out the log, false to let it being stored and sent by the channel.
          */
         boolean shouldFilter(@NonNull Log log);
+
+        /**
+         * Called after channel state has changed.
+         *
+         * @param isEnabled new channel state.
+         */
+        void onGloballyEnabled(boolean isEnabled);
 
         /**
          * Called when a group is cleared.
