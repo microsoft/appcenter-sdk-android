@@ -68,6 +68,10 @@ public class OneCollectorChannelListenerTest {
     @Test
     public void enqueueConvertedLogs() {
 
+        /* Mock original log. */
+        Log originalLog = mock(Log.class);
+        when(originalLog.getTransmissionTargetTokens()).thenReturn(new HashSet<>(Collections.singletonList("token")));
+
         /* Mock a log. */
         CommonSchemaLog log1 = mock(CommonSchemaLog.class);
         Extensions ext1 = new Extensions();
@@ -88,7 +92,12 @@ public class OneCollectorChannelListenerTest {
         /* Init listener. */
         UUID installId = UUIDUtils.randomUUID();
         OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, logSerializer, installId);
-        listener.onPreparedLog(mock(Log.class), TEST_GROUP);
+        listener.onPreparedLog(originalLog, TEST_GROUP);
+        listener.onPreparedLog(mock(CommonSchemaLog.class), TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+
+        /* Verify conversion. */
+        verify(logSerializer).toCommonSchemaLog(originalLog);
+        verifyNoMoreInteractions(logSerializer);
 
         /* Verify same epoch. */
         assertNotNull(log1.getExt().getSdk().getEpoch());
@@ -102,7 +111,9 @@ public class OneCollectorChannelListenerTest {
         assertEquals(installId, log1.getExt().getSdk().getInstallId());
         assertEquals(installId, log2.getExt().getSdk().getInstallId());
 
-        /* TODO verify enqueue here. */
+        /* Verify enqueue. */
+        verify(channel).enqueue(log1, TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        verify(channel).enqueue(log2, TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
     }
 
     @Test
