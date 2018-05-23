@@ -678,6 +678,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Persistence persistence = mock(Persistence.class);
         when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(1));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mCoreHandler);
+        Channel.Listener listener = spy(new AbstractChannelListener());
+        channel.addListener(listener);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         channel.enqueue(mock(Log.class), TEST_GROUP);
         verify(mHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
@@ -688,6 +690,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(ingestion).close();
         verify(persistence).deleteLogs(TEST_GROUP);
         verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(listener).onGloballyEnabled(false);
 
         /* Enable and send a new log. */
         AtomicReference<Runnable> runnable = catchPostRunnable();
@@ -697,6 +700,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         runnable.get().run();
         verify(ingestion).reopen();
         verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(listener).onGloballyEnabled(true);
     }
 
     @Test

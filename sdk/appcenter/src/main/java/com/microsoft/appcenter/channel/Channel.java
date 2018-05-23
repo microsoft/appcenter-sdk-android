@@ -132,6 +132,13 @@ public interface Channel {
         boolean shouldFilter(@NonNull Log log);
 
         /**
+         * Called after channel state has changed.
+         *
+         * @param isEnabled new channel state.
+         */
+        void onGloballyEnabled(boolean isEnabled);
+
+        /**
          * Called when a group is cleared.
          *
          * @param groupName The group name.
