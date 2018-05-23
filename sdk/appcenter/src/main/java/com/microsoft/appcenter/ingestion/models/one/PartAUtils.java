@@ -59,12 +59,12 @@ public class PartAUtils {
         dest.getExt().setSdk(new SdkExtension());
         dest.getExt().getSdk().setLibVer(device.getSdkName() + "-" + device.getSdkVersion());
 
-        /* Add loc extension. */
-        dest.getExt().setLoc(new LocExtension());
+        /* Add location extension. */
+        dest.getExt().setLocation(new LocationExtension());
         String timezoneOffset = String.format(Locale.US, "%s%02d:%02d",
                 device.getTimeZoneOffset() >= 0 ? "+" : "-",
                 Math.abs(device.getTimeZoneOffset() / 60),
                 Math.abs(device.getTimeZoneOffset() % 60));
-        dest.getExt().getLoc().setTz(timezoneOffset);
+        dest.getExt().getLocation().setTimeZone(timezoneOffset);
     }
 }

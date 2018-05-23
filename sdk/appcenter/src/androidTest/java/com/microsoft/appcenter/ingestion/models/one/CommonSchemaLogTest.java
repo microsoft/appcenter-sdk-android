@@ -3,7 +3,6 @@ package com.microsoft.appcenter.ingestion.models.one;
 import com.microsoft.appcenter.test.TestUtils;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.Test;
 
 import java.util.Date;
@@ -84,7 +83,7 @@ public class CommonSchemaLogTest {
 
         /* Extensions. */
         Extensions ext = new Extensions();
-        ext.setLoc(new LocExtension());
+        ext.setLocation(new LocationExtension());
         a.setExt(ext);
         checkNotEquals(a, b);
         b.setExt(new Extensions());

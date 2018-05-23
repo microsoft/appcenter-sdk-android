@@ -7,27 +7,27 @@ import org.junit.Test;
 import static com.microsoft.appcenter.test.TestUtils.checkEquals;
 import static com.microsoft.appcenter.test.TestUtils.checkNotEquals;
 
-public class LocExtensionTest {
+public class LocationExtensionTest {
 
     @Test
     public void compareDifferentType() {
-        TestUtils.compareSelfNullClass(new LocExtension());
+        TestUtils.compareSelfNullClass(new LocationExtension());
     }
 
     @Test
     public void equalsHashCode() {
 
         /* Empty objects. */
-        LocExtension a = new LocExtension();
-        LocExtension b = new LocExtension();
+        LocationExtension a = new LocationExtension();
+        LocationExtension b = new LocationExtension();
         checkEquals(a, b);
 
-        /* Tz. */
-        a.setTz("a1");
+        /* Timezone. */
+        a.setTimeZone("a1");
         checkNotEquals(a, b);
-        b.setTz("b1");
+        b.setTimeZone("b1");
         checkNotEquals(a, b);
-        b.setTz("a1");
+        b.setTimeZone("a1");
         checkEquals(a, b);
     }
 }

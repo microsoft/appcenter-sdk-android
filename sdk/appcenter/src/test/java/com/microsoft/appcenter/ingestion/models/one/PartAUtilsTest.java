@@ -81,7 +81,7 @@ public class PartAUtilsTest {
         assertEquals("carrierName", commonSchemaLog.getExt().getNet().getProvider());
         assertNotNull(commonSchemaLog.getExt().getSdk());
         assertEquals("appcenter.android-1.5.0", commonSchemaLog.getExt().getSdk().getLibVer());
-        assertNotNull(commonSchemaLog.getExt().getLoc());
-        assertEquals(commonSchemaTimeZoneOffset, commonSchemaLog.getExt().getLoc().getTz());
+        assertNotNull(commonSchemaLog.getExt().getLocation());
+        assertEquals(commonSchemaTimeZoneOffset, commonSchemaLog.getExt().getLocation().getTimeZone());
     }
 }
