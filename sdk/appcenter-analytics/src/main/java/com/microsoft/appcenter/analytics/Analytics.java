@@ -16,6 +16,8 @@ import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.appcenter.analytics.ingestion.models.json.EventLogFactory;
 import com.microsoft.appcenter.analytics.ingestion.models.json.PageLogFactory;
 import com.microsoft.appcenter.analytics.ingestion.models.json.StartSessionLogFactory;
+import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
+import com.microsoft.appcenter.analytics.ingestion.models.one.json.CommonSchemaEventLogFactory;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
@@ -106,6 +108,7 @@ public class Analytics extends AbstractAppCenterService {
         mFactories.put(StartSessionLog.TYPE, new StartSessionLogFactory());
         mFactories.put(PageLog.TYPE, new PageLogFactory());
         mFactories.put(EventLog.TYPE, new EventLogFactory());
+        mFactories.put(CommonSchemaEventLog.TYPE, new CommonSchemaEventLogFactory());
         mTransmissionTargets = new HashMap<>();
     }
 

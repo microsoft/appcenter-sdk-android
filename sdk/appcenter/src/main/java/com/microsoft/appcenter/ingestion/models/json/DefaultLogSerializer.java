@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.json.JSONArray;
@@ -14,6 +15,7 @@ import org.json.JSONStringer;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +58,11 @@ public class DefaultLogSerializer implements LogSerializer {
     @Override
     public Log deserializeLog(@NonNull String json) throws JSONException {
         return readLog(new JSONObject(json));
+    }
+
+    @Override
+    public Collection<CommonSchemaLog> toCommonSchemaLog(@NonNull Log log) {
+        return mLogFactories.get(log.getType()).toCommonSchemaLogs(log);
     }
 
     @NonNull

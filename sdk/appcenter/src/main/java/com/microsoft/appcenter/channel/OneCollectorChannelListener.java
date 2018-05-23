@@ -4,6 +4,15 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.SdkExtension;
+import com.microsoft.appcenter.utils.UUIDUtils;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * One Collector channel listener used to redirect selected traffic to One Collector.
@@ -37,15 +46,32 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     /**
      * Channel.
      */
-    private Channel mChannel;
+    private final Channel mChannel;
+
+    /**
+     * Log serializer.
+     */
+    private final LogSerializer mLogSerializer;
+
+    /**
+     * Install id.
+     */
+    private final UUID mInstallId;
+
+    /**
+     * Epochs and sequences grouped by iKey.
+     */
+    private final Map<String, EpochAndSeq> mEpochsAndSeqsByIKey = new HashMap<>();
 
     /**
      * Init with channel.
      *
      * @param channel channel.
      */
-    public OneCollectorChannelListener(@NonNull Channel channel) {
+    public OneCollectorChannelListener(@NonNull Channel channel, @NonNull LogSerializer logSerializer, @NonNull UUID installId) {
         mChannel = channel;
+        mLogSerializer = logSerializer;
+        mInstallId = installId;
     }
 
     @Override
@@ -57,6 +83,26 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         mChannel.addGroup(oneCollectorGroupName, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
     }
 
+    /**
+     * Get One Collector's group name for original one.
+     *
+     * @param groupName The group name.
+     * @return The One Collector's group name.
+     */
+    private static String getOneCollectorGroupName(@NonNull String groupName) {
+        return groupName + ONE_COLLECTOR_GROUP_NAME_SUFFIX;
+    }
+
+    /**
+     * Checks if the group has One Collector's postfix.
+     *
+     * @param groupName The group name.
+     * @return true if group has One Collector's postfix, false otherwise.
+     */
+    private static boolean isOneCollectorGroup(@NonNull String groupName) {
+        return groupName.endsWith(ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+    }
+
     @Override
     public void onGroupRemoved(@NonNull String groupName) {
         if (isOneCollectorGroup(groupName)) {
@@ -64,11 +110,40 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         }
         String oneCollectorGroupName = getOneCollectorGroupName(groupName);
         mChannel.removeGroup(oneCollectorGroupName);
+
+        /* TODO: We need to reset epoch and sequence in onGloballyEnabled(false) callback. */
+    }
+
+    @Override
+    public void onPreparedLog(@NonNull Log log, @NonNull String groupName) {
+
+        /* Nothing to do on common schema log prepared. */
+        if (log instanceof CommonSchemaLog) {
+            return;
+        }
+
+        /* Convert logs to Common Schema. */
+        Collection<CommonSchemaLog> commonSchemaLogs = mLogSerializer.toCommonSchemaLog(log);
+
+        /* Add SDK extension part A fields. libVer is already set. */
+        for (CommonSchemaLog commonSchemaLog : commonSchemaLogs) {
+            EpochAndSeq epochAndSeq = mEpochsAndSeqsByIKey.get(commonSchemaLog.getIKey());
+            if (epochAndSeq == null) {
+                epochAndSeq = new EpochAndSeq(UUIDUtils.randomUUID().toString(), 0L);
+                mEpochsAndSeqsByIKey.put(commonSchemaLog.getIKey(), epochAndSeq);
+            }
+            SdkExtension sdk = commonSchemaLog.getExt().getSdk();
+            sdk.setEpoch(epochAndSeq.epoch);
+            sdk.setSeq(++epochAndSeq.seq);
+            sdk.setInstallId(mInstallId);
+        }
     }
 
     @Override
     public boolean shouldFilter(@NonNull Log log) {
-        return false;
+
+        /* Don't send the logs to AppCenter if it is being sent to OneCollector. */
+        return !(log instanceof CommonSchemaLog) && !log.getTransmissionTargetTokens().isEmpty();
     }
 
     @Override
@@ -81,22 +156,26 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     }
 
     /**
-     * Get One Collector's group name for original one.
-     *
-     * @param groupName The group name.
-     * @return The One Collector's group name.
+     * Epoch and sequence number for logs.
      */
-    private String getOneCollectorGroupName(@NonNull String groupName) {
-        return groupName + ONE_COLLECTOR_GROUP_NAME_SUFFIX;
-    }
+    private static class EpochAndSeq {
 
-    /**
-     * Checks if the group has One Collector's postfix.
-     *
-     * @param groupName The group name.
-     * @return true if group has One Collector's postfix, false otherwise.
-     */
-    private boolean isOneCollectorGroup(@NonNull String groupName) {
-        return groupName.endsWith(ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        /**
+         * Epoch.
+         */
+        String epoch;
+
+        /**
+         * Sequence number.
+         */
+        long seq;
+
+        /**
+         * Init.
+         */
+        EpochAndSeq(String epoch, long seq) {
+            this.epoch = epoch;
+            this.seq = seq;
+        }
     }
 }
