@@ -27,6 +27,9 @@ public class PartAUtils {
         /* TODO: We should cache the ikey for transmission target */
         dest.setIKey("o:" + transmissionTarget.split("-")[0]);
 
+        /* Copy target token also in the set. */
+        dest.addTransmissionTarget(transmissionTarget);
+
         /* Add extension. */
         dest.setExt(new Extensions());
 
