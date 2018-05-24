@@ -83,36 +83,6 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         mChannel.addGroup(oneCollectorGroupName, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
     }
 
-    /**
-     * Get One Collector's group name for original one.
-     *
-     * @param groupName The group name.
-     * @return The One Collector's group name.
-     */
-    private static String getOneCollectorGroupName(@NonNull String groupName) {
-        return groupName + ONE_COLLECTOR_GROUP_NAME_SUFFIX;
-    }
-
-    /**
-     * Checks if the group has One Collector's postfix.
-     *
-     * @param groupName The group name.
-     * @return true if group has One Collector's postfix, false otherwise.
-     */
-    private static boolean isOneCollectorGroup(@NonNull String groupName) {
-        return groupName.endsWith(ONE_COLLECTOR_GROUP_NAME_SUFFIX);
-    }
-
-    /**
-     * Checks if the log is compatible with One Collector.
-     *
-     * @param log The log.
-     * @return true if the log is compatible with One Collector, false otherwise.
-     */
-    private static boolean isOneCollectorCompatible(@NonNull Log log) {
-        return !(log instanceof CommonSchemaLog) && !log.getTransmissionTargetTokens().isEmpty();
-    }
-
     @Override
     public void onGroupRemoved(@NonNull String groupName) {
         if (isOneCollectorGroup(groupName)) {
@@ -120,8 +90,6 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         }
         String oneCollectorGroupName = getOneCollectorGroupName(groupName);
         mChannel.removeGroup(oneCollectorGroupName);
-
-        /* TODO: We need to reset epoch and sequence in onGloballyEnabled(false) callback. */
     }
 
     @Override
@@ -162,6 +130,16 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         return isOneCollectorCompatible(log);
     }
 
+    /**
+     * Get One Collector's group name for original one.
+     *
+     * @param groupName The group name.
+     * @return The One Collector's group name.
+     */
+    private static String getOneCollectorGroupName(@NonNull String groupName) {
+        return groupName + ONE_COLLECTOR_GROUP_NAME_SUFFIX;
+    }
+
     @Override
     public void onClear(@NonNull String groupName) {
         if (isOneCollectorGroup(groupName)) {
@@ -169,6 +147,33 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         }
         String oneCollectorGroupName = getOneCollectorGroupName(groupName);
         mChannel.clear(oneCollectorGroupName);
+    }
+
+    /**
+     * Checks if the group has One Collector's postfix.
+     *
+     * @param groupName The group name.
+     * @return true if group has One Collector's postfix, false otherwise.
+     */
+    private static boolean isOneCollectorGroup(@NonNull String groupName) {
+        return groupName.endsWith(ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+    }
+
+    /**
+     * Checks if the log is compatible with One Collector.
+     *
+     * @param log The log.
+     * @return true if the log is compatible with One Collector, false otherwise.
+     */
+    private static boolean isOneCollectorCompatible(@NonNull Log log) {
+        return !(log instanceof CommonSchemaLog) && !log.getTransmissionTargetTokens().isEmpty();
+    }
+
+    @Override
+    public void onGloballyEnabled(boolean isEnabled) {
+        if (!isEnabled) {
+            mEpochsAndSeqsByIKey.clear();
+        }
     }
 
     /**
