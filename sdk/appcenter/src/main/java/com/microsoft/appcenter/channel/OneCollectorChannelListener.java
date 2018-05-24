@@ -181,7 +181,6 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
      */
     private static class EpochAndSeq {
 
-
         /**
          * Epoch.
          */
