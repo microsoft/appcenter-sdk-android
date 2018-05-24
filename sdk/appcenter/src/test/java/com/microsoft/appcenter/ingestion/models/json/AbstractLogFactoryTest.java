@@ -12,17 +12,16 @@ import static org.junit.Assert.assertSame;
 
 public class AbstractLogFactoryTest {
 
-    private AbstractLogFactory mLogFactory = new AbstractLogFactory() {
-
-        @Override
-        public Log create() {
-            return null;
-        }
-    };
-
     @Test
     public void toCommonSchemaLogs() {
-        Collection<CommonSchemaLog> logs = mLogFactory.toCommonSchemaLogs(null);
+        AbstractLogFactory logFactory = new AbstractLogFactory() {
+
+            @Override
+            public Log create() {
+                return null;
+            }
+        };
+        Collection<CommonSchemaLog> logs = logFactory.toCommonSchemaLogs(null);
         assertNotNull(logs);
         assertSame(0, logs.size());
     }
