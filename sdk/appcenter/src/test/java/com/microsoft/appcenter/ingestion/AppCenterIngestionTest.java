@@ -48,8 +48,8 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({IngestionHttp.class, AppCenterLog.class})
-public class IngestionHttpTest {
+@PrepareForTest({AppCenterIngestion.class, AppCenterLog.class})
+public class AppCenterIngestionTest {
 
     @Rule
     public PowerMockRule rule = new PowerMockRule();
@@ -74,34 +74,34 @@ public class IngestionHttpTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 callTemplate.set((HttpClient.CallTemplate) invocation.getArguments()[3]);
                 return call;
             }
         });
 
         /* Test calling code. */
-        IngestionHttp ingestionHttp = new IngestionHttp(mock(Context.class), serializer);
-        ingestionHttp.setLogUrl("http://mock");
+        AppCenterIngestion ingestion = new AppCenterIngestion(mock(Context.class), serializer);
+        ingestion.setLogUrl("http://mock");
         String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestionHttp.sendAsync(appSecret, installId, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(appSecret, installId, container, serviceCallback));
 
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
-        expectedHeaders.put(IngestionHttp.APP_SECRET, appSecret);
-        expectedHeaders.put(IngestionHttp.INSTALL_ID, installId.toString());
-        verify(httpClient).callAsync(eq("http://mock" + IngestionHttp.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
+        expectedHeaders.put(AppCenterIngestion.APP_SECRET, appSecret);
+        expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
+        verify(httpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
         assertEquals("mockPayload", callTemplate.get().buildRequestBody());
 
         /* Verify close. */
-        ingestionHttp.close();
+        ingestion.close();
         verify(httpClient).close();
 
         /* Verify reopen. */
-        ingestionHttp.reopen();
+        ingestion.reopen();
         verify(httpClient).reopen();
     }
 
@@ -126,24 +126,24 @@ public class IngestionHttpTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 callTemplate.set((HttpClient.CallTemplate) invocation.getArguments()[3]);
                 return call;
             }
         });
 
         /* Test calling code. */
-        IngestionHttp ingestionHttp = new IngestionHttp(mock(Context.class), serializer);
-        ingestionHttp.setLogUrl("http://mock");
+        AppCenterIngestion ingestion = new AppCenterIngestion(mock(Context.class), serializer);
+        ingestion.setLogUrl("http://mock");
         String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestionHttp.sendAsync(appSecret, installId, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(appSecret, installId, container, serviceCallback));
 
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
-        expectedHeaders.put(IngestionHttp.APP_SECRET, appSecret);
-        expectedHeaders.put(IngestionHttp.INSTALL_ID, installId.toString());
+        expectedHeaders.put(AppCenterIngestion.APP_SECRET, appSecret);
+        expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
         verify(httpClient).callAsync(eq("http://mock/logs?api-version=1.0.0"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
 
@@ -154,7 +154,7 @@ public class IngestionHttpTest {
         }
 
         /* Verify close. */
-        ingestionHttp.close();
+        ingestion.close();
         verify(httpClient).close();
     }
 
@@ -185,7 +185,7 @@ public class IngestionHttpTest {
         }
 
         /* Put app secret to header. */
-        headers.put(IngestionHttp.APP_SECRET, appSecret);
+        headers.put(AppCenterIngestion.APP_SECRET, appSecret);
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify app secret is in log. */
@@ -222,14 +222,14 @@ public class IngestionHttpTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 callTemplate.set((HttpClient.CallTemplate) invocation.getArguments()[3]);
                 return call;
             }
         });
-        IngestionHttp ingestionHttp = new IngestionHttp(mock(Context.class), mock(LogSerializer.class));
-        ingestionHttp.setLogUrl("http://mock");
-        assertEquals(call, ingestionHttp.sendAsync(appSecret, UUIDUtils.randomUUID(), mock(LogContainer.class), mock(ServiceCallback.class)));
+        AppCenterIngestion ingestion = new AppCenterIngestion(mock(Context.class), mock(LogSerializer.class));
+        ingestion.setLogUrl("http://mock");
+        assertEquals(call, ingestion.sendAsync(appSecret, UUIDUtils.randomUUID(), mock(LogContainer.class), mock(ServiceCallback.class)));
         return callTemplate.get();
     }
 }

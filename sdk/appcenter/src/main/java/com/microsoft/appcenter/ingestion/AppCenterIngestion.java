@@ -28,7 +28,7 @@ import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 
-public class IngestionHttp implements Ingestion {
+public class AppCenterIngestion implements Ingestion {
 
     /**
      * Default log URL.
@@ -75,7 +75,7 @@ public class IngestionHttp implements Ingestion {
      * @param context       any context.
      * @param logSerializer log serializer.
      */
-    public IngestionHttp(@NonNull Context context, @NonNull LogSerializer logSerializer) {
+    public AppCenterIngestion(@NonNull Context context, @NonNull LogSerializer logSerializer) {
         mLogSerializer = logSerializer;
         HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(context);
