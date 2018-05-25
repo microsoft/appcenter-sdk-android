@@ -36,6 +36,11 @@ import static com.microsoft.appcenter.utils.storage.StorageHelper.DatabaseStorag
 public class DatabasePersistence extends Persistence {
 
     /**
+     * Version of the schema.
+     */
+    private static final int VERSION = 2;
+
+    /**
      * Name of group column in the table.
      */
     @VisibleForTesting
@@ -121,7 +126,7 @@ public class DatabasePersistence extends Persistence {
      * @param context application context.
      */
     public DatabasePersistence(Context context) {
-        this(context, 2, SCHEMA, Persistence.DEFAULT_CAPACITY);
+        this(context, VERSION, SCHEMA, Persistence.DEFAULT_CAPACITY);
     }
 
     /**
@@ -141,6 +146,11 @@ public class DatabasePersistence extends Persistence {
 
                     @Override
                     public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+                        /*
+                         * This is called only on upgrade and thus only if oldVersion is < 2.
+                         * Therefore we don't have to check anything to add the missing column.
+                         */
                         db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_TOKEN + "` TEXT");
                         return true;
                     }

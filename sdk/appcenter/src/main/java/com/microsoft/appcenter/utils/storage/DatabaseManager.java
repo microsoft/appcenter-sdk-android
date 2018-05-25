@@ -544,7 +544,13 @@ public class DatabaseManager implements Closeable {
 
         /**
          * Called when upgrade is performed on the database.
+         * You can use this callback to alter table schema without losing data.
+         * If schema is not migrated, return false and table will be recreated with new schema,
+         * deleting old data.
          *
+         * @param db         database being upgraded.
+         * @param oldVersion version of the schema the database was at open time.
+         * @param newVersion new version of the schema.
          * @return true if upgrade was managed, false to drop/create table.
          */
         boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
