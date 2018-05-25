@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.persistence;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
@@ -12,6 +13,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
@@ -86,8 +88,14 @@ public class DatabasePersistence extends Persistence {
     private static final String PAYLOAD_FILE_EXTENSION = ".json";
 
     /**
+     * Application context.
+     */
+    private final Context mContext;
+
+    /**
      * Database storage instance to access Persistence database.
      */
+    @VisibleForTesting
     final DatabaseStorage mDatabaseStorage;
 
     /**
@@ -109,19 +117,23 @@ public class DatabasePersistence extends Persistence {
 
     /**
      * Initializes variables.
+     *
+     * @param context application context.
      */
-    public DatabasePersistence() {
-        this(2, SCHEMA, Persistence.DEFAULT_CAPACITY);
+    public DatabasePersistence(Context context) {
+        this(context, 2, SCHEMA, Persistence.DEFAULT_CAPACITY);
     }
 
     /**
      * Initializes variables.
      *
+     * @param context    application context.
      * @param version    The version of current schema.
      * @param schema     schema.
      * @param maxRecords The maximum number of records allowed in the table.
      */
-    DatabasePersistence(int version, ContentValues schema, int maxRecords) {
+    DatabasePersistence(Context context, int version, ContentValues schema, int maxRecords) {
+        mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
         mPendingDbIdentifiers = new HashSet<>();
         mDatabaseStorage = DatabaseStorage.getDatabaseStorage(DATABASE, TABLE, version, schema, maxRecords,
@@ -172,6 +184,7 @@ public class DatabasePersistence extends Persistence {
             String targetToken;
             if (log instanceof CommonSchemaLog) {
                 targetToken = log.getTransmissionTargetTokens().iterator().next();
+                targetToken = CryptoUtils.getInstance(mContext).encrypt(targetToken);
             } else {
                 targetToken = null;
             }
@@ -349,7 +362,8 @@ public class DatabasePersistence extends Persistence {
                     /* Restore target token. */
                     String targetToken = values.getAsString(COLUMN_TARGET_TOKEN);
                     if (targetToken != null) {
-                        log.addTransmissionTarget(targetToken);
+                        CryptoUtils.DecryptedData data = CryptoUtils.getInstance(mContext).decrypt(targetToken, false);
+                        log.addTransmissionTarget(data.getDecryptedData());
                     }
 
                     /* Add log to list and count. */

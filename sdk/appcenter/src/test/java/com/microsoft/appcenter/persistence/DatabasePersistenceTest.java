@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.persistence;
 
 import android.content.ContentValues;
+import android.content.Context;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -30,7 +31,6 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -52,7 +52,7 @@ public class DatabasePersistenceTest {
         mockStatic(AppCenterLog.class);
         LogSerializer mockSerializer = mock(DefaultLogSerializer.class);
         when(mockSerializer.serializeLog(any(Log.class))).thenReturn("{}");
-        DatabasePersistence mockPersistence = spy(new DatabasePersistence(1, DatabasePersistence.SCHEMA, Persistence.DEFAULT_CAPACITY));
+        DatabasePersistence mockPersistence = spy(new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA, Persistence.DEFAULT_CAPACITY));
         doReturn(mockSerializer).when(mockPersistence).getLogSerializer();
         try {
 
@@ -106,7 +106,7 @@ public class DatabasePersistenceTest {
         when(mockLogSerializer.deserializeLog(anyString())).thenReturn(mock(Log.class));
 
         /* Instantiate Database Persistence. */
-        DatabasePersistence persistence = new DatabasePersistence();
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
         persistence.setLogSerializer(mockLogSerializer);
 
         /* Get logs. */
@@ -187,7 +187,7 @@ public class DatabasePersistenceTest {
                 return log;
             }
         });
-        DatabasePersistence persistence = new DatabasePersistence();
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
         persistence.setLogSerializer(logSerializer);
 
         /* Get logs and verify we get only non corrupted logs. */
