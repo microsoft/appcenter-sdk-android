@@ -17,7 +17,6 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,9 +64,9 @@ public class DatabaseManager implements Closeable {
     private final int mMaxNumberOfRecords;
 
     /**
-     * Error listener instance.
+     * Listener instance.
      */
-    private final ErrorListener mErrorListener;
+    private final Listener mListener;
 
     /**
      * SQLite helper instance.
@@ -97,7 +96,7 @@ public class DatabaseManager implements Closeable {
      */
     @SuppressWarnings("SameParameterValue")
     DatabaseManager(Context context, String database, String table, int version,
-                    ContentValues schema, ErrorListener listener) {
+                    ContentValues schema, Listener listener) {
         this(context, database, table, version, schema, 0, listener);
     }
 
@@ -113,13 +112,13 @@ public class DatabaseManager implements Closeable {
      * @param listener   The error listener.
      */
     DatabaseManager(Context context, String database, String table, int version,
-                    ContentValues schema, int maxRecords, ErrorListener listener) {
+                    ContentValues schema, final int maxRecords, Listener listener) {
         mContext = context;
         mDatabase = database;
         mTable = table;
         mSchema = schema;
         mMaxNumberOfRecords = maxRecords;
-        mErrorListener = listener;
+        mListener = listener;
         mSQLiteOpenHelper = new SQLiteOpenHelper(context, database, null, version) {
 
             @Override
@@ -149,9 +148,11 @@ public class DatabaseManager implements Closeable {
             @Override
             public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
-                /* For now we upgrade by destroying the old table. */
-                db.execSQL("DROP TABLE `" + mTable + "`");
-                onCreate(db);
+                /* Upgrade by destroying the old table unless managed. */
+                if (!mListener.onUpgrade(db, oldVersion, newVersion)) {
+                    db.execSQL("DROP TABLE `" + mTable + "`");
+                    onCreate(db);
+                }
             }
         };
     }
@@ -410,11 +411,9 @@ public class DatabaseManager implements Closeable {
 
     /**
      * Closes database and clean up in-memory database.
-     *
-     * @throws IOException If an I/O error occurs
      */
     @Override
-    public void close() throws IOException {
+    public void close() {
 
         /* Try SQLite. */
         if (mIMDB == null) {
@@ -522,8 +521,8 @@ public class DatabaseManager implements Closeable {
         };
 
         /* Trigger error listener. */
-        if (mErrorListener != null) {
-            mErrorListener.onError(operation, exception);
+        if (mListener != null) {
+            mListener.onError(operation, exception);
         }
     }
 
@@ -539,11 +538,22 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Error listener for DatabaseManager.
+     * Database listener.
      */
-    interface ErrorListener {
+    public interface Listener {
+
         /**
-         * Notifies an exception
+         * Called when upgrade is performed on the database.
+         *
+         * @return true if upgrade was managed, false to drop/create table.
+         */
+        boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
+
+        /**
+         * Notifies an exception, before switching to in memory storage.
+         *
+         * @param operation A name of operation that caused the error.
+         * @param e         A runtime exception for the error.
          */
         void onError(String operation, RuntimeException e);
     }
