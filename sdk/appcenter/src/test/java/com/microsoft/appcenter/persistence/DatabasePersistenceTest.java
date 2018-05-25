@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.persistence;
 
 import android.content.ContentValues;
+import android.content.Context;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -18,7 +19,6 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -31,7 +31,6 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -47,13 +46,13 @@ public class DatabasePersistenceTest {
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Test
-    public void databaseOperationException() throws Persistence.PersistenceException, IOException, JSONException {
+    public void databaseOperationException() throws Persistence.PersistenceException, JSONException {
 
         /* Mock instances. */
         mockStatic(AppCenterLog.class);
         LogSerializer mockSerializer = mock(DefaultLogSerializer.class);
         when(mockSerializer.serializeLog(any(Log.class))).thenReturn("{}");
-        DatabasePersistence mockPersistence = spy(new DatabasePersistence("test-persistence", "operation.exception", 1));
+        DatabasePersistence mockPersistence = spy(new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA, Persistence.DEFAULT_CAPACITY));
         doReturn(mockSerializer).when(mockPersistence).getLogSerializer();
         try {
 
@@ -69,17 +68,6 @@ public class DatabasePersistenceTest {
 
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
-    }
-
-    @Test(expected = IOException.class)
-    public void persistenceCloseException() throws IOException {
-
-        /* Mock instances. */
-        DatabasePersistence mockPersistence = spy(new DatabasePersistence("test-persistence", "operation.exception", 1));
-        doThrow(new IOException()).when(mockPersistence).close();
-
-        /* Close. */
-        mockPersistence.close();
     }
 
     @Test
@@ -106,7 +94,7 @@ public class DatabasePersistenceTest {
         mockStatic(StorageHelper.DatabaseStorage.class);
         StorageHelper.DatabaseStorage mockDatabaseStorage = mock(StorageHelper.DatabaseStorage.class);
         when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class),
-                anyInt(), any(StorageHelper.DatabaseStorage.DatabaseErrorListener.class))).thenReturn(mockDatabaseStorage);
+                anyInt(), any(DatabaseManager.Listener.class))).thenReturn(mockDatabaseStorage);
 
         for (int i = 0; i < groupCount; i++) {
             StorageHelper.DatabaseStorage.DatabaseScanner mockDatabaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
@@ -118,7 +106,7 @@ public class DatabasePersistenceTest {
         when(mockLogSerializer.deserializeLog(anyString())).thenReturn(mock(Log.class));
 
         /* Instantiate Database Persistence. */
-        DatabasePersistence persistence = new DatabasePersistence();
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
         persistence.setLogSerializer(mockLogSerializer);
 
         /* Get logs. */
@@ -144,7 +132,7 @@ public class DatabasePersistenceTest {
         mockStatic(StorageHelper.DatabaseStorage.class);
         StorageHelper.DatabaseStorage databaseStorage = mock(StorageHelper.DatabaseStorage.class);
         when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class),
-                anyInt(), any(StorageHelper.DatabaseStorage.DatabaseErrorListener.class))).thenReturn(databaseStorage);
+                anyInt(), any(DatabaseManager.Listener.class))).thenReturn(databaseStorage);
 
         /* Make 3 logs, the second one will be corrupted. */
         Collection<ContentValues> fieldValues = new ArrayList<>(logCount);
@@ -191,7 +179,7 @@ public class DatabasePersistenceTest {
         when(logSerializer.deserializeLog(anyString())).thenAnswer(new Answer<Log>() {
 
             @Override
-            public Log answer(InvocationOnMock invocation) throws Throwable {
+            public Log answer(InvocationOnMock invocation) {
 
                 /* Hack serializer to return type = payload to simplify checking. */
                 Log log = mock(Log.class);
@@ -199,7 +187,7 @@ public class DatabasePersistenceTest {
                 return log;
             }
         });
-        DatabasePersistence persistence = new DatabasePersistence();
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
         persistence.setLogSerializer(logSerializer);
 
         /* Get logs and verify we get only non corrupted logs. */

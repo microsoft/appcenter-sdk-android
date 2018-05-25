@@ -127,7 +127,7 @@ public class DefaultChannel implements Channel {
      * @param appCenterHandler App Center looper thread handler.
      */
     public DefaultChannel(@NonNull Context context, String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler) {
-        this(context, appSecret, buildDefaultPersistence(logSerializer), new IngestionHttp(context, logSerializer), appCenterHandler);
+        this(context, appSecret, buildDefaultPersistence(context, logSerializer), new IngestionHttp(context, logSerializer), appCenterHandler);
     }
 
     /**
@@ -161,8 +161,8 @@ public class DefaultChannel implements Channel {
     /**
      * Init Persistence for default constructor.
      */
-    private static Persistence buildDefaultPersistence(@NonNull LogSerializer logSerializer) {
-        Persistence persistence = new DatabasePersistence();
+    private static Persistence buildDefaultPersistence(@NonNull Context context, @NonNull LogSerializer logSerializer) {
+        Persistence persistence = new DatabasePersistence(context);
         persistence.setLogSerializer(logSerializer);
         return persistence;
     }

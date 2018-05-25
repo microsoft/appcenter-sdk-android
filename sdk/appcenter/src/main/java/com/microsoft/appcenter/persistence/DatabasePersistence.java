@@ -1,6 +1,8 @@
 package com.microsoft.appcenter.persistence;
 
 import android.content.ContentValues;
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -8,8 +10,10 @@ import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
@@ -32,6 +36,11 @@ import static com.microsoft.appcenter.utils.storage.StorageHelper.DatabaseStorag
 public class DatabasePersistence extends Persistence {
 
     /**
+     * Version of the schema.
+     */
+    private static final int VERSION = 2;
+
+    /**
      * Name of group column in the table.
      */
     @VisibleForTesting
@@ -44,19 +53,28 @@ public class DatabasePersistence extends Persistence {
     static final String COLUMN_LOG = "log";
 
     /**
+     * Name of target token column in the table.
+     */
+    @VisibleForTesting
+    static final String COLUMN_TARGET_TOKEN = "target_token";
+
+    /**
      * Database name.
      */
-    private static final String DATABASE = "com.microsoft.appcenter.persistence";
+    @VisibleForTesting
+    static final String DATABASE = "com.microsoft.appcenter.persistence";
 
     /**
      * Table name.
      */
-    private static final String TABLE = "logs";
+    @VisibleForTesting
+    static final String TABLE = "logs";
 
     /**
      * Table schema for Persistence.
      */
-    private static final ContentValues SCHEMA = getContentValues("", "");
+    @VisibleForTesting
+    static final ContentValues SCHEMA = getContentValues("", "", "");
 
     /**
      * Size limit (in bytes) for a database row log payload.
@@ -75,8 +93,14 @@ public class DatabasePersistence extends Persistence {
     private static final String PAYLOAD_FILE_EXTENSION = ".json";
 
     /**
+     * Application context.
+     */
+    private final Context mContext;
+
+    /**
      * Database storage instance to access Persistence database.
      */
+    @VisibleForTesting
     final DatabaseStorage mDatabaseStorage;
 
     /**
@@ -98,35 +122,38 @@ public class DatabasePersistence extends Persistence {
 
     /**
      * Initializes variables.
+     *
+     * @param context application context.
      */
-    public DatabasePersistence() {
-        this(DATABASE, TABLE, 1);
+    public DatabasePersistence(Context context) {
+        this(context, VERSION, SCHEMA, Persistence.DEFAULT_CAPACITY);
     }
 
     /**
      * Initializes variables.
      *
-     * @param database The database name
-     * @param table    The table name
-     * @param version  The version of current schema.
-     */
-    DatabasePersistence(String database, String table, @SuppressWarnings("SameParameterValue") int version) {
-        this(database, table, version, Persistence.DEFAULT_CAPACITY);
-    }
-
-    /**
-     * Initializes variables.
-     *
-     * @param database   The database name
-     * @param table      The table name
+     * @param context    application context.
      * @param version    The version of current schema.
+     * @param schema     schema.
      * @param maxRecords The maximum number of records allowed in the table.
      */
-    DatabasePersistence(String database, String table, int version, int maxRecords) {
+    DatabasePersistence(Context context, int version, ContentValues schema, int maxRecords) {
+        mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
         mPendingDbIdentifiers = new HashSet<>();
-        mDatabaseStorage = DatabaseStorage.getDatabaseStorage(database, table, version, SCHEMA, maxRecords,
-                new DatabaseStorage.DatabaseErrorListener() {
+        mDatabaseStorage = DatabaseStorage.getDatabaseStorage(DATABASE, TABLE, version, schema, maxRecords,
+                new DatabaseManager.Listener() {
+
+                    @Override
+                    public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+                        /*
+                         * This is called only on upgrade and thus only if oldVersion is < 2.
+                         * Therefore we don't have to check anything to add the missing column.
+                         */
+                        db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_TOKEN + "` TEXT");
+                        return true;
+                    }
 
                     @Override
                     public void onError(String operation, RuntimeException e) {
@@ -142,14 +169,16 @@ public class DatabasePersistence extends Persistence {
     /**
      * Instantiates {@link ContentValues} with the give values.
      *
-     * @param group The group of the storage for the log.
-     * @param logJ  The JSON string for a log.
+     * @param group       The group of the storage for the log.
+     * @param logJ        The JSON string for a log.
+     * @param targetToken target token if the log is common schema.
      * @return A {@link ContentValues} instance.
      */
-    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ) {
+    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_GROUP, group);
         values.put(COLUMN_LOG, logJ);
+        values.put(COLUMN_TARGET_TOKEN, targetToken);
         return values;
     }
 
@@ -162,10 +191,17 @@ public class DatabasePersistence extends Persistence {
             String payload = getLogSerializer().serializeLog(log);
             ContentValues contentValues;
             boolean isLargePayload = payload.getBytes("UTF-8").length >= PAYLOAD_MAX_SIZE;
-            if (isLargePayload) {
-                contentValues = getContentValues(group, null);
+            String targetToken;
+            if (log instanceof CommonSchemaLog) {
+                targetToken = log.getTransmissionTargetTokens().iterator().next();
+                targetToken = CryptoUtils.getInstance(mContext).encrypt(targetToken);
             } else {
-                contentValues = getContentValues(group, payload);
+                targetToken = null;
+            }
+            if (isLargePayload) {
+                contentValues = getContentValues(group, null, targetToken);
+            } else {
+                contentValues = getContentValues(group, payload, targetToken);
             }
             long databaseId = mDatabaseStorage.put(contentValues);
             AppCenterLog.debug(LOG_TAG, "Stored a log to the Persistence database for log type " + log.getType() + " with databaseId=" + databaseId);
@@ -331,7 +367,17 @@ public class DatabasePersistence extends Persistence {
                     } else {
                         logPayload = databasePayload;
                     }
-                    candidates.put(dbIdentifier, getLogSerializer().deserializeLog(logPayload));
+                    Log log = getLogSerializer().deserializeLog(logPayload);
+
+                    /* Restore target token. */
+                    String targetToken = values.getAsString(COLUMN_TARGET_TOKEN);
+                    if (targetToken != null) {
+                        CryptoUtils.DecryptedData data = CryptoUtils.getInstance(mContext).decrypt(targetToken, false);
+                        log.addTransmissionTarget(data.getDecryptedData());
+                    }
+
+                    /* Add log to list and count. */
+                    candidates.put(dbIdentifier, log);
                     count++;
                 } catch (JSONException e) {
 
@@ -396,7 +442,7 @@ public class DatabasePersistence extends Persistence {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         mDatabaseStorage.close();
     }
 }
