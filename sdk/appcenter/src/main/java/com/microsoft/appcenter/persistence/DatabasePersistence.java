@@ -129,7 +129,7 @@ public class DatabasePersistence extends Persistence {
 
                     @Override
                     public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                        db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN " + COLUMN_TARGET_TOKEN + " TEXT");
+                        db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_TOKEN + "` TEXT");
                         return true;
                     }
 
