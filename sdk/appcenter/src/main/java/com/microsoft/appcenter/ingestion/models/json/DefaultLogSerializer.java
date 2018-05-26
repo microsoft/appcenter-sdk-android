@@ -6,6 +6,7 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.Data;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.json.JSONArray;
@@ -38,7 +39,14 @@ public class DefaultLogSerializer implements LogSerializer {
 
     @NonNull
     private Log readLog(JSONObject object) throws JSONException {
-        String type = object.getString(TYPE);
+
+        /* AppCenter logs have type as top level field. */
+        String type = object.optString(TYPE, null);
+        if (type == null) {
+
+            /* Common schema log types is in Part B. */
+            type = object.getJSONObject(CommonSchemaLog.DATA).getString(Data.BASE_DATA_TYPE);
+        }
         LogFactory logFactory = mLogFactories.get(type);
         if (logFactory == null) {
             throw new JSONException("Unknown log type: " + type);

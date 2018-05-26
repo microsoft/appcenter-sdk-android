@@ -23,6 +23,12 @@ public class DataTest {
         Data b = new Data();
         checkEquals(a, b);
 
+        /* Type. */
+        a.setBaseDataType("custom");
+        checkNotEquals(a, b);
+        b.setBaseDataType("custom");
+        checkEquals(a, b);
+
         /* Properties. */
         a.getProperties().put("a", "b");
         checkNotEquals(a, b);

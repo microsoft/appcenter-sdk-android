@@ -10,7 +10,7 @@ public class CommonSchemaEventLog extends CommonSchemaLog {
     /**
      * Type property.
      */
-    public static final String TYPE = "commonSchemaEvent";
+    public static final String TYPE = "Ms.AppCenter.Event";
 
     @Override
     public String getType() {

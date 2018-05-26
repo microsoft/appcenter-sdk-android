@@ -8,8 +8,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
-import static com.microsoft.appcenter.ingestion.models.CommonProperties.TYPE;
-
 /**
  * Common schema has 1 log type with extensions, everything is called an event.
  * Part B can be used in the future for domain specific typing (like reflecting AppCenter log type).
@@ -59,7 +57,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
     /**
      * Data property.
      */
-    private static final String DATA = "data";
+    public static final String DATA = "data";
 
     /**
      * Common schema version.
@@ -287,9 +285,6 @@ public abstract class CommonSchemaLog extends AbstractLog {
 
         /* Override abstract log JSON since it's Common Schema and not App Center schema. */
 
-        /* TODO We still need type internally, for now we add it here but we'll need to migrate to Part B. */
-        JSONUtils.write(writer, TYPE, getType());
-
         /* Part A. */
         writer.key(VER).value(getVer());
         writer.key(NAME).value(getName());
@@ -307,11 +302,13 @@ public abstract class CommonSchemaLog extends AbstractLog {
         }
 
         /* Parts B&C. */
-        if (getData() != null) {
-            writer.key(DATA).object();
-            getData().write(writer);
-            writer.endObject();
+        if (getData() == null) {
+            setData(new Data());
         }
+        getData().setBaseDataType(getType());
+        writer.key(DATA).object();
+        getData().write(writer);
+        writer.endObject();
     }
 
     @SuppressWarnings("SimplifiableIfStatement")
