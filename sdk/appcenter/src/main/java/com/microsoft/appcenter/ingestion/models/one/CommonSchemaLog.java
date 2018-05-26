@@ -272,12 +272,10 @@ public abstract class CommonSchemaLog extends AbstractLog {
             setExt(extensions);
         }
 
-        /* Read Parts B&C. */
-        if (object.has(DATA)) {
-            Data data = new Data();
-            data.read(object.getJSONObject(DATA));
-            setData(data);
-        }
+        /* Read Parts B&C. Since we use baseDataType the data container is never missing. */
+        Data data = new Data();
+        data.read(object.getJSONObject(DATA));
+        setData(data);
     }
 
     @Override
@@ -301,7 +299,12 @@ public abstract class CommonSchemaLog extends AbstractLog {
             writer.endObject();
         }
 
-        /* Parts B&C. */
+        /*
+         * Parts B&C.
+         * We need to store type for deserialization, and one collector does not accept custom fields.
+         * We should not use Part C as it's reserved for customer properties.
+         * We can use Part B type. We will most likely use Part B for real eventually anyway.
+         */
         if (getData() == null) {
             setData(new Data());
         }

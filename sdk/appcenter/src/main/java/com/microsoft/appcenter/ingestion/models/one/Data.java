@@ -68,12 +68,10 @@ public class Data implements Model {
 
         /* Part C. */
         JSONArray names = object.names();
-        if (names != null) {
-            for (int i = 0; i < names.length(); i++) {
-                String name = names.getString(i);
-                if (!name.equals(BASE_DATA) && !name.equals(BASE_DATA_TYPE)) {
-                    mProperties.put(name, object.get(name));
-                }
+        for (int i = 0; i < names.length(); i++) {
+            String name = names.getString(i);
+            if (!name.equals(BASE_DATA) && !name.equals(BASE_DATA_TYPE)) {
+                mProperties.put(name, object.get(name));
             }
         }
     }

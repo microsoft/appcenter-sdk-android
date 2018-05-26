@@ -44,7 +44,7 @@ public class DefaultLogSerializer implements LogSerializer {
         String type = object.optString(TYPE, null);
         if (type == null) {
 
-            /* Common schema log types is in Part B. */
+            /* Common schema log type is in Part B. */
             type = object.getJSONObject(CommonSchemaLog.DATA).getString(Data.BASE_DATA_TYPE);
         }
         LogFactory logFactory = mLogFactories.get(type);
