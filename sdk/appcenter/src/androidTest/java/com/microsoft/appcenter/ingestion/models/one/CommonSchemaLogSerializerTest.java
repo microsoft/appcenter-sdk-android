@@ -102,7 +102,7 @@ public class CommonSchemaLogSerializerTest {
         /* Loc extension. */
         log.getExt().setLoc(new LocExtension());
         checkSerialization(serializer, log);
-        log.getExt().getLoc().setTimeZone("-08:00");
+        log.getExt().getLoc().setTz("-08:00");
         checkSerialization(serializer, log);
 
         /* Data. */

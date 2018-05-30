@@ -15,39 +15,39 @@ public class LocExtension implements Model {
     /**
      * Time zone property.
      */
-    private static final String TIMEZONE = "timeZone";
+    private static final String TZ = "tz";
 
     /**
      * Time zone on the device.
      */
-    private String timeZone;
+    private String tz;
 
     /**
      * Get device time zone.
      *
      * @return device time zone.
      */
-    public String getTimeZone() {
-        return timeZone;
+    public String getTz() {
+        return tz;
     }
 
     /**
      * Set device time zone.
      *
-     * @param timeZone device time zone.
+     * @param tz device time zone.
      */
-    public void setTimeZone(String timeZone) {
-        this.timeZone = timeZone;
+    public void setTz(String tz) {
+        this.tz = tz;
     }
 
     @Override
     public void read(JSONObject object) throws JSONException {
-        setTimeZone(object.optString(TIMEZONE, null));
+        setTz(object.optString(TZ, null));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        JSONUtils.write(writer, TIMEZONE, getTimeZone());
+        JSONUtils.write(writer, TZ, getTz());
     }
 
     @Override
@@ -57,11 +57,11 @@ public class LocExtension implements Model {
 
         LocExtension that = (LocExtension) o;
 
-        return timeZone != null ? timeZone.equals(that.timeZone) : that.timeZone == null;
+        return tz != null ? tz.equals(that.tz) : that.tz == null;
     }
 
     @Override
     public int hashCode() {
-        return timeZone != null ? timeZone.hashCode() : 0;
+        return tz != null ? tz.hashCode() : 0;
     }
 }
