@@ -2,7 +2,6 @@ package com.microsoft.appcenter.channel;
 
 import android.content.Context;
 import android.os.Handler;
-import android.os.Looper;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
@@ -58,11 +57,6 @@ public class DefaultChannel implements Channel {
      * The installId that's required for forwarding to ingestion.
      */
     private final UUID mInstallId;
-
-    /**
-     * Handler for triggering ingestion of events.
-     */
-    private final Handler mIngestionHandler;
 
     /**
      * Channel state per log group.
@@ -138,7 +132,6 @@ public class DefaultChannel implements Channel {
         mContext = context;
         mAppSecret = appSecret;
         mInstallId = IdHelper.getInstallId();
-        mIngestionHandler = new Handler(Looper.getMainLooper());
         mGroupStates = new HashMap<>();
         mListeners = new LinkedHashSet<>();
         mPersistence = appSecretNullOrEmpty ? null : persistence;
@@ -322,7 +315,7 @@ public class DefaultChannel implements Channel {
         }
         if (groupState.mScheduled) {
             groupState.mScheduled = false;
-            mIngestionHandler.removeCallbacks(groupState.mRunnable);
+            mAppCenterHandler.removeCallbacks(groupState.mRunnable);
         }
     }
 
@@ -382,7 +375,7 @@ public class DefaultChannel implements Channel {
 
         /*
          * Due to bug on old Android versions (verified on 4.0.4),
-         * if we start an async task from here, i.e. the async persistence handler thread,
+         * if we start an async task from here, i.e. the async handler thread,
          * we end up with AsyncTask configured with the wrong Handler to use for onPostExecute
          * instead of using main thread as advertised in Javadoc (and its a static field there).
          *
@@ -616,7 +609,7 @@ public class DefaultChannel implements Channel {
             triggerIngestion(groupName);
         } else if (pendingLogCount > 0 && !groupState.mScheduled) {
             groupState.mScheduled = true;
-            mIngestionHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
+            mAppCenterHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
         }
     }
 
@@ -689,13 +682,7 @@ public class DefaultChannel implements Channel {
             @Override
             public void run() {
                 mScheduled = false;
-                mAppCenterHandler.post(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        triggerIngestion(mName);
-                    }
-                });
+                triggerIngestion(mName);
             }
         };
 
