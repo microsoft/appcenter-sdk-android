@@ -24,7 +24,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.microsoft.appcenter.BuildConfig.VERSION_NAME;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
+import static com.microsoft.appcenter.http.DefaultHttpClient.CLIENT_VERSION_KEY;
+import static com.microsoft.appcenter.http.DefaultHttpClient.CLIENT_VERSION_FORMAT;
+import static com.microsoft.appcenter.http.DefaultHttpClient.UPLOAD_TIME_KEY;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 
 public class OneCollectorIngestion implements Ingestion {
@@ -92,6 +96,15 @@ public class OneCollectorIngestion implements Ingestion {
 
         /* Content type. */
         headers.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
+
+        /* Client version */
+        StringBuilder clientVersion = new StringBuilder();
+        logContainer.getLogs().get(0);
+
+        headers.put(CLIENT_VERSION_KEY, String.format(CLIENT_VERSION_FORMAT, sdktype, projection, VERSION_NAME, tag));
+
+        /* Upload time */
+        headers.put(UPLOAD_TIME_KEY, Long.toString(System.currentTimeMillis()));
 
         /* Make the call. */
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);

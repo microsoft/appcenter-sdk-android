@@ -55,6 +55,21 @@ public class DefaultHttpClient implements HttpClient {
     public static final String CONTENT_TYPE_KEY = "Content-Type";
 
     /**
+     * Client version header key.
+     */
+    public static final String CLIENT_VERSION_KEY = "Client-Version";
+
+    /**
+     * Client version format string.
+     */
+    public static final String CLIENT_VERSION_FORMAT = "SDKTYPE?-Android-Java-PROJECTION?-%s-%s";
+
+    /**
+     * Upload time header key.
+     */
+    public static final String UPLOAD_TIME_KEY = "Upload-Time";
+
+    /**
      * Character encoding.
      */
     private static final String CHARSET_NAME = "UTF-8";
