@@ -98,10 +98,11 @@ public class OneCollectorIngestion implements Ingestion {
         headers.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
 
         /* Client version */
-        StringBuilder clientVersion = new StringBuilder();
-        logContainer.getLogs().get(0);
+        // TODO tag field would be useful to put enabled SDK modules in (e.g. for Analytis + Crashes + Distribute it could be ACD)
+        headers.put(CLIENT_VERSION_KEY, String.format(CLIENT_VERSION_FORMAT, VERSION_NAME, "no"));
 
-        headers.put(CLIENT_VERSION_KEY, String.format(CLIENT_VERSION_FORMAT, sdktype, projection, VERSION_NAME, tag));
+        /* Content encoding */
+        // TODO
 
         /* Upload time */
         headers.put(UPLOAD_TIME_KEY, Long.toString(System.currentTimeMillis()));
