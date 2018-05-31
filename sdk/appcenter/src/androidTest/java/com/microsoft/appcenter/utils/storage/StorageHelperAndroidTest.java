@@ -3,6 +3,7 @@ package com.microsoft.appcenter.utils.storage;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -96,6 +97,7 @@ public class StorageHelperAndroidTest {
 
     @AfterClass
     public static void tearDownClass() {
+
         /* Clean up shared preferences. */
         try {
             for (SharedPreferencesTestData data : generateSharedPreferenceData()) {
@@ -236,9 +238,11 @@ public class StorageHelperAndroidTest {
 
         /* Get for in-memory database test. */
         if (imdbTest) {
+
             /* Try with invalid key. */
             ContentValues valueFromDatabase = databaseStorage.get("COL_STRINGX", value1.getAsString("COL_STRING"));
             assertNull(valueFromDatabase);
+
             /* Try with valid key. */
             valueFromDatabase = databaseStorage.get("COL_STRING", value1.getAsString("COL_STRING"));
             assertContentValuesEquals(value1, valueFromDatabase);
@@ -295,7 +299,7 @@ public class StorageHelperAndroidTest {
         assertNotNull(value5Id);
 
         /* Delete multiple logs. */
-        databaseStorage.delete(Arrays.asList(new Long[]{value4Id, value5Id}));
+        databaseStorage.delete(Arrays.asList(value4Id, value5Id));
         assertNull(databaseStorage.get(value4Id));
         assertNull(databaseStorage.get(value5Id));
         assertEquals(1, databaseStorage.size());
@@ -312,6 +316,7 @@ public class StorageHelperAndroidTest {
 
         /* Delete for in-memory database test. */
         if (imdbTest) {
+
             /* Try with invalid key. */
             databaseStorage.delete("COL_STRINGX", value2.getAsString("COL_STRING"));
             assertEquals(3, databaseStorage.size());
@@ -502,11 +507,17 @@ public class StorageHelperAndroidTest {
     }
 
     @Test
-    public void databaseStorage() throws IOException {
+    public void databaseStorage() {
         Log.i(TAG, "Testing Database Storage");
 
         /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorage", "databaseStorage", 1, mSchema, new DatabaseStorage.DatabaseErrorListener() {
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorage", "databaseStorage", 1, mSchema, new DatabaseManager.Listener() {
+
+            @Override
+            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                return false;
+            }
+
             @Override
             public void onError(String operation, RuntimeException e) {
                 throw e;
@@ -517,6 +528,7 @@ public class StorageHelperAndroidTest {
         try {
             runDatabaseStorageTest(databaseStorage, false);
         } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             databaseStorage.close();
@@ -524,8 +536,8 @@ public class StorageHelperAndroidTest {
     }
 
     @Test
-    public void databaseStorageUpgrade() throws IOException {
-        Log.i(TAG, "Testing Database Storage Upgrade");
+    public void databaseStorageUpgradeNotHandled() {
+        Log.i(TAG, "Testing Database Storage Upgrade by recreating table");
 
         /* Create a schema for v1. */
         ContentValues schema = new ContentValues();
@@ -536,46 +548,154 @@ public class StorageHelperAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageUpgrade", "databaseStorageUpgrade", 1, schema, new DatabaseStorage.DatabaseErrorListener() {
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageUpgrade", "databaseStorageUpgrade", 1, schema, new DatabaseManager.Listener() {
+
+            @Override
+            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                return false;
+            }
+
             @Override
             public void onError(String operation, RuntimeException e) {
                 throw e;
             }
         });
-
         try {
+
             /* Database will always create a column for identifiers so default length of all tables is 1. */
             assertEquals(2, databaseStorage.getColumnNames().length);
+            long id = databaseStorage.put(oldVersionValue);
+
+            /* Put data. */
+            ContentValues actual = databaseStorage.get(id);
+            actual.remove("oid");
+            assertEquals(oldVersionValue, actual);
+            assertEquals(1, databaseStorage.size());
         } finally {
+
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             databaseStorage.close();
         }
 
-        /* Get instance to access database with a newer schema. */
-        databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageUpgrade", "databaseStorageUpgrade", 2, mSchema, new DatabaseStorage.DatabaseErrorListener() {
+        /* Get instance to access database with a newer schema without handling upgrade. */
+        databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageUpgrade", "databaseStorageUpgrade", 2, mSchema, new DatabaseManager.Listener() {
+
+            @Override
+            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                return false;
+            }
+
             @Override
             public void onError(String operation, RuntimeException e) {
                 throw e;
             }
         });
 
+        /* Verify data deleted since no handled upgrade. */
         try {
             assertEquals(11, databaseStorage.getColumnNames().length);
+            assertEquals(0, databaseStorage.size());
         } finally {
+
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             databaseStorage.close();
         }
     }
 
     @Test
-    public void putTooManyLogs() throws IOException {
+    public void databaseStorageUpgradeHandled() {
+        Log.i(TAG, "Testing Database Storage Upgrade by updating table");
+
+        /* Create a schema for v1. */
+        ContentValues schema = new ContentValues();
+        schema.put("COL_STRING", "");
+
+        /* Create a row for v1. */
+        ContentValues oldVersionValue = new ContentValues();
+        oldVersionValue.put("COL_STRING", "Hello World");
+
+        /* Get instance to access database. */
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageUpgrade", "databaseStorageUpgrade", 1, schema, new DatabaseManager.Listener() {
+
+            @Override
+            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                return false;
+            }
+
+            @Override
+            public void onError(String operation, RuntimeException e) {
+                throw e;
+            }
+        });
+
+        /* Put data. */
+        long id;
+        try {
+            id = databaseStorage.put(oldVersionValue);
+            ContentValues actual = databaseStorage.get(id);
+            actual.remove("oid");
+            assertEquals(oldVersionValue, actual);
+            assertEquals(1, databaseStorage.size());
+        } finally {
+
+            /* Close. */
+            databaseStorage.close();
+        }
+
+        /* Upgrade schema. */
+        schema.put("COL_INT", 1);
+
+        /* Get instance to access database with a newer schema without handling upgrade. */
+        databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageUpgrade", "databaseStorageUpgrade", 2, schema, new DatabaseManager.Listener() {
+
+            @Override
+            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                db.execSQL("ALTER TABLE databaseStorageUpgrade ADD COLUMN COL_INT INTEGER");
+                return true;
+            }
+
+            @Override
+            public void onError(String operation, RuntimeException e) {
+                throw e;
+            }
+        });
+        try {
+
+            /* Verify data still there. */
+            ContentValues actual = databaseStorage.get(id);
+            actual.remove("oid");
+            assertEquals(oldVersionValue, actual);
+            assertEquals(1, databaseStorage.size());
+
+            /* Put new data. */
+            ContentValues data = new ContentValues();
+            data.put("COL_STRING", "Hello World");
+            data.put("COL_INT", 2);
+            id = databaseStorage.put(data);
+            actual = databaseStorage.get(id);
+            actual.remove("oid");
+            assertEquals(data, actual);
+            assertEquals(2, databaseStorage.size());
+        } finally {
+
+            /* Close. */
+            databaseStorage.close();
+        }
+    }
+
+    @Test
+    public void putTooManyLogs() {
         Log.i(TAG, "Testing Database Storage Capacity");
 
         /* Get instance to access database. */
         final int capacity = 2;
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-putTooManyLogs", "putTooManyLogs", 1, mSchema, capacity, new DatabaseStorage.DatabaseErrorListener() {
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-putTooManyLogs", "putTooManyLogs", 1, mSchema, capacity, new DatabaseManager.Listener() {
+
+            @Override
+            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                return false;
+            }
+
             @Override
             public void onError(String operation, RuntimeException e) {
                 throw e;
@@ -599,6 +719,7 @@ public class StorageHelperAndroidTest {
 
             assertEquals(capacity, databaseStorage.size());
         } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             databaseStorage.close();
@@ -606,11 +727,17 @@ public class StorageHelperAndroidTest {
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void databaseStorageScannerRemove() throws IOException {
+    public void databaseStorageScannerRemove() {
         Log.i(TAG, "Testing Database Storage Exceptions");
 
         /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageScannerRemove", "databaseStorageScannerRemove", 1, mSchema, new DatabaseStorage.DatabaseErrorListener() {
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageScannerRemove", "databaseStorageScannerRemove", 1, mSchema, new DatabaseManager.Listener() {
+
+            @Override
+            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                return false;
+            }
+
             @Override
             public void onError(String operation, RuntimeException e) {
                 throw e;
@@ -621,6 +748,7 @@ public class StorageHelperAndroidTest {
         try {
             databaseStorage.getScanner().iterator().remove();
         } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             databaseStorage.close();
@@ -628,11 +756,17 @@ public class StorageHelperAndroidTest {
     }
 
     @Test(expected = NoSuchElementException.class)
-    public void databaseStorageScannerNext() throws IOException {
+    public void databaseStorageScannerNext() {
         Log.i(TAG, "Testing Database Storage Exceptions");
 
         /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageScannerNext", "databaseStorageScannerNext", 1, mSchema, new DatabaseStorage.DatabaseErrorListener() {
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageScannerNext", "databaseStorageScannerNext", 1, mSchema, new DatabaseManager.Listener() {
+
+            @Override
+            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                return false;
+            }
+
             @Override
             public void onError(String operation, RuntimeException e) {
                 throw e;
@@ -643,6 +777,7 @@ public class StorageHelperAndroidTest {
         try {
             databaseStorage.getScanner().iterator().next();
         } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             databaseStorage.close();
@@ -654,11 +789,17 @@ public class StorageHelperAndroidTest {
        This test method will then be able to test in-memory database by accessing a table which is not created.
        Only tested on emulator so it might not work in the future or on any other devices. */
     @Test
-    public void databaseStorageInMemoryDB() throws IOException {
+    public void databaseStorageInMemoryDB() {
         Log.i(TAG, "Testing Database Storage switch over to in-memory database");
 
         /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageInMemoryDB", "test.databaseStorageInMemoryDB", 1, mSchema, new DatabaseStorage.DatabaseErrorListener() {
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageInMemoryDB", "test.databaseStorageInMemoryDB", 1, mSchema, new DatabaseManager.Listener() {
+
+            @Override
+            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                return false;
+            }
+
             @Override
             public void onError(String operation, RuntimeException e) {
                 /* Do not handle any errors. This is simulating errors so this is expected. */

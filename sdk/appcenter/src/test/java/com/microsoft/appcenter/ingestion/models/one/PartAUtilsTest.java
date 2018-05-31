@@ -5,6 +5,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
@@ -83,5 +84,6 @@ public class PartAUtilsTest {
         assertEquals("appcenter.android-1.5.0", commonSchemaLog.getExt().getSdk().getLibVer());
         assertNotNull(commonSchemaLog.getExt().getLoc());
         assertEquals(commonSchemaTimeZoneOffset, commonSchemaLog.getExt().getLoc().getTz());
+        assertEquals(Collections.singleton(transmissionTarget), commonSchemaLog.getTransmissionTargetTokens());
     }
 }

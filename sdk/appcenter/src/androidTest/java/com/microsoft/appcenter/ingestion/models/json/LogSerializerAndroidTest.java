@@ -22,6 +22,8 @@ import java.util.UUID;
 
 import static com.microsoft.appcenter.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 import static com.microsoft.appcenter.test.TestUtils.TAG;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 @SuppressWarnings("unused")
 public class LogSerializerAndroidTest {
@@ -160,5 +162,15 @@ public class LogSerializerAndroidTest {
         invalidTypeProperties.put("nested", new HashMap<String, Object>());
         invalidTypeLog.setProperties(invalidTypeProperties);
         serializer.serializeLog(invalidTypeLog);
+    }
+
+    @Test
+    public void toCommonSchemaLog() {
+        LogFactory logFactory = mock(LogFactory.class);
+        MockLog log = AndroidTestUtils.generateMockLog();
+        LogSerializer serializer = new DefaultLogSerializer();
+        serializer.addLogFactory(MOCK_LOG_TYPE, logFactory);
+        serializer.toCommonSchemaLog(log);
+        verify(logFactory).toCommonSchemaLogs(log);
     }
 }

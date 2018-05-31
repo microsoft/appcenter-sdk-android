@@ -73,6 +73,7 @@ public class DefaultLogSerializer implements LogSerializer {
         JSONStringer writer = null;
         if (AppCenterLog.getLogLevel() <= android.util.Log.VERBOSE) {
             try {
+                @SuppressWarnings("JavaReflectionMemberAccess")
                 Constructor<JSONStringer> constructor = JSONStringer.class.getDeclaredConstructor(int.class);
                 constructor.setAccessible(true);
                 writer = constructor.newInstance(2);

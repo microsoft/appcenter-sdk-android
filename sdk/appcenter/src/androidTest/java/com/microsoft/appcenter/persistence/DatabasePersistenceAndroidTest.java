@@ -1,7 +1,9 @@
 package com.microsoft.appcenter.persistence;
 
 import android.annotation.SuppressLint;
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -13,12 +15,17 @@ import com.microsoft.appcenter.ingestion.models.LogWithProperties;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.MockLogFactory;
+import com.microsoft.appcenter.ingestion.models.one.MockCommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.MockCommonSchemaLogFactory;
 import com.microsoft.appcenter.persistence.Persistence.PersistenceException;
+import com.microsoft.appcenter.utils.crypto.CryptoUtils;
+import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 import com.microsoft.appcenter.utils.storage.StorageHelper.DatabaseStorage.DatabaseScanner;
 
 import org.json.JSONException;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,6 +33,7 @@ import org.junit.runner.RunWith;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -45,7 +53,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-@SuppressWarnings("unused")
+@SuppressWarnings("TryFinallyCanBeTryWithResources")
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class DatabasePersistenceAndroidTest {
@@ -61,9 +69,13 @@ public class DatabasePersistenceAndroidTest {
         sContext = InstrumentationRegistry.getTargetContext();
         StorageHelper.initialize(sContext);
         Constants.loadFromContext(sContext);
+    }
+
+    @Before
+    public void setUp() {
 
         /* Clean up database. */
-        sContext.deleteDatabase("test-persistence");
+        sContext.deleteDatabase(DatabasePersistence.DATABASE);
     }
 
     private static int getIteratorSize(Iterator iterator) {
@@ -81,10 +93,10 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
-    public void putLog() throws PersistenceException, IOException {
+    public void putLog() throws PersistenceException {
 
         /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putLog", 1);
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
@@ -111,16 +123,15 @@ public class DatabasePersistenceAndroidTest {
         } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
 
     @Test
-    public void putLargeLogAndDeleteAll() throws PersistenceException, IOException {
+    public void putLargeLogAndDeleteAll() throws PersistenceException {
 
         /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putLargeLog", 1);
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
@@ -170,18 +181,17 @@ public class DatabasePersistenceAndroidTest {
         } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
 
     @Test
-    public void putLargeLogFails() throws PersistenceException, IOException {
+    public void putLargeLogFails() {
 
         /* Initialize database persistence. */
         String path = Constants.FILES_PATH;
         Constants.FILES_PATH = null;
-        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putLargeLogException", 1);
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
@@ -204,18 +214,14 @@ public class DatabasePersistenceAndroidTest {
             log.setProperties(properties);
             persistence.putLog("test-p1", log);
             fail("putLog was expected to fail");
-        }
-        catch (Persistence.PersistenceException e)
-        {
+        } catch (Persistence.PersistenceException e) {
             assertTrue(e.getCause() instanceof IOException);
 
             /* Make sure database entry has been removed. */
             assertEquals(0, persistence.countLogs("test-p1"));
-        }
-        finally {
+        } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
 
             /* Restore path. */
@@ -224,10 +230,10 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
-    public void putLargeLogFailsToRead() throws PersistenceException, IOException {
+    public void putLargeLogFailsToRead() throws PersistenceException {
 
         /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putLargeLogException", 1);
+        DatabasePersistence persistence = new DatabasePersistence(sContext, 1, DatabasePersistence.SCHEMA, Persistence.DEFAULT_CAPACITY);
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
@@ -269,16 +275,15 @@ public class DatabasePersistenceAndroidTest {
         } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
 
     @Test
-    public void putTooManyLogs() throws PersistenceException, IOException {
+    public void putTooManyLogs() throws PersistenceException {
 
         /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putTooManyLogs", 1, 2);
+        DatabasePersistence persistence = new DatabasePersistence(sContext, 2, DatabasePersistence.SCHEMA, 2);
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
@@ -312,10 +317,10 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test(expected = PersistenceException.class)
-    public void putLogException() throws PersistenceException, IOException, JSONException {
+    public void putLogException() throws PersistenceException, JSONException {
 
         /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "putLogException", 1);
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -329,16 +334,15 @@ public class DatabasePersistenceAndroidTest {
         } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
 
     @Test
-    public void deleteLogs() throws PersistenceException, IOException {
+    public void deleteLogs() throws PersistenceException {
 
         /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "deleteLogs", 1);
+        DatabasePersistence persistence = new DatabasePersistence(sContext, 1, DatabasePersistence.SCHEMA, Persistence.DEFAULT_CAPACITY);
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
@@ -422,16 +426,15 @@ public class DatabasePersistenceAndroidTest {
         } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
 
     @Test
-    public void deleteLogsForGroup() throws PersistenceException, IOException {
+    public void deleteLogsForGroup() throws PersistenceException {
 
         /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "deleteLogsForGroup", 1);
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
@@ -486,16 +489,15 @@ public class DatabasePersistenceAndroidTest {
         } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
 
     @Test
-    public void getLogs() throws PersistenceException, IOException {
+    public void getLogs() throws PersistenceException {
 
         /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "getLogs", 1);
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
@@ -557,10 +559,10 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
-    public void getLogsException() throws PersistenceException, IOException, JSONException {
+    public void getLogsException() throws PersistenceException, JSONException {
 
         /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence("test-persistence", "getLogs", 1);
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = spy(new DefaultLogSerializer());
@@ -597,7 +599,98 @@ public class DatabasePersistenceAndroidTest {
         } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
+            persistence.close();
+        }
+    }
+
+    @Test
+    public void upgradeAndUseTargetToken() throws PersistenceException, JSONException {
+
+        /* Initialize database persistence with old schema. */
+        ContentValues oldSchema = new ContentValues(DatabasePersistence.SCHEMA);
+        oldSchema.remove(DatabasePersistence.COLUMN_TARGET_TOKEN);
+        StorageHelper.DatabaseStorage databaseStorage = StorageHelper.DatabaseStorage.getDatabaseStorage(DatabasePersistence.DATABASE, DatabasePersistence.TABLE, 1, oldSchema, new DatabaseManager.Listener() {
+
+            @Override
+            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                return false;
+            }
+
+            @Override
+            public void onError(String operation, RuntimeException e) {
+                throw e;
+            }
+        });
+
+        /* Init log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        logSerializer.addLogFactory(MockCommonSchemaLog.TYPE, new MockCommonSchemaLogFactory());
+
+        /* Insert old data before upgrade. */
+        Log oldLog = AndroidTestUtils.generateMockLog();
+        try {
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(DatabasePersistence.COLUMN_GROUP, "test");
+            contentValues.put(DatabasePersistence.COLUMN_LOG, logSerializer.serializeLog(oldLog));
+            databaseStorage.put(contentValues);
+        } finally {
+
+            /* Close. */
+            databaseStorage.close();
+        }
+
+        /* Upgrade. */
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
+        persistence.setLogSerializer(logSerializer);
+
+        /* Prepare a common schema log. */
+        MockCommonSchemaLog commonSchemaLog = new MockCommonSchemaLog();
+        commonSchemaLog.setName("test");
+        commonSchemaLog.setIKey("o:test");
+        commonSchemaLog.setTimestamp(new Date());
+        commonSchemaLog.setVer("3.0");
+        commonSchemaLog.addTransmissionTarget("test-guid");
+
+        /* Check upgrade. */
+        try {
+
+            /* Get old data. */
+            assertEquals(1, persistence.countLogs("test"));
+            List<Log> outputLogs = new ArrayList<>();
+            persistence.getLogs("test", 1, outputLogs);
+            assertEquals(1, outputLogs.size());
+            assertEquals(oldLog, outputLogs.get(0));
+
+            /* Put new data with token. */
+            persistence.putLog("test/one", commonSchemaLog);
+        } finally {
+
+            /* Close. */
+            persistence.close();
+        }
+
+        /* Get new data after restart. */
+        persistence = new DatabasePersistence(sContext);
+        persistence.setLogSerializer(logSerializer);
+        try {
+
+            /* Get new data. */
+            assertEquals(1, persistence.countLogs("test/one"));
+            List<Log> outputLogs = new ArrayList<>();
+            persistence.getLogs("test/one", 1, outputLogs);
+            assertEquals(1, outputLogs.size());
+            assertEquals(commonSchemaLog, outputLogs.get(0));
+
+            /* Verify target token is encrypted. */
+            ContentValues values = persistence.mDatabaseStorage.get(DatabasePersistence.COLUMN_GROUP, "test/one");
+            String token = values.getAsString(DatabasePersistence.COLUMN_TARGET_TOKEN);
+            assertNotNull(token);
+            assertNotEquals("test-guid", token);
+            assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token, false).getDecryptedData());
+        } finally {
+
+            /* Close. */
             persistence.close();
         }
     }

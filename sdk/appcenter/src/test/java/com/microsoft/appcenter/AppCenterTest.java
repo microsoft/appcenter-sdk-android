@@ -23,6 +23,7 @@ import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.After;
@@ -195,7 +196,7 @@ public class AppCenterTest {
 
         /* Mock empty database. */
         StorageHelper.DatabaseStorage databaseStorage = mock(StorageHelper.DatabaseStorage.class);
-        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class), anyInt(), any(StorageHelper.DatabaseStorage.DatabaseErrorListener.class))).thenReturn(databaseStorage);
+        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class), anyInt(), any(DatabaseManager.Listener.class))).thenReturn(databaseStorage);
         StorageHelper.DatabaseStorage.DatabaseScanner databaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
         when(databaseStorage.getScanner(anyString(), anyObject())).thenReturn(databaseScanner);
         when(databaseScanner.iterator()).thenReturn(mDataBaseScannerIterator);
@@ -1164,7 +1165,7 @@ public class AppCenterTest {
     }
 
     @Test
-    public void addOneCollectorListenerOnStart() throws Exception {
+    public void addOneCollectorListenerOnStart() {
         String secret = TRANSMISSION_TARGET_TOKEN_KEY + KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
         AppCenter.start(mApplication, secret, DummyService.class);
         verify(mChannel).addListener(argThat(new ArgumentMatcher<Channel.Listener>() {

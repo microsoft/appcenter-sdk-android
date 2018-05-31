@@ -47,6 +47,12 @@ public class AbstractLogTest {
         AbstractLog b = new MockLog();
         checkEquals(a, b);
 
+        /* Transmission targets. */
+        a.addTransmissionTarget("a");
+        checkNotEquals(a, b);
+        b.addTransmissionTarget("a");
+        checkEquals(a, b);
+
         /* Timestamp. */
         a.setTimestamp(new Date(1));
         checkNotEquals(a, b);

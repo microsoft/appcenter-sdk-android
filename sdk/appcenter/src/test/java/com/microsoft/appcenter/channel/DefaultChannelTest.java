@@ -7,8 +7,8 @@ import android.support.annotation.NonNull;
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.ingestion.AppCenterIngestion;
 import com.microsoft.appcenter.ingestion.Ingestion;
-import com.microsoft.appcenter.ingestion.IngestionHttp;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
@@ -73,7 +73,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @SuppressWarnings("unchecked")
     public void analyticsSuccess() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
-        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer(50)).then(getGetLogsAnswer(1)).then(getGetLogsAnswer(2));
@@ -166,7 +166,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @Test
     public void lessLogsThanExpected() {
         Persistence mockPersistence = mock(Persistence.class);
-        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), Matchers.<ArrayList<Log>>any())).then(getGetLogsAnswer(40));
@@ -209,7 +209,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @SuppressWarnings("unchecked")
     public void maxRequests() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
-        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
 
         /* We make second request return less logs than expected to make sure counter is reset properly. */
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer()).then(getGetLogsAnswer(49)).then(getGetLogsAnswer());
@@ -261,7 +261,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @SuppressWarnings("unchecked")
     public void maxRequestsInitial() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
-        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
 
         when(mockPersistence.countLogs(any(String.class))).thenReturn(100);
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
@@ -315,7 +315,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @SuppressWarnings("unchecked")
     public void analyticsRecoverable() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
-        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class)))
@@ -394,7 +394,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @SuppressWarnings("unchecked")
     public void analyticsFatal() throws Exception {
         Persistence mockPersistence = mock(Persistence.class);
-        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class)))
                 .then(getGetLogsAnswer(50))
@@ -653,7 +653,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Simulate Persistence failing. */
         doThrow(new Persistence.PersistenceException("mock", new IOException("mock"))).
                 when(mockPersistence).putLog(anyString(), any(Log.class));
-        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mCoreHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
 
@@ -803,7 +803,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     public void listener() {
 
         @SuppressWarnings("ConstantConditions")
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(IngestionHttp.class), mCoreHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mCoreHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         Channel.Listener listener = spy(new AbstractChannelListener());
         channel.addListener(listener);
@@ -831,7 +831,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @Test
     public void clear() {
         Persistence mockPersistence = mock(Persistence.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mock(IngestionHttp.class), mCoreHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mock(AppCenterIngestion.class), mCoreHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
 
         /* Clear an existing channel. */
@@ -851,7 +851,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new PackageManager.NameNotFoundException()));
         Persistence persistence = mock(Persistence.class);
         @SuppressWarnings("ConstantConditions")
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, mock(IngestionHttp.class), mCoreHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, mock(AppCenterIngestion.class), mCoreHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         Channel.Listener listener = mock(Channel.Listener.class);
         channel.addListener(listener);
@@ -889,7 +889,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @SuppressWarnings("unchecked")
     public void invokeCallbacksAfterSuspendFatal() {
         Persistence mockPersistence = mock(Persistence.class);
-        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         when(mockPersistence.getLogs(eq(TEST_GROUP), anyInt(), any(ArrayList.class)))
@@ -920,7 +920,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @SuppressWarnings("unchecked")
     public void invokeCallbacksAfterSuspendFatalNoListener() {
         Persistence mockPersistence = mock(Persistence.class);
-        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         /* Simulate a lot of logs already in database. */
@@ -952,7 +952,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @SuppressWarnings("unchecked")
     public void invokeCallbacksAfterSuspendRecoverable() {
         Persistence mockPersistence = mock(Persistence.class);
-        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         when(mockPersistence.getLogs(eq(TEST_GROUP), anyInt(), any(ArrayList.class)))
@@ -982,7 +982,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @Test
     public void shutdown() {
         Persistence mockPersistence = mock(Persistence.class);
-        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         when(mockPersistence.getLogs(any(String.class), anyInt(), Matchers.<List<Log>>any()))
@@ -1007,7 +1007,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Persistence persistence = mock(Persistence.class);
 
         @SuppressWarnings("ConstantConditions")
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(IngestionHttp.class), mCoreHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(AppCenterIngestion.class), mCoreHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
 
         /* Given we add mock listeners. */
