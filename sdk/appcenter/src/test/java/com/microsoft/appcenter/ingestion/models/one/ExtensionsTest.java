@@ -84,7 +84,7 @@ public class ExtensionsTest {
 
         /* Loc. */
         LocExtension loc = new LocExtension();
-        loc.setTimeZone("+02:00");
+        loc.setTz("+02:00");
         a.setLoc(loc);
         checkNotEquals(a, b);
         b.setLoc(new LocExtension());

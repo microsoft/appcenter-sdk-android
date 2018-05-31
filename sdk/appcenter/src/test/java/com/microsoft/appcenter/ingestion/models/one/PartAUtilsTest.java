@@ -83,7 +83,7 @@ public class PartAUtilsTest {
         assertNotNull(commonSchemaLog.getExt().getSdk());
         assertEquals("appcenter.android-1.5.0", commonSchemaLog.getExt().getSdk().getLibVer());
         assertNotNull(commonSchemaLog.getExt().getLoc());
-        assertEquals(commonSchemaTimeZoneOffset, commonSchemaLog.getExt().getLoc().getTimeZone());
+        assertEquals(commonSchemaTimeZoneOffset, commonSchemaLog.getExt().getLoc().getTz());
         assertEquals(Collections.singleton(transmissionTarget), commonSchemaLog.getTransmissionTargetTokens());
     }
 }

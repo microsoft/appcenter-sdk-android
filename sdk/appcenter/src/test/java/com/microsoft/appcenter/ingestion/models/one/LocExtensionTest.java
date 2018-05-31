@@ -22,12 +22,12 @@ public class LocExtensionTest {
         LocExtension b = new LocExtension();
         checkEquals(a, b);
 
-        /* Timezone. */
-        a.setTimeZone("a1");
+        /* Tz. */
+        a.setTz("a1");
         checkNotEquals(a, b);
-        b.setTimeZone("b1");
+        b.setTz("b1");
         checkNotEquals(a, b);
-        b.setTimeZone("a1");
+        b.setTz("a1");
         checkEquals(a, b);
     }
 }
