@@ -65,7 +65,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Simulate enable module then disable. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mCoreHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);
@@ -110,7 +110,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         });
 
         /* Simulate enable module then disable. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mCoreHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);
@@ -163,7 +163,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         });
 
         /* Simulate enable module then disable. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mCoreHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);
