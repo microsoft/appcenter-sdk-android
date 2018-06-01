@@ -207,9 +207,9 @@ public class DatabasePersistence extends Persistence {
                 targetToken = null;
             }
             if (isLargePayload) {
-                contentValues = getContentValues(group, null, targetToken, type);
+                contentValues = getContentValues(group, null, targetToken, log.getType());
             } else {
-                contentValues = getContentValues(group, payload, targetToken, type);
+                contentValues = getContentValues(group, payload, targetToken, log.getType());
             }
             long databaseId = mDatabaseStorage.put(contentValues);
             AppCenterLog.debug(LOG_TAG, "Stored a log to the Persistence database for log type " + log.getType() + " with databaseId=" + databaseId);
@@ -377,7 +377,7 @@ public class DatabasePersistence extends Persistence {
                     }
 
                     //TODO 1432
-                    Log log = getLogSerializer().deserializeLog(logPayload, type);
+                    Log log = getLogSerializer().deserializeLog(logPayload, "DefaultType?" /*Ms.AppCenter.Event*/);
 
                     /* Restore target token. */
                     String targetToken = values.getAsString(COLUMN_TARGET_TOKEN);

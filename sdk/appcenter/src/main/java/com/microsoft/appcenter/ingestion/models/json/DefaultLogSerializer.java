@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//import static com.microsoft.appcenter.ingestion.models.CommonProperties.TYPE;
+import static com.microsoft.appcenter.ingestion.models.CommonProperties.TYPE;
 
 public class DefaultLogSerializer implements LogSerializer {
 
@@ -38,8 +38,8 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @NonNull //TODO 1432
-    private Log readLog(JSONObject object, String type) throws JSONException {
-        //String type = object.getString(TYPE);
+    private Log readLog(JSONObject object, String typeArg) throws JSONException {
+        String type = object.optString(TYPE, typeArg);
         LogFactory logFactory = mLogFactories.get(type);
         if (logFactory == null) {
             throw new JSONException("Unknown log type: " + type);
