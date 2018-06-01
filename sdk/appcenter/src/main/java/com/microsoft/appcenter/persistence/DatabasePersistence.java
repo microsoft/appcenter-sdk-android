@@ -59,6 +59,12 @@ public class DatabasePersistence extends Persistence {
     static final String COLUMN_TARGET_TOKEN = "target_token";
 
     /**
+     * Name of target token column in the table.
+     */
+    @VisibleForTesting
+    static final String COLUMN_DATA_TYPE = "type";
+
+    /**
      * Database name.
      */
     @VisibleForTesting
@@ -73,8 +79,8 @@ public class DatabasePersistence extends Persistence {
     /**
      * Table schema for Persistence.
      */
-    @VisibleForTesting //TODO 1432
-    static final ContentValues SCHEMA = getContentValues("", "", "");
+    @VisibleForTesting
+    static final ContentValues SCHEMA = getContentValues("", "", "", "");
 
     /**
      * Size limit (in bytes) for a database row log payload.
@@ -150,8 +156,9 @@ public class DatabasePersistence extends Persistence {
                         /*
                          * This is called only on upgrade and thus only if oldVersion is < 2.
                          * Therefore we don't have to check anything to add the missing column.
-                         */ //TODO 1432
+                         */
                         db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_TOKEN + "` TEXT");
+                        db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_DATA_TYPE + "` TEXT");
                         return true;
                     }
 
@@ -174,11 +181,12 @@ public class DatabasePersistence extends Persistence {
      * @param targetToken target token if the log is common schema.
      * @return A {@link ContentValues} instance.
      */
-    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken) {
-        ContentValues values = new ContentValues(); //TODO 1432
+    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken, String type) {
+        ContentValues values = new ContentValues();
         values.put(COLUMN_GROUP, group);
         values.put(COLUMN_LOG, logJ);
         values.put(COLUMN_TARGET_TOKEN, targetToken);
+        values.put(COLUMN_DATA_TYPE, type);
         return values;
     }
 
@@ -199,9 +207,9 @@ public class DatabasePersistence extends Persistence {
                 targetToken = null;
             }
             if (isLargePayload) {
-                contentValues = getContentValues(group, null, targetToken);
+                contentValues = getContentValues(group, null, targetToken, type);
             } else {
-                contentValues = getContentValues(group, payload, targetToken);
+                contentValues = getContentValues(group, payload, targetToken, type);
             }
             long databaseId = mDatabaseStorage.put(contentValues);
             AppCenterLog.debug(LOG_TAG, "Stored a log to the Persistence database for log type " + log.getType() + " with databaseId=" + databaseId);
@@ -369,7 +377,7 @@ public class DatabasePersistence extends Persistence {
                     }
 
                     //TODO 1432
-                    Log log = getLogSerializer().deserializeLog(logPayload);
+                    Log log = getLogSerializer().deserializeLog(logPayload, type);
 
                     /* Restore target token. */
                     String targetToken = values.getAsString(COLUMN_TARGET_TOKEN);

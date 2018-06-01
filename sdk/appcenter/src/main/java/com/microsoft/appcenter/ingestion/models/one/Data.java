@@ -63,24 +63,20 @@ public class Data implements Model {
     @Override
     public void read(JSONObject object) throws JSONException {
 
-        /* Part B. We don't really handle it yet but we need a type internally. */
-        setBaseDataType(object.getString(BASE_DATA_TYPE));
-
         /* Part C. */
         JSONArray names = object.names();
-        for (int i = 0; i < names.length(); i++) {
-            String name = names.getString(i);
-            if (!name.equals(BASE_DATA) && !name.equals(BASE_DATA_TYPE)) {
-                mProperties.put(name, object.get(name));
+        if (names != null) {
+            for (int i = 0; i < names.length(); i++) {
+                String name = names.getString(i);
+                if (!name.equals(BASE_DATA) && !name.equals(BASE_DATA_TYPE)) {
+                    mProperties.put(name, object.get(name));
+                }
             }
         }
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-
-        /* Part B. We don't really handle it yet but we need a type internally. */
-        writer.key(BASE_DATA_TYPE).value(getBaseDataType());
 
         /* Part C. */
         JSONArray names = mProperties.names();
@@ -100,15 +96,11 @@ public class Data implements Model {
 
         Data data = (Data) o;
 
-        if (baseDataType != null ? !baseDataType.equals(data.baseDataType) : data.baseDataType != null)
-            return false;
         return mProperties.toString().equals(data.mProperties.toString());
     }
 
     @Override
     public int hashCode() {
-        int result = baseDataType != null ? baseDataType.hashCode() : 0;
-        result = 31 * result + mProperties.toString().hashCode();
-        return result;
+        return mProperties.toString().hashCode();
     }
 }
