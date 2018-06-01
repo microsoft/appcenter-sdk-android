@@ -37,16 +37,9 @@ public class DefaultLogSerializer implements LogSerializer {
         return writer;
     }
 
-    @NonNull
+    @NonNull //TODO 1432
     private Log readLog(JSONObject object) throws JSONException {
-
-        /* AppCenter logs have type as top level field. */
-        String type = object.optString(TYPE, null);
-        if (type == null) {
-
-            /* Common schema log type is in Part B. */
-            type = object.getJSONObject(CommonSchemaLog.DATA).getString(Data.BASE_DATA_TYPE);
-        }
+        String type = object.getString(TYPE);
         LogFactory logFactory = mLogFactories.get(type);
         if (logFactory == null) {
             throw new JSONException("Unknown log type: " + type);
@@ -63,7 +56,7 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @NonNull
-    @Override
+    @Override //TODO 1432
     public Log deserializeLog(@NonNull String json) throws JSONException {
         return readLog(new JSONObject(json));
     }

@@ -8,6 +8,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+import static com.microsoft.appcenter.ingestion.models.CommonProperties.TYPE;
+
 /**
  * Common schema has 1 log type with extensions, everything is called an event.
  * Part B can be used in the future for domain specific typing (like reflecting AppCenter log type).
@@ -57,7 +59,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
     /**
      * Data property.
      */
-    public static final String DATA = "data";
+    private static final String DATA = "data";
 
     /**
      * Common schema version.
@@ -272,10 +274,12 @@ public abstract class CommonSchemaLog extends AbstractLog {
             setExt(extensions);
         }
 
-        /* Read Parts B&C. Since we use baseDataType the data container is never missing. */
-        Data data = new Data();
-        data.read(object.getJSONObject(DATA));
-        setData(data);
+        /* Read Parts B&C. */
+        if (object.has(DATA)) {
+            Data data = new Data();
+            data.read(object.getJSONObject(DATA));
+            setData(data);
+        }
     }
 
     @Override
@@ -299,19 +303,11 @@ public abstract class CommonSchemaLog extends AbstractLog {
             writer.endObject();
         }
 
-        /*
-         * Parts B&C.
-         * We need to store type for deserialization, and one collector does not accept custom fields.
-         * We should not use Part C as it's reserved for customer properties.
-         * We can use Part B type. We will most likely use Part B for real eventually anyway.
-         */
-        if (getData() == null) {
-            setData(new Data());
+        if (getData() != null) {
+            writer.key(DATA).object();
+            getData().write(writer);
+            writer.endObject();
         }
-        getData().setBaseDataType(getType());
-        writer.key(DATA).object();
-        getData().write(writer);
-        writer.endObject();
     }
 
     @SuppressWarnings("SimplifiableIfStatement")

@@ -73,7 +73,7 @@ public class DatabasePersistence extends Persistence {
     /**
      * Table schema for Persistence.
      */
-    @VisibleForTesting
+    @VisibleForTesting //TODO 1432
     static final ContentValues SCHEMA = getContentValues("", "", "");
 
     /**
@@ -150,7 +150,7 @@ public class DatabasePersistence extends Persistence {
                         /*
                          * This is called only on upgrade and thus only if oldVersion is < 2.
                          * Therefore we don't have to check anything to add the missing column.
-                         */
+                         */ //TODO 1432
                         db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_TOKEN + "` TEXT");
                         return true;
                     }
@@ -175,7 +175,7 @@ public class DatabasePersistence extends Persistence {
      * @return A {@link ContentValues} instance.
      */
     private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken) {
-        ContentValues values = new ContentValues();
+        ContentValues values = new ContentValues(); //TODO 1432
         values.put(COLUMN_GROUP, group);
         values.put(COLUMN_LOG, logJ);
         values.put(COLUMN_TARGET_TOKEN, targetToken);
@@ -367,6 +367,8 @@ public class DatabasePersistence extends Persistence {
                     } else {
                         logPayload = databasePayload;
                     }
+
+                    //TODO 1432
                     Log log = getLogSerializer().deserializeLog(logPayload);
 
                     /* Restore target token. */

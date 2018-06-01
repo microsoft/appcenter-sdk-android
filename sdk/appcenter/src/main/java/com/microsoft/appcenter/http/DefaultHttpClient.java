@@ -52,7 +52,7 @@ public class DefaultHttpClient implements HttpClient {
     /**
      * Content type header key.
      */
-    public static final String CONTENT_TYPE_KEY = "Content-Type";
+    private static final String CONTENT_TYPE_KEY = "Content-Type";
 
     /**
      * Client version header key.
