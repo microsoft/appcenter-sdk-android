@@ -98,14 +98,13 @@ public class OneCollectorIngestion implements Ingestion {
         headers.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
 
         /* Client version */
-        // TODO tag field would be useful to put enabled SDK modules in (e.g. for Analytis + Crashes + Distribute it could be ACD)
-        headers.put(CLIENT_VERSION_KEY, String.format(CLIENT_VERSION_FORMAT, VERSION_NAME, "no"));
+        headers.put(CLIENT_VERSION_KEY, String.format(CLIENT_VERSION_FORMAT, VERSION_NAME));
 
         /* Content encoding */
-        // TODO
+        // TODO Android HttpUrlConnection should take care of this?  Need to verify in fiddler
 
         /* Upload time */
-        headers.put(UPLOAD_TIME_KEY, Long.toString(System.currentTimeMillis()));
+        headers.put(UPLOAD_TIME_KEY, String.valueOf(System.currentTimeMillis()));
 
         /* Make the call. */
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);

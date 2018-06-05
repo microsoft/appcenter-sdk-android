@@ -62,7 +62,7 @@ public class DefaultHttpClient implements HttpClient {
     /**
      * Client version format string.
      */
-    public static final String CLIENT_VERSION_FORMAT = "ASK-Android-Java-no-%s-%s";
+    public static final String CLIENT_VERSION_FORMAT = "ACS-Android-Java-no-%s-no";
 
     /**
      * Upload time header key.

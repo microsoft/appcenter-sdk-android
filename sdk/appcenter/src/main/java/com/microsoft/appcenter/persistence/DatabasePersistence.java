@@ -375,9 +375,8 @@ public class DatabasePersistence extends Persistence {
                     } else {
                         logPayload = databasePayload;
                     }
-
-                    //TODO 1432
-                    Log log = getLogSerializer().deserializeLog(logPayload, "DefaultType?" /*Ms.AppCenter.Event*/);
+                    String databasePayloadType = values.getAsString(COLUMN_DATA_TYPE);
+                    Log log = getLogSerializer().deserializeLog(logPayload, databasePayloadType);
 
                     /* Restore target token. */
                     String targetToken = values.getAsString(COLUMN_TARGET_TOKEN);

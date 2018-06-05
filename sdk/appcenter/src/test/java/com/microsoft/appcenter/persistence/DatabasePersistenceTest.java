@@ -103,7 +103,7 @@ public class DatabasePersistenceTest {
         }
 
         LogSerializer mockLogSerializer = mock(LogSerializer.class);
-        when(mockLogSerializer.deserializeLog(anyString())).thenReturn(mock(Log.class));
+        when(mockLogSerializer.deserializeLog(anyString(), anyString())).thenReturn(mock(Log.class));
 
         /* Instantiate Database Persistence. */
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
@@ -176,7 +176,7 @@ public class DatabasePersistenceTest {
 
         /* Mock serializer and eventually the database. */
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenAnswer(new Answer<Log>() {
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<Log>() {
 
             @Override
             public Log answer(InvocationOnMock invocation) {

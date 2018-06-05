@@ -575,7 +575,7 @@ public class DatabasePersistenceAndroidTest {
                 .doThrow(new JSONException("JSON exception"))
                 /* Return a normal log for further calls. */
                 .doReturn(AndroidTestUtils.generateMockLog())
-                .when(logSerializer).deserializeLog(anyString());
+                .when(logSerializer).deserializeLog(anyString(), anyString());
         persistence.setLogSerializer(logSerializer);
         try {
 
@@ -609,6 +609,7 @@ public class DatabasePersistenceAndroidTest {
         /* Initialize database persistence with old schema. */
         ContentValues oldSchema = new ContentValues(DatabasePersistence.SCHEMA);
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_TOKEN);
+        oldSchema.remove(DatabasePersistence.COLUMN_DATA_TYPE);
         StorageHelper.DatabaseStorage databaseStorage = StorageHelper.DatabaseStorage.getDatabaseStorage(DatabasePersistence.DATABASE, DatabasePersistence.TABLE, 1, oldSchema, new DatabaseManager.Listener() {
 
             @Override

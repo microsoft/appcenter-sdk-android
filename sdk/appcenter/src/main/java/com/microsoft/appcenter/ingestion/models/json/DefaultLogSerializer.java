@@ -37,9 +37,11 @@ public class DefaultLogSerializer implements LogSerializer {
         return writer;
     }
 
-    @NonNull //TODO 1432
-    private Log readLog(JSONObject object, String typeArg) throws JSONException {
-        String type = object.optString(TYPE, typeArg);
+    @NonNull
+    private Log readLog(JSONObject object, String type) throws JSONException {
+        if (type == null) {
+            type = object.getString(TYPE);
+        }
         LogFactory logFactory = mLogFactories.get(type);
         if (logFactory == null) {
             throw new JSONException("Unknown log type: " + type);
@@ -56,7 +58,7 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @NonNull
-    @Override //TODO 1432
+    @Override
     public Log deserializeLog(@NonNull String json, String type) throws JSONException {
         return readLog(new JSONObject(json), type);
     }
