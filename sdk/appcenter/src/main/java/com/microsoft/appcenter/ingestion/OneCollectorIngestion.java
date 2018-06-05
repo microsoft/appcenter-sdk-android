@@ -2,16 +2,19 @@ package com.microsoft.appcenter.ingestion;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.HttpClientRetryer;
+import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import org.json.JSONException;
@@ -19,16 +22,15 @@ import org.json.JSONException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static android.util.Log.VERBOSE;
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.BuildConfig.VERSION_NAME;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
-import static com.microsoft.appcenter.http.DefaultHttpClient.CLIENT_VERSION_KEY;
-import static com.microsoft.appcenter.http.DefaultHttpClient.CLIENT_VERSION_FORMAT;
-import static com.microsoft.appcenter.http.DefaultHttpClient.UPLOAD_TIME_KEY;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 
 public class OneCollectorIngestion implements Ingestion {
@@ -43,7 +45,26 @@ public class OneCollectorIngestion implements Ingestion {
     /**
      * API key header.
      */
-    private static final String API_KEY = "apikey";
+    @VisibleForTesting
+    static final String API_KEY = "apikey";
+
+    /**
+     * Client version header key.
+     */
+    @VisibleForTesting
+    static final String CLIENT_VERSION_KEY = "Client-Version";
+
+    /**
+     * Client version format string.
+     */
+    @VisibleForTesting
+    static final String CLIENT_VERSION_FORMAT = "ACS-Android-Java-no-%s-no";
+
+    /**
+     * Upload time header key.
+     */
+    @VisibleForTesting
+    static final String UPLOAD_TIME_KEY = "Upload-Time";
 
     /**
      * Log serializer.
@@ -79,7 +100,7 @@ public class OneCollectorIngestion implements Ingestion {
 
         /* Gather API keys from logs. */
         Map<String, String> headers = new HashMap<>();
-        Set<String> apiKeys = new HashSet<>();
+        Set<String> apiKeys = new LinkedHashSet<>();
         for (Log log : logContainer.getLogs()) {
             apiKeys.addAll(log.getTransmissionTargetTokens());
         }
@@ -157,7 +178,21 @@ public class OneCollectorIngestion implements Ingestion {
 
         @Override
         public void onBeforeCalling(URL url, Map<String, String> headers) {
+            if (AppCenterLog.getLogLevel() <= VERBOSE) {
 
+                /* Log url. */
+                AppCenterLog.verbose(LOG_TAG, "Calling " + url + "...");
+
+                /* Log headers. */
+                Map<String, String> logHeaders = new HashMap<>(headers);
+                String apiKeys = logHeaders.get(API_KEY);
+                if (apiKeys != null) {
+
+                    /* TODO possibly censor multiple API keys individually instead of whole set */
+                    logHeaders.put(API_KEY, HttpUtils.hideSecret(apiKeys));
+                }
+                AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
+            }
         }
     }
 }
