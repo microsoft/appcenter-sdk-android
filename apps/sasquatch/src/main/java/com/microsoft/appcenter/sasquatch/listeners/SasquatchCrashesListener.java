@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.SystemClock;
 import android.provider.OpenableColumns;
 import android.support.annotation.VisibleForTesting;
 import android.support.test.espresso.idling.CountingIdlingResource;
@@ -21,6 +22,7 @@ import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.MainActivity;
+import com.microsoft.appcenter.utils.HandlerUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,9 +36,16 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
 
     @VisibleForTesting
     public static final CountingIdlingResource crashesIdlingResource = new CountingIdlingResource("crashes");
+
     private final Context mContext;
+
+    private static final long TOAST_DELAY = 2000;
+
     private String mTextAttachment;
+
     private Uri mFileAttachment;
+
+    private long mBeforeSendingToastTime;
 
     public SasquatchCrashesListener(Context context) {
         this.mContext = context;
@@ -118,14 +127,14 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
 
     @Override
     public void onBeforeSending(ErrorReport report) {
+        mBeforeSendingToastTime = SystemClock.uptimeMillis();
         Toast.makeText(mContext, R.string.crash_before_sending, Toast.LENGTH_SHORT).show();
         crashesIdlingResource.increment();
     }
 
     @Override
     public void onSendingFailed(ErrorReport report, Exception e) {
-        Toast.makeText(mContext, R.string.crash_sent_failed, Toast.LENGTH_SHORT).show();
-        crashesIdlingResource.decrement();
+        notifySending(mContext.getString(R.string.crash_sent_failed));
     }
 
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -135,7 +144,22 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
         if (report.getThrowable() != null) {
             message += String.format("\nThrowable: %s", report.getThrowable().toString());
         }
-        Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
+        notifySending(message);
+    }
+
+    private void notifySending(final String message) {
+        long timeToWait = SystemClock.uptimeMillis() - mBeforeSendingToastTime + TOAST_DELAY;
+        if (timeToWait <= 0) {
+            Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
+        } else {
+            HandlerUtils.getMainHandler().postDelayed(new Runnable() {
+
+                @Override
+                public void run() {
+                    Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
+                }
+            }, timeToWait);
+        }
         crashesIdlingResource.decrement();
     }
 
