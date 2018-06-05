@@ -155,7 +155,7 @@ public class DatabasePersistence extends Persistence {
 
                         /*
                          * This is called only on upgrade and thus only if oldVersion is < 2.
-                         * Therefore we don't have to check anything to add the missing column.
+                         * Therefore we don't have to check anything to add the missing columns.
                          */
                         db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_TOKEN + "` TEXT");
                         db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_DATA_TYPE + "` TEXT");

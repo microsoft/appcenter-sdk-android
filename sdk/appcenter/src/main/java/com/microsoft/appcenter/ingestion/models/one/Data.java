@@ -23,33 +23,9 @@ public class Data implements Model {
     public static final String BASE_DATA = "baseData";
 
     /**
-     * Part B data type.
-     */
-    private String baseDataType;
-
-    /**
      * Part C properties.
      */
     private JSONObject mProperties = new JSONObject();
-
-    /**
-     * Get base data type.
-     *
-     * @return base data type.
-     */
-    @SuppressWarnings("WeakerAccess")
-    public String getBaseDataType() {
-        return baseDataType;
-    }
-
-    /**
-     * Set base data type.
-     *
-     * @param baseDataType base data type.
-     */
-    public void setBaseDataType(String baseDataType) {
-        this.baseDataType = baseDataType;
-    }
 
     /**
      * Get Part C properties.
