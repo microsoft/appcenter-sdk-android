@@ -97,10 +97,8 @@ public class OneCollectorIngestionTest {
         /* Test calling code. */
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
         ingestion.setLogUrl("http://mock");
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestion.sendAsync(appSecret, installId, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(null, null, container, serviceCallback));
 
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
@@ -151,10 +149,8 @@ public class OneCollectorIngestionTest {
         /* Test calling code. */
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
         ingestion.setLogUrl("http://mock");
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestion.sendAsync(appSecret, installId, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(null, null, container, serviceCallback));
 
         /* Verify call to http client. */
         assertNotNull(callTemplate.get());
@@ -174,11 +170,11 @@ public class OneCollectorIngestionTest {
 
         /* Mock instances. */
         URL url = new URL("http://mock/path/file");
-        String appSecret = UUIDUtils.randomUUID().toString();
-        String obfuscatedSecret = HttpUtils.hideSecret(appSecret);
+        String apiKeys = UUIDUtils.randomUUID().toString();
+        String obfuscatedSecret = HttpUtils.hideSecret(apiKeys);
         Map<String, String> headers = new HashMap<>();
         headers.put("Another-Header", "Another-Value");
-        HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret);
+        HttpClient.CallTemplate callTemplate = getCallTemplate();
         AppCenterLog.setLogLevel(android.util.Log.VERBOSE);
         mockStatic(AppCenterLog.class);
 
@@ -196,7 +192,7 @@ public class OneCollectorIngestionTest {
         }
 
         /* Put app secret to header. */
-        headers.put(OneCollectorIngestion.API_KEY, appSecret);
+        headers.put(OneCollectorIngestion.API_KEY, apiKeys);
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify app secret is in log. */
@@ -209,8 +205,8 @@ public class OneCollectorIngestionTest {
     public void onBeforeCallingWithAnotherLogLevel() throws Exception {
 
         /* Mock instances. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret);
+        String apiKey = UUIDUtils.randomUUID().toString();
+        HttpClient.CallTemplate callTemplate = getCallTemplate();
 
         /* Change log level. */
         AppCenterLog.setLogLevel(android.util.Log.WARN);
@@ -223,7 +219,7 @@ public class OneCollectorIngestionTest {
         AppCenterLog.verbose(anyString(), anyString());
     }
 
-    private HttpClient.CallTemplate getCallTemplate(String appSecret) throws Exception {
+    private HttpClient.CallTemplate getCallTemplate() throws Exception {
 
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
         final ServiceCall call = mock(ServiceCall.class);
@@ -240,7 +236,7 @@ public class OneCollectorIngestionTest {
         });
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), mock(LogSerializer.class));
         ingestion.setLogUrl("http://mock");
-        assertEquals(call, ingestion.sendAsync(appSecret, UUIDUtils.randomUUID(), mock(LogContainer.class), mock(ServiceCallback.class)));
+        assertEquals(call, ingestion.sendAsync(null, null, mock(LogContainer.class), mock(ServiceCallback.class)));
         return callTemplate.get();
     }
 }
