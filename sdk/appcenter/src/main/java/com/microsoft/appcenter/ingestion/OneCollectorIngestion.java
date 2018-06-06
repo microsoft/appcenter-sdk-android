@@ -38,7 +38,7 @@ public class OneCollectorIngestion implements Ingestion {
     /**
      * Default log URL.
      */
-    private static final String DEFAULT_LOG_URL = "https://browser.events.data.microsoft.com/OneCollector/1.0";
+    private static final String DEFAULT_LOG_URL = "https://mobile.events.data.microsoft.com/OneCollector/1.0";
 
     private static final String CONTENT_TYPE_VALUE = "application/x-json-stream; charset=utf-8";
 
@@ -57,8 +57,7 @@ public class OneCollectorIngestion implements Ingestion {
     /**
      * Client version format string.
      */
-    @VisibleForTesting
-    static final String CLIENT_VERSION_FORMAT = "ACS-Android-Java-no-%s-no";
+    private static final String CLIENT_VERSION_FORMAT = "ACS-Android-Java-no-%s-no";
 
     /**
      * Upload time header key.

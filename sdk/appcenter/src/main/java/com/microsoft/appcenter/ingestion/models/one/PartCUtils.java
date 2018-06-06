@@ -1,13 +1,10 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
-import com.microsoft.appcenter.utils.AppCenterLog;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Map;
-
-import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
+import java.util.regex.Pattern;
 
 /**
  * Populate Part C properties.
@@ -15,10 +12,16 @@ import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 public class PartCUtils {
 
     /**
+     * Property key allowed regex.
+     */
+    private static final Pattern PROPERTY_KEY_REGEX = Pattern.compile("^[_a-zA-Z0-9][._a-zA-Z0-9]{0,99}$");
+
+    /**
      * Adds part C properties to a log.
      *
      * @param properties custom properties.
      * @param dest       destination common schema log.
+     * @throws IllegalArgumentException if properties are not valid.
      */
     public static void addPartCFromLog(Map<String, String> properties, CommonSchemaLog dest) {
         if (properties == null) {
@@ -31,17 +34,24 @@ public class PartCUtils {
             dest.setData(data);
             for (Map.Entry<String, String> entry : properties.entrySet()) {
 
-                /* Validate key is not Part B. */
+                /* Validate key not null */
                 String key = entry.getKey();
-                if (Data.BASE_DATA.equals(key) || Data.BASE_DATA_TYPE.equals(key)) {
-                    AppCenterLog.warn(LOG_TAG, "Cannot use '" + key + "' in properties, skipping that property.");
-                    continue;
+                if (key == null) {
+                    throw new IllegalArgumentException("Property key cannot be null.");
                 }
 
-                /* TODO validate properties here, skip invalid ones and log a warning. */
+                /* Validate key is not Part B. */
+                if (Data.BASE_DATA.equals(key) || Data.BASE_DATA_TYPE.equals(key)) {
+                    throw new IllegalArgumentException("Property key '" + key + "' is reserved.");
+                }
+
+                /* Validate pattern. */
+                if (!PROPERTY_KEY_REGEX.matcher(key).matches()) {
+                    throw new IllegalArgumentException("Property key must match pattern '" + PROPERTY_KEY_REGEX + "' but was '" + key + "'.");
+                }
 
                 /* Split property name by dot. */
-                String[] keys = key.split("\\.");
+                String[] keys = key.split("\\.", -1);
                 int lastIndex = keys.length - 1;
                 JSONObject destProperties = data.getProperties();
                 for (int i = 0; i < lastIndex; i++) {

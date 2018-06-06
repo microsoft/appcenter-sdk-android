@@ -4,11 +4,34 @@ import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * Populate Part A properties.
  */
 public class PartAUtils {
+
+    /**
+     * Name pattern to validate against.
+     */
+    private static final Pattern NAME_REGEX = Pattern.compile("^[a-zA-Z0-9]((\\.(?!(\\.|$)))|[_a-zA-Z0-9]){3,99}$");
+
+    /**
+     * Validate and set name for common schema log.
+     *
+     * @param log  log.
+     * @param name name.
+     * @throws IllegalArgumentException if name is invalid.
+     */
+    public static void setName(CommonSchemaLog log, String name) throws IllegalArgumentException {
+        if (name == null) {
+            throw new IllegalArgumentException("Name cannot be null.");
+        }
+        if (!NAME_REGEX.matcher(name).matches()) {
+            throw new IllegalArgumentException("Name must match '" + NAME_REGEX + "' but was '" + name + "'.");
+        }
+        log.setName(name);
+    }
 
     /**
      * Adds part A extension to common schema log from device object in Log.
