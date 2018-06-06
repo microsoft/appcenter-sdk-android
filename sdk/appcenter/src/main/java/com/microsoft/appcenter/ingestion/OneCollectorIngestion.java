@@ -38,8 +38,11 @@ public class OneCollectorIngestion implements Ingestion {
     /**
      * Default log URL.
      */
-    private static final String DEFAULT_LOG_URL = "https://browser.events.data.microsoft.com/OneCollector/1.0";
+    private static final String DEFAULT_LOG_URL = "https://mobile.events.data.microsoft.com/OneCollector/1.0";
 
+    /**
+     * Content type header.
+     */
     private static final String CONTENT_TYPE_VALUE = "application/x-json-stream; charset=utf-8";
 
     /**
@@ -57,8 +60,7 @@ public class OneCollectorIngestion implements Ingestion {
     /**
      * Client version format string.
      */
-    @VisibleForTesting
-    static final String CLIENT_VERSION_FORMAT = "ACS-Android-Java-no-%s-no";
+    private static final String CLIENT_VERSION_FORMAT = "ACS-Android-Java-no-%s-no";
 
     /**
      * Upload time header key.
@@ -153,12 +155,16 @@ public class OneCollectorIngestion implements Ingestion {
         mHttpClient.close();
     }
 
+    /** Call template implementation for One Collector. */
     private static class IngestionCallTemplate implements HttpClient.CallTemplate {
 
+        /** Log serializer. */
         private final LogSerializer mLogSerializer;
 
+        /** Log container. */
         private final LogContainer mLogContainer;
 
+        /** Init. */
         IngestionCallTemplate(LogSerializer logSerializer, LogContainer logContainer) {
             mLogSerializer = logSerializer;
             mLogContainer = logContainer;

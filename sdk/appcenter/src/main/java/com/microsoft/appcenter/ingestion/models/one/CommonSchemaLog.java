@@ -303,6 +303,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
             writer.endObject();
         }
 
+        /* Parts B & C. */
         if (getData() != null) {
             writer.key(DATA).object();
             getData().write(writer);

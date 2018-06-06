@@ -47,11 +47,6 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     static final String ONE_COLLECTOR_GROUP_NAME_SUFFIX = "/one";
 
     /**
-     * App context.
-     */
-    private final Context mContext;
-
-    /**
      * Channel.
      */
     private final Channel mChannel;
@@ -67,6 +62,11 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     private final UUID mInstallId;
 
     /**
+     * Ingestion instance.
+     */
+    private final Ingestion mIngestion;
+
+    /**
      * Epochs and sequences grouped by iKey.
      */
     private final Map<String, EpochAndSeq> mEpochsAndSeqsByIKey = new HashMap<>();
@@ -78,10 +78,10 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
      * @param channel channel.
      */
     public OneCollectorChannelListener(@NonNull Context context, @NonNull Channel channel, @NonNull LogSerializer logSerializer, @NonNull UUID installId) {
-        mContext = context;
         mChannel = channel;
         mLogSerializer = logSerializer;
         mInstallId = installId;
+        mIngestion = new OneCollectorIngestion(context, mLogSerializer);
     }
 
     @Override
@@ -90,8 +90,7 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
             return;
         }
         String oneCollectorGroupName = getOneCollectorGroupName(groupName);
-        Ingestion ingestion = new OneCollectorIngestion(mContext, mLogSerializer);
-        mChannel.addGroup(oneCollectorGroupName, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, ingestion, null);
+        mChannel.addGroup(oneCollectorGroupName, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, mIngestion, null);
     }
 
     @Override

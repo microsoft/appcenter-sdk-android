@@ -6,7 +6,6 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
-//import com.microsoft.appcenter.ingestion.models.one.Data;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.json.JSONArray;
