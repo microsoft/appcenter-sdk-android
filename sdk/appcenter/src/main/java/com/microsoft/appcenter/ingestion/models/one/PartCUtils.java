@@ -4,17 +4,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * Populate Part C properties.
  */
 public class PartCUtils {
-
-    /**
-     * Property key allowed regex.
-     */
-    private static final Pattern PROPERTY_KEY_REGEX = Pattern.compile("^[_a-zA-Z0-9][._a-zA-Z0-9]{0,99}$");
 
     /**
      * Adds part C properties to a log.
@@ -43,11 +37,6 @@ public class PartCUtils {
                 /* Validate key is not Part B. */
                 if (Data.BASE_DATA.equals(key) || Data.BASE_DATA_TYPE.equals(key)) {
                     throw new IllegalArgumentException("Property key '" + key + "' is reserved.");
-                }
-
-                /* Validate pattern. */
-                if (!PROPERTY_KEY_REGEX.matcher(key).matches()) {
-                    throw new IllegalArgumentException("Property key must match pattern '" + PROPERTY_KEY_REGEX + "' but was '" + key + "'.");
                 }
 
                 /* Split property name by dot. */

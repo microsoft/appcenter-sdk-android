@@ -32,16 +32,30 @@ public class PartCUtilsAndroidTest {
         assertEquals(0, log.getData().getProperties().length());
     }
 
-    @Test
-    public void filterPartBReserved() {
+    @Test(expected = IllegalArgumentException.class)
+    public void nullKey() {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        Map<String, String> properties = new HashMap<>();
+        properties.put(null, "c");
+        PartCUtils.addPartCFromLog(properties, log);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void baseDataForbidden() {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        Map<String, String> properties = new HashMap<>();
+        properties.put("a", "b");
+        properties.put("baseData", "{}");
+        PartCUtils.addPartCFromLog(properties, log);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void baseDataTypeForbidden() {
         MockCommonSchemaLog log = new MockCommonSchemaLog();
         Map<String, String> properties = new HashMap<>();
         properties.put("a", "b");
         properties.put("baseDataType", "custom");
-        properties.put("baseData", "{}");
         PartCUtils.addPartCFromLog(properties, log);
-        assertEquals(1, log.getData().getProperties().length());
-        assertEquals("b", log.getData().getProperties().optString("a", null));
     }
 
     @Test
