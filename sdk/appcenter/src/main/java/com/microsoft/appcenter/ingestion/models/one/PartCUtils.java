@@ -28,7 +28,7 @@ public class PartCUtils {
             dest.setData(data);
             for (Map.Entry<String, String> entry : properties.entrySet()) {
 
-                /* Validate key not null */
+                /* Validate key not null. */
                 String key = entry.getKey();
                 if (key == null) {
                     throw new IllegalArgumentException("Property key cannot be null.");
