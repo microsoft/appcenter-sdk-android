@@ -155,16 +155,24 @@ public class OneCollectorIngestion implements Ingestion {
         mHttpClient.close();
     }
 
-    /** Call template implementation for One Collector. */
+    /**
+     * Call template implementation for One Collector.
+     */
     private static class IngestionCallTemplate implements HttpClient.CallTemplate {
 
-        /** Log serializer. */
+        /**
+         * Log serializer.
+         */
         private final LogSerializer mLogSerializer;
 
-        /** Log container. */
+        /**
+         * Log container.
+         */
         private final LogContainer mLogContainer;
 
-        /** Init. */
+        /**
+         * Init.
+         */
         IngestionCallTemplate(LogSerializer logSerializer, LogContainer logContainer) {
             mLogSerializer = logSerializer;
             mLogContainer = logContainer;
