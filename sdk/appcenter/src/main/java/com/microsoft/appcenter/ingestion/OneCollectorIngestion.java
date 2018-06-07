@@ -185,6 +185,8 @@ public class OneCollectorIngestion implements Ingestion {
             StringBuilder jsonStream = new StringBuilder();
             for (Log log : mLogContainer.getLogs()) {
                 jsonStream.append(mLogSerializer.serializeLog(log));
+
+                /* We have to use a different delimiter specific to OneCollector. */
                 jsonStream.append('\n');
             }
             return jsonStream.toString();

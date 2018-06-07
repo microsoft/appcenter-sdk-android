@@ -122,7 +122,6 @@ public class CommonSchemaLogSerializerTest {
         /* Check deserialize fails without data type */
         try {
             serializer.deserializeLog(serializer.serializeLog(log), null);
-            fail("Was supposed to fail with JSONException");
         } catch (JSONException ignore) {
 
             /* Expected. */
