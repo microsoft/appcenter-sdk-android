@@ -123,9 +123,6 @@ public class OneCollectorIngestion implements Ingestion {
         /* Client version */
         headers.put(CLIENT_VERSION_KEY, String.format(CLIENT_VERSION_FORMAT, VERSION_NAME));
 
-        /* Content encoding */
-        // TODO Android HttpUrlConnection should take care of this?  Need to verify in fiddler
-
         /* Upload time */
         headers.put(UPLOAD_TIME_KEY, String.valueOf(System.currentTimeMillis()));
 
