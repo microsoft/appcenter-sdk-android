@@ -41,6 +41,14 @@ public class PartCUtilsAndroidTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    public void nullValue() {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        Map<String, String> properties = new HashMap<>();
+        properties.put("d", null);
+        PartCUtils.addPartCFromLog(properties, log);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
     public void baseDataForbidden() {
         MockCommonSchemaLog log = new MockCommonSchemaLog();
         Map<String, String> properties = new HashMap<>();
