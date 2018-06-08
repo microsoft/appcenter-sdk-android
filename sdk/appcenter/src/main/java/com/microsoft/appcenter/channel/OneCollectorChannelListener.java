@@ -119,7 +119,7 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         try {
             commonSchemaLogs = mLogSerializer.toCommonSchemaLog(log);
         } catch (IllegalArgumentException e) {
-            AppCenterLog.error(LOG_TAG, "Cannot send log to one collector: " + e.getMessage());
+            AppCenterLog.error(LOG_TAG, "Cannot send a log to one collector: " + e.getMessage());
             return;
         }
 
