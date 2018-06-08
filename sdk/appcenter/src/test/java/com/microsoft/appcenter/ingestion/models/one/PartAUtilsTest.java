@@ -10,6 +10,8 @@ import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -18,6 +20,42 @@ public class PartAUtilsTest {
     @Test
     public void coverInit() {
         new PartAUtils();
+    }
+
+    private static void testInvalidName(String name) {
+        CommonSchemaLog log = new MockCommonSchemaLog();
+        try {
+            PartAUtils.setName(log, name);
+            fail("Expected exception");
+        } catch (IllegalArgumentException e) {
+            assertNull(log.getName());
+        }
+    }
+
+    private static void testValidName(String name) {
+        CommonSchemaLog log = new MockCommonSchemaLog();
+        PartAUtils.setName(log, name);
+        assertEquals(name, log.getName());
+    }
+
+    @Test
+    public void setInvalidNames() {
+        testInvalidName(null);
+        testInvalidName("a  b");
+        testInvalidName("abc");
+        testInvalidName("0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789a");
+        testInvalidName("....");
+        testInvalidName("a..b");
+        testInvalidName("a.b.");
+        testInvalidName(".a.b");
+    }
+
+    @Test
+    public void setValidNames() {
+        testValidName("AbCd");
+        testValidName("a.b.c");
+        testValidName("0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789");
+        testValidName("A_._");
     }
 
     @Test

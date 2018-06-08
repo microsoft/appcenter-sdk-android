@@ -25,11 +25,13 @@ public class EventLogFactory extends AbstractLogFactory {
 
             /* Part A common fields. */
             CommonSchemaEventLog commonSchemaEventLog = new CommonSchemaEventLog();
-            PartAUtils.addPartAFromLog(log, commonSchemaEventLog, transmissionTarget);
 
-            /* Event name goes to Part A too. */
+            /* Event name goes to Part A. */
             EventLog eventLog = (EventLog) log;
-            commonSchemaEventLog.setName(eventLog.getName());
+            PartAUtils.setName(commonSchemaEventLog, eventLog.getName());
+
+            /* Add common Part A fields. */
+            PartAUtils.addPartAFromLog(log, commonSchemaEventLog, transmissionTarget);
 
             /* Properties go to Part C. */
             PartCUtils.addPartCFromLog(eventLog.getProperties(), commonSchemaEventLog);

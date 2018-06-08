@@ -170,6 +170,27 @@ public class OneCollectorChannelListenerTest {
     }
 
     @Test
+    public void validateCommonSchemaLogs() {
+
+        /* Setup mocks. */
+        Channel channel = mock(Channel.class);
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.toCommonSchemaLog(any(Log.class))).thenThrow(new IllegalArgumentException());
+        Log log = mock(Log.class);
+        when(log.getTransmissionTargetTokens()).thenReturn(Collections.singleton("token"));
+
+        /* Init listener. */
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, logSerializer, UUIDUtils.randomUUID());
+        listener.onPreparedLog(log, TEST_GROUP);
+
+        /* Verify conversion attempted. */
+        verify(logSerializer).toCommonSchemaLog(any(Log.class));
+
+        /* Verify no enqueuing as the log was invalid. */
+        verify(channel, never()).enqueue(any(Log.class), anyString());
+    }
+
+    @Test
     public void dontConvertCommonSchemaLogs() {
 
         /* Setup mocks. */
