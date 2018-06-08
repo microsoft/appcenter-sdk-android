@@ -32,11 +32,29 @@ public class PartCUtilsAndroidTest {
         assertEquals(0, log.getData().getProperties().length());
     }
 
+    @Test
+    public void emptyStringsAreAllowed() throws JSONException {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        Map<String, String> properties = new HashMap<>();
+        properties.put("", "");
+        PartCUtils.addPartCFromLog(properties, log);
+        assertEquals(1, log.getData().getProperties().length());
+        assertEquals("", log.getData().getProperties().getString(""));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void nullKey() {
         MockCommonSchemaLog log = new MockCommonSchemaLog();
         Map<String, String> properties = new HashMap<>();
         properties.put(null, "c");
+        PartCUtils.addPartCFromLog(properties, log);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void nullValue() {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        Map<String, String> properties = new HashMap<>();
+        properties.put("d", null);
         PartCUtils.addPartCFromLog(properties, log);
     }
 

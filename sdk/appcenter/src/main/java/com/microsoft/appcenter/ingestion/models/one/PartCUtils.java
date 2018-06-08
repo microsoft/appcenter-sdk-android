@@ -34,6 +34,12 @@ public class PartCUtils {
                     throw new IllegalArgumentException("Property key cannot be null.");
                 }
 
+                /* Validate value not null. */
+                String value = entry.getValue();
+                if (value == null) {
+                    throw new IllegalArgumentException("Property value cannot be null.");
+                }
+
                 /* Validate key is not Part B. */
                 if (Data.BASE_DATA.equals(key) || Data.BASE_DATA_TYPE.equals(key)) {
                     throw new IllegalArgumentException("Property key '" + key + "' is reserved.");
@@ -48,7 +54,7 @@ public class PartCUtils {
                     destProperties.put(keys[i], subObject);
                     destProperties = subObject;
                 }
-                destProperties.put(keys[lastIndex], entry.getValue());
+                destProperties.put(keys[lastIndex], value);
             }
         } catch (JSONException ignore) {
 
