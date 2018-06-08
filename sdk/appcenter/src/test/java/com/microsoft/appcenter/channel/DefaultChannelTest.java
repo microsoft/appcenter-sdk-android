@@ -1131,8 +1131,9 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Channel.Listener listener = spy(new AbstractChannelListener());
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mAppCenterHandler);
         channel.addListener(listener);
-        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
-        verify(listener).onGroupAdded(TEST_GROUP);
+        Channel.GroupListener groupListener = mock(Channel.GroupListener.class);
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, groupListener);
+        verify(listener).onGroupAdded(TEST_GROUP, groupListener);
         channel.removeGroup(TEST_GROUP);
         verify(listener).onGroupRemoved(TEST_GROUP);
     }

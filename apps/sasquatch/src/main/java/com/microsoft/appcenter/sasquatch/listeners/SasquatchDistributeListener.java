@@ -1,4 +1,4 @@
-package com.microsoft.appcenter.sasquatch;
+package com.microsoft.appcenter.sasquatch.listeners;
 
 import android.app.Activity;
 import android.content.DialogInterface;
@@ -8,6 +8,7 @@ import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.distribute.DistributeListener;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.UpdateAction;
+import com.microsoft.appcenter.sasquatch.R;
 
 public class SasquatchDistributeListener implements DistributeListener {
 

@@ -194,7 +194,7 @@ public class DefaultChannel implements Channel {
 
         /* Call listeners so that they can react on group adding. */
         for (Listener listener : mListeners) {
-            listener.onGroupAdded(groupName);
+            listener.onGroupAdded(groupName, groupListener);
         }
     }
 
