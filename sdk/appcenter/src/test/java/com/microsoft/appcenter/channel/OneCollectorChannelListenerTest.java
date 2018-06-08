@@ -33,7 +33,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
+import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -49,7 +49,8 @@ public class OneCollectorChannelListenerTest {
         OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
 
         /* Mock group added. */
-        listener.onGroupAdded(TEST_GROUP);
+        Channel.GroupListener groupListener = mock(Channel.GroupListener.class);
+        listener.onGroupAdded(TEST_GROUP, groupListener);
 
         /* Verify one collector group added. */
         verify(channel).addGroup(eq(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX), eq(ONE_COLLECTOR_TRIGGER_COUNT), eq(ONE_COLLECTOR_TRIGGER_INTERVAL), eq(ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS), argThat(new ArgumentMatcher<Ingestion>() {
@@ -58,10 +59,10 @@ public class OneCollectorChannelListenerTest {
             public boolean matches(Object argument) {
                 return argument instanceof OneCollectorIngestion;
             }
-        }), isNull(Channel.GroupListener.class));
+        }), same(groupListener));
 
         /* Mock one collector group added callback, should not loop indefinitely. */
-        listener.onGroupAdded(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        listener.onGroupAdded(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, groupListener);
         verifyNoMoreInteractions(channel);
     }
 

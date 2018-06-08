@@ -8,8 +8,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
-import static com.microsoft.appcenter.ingestion.models.CommonProperties.TYPE;
-
 /**
  * Common schema has 1 log type with extensions, everything is called an event.
  * Part B can be used in the future for domain specific typing (like reflecting AppCenter log type).
