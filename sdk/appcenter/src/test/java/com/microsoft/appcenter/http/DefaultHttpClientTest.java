@@ -3,8 +3,8 @@ package com.microsoft.appcenter.http;
 import android.net.TrafficStats;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
@@ -29,10 +29,12 @@ import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
+import java.util.zip.GZIPOutputStream;
 
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.anyInt;
@@ -71,15 +73,14 @@ public class DefaultHttpClientTest {
         whenNew(DefaultHttpClient.Call.class).withAnyArguments().thenAnswer(new Answer<Object>() {
 
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
 
-                @SuppressWarnings("unchecked")
-                final DefaultHttpClient.Call call = new DefaultHttpClient.Call(invocation.getArguments()[0].toString(), invocation.getArguments()[1].toString(), (Map<String, String>) invocation.getArguments()[2], (HttpClient.CallTemplate) invocation.getArguments()[3], (ServiceCallback) invocation.getArguments()[4]);
+                @SuppressWarnings("unchecked") final DefaultHttpClient.Call call = new DefaultHttpClient.Call(invocation.getArguments()[0].toString(), invocation.getArguments()[1].toString(), (Map<String, String>) invocation.getArguments()[2], (HttpClient.CallTemplate) invocation.getArguments()[3], (ServiceCallback) invocation.getArguments()[4]);
                 DefaultHttpClient.Call spyCall = spy(call);
                 when(spyCall.executeOnExecutor(any(Executor.class))).then(new Answer<DefaultHttpClient.Call>() {
 
                     @Override
-                    public DefaultHttpClient.Call answer(InvocationOnMock invocation) throws Throwable {
+                    public DefaultHttpClient.Call answer(InvocationOnMock invocation) {
                         call.onPostExecute(call.doInBackground());
                         return call;
                     }
@@ -91,7 +92,6 @@ public class DefaultHttpClientTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void post200() throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
@@ -125,12 +125,13 @@ public class DefaultHttpClientTest {
         verify(serviceCallback).onCallSucceeded("OK");
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
+        verify(urlConnection, never()).setRequestProperty(eq("Content-Encoding"), anyString());
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
         verify(urlConnection).setRequestMethod("POST");
         verify(urlConnection).setDoOutput(true);
         verify(urlConnection).disconnect();
-        verify(callTemplate).onBeforeCalling(eq(url), any(Map.class));
+        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
         verify(callTemplate).buildRequestBody();
         httpClient.close();
 
@@ -146,7 +147,6 @@ public class DefaultHttpClientTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void post200WithoutCallTemplate() throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
@@ -177,7 +177,8 @@ public class DefaultHttpClientTest {
         httpClient.callAsync(urlString, METHOD_POST, headers, null, serviceCallback);
         verify(serviceCallback).onCallSucceeded("OK");
         verifyNoMoreInteractions(serviceCallback);
-        verify(urlConnection).setRequestProperty("Content-Type", "application/json");
+        verify(urlConnection, never()).setRequestProperty(eq("Content-Type"), anyString());
+        verify(urlConnection, never()).setRequestProperty(eq("Content-Encoding"), anyString());
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
         verify(urlConnection).setRequestMethod("POST");
@@ -191,7 +192,6 @@ public class DefaultHttpClientTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void get200() throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
@@ -224,14 +224,15 @@ public class DefaultHttpClientTest {
         httpClient.callAsync(urlString, METHOD_GET, headers, callTemplate, serviceCallback);
         verify(serviceCallback).onCallSucceeded("OK");
         verifyNoMoreInteractions(serviceCallback);
-        verify(urlConnection).setRequestProperty("Content-Type", "application/json");
+        verify(urlConnection, never()).setRequestProperty(eq("Content-Type"), anyString());
+        verify(urlConnection, never()).setRequestProperty(eq("Content-Encoding"), anyString());
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
         verify(urlConnection).setRequestMethod("GET");
         verify(urlConnection, never()).setDoOutput(true);
         verify(urlConnection).disconnect();
         verify(inputStream).close();
-        verify(callTemplate).onBeforeCalling(eq(url), any(Map.class));
+        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
         verify(callTemplate, never()).buildRequestBody();
         httpClient.close();
     }
@@ -329,7 +330,8 @@ public class DefaultHttpClientTest {
         httpClient.callAsync(urlString, METHOD_GET, headers, null, serviceCallback);
         verify(serviceCallback).onCallSucceeded("OK");
         verifyNoMoreInteractions(serviceCallback);
-        verify(urlConnection).setRequestProperty("Content-Type", "application/json");
+        verify(urlConnection, never()).setRequestProperty(eq("Content-Type"), anyString());
+        verify(urlConnection, never()).setRequestProperty(eq("Content-Encoding"), anyString());
         verify(urlConnection).setRequestProperty("App-Secret", appSecret);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
         verify(urlConnection).setRequestMethod("GET");
@@ -589,7 +591,7 @@ public class DefaultHttpClientTest {
         doAnswer(new Answer<Object>() {
 
             @Override
-            public Object answer(final InvocationOnMock invocation) throws Throwable {
+            public Object answer(final InvocationOnMock invocation) {
                 new Thread("rejectedAsyncTask.handler") {
 
                     @Override
@@ -618,5 +620,64 @@ public class DefaultHttpClientTest {
         semaphore.acquireUninterruptibly();
         verify(serviceCallback).onCallFailed(exception);
         verify(serviceCallback, never()).onCallSucceeded(notNull(String.class));
+    }
+
+    @Test
+    public void sendGzip() throws Exception {
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(200);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(buffer);
+        when(urlConnection.getInputStream()).thenReturn(new ByteArrayInputStream("OK".getBytes()));
+
+        /* Long mock payload. */
+        StringBuilder payloadBuilder = new StringBuilder();
+        for (int i = 0; i < 2048; i++) {
+            payloadBuilder.append('a');
+        }
+        String payload = payloadBuilder.toString();
+
+        /* Compress payload for verification. */
+        ByteArrayOutputStream gzipBuffer = new ByteArrayOutputStream(payload.length());
+        GZIPOutputStream gzipStream = new GZIPOutputStream(gzipBuffer);
+        gzipStream.write(payload.getBytes("UTF-8"));
+        gzipStream.close();
+        byte[] compressedBytes = gzipBuffer.toByteArray();
+
+        /* Configure API client. */
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        when(callTemplate.buildRequestBody()).thenReturn(payload);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+
+        /* Test calling code. */
+        String appSecret = UUIDUtils.randomUUID().toString();
+        UUID installId = UUIDUtils.randomUUID();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "custom");
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        mockCall();
+        httpClient.callAsync(urlString, METHOD_POST, headers, callTemplate, serviceCallback);
+        verify(serviceCallback).onCallSucceeded("OK");
+        verifyNoMoreInteractions(serviceCallback);
+        verify(urlConnection).setRequestProperty("Content-Type", "custom");
+
+        /* Also verify content type was set only once, json not applied. */
+        verify(urlConnection).setRequestProperty(eq("Content-Type"), anyString());
+        verify(urlConnection).setRequestProperty("Content-Encoding", "gzip");
+        verify(urlConnection).setRequestMethod("POST");
+        verify(urlConnection).setDoOutput(true);
+        verify(urlConnection).disconnect();
+        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
+        verify(callTemplate).buildRequestBody();
+        httpClient.close();
+
+        /* Verify payload compressed. */
+        assertArrayEquals(compressedBytes, buffer.toByteArray());
     }
 }
