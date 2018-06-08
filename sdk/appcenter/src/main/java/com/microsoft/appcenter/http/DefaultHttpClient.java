@@ -87,9 +87,9 @@ public class DefaultHttpClient implements HttpClient {
     private static final int READ_TIMEOUT = 20000;
 
     /**
-     * Minimum length to use gzip.
+     * Minimum payload length in bytes to use gzip.
      */
-    private static final long MIN_GZIP_LENGTH = (long) (1024 * 1.4);
+    private static final int MIN_GZIP_LENGTH = 1400;
 
     /**
      * Dump stream to string.
