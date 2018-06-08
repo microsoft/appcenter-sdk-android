@@ -70,7 +70,7 @@ public class SessionTracker extends AbstractChannelListener {
     }
 
     @Override
-    public void onEnqueuingLog(@NonNull Log log, @NonNull String groupName) {
+    public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
 
         /*
          * Since we enqueue start session logs, skip them to avoid infinite loop.

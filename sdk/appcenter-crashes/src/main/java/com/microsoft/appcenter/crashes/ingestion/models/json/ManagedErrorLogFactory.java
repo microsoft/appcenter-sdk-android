@@ -1,9 +1,9 @@
 package com.microsoft.appcenter.crashes.ingestion.models.json;
 
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
-import com.microsoft.appcenter.ingestion.models.json.LogFactory;
+import com.microsoft.appcenter.ingestion.models.json.AbstractLogFactory;
 
-public class ManagedErrorLogFactory implements LogFactory {
+public class ManagedErrorLogFactory extends AbstractLogFactory {
 
     private static final ManagedErrorLogFactory sInstance = new ManagedErrorLogFactory();
 

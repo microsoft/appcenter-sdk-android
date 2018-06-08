@@ -6,6 +6,7 @@ import android.os.SystemClock;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
+import com.microsoft.appcenter.analytics.channel.AnalyticsValidator;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
@@ -13,7 +14,10 @@ import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.appcenter.analytics.ingestion.models.json.EventLogFactory;
 import com.microsoft.appcenter.analytics.ingestion.models.json.PageLogFactory;
 import com.microsoft.appcenter.analytics.ingestion.models.json.StartSessionLogFactory;
+import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
+import com.microsoft.appcenter.analytics.ingestion.models.one.json.CommonSchemaEventLogFactory;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -43,8 +47,6 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static com.microsoft.appcenter.analytics.Analytics.trackEvent;
-import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -56,6 +58,8 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -141,6 +145,7 @@ public class AnalyticsTest {
         assertTrue(factories.remove(StartSessionLog.TYPE) instanceof StartSessionLogFactory);
         assertTrue(factories.remove(PageLog.TYPE) instanceof PageLogFactory);
         assertTrue(factories.remove(EventLog.TYPE) instanceof EventLogFactory);
+        assertTrue(factories.remove(CommonSchemaEventLog.TYPE) instanceof CommonSchemaEventLogFactory);
         assertTrue(factories.isEmpty());
     }
 
@@ -148,8 +153,8 @@ public class AnalyticsTest {
     public void notInit() {
 
         /* Just check log is discarded without throwing any exception. */
-        trackEvent("test");
-        trackEvent("test", new HashMap<String, String>());
+        Analytics.trackEvent("test");
+        Analytics.trackEvent("test", new HashMap<String, String>());
         Analytics.trackPage("test");
         Analytics.trackPage("test", new HashMap<String, String>());
 
@@ -254,87 +259,8 @@ public class AnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", null, channel);
-        trackEvent(null, (Map<String, String>) null);
-        verify(channel, never()).enqueue(any(Log.class), anyString());
-        reset(channel);
-        trackEvent("", (Map<String, String>) null);
-        verify(channel, never()).enqueue(any(Log.class), anyString());
-        reset(channel);
-        trackEvent(" ", (Map<String, String>) null);
+        Analytics.trackEvent("eventName");
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
-        reset(channel);
-        final String maxName = generateString(Analytics.MAX_NAME_LENGTH, '*');
-        trackEvent(maxName + "*", (Map<String, String>) null);
-        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    return eventLog.getName().equals(maxName) && eventLog.getProperties() == null;
-                }
-                return false;
-            }
-        }), anyString());
-        reset(channel);
-        trackEvent(maxName, (Map<String, String>) null);
-        verify(channel, times(1)).enqueue(any(Log.class), anyString());
-        reset(channel);
-        trackEvent("eventName", new HashMap<String, String>() {{
-            put(null, null);
-            put("", null);
-            put(generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
-            put("1", null);
-        }});
-        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    return eventLog.getProperties().size() == 0;
-                }
-                return false;
-            }
-        }), anyString());
-        reset(channel);
-        final String validMapItem = "valid";
-        trackEvent("eventName", new HashMap<String, String>() {{
-            for (int i = 0; i < 30; i++) {
-                put(validMapItem + i, validMapItem);
-            }
-        }});
-        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    return eventLog.getProperties().size() == 20;
-                }
-                return false;
-            }
-        }), anyString());
-        reset(channel);
-        final String longerMapItem = generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
-        trackEvent("eventName", new HashMap<String, String>() {{
-            put(longerMapItem, longerMapItem);
-        }});
-        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    if (eventLog.getProperties().size() == 1) {
-                        Map.Entry<String, String> entry = eventLog.getProperties().entrySet().iterator().next();
-                        String truncatedMapItem = generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH, '*');
-                        return entry.getKey().length() == Analytics.MAX_PROPERTY_ITEM_LENGTH && entry.getValue().length() == Analytics.MAX_PROPERTY_ITEM_LENGTH;
-                    }
-                }
-                return false;
-            }
-        }), anyString());
     }
 
     @Test
@@ -343,87 +269,8 @@ public class AnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", null, channel);
-        Analytics.trackPage(null, null);
-        verify(channel, never()).enqueue(any(Log.class), anyString());
-        reset(channel);
-        Analytics.trackPage("", null);
-        verify(channel, never()).enqueue(any(Log.class), anyString());
-        reset(channel);
-        Analytics.trackPage(" ", null);
+        Analytics.trackEvent("pageName");
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
-        reset(channel);
-        final String maxName = generateString(Analytics.MAX_NAME_LENGTH, '*');
-        Analytics.trackPage(maxName + "*", null);
-        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof PageLog) {
-                    PageLog pageLog = (PageLog) item;
-                    return pageLog.getName().equals(maxName) && pageLog.getProperties() == null;
-                }
-                return false;
-            }
-        }), anyString());
-        reset(channel);
-        Analytics.trackPage(maxName, null);
-        verify(channel, times(1)).enqueue(any(Log.class), anyString());
-        reset(channel);
-        Analytics.trackPage("pageName", new HashMap<String, String>() {{
-            put(null, null);
-            put("", null);
-            put(generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
-            put("1", null);
-        }});
-        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof PageLog) {
-                    PageLog pageLog = (PageLog) item;
-                    return pageLog.getProperties().size() == 0;
-                }
-                return false;
-            }
-        }), anyString());
-        reset(channel);
-        final String validMapItem = "valid";
-        Analytics.trackPage("pageName", new HashMap<String, String>() {{
-            for (int i = 0; i < 30; i++) {
-                put(validMapItem + i, validMapItem);
-            }
-        }});
-        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof PageLog) {
-                    PageLog pageLog = (PageLog) item;
-                    return pageLog.getProperties().size() == 20;
-                }
-                return false;
-            }
-        }), anyString());
-        reset(channel);
-        final String longerMapItem = generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
-        Analytics.trackPage("pageName", new HashMap<String, String>() {{
-            put(longerMapItem, longerMapItem);
-        }});
-        verify(channel, times(1)).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof PageLog) {
-                    PageLog pageLog = (PageLog) item;
-                    if (pageLog.getProperties().size() == 1) {
-                        Map.Entry<String, String> entry = pageLog.getProperties().entrySet().iterator().next();
-                        String truncatedMapItem = generateString(Analytics.MAX_PROPERTY_ITEM_LENGTH, '*');
-                        return entry.getKey().length() == Analytics.MAX_PROPERTY_ITEM_LENGTH && entry.getValue().length() == Analytics.MAX_PROPERTY_ITEM_LENGTH;
-                    }
-                }
-                return false;
-            }
-        }), anyString());
     }
 
     @Test
@@ -441,8 +288,9 @@ public class AnalyticsTest {
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", null, channel);
         verify(channel).removeGroup(eq(analytics.getGroupName()));
-        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), any(Channel.GroupListener.class));
-        verify(channel).addListener(any(Channel.Listener.class));
+        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(channel).addListener(isA(SessionTracker.class));
+        verify(channel).addListener(isA(AnalyticsValidator.class));
 
         /* Now we can see the service enabled. */
         assertTrue(Analytics.isEnabled().get());
@@ -450,13 +298,14 @@ public class AnalyticsTest {
         /* Disable. Testing to wait setEnabled to finish while we are at it. */
         Analytics.setEnabled(false).get();
         assertFalse(Analytics.isEnabled().get());
-        verify(channel).removeListener(any(SessionTracker.class));
+        verify(channel).removeListener(isA(SessionTracker.class));
+        verify(channel).removeListener(isA(AnalyticsValidator.class));
         verify(channel, times(2)).removeGroup(analytics.getGroupName());
         verify(channel).clear(analytics.getGroupName());
         verifyStatic();
         StorageHelper.PreferencesStorage.remove("sessions");
 
-        trackEvent("test");
+        Analytics.trackEvent("test");
         Analytics.trackPage("test");
         analytics.onActivityResumed(new Activity());
         analytics.onActivityPaused(new Activity());
@@ -477,14 +326,14 @@ public class AnalyticsTest {
         /* Test double call to setEnabled true. */
         Analytics.setEnabled(true);
         assertTrue(Analytics.isEnabled().get());
-        trackEvent("test");
+        Analytics.trackEvent("test");
         Analytics.trackPage("test");
         verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
         /* Disable again. */
         Analytics.setEnabled(false);
         assertFalse(Analytics.isEnabled().get());
-        trackEvent("test");
+        Analytics.trackEvent("test");
         Analytics.trackPage("test");
         analytics.onActivityResumed(new Activity());
         analytics.onActivityPaused(new Activity());
@@ -583,7 +432,7 @@ public class AnalyticsTest {
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), "", null, channel);
         final ArgumentCaptor<Channel.GroupListener> captor = ArgumentCaptor.forClass(Channel.GroupListener.class);
-        verify(channel).addGroup(anyString(), anyInt(), anyLong(), anyInt(), captor.capture());
+        verify(channel).addGroup(anyString(), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), captor.capture());
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -594,7 +443,7 @@ public class AnalyticsTest {
                 return null;
             }
         }).when(channel).enqueue(any(Log.class), anyString());
-        trackEvent("name");
+        Analytics.trackEvent("name");
         verify(listener).onBeforeSending(notNull(Log.class));
         verify(listener).onSendingSucceeded(notNull(Log.class));
         verify(listener).onSendingFailed(notNull(Log.class), notNull(Exception.class));
@@ -634,7 +483,7 @@ public class AnalyticsTest {
         assertNotNull(target);
 
         /* Track event with transmission target. */
-        trackEvent("name", target);
+        Analytics.trackEvent("name", target);
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override

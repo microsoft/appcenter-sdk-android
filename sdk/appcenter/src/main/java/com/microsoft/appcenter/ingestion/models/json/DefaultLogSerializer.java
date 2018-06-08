@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.json.JSONArray;
@@ -14,6 +15,7 @@ import org.json.JSONStringer;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +37,10 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @NonNull
-    private Log readLog(JSONObject object) throws JSONException {
-        String type = object.getString(TYPE);
+    private Log readLog(JSONObject object, String type) throws JSONException {
+        if (type == null) {
+            type = object.getString(TYPE);
+        }
         LogFactory logFactory = mLogFactories.get(type);
         if (logFactory == null) {
             throw new JSONException("Unknown log type: " + type);
@@ -54,8 +58,13 @@ public class DefaultLogSerializer implements LogSerializer {
 
     @NonNull
     @Override
-    public Log deserializeLog(@NonNull String json) throws JSONException {
-        return readLog(new JSONObject(json));
+    public Log deserializeLog(@NonNull String json, String type) throws JSONException {
+        return readLog(new JSONObject(json), type);
+    }
+
+    @Override
+    public Collection<CommonSchemaLog> toCommonSchemaLog(@NonNull Log log) {
+        return mLogFactories.get(log.getType()).toCommonSchemaLogs(log);
     }
 
     @NonNull
@@ -66,6 +75,7 @@ public class DefaultLogSerializer implements LogSerializer {
         JSONStringer writer = null;
         if (AppCenterLog.getLogLevel() <= android.util.Log.VERBOSE) {
             try {
+                @SuppressWarnings("JavaReflectionMemberAccess")
                 Constructor<JSONStringer> constructor = JSONStringer.class.getDeclaredConstructor(int.class);
                 constructor.setAccessible(true);
                 writer = constructor.newInstance(2);
@@ -90,14 +100,14 @@ public class DefaultLogSerializer implements LogSerializer {
 
     @NonNull
     @Override
-    public LogContainer deserializeContainer(@NonNull String json) throws JSONException {
+    public LogContainer deserializeContainer(@NonNull String json, String type) throws JSONException {
         JSONObject jContainer = new JSONObject(json);
         LogContainer container = new LogContainer();
         JSONArray jLogs = jContainer.getJSONArray(LOGS);
         List<Log> logs = new ArrayList<>();
         for (int i = 0; i < jLogs.length(); i++) {
             JSONObject jLog = jLogs.getJSONObject(i);
-            Log log = readLog(jLog);
+            Log log = readLog(jLog, type);
             logs.add(log);
         }
         container.setLogs(logs);

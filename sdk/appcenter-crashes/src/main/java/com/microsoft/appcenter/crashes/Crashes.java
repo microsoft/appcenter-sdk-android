@@ -628,7 +628,7 @@ public class Crashes extends AbstractAppCenterService {
                     AppCenterLog.error(LOG_TAG, "Error reading last session error log.");
                 } else {
                     try {
-                        ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logFileContents);
+                        ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logFileContents, null);
                         mLastSessionErrorReport = buildErrorReport(log);
                         AppCenterLog.debug(LOG_TAG, "Processed crash report for the last session.");
                     } catch (JSONException e) {
@@ -645,7 +645,7 @@ public class Crashes extends AbstractAppCenterService {
             String logfileContents = StorageHelper.InternalStorage.read(logFile);
             if (logfileContents != null) {
                 try {
-                    ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logfileContents);
+                    ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logfileContents, null);
                     UUID id = log.getId();
                     ErrorReport report = buildErrorReport(log);
                     if (report == null) {

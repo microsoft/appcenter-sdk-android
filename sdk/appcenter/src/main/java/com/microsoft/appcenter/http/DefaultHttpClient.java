@@ -4,8 +4,8 @@ import android.net.TrafficStats;
 import android.os.AsyncTask;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.HandlerUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,7 +52,7 @@ public class DefaultHttpClient implements HttpClient {
     /**
      * Content type header key.
      */
-    private static final String CONTENT_TYPE_KEY = "Content-Type";
+    public static final String CONTENT_TYPE_KEY = "Content-Type";
 
     /**
      * Character encoding.
@@ -220,7 +220,7 @@ public class DefaultHttpClient implements HttpClient {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
 
         /* No-op. A decorator can take care of tracking calls to cancel. */
     }

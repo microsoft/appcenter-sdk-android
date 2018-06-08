@@ -39,7 +39,7 @@ public class ChannelLogDecorateTest {
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(device);
         mockStatic(IdHelper.class);
         Channel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mock(Persistence.class), mock(Ingestion.class), mock(Handler.class));
-        channel.addGroup("", 0, 0, 0, null);
+        channel.addGroup("", 0, 0, 0, null, null);
 
         /* Test a log that should be decorated. */
         for (int i = 0; i < 3; i++) {

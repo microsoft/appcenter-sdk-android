@@ -11,6 +11,7 @@ import android.os.Looper;
 
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.DefaultChannel;
+import com.microsoft.appcenter.channel.OneCollectorChannelListener;
 import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
@@ -22,6 +23,7 @@ import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.After;
@@ -194,7 +196,7 @@ public class AppCenterTest {
 
         /* Mock empty database. */
         StorageHelper.DatabaseStorage databaseStorage = mock(StorageHelper.DatabaseStorage.class);
-        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class), anyInt(), any(StorageHelper.DatabaseStorage.DatabaseErrorListener.class))).thenReturn(databaseStorage);
+        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class), anyInt(), any(DatabaseManager.Listener.class))).thenReturn(databaseStorage);
         StorageHelper.DatabaseStorage.DatabaseScanner databaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
         when(databaseStorage.getScanner(anyString(), anyObject())).thenReturn(databaseScanner);
         when(databaseScanner.iterator()).thenReturn(mDataBaseScannerIterator);
@@ -1160,6 +1162,19 @@ public class AppCenterTest {
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
+    }
+
+    @Test
+    public void addOneCollectorListenerOnStart() {
+        String secret = TRANSMISSION_TARGET_TOKEN_KEY + KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
+        AppCenter.start(mApplication, secret, DummyService.class);
+        verify(mChannel).addListener(argThat(new ArgumentMatcher<Channel.Listener>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof OneCollectorChannelListener;
+            }
+        }));
     }
 
     private static class DummyService extends AbstractAppCenterService {

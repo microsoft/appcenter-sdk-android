@@ -5,7 +5,7 @@ import android.content.Context;
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.ingestion.IngestionHttp;
+import com.microsoft.appcenter.ingestion.AppCenterIngestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.persistence.Persistence;
@@ -45,7 +45,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
         when(mockPersistence.getLogs(anyString(), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(mockPersistence.getLogs(anyString(), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
-        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -67,7 +67,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         /* Simulate enable module then disable. */
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
-        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, listener);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);
         channel.setEnabled(true);
 
@@ -91,7 +91,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
         when(mockPersistence.getLogs(anyString(), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(mockPersistence.getLogs(anyString(), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
-        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
 
             @Override
@@ -112,7 +112,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         /* Simulate enable module then disable. */
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
-        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, listener);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);
         channel.setEnabled(true);
 
@@ -143,7 +143,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
         when(mockPersistence.getLogs(anyString(), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(mockPersistence.getLogs(anyString(), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
-        IngestionHttp mockIngestion = mock(IngestionHttp.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         final Exception mockException = new IOException();
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
 
@@ -165,7 +165,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         /* Simulate enable module then disable. */
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
-        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, listener);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);
         channel.setEnabled(true);
 

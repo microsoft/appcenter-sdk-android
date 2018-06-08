@@ -98,7 +98,7 @@ public class AnalyticsSerializerTest {
         serializer.addLogFactory(EventLog.TYPE, new EventLogFactory());
         String payload = serializer.serializeContainer(expectedContainer);
         android.util.Log.v(TAG, payload);
-        LogContainer actualContainer = serializer.deserializeContainer(payload);
+        LogContainer actualContainer = serializer.deserializeContainer(payload, null);
         Assert.assertEquals(expectedContainer, actualContainer);
     }
 }

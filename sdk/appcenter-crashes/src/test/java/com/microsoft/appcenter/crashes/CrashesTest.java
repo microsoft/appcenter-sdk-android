@@ -20,6 +20,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.model.NativeException;
 import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
+import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
@@ -79,6 +80,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -122,7 +124,7 @@ public class CrashesTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         Thread.setDefaultUncaughtExceptionHandler(null);
         Crashes.unsetInstance();
         mockStatic(SystemClock.class);
@@ -144,7 +146,7 @@ public class CrashesTest {
         doAnswer(new Answer<Object>() {
 
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
@@ -159,7 +161,7 @@ public class CrashesTest {
         Answer<Void> runNow = new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 ((Runnable) invocation.getArguments()[0]).run();
                 return null;
             }
@@ -249,7 +251,7 @@ public class CrashesTest {
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), "", null, mockChannel);
         verify(mockChannel).removeGroup(eq(crashes.getGroupName()));
-        verify(mockChannel).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
+        verify(mockChannel).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
 
         /* Test. */
         assertTrue(Crashes.isEnabled().get());
@@ -274,7 +276,7 @@ public class CrashesTest {
         assertTrue(Thread.getDefaultUncaughtExceptionHandler() instanceof UncaughtExceptionHandler);
         Crashes.setEnabled(true);
         assertTrue(Crashes.isEnabled().get());
-        verify(mockChannel, times(2)).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), any(Channel.GroupListener.class));
+        verify(mockChannel, times(2)).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         Crashes.trackException(EXCEPTION);
         verify(mockChannel, times(1)).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
     }
@@ -323,7 +325,7 @@ public class CrashesTest {
         List<ErrorAttachmentLog> errorAttachmentLogList = Arrays.asList(mockAttachment, mockAttachment, mockEmptyAttachment, null);
         when(mockListener.getErrorAttachments(report)).thenReturn(errorAttachmentLogList);
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
         Crashes crashes = Crashes.getInstance();
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
@@ -363,7 +365,7 @@ public class CrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
@@ -412,7 +414,7 @@ public class CrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
@@ -443,7 +445,7 @@ public class CrashesTest {
         Crashes crashes = Crashes.getInstance();
 
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mock(ManagedErrorLog.class));
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mock(ManagedErrorLog.class));
         crashes.setLogSerializer(logSerializer);
 
         CrashesListener listener = mock(CrashesListener.class);
@@ -479,7 +481,7 @@ public class CrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(null);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(null);
         crashes.setLogSerializer(logSerializer);
 
         crashes.onStarting(mAppCenterHandler);
@@ -501,7 +503,7 @@ public class CrashesTest {
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
 
-        when(logSerializer.deserializeLog(anyString())).thenThrow(jsonException);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenThrow(jsonException);
         crashes.setLogSerializer(logSerializer);
 
         crashes.onStarting(mAppCenterHandler);
@@ -769,7 +771,7 @@ public class CrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
@@ -806,7 +808,7 @@ public class CrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
@@ -945,7 +947,7 @@ public class CrashesTest {
         errorLog.setDevice(mock(Device.class));
 
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(errorLog);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(errorLog);
 
         final Throwable throwable = mock(Throwable.class);
         final ErrorReport errorReport = ErrorLogHelper.getErrorReportFromErrorLog(errorLog, throwable);
@@ -1018,9 +1020,9 @@ public class CrashesTest {
     }
 
     @Test
-    public void failToDeserializeLastSessionCrashReport() throws JSONException, IOException, ClassNotFoundException {
+    public void failToDeserializeLastSessionCrashReport() throws JSONException, IOException {
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mock(ManagedErrorLog.class));
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mock(ManagedErrorLog.class));
 
         mockStatic(ErrorLogHelper.class);
         File lastErrorLogFile = errorStorageDirectory.newFile("last-error-log.json");
@@ -1035,7 +1037,7 @@ public class CrashesTest {
         assertFalse(Crashes.hasCrashedInLastSession().get());
 
         JSONException jsonException = new JSONException("Fake JSON exception");
-        when(logSerializer.deserializeLog(anyString())).thenThrow(jsonException);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenThrow(jsonException);
 
         /*
          * Last session error is only fetched upon initialization: enabled and channel ready.
@@ -1107,7 +1109,7 @@ public class CrashesTest {
         when(log.getId()).thenReturn(UUID.randomUUID());
 
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(log);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(log);
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
@@ -1147,10 +1149,10 @@ public class CrashesTest {
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
 
             @Override
-            public ManagedErrorLog answer(InvocationOnMock invocation) throws Throwable {
+            public ManagedErrorLog answer(InvocationOnMock invocation) {
                 ManagedErrorLog log = mock(ManagedErrorLog.class);
                 when(log.getId()).thenReturn(UUID.randomUUID());
                 return log;
@@ -1255,10 +1257,10 @@ public class CrashesTest {
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
 
             @Override
-            public ManagedErrorLog answer(InvocationOnMock invocation) throws Throwable {
+            public ManagedErrorLog answer(InvocationOnMock invocation) {
                 ManagedErrorLog log = mock(ManagedErrorLog.class);
                 when(log.getId()).thenReturn(UUID.randomUUID());
                 return log;
@@ -1323,10 +1325,10 @@ public class CrashesTest {
         LogSerializer logSerializer = mock(LogSerializer.class);
         ArgumentCaptor<Log> log = ArgumentCaptor.forClass(Log.class);
         when(logSerializer.serializeLog(log.capture())).thenReturn("{}");
-        when(logSerializer.deserializeLog(anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
 
             @Override
-            public ManagedErrorLog answer(InvocationOnMock invocation) throws Throwable {
+            public ManagedErrorLog answer(InvocationOnMock invocation) {
                 ManagedErrorLog log = mock(ManagedErrorLog.class);
                 when(log.getId()).thenReturn(UUID.randomUUID());
                 return log;
