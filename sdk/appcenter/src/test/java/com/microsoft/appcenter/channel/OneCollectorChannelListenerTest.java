@@ -1,5 +1,9 @@
 package com.microsoft.appcenter.channel;
 
+import android.content.Context;
+
+import com.microsoft.appcenter.ingestion.Ingestion;
+import com.microsoft.appcenter.ingestion.OneCollectorIngestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
@@ -8,6 +12,7 @@ import com.microsoft.appcenter.ingestion.models.one.SdkExtension;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,6 +31,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -38,13 +46,19 @@ public class OneCollectorChannelListenerTest {
     @Test
     public void addCorrespondingGroup() {
         Channel channel = mock(Channel.class);
-        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
 
         /* Mock group added. */
         listener.onGroupAdded(TEST_GROUP);
 
         /* Verify one collector group added. */
-        verify(channel).addGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
+        verify(channel).addGroup(eq(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX), eq(ONE_COLLECTOR_TRIGGER_COUNT), eq(ONE_COLLECTOR_TRIGGER_INTERVAL), eq(ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS), argThat(new ArgumentMatcher<Ingestion>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof OneCollectorIngestion;
+            }
+        }), isNull(Channel.GroupListener.class));
 
         /* Mock one collector group added callback, should not loop indefinitely. */
         listener.onGroupAdded(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
@@ -54,7 +68,7 @@ public class OneCollectorChannelListenerTest {
     @Test
     public void removeCorrespondingGroup() {
         Channel channel = mock(Channel.class);
-        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
 
         /* Mock group removed. */
         listener.onGroupRemoved(TEST_GROUP);
@@ -95,7 +109,7 @@ public class OneCollectorChannelListenerTest {
 
         /* Init listener. */
         UUID installId = UUIDUtils.randomUUID();
-        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, logSerializer, installId);
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, logSerializer, installId);
         listener.onPreparedLog(originalLog, TEST_GROUP);
         listener.onPreparedLog(mock(CommonSchemaLog.class), TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
 
@@ -162,7 +176,7 @@ public class OneCollectorChannelListenerTest {
         LogSerializer logSerializer = mock(LogSerializer.class);
 
         /* Init listener. */
-        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, logSerializer, UUIDUtils.randomUUID());
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, logSerializer, UUIDUtils.randomUUID());
         listener.onPreparedLog(mock(CommonSchemaLog.class), TEST_GROUP);
 
         /* Verify no conversion. */
@@ -175,7 +189,7 @@ public class OneCollectorChannelListenerTest {
     @Test
     public void shouldFilterAppCenterLog() {
         Channel channel = mock(Channel.class);
-        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
 
         /* App center log with no transmission target must not be filtered. */
         Log log = mock(Log.class);
@@ -192,7 +206,7 @@ public class OneCollectorChannelListenerTest {
     @Test
     public void clearCorrespondingGroup() {
         Channel channel = mock(Channel.class);
-        OneCollectorChannelListener listener = new OneCollectorChannelListener(channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
 
         /* Clear a group. */
         listener.onClear(TEST_GROUP);

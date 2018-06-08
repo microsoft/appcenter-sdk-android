@@ -1,8 +1,11 @@
 package com.microsoft.appcenter.channel;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.ingestion.Ingestion;
+import com.microsoft.appcenter.ingestion.OneCollectorIngestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
@@ -23,7 +26,7 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
      * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
      */
     @VisibleForTesting
-    static final int ONE_COLLECTOR_TRIGGER_INTERVAL = 3 * 1000;
+    static final long ONE_COLLECTOR_TRIGGER_INTERVAL = 3 * 1000;
 
     /**
      * Number of metrics queue items which will trigger synchronization.
@@ -59,6 +62,11 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     private final UUID mInstallId;
 
     /**
+     * Ingestion instance.
+     */
+    private final Ingestion mIngestion;
+
+    /**
      * Epochs and sequences grouped by iKey.
      */
     private final Map<String, EpochAndSeq> mEpochsAndSeqsByIKey = new HashMap<>();
@@ -66,12 +74,14 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     /**
      * Init with channel.
      *
+     * @param context context.
      * @param channel channel.
      */
-    public OneCollectorChannelListener(@NonNull Channel channel, @NonNull LogSerializer logSerializer, @NonNull UUID installId) {
+    public OneCollectorChannelListener(@NonNull Context context, @NonNull Channel channel, @NonNull LogSerializer logSerializer, @NonNull UUID installId) {
         mChannel = channel;
         mLogSerializer = logSerializer;
         mInstallId = installId;
+        mIngestion = new OneCollectorIngestion(context, mLogSerializer);
     }
 
     @Override
@@ -80,7 +90,7 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
             return;
         }
         String oneCollectorGroupName = getOneCollectorGroupName(groupName);
-        mChannel.addGroup(oneCollectorGroupName, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
+        mChannel.addGroup(oneCollectorGroupName, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, mIngestion, null);
     }
 
     @Override

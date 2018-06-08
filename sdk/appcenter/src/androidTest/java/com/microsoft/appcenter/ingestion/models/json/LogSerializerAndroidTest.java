@@ -35,7 +35,7 @@ public class LogSerializerAndroidTest {
         LogSerializer serializer = new DefaultLogSerializer();
         String payload = serializer.serializeContainer(expectedContainer);
         android.util.Log.v(TAG, payload);
-        LogContainer actualContainer = serializer.deserializeContainer(payload);
+        LogContainer actualContainer = serializer.deserializeContainer(payload, null);
         Assert.assertEquals(expectedContainer, actualContainer);
     }
 
@@ -46,7 +46,7 @@ public class LogSerializerAndroidTest {
         serializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
         String payload = serializer.serializeContainer(expectedContainer);
         android.util.Log.v(TAG, payload);
-        LogContainer actualContainer = serializer.deserializeContainer(payload);
+        LogContainer actualContainer = serializer.deserializeContainer(payload, null);
         Assert.assertEquals(expectedContainer, actualContainer);
         Assert.assertEquals(expectedContainer.hashCode(), actualContainer.hashCode());
     }
@@ -58,7 +58,7 @@ public class LogSerializerAndroidTest {
         serializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
         String payload = serializer.serializeLog(log);
         android.util.Log.v(TAG, payload);
-        new DefaultLogSerializer().deserializeLog(payload);
+        new DefaultLogSerializer().deserializeLog(payload, null);
     }
 
     @Test
@@ -76,7 +76,7 @@ public class LogSerializerAndroidTest {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
         String payload = serializer.serializeLog(log);
-        Log actualContainer = serializer.deserializeLog(payload);
+        Log actualContainer = serializer.deserializeLog(payload, null);
         Assert.assertEquals(log, actualContainer);
     }
 
@@ -98,7 +98,7 @@ public class LogSerializerAndroidTest {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         String payload = serializer.serializeLog(log);
-        Log actualContainer = serializer.deserializeLog(payload);
+        Log actualContainer = serializer.deserializeLog(payload, null);
         Assert.assertEquals(log, actualContainer);
     }
 
@@ -109,7 +109,7 @@ public class LogSerializerAndroidTest {
         serializer.deserializeLog("{" +
                 "\"type\": \"customProperties\"," +
                 "\"timestamp\": \"2017-07-08T00:32:58.123Z\"" +
-                "}");
+                "}", null);
     }
 
     @Test(expected = JSONException.class)
@@ -120,7 +120,7 @@ public class LogSerializerAndroidTest {
                 "\"type\": \"customProperties\"," +
                 "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
                 "\"properties\":[{\"name\":\"test\",\"type\":\"unknown\",\"value\":42}]" +
-                "}");
+                "}", null);
     }
 
     @Test(expected = JSONException.class)
@@ -131,7 +131,7 @@ public class LogSerializerAndroidTest {
                 "\"type\": \"customProperties\"," +
                 "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
                 "\"properties\":[{\"name\":\"test\",\"type\":\"dateTime\",\"value\":\"today\"}]" +
-                "}");
+                "}", null);
     }
 
     @Test(expected = JSONException.class)
@@ -142,7 +142,7 @@ public class LogSerializerAndroidTest {
                 "\"type\": \"customProperties\"," +
                 "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
                 "\"properties\":[{\"name\":\"test\",\"type\":\"number\",\"value\":false}]" +
-                "}");
+                "}", null);
     }
 
     @Test(expected = JSONException.class)

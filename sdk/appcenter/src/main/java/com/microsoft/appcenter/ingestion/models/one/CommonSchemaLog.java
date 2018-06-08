@@ -287,9 +287,6 @@ public abstract class CommonSchemaLog extends AbstractLog {
 
         /* Override abstract log JSON since it's Common Schema and not App Center schema. */
 
-        /* TODO We still need type internally, for now we add it here but we'll need to migrate to Part B. */
-        JSONUtils.write(writer, TYPE, getType());
-
         /* Part A. */
         writer.key(VER).value(getVer());
         writer.key(NAME).value(getName());
@@ -306,7 +303,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
             writer.endObject();
         }
 
-        /* Parts B&C. */
+        /* Parts B & C. */
         if (getData() != null) {
             writer.key(DATA).object();
             getData().write(writer);

@@ -325,7 +325,7 @@ public class CrashesTest {
         List<ErrorAttachmentLog> errorAttachmentLogList = Arrays.asList(mockAttachment, mockAttachment, mockEmptyAttachment, null);
         when(mockListener.getErrorAttachments(report)).thenReturn(errorAttachmentLogList);
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
         Crashes crashes = Crashes.getInstance();
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
@@ -365,7 +365,7 @@ public class CrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
@@ -414,7 +414,7 @@ public class CrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
@@ -445,7 +445,7 @@ public class CrashesTest {
         Crashes crashes = Crashes.getInstance();
 
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mock(ManagedErrorLog.class));
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mock(ManagedErrorLog.class));
         crashes.setLogSerializer(logSerializer);
 
         CrashesListener listener = mock(CrashesListener.class);
@@ -481,7 +481,7 @@ public class CrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(null);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(null);
         crashes.setLogSerializer(logSerializer);
 
         crashes.onStarting(mAppCenterHandler);
@@ -503,7 +503,7 @@ public class CrashesTest {
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
 
-        when(logSerializer.deserializeLog(anyString())).thenThrow(jsonException);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenThrow(jsonException);
         crashes.setLogSerializer(logSerializer);
 
         crashes.onStarting(mAppCenterHandler);
@@ -771,7 +771,7 @@ public class CrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
@@ -808,7 +808,7 @@ public class CrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
@@ -947,7 +947,7 @@ public class CrashesTest {
         errorLog.setDevice(mock(Device.class));
 
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(errorLog);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(errorLog);
 
         final Throwable throwable = mock(Throwable.class);
         final ErrorReport errorReport = ErrorLogHelper.getErrorReportFromErrorLog(errorLog, throwable);
@@ -1022,7 +1022,7 @@ public class CrashesTest {
     @Test
     public void failToDeserializeLastSessionCrashReport() throws JSONException, IOException {
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(mock(ManagedErrorLog.class));
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mock(ManagedErrorLog.class));
 
         mockStatic(ErrorLogHelper.class);
         File lastErrorLogFile = errorStorageDirectory.newFile("last-error-log.json");
@@ -1037,7 +1037,7 @@ public class CrashesTest {
         assertFalse(Crashes.hasCrashedInLastSession().get());
 
         JSONException jsonException = new JSONException("Fake JSON exception");
-        when(logSerializer.deserializeLog(anyString())).thenThrow(jsonException);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenThrow(jsonException);
 
         /*
          * Last session error is only fetched upon initialization: enabled and channel ready.
@@ -1109,7 +1109,7 @@ public class CrashesTest {
         when(log.getId()).thenReturn(UUID.randomUUID());
 
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenReturn(log);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(log);
 
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
@@ -1149,7 +1149,7 @@ public class CrashesTest {
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
 
             @Override
             public ManagedErrorLog answer(InvocationOnMock invocation) {
@@ -1257,7 +1257,7 @@ public class CrashesTest {
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
 
             @Override
             public ManagedErrorLog answer(InvocationOnMock invocation) {
@@ -1325,7 +1325,7 @@ public class CrashesTest {
         LogSerializer logSerializer = mock(LogSerializer.class);
         ArgumentCaptor<Log> log = ArgumentCaptor.forClass(Log.class);
         when(logSerializer.serializeLog(log.capture())).thenReturn("{}");
-        when(logSerializer.deserializeLog(anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
 
             @Override
             public ManagedErrorLog answer(InvocationOnMock invocation) {

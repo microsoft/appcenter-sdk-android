@@ -5,8 +5,8 @@ apply from: 'publish.gradle'
 
 buildscript {
     repositories {
-        jcenter()
         google()
+        jcenter()
     }
 
     dependencies {
@@ -19,8 +19,8 @@ buildscript {
 
 allprojects {
     repositories {
-        jcenter()
         google()
+        jcenter()
     }
 
     tasks.withType(JavaCompile) {

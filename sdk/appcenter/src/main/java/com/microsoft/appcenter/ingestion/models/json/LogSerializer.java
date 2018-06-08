@@ -16,7 +16,7 @@ public interface LogSerializer {
     String serializeLog(@NonNull Log log) throws JSONException;
 
     @NonNull
-    Log deserializeLog(@NonNull String json) throws JSONException;
+    Log deserializeLog(@NonNull String json, String type) throws JSONException;
 
     Collection<CommonSchemaLog> toCommonSchemaLog(@NonNull Log log);
 
@@ -24,7 +24,7 @@ public interface LogSerializer {
     String serializeContainer(@NonNull LogContainer container) throws JSONException;
 
     @NonNull
-    LogContainer deserializeContainer(@NonNull String json) throws JSONException;
+    LogContainer deserializeContainer(@NonNull String json, String type) throws JSONException;
 
     void addLogFactory(@NonNull String logType, @NonNull LogFactory logFactory);
 }

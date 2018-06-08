@@ -40,7 +40,7 @@ public class PushSerializerTest {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(PushInstallationLog.TYPE, new PushInstallationLogFactory());
         String payload = serializer.serializeContainer(expectedContainer);
-        LogContainer actualContainer = serializer.deserializeContainer(payload);
+        LogContainer actualContainer = serializer.deserializeContainer(payload, null);
         Assert.assertEquals(expectedContainer, actualContainer);
     }
 }

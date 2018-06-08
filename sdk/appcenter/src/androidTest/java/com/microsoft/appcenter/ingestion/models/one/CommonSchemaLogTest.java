@@ -3,7 +3,6 @@ package com.microsoft.appcenter.ingestion.models.one;
 import com.microsoft.appcenter.test.TestUtils;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.Test;
 
 import java.util.Date;

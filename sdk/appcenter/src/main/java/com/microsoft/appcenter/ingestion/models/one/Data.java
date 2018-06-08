@@ -64,6 +64,7 @@ public class Data implements Model {
         }
     }
 
+    @SuppressWarnings("SimplifiableIfStatement")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

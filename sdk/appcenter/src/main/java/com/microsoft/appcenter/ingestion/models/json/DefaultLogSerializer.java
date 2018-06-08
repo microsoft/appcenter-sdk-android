@@ -37,8 +37,10 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @NonNull
-    private Log readLog(JSONObject object) throws JSONException {
-        String type = object.getString(TYPE);
+    private Log readLog(JSONObject object, String type) throws JSONException {
+        if (type == null) {
+            type = object.getString(TYPE);
+        }
         LogFactory logFactory = mLogFactories.get(type);
         if (logFactory == null) {
             throw new JSONException("Unknown log type: " + type);
@@ -56,8 +58,8 @@ public class DefaultLogSerializer implements LogSerializer {
 
     @NonNull
     @Override
-    public Log deserializeLog(@NonNull String json) throws JSONException {
-        return readLog(new JSONObject(json));
+    public Log deserializeLog(@NonNull String json, String type) throws JSONException {
+        return readLog(new JSONObject(json), type);
     }
 
     @Override
@@ -98,14 +100,14 @@ public class DefaultLogSerializer implements LogSerializer {
 
     @NonNull
     @Override
-    public LogContainer deserializeContainer(@NonNull String json) throws JSONException {
+    public LogContainer deserializeContainer(@NonNull String json, String type) throws JSONException {
         JSONObject jContainer = new JSONObject(json);
         LogContainer container = new LogContainer();
         JSONArray jLogs = jContainer.getJSONArray(LOGS);
         List<Log> logs = new ArrayList<>();
         for (int i = 0; i < jLogs.length(); i++) {
             JSONObject jLog = jLogs.getJSONObject(i);
-            Log log = readLog(jLog);
+            Log log = readLog(jLog, type);
             logs.add(log);
         }
         container.setLogs(logs);

@@ -40,7 +40,7 @@ public class DistributeSerializerTest {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(DistributionStartSessionLog.TYPE, new DistributionStartSessionLogFactory());
         String payload = serializer.serializeContainer(expectedContainer);
-        LogContainer actualContainer = serializer.deserializeContainer(payload);
+        LogContainer actualContainer = serializer.deserializeContainer(payload, null);
 
         /* Verify that logs container successfully deserialized. */
         Assert.assertEquals(expectedContainer, actualContainer);

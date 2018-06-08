@@ -114,10 +114,19 @@ public class CommonSchemaLogSerializerTest {
         /* Check baseData and baseDataType from Part B not read into Part C. */
         log.getData().getProperties().put("baseDataType", "custom");
         log.getData().getProperties().put("baseData", new JSONObject());
-        Log copy = serializer.deserializeLog(serializer.serializeLog(log));
+        Log copy = serializer.deserializeLog(serializer.serializeLog(log), MockCommonSchemaLog.TYPE);
         log.getData().getProperties().remove("baseData");
         log.getData().getProperties().remove("baseDataType");
         assertEquals(log, copy);
+
+        /* Check deserialize fails without data type */
+        try {
+            serializer.deserializeLog(serializer.serializeLog(log), null);
+            fail("Was supposed to fail with JSONException");
+        } catch (JSONException ignore) {
+
+            /* Expected. */
+        }
     }
 
     /**
@@ -134,7 +143,7 @@ public class CommonSchemaLogSerializerTest {
     }
 
     private void checkSerialization(LogSerializer serializer, MockCommonSchemaLog log) throws JSONException {
-        Log copy = serializer.deserializeLog(serializer.serializeLog(log));
+        Log copy = serializer.deserializeLog(serializer.serializeLog(log), MockCommonSchemaLog.TYPE);
         assertEquals(log, copy);
     }
 }
