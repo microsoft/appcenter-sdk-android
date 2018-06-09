@@ -16,7 +16,7 @@
         android:id="@+id/name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@id/name"
+        android:hint="@string/name"
         android:inputType="text" />
 
     <TextView
