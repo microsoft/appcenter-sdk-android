@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.http;
 
 import android.net.TrafficStats;
+import android.util.Log;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -8,6 +9,7 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -58,7 +60,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({DefaultHttpClient.class, TrafficStats.class})
+@PrepareForTest({DefaultHttpClient.class, TrafficStats.class, AppCenterLog.class})
 public class DefaultHttpClientTest {
 
     @Rule
@@ -94,8 +96,16 @@ public class DefaultHttpClientTest {
     @Test
     public void post200() throws Exception {
 
-        /* Set log level to verbose to test shorter app secret as well. */
-        AppCenter.setLogLevel(VERBOSE);
+        /* Mock related to pretty json logging. */
+        mockStatic(AppCenterLog.class);
+        when(AppCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
+        JSONObject jsonObject = mock(JSONObject.class);
+        whenNew(JSONObject.class).withAnyArguments().thenReturn(jsonObject);
+        String prettyString = "{\n" +
+                "  \"a\": 1,\n" +
+                "  \"b\": 2\n" +
+                "}";
+        when(jsonObject.toString(2)).thenReturn(prettyString);
 
         /* Configure mock HTTP. */
         String urlString = "http://mock/logs?api-version=1.0.0";
@@ -110,7 +120,7 @@ public class DefaultHttpClientTest {
 
         /* Configure API client. */
         HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
-        when(callTemplate.buildRequestBody()).thenReturn("mockPayload");
+        when(callTemplate.buildRequestBody()).thenReturn("{a:1,b:2}");
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test calling code. Use shorter but valid app secret. */
@@ -137,20 +147,22 @@ public class DefaultHttpClientTest {
 
         /* Verify payload. */
         String sentPayload = buffer.toString("UTF-8");
-        assertEquals("mockPayload", sentPayload);
+        assertEquals("{a:1,b:2}", sentPayload);
 
         /* Verify socket tagged to avoid strict mode error. */
         verifyStatic();
         TrafficStats.setThreadStatsTag(anyInt());
         verifyStatic();
         TrafficStats.clearThreadStatsTag();
+
+        /* We enabled verbose and it's json, check pretty print. */
+        verifyStatic();
+
+        AppCenterLog.verbose(AppCenterLog.LOG_TAG, prettyString);
     }
 
     @Test
     public void post200WithoutCallTemplate() throws Exception {
-
-        /* Set log level to verbose to test shorter app secret as well. */
-        AppCenter.setLogLevel(VERBOSE);
 
         /* Configure mock HTTP. */
         String urlString = "http://mock/logs?api-version=1.0.0";
@@ -193,9 +205,6 @@ public class DefaultHttpClientTest {
 
     @Test
     public void get200() throws Exception {
-
-        /* Set log level to verbose to test shorter app secret as well. */
-        AppCenter.setLogLevel(VERBOSE);
 
         /* Configure mock HTTP. */
         String urlString = "http://mock/get";
@@ -302,9 +311,6 @@ public class DefaultHttpClientTest {
     @Test
     public void get200WithoutCallTemplate() throws Exception {
 
-        /* Set log level to verbose to test shorter app secret as well. */
-        AppCenter.setLogLevel(VERBOSE);
-
         /* Configure mock HTTP. */
         String urlString = "http://mock/get";
         URL url = mock(URL.class);
@@ -343,7 +349,8 @@ public class DefaultHttpClientTest {
     private void testPayloadLogging(final String payload, String mimeType) throws Exception {
 
         /* Set log level to verbose to test shorter app secret as well. */
-        AppCenter.setLogLevel(VERBOSE);
+        mockStatic(AppCenterLog.class);
+        when(AppCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
 
         /* Configure mock HTTP. */
         String urlString = "http://mock/get";
@@ -379,7 +386,7 @@ public class DefaultHttpClientTest {
 
         /* Test binary placeholder used in logging code instead of real payload. */
         verifyStatic();
-        AppCenterLog.info(anyString(), argThat(new ArgumentMatcher<String>() {
+        AppCenterLog.verbose(anyString(), argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -401,8 +408,9 @@ public class DefaultHttpClientTest {
     @Test
     public void get200image() throws Exception {
 
-        /* Set log level to verbose to test shorter app secret as well. */
-        AppCenter.setLogLevel(VERBOSE);
+        /* Mock verbose logs. */
+        mockStatic(AppCenterLog.class);
+        when(AppCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
 
         /* Configure mock HTTP. */
         String urlString = "http://mock/get";
@@ -438,7 +446,7 @@ public class DefaultHttpClientTest {
 
         /* Test binary placeholder used in logging code instead of real payload. */
         verifyStatic();
-        AppCenterLog.info(anyString(), argThat(new ArgumentMatcher<String>() {
+        AppCenterLog.verbose(anyString(), argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -450,9 +458,6 @@ public class DefaultHttpClientTest {
 
     @Test
     public void error503() throws Exception {
-
-        /* Set log level to verbose to test shorter app secret as well. */
-        AppCenter.setLogLevel(android.util.Log.INFO);
 
         /* Configure mock HTTP. */
         URL url = mock(URL.class);
