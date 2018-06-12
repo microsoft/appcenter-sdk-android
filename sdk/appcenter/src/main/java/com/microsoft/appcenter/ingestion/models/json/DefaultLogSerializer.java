@@ -71,21 +71,8 @@ public class DefaultLogSerializer implements LogSerializer {
     @Override
     public String serializeContainer(@NonNull LogContainer logContainer) throws JSONException {
 
-        /* Init JSON serializer, in verbose: try to make it pretty. */
-        JSONStringer writer = null;
-        if (AppCenterLog.getLogLevel() <= android.util.Log.VERBOSE) {
-            try {
-                @SuppressWarnings("JavaReflectionMemberAccess")
-                Constructor<JSONStringer> constructor = JSONStringer.class.getDeclaredConstructor(int.class);
-                constructor.setAccessible(true);
-                writer = constructor.newInstance(2);
-            } catch (Exception e) {
-                AppCenterLog.error(AppCenter.LOG_TAG, "Failed to setup pretty json, falling back to default one", e);
-            }
-        }
-        if (writer == null) {
-            writer = new JSONStringer();
-        }
+        /* Init JSON serializer. */
+        JSONStringer writer = new JSONStringer();
 
         /* Start writing JSON. */
         writer.object();

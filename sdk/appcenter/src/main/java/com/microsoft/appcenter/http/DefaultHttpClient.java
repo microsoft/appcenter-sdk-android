@@ -3,9 +3,12 @@ package com.microsoft.appcenter.http;
 import android.net.TrafficStats;
 import android.os.AsyncTask;
 import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
+
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -190,7 +193,12 @@ public class DefaultHttpClient implements HttpClient {
             if (binaryPayload != null) {
 
                 /* Compress payload if large enough to be worth it. */
-                AppCenterLog.verbose(LOG_TAG, payload);
+                if (AppCenterLog.getLogLevel() <= Log.VERBOSE) {
+                    if (CONTENT_TYPE_VALUE.equals(headers.get(CONTENT_TYPE_KEY))) {
+                        payload = new JSONObject(payload).toString(2);
+                    }
+                    AppCenterLog.verbose(LOG_TAG, payload);
+                }
                 if (shouldCompress) {
                     ByteArrayOutputStream gzipBuffer = new ByteArrayOutputStream(binaryPayload.length);
                     GZIPOutputStream gzipStream = new GZIPOutputStream(gzipBuffer);
