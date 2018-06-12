@@ -3,7 +3,6 @@ package com.microsoft.appcenter.http;
 import android.net.TrafficStats;
 import android.util.Log;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.UUIDUtils;
@@ -33,7 +32,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.zip.GZIPOutputStream;
 
-import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static org.junit.Assert.assertArrayEquals;
@@ -157,7 +155,6 @@ public class DefaultHttpClientTest {
 
         /* We enabled verbose and it's json, check pretty print. */
         verifyStatic();
-
         AppCenterLog.verbose(AppCenterLog.LOG_TAG, prettyString);
     }
 
@@ -630,6 +627,10 @@ public class DefaultHttpClientTest {
     @Test
     public void sendGzip() throws Exception {
 
+        /* Mock no verbose logging. */
+        mockStatic(AppCenterLog.class);
+        when(AppCenterLog.getLogLevel()).thenReturn(Log.DEBUG);
+
         /* Configure mock HTTP. */
         String urlString = "http://mock";
         URL url = mock(URL.class);
@@ -646,7 +647,7 @@ public class DefaultHttpClientTest {
         for (int i = 0; i < 2048; i++) {
             payloadBuilder.append('a');
         }
-        String payload = payloadBuilder.toString();
+        final String payload = payloadBuilder.toString();
 
         /* Compress payload for verification. */
         ByteArrayOutputStream gzipBuffer = new ByteArrayOutputStream(payload.length());
@@ -661,7 +662,7 @@ public class DefaultHttpClientTest {
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test calling code. */
-        String appSecret = UUIDUtils.randomUUID().toString();
+        final String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "custom");
@@ -684,5 +685,14 @@ public class DefaultHttpClientTest {
 
         /* Verify payload compressed. */
         assertArrayEquals(compressedBytes, buffer.toByteArray());
+
+        /* Check no payload logging since log level not enabled. */
+        verifyStatic(never());
+        AppCenterLog.verbose(anyString(), argThat(new ArgumentMatcher<String>() {
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().contains(payload);
+            }
+        }));
     }
 }
