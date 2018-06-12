@@ -41,7 +41,7 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
      * Maximum number of requests being sent for the group.
      */
     @VisibleForTesting
-    static final int ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
+    static final int ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS = 2;
 
     /**
      * Postfix for One Collector's groups.
