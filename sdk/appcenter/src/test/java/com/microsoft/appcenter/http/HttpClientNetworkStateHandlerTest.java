@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static org.mockito.Matchers.any;

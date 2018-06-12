@@ -1,7 +1,7 @@
 package com.microsoft.appcenter.analytics.channel;
 
-import com.microsoft.appcenter.analytics.ingestion.models.LogWithNameAndProperties;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
+import com.microsoft.appcenter.analytics.ingestion.models.LogWithNameAndProperties;
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
 
 import org.junit.experimental.theories.DataPoint;
@@ -24,7 +24,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Theories.class)
 public class AnalyticsValidatorTheoriesTest {
 
-    private AnalyticsValidator mAnalyticsValidator = new AnalyticsValidator();
+    private final AnalyticsValidator mAnalyticsValidator = new AnalyticsValidator();
 
     @DataPoint
     public static EventLog eventLog() {

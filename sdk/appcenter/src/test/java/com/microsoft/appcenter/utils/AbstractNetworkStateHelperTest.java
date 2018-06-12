@@ -22,7 +22,7 @@ public class AbstractNetworkStateHelperTest {
     ConnectivityManager mConnectivityManager;
 
     @Before
-    public void setUpAbstract() throws Exception {
+    public void setUpAbstract() {
         when(mContext.getApplicationContext()).thenReturn(mContext);
         when(mContext.getSystemService(Context.CONNECTIVITY_SERVICE)).thenReturn(mConnectivityManager);
     }

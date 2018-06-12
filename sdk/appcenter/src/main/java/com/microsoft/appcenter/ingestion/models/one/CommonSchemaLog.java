@@ -181,6 +181,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
      *
      * @return flags.
      */
+    @SuppressWarnings("WeakerAccess")
     public Long getFlags() {
         return flags;
     }

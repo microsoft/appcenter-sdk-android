@@ -8,11 +8,11 @@ import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class TestFeaturesListAdapter extends BaseAdapter {
-    private List<TestFeatures.TestFeatureModel> mList = new ArrayList<>();
+
+    private List<TestFeatures.TestFeatureModel> mList;
 
     public TestFeaturesListAdapter(List<TestFeatures.TestFeatureModel> list) {
         mList = list;

@@ -143,6 +143,7 @@ public class DatabasePersistence extends Persistence {
      * @param schema     schema.
      * @param maxRecords The maximum number of records allowed in the table.
      */
+    @SuppressWarnings("SameParameterValue")
     DatabasePersistence(Context context, int version, ContentValues schema, int maxRecords) {
         mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();

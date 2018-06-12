@@ -32,6 +32,7 @@ class RemoveDownloadTask extends AsyncTask<Void, Void, Void> {
         mDownloadId = downloadId;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     protected Void doInBackground(Void... params) {
 

@@ -409,7 +409,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
@@ -436,7 +436,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 currentDownloadState[0] = (Integer) invocation.getArguments()[1];
                 return null;
             }
@@ -445,7 +445,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 currentDownloadState[0] = DOWNLOAD_STATE_COMPLETED;
                 return null;
             }
@@ -455,7 +455,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
                 .thenAnswer(new Answer<Integer>() {
 
                     @Override
-                    public Integer answer(InvocationOnMock invocation) throws Throwable {
+                    public Integer answer(InvocationOnMock invocation) {
                         return currentDownloadState[0];
                     }
                 });

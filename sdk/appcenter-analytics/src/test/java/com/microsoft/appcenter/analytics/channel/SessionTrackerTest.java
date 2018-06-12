@@ -85,7 +85,7 @@ public class SessionTrackerTest {
 
             @Override
             @SuppressWarnings("unchecked")
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 String key = (String) invocation.getArguments()[0];
@@ -321,7 +321,7 @@ public class SessionTrackerTest {
         doAnswer(new Answer() {
 
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
                 startSessionLog.set((StartSessionLog) invocation.getArguments()[0]);
                 return null;
             }

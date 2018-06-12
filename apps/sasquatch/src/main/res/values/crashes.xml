@@ -28,8 +28,8 @@
     <string name="description_test_native_crash" tools:ignore="MissingTranslation">Dereference a null pointer.</string>
     <string name="title_native_stack_overflow_crash" tools:ignore="MissingTranslation">NDK stack overflow crash</string>
     <string name="description_native_stack_overflow_crash" tools:ignore="MissingTranslation">Caused by infinite recursion</string>
-    <string name="title_native_abort_crash">NDK call abort()</string>
-    <string name="description_native_abort_crash">Simply call abort() to terminate</string>
+    <string name="title_native_abort_crash" tools:ignore="MissingTranslation">NDK call abort()</string>
+    <string name="description_native_abort_crash" tools:ignore="MissingTranslation">Simply call abort() to terminate</string>
     <string name="crash_confirmation_dialog_title" tools:ignore="MissingTranslation">Unexpected crash found</string>
     <string name="crash_confirmation_dialog_message" tools:ignore="MissingTranslation">Would you like to send an anonymous report so we can fix the problem?</string>
     <string name="crash_confirmation_dialog_not_send_button" tools:ignore="MissingTranslation">Don\'t Send</string>

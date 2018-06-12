@@ -7,7 +7,6 @@ import org.junit.Test;
 import org.powermock.reflect.Whitebox;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 
@@ -15,7 +14,7 @@ public class AppNameHelperTest {
 
     @Test
     public void init() {
-        assertNotNull(new AppNameHelper());
+        new AppNameHelper();
     }
 
     @Test

@@ -90,7 +90,7 @@ public abstract class LogActivity extends AppCompatActivity {
      *
      * @return transmission target or null for default.
      */
-    protected String getTransmissionTarget() {
+    String getTransmissionTarget() {
 
         /* First item is always empty as it's default value which means either appcenter, one collector or both. */
         int pos = mTransmissionTargetSpinner.getSelectedItemPosition();

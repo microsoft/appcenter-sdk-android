@@ -1,7 +1,6 @@
 package com.microsoft.appcenter.http;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Test;
 
 import static com.microsoft.appcenter.http.HttpUtils.MAX_CHARACTERS_DISPLAYED_FOR_SECRET;

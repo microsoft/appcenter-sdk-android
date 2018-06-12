@@ -14,8 +14,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.IOException;
-
 @SuppressWarnings("unused")
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -43,7 +41,7 @@ public class PersistenceAndroidTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void missingLogSerializer() throws Persistence.PersistenceException, IOException {
+    public void missingLogSerializer() throws Persistence.PersistenceException {
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence(sContext, 1, DatabasePersistence.SCHEMA, Persistence.DEFAULT_CAPACITY);

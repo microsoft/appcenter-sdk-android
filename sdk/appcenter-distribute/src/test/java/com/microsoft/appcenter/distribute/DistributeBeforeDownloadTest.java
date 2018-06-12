@@ -84,7 +84,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
@@ -126,7 +126,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
@@ -170,7 +170,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
@@ -210,7 +210,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
@@ -270,7 +270,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
@@ -313,7 +313,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(final InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(final InvocationOnMock invocation) {
                 new Thread() {
 
                     @Override
@@ -384,7 +384,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
@@ -410,7 +410,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 when(PreferencesStorage.getLong(invocation.getArguments()[0].toString(), 0)).thenReturn((Long) invocation.getArguments()[1]);
                 return null;
             }
@@ -487,7 +487,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
@@ -541,7 +541,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
@@ -603,7 +603,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 Object serviceCallback = invocation.getArguments()[4];
                 if (serviceCallback instanceof ServiceCallback) {
                     serviceCallbackRef.set((ServiceCallback) serviceCallback);
@@ -721,7 +721,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 Object serviceCallback = invocation.getArguments()[4];
                 if (serviceCallback instanceof ServiceCallback) {
                     serviceCallbackRef.set((ServiceCallback) serviceCallback);
@@ -770,7 +770,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
@@ -866,7 +866,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
@@ -907,7 +907,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
@@ -935,7 +935,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 PowerMockito.when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn((Integer) invocation.getArguments()[1]);
                 return null;
             }
@@ -944,7 +944,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 PowerMockito.when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn(DOWNLOAD_STATE_COMPLETED);
                 return null;
             }
@@ -953,7 +953,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 PowerMockito.when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(invocation.getArguments()[1].toString());
                 return null;
             }
@@ -962,7 +962,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 PowerMockito.when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(null);
                 return null;
             }

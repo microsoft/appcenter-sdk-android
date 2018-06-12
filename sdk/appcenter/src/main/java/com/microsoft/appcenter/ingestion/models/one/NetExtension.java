@@ -41,7 +41,7 @@ public class NetExtension implements Model {
     }
 
     @Override
-    public void read(JSONObject object) throws JSONException {
+    public void read(JSONObject object) {
         setProvider(object.optString(PROVIDER, null));
     }
 
