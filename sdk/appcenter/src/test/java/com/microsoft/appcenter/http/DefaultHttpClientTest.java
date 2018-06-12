@@ -662,7 +662,7 @@ public class DefaultHttpClientTest {
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test calling code. */
-        final String appSecret = UUIDUtils.randomUUID().toString();
+        String appSecret = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "custom");
