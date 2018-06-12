@@ -10,7 +10,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -29,7 +28,7 @@ public class AsyncTaskUtilsTest {
 
     @Test
     public void init() {
-        assertNotNull(new AsyncTaskUtils());
+        new AsyncTaskUtils();
     }
 
     @Test

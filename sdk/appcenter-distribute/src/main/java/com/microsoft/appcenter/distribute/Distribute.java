@@ -862,6 +862,8 @@ public class Distribute extends AbstractAppCenterService {
         if (getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
             AppCenterLog.debug(LOG_TAG, "Delete notification");
             NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+
+            //noinspection ConstantConditions
             notificationManager.cancel(DistributeUtils.getNotificationId());
         }
     }
@@ -962,7 +964,7 @@ public class Distribute extends AbstractAppCenterService {
         mCheckReleaseApiCall = httpClient.callAsync(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
 
             @Override
-            public String buildRequestBody() throws JSONException {
+            public String buildRequestBody() {
 
                 /* Only GET is used by Distribute service. This method is never getting called. */
                 return null;
@@ -1659,6 +1661,8 @@ public class Distribute extends AbstractAppCenterService {
             NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
                     mContext.getString(R.string.appcenter_distribute_notification_category),
                     NotificationManager.IMPORTANCE_DEFAULT);
+
+            //noinspection ConstantConditions
             notificationManager.createNotificationChannel(channel);
             builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
         } else {
@@ -1674,6 +1678,8 @@ public class Distribute extends AbstractAppCenterService {
         }
         Notification notification = DistributeUtils.buildNotification(builder);
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
+
+        //noinspection ConstantConditions
         notificationManager.notify(DistributeUtils.getNotificationId(), notification);
         PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
 

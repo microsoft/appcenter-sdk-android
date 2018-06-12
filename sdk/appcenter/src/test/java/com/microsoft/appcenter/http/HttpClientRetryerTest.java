@@ -27,7 +27,7 @@ public class HttpClientRetryerTest {
         doAnswer(new Answer() {
 
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
                 Runnable runnable = (Runnable) invocation.getArguments()[0];
                 runnable.run();
                 return null;
@@ -55,7 +55,7 @@ public class HttpClientRetryerTest {
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockSuccessPayload");
                 return call;
             }
@@ -74,14 +74,14 @@ public class HttpClientRetryerTest {
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(new SocketException());
                 return mock(ServiceCall.class);
             }
         }).doAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockSuccessPayload");
                 return mock(ServiceCall.class);
             }
@@ -104,14 +104,14 @@ public class HttpClientRetryerTest {
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(new UnknownHostException());
                 return mock(ServiceCall.class);
             }
         }).doAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(expectedException);
                 return mock(ServiceCall.class);
             }
@@ -135,7 +135,7 @@ public class HttpClientRetryerTest {
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(new HttpException(408));
                 return call;
             }
@@ -161,7 +161,7 @@ public class HttpClientRetryerTest {
         doAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(new HttpException(503));
                 return call;
             }

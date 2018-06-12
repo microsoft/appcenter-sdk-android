@@ -21,8 +21,8 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TimePicker;
 
-import com.microsoft.appcenter.CustomProperties;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.CustomProperties;
 import com.microsoft.appcenter.sasquatch.R;
 
 import java.text.DateFormat;
@@ -186,7 +186,7 @@ public class CustomPropertiesActivity extends AppCompatActivity {
             setDate(calendar.getTime());
         }
 
-        public void set(CustomProperties customProperties) {
+        void set(CustomProperties customProperties) {
             int type = mEditType.getSelectedItemPosition();
             String key = mEditKey.getText().toString();
             switch (type) {

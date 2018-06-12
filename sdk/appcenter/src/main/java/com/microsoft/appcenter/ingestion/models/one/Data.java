@@ -25,7 +25,7 @@ public class Data implements Model {
     /**
      * Part C properties.
      */
-    private JSONObject mProperties = new JSONObject();
+    private final JSONObject mProperties = new JSONObject();
 
     /**
      * Get Part C properties.

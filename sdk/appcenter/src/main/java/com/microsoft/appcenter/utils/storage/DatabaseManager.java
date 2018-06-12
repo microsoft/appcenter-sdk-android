@@ -553,6 +553,7 @@ public class DatabaseManager implements Closeable {
          * @param newVersion new version of the schema.
          * @return true if upgrade was managed, false to drop/create table.
          */
+        @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "unused"})
         boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
 
         /**

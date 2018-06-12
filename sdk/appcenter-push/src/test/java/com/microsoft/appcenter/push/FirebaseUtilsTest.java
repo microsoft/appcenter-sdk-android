@@ -9,7 +9,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -26,18 +25,18 @@ public class FirebaseUtilsTest {
 
     @Test
     public void coverInit() {
-        assertNotNull(new FirebaseUtils());
+        new FirebaseUtils();
     }
 
     @Test
-    public void firebaseUnavailable() throws Exception {
+    public void firebaseUnavailable() {
         IllegalStateException exception = new IllegalStateException("Not init.");
         when(FirebaseInstanceId.getInstance()).thenThrow(exception);
         assertFalse(FirebaseUtils.isFirebaseAvailable());
     }
 
     @Test
-    public void firebaseIsAvailable() throws Exception {
+    public void firebaseIsAvailable() {
         FirebaseInstanceId instanceId = mock(FirebaseInstanceId.class);
         when(FirebaseInstanceId.getInstance()).thenReturn(instanceId);
         when(instanceId.getToken()).thenReturn("token");
@@ -45,7 +44,7 @@ public class FirebaseUtilsTest {
     }
 
     @Test
-    public void firebaseNullInstance() throws Exception {
+    public void firebaseNullInstance() {
         assertFalse(FirebaseUtils.isFirebaseAvailable());
     }
 }

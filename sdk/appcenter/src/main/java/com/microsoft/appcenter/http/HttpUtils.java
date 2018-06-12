@@ -78,6 +78,8 @@ public class HttpUtils {
         /* Check corner cases. */
         if (t instanceof SSLException) {
             String message = t.getMessage();
+
+            //noinspection RedundantIfStatement simplifying would break adding a new block of code later.
             if (message != null && CONNECTION_ISSUE_PATTERN.matcher(message.toLowerCase(Locale.US)).find()) {
                 return true;
             }

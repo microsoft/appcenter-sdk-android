@@ -47,7 +47,7 @@ public class AppCenterAndroidTest {
     }
 
     @Test
-    public void getInstallId() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+    public void getInstallId() {
         assertNull(AppCenter.getInstallId().get());
         StorageHelper.initialize(mApplication);
         StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
@@ -77,7 +77,7 @@ public class AppCenterAndroidTest {
     }
 
     @Test
-    public void setDefaultLogLevelDebug() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+    public void setDefaultLogLevelDebug() {
         AppCenterLog.setLogLevel(Log.ASSERT);
         AppCenter.start(mApplication, UUIDUtils.randomUUID().toString());
         assertEquals(Log.WARN, AppCenter.getLogLevel());

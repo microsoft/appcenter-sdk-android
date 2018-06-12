@@ -4,9 +4,9 @@ import android.annotation.SuppressLint;
 import android.app.Application;
 import android.support.test.InstrumentationRegistry;
 
-import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterPrivateHelper;
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
@@ -41,7 +41,7 @@ public class WrapperSdkExceptionManagerAndroidTest {
     }
 
     @Before
-    public void setUp() throws java.lang.Exception {
+    public void setUp() {
         android.util.Log.i(TAG, "Cleanup");
         StorageHelper.PreferencesStorage.clear();
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {

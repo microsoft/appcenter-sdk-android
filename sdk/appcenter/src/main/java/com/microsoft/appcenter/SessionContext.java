@@ -191,6 +191,7 @@ public class SessionContext {
         /**
          * @return session timestamp.
          */
+        @SuppressWarnings("WeakerAccess")
         public long getTimestamp() {
             return mTimestamp;
         }

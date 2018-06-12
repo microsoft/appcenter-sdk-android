@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import static org.junit.Assert.assertNotNull;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -27,10 +26,10 @@ public class ShutdownHelperTest {
     }
 
     @Test
-    public void shutdown() throws Exception {
+    public void shutdown() {
 
         /* Dummy coverage */
-        assertNotNull(new ShutdownHelper());
+        new ShutdownHelper();
 
         /* Mock process id */
         when(Process.myPid()).thenReturn(123);

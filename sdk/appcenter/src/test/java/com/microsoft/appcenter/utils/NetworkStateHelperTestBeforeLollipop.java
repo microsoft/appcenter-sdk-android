@@ -59,7 +59,7 @@ public class NetworkStateHelperTestBeforeLollipop extends AbstractNetworkStateHe
         when(mContext.registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class))).then(new Answer<Intent>() {
 
             @Override
-            public Intent answer(InvocationOnMock invocation) throws Throwable {
+            public Intent answer(InvocationOnMock invocation) {
                 BroadcastReceiver receiver = (BroadcastReceiver) invocation.getArguments()[0];
                 IntentFilter filter = (IntentFilter) invocation.getArguments()[1];
                 assertNotNull(receiver);
