@@ -1,14 +1,17 @@
 package com.microsoft.appcenter.http;
 
 import android.net.TrafficStats;
+import android.os.Build;
 import android.util.Log;
 
+import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -22,7 +25,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +33,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.zip.GZIPOutputStream;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
@@ -64,6 +69,11 @@ public class DefaultHttpClientTest {
     @Rule
     public PowerMockRule rule = new PowerMockRule();
 
+    @After
+    public void tearDown() throws Exception {
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
+    }
+
     /**
      * Simulate ASyncTask. It's not in @Before because some tests like cancel must not use this.
      */
@@ -92,6 +102,38 @@ public class DefaultHttpClientTest {
     }
 
     @Test
+    public void tls1_2Enforcement() throws Exception {
+
+        /* Configure mock HTTP. */
+        mockCall();
+        testTls1_2Setting(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1, 0);
+        for (int apiLevel = Build.VERSION_CODES.JELLY_BEAN; apiLevel < Build.VERSION_CODES.KITKAT_WATCH; apiLevel++) {
+            testTls1_2Setting(apiLevel, 1);
+        }
+        for (int apiLevel = Build.VERSION_CODES.KITKAT_WATCH; apiLevel <= Build.VERSION_CODES.O_MR1; apiLevel++) {
+            testTls1_2Setting(apiLevel, 0);
+        }
+    }
+
+    private void testTls1_2Setting(int apiLevel, int tlsSetExpectedCalls) throws Exception {
+        String urlString = "http://mock/logs?api-version=1.0.0";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", apiLevel);
+        httpClient.callAsync(urlString, METHOD_POST, new HashMap<String, String>(), null, mock(ServiceCallback.class));
+        verify(urlConnection, times(tlsSetExpectedCalls)).setSSLSocketFactory(argThat(new ArgumentMatcher<SSLSocketFactory>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument instanceof TLS1_2SocketFactory;
+            }
+        }));
+    }
+
+    @Test
     public void post200() throws Exception {
 
         /* Mock related to pretty json logging. */
@@ -109,7 +151,7 @@ public class DefaultHttpClientTest {
         String urlString = "http://mock/logs?api-version=1.0.0";
         URL url = mock(URL.class);
         whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -165,7 +207,7 @@ public class DefaultHttpClientTest {
         String urlString = "http://mock/logs?api-version=1.0.0";
         URL url = mock(URL.class);
         whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -207,7 +249,7 @@ public class DefaultHttpClientTest {
         String urlString = "http://mock/get";
         URL url = mock(URL.class);
         whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -250,7 +292,7 @@ public class DefaultHttpClientTest {
         String urlString = "http://mock/get";
         URL url = mock(URL.class);
         whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(outputStream);
@@ -285,7 +327,7 @@ public class DefaultHttpClientTest {
         /* Configure mock HTTP. */
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
-        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(100);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -312,7 +354,7 @@ public class DefaultHttpClientTest {
         String urlString = "http://mock/get";
         URL url = mock(URL.class);
         whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -353,7 +395,7 @@ public class DefaultHttpClientTest {
         String urlString = "http://mock/get";
         URL url = mock(URL.class);
         whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -413,7 +455,7 @@ public class DefaultHttpClientTest {
         String urlString = "http://mock/get";
         URL url = mock(URL.class);
         whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -459,7 +501,7 @@ public class DefaultHttpClientTest {
         /* Configure mock HTTP. */
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
-        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(503);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -533,7 +575,7 @@ public class DefaultHttpClientTest {
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
         IOException exception = new IOException("mock");
-        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(200);
         InputStream inputStream = mock(InputStream.class);
@@ -561,7 +603,7 @@ public class DefaultHttpClientTest {
         /* Configure mock HTTP. */
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
-        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
 
         /* Configure API client. */
@@ -635,7 +677,7 @@ public class DefaultHttpClientTest {
         String urlString = "http://mock";
         URL url = mock(URL.class);
         whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -707,7 +749,7 @@ public class DefaultHttpClientTest {
         String urlString = "http://mock";
         URL url = mock(URL.class);
         whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();

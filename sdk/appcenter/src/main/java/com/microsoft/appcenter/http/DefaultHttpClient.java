@@ -2,6 +2,7 @@ package com.microsoft.appcenter.http;
 
 import android.net.TrafficStats;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.support.annotation.VisibleForTesting;
 import android.util.Log;
 
@@ -20,6 +21,8 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.zip.GZIPOutputStream;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static java.lang.Math.max;
@@ -148,8 +151,19 @@ public class DefaultHttpClient implements HttpClient {
 
         /* HTTP session. */
         URL url = new URL(urlString);
-        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
         try {
+
+            /*
+             * Make sure we use TLS 1.2 when the device supports it but not enabled by default.
+             * Don't hardcode TLS version when enabled by default to avoid unnecessary wrapping and
+             * to support future versions of TLS such as say 1.3 without having to patch this code.
+             * We have to drop support for API level 15 if we want to enforce TLS 1.2 on all devices.
+             */
+            int apiLevel = Build.VERSION.SDK_INT;
+            if (apiLevel >= Build.VERSION_CODES.JELLY_BEAN && apiLevel < Build.VERSION_CODES.KITKAT_WATCH) {
+                urlConnection.setSSLSocketFactory(new TLS1_2SocketFactory());
+            }
 
             /* Configure connection timeouts. */
             urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
