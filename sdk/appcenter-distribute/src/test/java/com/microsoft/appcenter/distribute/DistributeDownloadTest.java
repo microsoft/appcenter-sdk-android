@@ -30,16 +30,15 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Semaphore;
 
 import static android.app.DownloadManager.EXTRA_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
@@ -127,7 +126,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
     }
 
     @Test
-    public void disableWhileProcessingCompletion() throws Exception {
+    public void disableWhileProcessingCompletion() {
 
         /* Simulate async task. */
         waitDownloadTask();
@@ -271,7 +270,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
     }
 
     @Test
-    public void disableDuringDownload() throws Exception {
+    public void disableDuringDownload() {
 
         /* Simulate async task. */
         waitDownloadTask();
@@ -341,7 +340,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
     }
 
     @Test
-    public void longFailingDownloadForOptionalDownload() throws Exception {
+    public void longFailingDownloadForOptionalDownload() {
 
         /* Simulate async task. */
         waitDownloadTask();
@@ -406,7 +405,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
     }
 
     @Test
-    public void disabledWhileCheckingDownloadOnRestart() throws BrokenBarrierException, InterruptedException {
+    public void disabledWhileCheckingDownloadOnRestart() {
 
         /* Simulate async task. */
         waitDownloadTask();
@@ -434,7 +433,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).then(new Answer<Long>() {
 
             @Override
-            public Long answer(InvocationOnMock invocation) throws Throwable {
+            public Long answer(InvocationOnMock invocation) {
 
                 /* This is called by setEnabled too and we want to block only the async task. */
                 if (testThread != Thread.currentThread()) {
@@ -480,7 +479,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).then(new Answer<Long>() {
 
             @Override
-            public Long answer(InvocationOnMock invocation) throws Throwable {
+            public Long answer(InvocationOnMock invocation) {
 
                 /* This is called by setEnabled too and we want to block only the async task. */
                 if (testThread != Thread.currentThread()) {
@@ -535,7 +534,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 beforeStartingActivityLock.release();
                 disabledLock.acquireUninterruptibly();
                 return null;
@@ -745,7 +744,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         doAnswer(new Answer<Object>() {
 
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
                 when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_TIME)).thenReturn((Long) invocation.getArguments()[1]);
                 return null;
             }

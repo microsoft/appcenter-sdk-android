@@ -8,9 +8,8 @@ import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
-import junit.framework.Assert;
-
 import org.json.JSONException;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -40,7 +39,7 @@ public class PushSerializerTest {
         LogSerializer serializer = new DefaultLogSerializer();
         serializer.addLogFactory(PushInstallationLog.TYPE, new PushInstallationLogFactory());
         String payload = serializer.serializeContainer(expectedContainer);
-        LogContainer actualContainer = serializer.deserializeContainer(payload);
+        LogContainer actualContainer = serializer.deserializeContainer(payload, null);
         Assert.assertEquals(expectedContainer, actualContainer);
     }
 }

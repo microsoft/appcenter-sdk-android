@@ -2,10 +2,11 @@ package com.microsoft.appcenter.channel;
 
 import android.support.annotation.NonNull;
 
+import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 
 /**
- * The interface for Channel
+ * The interface for Channel.
  */
 public interface Channel {
 
@@ -16,9 +17,10 @@ public interface Channel {
      * @param maxLogsPerBatch    maximum log count per batch.
      * @param batchTimeInterval  time interval for a next batch.
      * @param maxParallelBatches maximum number of batches in parallel.
+     * @param ingestion          ingestion for the channel. If null then the default ingestion will be used.
      * @param groupListener      a listener for a service.
      */
-    void addGroup(String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, GroupListener groupListener);
+    void addGroup(String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, Ingestion ingestion, GroupListener groupListener);
 
     /**
      * Remove a group for logs.
@@ -30,8 +32,8 @@ public interface Channel {
     /**
      * Add Log to queue to be persisted and sent.
      *
-     * @param log       the Log to be enqueued
-     * @param groupName the group to use
+     * @param log       the Log to be enqueued.
+     * @param groupName the group to use.
      */
     void enqueue(@NonNull Log log, @NonNull String groupName);
 
@@ -94,14 +96,37 @@ public interface Channel {
     interface Listener {
 
         /**
-         * Called whenever a log is enqueued.
+         * Called whenever a new group is added.
+         *
+         * @param groupName     group name.
+         * @param groupListener group listener.
+         */
+        void onGroupAdded(@NonNull String groupName, GroupListener groupListener);
+
+        /**
+         * Called whenever a new group is removed.
+         *
+         * @param groupName group name.
+         */
+        void onGroupRemoved(@NonNull String groupName);
+
+        /**
+         * Called whenever a log is being prepared.
          * This is used to alter some log properties if needed.
          * The channel might alter log furthermore between this event and the next one: {@link #shouldFilter}.
          *
          * @param log       log being enqueued.
          * @param groupName group of the log.
          */
-        void onEnqueuingLog(@NonNull Log log, @NonNull String groupName);
+        void onPreparingLog(@NonNull Log log, @NonNull String groupName);
+
+        /**
+         * Called after a log has been fully prepared and properties are now final.
+         *
+         * @param log       prepared log.
+         * @param groupName group of the log.
+         */
+        void onPreparedLog(@NonNull Log log, @NonNull String groupName);
 
         /**
          * Called after a log has been fully prepared and properties are now final.
@@ -111,6 +136,20 @@ public interface Channel {
          * @return true to filter out the log, false to let it being stored and sent by the channel.
          */
         boolean shouldFilter(@NonNull Log log);
+
+        /**
+         * Called after channel state has changed.
+         *
+         * @param isEnabled new channel state.
+         */
+        void onGloballyEnabled(boolean isEnabled);
+
+        /**
+         * Called when a group is cleared.
+         *
+         * @param groupName The group name.
+         */
+        void onClear(@NonNull String groupName);
     }
 
     /**

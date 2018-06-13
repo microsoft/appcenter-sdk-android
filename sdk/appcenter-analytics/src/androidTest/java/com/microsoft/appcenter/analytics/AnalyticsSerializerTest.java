@@ -13,9 +13,8 @@ import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
-import junit.framework.Assert;
-
 import org.json.JSONException;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -98,7 +97,7 @@ public class AnalyticsSerializerTest {
         serializer.addLogFactory(EventLog.TYPE, new EventLogFactory());
         String payload = serializer.serializeContainer(expectedContainer);
         android.util.Log.v(TAG, payload);
-        LogContainer actualContainer = serializer.deserializeContainer(payload);
+        LogContainer actualContainer = serializer.deserializeContainer(payload, null);
         Assert.assertEquals(expectedContainer, actualContainer);
     }
 }

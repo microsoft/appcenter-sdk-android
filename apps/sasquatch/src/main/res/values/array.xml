@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string-array name="appcenter_start_type_values">
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string-array name="appcenter_start_type_values" tools:ignore="MissingTranslation">
         <item>APP_SECRET</item>
         <item>TARGET</item>
         <item>BOTH</item>

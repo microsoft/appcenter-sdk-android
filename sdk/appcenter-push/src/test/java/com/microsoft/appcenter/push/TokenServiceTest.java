@@ -41,7 +41,7 @@ public class TokenServiceTest {
     private FirebaseInstanceId mFirebaseInstanceId;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         mockStatic(Push.class);
         when(Push.getInstance()).thenReturn(mPush);
         mockStatic(FirebaseInstanceId.class);
@@ -49,7 +49,7 @@ public class TokenServiceTest {
     }
 
     @Test
-    public void onTokenRefresh() throws Exception {
+    public void onTokenRefresh() {
         TokenService service = new TokenService();
         FirebaseInstanceIdService firebaseInstanceIdService = service.getFirebaseInstanceIdService();
         assertNotNull(firebaseInstanceIdService);
@@ -91,7 +91,7 @@ public class TokenServiceTest {
     }
 
     @Test
-    public void firebaseUnavailable() throws Exception {
+    public void firebaseUnavailable() {
 
         /* Just check it does not crash when no firebase. */
         when(FirebaseInstanceId.getInstance()).thenThrow(new NoClassDefFoundError());

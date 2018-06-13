@@ -55,7 +55,7 @@ public class HttpUtils {
         if (t instanceof HttpException) {
             HttpException exception = (HttpException) t;
             int code = exception.getStatusCode();
-            return code >= 500 || code == 408;
+            return code >= 500 || code == 408 || code == 429;
         }
 
         /* Check for a generic exception to retry. */
@@ -78,6 +78,8 @@ public class HttpUtils {
         /* Check corner cases. */
         if (t instanceof SSLException) {
             String message = t.getMessage();
+
+            //noinspection RedundantIfStatement simplifying would break adding a new block of code later.
             if (message != null && CONNECTION_ISSUE_PATTERN.matcher(message.toLowerCase(Locale.US)).find()) {
                 return true;
             }

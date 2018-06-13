@@ -2,11 +2,16 @@ package com.microsoft.appcenter.http;
 
 import android.net.TrafficStats;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.HandlerUtils;
 
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,6 +20,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.zip.GZIPOutputStream;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static java.lang.Math.max;
@@ -40,24 +48,34 @@ public class DefaultHttpClient implements HttpClient {
     private static final int THREAD_STATS_TAG = 0xD83DDC19;
 
     /**
+     * Content type header key.
+     */
+    public static final String CONTENT_TYPE_KEY = "Content-Type";
+
+    /**
      * Content type header value.
      */
     private static final String CONTENT_TYPE_VALUE = "application/json";
 
     /**
-     * Default string builder capacity.
-     */
-    private static final int DEFAULT_STRING_BUILDER_CAPACITY = 16;
-
-    /**
-     * Content type header key.
-     */
-    private static final String CONTENT_TYPE_KEY = "Content-Type";
-
-    /**
      * Character encoding.
      */
     private static final String CHARSET_NAME = "UTF-8";
+
+    /**
+     * Content encoding header key.
+     */
+    private static final String CONTENT_ENCODING_KEY = "Content-Encoding";
+
+    /**
+     * Content encoding header key.
+     */
+    private static final String CONTENT_ENCODING_VALUE = "gzip";
+
+    /**
+     * Default string builder capacity.
+     */
+    private static final int DEFAULT_STRING_BUILDER_CAPACITY = 16;
 
     /**
      * Read buffer size.
@@ -73,6 +91,11 @@ public class DefaultHttpClient implements HttpClient {
      * HTTP read timeout.
      */
     private static final int READ_TIMEOUT = 20000;
+
+    /**
+     * Minimum payload length in bytes to use gzip.
+     */
+    private static final int MIN_GZIP_LENGTH = 1400;
 
     /**
      * Dump stream to string.
@@ -128,32 +151,77 @@ public class DefaultHttpClient implements HttpClient {
 
         /* HTTP session. */
         URL url = new URL(urlString);
-        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
         try {
+
+            /*
+             * Make sure we use TLS 1.2 when the device supports it but not enabled by default.
+             * Don't hardcode TLS version when enabled by default to avoid unnecessary wrapping and
+             * to support future versions of TLS such as say 1.3 without having to patch this code.
+             * We have to drop support for API level 15 if we want to enforce TLS 1.2 on all devices.
+             */
+            int apiLevel = Build.VERSION.SDK_INT;
+            if (apiLevel >= Build.VERSION_CODES.JELLY_BEAN && apiLevel < Build.VERSION_CODES.KITKAT_WATCH) {
+                urlConnection.setSSLSocketFactory(new TLS1_2SocketFactory());
+            }
 
             /* Configure connection timeouts. */
             urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
             urlConnection.setReadTimeout(READ_TIMEOUT);
-            urlConnection.setRequestMethod(method);
 
-            /* Set headers. */
-            urlConnection.setRequestProperty(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
+            /* Build payload now if POST. */
+            urlConnection.setRequestMethod(method);
+            String payload = null;
+            byte[] binaryPayload = null;
+            boolean shouldCompress = false;
+            boolean isPost = method.equals(METHOD_POST);
+            if (isPost && callTemplate != null) {
+
+                /* Get bytes, check if large enough to compress. */
+                payload = callTemplate.buildRequestBody();
+                binaryPayload = payload.getBytes(CHARSET_NAME);
+                shouldCompress = binaryPayload.length >= MIN_GZIP_LENGTH;
+
+                /* If no content type specified, assume json. */
+                if (!headers.containsKey(CONTENT_TYPE_KEY)) {
+                    headers.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
+                }
+            }
+
+            /* If about to compress, add corresponding header. */
+            if (shouldCompress) {
+                headers.put(CONTENT_ENCODING_KEY, CONTENT_ENCODING_VALUE);
+            }
+
+            /* Send headers. */
             for (Map.Entry<String, String> header : headers.entrySet()) {
                 urlConnection.setRequestProperty(header.getKey(), header.getValue());
             }
 
-            /* Before send. */
+            /* Call back before the payload is sent. */
             if (callTemplate != null) {
                 callTemplate.onBeforeCalling(url, headers);
             }
 
-            /* Build payload. */
-            if (method.equals(METHOD_POST) && callTemplate != null) {
-                String payload = callTemplate.buildRequestBody();
-                AppCenterLog.verbose(LOG_TAG, payload);
+            /* Send payload. */
+            if (binaryPayload != null) {
 
-                /* Send payload through the wire. */
-                byte[] binaryPayload = payload.getBytes(CHARSET_NAME);
+                /* Compress payload if large enough to be worth it. */
+                if (AppCenterLog.getLogLevel() <= Log.VERBOSE) {
+                    if (CONTENT_TYPE_VALUE.equals(headers.get(CONTENT_TYPE_KEY))) {
+                        payload = new JSONObject(payload).toString(2);
+                    }
+                    AppCenterLog.verbose(LOG_TAG, payload);
+                }
+                if (shouldCompress) {
+                    ByteArrayOutputStream gzipBuffer = new ByteArrayOutputStream(binaryPayload.length);
+                    GZIPOutputStream gzipStream = new GZIPOutputStream(gzipBuffer);
+                    gzipStream.write(binaryPayload);
+                    gzipStream.close();
+                    binaryPayload = gzipBuffer.toByteArray();
+                }
+
+                /* Send payload on the wire. */
                 urlConnection.setDoOutput(true);
                 urlConnection.setFixedLengthStreamingMode(binaryPayload.length);
                 OutputStream out = urlConnection.getOutputStream();
@@ -164,7 +232,7 @@ public class DefaultHttpClient implements HttpClient {
             /* Read response. */
             int status = urlConnection.getResponseCode();
             String response = dump(urlConnection);
-            String contentType = urlConnection.getHeaderField("Content-Type");
+            String contentType = urlConnection.getHeaderField(CONTENT_TYPE_KEY);
             String logPayload;
             if (contentType == null || contentType.startsWith("text/") || contentType.startsWith("application/")) {
                 logPayload = response;
@@ -220,7 +288,7 @@ public class DefaultHttpClient implements HttpClient {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
 
         /* No-op. A decorator can take care of tracking calls to cancel. */
     }

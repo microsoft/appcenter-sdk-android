@@ -8,6 +8,7 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
+import com.microsoft.appcenter.analytics.channel.AnalyticsValidator;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
@@ -15,6 +16,8 @@ import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.appcenter.analytics.ingestion.models.json.EventLogFactory;
 import com.microsoft.appcenter.analytics.ingestion.models.json.PageLogFactory;
 import com.microsoft.appcenter.analytics.ingestion.models.json.StartSessionLogFactory;
+import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
+import com.microsoft.appcenter.analytics.ingestion.models.one.json.CommonSchemaEventLogFactory;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
@@ -30,18 +33,6 @@ import java.util.Map;
  * Analytics service.
  */
 public class Analytics extends AbstractAppCenterService {
-
-    /**
-     * Max length of event/page name.
-     */
-    @VisibleForTesting
-    static final int MAX_NAME_LENGTH = 256;
-
-    /**
-     * Max length of properties.
-     */
-    @VisibleForTesting
-    static final int MAX_PROPERTY_ITEM_LENGTH = 125;
 
     /**
      * Name of the service.
@@ -62,11 +53,6 @@ public class Analytics extends AbstractAppCenterService {
      * Activity suffix to exclude from generated page names.
      */
     private static final String ACTIVITY_SUFFIX = "Activity";
-
-    /**
-     * Max number of properties.
-     */
-    private static final int MAX_PROPERTY_COUNT = 20;
 
     /**
      * Shared instance.
@@ -99,6 +85,11 @@ public class Analytics extends AbstractAppCenterService {
     private SessionTracker mSessionTracker;
 
     /**
+     * Event validator.
+     */
+    private AnalyticsValidator mAnalyticsValidator;
+
+    /**
      * Custom analytics listener.
      */
     private AnalyticsListener mAnalyticsListener;
@@ -117,6 +108,7 @@ public class Analytics extends AbstractAppCenterService {
         mFactories.put(StartSessionLog.TYPE, new StartSessionLogFactory());
         mFactories.put(PageLog.TYPE, new PageLogFactory());
         mFactories.put(EventLog.TYPE, new EventLogFactory());
+        mFactories.put(CommonSchemaEventLog.TYPE, new CommonSchemaEventLogFactory());
         mTransmissionTargets = new HashMap<>();
     }
 
@@ -225,12 +217,7 @@ public class Analytics extends AbstractAppCenterService {
      */
     @SuppressWarnings("WeakerAccess")
     protected static void trackPage(String name, Map<String, String> properties) {
-        final String logType = "Page";
-        name = validateName(name, logType);
-        if (name != null) {
-            Map<String, String> validatedProperties = validateProperties(properties, name, logType);
-            getInstance().trackPageAsync(name, validatedProperties);
-        }
+        getInstance().trackPageAsync(name, properties);
     }
 
     /**
@@ -284,12 +271,7 @@ public class Analytics extends AbstractAppCenterService {
      */
     @SuppressWarnings("WeakerAccess")
     static void trackEvent(String name, Map<String, String> properties, AnalyticsTransmissionTarget transmissionTarget) {
-        final String logType = "Event";
-        name = validateName(name, logType);
-        if (name != null) {
-            Map<String, String> validatedProperties = validateProperties(properties, name, logType);
-            getInstance().trackEventAsync(name, validatedProperties, transmissionTarget);
-        }
+        getInstance().trackEventAsync(name, properties, transmissionTarget);
     }
 
     /**
@@ -316,72 +298,6 @@ public class Analytics extends AbstractAppCenterService {
         } else {
             return name;
         }
-    }
-
-    /**
-     * Validates name.
-     *
-     * @param name    Log name to validate.
-     * @param logType Log type.
-     * @return <code>null</code> if validation failed, otherwise a valid name within the length limit will be returned.
-     */
-    private static String validateName(String name, String logType) {
-        if (name == null || name.isEmpty()) {
-            AppCenterLog.error(Analytics.LOG_TAG, logType + " name cannot be null or empty.");
-            return null;
-        }
-        if (name.length() > MAX_NAME_LENGTH) {
-            AppCenterLog.warn(Analytics.LOG_TAG, String.format("%s '%s' : name length cannot be longer than %s characters. Name will be truncated.", logType, name, MAX_NAME_LENGTH));
-            name = name.substring(0, MAX_NAME_LENGTH);
-        }
-        return name;
-    }
-
-    /**
-     * Validates properties.
-     *
-     * @param properties Properties collection to validate.
-     * @param logName    Log name.
-     * @param logType    Log type.
-     * @return valid properties collection with maximum size of 20.
-     */
-    private static Map<String, String> validateProperties(Map<String, String> properties, String logName, String logType) {
-        if (properties == null) {
-            return null;
-        }
-        String message;
-        Map<String, String> result = new HashMap<>();
-        for (Map.Entry<String, String> property : properties.entrySet()) {
-            String key = property.getKey();
-            String value = property.getValue();
-            if (result.size() >= MAX_PROPERTY_COUNT) {
-                message = String.format("%s '%s' : properties cannot contain more than %s items. Skipping other properties.", logType, logName, MAX_PROPERTY_COUNT);
-                AppCenterLog.warn(Analytics.LOG_TAG, message);
-                break;
-            }
-            if (key == null || key.isEmpty()) {
-                message = String.format("%s '%s' : a property key cannot be null or empty. Property will be skipped.", logType, logName);
-                AppCenterLog.warn(Analytics.LOG_TAG, message);
-                continue;
-            }
-            if (value == null) {
-                message = String.format("%s '%s' : property '%s' : property value cannot be null. Property '%s' will be skipped.", logType, logName, key, key);
-                AppCenterLog.warn(Analytics.LOG_TAG, message);
-                continue;
-            }
-            if (key.length() > MAX_PROPERTY_ITEM_LENGTH) {
-                message = String.format("%s '%s' : property '%s' : property key length cannot be longer than %s characters. Property key will be truncated.", logType, logName, key, MAX_PROPERTY_ITEM_LENGTH);
-                AppCenterLog.warn(Analytics.LOG_TAG, message);
-                key = key.substring(0, MAX_PROPERTY_ITEM_LENGTH);
-            }
-            if (value.length() > MAX_PROPERTY_ITEM_LENGTH) {
-                message = String.format("%s '%s' : property '%s' : property value cannot be longer than %s characters. Property value will be truncated.", logType, logName, key, MAX_PROPERTY_ITEM_LENGTH);
-                AppCenterLog.warn(Analytics.LOG_TAG, message);
-                value = value.substring(0, MAX_PROPERTY_ITEM_LENGTH);
-            }
-            result.put(key, value);
-        }
-        return result;
     }
 
     /**
@@ -516,9 +432,13 @@ public class Analytics extends AbstractAppCenterService {
      */
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
-
-        /* Start session tracker when enabled. */
         if (enabled) {
+
+            /* Enable filtering logs. */
+            mAnalyticsValidator = new AnalyticsValidator();
+            mChannel.addListener(mAnalyticsValidator);
+
+            /* Start session tracker. */
             mSessionTracker = new SessionTracker(mChannel, ANALYTICS_GROUP);
             mChannel.addListener(mSessionTracker);
             if (mCurrentActivity != null) {
@@ -527,13 +447,16 @@ public class Analytics extends AbstractAppCenterService {
                     processOnResume(activity);
                 }
             }
-        }
-
-        /* Release resources if disabled and enabled before with resources. */
-        else if (mSessionTracker != null) {
-            mChannel.removeListener(mSessionTracker);
-            mSessionTracker.clearSessions();
-            mSessionTracker = null;
+        } else {
+            if (mAnalyticsValidator != null) {
+                mChannel.removeListener(mAnalyticsValidator);
+                mAnalyticsValidator = null;
+            }
+            if (mSessionTracker != null) {
+                mChannel.removeListener(mSessionTracker);
+                mSessionTracker.clearSessions();
+                mSessionTracker = null;
+            }
         }
     }
 
@@ -544,11 +467,14 @@ public class Analytics extends AbstractAppCenterService {
      * @param properties optional properties.
      */
     private synchronized void trackPageAsync(final String name, final Map<String, String> properties) {
+
+        /* Make a copy to prevent concurrent modification. */
+        final Map<String, String> propertiesCopy = properties != null ? new HashMap<>(properties) : null;
         post(new Runnable() {
 
             @Override
             public void run() {
-                queuePage(name, properties);
+                queuePage(name, propertiesCopy);
             }
         });
     }
@@ -571,6 +497,9 @@ public class Analytics extends AbstractAppCenterService {
      * @param properties optional properties.
      */
     private synchronized void trackEventAsync(final String name, final Map<String, String> properties, final AnalyticsTransmissionTarget transmissionTarget) {
+
+        /* Make a copy to prevent concurrent modification. */
+        final Map<String, String> propertiesCopy = properties != null ? new HashMap<>(properties) : null;
         post(new Runnable() {
 
             @Override
@@ -578,7 +507,7 @@ public class Analytics extends AbstractAppCenterService {
                 EventLog eventLog = new EventLog();
                 eventLog.setId(UUIDUtils.randomUUID());
                 eventLog.setName(name);
-                eventLog.setProperties(properties);
+                eventLog.setProperties(propertiesCopy);
                 AnalyticsTransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? mDefaultTransmissionTarget : transmissionTarget;
                 if (aTransmissionTarget != null) {
                     eventLog.addTransmissionTarget(aTransmissionTarget.getTransmissionTargetToken());

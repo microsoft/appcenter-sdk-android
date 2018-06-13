@@ -13,7 +13,6 @@ import org.powermock.reflect.Whitebox;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -43,7 +42,7 @@ public class AppStoreDetectionTest {
 
     @Test
     public void init() {
-        assertNotNull(new InstallerUtils());
+        new InstallerUtils();
     }
 
     @Test

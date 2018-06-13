@@ -188,31 +188,27 @@ public abstract class AbstractLog implements Log {
         }
     }
 
-    @Override
     @SuppressWarnings("SimplifiableIfStatement")
+    @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
         AbstractLog that = (AbstractLog) o;
-        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) {
+
+        if (!transmissionTargetTokens.equals(that.transmissionTargetTokens)) return false;
+        if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null)
             return false;
-        }
-        if (sid != null ? !sid.equals(that.sid) : that.sid != null) {
+        if (sid != null ? !sid.equals(that.sid) : that.sid != null) return false;
+        if (distributionGroupId != null ? !distributionGroupId.equals(that.distributionGroupId) : that.distributionGroupId != null)
             return false;
-        }
-        if (distributionGroupId != null ? !distributionGroupId.equals(that.distributionGroupId) : that.distributionGroupId != null) {
-            return false;
-        }
         return device != null ? device.equals(that.device) : that.device == null;
     }
 
     @Override
     public int hashCode() {
-        int result = timestamp != null ? timestamp.hashCode() : 0;
+        int result = transmissionTargetTokens.hashCode();
+        result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         result = 31 * result + (sid != null ? sid.hashCode() : 0);
         result = 31 * result + (distributionGroupId != null ? distributionGroupId.hashCode() : 0);
         result = 31 * result + (device != null ? device.hashCode() : 0);

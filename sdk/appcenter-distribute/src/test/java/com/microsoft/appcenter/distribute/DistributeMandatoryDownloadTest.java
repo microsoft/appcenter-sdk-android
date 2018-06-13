@@ -68,7 +68,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 when(mProgressDialog.isIndeterminate()).thenReturn((Boolean) invocation.getArguments()[0]);
                 return null;
             }
@@ -76,7 +76,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 Mockito.when(mDialog.isShowing()).thenReturn(true);
                 return null;
             }
@@ -84,7 +84,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 Mockito.when(mDialog.isShowing()).thenReturn(false);
                 return null;
             }
@@ -123,7 +123,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         final Answer<Boolean> simulateTimeReached = new Answer<Boolean>() {
 
             @Override
-            public Boolean answer(InvocationOnMock invocation) throws Throwable {
+            public Boolean answer(InvocationOnMock invocation) {
                 ((Runnable) invocation.getArguments()[0]).run();
                 return true;
             }
@@ -285,7 +285,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 beforeStartingActivityLock.release();
                 disabledLock.acquireUninterruptibly();
                 return null;
@@ -296,7 +296,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
             boolean firstCall = true;
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
 
                 /* First call is update progress dialog, second is hide. */
                 if (firstCall) {

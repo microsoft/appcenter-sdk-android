@@ -4,8 +4,11 @@ import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 
 import org.json.JSONException;
+
+import java.util.Collection;
 
 public interface LogSerializer {
 
@@ -13,13 +16,15 @@ public interface LogSerializer {
     String serializeLog(@NonNull Log log) throws JSONException;
 
     @NonNull
-    Log deserializeLog(@NonNull String json) throws JSONException;
+    Log deserializeLog(@NonNull String json, String type) throws JSONException;
+
+    Collection<CommonSchemaLog> toCommonSchemaLog(@NonNull Log log);
 
     @NonNull
     String serializeContainer(@NonNull LogContainer container) throws JSONException;
 
     @NonNull
-    LogContainer deserializeContainer(@NonNull String json) throws JSONException;
+    LogContainer deserializeContainer(@NonNull String json, String type) throws JSONException;
 
     void addLogFactory(@NonNull String logType, @NonNull LogFactory logFactory);
 }

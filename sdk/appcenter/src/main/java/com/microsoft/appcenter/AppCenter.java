@@ -13,6 +13,7 @@ import android.util.Log;
 
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.DefaultChannel;
+import com.microsoft.appcenter.channel.OneCollectorChannelListener;
 import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
@@ -576,10 +577,11 @@ public class AppCenter {
         mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
         mChannel.setEnabled(enabled);
-        mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null);
+        mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
         if (mLogUrl != null) {
             mChannel.setLogUrl(mLogUrl);
         }
+        mChannel.addListener(new OneCollectorChannelListener(mApplication, mChannel, mLogSerializer, IdHelper.getInstallId()));
         if (!enabled) {
             NetworkStateHelper.getSharedInstance(mApplication).close();
         }

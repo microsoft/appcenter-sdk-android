@@ -11,8 +11,8 @@ import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
 
-import com.microsoft.appcenter.BuildConfig;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.BuildConfig;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
 
@@ -102,7 +102,7 @@ public class DeviceInfoHelperTest {
         when(displayMock.getRotation()).thenReturn(Surface.ROTATION_0, Surface.ROTATION_90, Surface.ROTATION_180, Surface.ROTATION_270);
         doAnswer(new Answer<Void>() {
             @Override
-            public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public Void answer(InvocationOnMock invocationOnMock) {
                 Object[] args = invocationOnMock.getArguments();
                 /* DO NOT call set method and assign values directly to variables. */
                 ((Point) args[0]).x = 100;

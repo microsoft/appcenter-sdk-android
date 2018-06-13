@@ -3,9 +3,9 @@ package com.microsoft.appcenter.sasquatch.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.StringRes;
-import android.support.test.espresso.Espresso;
 import android.support.test.espresso.EspressoException;
 import android.support.test.espresso.FailureHandler;
+import android.support.test.espresso.IdlingRegistry;
 import android.support.test.espresso.ViewInteraction;
 import android.support.test.espresso.matcher.BoundedMatcher;
 import android.support.test.rule.ActivityTestRule;
@@ -43,7 +43,6 @@ import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.isRoot;
 import static android.support.test.espresso.matcher.ViewMatchers.withChild;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
-import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.CHECK_DELAY;
 import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.TOAST_DELAY;
 import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.onToast;
 import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.waitFor;
@@ -84,7 +83,7 @@ public class CrashesTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         mContext = getInstrumentation().getTargetContext();
 
         /* Clear preferences. */
@@ -94,7 +93,9 @@ public class CrashesTest {
         /* Clear crashes. */
         Constants.loadFromContext(mContext);
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
-            assertTrue(logFile.delete());
+            if (!logFile.isDirectory()) {
+                assertTrue(logFile.delete());
+            }
         }
 
         /* Clear listeners. */
@@ -106,14 +107,14 @@ public class CrashesTest {
         mActivityTestRule.launchActivity(new Intent());
 
         /* Register IdlingResource */
-        Espresso.registerIdlingResources(SasquatchCrashesListener.crashesIdlingResource);
+        IdlingRegistry.getInstance().register(SasquatchCrashesListener.crashesIdlingResource);
     }
 
     @After
     public final void tearDown() {
 
         /* Unregister IdlingResource */
-        Espresso.unregisterIdlingResources(SasquatchCrashesListener.crashesIdlingResource);
+        IdlingRegistry.getInstance().unregister(SasquatchCrashesListener.crashesIdlingResource);
     }
 
     @Test
@@ -190,9 +191,9 @@ public class CrashesTest {
 
         /* Check toasts. */
         waitFor(onToast(mActivityTestRule.getActivity(),
-                withText(R.string.crash_before_sending)), CHECK_DELAY)
+                withText(R.string.crash_before_sending)), TOAST_DELAY)
                 .check(matches(isDisplayed()));
-        onView(isRoot()).perform(waitFor(CHECK_DELAY));
+        onView(isRoot()).perform(waitFor(TOAST_DELAY));
         waitFor(onToast(mActivityTestRule.getActivity(), anyOf(
                 withContainsText(R.string.crash_sent_succeeded),
                 withText(R.string.crash_sent_failed))), TOAST_DELAY)

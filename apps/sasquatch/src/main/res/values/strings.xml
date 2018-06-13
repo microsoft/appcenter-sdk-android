@@ -12,7 +12,7 @@
     <string name="description_device_info" tools:ignore="MissingTranslation">Display device information</string>
     <string name="title_generate_page_log" tools:ignore="MissingTranslation">Generate page logs</string>
     <string name="description_generate_page_log" tools:ignore="MissingTranslation">Simulate page open and close 5 times</string>
-    <string name="error_device_info" tools:ignore="MissingTranslation">Couldn\'t retrieve device information</string>
+    <string name="error_device_info" tools:ignore="MissingTranslation">Could not retrieve device information</string>
     <string name="title_error" tools:ignore="MissingTranslation">Errors</string>
     <string name="description_error" tools:ignore="MissingTranslation">Send an exception</string>
     <string name="title_event" tools:ignore="MissingTranslation">Events</string>
@@ -22,6 +22,7 @@
     <string name="send" tools:ignore="MissingTranslation">Send</string>
     <string name="name" tools:ignore="MissingTranslation">Name</string>
     <string name="properties" tools:ignore="MissingTranslation">Properties</string>
+    <string name="transmission_target" tools:ignore="MissingTranslation">Transmission Target</string>
     <string name="key" tools:ignore="MissingTranslation">Key</string>
     <string name="value" tools:ignore="MissingTranslation">Value</string>
     <string name="type" tools:ignore="MissingTranslation">Type</string>

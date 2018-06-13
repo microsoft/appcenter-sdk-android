@@ -138,7 +138,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
 
             /* Register service to channel on enabling. */
             if (enabled) {
-                mChannel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
+                mChannel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), null, getChannelListener());
             }
 
             /* Otherwise, clear all persisted logs and remove a group for the service. */
@@ -189,7 +189,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
 
             /* Add a group to the channel if the service is enabled */
             if (enabled) {
-                channel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), getChannelListener());
+                channel.addGroup(groupName, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), null, getChannelListener());
             }
 
             /* Otherwise, clear all persisted logs for the service. */

@@ -116,7 +116,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 when(PreferencesStorage.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn((Long) invocation.getArguments()[1]);
                 return null;
             }
@@ -125,7 +125,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 when(PreferencesStorage.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
                 return null;
             }
@@ -134,7 +134,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn((Integer) invocation.getArguments()[1]);
                 return null;
             }
@@ -143,7 +143,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn(DOWNLOAD_STATE_COMPLETED);
                 return null;
             }
@@ -152,7 +152,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(invocation.getArguments()[1].toString());
                 return null;
             }
@@ -161,7 +161,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(null);
                 return null;
             }
@@ -176,7 +176,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
-            public ServiceCall answer(InvocationOnMock invocation) throws Throwable {
+            public ServiceCall answer(InvocationOnMock invocation) {
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
@@ -204,7 +204,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         }), Mockito.<Void>anyVararg())).then(new Answer<DownloadTask>() {
 
             @Override
-            public DownloadTask answer(InvocationOnMock invocation) throws Throwable {
+            public DownloadTask answer(InvocationOnMock invocation) {
                 final DownloadTask task = spy((DownloadTask) invocation.getArguments()[1]);
                 mDownloadTask.set(task);
                 new Thread() {
@@ -230,7 +230,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         }), Mockito.<Void>anyVararg())).then(new Answer<RemoveDownloadTask>() {
 
             @Override
-            public RemoveDownloadTask answer(InvocationOnMock invocation) throws Throwable {
+            public RemoveDownloadTask answer(InvocationOnMock invocation) {
                 final RemoveDownloadTask task = (RemoveDownloadTask) invocation.getArguments()[1];
                 task.doInBackground();
                 return task;
@@ -244,7 +244,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         when(AsyncTaskUtils.execute(anyString(), argThat(sCheckCompleteTask), Mockito.<Void>anyVararg())).then(new Answer<CheckDownloadTask>() {
 
             @Override
-            public CheckDownloadTask answer(InvocationOnMock invocation) throws Throwable {
+            public CheckDownloadTask answer(InvocationOnMock invocation) {
                 final CheckDownloadTask task = spy((CheckDownloadTask) invocation.getArguments()[1]);
                 mCompletionTask.set(task);
                 new Thread() {

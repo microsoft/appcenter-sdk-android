@@ -121,7 +121,7 @@ public class AbstractDistributeTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 ((Runnable) invocation.getArguments()[0]).run();
                 return null;
             }
@@ -139,7 +139,7 @@ public class AbstractDistributeTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
@@ -187,7 +187,7 @@ public class AbstractDistributeTest {
         when(TextUtils.isEmpty(any(CharSequence.class))).thenAnswer(new Answer<Boolean>() {
 
             @Override
-            public Boolean answer(InvocationOnMock invocation) throws Throwable {
+            public Boolean answer(InvocationOnMock invocation) {
                 CharSequence str = (CharSequence) invocation.getArguments()[0];
                 return str == null || str.length() == 0;
             }
@@ -199,7 +199,7 @@ public class AbstractDistributeTest {
         when(mCryptoUtils.decrypt(anyString(), anyBoolean())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
 
             @Override
-            public CryptoUtils.DecryptedData answer(InvocationOnMock invocation) throws Throwable {
+            public CryptoUtils.DecryptedData answer(InvocationOnMock invocation) {
                 Object arg = invocation.getArguments()[0];
                 return new CryptoUtils.DecryptedData(arg == null ? null : arg.toString(), null);
             }
@@ -207,7 +207,7 @@ public class AbstractDistributeTest {
         when(mCryptoUtils.encrypt(anyString())).thenAnswer(new Answer<String>() {
 
             @Override
-            public String answer(InvocationOnMock invocation) throws Throwable {
+            public String answer(InvocationOnMock invocation) {
                 return invocation.getArguments()[0].toString();
             }
         });
@@ -218,7 +218,7 @@ public class AbstractDistributeTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 when(mDialog.isShowing()).thenReturn(true);
                 return null;
             }
@@ -226,7 +226,7 @@ public class AbstractDistributeTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 when(mDialog.isShowing()).thenReturn(false);
                 return null;
             }
@@ -241,7 +241,7 @@ public class AbstractDistributeTest {
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
                 ((Runnable) invocation.getArguments()[0]).run();
                 return null;
             }

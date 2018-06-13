@@ -25,7 +25,7 @@ public class DistributeInfoTracker extends AbstractChannelListener {
     }
 
     @Override
-    synchronized public void onEnqueuingLog(@NonNull Log log, @NonNull String groupName) {
+    synchronized public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
         if (mDistributionGroupId == null) {
             return;
         }

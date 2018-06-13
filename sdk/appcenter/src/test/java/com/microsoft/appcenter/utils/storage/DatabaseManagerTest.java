@@ -49,7 +49,7 @@ public class DatabaseManagerTest {
     }
 
     @Test
-    public void switchInMemory() throws Exception {
+    public void switchInMemory() {
         DatabaseManager databaseManagerMock;
 
         /* Put. */
@@ -139,7 +139,7 @@ public class DatabaseManagerTest {
         databaseManagerMock.delete(new ArrayList<Long>());
         verify(databaseManagerMock, never()).switchToInMemory(eq("delete"), any(RuntimeException.class));
         databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.delete(Arrays.asList(new Long[]{0L, 1L}));
+        databaseManagerMock.delete(Arrays.asList(0L, 1L));
         verify(databaseManagerMock).switchToInMemory(eq("delete"), any(RuntimeException.class));
 
         /* Clear. */

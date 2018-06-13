@@ -569,7 +569,7 @@ public class StorageHelper {
          * @param version  The version.
          * @param schema   The schema of the database. If the database has more than one table,
          *                 it should contain schemas for all the tables.
-         * @param listener The error listener.
+         * @param listener The database listener.
          * @return database storage.
          */
         @SuppressWarnings("WeakerAccess")
@@ -577,7 +577,7 @@ public class StorageHelper {
                                                          @NonNull String table,
                                                          @IntRange(from = 1) int version,
                                                          @NonNull ContentValues schema,
-                                                         @NonNull final DatabaseErrorListener listener) {
+                                                         @NonNull DatabaseManager.Listener listener) {
             return getDatabaseStorage(database, table, version, schema, 0, listener);
         }
 
@@ -590,7 +590,7 @@ public class StorageHelper {
          * @param schema     The schema of the database. If the database has more than one table,
          *                   it should contain schemas for all tables.
          * @param maxRecords The maximum number of records allowed in the table.
-         * @param listener   The error listener.
+         * @param listener   The database listener.
          * @return database storage.
          */
         public static DatabaseStorage getDatabaseStorage(@NonNull String database,
@@ -598,14 +598,8 @@ public class StorageHelper {
                                                          @IntRange(from = 1) int version,
                                                          @NonNull ContentValues schema,
                                                          @IntRange(from = 0) int maxRecords,
-                                                         final DatabaseErrorListener listener) {
-            return new DatabaseStorage(new DatabaseManager(sContext, database, table, version, schema, maxRecords, new DatabaseManager.ErrorListener() {
-
-                @Override
-                public void onError(String operation, RuntimeException e) {
-                    listener.onError(operation, e);
-                }
-            }));
+                                                         @NonNull DatabaseManager.Listener listener) {
+            return new DatabaseStorage(new DatabaseManager(sContext, database, table, version, schema, maxRecords, listener));
         }
 
         /**
@@ -722,11 +716,9 @@ public class StorageHelper {
 
         /**
          * Closes database and cleans up in-memory database.
-         *
-         * @throws IOException If an I/O error occurs
          */
         @Override
-        public void close() throws IOException {
+        public void close() {
             mDatabaseManager.close();
         }
 
@@ -747,20 +739,6 @@ public class StorageHelper {
         @VisibleForTesting
         String[] getColumnNames() {
             return mDatabaseManager.getCursor(null, null, false).getColumnNames();
-        }
-
-        /**
-         * GroupListener specification, each callback is called only once per instance
-         */
-        public interface DatabaseErrorListener {
-
-            /**
-             * Notifies an exception
-             *
-             * @param operation A name of operation that caused the error.
-             * @param e         A runtime exception for the error.
-             */
-            void onError(String operation, RuntimeException e);
         }
 
         /**

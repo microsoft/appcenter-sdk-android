@@ -141,7 +141,7 @@ public class RealUserMeasurements extends AbstractAppCenterService {
         return sInstance;
     }
 
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "unused"})
     public static void setRumKey(String rumKey) {
         getInstance().setInstanceRumKey(rumKey);
     }
@@ -152,6 +152,7 @@ public class RealUserMeasurements extends AbstractAppCenterService {
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
+    @SuppressWarnings("unused")
     public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
@@ -162,6 +163,7 @@ public class RealUserMeasurements extends AbstractAppCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
+    @SuppressWarnings("unused")
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }

@@ -53,6 +53,8 @@ class DownloadTask extends AsyncTask<Void, Void, Void> {
             request.setVisibleInDownloadsUi(false);
         }
         long enqueueTime = System.currentTimeMillis();
+
+        @SuppressWarnings("ConstantConditions")
         long downloadRequestId = downloadManager.enqueue(request);
         Distribute.getInstance().storeDownloadRequestId(downloadManager, this, downloadRequestId, enqueueTime);
         return null;

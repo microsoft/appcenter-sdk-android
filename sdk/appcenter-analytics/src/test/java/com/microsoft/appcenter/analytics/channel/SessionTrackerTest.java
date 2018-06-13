@@ -85,7 +85,7 @@ public class SessionTrackerTest {
 
             @Override
             @SuppressWarnings("unchecked")
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public Void answer(InvocationOnMock invocation) {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 String key = (String) invocation.getArguments()[0];
@@ -112,8 +112,8 @@ public class SessionTrackerTest {
         StartSessionLog expectedStartSessionLog = new StartSessionLog();
         {
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertNotNull(log.getSid());
             firstSid = expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
@@ -123,8 +123,8 @@ public class SessionTrackerTest {
         /* Verify session reused for second log. */
         {
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
@@ -133,8 +133,8 @@ public class SessionTrackerTest {
         {
             spendTime(30000);
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertNotEquals(expectedSid, log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
@@ -145,8 +145,8 @@ public class SessionTrackerTest {
         {
             mSessionTracker.onActivityResumed();
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
@@ -155,8 +155,8 @@ public class SessionTrackerTest {
         {
             spendTime(30000);
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
@@ -168,8 +168,8 @@ public class SessionTrackerTest {
             spendTime(2);
             mSessionTracker.onActivityResumed();
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
@@ -178,8 +178,8 @@ public class SessionTrackerTest {
         {
             spendTime(30000);
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
@@ -190,8 +190,8 @@ public class SessionTrackerTest {
             mSessionTracker.onActivityPaused();
             spendTime(2);
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
@@ -200,8 +200,8 @@ public class SessionTrackerTest {
         {
             Log log = newEvent();
             log.setTimestamp(new Date(firstSessionTime + 20));
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(firstSid, log.getSid());
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
@@ -211,8 +211,8 @@ public class SessionTrackerTest {
             spendTime(30000);
             mSessionTracker.onActivityResumed();
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertNotEquals(expectedSid, log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
@@ -224,8 +224,8 @@ public class SessionTrackerTest {
             mSessionTracker.onActivityPaused();
             spendTime(30000);
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertNotEquals(expectedSid, log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
@@ -242,8 +242,8 @@ public class SessionTrackerTest {
         StartSessionLog expectedStartSessionLog = new StartSessionLog();
         {
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertNotNull(log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
@@ -261,8 +261,8 @@ public class SessionTrackerTest {
         /* Send a log again: session must be reused. */
         {
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
@@ -277,8 +277,8 @@ public class SessionTrackerTest {
         StartSessionLog expectedStartSessionLog = new StartSessionLog();
         {
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertNotNull(log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
@@ -296,8 +296,8 @@ public class SessionTrackerTest {
         /* Send a log again: new session. */
         {
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertNotEquals(expectedSid, log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
@@ -321,7 +321,7 @@ public class SessionTrackerTest {
         doAnswer(new Answer() {
 
             @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) {
                 startSessionLog.set((StartSessionLog) invocation.getArguments()[0]);
                 return null;
             }
@@ -361,8 +361,8 @@ public class SessionTrackerTest {
         StartSessionLog expectedStartSessionLog = new StartSessionLog();
         {
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertNotNull(log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
@@ -372,8 +372,8 @@ public class SessionTrackerTest {
         /* Verify session reused for second log. */
         {
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
@@ -382,8 +382,8 @@ public class SessionTrackerTest {
         {
             spendTime(30000);
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertNotEquals(expectedSid, log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
@@ -394,8 +394,8 @@ public class SessionTrackerTest {
         {
             mSessionTracker.onActivityResumed();
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
@@ -404,8 +404,8 @@ public class SessionTrackerTest {
         {
             spendTime(30000);
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
-            mSessionTracker.onEnqueuingLog(expectedStartSessionLog, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
             verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP);
         }
@@ -419,19 +419,19 @@ public class SessionTrackerTest {
         assertNotNull(sessions);
         assertEquals(1, sessions.size());
         String firstSession = sessions.iterator().next();
-        mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
+        mSessionTracker.onPreparingLog(newEvent(), TEST_GROUP);
         sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
         assertNotNull(sessions);
         assertEquals(2, sessions.size());
         spendTime(30000);
         for (int i = 3; i <= 10; i++) {
-            mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
+            mSessionTracker.onPreparingLog(newEvent(), TEST_GROUP);
             Set<String> intermediateSessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
             assertNotNull(intermediateSessions);
             assertEquals(i, intermediateSessions.size());
             spendTime(30000);
         }
-        mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
+        mSessionTracker.onPreparingLog(newEvent(), TEST_GROUP);
         Set<String> finalSessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
         assertNotNull(finalSessions);
         assertEquals(10, finalSessions.size());
@@ -446,7 +446,7 @@ public class SessionTrackerTest {
         long firstSessionTime = mMockTime;
         {
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
             assertNotNull(log.getSid());
             currentSid = firstSid = log.getSid();
         }
@@ -454,7 +454,7 @@ public class SessionTrackerTest {
         /* Verify session reused for second log. */
         {
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
             assertEquals(currentSid, log.getSid());
         }
 
@@ -462,7 +462,7 @@ public class SessionTrackerTest {
         {
             Log log = newEvent();
             log.setTimestamp(new Date(123L));
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
             assertNull(log.getSid());
         }
 
@@ -471,7 +471,7 @@ public class SessionTrackerTest {
             spendTime(30000);
             Log log = newEvent();
             log.setTimestamp(new Date(firstSessionTime + 1));
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
             assertEquals(currentSid, log.getSid());
             Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
             assertNotNull(sessions);
@@ -481,7 +481,7 @@ public class SessionTrackerTest {
         /* Trigger a second session. */
         {
             Log log = newEvent();
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
             assertNotEquals(currentSid, log.getSid());
             Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
             assertNotNull(sessions);
@@ -493,7 +493,7 @@ public class SessionTrackerTest {
             spendTime(30000);
             Log log = newEvent();
             log.setTimestamp(new Date(firstSessionTime + 1));
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
             assertEquals(firstSid, log.getSid());
             Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
             assertNotNull(sessions);
@@ -505,7 +505,7 @@ public class SessionTrackerTest {
         {
             Log log = newEvent();
             log.setTimestamp(new Date(firstSessionTime + 1));
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
             assertEquals(firstSid, log.getSid());
             Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
             assertNotNull(sessions);
@@ -516,7 +516,7 @@ public class SessionTrackerTest {
         {
             Log log = newEvent();
             log.setTimestamp(new Date(1));
-            mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+            mSessionTracker.onPreparingLog(log, TEST_GROUP);
             assertNull(log.getSid());
             Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
             assertNotNull(sessions);
@@ -546,7 +546,7 @@ public class SessionTrackerTest {
         mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);
 
         /* Generate a current session. */
-        mSessionTracker.onEnqueuingLog(newEvent(), TEST_GROUP);
+        mSessionTracker.onPreparingLog(newEvent(), TEST_GROUP);
 
         /* Check sessions in store. */
         sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
@@ -583,7 +583,7 @@ public class SessionTrackerTest {
     @Test
     public void ignoreStartService() {
         Log startServiceLog = spy(new StartServiceLog());
-        mSessionTracker.onEnqueuingLog(startServiceLog, TEST_GROUP);
+        mSessionTracker.onPreparingLog(startServiceLog, TEST_GROUP);
         verify(mChannel, never()).enqueue(any(Log.class), anyString());
         verify(startServiceLog, never()).setSid(any(UUID.class));
     }
@@ -600,7 +600,7 @@ public class SessionTrackerTest {
         UUID firstSid;
         long firstSessionTime = mMockTime;
         Log log = newEvent();
-        mSessionTracker.onEnqueuingLog(log, TEST_GROUP);
+        mSessionTracker.onPreparingLog(log, TEST_GROUP);
         assertNotNull(log.getSid());
 
         /* Get session and check it after reset (simulate a restart). */
@@ -618,7 +618,7 @@ public class SessionTrackerTest {
         mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);
         Log log2 = newEvent();
         log2.setTimestamp(new Date(mMockTime));
-        mSessionTracker.onEnqueuingLog(log2, TEST_GROUP);
+        mSessionTracker.onPreparingLog(log2, TEST_GROUP);
         assertNotEquals(log.getSid(), log2.getSid());
         assertNull(log2.getSid());
     }
