@@ -13,6 +13,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
@@ -27,12 +28,16 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(PowerMockRunner.class)
 public class Tls1_2SocketFactoryTest {
 
+    private static final String[] DEFAULT_CIPHER_SUITES = {"mockCipher1"};
+
+    private static final String[] SUPPORTED_CIPHER_SUITES = {"mockCipher1", "mockCipher2"};
+
     private TLS1_2SocketFactory getFactory() throws IOException {
         mockStatic(HttpsURLConnection.class);
         SSLSocketFactory sslSocketFactory = mock(SSLSocketFactory.class);
         when(HttpsURLConnection.getDefaultSSLSocketFactory()).thenReturn(sslSocketFactory);
-        when(sslSocketFactory.getDefaultCipherSuites()).thenReturn(new String[]{"mockCipher1"});
-        when(sslSocketFactory.getSupportedCipherSuites()).thenReturn(new String[]{"mockCipher1", "mockCipher2"});
+        when(sslSocketFactory.getDefaultCipherSuites()).thenReturn(DEFAULT_CIPHER_SUITES);
+        when(sslSocketFactory.getSupportedCipherSuites()).thenReturn(SUPPORTED_CIPHER_SUITES);
         SSLSocket sslSocket = mock(SSLSocket.class);
         when(sslSocketFactory.createSocket()).thenReturn(sslSocket);
         when(sslSocketFactory.createSocket(anyString(), anyInt())).thenReturn(sslSocket);
@@ -55,5 +60,7 @@ public class Tls1_2SocketFactoryTest {
         checkProtocol(getFactory().createSocket("localhost", 80, mock(InetAddress.class), 8080));
         checkProtocol(getFactory().createSocket(mock(InetAddress.class), 80, mock(InetAddress.class), 8080));
         checkProtocol(getFactory().createSocket(mock(Socket.class), "localhost", 80, true));
+        assertArrayEquals(DEFAULT_CIPHER_SUITES, getFactory().getDefaultCipherSuites());
+        assertArrayEquals(SUPPORTED_CIPHER_SUITES, getFactory().getSupportedCipherSuites());
     }
 }
