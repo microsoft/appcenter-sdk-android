@@ -229,7 +229,7 @@ public class Crashes extends AbstractAppCenterService {
      * Any length of name/keys/values that are longer than each limit will be truncated.
      * TODO the backend does not support that service yet, will be public method later.
      *
-     * @param throwable An exception.
+     * @param throwable  An exception.
      * @param properties Optional properties.
      */
     static void trackException(@NonNull Throwable throwable, Map<String, String> properties) {
@@ -260,12 +260,10 @@ public class Crashes extends AbstractAppCenterService {
     /**
      * Get the path where NDK minidump files should be created.
      * <p>
-     * TODO this API is yet not public as backend is not ready for this feature.
      *
      * @return path where minidump files should be created.
      */
-    @SuppressWarnings("unusued")
-    protected static AppCenterFuture<String> getMinidumpDirectory() {
+    public static AppCenterFuture<String> getMinidumpDirectory() {
         return getInstance().getNewMinidumpDirectoryAsync();
     }
 
@@ -499,7 +497,7 @@ public class Crashes extends AbstractAppCenterService {
     /**
      * Send an handled exception.
      *
-     * @param throwable An handled exception.
+     * @param throwable  An handled exception.
      * @param properties optional properties.
      */
     private synchronized void queueException(@NonNull final Throwable throwable, Map<String, String> properties) {
@@ -516,7 +514,7 @@ public class Crashes extends AbstractAppCenterService {
      * Send an handled exception (used by wrapper SDKs).
      *
      * @param modelException An handled exception already in JSON model form.
-     * @param properties optional properties.
+     * @param properties     optional properties.
      */
     synchronized void queueException(@NonNull final com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, Map<String, String> properties) {
         queueException(new ExceptionModelBuilder() {
