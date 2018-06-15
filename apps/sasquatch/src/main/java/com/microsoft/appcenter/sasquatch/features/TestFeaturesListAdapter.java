@@ -12,7 +12,7 @@ import java.util.List;
 
 public class TestFeaturesListAdapter extends BaseAdapter {
 
-    private List<TestFeatures.TestFeatureModel> mList;
+    private final List<TestFeatures.TestFeatureModel> mList;
 
     public TestFeaturesListAdapter(List<TestFeatures.TestFeatureModel> list) {
         mList = list;

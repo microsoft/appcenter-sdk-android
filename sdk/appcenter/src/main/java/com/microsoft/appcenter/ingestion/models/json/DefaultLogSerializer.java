@@ -2,18 +2,15 @@ package com.microsoft.appcenter.ingestion.models.json;
 
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
-import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
