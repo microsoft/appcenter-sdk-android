@@ -144,8 +144,8 @@ public class MainActivity extends AppCompatActivity {
         StartType startType = StartType.valueOf(sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString()));
         startAppCenter(startType);
 
-        /* Attach NDK Crash Handler (if available) after SDK is initialized. */
-        CrashesPrivateHelper.getMinidumpDirectory().thenAccept(new AppCenterConsumer<String>() {
+        /* Attach NDK Crash Handler after SDK is initialized. */
+        Crashes.getMinidumpDirectory().thenAccept(new AppCenterConsumer<String>() {
 
             @Override
             public void accept(String path) {
