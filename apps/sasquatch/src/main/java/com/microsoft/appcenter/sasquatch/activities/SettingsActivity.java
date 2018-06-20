@@ -53,9 +53,12 @@ public class SettingsActivity extends AppCompatActivity {
 
     private static boolean sEventFilterStarted;
 
+    private static boolean sNeedRestartOnStartTypeUpdate;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sNeedRestartOnStartTypeUpdate = !MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString()).equals(StartType.NONE.toString());
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
                 .commit();
@@ -335,12 +338,24 @@ public class SettingsActivity extends AppCompatActivity {
             });
 
             /* Miscellaneous. */
-            initChangeableSetting(R.string.appcenter_start_type_key, MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString()), new Preference.OnPreferenceChangeListener() {
+            String initialStartType = MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
+            initChangeableSetting(R.string.appcenter_start_type_key, initialStartType, new Preference.OnPreferenceChangeListener() {
 
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    setKeyValue(APPCENTER_START_TYPE, (String) newValue);
+                    String startValue = newValue.toString();
+                    setKeyValue(APPCENTER_START_TYPE, startValue);
                     preference.setSummary(MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, null));
+
+                    /* Try to start now, this tests double calls log an error as well as valid call if previous type was none. */
+                    MainActivity.startAppCenter(getActivity().getApplication(), startValue);
+
+                    /* Invite to restart app to take effect. */
+                    if (sNeedRestartOnStartTypeUpdate) {
+                        Toast.makeText(getActivity(), R.string.appcenter_start_type_changed, Toast.LENGTH_SHORT).show();
+                    } else {
+                        sNeedRestartOnStartTypeUpdate = true;
+                    }
                     return true;
                 }
             });

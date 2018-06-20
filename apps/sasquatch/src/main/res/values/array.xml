@@ -4,5 +4,6 @@
         <item>APP_SECRET</item>
         <item>TARGET</item>
         <item>BOTH</item>
+        <item>NONE</item>
     </string-array>
 </resources>

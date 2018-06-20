@@ -2,6 +2,7 @@ package com.microsoft.appcenter;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -38,6 +39,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
@@ -283,7 +285,7 @@ public class AppCenter {
      */
     @SafeVarargs
     public static void start(Class<? extends AppCenterService>... services) {
-        getInstance().startServices(services);
+        getInstance().startServices(true, services);
     }
 
     /**
@@ -297,6 +299,23 @@ public class AppCenter {
     @SafeVarargs
     public static void start(Application application, String appSecret, Class<? extends AppCenterService>... services) {
         getInstance().configureAndStartServices(application, appSecret, services);
+    }
+
+    /**
+     * Start services from a library. This does not configure app secret and can be called multiple
+     * times without side effect.
+     * <p>
+     * This will not start the service at app level, it will enable the service only for the library.
+     * <p>
+     * Please note that not all services support this start mode,
+     * you can refer to the documentation of each service to know if this is supported in libraries.
+     *
+     * @param context  Context.
+     * @param services List of services to use.
+     */
+    @SafeVarargs
+    public static void startFromLibrary(Context context, Class<? extends AppCenterService>... services) {
+        getInstance().startInstanceFromLibrary(context, services);
     }
 
     /**
@@ -450,19 +469,75 @@ public class AppCenter {
             return false;
         }
 
-        /* Ignore call if already configured. */
-        if (mHandler != null) {
-            AppCenterLog.warn(LOG_TAG, "App Center may only be configured once.");
-            return false;
-        }
-
         /* Enable a default log level for debuggable applications. */
         if (!mLogLevelConfigured && (application.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {
             AppCenterLog.setLogLevel(Log.WARN);
         }
 
+        /* Configure app secret. */
+        if (!configureAppSecret(appSecret)) {
+            return false;
+        }
+
+        /* Skip configuration of global states if already done. */
+        if (mHandler != null) {
+
+            /* If app started after library with an app secret, set app secret on channel now. */
+            if (appSecret != null && appSecret.equals(mAppSecret)) {
+                mHandler.post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        mChannel.setAppSecret(mAppSecret);
+                    }
+                });
+            }
+            return true;
+        }
+
         /* Store state. */
         mApplication = application;
+
+        /* Start looper. */
+        mHandlerThread = new HandlerThread("AppCenter.Looper");
+        mHandlerThread.start();
+        mHandler = new Handler(mHandlerThread.getLooper());
+        mAppCenterHandler = new AppCenterHandler() {
+
+            @Override
+            public void post(@NonNull Runnable runnable, Runnable disabledRunnable) {
+                handlerAppCenterOperation(runnable, disabledRunnable);
+            }
+        };
+
+        /* The rest of initialization is done in background as we need storage. */
+        mServices = new HashSet<>();
+        mHandler.post(new Runnable() {
+
+            @Override
+            public void run() {
+                finishConfiguration();
+            }
+        });
+        AppCenterLog.info(LOG_TAG, "App Center SDK configured successfully.");
+        return true;
+    }
+
+
+    /**
+     * Configure app secret.
+     *
+     * @param appSecret a unique and secret key used to identify the application.
+     *                  It can be null since a transmission target token can be set later.
+     * @return false if app secret already configured or invalid.
+     */
+    private boolean configureAppSecret(String appSecret) {
+
+        /* We don't support overriding the app secret. */
+        if (mAppSecret != null || mTransmissionTargetToken != null) {
+            AppCenterLog.warn(LOG_TAG, "App Center may only be configured once.");
+            return false;
+        }
 
         /* A null secret is still valid since transmission target token can be set later. */
         if (appSecret != null && !appSecret.isEmpty()) {
@@ -494,29 +569,6 @@ public class AppCenter {
                 }
             }
         }
-
-        /* Start looper. */
-        mHandlerThread = new HandlerThread("AppCenter.Looper");
-        mHandlerThread.start();
-        mHandler = new Handler(mHandlerThread.getLooper());
-        mAppCenterHandler = new AppCenterHandler() {
-
-            @Override
-            public void post(@NonNull Runnable runnable, Runnable disabledRunnable) {
-                handlerAppCenterOperation(runnable, disabledRunnable);
-            }
-        };
-
-        /* The rest of initialization is done in background as we need storage. */
-        mServices = new HashSet<>();
-        mHandler.post(new Runnable() {
-
-            @Override
-            public void run() {
-                finishConfiguration();
-            }
-        });
-        AppCenterLog.info(LOG_TAG, "App Center SDK configured successfully.");
         return true;
     }
 
@@ -589,7 +641,7 @@ public class AppCenter {
     }
 
     @SafeVarargs
-    private final synchronized void startServices(Class<? extends AppCenterService>... services) {
+    private final synchronized void startServices(boolean startFromApp, Class<? extends AppCenterService>... services) {
         if (services == null) {
             AppCenterLog.error(LOG_TAG, "Cannot start services, services array is null. Failed to start services.");
             return;
@@ -612,7 +664,9 @@ public class AppCenter {
                 try {
                     AppCenterService serviceInstance = (AppCenterService) service.getMethod("getInstance").invoke(null);
                     if (mServices.contains(serviceInstance)) {
-                        AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
+                        if (startFromApp) {
+                            AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
+                        }
                     } else if (shouldDisable(serviceInstance.getServiceName())) {
                         AppCenterLog.debug(LOG_TAG, "Instrumentation variable to disable service has been set; not starting service " + service.getName() + ".");
                     } else if (mAppSecret == null && serviceInstance.isAppSecretRequired()) {
@@ -685,11 +739,19 @@ public class AppCenter {
         }
     }
 
-    @SafeVarargs
-    private final synchronized void configureAndStartServices(Application application, String appSecret, Class<? extends AppCenterService>... services) {
+    private synchronized void configureAndStartServices(Application application, String appSecret, Class<? extends AppCenterService>[] services) {
+        configureAndStartServices(application, appSecret, true, services);
+    }
+
+    private synchronized void startInstanceFromLibrary(Context context, Class<? extends AppCenterService>[] services) {
+        Application application = (Application) context.getApplicationContext();
+        configureAndStartServices(application, null, false, services);
+    }
+
+    private void configureAndStartServices(Application application, String appSecret, boolean startFromApp, Class<? extends AppCenterService>[] services) {
         boolean configuredSuccessfully = instanceConfigure(application, appSecret);
         if (configuredSuccessfully) {
-            startServices(services);
+            startServices(startFromApp, services);
         }
     }
 

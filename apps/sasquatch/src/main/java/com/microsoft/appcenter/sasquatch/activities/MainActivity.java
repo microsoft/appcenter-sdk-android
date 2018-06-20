@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
 import android.annotation.SuppressLint;
+import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -141,8 +142,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* Start App Center. */
-        StartType startType = StartType.valueOf(sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString()));
-        startAppCenter(startType);
+        String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
+        startAppCenter(getApplication(), startType);
 
         /* Attach NDK Crash Handler after SDK is initialized. */
         Crashes.getMinidumpDirectory().thenAccept(new AppCenterConsumer<String>() {
@@ -239,9 +240,13 @@ public class MainActivity extends AppCompatActivity {
         return sPushListener;
     }
 
-    private void startAppCenter(StartType startType) {
-        String appId = sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret));
-        String targetId = sSharedPreferences.getString(TARGET_KEY, getString(R.string.target_id));
+    static void startAppCenter(Application application, String startTypeString) {
+        StartType startType = StartType.valueOf(startTypeString);
+        if (startType == StartType.NONE) {
+            return;
+        }
+        String appId = sSharedPreferences.getString(APP_SECRET_KEY, application.getString(R.string.app_secret));
+        String targetId = sSharedPreferences.getString(TARGET_KEY, application.getString(R.string.target_id));
         String appIdArg = "";
         switch (startType) {
             case APP_SECRET:
@@ -254,12 +259,13 @@ public class MainActivity extends AppCompatActivity {
                 appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
                 break;
         }
-        AppCenter.start(getApplication(), appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
+        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
     }
 
     public enum StartType {
         APP_SECRET,
         TARGET,
-        BOTH
+        BOTH,
+        NONE
     }
 }
