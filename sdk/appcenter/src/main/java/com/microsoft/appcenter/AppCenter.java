@@ -143,14 +143,17 @@ public class AppCenter {
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
 
     /**
-     * Configured services.
-     */
-    private Set<AppCenterService> mServices;
-
-    /**
      * Started services for which the log isn't sent yet.
      */
-    private List<String> mStartedServicesNamesToLog;
+    private final List<String> mStartedServicesNamesToLog = new ArrayList<>();
+    /**
+     * All started services.
+     */
+    private Set<AppCenterService> mServices;
+    /**
+     * All started services from library without an app secret.
+     */
+    private Set<AppCenterService> mServicesStartedFromLibrary;
 
     /**
      * Log serializer.
@@ -511,6 +514,7 @@ public class AppCenter {
 
         /* The rest of initialization is done in background as we need storage. */
         mServices = new HashSet<>();
+        mServicesStartedFromLibrary = new HashSet<>();
         mHandler.post(new Runnable() {
 
             @Override
@@ -664,7 +668,12 @@ public class AppCenter {
                     AppCenterService serviceInstance = (AppCenterService) service.getMethod("getInstance").invoke(null);
                     if (mServices.contains(serviceInstance)) {
                         if (startFromApp) {
-                            AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
+                            if (mServicesStartedFromLibrary.contains(serviceInstance)) {
+                                mStartedServicesNamesToLog.add(serviceInstance.getServiceName());
+                                mServicesStartedFromLibrary.remove(serviceInstance);
+                            } else {
+                                AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
+                            }
                         }
                     } else if (shouldDisable(serviceInstance.getServiceName())) {
                         AppCenterLog.debug(LOG_TAG, "Instrumentation variable to disable service has been set; not starting service " + service.getName() + ".");
@@ -677,6 +686,11 @@ public class AppCenter {
                         mApplication.registerActivityLifecycleCallbacks(serviceInstance);
                         mServices.add(serviceInstance);
                         startedServices.add(serviceInstance);
+
+                        /* Keep track of services started from a library before the app has started the services. */
+                        if (mAppSecret == null && mTransmissionTargetToken == null && !startFromApp) {
+                            mServicesStartedFromLibrary.add(serviceInstance);
+                        }
                     }
                 } catch (Exception e) {
                     AppCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
@@ -731,13 +745,12 @@ public class AppCenter {
     @WorkerThread
     private void sendStartServiceLog(List<String> serviceNames) {
         if (isInstanceEnabled()) {
+            serviceNames.addAll(mStartedServicesNamesToLog);
+            mStartedServicesNamesToLog.clear();
             StartServiceLog startServiceLog = new StartServiceLog();
             startServiceLog.setServices(serviceNames);
             mChannel.enqueue(startServiceLog, CORE_GROUP);
         } else {
-            if (mStartedServicesNamesToLog == null) {
-                mStartedServicesNamesToLog = new ArrayList<>();
-            }
             mStartedServicesNamesToLog.addAll(serviceNames);
         }
     }
@@ -833,9 +846,9 @@ public class AppCenter {
         }
 
         /* Send started services. */
-        if (mStartedServicesNamesToLog != null && switchToEnabled) {
+        if (!mStartedServicesNamesToLog.isEmpty() && switchToEnabled) {
             sendStartServiceLog(mStartedServicesNamesToLog);
-            mStartedServicesNamesToLog = null;
+            mStartedServicesNamesToLog.clear();
         }
 
         /* Apply change to services. */

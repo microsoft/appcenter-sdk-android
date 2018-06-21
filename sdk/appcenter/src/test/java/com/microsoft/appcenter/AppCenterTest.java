@@ -1216,8 +1216,8 @@ public class AppCenterTest {
         /* Verify start service log is sent. */
         verify(mChannel).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
         List<String> services = new ArrayList<>();
-        services.add(DummyService.getInstance().getServiceName());
         services.add(AnotherDummyService.getInstance().getServiceName());
+        services.add(DummyService.getInstance().getServiceName());
         verify(mStartServiceLog).setServices(eq(services));
     }
 
