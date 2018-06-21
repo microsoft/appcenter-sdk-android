@@ -36,6 +36,7 @@ import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -745,10 +746,11 @@ public class AppCenter {
     @WorkerThread
     private void sendStartServiceLog(List<String> serviceNames) {
         if (isInstanceEnabled()) {
-            serviceNames.addAll(mStartedServicesNamesToLog);
+            List<String> allServiceNamesToStart = new ArrayList<>(serviceNames);
+            allServiceNamesToStart.addAll(mStartedServicesNamesToLog);
             mStartedServicesNamesToLog.clear();
             StartServiceLog startServiceLog = new StartServiceLog();
-            startServiceLog.setServices(serviceNames);
+            startServiceLog.setServices(allServiceNamesToStart);
             mChannel.enqueue(startServiceLog, CORE_GROUP);
         } else {
             mStartedServicesNamesToLog.addAll(serviceNames);
@@ -847,8 +849,7 @@ public class AppCenter {
 
         /* Send started services. */
         if (!mStartedServicesNamesToLog.isEmpty() && switchToEnabled) {
-            sendStartServiceLog(mStartedServicesNamesToLog);
-            mStartedServicesNamesToLog.clear();
+            sendStartServiceLog(Collections.<String>emptyList());
         }
 
         /* Apply change to services. */
