@@ -39,7 +39,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
@@ -641,7 +640,7 @@ public class AppCenter {
     }
 
     @SafeVarargs
-    private final synchronized void startServices(boolean startFromApp, Class<? extends AppCenterService>... services) {
+    private final synchronized void startServices(final boolean startFromApp, Class<? extends AppCenterService>... services) {
         if (services == null) {
             AppCenterLog.error(LOG_TAG, "Cannot start services, services array is null. Failed to start services.");
             return;
@@ -693,14 +692,14 @@ public class AppCenter {
 
                 @Override
                 public void run() {
-                    finishStartServices(startedServices);
+                    finishStartServices(startedServices, startFromApp);
                 }
             });
         }
     }
 
     @WorkerThread
-    private void finishStartServices(Iterable<AppCenterService> services) {
+    private void finishStartServices(Iterable<AppCenterService> services, boolean startFromApp) {
         boolean enabled = isInstanceEnabled();
         List<String> serviceNames = new ArrayList<>();
         for (AppCenterService service : services) {
@@ -717,7 +716,11 @@ public class AppCenter {
             AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
             serviceNames.add(service.getServiceName());
         }
-        sendStartServiceLog(serviceNames);
+
+        /* If starting from a library, we will send start service log later when app starts with an app secret. */
+        if (startFromApp) {
+            sendStartServiceLog(serviceNames);
+        }
     }
 
     /**

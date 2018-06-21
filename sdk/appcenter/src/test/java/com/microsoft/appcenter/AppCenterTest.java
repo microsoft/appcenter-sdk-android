@@ -1177,6 +1177,20 @@ public class AppCenterTest {
         }));
     }
 
+    @Test
+    public void startFromLibrary() {
+        AppCenter.startFromLibrary(mApplication, DummyService.class, AnotherDummyService.class);
+
+        /* Verify that dummy service has been loaded and configured */
+        assertEquals(1, AppCenter.getInstance().getServices().size());
+        DummyService service = DummyService.getInstance();
+        assertTrue(AppCenter.getInstance().getServices().contains(service));
+        verify(service).getLogFactories();
+        verify(service).onStarted(any(Context.class), isNull(String.class), isNull(String.class), any(Channel.class));
+        verify(mApplication).registerActivityLifecycleCallbacks(service);
+        verify(mChannel, never()).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
+    }
+
     private static class DummyService extends AbstractAppCenterService {
 
         private static DummyService sharedInstance;
