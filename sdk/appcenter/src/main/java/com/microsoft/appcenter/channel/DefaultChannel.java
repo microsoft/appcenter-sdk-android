@@ -200,8 +200,8 @@ public class DefaultChannel implements Channel {
         /* Count pending logs. */
         groupState.mPendingLogCount = mPersistence.countLogs(groupName);
 
-        /* If no app secret, don't resume sending logs from storage. */
-        if (mAppSecret != null) {
+        /* If no app secret, don't resume sending App Center logs from storage. */
+        if (mAppSecret != null && mIngestion == ingestion) {
 
             /* Schedule sending any pending log. */
             checkPendingLogs(groupState.mName);
