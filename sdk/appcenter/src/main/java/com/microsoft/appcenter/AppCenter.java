@@ -138,10 +138,12 @@ public class AppCenter {
      * Started services for which the log isn't sent yet.
      */
     private final List<String> mStartedServicesNamesToLog = new ArrayList<>();
+
     /**
      * All started services.
      */
     private Set<AppCenterService> mServices;
+
     /**
      * All started services from library without an app secret.
      */
