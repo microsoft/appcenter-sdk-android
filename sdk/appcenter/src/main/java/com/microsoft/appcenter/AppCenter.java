@@ -29,7 +29,6 @@ import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
-import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
@@ -41,8 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
@@ -100,11 +97,6 @@ public class AppCenter {
      */
     @VisibleForTesting
     static final String TRANSMISSION_TARGET_TOKEN_KEY = "target";
-
-    /**
-     * Shutdown timeout in millis.
-     */
-    private static final int SHUTDOWN_TIMEOUT = 5000;
 
     /**
      * Shared instance.
@@ -180,7 +172,11 @@ public class AppCenter {
      */
     private AppCenterHandler mAppCenterHandler;
 
-    @VisibleForTesting
+    /**
+     * Get unique instance.
+     *
+     * @return unique instance.
+     */
     static synchronized AppCenter getInstance() {
         if (sInstance == null) {
             sInstance = new AppCenter();
@@ -620,12 +616,6 @@ public class AppCenter {
         /* Get enabled state. */
         boolean enabled = isInstanceEnabled();
 
-        /* Init uncaught exception handler. */
-        mUncaughtExceptionHandler = new UncaughtExceptionHandler();
-        if (enabled) {
-            mUncaughtExceptionHandler.register();
-        }
-
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
@@ -637,10 +627,18 @@ public class AppCenter {
             mChannel.setLogUrl(mLogUrl);
         }
         mChannel.addListener(new OneCollectorChannelListener(mApplication, mChannel, mLogSerializer, IdHelper.getInstallId()));
+
+        /* Disable listening network if we start while being disabled. */
         if (!enabled) {
             NetworkStateHelper.getSharedInstance(mApplication).close();
         }
-        AppCenterLog.debug(LOG_TAG, "App Center storage initialized.");
+
+        /* Init uncaught exception handler. */
+        mUncaughtExceptionHandler = new UncaughtExceptionHandler(mHandler, mChannel);
+        if (enabled) {
+            mUncaughtExceptionHandler.register();
+        }
+        AppCenterLog.debug(LOG_TAG, "App Center initialized.");
     }
 
     @SafeVarargs
@@ -810,7 +808,7 @@ public class AppCenter {
      * This can be called only after storage has been initialized in background.
      * However after that it can be used from U.I. thread without breaking strict mode.
      */
-    private boolean isInstanceEnabled() {
+    boolean isInstanceEnabled() {
         return StorageHelper.PreferencesStorage.getBoolean(PrefStorageConstants.KEY_ENABLED, true);
     }
 
@@ -955,58 +953,6 @@ public class AppCenter {
         } catch (LinkageError | IllegalStateException e) {
             AppCenterLog.debug(LOG_TAG, "Cannot read instrumentation variables in a non-test environment.");
             return false;
-        }
-    }
-
-    @VisibleForTesting
-    class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
-
-        private Thread.UncaughtExceptionHandler mDefaultUncaughtExceptionHandler;
-
-        @Override
-        public void uncaughtException(Thread thread, Throwable exception) {
-            if (isInstanceEnabled()) {
-
-                /* Wait channel to finish saving other logs in background. */
-                final Semaphore semaphore = new Semaphore(0);
-                mHandler.post(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (mChannel != null) {
-                            mChannel.shutdown();
-                        }
-                        AppCenterLog.debug(LOG_TAG, "Channel completed shutdown.");
-                        semaphore.release();
-                    }
-                });
-                try {
-                    if (!semaphore.tryAcquire(SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS)) {
-                        AppCenterLog.error(LOG_TAG, "Timeout waiting for looper tasks to complete.");
-                    }
-                } catch (InterruptedException e) {
-                    AppCenterLog.warn(LOG_TAG, "Interrupted while waiting looper to flush.", e);
-                }
-            }
-            if (mDefaultUncaughtExceptionHandler != null) {
-                mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
-            } else {
-                ShutdownHelper.shutdown(10);
-            }
-        }
-
-        @VisibleForTesting
-        Thread.UncaughtExceptionHandler getDefaultUncaughtExceptionHandler() {
-            return mDefaultUncaughtExceptionHandler;
-        }
-
-        void register() {
-            mDefaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
-            Thread.setDefaultUncaughtExceptionHandler(this);
-        }
-
-        void unregister() {
-            Thread.setDefaultUncaughtExceptionHandler(mDefaultUncaughtExceptionHandler);
         }
     }
 }

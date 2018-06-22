@@ -85,7 +85,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @SuppressWarnings({"unused", "CanBeFinal"})
 @PrepareForTest({
         AppCenter.class,
-        AppCenter.UncaughtExceptionHandler.class,
+        UncaughtExceptionHandler.class,
         DefaultChannel.class,
         Constants.class,
         AppCenterLog.class,
@@ -999,7 +999,7 @@ public class AppCenterTest {
         Thread.UncaughtExceptionHandler defaultUncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         when(Thread.getDefaultUncaughtExceptionHandler()).thenReturn(defaultUncaughtExceptionHandler);
         AppCenter.configure(mApplication, DUMMY_APP_SECRET);
-        AppCenter.UncaughtExceptionHandler handler = AppCenter.getInstance().getUncaughtExceptionHandler();
+        UncaughtExceptionHandler handler = AppCenter.getInstance().getUncaughtExceptionHandler();
         assertNotNull(handler);
         assertEquals(defaultUncaughtExceptionHandler, handler.getDefaultUncaughtExceptionHandler());
         verifyStatic();
@@ -1050,7 +1050,7 @@ public class AppCenterTest {
         Thread.UncaughtExceptionHandler defaultUncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         when(Thread.getDefaultUncaughtExceptionHandler()).thenReturn(defaultUncaughtExceptionHandler);
         AppCenter.configure(mApplication, DUMMY_APP_SECRET);
-        AppCenter.UncaughtExceptionHandler handler = AppCenter.getInstance().getUncaughtExceptionHandler();
+        UncaughtExceptionHandler handler = AppCenter.getInstance().getUncaughtExceptionHandler();
         assertNotNull(handler);
         assertEquals(defaultUncaughtExceptionHandler, handler.getDefaultUncaughtExceptionHandler());
         verifyStatic();
@@ -1084,7 +1084,7 @@ public class AppCenterTest {
         Thread.UncaughtExceptionHandler defaultUncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         when(Thread.getDefaultUncaughtExceptionHandler()).thenReturn(defaultUncaughtExceptionHandler);
         AppCenter.configure(mApplication, DUMMY_APP_SECRET);
-        AppCenter.UncaughtExceptionHandler handler = AppCenter.getInstance().getUncaughtExceptionHandler();
+        UncaughtExceptionHandler handler = AppCenter.getInstance().getUncaughtExceptionHandler();
         assertNotNull(handler);
         assertEquals(defaultUncaughtExceptionHandler, handler.getDefaultUncaughtExceptionHandler());
         verifyStatic();
