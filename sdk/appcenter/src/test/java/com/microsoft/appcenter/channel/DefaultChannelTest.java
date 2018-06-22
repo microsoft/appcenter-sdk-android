@@ -1093,7 +1093,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Check log url. */
         String logUrl = "http://mockUrl";
         channel.setLogUrl(logUrl);
-        verify(ingestion, never()).setLogUrl(logUrl);
+        verify(ingestion).setLogUrl(logUrl);
 
         /* Check enqueue. */
         Log log = mock(Log.class);
@@ -1109,19 +1109,6 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Check shutdown. */
         channel.shutdown();
         verify(persistence).clearPendingLogState();
-    }
-
-    @Test
-    public void withoutIngestion() {
-        Persistence persistence = mock(Persistence.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, null, mAppCenterHandler);
-        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
-        channel.enqueue(mock(Log.class), TEST_GROUP);
-        channel.enqueue(mock(Log.class), "other");
-        channel.setEnabled(false);
-        channel.setEnabled(true);
-
-        /* No exceptions. */
     }
 
     @Test
