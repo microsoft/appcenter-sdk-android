@@ -1331,10 +1331,15 @@ public class AppCenterTest {
         services.add(AnotherDummyService.getInstance().getServiceName());
         verify(mStartServiceLog).setServices(eq(services));
 
-        /* Start two services from library. */
+        /* Start two services from 2 libraries. */
         AppCenter.startFromLibrary(mApplication, DummyService.class, AnotherDummyService.class);
+        AppCenter.startFromLibrary(mApplication, AnotherDummyService.class, DummyService.class);
 
-        /* Check nothing changes. */
+        /* We get no warnings as app started those. */
+        verifyStatic(never());
+        AppCenterLog.warn(anyString(), anyString());
+
+        /* Check nothing changes as everything was already initialized by app start. */
         assertEquals(2, AppCenter.getInstance().getServices().size());
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         verify(DummyService.getInstance()).getLogFactories();

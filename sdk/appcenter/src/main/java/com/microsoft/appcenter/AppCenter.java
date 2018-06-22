@@ -532,14 +532,14 @@ public class AppCenter {
      */
     private boolean configureAppSecret(String appSecret) {
 
-        /* We don't support overriding the app secret. */
-        if (mAppSecret != null || mTransmissionTargetToken != null) {
-            AppCenterLog.warn(LOG_TAG, "App Center may only be configured once.");
-            return false;
-        }
-
         /* A null secret is still valid since transmission target token can be set later. */
         if (appSecret != null && !appSecret.isEmpty()) {
+
+            /* We don't support overriding the app secret. */
+            if (mAppSecret != null || mTransmissionTargetToken != null) {
+                AppCenterLog.warn(LOG_TAG, "App Center may only be configured once.");
+                return false;
+            }
 
             /* Init parsing, the app secret string can contain other secrets.  */
             String[] pairs = appSecret.split(PAIR_DELIMITER);
