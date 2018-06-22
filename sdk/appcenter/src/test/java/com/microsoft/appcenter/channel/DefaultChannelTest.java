@@ -1252,6 +1252,5 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Verify that now logs are sent when channel is enabled. */
         verify(defaultIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(alternateIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-
     }
 }
