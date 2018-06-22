@@ -36,7 +36,6 @@ import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -661,6 +660,7 @@ public class AppCenter {
 
         /* Start each service and collect info for send start service log. */
         final Collection<AppCenterService> startedServices = new ArrayList<>();
+        final Collection<String> startedServicesNamesToLog = new ArrayList<>();
         for (Class<? extends AppCenterService> service : services) {
             if (service == null) {
                 AppCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
@@ -670,7 +670,7 @@ public class AppCenter {
                     if (mServices.contains(serviceInstance)) {
                         if (startFromApp) {
                             if (mServicesStartedFromLibrary.contains(serviceInstance)) {
-                                mStartedServicesNamesToLog.add(serviceInstance.getServiceName());
+                                startedServicesNamesToLog.add(serviceInstance.getServiceName());
                                 mServicesStartedFromLibrary.remove(serviceInstance);
                             } else {
                                 AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
@@ -692,6 +692,11 @@ public class AppCenter {
                         if (mAppSecret == null && mTransmissionTargetToken == null && !startFromApp) {
                             mServicesStartedFromLibrary.add(serviceInstance);
                         }
+
+                        /* Otherwise start service log will be sent now. */
+                        else {
+                            startedServicesNamesToLog.add(serviceInstance.getServiceName());
+                        }
                     }
                 } catch (Exception e) {
                     AppCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
@@ -699,24 +704,19 @@ public class AppCenter {
             }
         }
 
-        /* Finish starting in background. */
-        if (startedServices.size() > 0) {
+        /* Post to ensure service started after storage initialized. */
+        mHandler.post(new Runnable() {
 
-            /* Post to ensure service started after storage initialized. */
-            mHandler.post(new Runnable() {
-
-                @Override
-                public void run() {
-                    finishStartServices(startedServices, startFromApp);
-                }
-            });
-        }
+            @Override
+            public void run() {
+                finishStartServices(startedServices, startedServicesNamesToLog, startFromApp);
+            }
+        });
     }
 
     @WorkerThread
-    private void finishStartServices(Iterable<AppCenterService> services, boolean startFromApp) {
+    private void finishStartServices(Iterable<AppCenterService> services, Collection<String> startedServicesNamesToLog, boolean startFromApp) {
         boolean enabled = isInstanceEnabled();
-        List<String> serviceNames = new ArrayList<>();
         for (AppCenterService service : services) {
             Map<String, LogFactory> logFactories = service.getLogFactories();
             if (logFactories != null) {
@@ -729,31 +729,26 @@ public class AppCenter {
             }
             service.onStarted(mApplication, mAppSecret, mTransmissionTargetToken, mChannel);
             AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
-            serviceNames.add(service.getServiceName());
         }
+        mStartedServicesNamesToLog.addAll(startedServicesNamesToLog);
 
         /* If starting from a library, we will send start service log later when app starts with an app secret. */
         if (startFromApp) {
-            sendStartServiceLog(serviceNames);
+            sendStartServiceLog();
         }
     }
 
     /**
      * Queue start service log.
-     *
-     * @param serviceNames the services to send.
      */
     @WorkerThread
-    private void sendStartServiceLog(List<String> serviceNames) {
-        if (isInstanceEnabled()) {
-            List<String> allServiceNamesToStart = new ArrayList<>(serviceNames);
-            allServiceNamesToStart.addAll(mStartedServicesNamesToLog);
+    private void sendStartServiceLog() {
+        if (!mStartedServicesNamesToLog.isEmpty() && isInstanceEnabled()) {
+            List<String> allServiceNamesToStart = new ArrayList<>(mStartedServicesNamesToLog);
             mStartedServicesNamesToLog.clear();
             StartServiceLog startServiceLog = new StartServiceLog();
             startServiceLog.setServices(allServiceNamesToStart);
             mChannel.enqueue(startServiceLog, CORE_GROUP);
-        } else {
-            mStartedServicesNamesToLog.addAll(serviceNames);
         }
     }
 
@@ -762,7 +757,7 @@ public class AppCenter {
     }
 
     private synchronized void startInstanceFromLibrary(Context context, Class<? extends AppCenterService>[] services) {
-        Application application = (Application) context.getApplicationContext();
+        Application application = context != null ? (Application) context.getApplicationContext() : null;
         configureAndStartServices(application, null, false, services);
     }
 
@@ -849,7 +844,7 @@ public class AppCenter {
 
         /* Send started services. */
         if (!mStartedServicesNamesToLog.isEmpty() && switchToEnabled) {
-            sendStartServiceLog(Collections.<String>emptyList());
+            sendStartServiceLog();
         }
 
         /* Apply change to services. */
