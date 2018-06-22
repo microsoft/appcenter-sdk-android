@@ -276,7 +276,7 @@ public class DefaultChannel implements Channel {
      */
     @Override
     public synchronized void clear(String groupName) {
-        if (!mGroupStates.containsKey(groupName) || mGroupStates.get(groupName).mIngestion == null) {
+        if (!mGroupStates.containsKey(groupName)) {
             return;
         }
         AppCenterLog.debug(LOG_TAG, "clear(" + groupName + ")");
@@ -354,9 +354,6 @@ public class DefaultChannel implements Channel {
     }
 
     private void cancelTimer(GroupState groupState) {
-        if (groupState.mIngestion == null) {
-            return;
-        }
         if (groupState.mScheduled) {
             groupState.mScheduled = false;
             mAppCenterHandler.removeCallbacks(groupState.mRunnable);
