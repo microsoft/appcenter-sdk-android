@@ -1074,20 +1074,17 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     public void nullAppSecretProvided() throws Persistence.PersistenceException {
-        testChannelWithoutAppSecret(null);
-    }
 
-    @Test
-    public void emptyAppSecretProvided() throws Persistence.PersistenceException {
-        testChannelWithoutAppSecret("");
-    }
-
-    private void testChannelWithoutAppSecret(String appSecret) throws Persistence.PersistenceException {
+        /*
+         * We don't test empty app secret in channel (and thus in tests) as it's already checked by AppCenter.
+         * If app secret is set in channel, the assumption is that it's a well formed string.
+         * Channel is not meant to be used publicly directly.
+         */
 
         /* Given a mock channel. */
         Persistence persistence = mock(Persistence.class);
         Ingestion ingestion = mock(Ingestion.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), appSecret, persistence, ingestion, mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, ingestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
 
         /* Check log url. */
@@ -1102,9 +1099,9 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.enqueue(mock(Log.class), "other");
         verify(persistence, never()).putLog(anyString(), any(Log.class));
 
-        /* Check clear. */
+        /* Check clear. Even without app secret it works as it could be logs from previous process. */
         channel.clear(TEST_GROUP);
-        verify(persistence, never()).deleteLogs(eq(TEST_GROUP));
+        verify(persistence).deleteLogs(eq(TEST_GROUP));
 
         /* Check shutdown. */
         channel.shutdown();
