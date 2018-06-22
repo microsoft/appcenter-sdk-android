@@ -356,6 +356,47 @@ public class AppCenterTest {
     }
 
     @Test
+    public void startTargetTokenThenStartWithAppSecretTest() {
+        String secret = TRANSMISSION_TARGET_TOKEN_KEY + KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
+        AppCenter.start(mApplication, secret, DummyService.class);
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, AnotherDummyService.class);
+
+        /* Verify that single service has been loaded and configured */
+        assertEquals(1, AppCenter.getInstance().getServices().size());
+        DummyService service = DummyService.getInstance();
+        assertTrue(AppCenter.getInstance().getServices().contains(service));
+        verify(service).getLogFactories();
+        verify(service).onStarted(any(Context.class), isNull(String.class), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
+        verify(service, never()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), isNull(String.class), any(Channel.class));
+        verify(mApplication).registerActivityLifecycleCallbacks(service);
+        verify(mChannel).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
+        List<String> services = new ArrayList<>();
+        services.add(service.getServiceName());
+        verify(mStartServiceLog).setServices(eq(services));
+    }
+
+    @Test
+    public void startAppSecretThenStartWithTargetTokenTest() {
+        String secret = TRANSMISSION_TARGET_TOKEN_KEY + KEY_VALUE_DELIMITER + DUMMY_TRANSMISSION_TARGET_TOKEN;
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
+        AppCenter.start(mApplication, secret, AnotherDummyService.class);
+
+        /* Verify that single service has been loaded and configured */
+        assertEquals(1, AppCenter.getInstance().getServices().size());
+        DummyService service = DummyService.getInstance();
+        assertTrue(AppCenter.getInstance().getServices().contains(service));
+        verify(service).getLogFactories();
+        verify(service, never()).onStarted(any(Context.class), isNull(String.class), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
+        verify(service).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), isNull(String.class), any(Channel.class));
+        verify(mApplication).registerActivityLifecycleCallbacks(service);
+        verify(mChannel).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
+        List<String> services = new ArrayList<>();
+        services.add(service.getServiceName());
+        verify(mStartServiceLog).setServices(eq(services));
+    }
+
+
+    @Test
     public void configureTwiceTest() {
         AppCenter.configure(mApplication, DUMMY_APP_SECRET);
         AppCenter.configure(mApplication, DUMMY_APP_SECRET + "a"); //ignored

@@ -1153,4 +1153,105 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(alternateIngestion).reopen();
         verify(defaultIngestion).reopen();
     }
+
+    @Test
+    public void startWithoutAppSecret() throws Persistence.PersistenceException {
+
+        /* Set up channel without app secret. */
+        String appCenterGroup = "test_group1";
+        String oneCollectorGroup = "test_group2";
+        Persistence mockPersistence = mock(Persistence.class);
+        Ingestion defaultIngestion = mock(Ingestion.class);
+        Ingestion alternateIngestion = mock(Ingestion.class);
+        when(mockPersistence.getLogs(any(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mockPersistence, defaultIngestion, mAppCenterHandler);
+        channel.addGroup(appCenterGroup, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
+        channel.addGroup(oneCollectorGroup, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, alternateIngestion, null);
+
+        /* Enqueuing 1 event. */
+        channel.enqueue(mock(Log.class), appCenterGroup);
+
+        /* Verify that we have called sendAsync on the ingestion. */
+        verify(alternateIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(defaultIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+
+        /* The counter should be 0 because we did not provide app secret. */
+        assertEquals(0, channel.getCounter(appCenterGroup));
+
+        /* Verify we didn't persist the log. */
+        verify(mockPersistence, never()).putLog(eq(appCenterGroup), any(Log.class));
+
+        /* Enqueuing 1 event from one collector group. */
+        channel.enqueue(mock(Log.class), oneCollectorGroup);
+
+        /* Verify that we have called sendAsync on the ingestion. */
+        verify(alternateIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(defaultIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+
+        /* Verify that we can now send logs to app center after we have set app secret. */
+        channel.setAppSecret("testAppSecret");
+        channel.enqueue(mock(Log.class), appCenterGroup);
+        verify(defaultIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void sendPendingLogsAfterSettingAppSecret() {
+
+        /* Set up channel without app secret. */
+        String appCenterGroup = "test_group1";
+        String oneCollectorGroup = "test_group2";
+        Persistence mockPersistence = mock(Persistence.class);
+        Ingestion defaultIngestion = mock(Ingestion.class);
+        Ingestion alternateIngestion = mock(Ingestion.class);
+        when(mockPersistence.getLogs(any(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
+
+        /* Simulate we have 1 pending log in storage. */
+        when(mockPersistence.countLogs(anyString())).thenReturn(1);
+
+        /* Create channel with the two groups. */
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mockPersistence, defaultIngestion, mAppCenterHandler);
+        channel.addGroup(appCenterGroup, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
+        channel.addGroup(oneCollectorGroup, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, alternateIngestion, null);
+
+        /* Verify that we can now send logs to app center after we have set app secret. */
+        channel.setAppSecret("testAppSecret");
+        verify(defaultIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(alternateIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void pendingLogsDisableSetAppSecretThenEnable() {
+
+        /* Set up channel without app secret. */
+        String appCenterGroup = "test_group1";
+        String oneCollectorGroup = "test_group2";
+        Persistence mockPersistence = mock(Persistence.class);
+        Ingestion defaultIngestion = mock(Ingestion.class);
+        Ingestion alternateIngestion = mock(Ingestion.class);
+        when(mockPersistence.getLogs(any(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
+
+        /* Simulate we have 1 pending log in storage for App Center. */
+        when(mockPersistence.countLogs(appCenterGroup)).thenReturn(1);
+
+        /* Create channel with the two groups. */
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mockPersistence, defaultIngestion, mAppCenterHandler);
+        channel.addGroup(appCenterGroup, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
+        channel.addGroup(oneCollectorGroup, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, alternateIngestion, null);
+
+        /* Disable channel. */
+        channel.setEnabled(false);
+
+        /* Verify that no log is sent even if we set app secret while channel is disabled. */
+        channel.setAppSecret("testAppSecret");
+        verify(defaultIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(alternateIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+
+        /* Enable channel. */
+        channel.setEnabled(true);
+
+        /* Verify that now logs are sent when channel is enabled. */
+        verify(defaultIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(alternateIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+
+    }
 }
