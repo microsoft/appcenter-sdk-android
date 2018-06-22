@@ -56,9 +56,7 @@ class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
                 @Override
                 public void run() {
-                    if (mChannel != null) {
-                        mChannel.shutdown();
-                    }
+                    mChannel.shutdown();
                     AppCenterLog.debug(AppCenter.LOG_TAG, "Channel completed shutdown.");
                     semaphore.release();
                 }

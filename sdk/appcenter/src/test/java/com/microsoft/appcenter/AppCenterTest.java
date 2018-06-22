@@ -1022,7 +1022,6 @@ public class AppCenterTest {
         /* Try enabled without default thread handler: should shut down process. */
         when(Thread.getDefaultUncaughtExceptionHandler()).thenReturn(null);
         AppCenter.setEnabled(true);
-        AppCenter.getInstance().setChannel(null);
         assertNull(handler.getDefaultUncaughtExceptionHandler());
         handler.uncaughtException(thread, exception);
         verifyStatic();

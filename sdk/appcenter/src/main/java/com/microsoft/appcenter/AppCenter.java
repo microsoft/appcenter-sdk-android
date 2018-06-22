@@ -177,7 +177,7 @@ public class AppCenter {
      *
      * @return unique instance.
      */
-    static synchronized AppCenter getInstance() {
+    public static synchronized AppCenter getInstance() {
         if (sInstance == null) {
             sInstance = new AppCenter();
         }
@@ -929,9 +929,8 @@ public class AppCenter {
         return mUncaughtExceptionHandler;
     }
 
-    @SuppressWarnings("SameParameterValue")
     @VisibleForTesting
-    void setChannel(Channel channel) {
+    public void setChannel(Channel channel) {
         mChannel = channel;
     }
 
