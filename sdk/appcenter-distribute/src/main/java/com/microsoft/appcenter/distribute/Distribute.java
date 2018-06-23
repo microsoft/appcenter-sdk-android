@@ -141,11 +141,6 @@ public class Distribute extends AbstractAppCenterService {
     private Context mContext;
 
     /**
-     * Application secret.
-     */
-    private String mAppSecret;
-
-    /**
      * Package info.
      */
     private PackageInfo mPackageInfo;
@@ -403,7 +398,6 @@ public class Distribute extends AbstractAppCenterService {
     @Override
     public synchronized void onStarted(@NonNull Context context, String appSecret, String transmissionTargetToken, @NonNull Channel channel) {
         mContext = context;
-        mAppSecret = appSecret;
         mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
         try {
             mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);

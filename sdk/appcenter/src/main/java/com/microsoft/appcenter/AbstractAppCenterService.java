@@ -34,6 +34,11 @@ public abstract class AbstractAppCenterService implements AppCenterService {
     protected Channel mChannel;
 
     /**
+     * App secret.
+     */
+    protected String mAppSecret;
+
+    /**
      * Background thread handler.
      */
     private AppCenterHandler mHandler;
@@ -198,7 +203,13 @@ public abstract class AbstractAppCenterService implements AppCenterService {
             }
         }
         mChannel = channel;
+        mAppSecret = appSecret;
         applyEnabledState(enabled);
+    }
+
+    @Override
+    public void onConfigurationUpdated(String appSecret, String transmissionTargetToken) {
+        mAppSecret = appSecret;
     }
 
     @Override

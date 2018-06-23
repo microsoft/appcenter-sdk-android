@@ -661,7 +661,7 @@ public class AppCenter {
 
         /* Start each service and collect info for send start service log. */
         final Collection<AppCenterService> startedServices = new ArrayList<>();
-        final Collection<String> startedServicesNamesToLog = new ArrayList<>();
+        final Collection<AppCenterService> updatedServices = new ArrayList<>();
         for (Class<? extends AppCenterService> service : services) {
             if (service == null) {
                 AppCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
@@ -670,9 +670,8 @@ public class AppCenter {
                     AppCenterService serviceInstance = (AppCenterService) service.getMethod("getInstance").invoke(null);
                     if (mServices.contains(serviceInstance)) {
                         if (startFromApp) {
-                            if (mServicesStartedFromLibrary.contains(serviceInstance)) {
-                                startedServicesNamesToLog.add(serviceInstance.getServiceName());
-                                mServicesStartedFromLibrary.remove(serviceInstance);
+                            if (mServicesStartedFromLibrary.remove(serviceInstance)) {
+                                updatedServices.add(serviceInstance);
                             } else {
                                 AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
                             }
@@ -693,11 +692,6 @@ public class AppCenter {
                         if (mAppSecret == null && mTransmissionTargetToken == null && !startFromApp) {
                             mServicesStartedFromLibrary.add(serviceInstance);
                         }
-
-                        /* Otherwise start service log will be sent now. */
-                        else {
-                            startedServicesNamesToLog.add(serviceInstance.getServiceName());
-                        }
                     }
                 } catch (Exception e) {
                     AppCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
@@ -710,15 +704,23 @@ public class AppCenter {
 
             @Override
             public void run() {
-                finishStartServices(startedServices, startedServicesNamesToLog, startFromApp);
+                finishStartServices(updatedServices, startedServices, startFromApp);
             }
         });
     }
 
     @WorkerThread
-    private void finishStartServices(Iterable<AppCenterService> services, Collection<String> startedServicesNamesToLog, boolean startFromApp) {
+    private void finishStartServices(Iterable<AppCenterService> updatedServices, Iterable<AppCenterService> startedServices, boolean startFromApp) {
+
+        /* Update existing services with app secret and/or transmission target. */
+        for (AppCenterService service : updatedServices) {
+            service.onConfigurationUpdated(mAppSecret, mTransmissionTargetToken);
+            AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service configuration updated.");
+        }
+
+        /* Start new services. */
         boolean enabled = isInstanceEnabled();
-        for (AppCenterService service : services) {
+        for (AppCenterService service : startedServices) {
             Map<String, LogFactory> logFactories = service.getLogFactories();
             if (logFactories != null) {
                 for (Map.Entry<String, LogFactory> logFactory : logFactories.entrySet()) {
@@ -731,10 +733,15 @@ public class AppCenter {
             service.onStarted(mApplication, mAppSecret, mTransmissionTargetToken, mChannel);
             AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
         }
-        mStartedServicesNamesToLog.addAll(startedServicesNamesToLog);
 
         /* If starting from a library, we will send start service log later when app starts with an app secret. */
         if (startFromApp) {
+            for (AppCenterService service : updatedServices) {
+                mStartedServicesNamesToLog.add(service.getServiceName());
+            }
+            for (AppCenterService service : startedServices) {
+                mStartedServicesNamesToLog.add(service.getServiceName());
+            }
             sendStartServiceLog();
         }
     }
