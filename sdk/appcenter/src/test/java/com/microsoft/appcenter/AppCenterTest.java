@@ -1339,6 +1339,54 @@ public class AppCenterTest {
     }
 
     @Test
+    public void startFromLibraryThenFromAppWithBothSecrets() {
+
+        /* Start two services from different libraries. */
+        AppCenter.startFromLibrary(mApplication, DummyService.class, AnotherDummyService.class);
+        AppCenter.startFromLibrary(mApplication, AnotherDummyService.class, DummyService.class);
+
+        /* Verify only dummy service has been started once, as the other one doesn't support start from library. */
+        assertEquals(1, AppCenter.getInstance().getServices().size());
+        assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
+        verify(DummyService.getInstance()).getLogFactories();
+        verify(DummyService.getInstance()).onStarted(any(Context.class), isNull(String.class), isNull(String.class), any(Channel.class));
+        verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
+        verify(mChannel, never()).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
+        verify(mChannel, never()).setAppSecret(anyString());
+
+        /* Start two services from app with app secret and transmission target. */
+        String secret = DUMMY_TARGET_TOKEN_STRING + PAIR_DELIMITER + DUMMY_APP_SECRET;
+        AppCenter.start(mApplication, secret, DummyService.class, AnotherDummyService.class);
+
+        /* Verify that the right amount of services have been loaded and configured. */
+        assertEquals(2, AppCenter.getInstance().getServices().size());
+
+        /* Verify first service started. */
+        assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
+        verify(DummyService.getInstance()).getLogFactories();
+
+        /* Verify onStarted was not called again (e.g. not more than once). */
+        verify(DummyService.getInstance()).onStarted(any(Context.class), anyString(), anyString(), any(Channel.class));
+        verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
+
+        /* Verify second service started. */
+        assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
+        verify(AnotherDummyService.getInstance()).getLogFactories();
+        verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), any(Channel.class));
+        verify(mApplication).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
+
+        /* Verify start service log is sent. */
+        verify(mChannel).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
+        List<String> services = new ArrayList<>();
+        services.add(DummyService.getInstance().getServiceName());
+        services.add(AnotherDummyService.getInstance().getServiceName());
+        verify(mStartServiceLog).setServices(eq(services));
+
+        /* Verify channel updated with app secret. */
+        verify(mChannel).setAppSecret(DUMMY_APP_SECRET);
+    }
+
+    @Test
     public void startFromAppThenFromLibrary() {
 
         /* Start two services from app. */

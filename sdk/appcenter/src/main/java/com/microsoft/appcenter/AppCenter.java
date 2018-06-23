@@ -454,14 +454,14 @@ public class AppCenter {
     /**
      * Internal SDK configuration.
      *
-     * @param application application context.
-     * @param appSecret   a unique and secret key used to identify the application.
-     *                    It can be null since a transmission target token can be set later.
+     * @param application  application context.
+     * @param secretString a unique and secret key used to identify the application.
+     *                     It can be null since a transmission target token can be set later.
      * @return true if configuration was successful, false otherwise.
      */
     /* UncaughtExceptionHandler is used by PowerMock but lint does not detect it. */
     @SuppressLint("VisibleForTests")
-    private synchronized boolean instanceConfigure(Application application, String appSecret) {
+    private synchronized boolean instanceConfigure(Application application, String secretString) {
 
         /* Check parameters. */
         if (application == null) {
@@ -474,8 +474,9 @@ public class AppCenter {
             AppCenterLog.setLogLevel(Log.WARN);
         }
 
-        /* Configure app secret. */
-        if (!configureAppSecret(appSecret)) {
+        /* Configure app secret and/or transmission target. */
+        String previousAppSecret = mAppSecret;
+        if (!configureSecretString(secretString)) {
             return false;
         }
 
@@ -483,7 +484,7 @@ public class AppCenter {
         if (mHandler != null) {
 
             /* If app started after library with an app secret, set app secret on channel now. */
-            if (appSecret != null && appSecret.equals(mAppSecret)) {
+            if (mAppSecret != null && !mAppSecret.equals(previousAppSecret)) {
                 mHandler.post(new Runnable() {
 
                     @Override
@@ -532,7 +533,7 @@ public class AppCenter {
      *                  It can be null since a transmission target token can be set later.
      * @return false if app secret already configured or invalid.
      */
-    private boolean configureAppSecret(String appSecret) {
+    private boolean configureSecretString(String appSecret) {
 
         /* A null secret is still valid since transmission target token can be set later. */
         if (appSecret != null && !appSecret.isEmpty()) {
