@@ -1268,12 +1268,12 @@ public class AppCenterTest {
         /* Verify that the right amount of services have been loaded and configured. */
         assertEquals(2, AppCenter.getInstance().getServices().size());
 
-        /* Verify first service started. */
-        assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
-        verify(DummyService.getInstance()).getLogFactories();
+        /* Verify first service updated. */
+        verify(DummyService.getInstance()).onConfigurationUpdated(DUMMY_APP_SECRET, null);
 
-        /* Verify onStarted was not called again (e.g. not more than once). */
-        verify(DummyService.getInstance()).onStarted(any(Context.class), anyString(), anyString(), any(Channel.class));
+        /* Verify previous behaviors happened only once, thus not again. */
+        verify(DummyService.getInstance()).getLogFactories();
+        verify(DummyService.getInstance()).onStarted(any(Context.class), isNull(String.class), isNull(String.class), any(Channel.class));
         verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
 
         /* Verify second service started. */
@@ -1314,12 +1314,12 @@ public class AppCenterTest {
         /* Verify that the right amount of services have been loaded and configured. */
         assertEquals(1, AppCenter.getInstance().getServices().size());
 
-        /* Verify first service started. */
-        assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
-        verify(DummyService.getInstance()).getLogFactories();
+        /* Verify first service updated. */
+        verify(DummyService.getInstance()).onConfigurationUpdated(null, DUMMY_TRANSMISSION_TARGET_TOKEN);
 
-        /* Verify onStarted was not called again (e.g. not more than once). */
-        verify(DummyService.getInstance()).onStarted(any(Context.class), anyString(), anyString(), any(Channel.class));
+        /* Verify previous behaviors happened only once, thus not again. */
+        verify(DummyService.getInstance()).getLogFactories();
+        verify(DummyService.getInstance()).onStarted(any(Context.class), isNull(String.class), isNull(String.class), any(Channel.class));
         verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
 
         /* Verify second service started. */
@@ -1361,12 +1361,12 @@ public class AppCenterTest {
         /* Verify that the right amount of services have been loaded and configured. */
         assertEquals(2, AppCenter.getInstance().getServices().size());
 
-        /* Verify first service started. */
-        assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
-        verify(DummyService.getInstance()).getLogFactories();
+        /* Verify first service updated. */
+        verify(DummyService.getInstance()).onConfigurationUpdated(DUMMY_APP_SECRET, DUMMY_TRANSMISSION_TARGET_TOKEN);
 
-        /* Verify onStarted was not called again (e.g. not more than once). */
-        verify(DummyService.getInstance()).onStarted(any(Context.class), anyString(), anyString(), any(Channel.class));
+        /* Verify previous behaviors happened only once, thus not again. */
+        verify(DummyService.getInstance()).getLogFactories();
+        verify(DummyService.getInstance()).onStarted(any(Context.class), isNull(String.class), isNull(String.class), any(Channel.class));
         verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
 
         /* Verify second service started. */

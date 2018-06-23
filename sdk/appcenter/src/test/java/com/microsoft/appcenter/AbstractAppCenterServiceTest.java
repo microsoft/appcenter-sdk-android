@@ -17,6 +17,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -270,5 +271,11 @@ public class AbstractAppCenterServiceTest {
         mService.setInstanceEnabled(false);
         mService.setInstanceEnabled(true);
         verifyZeroInteractions(channel);
+    }
+
+    @Test
+    public void updateConfiguration() {
+        mService.onConfigurationUpdated("secret", "token");
+        assertEquals("secret", mService.mAppSecret);
     }
 }
