@@ -130,6 +130,13 @@ public class AppCenter {
     private String mTransmissionTargetToken;
 
     /**
+     * Flag to now App Center configured at app level.
+     * If configuring with neither app secret or transmission target, then we need this flag
+     * to know App Center already configured/started at application level.
+     */
+    private boolean mConfiguredFromApp;
+
+    /**
      * Handler for uncaught exceptions.
      */
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
@@ -274,7 +281,7 @@ public class AppCenter {
      */
     @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void configure(Application application, String appSecret) {
-        getInstance().instanceConfigure(application, appSecret);
+        getInstance().instanceConfigure(application, appSecret, true);
     }
 
     /**
@@ -454,18 +461,19 @@ public class AppCenter {
     /**
      * Internal SDK configuration.
      *
-     * @param application  application context.
-     * @param secretString a unique and secret key used to identify the application.
-     *                     It can be null since a transmission target token can be set later.
+     * @param application      application context.
+     * @param secretString     a unique and secret key used to identify the application.
+     *                         It can be null since a transmission target token can be set later.
+     * @param configureFromApp true if configuring from app, false if called from a library.
      * @return true if configuration was successful, false otherwise.
      */
     /* UncaughtExceptionHandler is used by PowerMock but lint does not detect it. */
     @SuppressLint("VisibleForTests")
-    private synchronized boolean instanceConfigure(Application application, String secretString) {
+    private synchronized boolean instanceConfigure(Application application, String secretString, boolean configureFromApp) {
 
         /* Check parameters. */
         if (application == null) {
-            AppCenterLog.error(LOG_TAG, "application may not be null");
+            AppCenterLog.error(LOG_TAG, "Application context may not be null.");
             return false;
         }
 
@@ -476,7 +484,7 @@ public class AppCenter {
 
         /* Configure app secret and/or transmission target. */
         String previousAppSecret = mAppSecret;
-        if (!configureSecretString(secretString)) {
+        if (configureFromApp && !configureSecretString(secretString)) {
             return false;
         }
 
@@ -529,23 +537,24 @@ public class AppCenter {
     /**
      * Configure app secret.
      *
-     * @param appSecret a unique and secret key used to identify the application.
-     *                  It can be null since a transmission target token can be set later.
+     * @param secretString a unique and secret key used to identify the application.
+     *                     It can be null since a transmission target token can be set later.
      * @return false if app secret already configured or invalid.
      */
-    private boolean configureSecretString(String appSecret) {
+    private boolean configureSecretString(String secretString) {
 
-        /* A null secret is still valid since transmission target token can be set later. */
-        if (appSecret != null && !appSecret.isEmpty()) {
+        /* We don't support overriding the app secret. */
+        if (mConfiguredFromApp) {
+            AppCenterLog.warn(LOG_TAG, "App Center may only be configured once.");
+            return false;
+        }
+        mConfiguredFromApp = true;
 
-            /* We don't support overriding the app secret. */
-            if (mAppSecret != null || mTransmissionTargetToken != null) {
-                AppCenterLog.warn(LOG_TAG, "App Center may only be configured once.");
-                return false;
-            }
+        /* A null secret is still valid since some services don't require it. */
+        if (secretString != null && !secretString.isEmpty()) {
 
             /* Init parsing, the app secret string can contain other secrets.  */
-            String[] pairs = appSecret.split(PAIR_DELIMITER);
+            String[] pairs = secretString.split(PAIR_DELIMITER);
 
             /* Split by pairs. */
             for (String pair : pairs) {
@@ -775,7 +784,7 @@ public class AppCenter {
     }
 
     private void configureAndStartServices(Application application, String appSecret, boolean startFromApp, Class<? extends AppCenterService>[] services) {
-        boolean configuredSuccessfully = instanceConfigure(application, appSecret);
+        boolean configuredSuccessfully = instanceConfigure(application, appSecret, startFromApp);
         if (configuredSuccessfully) {
             startServices(startFromApp, services);
         }

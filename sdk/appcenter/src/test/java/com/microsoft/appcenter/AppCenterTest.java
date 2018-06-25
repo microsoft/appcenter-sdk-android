@@ -810,13 +810,36 @@ public class AppCenterTest {
     @Test
     public void nullAppSecretTest() {
         AppCenter.start(mApplication, null, DummyService.class);
-        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), isNull(String.class), eq(true));
+        testNullOrEmptySecretString();
     }
 
     @Test
     public void emptyAppSecretTest() {
         AppCenter.start(mApplication, "", DummyService.class);
+        testNullOrEmptySecretString();
+    }
+
+    private void testNullOrEmptySecretString() {
+
+        /* App Center is configured that way. */
+        assertTrue(AppCenter.isConfigured());
+
+        /* Verify service started with null secrets from application. */
         verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), isNull(String.class), eq(true));
+
+        /* We must not be able to reconfigure app secret from null/empty state. */
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class, AnotherDummyService.class);
+        AppCenter.start(mApplication, null, DummyService.class, AnotherDummyService.class);
+        AppCenter.start(mApplication, "", DummyService.class, AnotherDummyService.class);
+
+        /* Verify start not called again (1 total call). */
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), anyString(), anyString(), anyBoolean());
+
+        /* And not updated either. */
+        verify(DummyService.getInstance(), never()).onConfigurationUpdated(anyString(), anyString());
+
+        /* Verify the second service was not started as was part of second secret configuration. */
+        verify(AnotherDummyService.getInstance(), never()).onStarted(any(Context.class), any(Channel.class), anyString(), anyString(), anyBoolean());
     }
 
     @Test
