@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -518,6 +519,9 @@ public class AnalyticsTest {
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
         assertNotNull(target);
 
+        /* Getting a reference to the same target a second time actually returns the same. */
+        assertSame(target, Analytics.getTransmissionTarget("token"));
+
         /* Track event with default transmission target. */
         Analytics.trackEvent("name");
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
@@ -557,8 +561,8 @@ public class AnalyticsTest {
         }), anyString());
         reset(channel);
 
-        /* Track event via transmission target method with properties. */
-        target.trackEvent("name", new HashMap<String, String>() {{
+        /* Track event via another transmission target method with properties. */
+        Analytics.getTransmissionTarget("token2").trackEvent("name", new HashMap<String, String>() {{
             put("valid", "valid");
         }});
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
@@ -568,7 +572,7 @@ public class AnalyticsTest {
                 if (item instanceof EventLog) {
                     EventLog eventLog = (EventLog) item;
                     boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties().size() == 1 && "valid".equals(eventLog.getProperties().get("valid"));
-                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token");
+                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token2");
                     return nameAndPropertiesMatch && tokenMatch;
                 }
                 return false;
@@ -577,7 +581,7 @@ public class AnalyticsTest {
     }
 
     @Test
-    public void appLevelFeatures() {
+    public void appOnlyFeatures() {
 
         /* Start from library. */
         Analytics analytics = Analytics.getInstance();
@@ -585,34 +589,46 @@ public class AnalyticsTest {
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, null, null, false);
 
-        /* Session tracker not initialized. No page tracking. */
+        /* Session tracker not initialized. */
         verify(channel, never()).addListener(isA(SessionTracker.class));
-        analytics.onActivityResumed(new SomeScreen());
-        ArgumentMatcher<Log> matcher = new ArgumentMatcher<Log>() {
 
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof PageLog) {
-                    PageLog pageLog = (PageLog) item;
-                    return "SomeScreen".equals(pageLog.getName());
-                }
-                return false;
-            }
-        };
-        verify(channel, never()).enqueue(argThat(matcher), eq(analytics.getGroupName()));
+        /* No page tracking either. */
+        SomeScreen activity = new SomeScreen();
+        analytics.onActivityResumed(activity);
+        analytics.onActivityPaused(activity);
+        analytics.onActivityResumed(new MyActivity());
+        verify(channel, never()).enqueue(isA(StartSessionLog.class), eq(analytics.getGroupName()));
+        verify(channel, never()).enqueue(isA(PageLog.class), eq(analytics.getGroupName()));
 
         /* Even when switching states. */
         Analytics.setEnabled(false);
         Analytics.setEnabled(true);
         verify(channel, never()).addListener(isA(SessionTracker.class));
-        verify(channel, never()).enqueue(argThat(matcher), eq(analytics.getGroupName()));
+        verify(channel, never()).enqueue(isA(StartSessionLog.class), eq(analytics.getGroupName()));
+        verify(channel, never()).enqueue(isA(PageLog.class), eq(analytics.getGroupName()));
 
         /* Now start app, no secret needed. */
-        analytics.onStarted(mock(Context.class), channel, null, null, true);
+        analytics.onConfigurationUpdated(null, null);
 
-        /* Session tracker is started now. And page tracked. */
+        /* Session tracker is started now. */
         verify(channel).addListener(isA(SessionTracker.class));
-        verify(channel).enqueue(argThat(matcher), eq(analytics.getGroupName()));
+        verify(channel).enqueue(isA(StartSessionLog.class), anyString());
+
+        /* Verify last page tracked as still in foreground. */
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof PageLog) {
+                    PageLog pageLog = (PageLog) item;
+                    return "My".equals(pageLog.getName());
+                }
+                return false;
+            }
+        }), eq(analytics.getGroupName()));
+
+        /* Check that was the only page sent. */
+        verify(channel).enqueue(isA(PageLog.class), eq(analytics.getGroupName()));
 
         /* Session tracker removed if disabled. */
         Analytics.setEnabled(false);
@@ -621,7 +637,8 @@ public class AnalyticsTest {
         /* And added again on enabling again. Page tracked again. */
         Analytics.setEnabled(true);
         verify(channel, times(2)).addListener(isA(SessionTracker.class));
-        verify(channel, times(2)).enqueue(argThat(matcher), eq(analytics.getGroupName()));
+        verify(channel, times(2)).enqueue(isA(StartSessionLog.class), eq(analytics.getGroupName()));
+        verify(channel, times(2)).enqueue(isA(PageLog.class), eq(analytics.getGroupName()));
     }
 
     /**
