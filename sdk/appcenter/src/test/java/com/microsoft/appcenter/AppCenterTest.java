@@ -1503,6 +1503,29 @@ public class AppCenterTest {
         verify(mChannel, never()).setAppSecret(anyString());
     }
 
+    @Test
+    public void startFromLibraryDoesNotStartFromApp() {
+
+        /* Start one service from app with both secrets. */
+        String secret = DUMMY_TARGET_TOKEN_STRING + PAIR_DELIMITER + DUMMY_APP_SECRET;
+        AppCenter.start(mApplication, secret, AnotherDummyService.class);
+
+        /* Start another from library. */
+        AppCenter.startFromLibrary(mApplication, DummyService.class);
+
+        /* Verify second service started without secrets with library flag. */
+        verify(DummyService.getInstance()).onStarted(mApplication, mChannel, null, null, false);
+
+        /* Now start from app. */
+        AppCenter.start(DummyService.class);
+
+        /* It should update. */
+        verify(DummyService.getInstance()).onConfigurationUpdated(DUMMY_APP_SECRET, DUMMY_TRANSMISSION_TARGET_TOKEN);
+
+        /* And not call onStarted again (verify 1 total call). */
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), anyString(), anyString(), anyBoolean());
+    }
+
     private static class DummyService extends AbstractAppCenterService {
 
         private static DummyService sharedInstance;

@@ -689,7 +689,7 @@ public class AppCenter {
                         startedServices.add(serviceInstance);
 
                         /* Keep track of services started from a library before the app has started the services. */
-                        if (mAppSecret == null && mTransmissionTargetToken == null && !startFromApp) {
+                        if (!startFromApp) {
                             mServicesStartedFromLibrary.add(serviceInstance);
                         }
                     }
@@ -730,8 +730,13 @@ public class AppCenter {
             if (!enabled && service.isInstanceEnabled()) {
                 service.setInstanceEnabled(false);
             }
-            service.onStarted(mApplication, mChannel, mAppSecret, mTransmissionTargetToken, startFromApp);
-            AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
+            if (startFromApp) {
+                service.onStarted(mApplication, mChannel, mAppSecret, mTransmissionTargetToken, true);
+                AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started from application.");
+            } else {
+                service.onStarted(mApplication, mChannel, null, null, false);
+                AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started from library.");
+            }
         }
 
         /* If starting from a library, we will send start service log later when app starts with an app secret. */
