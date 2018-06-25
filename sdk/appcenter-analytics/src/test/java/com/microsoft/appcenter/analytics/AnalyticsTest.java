@@ -270,7 +270,7 @@ public class AnalyticsTest {
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, null, null, false);
 
-        /* There is no default transmission target and no app secret so it must not enqueue. */
+        /* Static track call forbidden if app didn't start Analytics. */
         Analytics.trackEvent("eventName");
         verify(channel, never()).enqueue(isA(EventLog.class), anyString());
 

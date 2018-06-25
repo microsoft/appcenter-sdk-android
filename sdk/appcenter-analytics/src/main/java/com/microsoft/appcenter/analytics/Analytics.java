@@ -445,7 +445,7 @@ public class Analytics extends AbstractAppCenterService {
         /* If we enabled the service. */
         if (enabled) {
 
-            /* Check if we have an app secret and enable corresponding features. */
+            /* Check if service started at application level and enable corresponding features. */
             startAppLevelFeatures();
         }
 
@@ -506,6 +506,8 @@ public class Analytics extends AbstractAppCenterService {
 
             @Override
             public void run() {
+
+                /* This flag is always read/written in the background thread. */
                 if (mStartedFromApp) {
                     queuePage(name, propertiesCopy);
                 } else {
