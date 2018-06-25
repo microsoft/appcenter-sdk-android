@@ -263,6 +263,22 @@ public class AnalyticsTest {
     }
 
     @Test
+    public void testTrackEventFromLibrary() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, null, null, false);
+
+        /* There is no default transmission target so it enqueues but it will be filtered out. */
+        Analytics.trackEvent("eventName");
+        verify(channel).enqueue(any(Log.class), anyString());
+
+        /* It works from a target. */
+        Analytics.getTransmissionTarget("t").trackEvent("eventName");
+        verify(channel, times(2)).enqueue(any(Log.class), anyString());
+    }
+
+    @Test
     public void testTrackPage() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
@@ -270,6 +286,18 @@ public class AnalyticsTest {
         analytics.onStarted(mock(Context.class), channel, "", null, true);
         Analytics.trackEvent("pageName");
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
+    }
+
+    @Test
+    public void testTrackPageFromLibrary() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+
+        /* There is no default transmission target so it enqueues but it will be filtered out. */
+        Analytics.trackEvent("pageName");
+        verify(channel).enqueue(any(Log.class), anyString());
     }
 
     @Test
@@ -473,23 +501,39 @@ public class AnalyticsTest {
     }
 
     @Test
-    public void testTrackEventWithTransmissionTarget() {
+    public void trackEventWithTransmissionTargetFromApp() {
+        testTrackEventWithTransmissionTarget("defaultToken", true);
+    }
+
+    @Test
+    public void trackEventWithTransmissionTargetFromLibrary() {
+        testTrackEventWithTransmissionTarget(null, false);
+    }
+
+    private void testTrackEventWithTransmissionTarget(final String defaultToken, boolean startFromApp) {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, null, "token", true);
+        analytics.onStarted(mock(Context.class), channel, null, defaultToken, startFromApp);
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
         assertNotNull(target);
 
-        /* Track event with transmission target. */
-        Analytics.trackEvent("name", target);
+        /* Track event with default transmission target. */
+        Analytics.trackEvent("name");
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
             public boolean matches(Object item) {
                 if (item instanceof EventLog) {
                     EventLog eventLog = (EventLog) item;
-                    return eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                    boolean tokenMatch;
+                    if (defaultToken != null) {
+                        tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains(defaultToken);
+                    } else {
+                        tokenMatch = eventLog.getTransmissionTargetTokens().isEmpty();
+                    }
+                    return nameAndPropertiesMatch && tokenMatch;
                 }
                 return false;
             }
@@ -504,7 +548,9 @@ public class AnalyticsTest {
             public boolean matches(Object item) {
                 if (item instanceof EventLog) {
                     EventLog eventLog = (EventLog) item;
-                    return eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token");
+                    return nameAndPropertiesMatch && tokenMatch;
                 }
                 return false;
             }
@@ -521,7 +567,9 @@ public class AnalyticsTest {
             public boolean matches(Object item) {
                 if (item instanceof EventLog) {
                     EventLog eventLog = (EventLog) item;
-                    return eventLog.getName().equals("name") && eventLog.getProperties().size() == 1;
+                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties().size() == 1 && "valid".equals(eventLog.getProperties().get("valid"));
+                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token");
+                    return nameAndPropertiesMatch && tokenMatch;
                 }
                 return false;
             }

@@ -584,7 +584,6 @@ public class Analytics extends AbstractAppCenterService {
 
     @Override
     public void onConfigurationUpdated(String appSecret, String transmissionTargetToken) {
-        super.onConfigurationUpdated(appSecret, transmissionTargetToken);
         mStartedFromApp = true;
         startAppLevelFeatures();
         setDefaultTransmissionTarget(transmissionTargetToken);
