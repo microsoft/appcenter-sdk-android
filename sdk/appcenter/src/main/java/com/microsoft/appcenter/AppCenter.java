@@ -2,6 +2,7 @@ package com.microsoft.appcenter;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -28,7 +29,6 @@ import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
-import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
@@ -40,8 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
@@ -101,11 +99,6 @@ public class AppCenter {
     static final String TRANSMISSION_TARGET_TOKEN_KEY = "target";
 
     /**
-     * Shutdown timeout in millis.
-     */
-    private static final int SHUTDOWN_TIMEOUT = 5000;
-
-    /**
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
@@ -142,14 +135,19 @@ public class AppCenter {
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
 
     /**
-     * Configured services.
+     * Started services for which the log isn't sent yet.
+     */
+    private final List<String> mStartedServicesNamesToLog = new ArrayList<>();
+
+    /**
+     * All started services.
      */
     private Set<AppCenterService> mServices;
 
     /**
-     * Started services for which the log isn't sent yet.
+     * All started services from library without an app secret.
      */
-    private List<String> mStartedServicesNamesToLog;
+    private Set<AppCenterService> mServicesStartedFromLibrary;
 
     /**
      * Log serializer.
@@ -176,8 +174,12 @@ public class AppCenter {
      */
     private AppCenterHandler mAppCenterHandler;
 
-    @VisibleForTesting
-    static synchronized AppCenter getInstance() {
+    /**
+     * Get unique instance.
+     *
+     * @return unique instance.
+     */
+    public static synchronized AppCenter getInstance() {
         if (sInstance == null) {
             sInstance = new AppCenter();
         }
@@ -283,7 +285,7 @@ public class AppCenter {
      */
     @SafeVarargs
     public static void start(Class<? extends AppCenterService>... services) {
-        getInstance().startServices(services);
+        getInstance().startServices(true, services);
     }
 
     /**
@@ -297,6 +299,23 @@ public class AppCenter {
     @SafeVarargs
     public static void start(Application application, String appSecret, Class<? extends AppCenterService>... services) {
         getInstance().configureAndStartServices(application, appSecret, services);
+    }
+
+    /**
+     * Start services from a library. This does not configure app secret and can be called multiple
+     * times without side effect.
+     * <p>
+     * This will not start the service at app level, it will enable the service only for the library.
+     * <p>
+     * Please note that not all services support this start mode,
+     * you can refer to the documentation of each service to know if this is supported in libraries.
+     *
+     * @param context  Context.
+     * @param services List of services to use.
+     */
+    @SafeVarargs
+    public static void startFromLibrary(Context context, Class<? extends AppCenterService>... services) {
+        getInstance().startInstanceFromLibrary(context, services);
     }
 
     /**
@@ -435,24 +454,18 @@ public class AppCenter {
     /**
      * Internal SDK configuration.
      *
-     * @param application application context.
-     * @param appSecret   a unique and secret key used to identify the application.
-     *                    It can be null since a transmission target token can be set later.
+     * @param application  application context.
+     * @param secretString a unique and secret key used to identify the application.
+     *                     It can be null since a transmission target token can be set later.
      * @return true if configuration was successful, false otherwise.
      */
     /* UncaughtExceptionHandler is used by PowerMock but lint does not detect it. */
     @SuppressLint("VisibleForTests")
-    private synchronized boolean instanceConfigure(Application application, String appSecret) {
+    private synchronized boolean instanceConfigure(Application application, String secretString) {
 
         /* Check parameters. */
         if (application == null) {
             AppCenterLog.error(LOG_TAG, "application may not be null");
-            return false;
-        }
-
-        /* Ignore call if already configured. */
-        if (mHandler != null) {
-            AppCenterLog.warn(LOG_TAG, "App Center may only be configured once.");
             return false;
         }
 
@@ -461,11 +474,75 @@ public class AppCenter {
             AppCenterLog.setLogLevel(Log.WARN);
         }
 
+        /* Configure app secret and/or transmission target. */
+        String previousAppSecret = mAppSecret;
+        if (!configureSecretString(secretString)) {
+            return false;
+        }
+
+        /* Skip configuration of global states if already done. */
+        if (mHandler != null) {
+
+            /* If app started after library with an app secret, set app secret on channel now. */
+            if (mAppSecret != null && !mAppSecret.equals(previousAppSecret)) {
+                mHandler.post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        mChannel.setAppSecret(mAppSecret);
+                    }
+                });
+            }
+            return true;
+        }
+
         /* Store state. */
         mApplication = application;
 
+        /* Start looper. */
+        mHandlerThread = new HandlerThread("AppCenter.Looper");
+        mHandlerThread.start();
+        mHandler = new Handler(mHandlerThread.getLooper());
+        mAppCenterHandler = new AppCenterHandler() {
+
+            @Override
+            public void post(@NonNull Runnable runnable, Runnable disabledRunnable) {
+                handlerAppCenterOperation(runnable, disabledRunnable);
+            }
+        };
+
+        /* The rest of initialization is done in background as we need storage. */
+        mServices = new HashSet<>();
+        mServicesStartedFromLibrary = new HashSet<>();
+        mHandler.post(new Runnable() {
+
+            @Override
+            public void run() {
+                finishConfiguration();
+            }
+        });
+        AppCenterLog.info(LOG_TAG, "App Center SDK configured successfully.");
+        return true;
+    }
+
+
+    /**
+     * Configure app secret.
+     *
+     * @param appSecret a unique and secret key used to identify the application.
+     *                  It can be null since a transmission target token can be set later.
+     * @return false if app secret already configured or invalid.
+     */
+    private boolean configureSecretString(String appSecret) {
+
         /* A null secret is still valid since transmission target token can be set later. */
         if (appSecret != null && !appSecret.isEmpty()) {
+
+            /* We don't support overriding the app secret. */
+            if (mAppSecret != null || mTransmissionTargetToken != null) {
+                AppCenterLog.warn(LOG_TAG, "App Center may only be configured once.");
+                return false;
+            }
 
             /* Init parsing, the app secret string can contain other secrets.  */
             String[] pairs = appSecret.split(PAIR_DELIMITER);
@@ -494,29 +571,6 @@ public class AppCenter {
                 }
             }
         }
-
-        /* Start looper. */
-        mHandlerThread = new HandlerThread("AppCenter.Looper");
-        mHandlerThread.start();
-        mHandler = new Handler(mHandlerThread.getLooper());
-        mAppCenterHandler = new AppCenterHandler() {
-
-            @Override
-            public void post(@NonNull Runnable runnable, Runnable disabledRunnable) {
-                handlerAppCenterOperation(runnable, disabledRunnable);
-            }
-        };
-
-        /* The rest of initialization is done in background as we need storage. */
-        mServices = new HashSet<>();
-        mHandler.post(new Runnable() {
-
-            @Override
-            public void run() {
-                finishConfiguration();
-            }
-        });
-        AppCenterLog.info(LOG_TAG, "App Center SDK configured successfully.");
         return true;
     }
 
@@ -565,12 +619,6 @@ public class AppCenter {
         /* Get enabled state. */
         boolean enabled = isInstanceEnabled();
 
-        /* Init uncaught exception handler. */
-        mUncaughtExceptionHandler = new UncaughtExceptionHandler();
-        if (enabled) {
-            mUncaughtExceptionHandler.register();
-        }
-
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
@@ -582,14 +630,22 @@ public class AppCenter {
             mChannel.setLogUrl(mLogUrl);
         }
         mChannel.addListener(new OneCollectorChannelListener(mApplication, mChannel, mLogSerializer, IdHelper.getInstallId()));
+
+        /* Disable listening network if we start while being disabled. */
         if (!enabled) {
             NetworkStateHelper.getSharedInstance(mApplication).close();
         }
-        AppCenterLog.debug(LOG_TAG, "App Center storage initialized.");
+
+        /* Init uncaught exception handler. */
+        mUncaughtExceptionHandler = new UncaughtExceptionHandler(mHandler, mChannel);
+        if (enabled) {
+            mUncaughtExceptionHandler.register();
+        }
+        AppCenterLog.debug(LOG_TAG, "App Center initialized.");
     }
 
     @SafeVarargs
-    private final synchronized void startServices(Class<? extends AppCenterService>... services) {
+    private final synchronized void startServices(final boolean startFromApp, Class<? extends AppCenterService>... services) {
         if (services == null) {
             AppCenterLog.error(LOG_TAG, "Cannot start services, services array is null. Failed to start services.");
             return;
@@ -605,6 +661,7 @@ public class AppCenter {
 
         /* Start each service and collect info for send start service log. */
         final Collection<AppCenterService> startedServices = new ArrayList<>();
+        final Collection<String> startedServicesNamesToLog = new ArrayList<>();
         for (Class<? extends AppCenterService> service : services) {
             if (service == null) {
                 AppCenterLog.warn(LOG_TAG, "Skipping null service, please check your varargs/array does not contain any null reference.");
@@ -612,7 +669,14 @@ public class AppCenter {
                 try {
                     AppCenterService serviceInstance = (AppCenterService) service.getMethod("getInstance").invoke(null);
                     if (mServices.contains(serviceInstance)) {
-                        AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
+                        if (startFromApp) {
+                            if (mServicesStartedFromLibrary.contains(serviceInstance)) {
+                                startedServicesNamesToLog.add(serviceInstance.getServiceName());
+                                mServicesStartedFromLibrary.remove(serviceInstance);
+                            } else {
+                                AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
+                            }
+                        }
                     } else if (shouldDisable(serviceInstance.getServiceName())) {
                         AppCenterLog.debug(LOG_TAG, "Instrumentation variable to disable service has been set; not starting service " + service.getName() + ".");
                     } else if (mAppSecret == null && serviceInstance.isAppSecretRequired()) {
@@ -624,6 +688,16 @@ public class AppCenter {
                         mApplication.registerActivityLifecycleCallbacks(serviceInstance);
                         mServices.add(serviceInstance);
                         startedServices.add(serviceInstance);
+
+                        /* Keep track of services started from a library before the app has started the services. */
+                        if (mAppSecret == null && mTransmissionTargetToken == null && !startFromApp) {
+                            mServicesStartedFromLibrary.add(serviceInstance);
+                        }
+
+                        /* Otherwise start service log will be sent now. */
+                        else {
+                            startedServicesNamesToLog.add(serviceInstance.getServiceName());
+                        }
                     }
                 } catch (Exception e) {
                     AppCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
@@ -631,24 +705,19 @@ public class AppCenter {
             }
         }
 
-        /* Finish starting in background. */
-        if (startedServices.size() > 0) {
+        /* Post to ensure service started after storage initialized. */
+        mHandler.post(new Runnable() {
 
-            /* Post to ensure service started after storage initialized. */
-            mHandler.post(new Runnable() {
-
-                @Override
-                public void run() {
-                    finishStartServices(startedServices);
-                }
-            });
-        }
+            @Override
+            public void run() {
+                finishStartServices(startedServices, startedServicesNamesToLog, startFromApp);
+            }
+        });
     }
 
     @WorkerThread
-    private void finishStartServices(Iterable<AppCenterService> services) {
+    private void finishStartServices(Iterable<AppCenterService> services, Collection<String> startedServicesNamesToLog, boolean startFromApp) {
         boolean enabled = isInstanceEnabled();
-        List<String> serviceNames = new ArrayList<>();
         for (AppCenterService service : services) {
             Map<String, LogFactory> logFactories = service.getLogFactories();
             if (logFactories != null) {
@@ -661,35 +730,42 @@ public class AppCenter {
             }
             service.onStarted(mApplication, mAppSecret, mTransmissionTargetToken, mChannel);
             AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
-            serviceNames.add(service.getServiceName());
         }
-        sendStartServiceLog(serviceNames);
+        mStartedServicesNamesToLog.addAll(startedServicesNamesToLog);
+
+        /* If starting from a library, we will send start service log later when app starts with an app secret. */
+        if (startFromApp) {
+            sendStartServiceLog();
+        }
     }
 
     /**
      * Queue start service log.
-     *
-     * @param serviceNames the services to send.
      */
     @WorkerThread
-    private void sendStartServiceLog(List<String> serviceNames) {
-        if (isInstanceEnabled()) {
+    private void sendStartServiceLog() {
+        if (!mStartedServicesNamesToLog.isEmpty() && isInstanceEnabled()) {
+            List<String> allServiceNamesToStart = new ArrayList<>(mStartedServicesNamesToLog);
+            mStartedServicesNamesToLog.clear();
             StartServiceLog startServiceLog = new StartServiceLog();
-            startServiceLog.setServices(serviceNames);
+            startServiceLog.setServices(allServiceNamesToStart);
             mChannel.enqueue(startServiceLog, CORE_GROUP);
-        } else {
-            if (mStartedServicesNamesToLog == null) {
-                mStartedServicesNamesToLog = new ArrayList<>();
-            }
-            mStartedServicesNamesToLog.addAll(serviceNames);
         }
     }
 
-    @SafeVarargs
-    private final synchronized void configureAndStartServices(Application application, String appSecret, Class<? extends AppCenterService>... services) {
+    private synchronized void configureAndStartServices(Application application, String appSecret, Class<? extends AppCenterService>[] services) {
+        configureAndStartServices(application, appSecret, true, services);
+    }
+
+    private synchronized void startInstanceFromLibrary(Context context, Class<? extends AppCenterService>[] services) {
+        Application application = context != null ? (Application) context.getApplicationContext() : null;
+        configureAndStartServices(application, null, false, services);
+    }
+
+    private void configureAndStartServices(Application application, String appSecret, boolean startFromApp, Class<? extends AppCenterService>[] services) {
         boolean configuredSuccessfully = instanceConfigure(application, appSecret);
         if (configuredSuccessfully) {
-            startServices(services);
+            startServices(startFromApp, services);
         }
     }
 
@@ -735,7 +811,7 @@ public class AppCenter {
      * This can be called only after storage has been initialized in background.
      * However after that it can be used from U.I. thread without breaking strict mode.
      */
-    private boolean isInstanceEnabled() {
+    boolean isInstanceEnabled() {
         return StorageHelper.PreferencesStorage.getBoolean(PrefStorageConstants.KEY_ENABLED, true);
     }
 
@@ -768,9 +844,8 @@ public class AppCenter {
         }
 
         /* Send started services. */
-        if (mStartedServicesNamesToLog != null && switchToEnabled) {
-            sendStartServiceLog(mStartedServicesNamesToLog);
-            mStartedServicesNamesToLog = null;
+        if (!mStartedServicesNamesToLog.isEmpty() && switchToEnabled) {
+            sendStartServiceLog();
         }
 
         /* Apply change to services. */
@@ -857,9 +932,8 @@ public class AppCenter {
         return mUncaughtExceptionHandler;
     }
 
-    @SuppressWarnings("SameParameterValue")
     @VisibleForTesting
-    void setChannel(Channel channel) {
+    public void setChannel(Channel channel) {
         mChannel = channel;
     }
 
@@ -881,58 +955,6 @@ public class AppCenter {
         } catch (LinkageError | IllegalStateException e) {
             AppCenterLog.debug(LOG_TAG, "Cannot read instrumentation variables in a non-test environment.");
             return false;
-        }
-    }
-
-    @VisibleForTesting
-    class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
-
-        private Thread.UncaughtExceptionHandler mDefaultUncaughtExceptionHandler;
-
-        @Override
-        public void uncaughtException(Thread thread, Throwable exception) {
-            if (isInstanceEnabled()) {
-
-                /* Wait channel to finish saving other logs in background. */
-                final Semaphore semaphore = new Semaphore(0);
-                mHandler.post(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (mChannel != null) {
-                            mChannel.shutdown();
-                        }
-                        AppCenterLog.debug(LOG_TAG, "Channel completed shutdown.");
-                        semaphore.release();
-                    }
-                });
-                try {
-                    if (!semaphore.tryAcquire(SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS)) {
-                        AppCenterLog.error(LOG_TAG, "Timeout waiting for looper tasks to complete.");
-                    }
-                } catch (InterruptedException e) {
-                    AppCenterLog.warn(LOG_TAG, "Interrupted while waiting looper to flush.", e);
-                }
-            }
-            if (mDefaultUncaughtExceptionHandler != null) {
-                mDefaultUncaughtExceptionHandler.uncaughtException(thread, exception);
-            } else {
-                ShutdownHelper.shutdown(10);
-            }
-        }
-
-        @VisibleForTesting
-        Thread.UncaughtExceptionHandler getDefaultUncaughtExceptionHandler() {
-            return mDefaultUncaughtExceptionHandler;
-        }
-
-        void register() {
-            mDefaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
-            Thread.setDefaultUncaughtExceptionHandler(this);
-        }
-
-        void unregister() {
-            Thread.setDefaultUncaughtExceptionHandler(mDefaultUncaughtExceptionHandler);
         }
     }
 }
