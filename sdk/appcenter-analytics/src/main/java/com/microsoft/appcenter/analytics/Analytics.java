@@ -80,6 +80,11 @@ public class Analytics extends AbstractAppCenterService {
     private WeakReference<Activity> mCurrentActivity;
 
     /**
+     * True if started from app, false if started only from a library or not yet started at all.
+     */
+    private boolean mStartedFromApp;
+
+    /**
      * Session tracker.
      */
     private SessionTracker mSessionTracker;
@@ -99,6 +104,7 @@ public class Analytics extends AbstractAppCenterService {
      * TODO the backend does not support pages yet so the default value would be true after the service becomes public.
      */
     private boolean mAutoPageTrackingEnabled = false;
+
 
     /**
      * Init.
@@ -441,7 +447,7 @@ public class Analytics extends AbstractAppCenterService {
         if (enabled) {
 
             /* Check if we have an app secret and enable corresponding features. */
-            enableFeaturesRequiringAppSecret();
+            startAppLevelFeatures();
         }
 
         /* On disabling service. */
@@ -460,10 +466,13 @@ public class Analytics extends AbstractAppCenterService {
         }
     }
 
-    private void enableFeaturesRequiringAppSecret() {
+    /**
+     * Start features at app level, this is not done if only libraries started the service.
+     */
+    private void startAppLevelFeatures() {
 
-        /* If app secret configured we can enable session tracking. */
-        if (mAppSecret != null) {
+        /* Share the started from app check between all calls. */
+        if (mStartedFromApp) {
 
             /* Enable filtering logs. */
             mAnalyticsValidator = new AnalyticsValidator();
@@ -567,15 +576,17 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, String appSecret, String transmissionTargetToken, @NonNull Channel channel) {
-        super.onStarted(context, appSecret, transmissionTargetToken, channel);
+    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startFromApp) {
+        mStartedFromApp = startFromApp;
+        super.onStarted(context, channel, appSecret, transmissionTargetToken, startFromApp);
         setDefaultTransmissionTarget(transmissionTargetToken);
     }
 
     @Override
     public void onConfigurationUpdated(String appSecret, String transmissionTargetToken) {
         super.onConfigurationUpdated(appSecret, transmissionTargetToken);
-        enableFeaturesRequiringAppSecret();
+        mStartedFromApp = true;
+        startAppLevelFeatures();
         setDefaultTransmissionTarget(transmissionTargetToken);
     }
 

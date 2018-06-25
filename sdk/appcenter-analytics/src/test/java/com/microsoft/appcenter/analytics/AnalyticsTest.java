@@ -179,7 +179,7 @@ public class AnalyticsTest {
         /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", null, channel);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
 
         /* Test resume/pause. */
         analytics.onActivityResumed(activity);
@@ -220,7 +220,7 @@ public class AnalyticsTest {
         assertFalse(Analytics.isAutoPageTrackingEnabled());
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", null, channel);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         analytics.onActivityResumed(new MyActivity());
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -257,7 +257,7 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", null, channel);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         Analytics.trackEvent("eventName");
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
     }
@@ -267,7 +267,7 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", null, channel);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         Analytics.trackEvent("pageName");
         verify(channel, times(1)).enqueue(any(Log.class), anyString());
     }
@@ -285,7 +285,7 @@ public class AnalyticsTest {
         /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", null, channel);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         verify(channel).removeGroup(eq(analytics.getGroupName()));
         verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         verify(channel).addListener(isA(SessionTracker.class));
@@ -349,7 +349,7 @@ public class AnalyticsTest {
         /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", null, channel);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         verify(channel, never()).removeListener(any(Channel.Listener.class));
         verify(channel, never()).addListener(any(Channel.Listener.class));
     }
@@ -364,7 +364,7 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", null, channel);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         Analytics.setEnabled(false);
 
         /* App in foreground: no log yet, we are disabled. */
@@ -409,7 +409,7 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", null, channel);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         Analytics.setEnabled(false);
 
         /* App in foreground: no log yet, we are disabled. */
@@ -429,7 +429,7 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), "", null, channel);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         final ArgumentCaptor<Channel.GroupListener> captor = ArgumentCaptor.forClass(Channel.GroupListener.class);
         verify(channel).addGroup(anyString(), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), captor.capture());
         doAnswer(new Answer<Void>() {
@@ -477,7 +477,7 @@ public class AnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), null, "token", channel);
+        analytics.onStarted(mock(Context.class), channel, null, "token", true);
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
         assertNotNull(target);
 

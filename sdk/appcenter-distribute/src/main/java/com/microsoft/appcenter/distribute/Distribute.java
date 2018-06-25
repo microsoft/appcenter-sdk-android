@@ -141,6 +141,11 @@ public class Distribute extends AbstractAppCenterService {
     private Context mContext;
 
     /**
+     * Application secret.
+     */
+    private String mAppSecret;
+
+    /**
      * Package info.
      */
     private PackageInfo mPackageInfo;
@@ -396,8 +401,9 @@ public class Distribute extends AbstractAppCenterService {
     private static final String DISTRIBUTE_GROUP = "group_distribute";
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, String appSecret, String transmissionTargetToken, @NonNull Channel channel) {
+    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startFromApp) {
         mContext = context;
+        mAppSecret = appSecret;
         mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
         try {
             mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
@@ -409,7 +415,7 @@ public class Distribute extends AbstractAppCenterService {
          * Apply enabled state is called by this method, we need fields to be initialized before.
          * So call super method at the end.
          */
-        super.onStarted(context, appSecret, transmissionTargetToken, channel);
+        super.onStarted(context, channel, appSecret, transmissionTargetToken, startFromApp);
     }
 
     /**

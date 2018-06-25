@@ -730,7 +730,7 @@ public class AppCenter {
             if (!enabled && service.isInstanceEnabled()) {
                 service.setInstanceEnabled(false);
             }
-            service.onStarted(mApplication, mAppSecret, mTransmissionTargetToken, mChannel);
+            service.onStarted(mApplication, mChannel, mAppSecret, mTransmissionTargetToken, startFromApp);
             AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started.");
         }
 

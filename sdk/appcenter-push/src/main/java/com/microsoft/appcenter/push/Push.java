@@ -282,9 +282,9 @@ public class Push extends AbstractAppCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, String appSecret, String transmissionTargetToken, @NonNull Channel channel) {
+    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startFromApp) {
         mContext = context;
-        super.onStarted(context, appSecret, transmissionTargetToken, channel);
+        super.onStarted(context, channel, appSecret, transmissionTargetToken, startFromApp);
         if (FirebaseUtils.isFirebaseAvailable() && !mFirebaseAnalyticsEnabled) {
             AppCenterLog.debug(LOG_TAG, "Disabling Firebase analytics collection by default.");
             setFirebaseAnalyticsEnabled(context, false);

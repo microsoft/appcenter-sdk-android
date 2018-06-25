@@ -256,6 +256,6 @@ public class AbstractDistributeTest {
 
     void start() {
         Distribute.getInstance().onStarting(mAppCenterHandler);
-        Distribute.getInstance().onStarted(mContext, "a", null, mChannel);
+        Distribute.getInstance().onStarted(mContext, mChannel, "a", null, true);
     }
 }
