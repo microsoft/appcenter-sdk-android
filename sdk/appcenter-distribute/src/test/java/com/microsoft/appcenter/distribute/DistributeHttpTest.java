@@ -140,7 +140,7 @@ public class DistributeHttpTest extends AbstractDistributeTest {
 
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
         Distribute.getInstance().onStarting(mAppCenterHandler);
-        Distribute.getInstance().onStarted(mContext, appSecret, null, mock(Channel.class));
+        Distribute.getInstance().onStarted(mContext, mock(Channel.class), appSecret, null, true);
         final ServiceCall call = mock(ServiceCall.class);
         final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
         mockStatic(NetworkStateHelper.class);

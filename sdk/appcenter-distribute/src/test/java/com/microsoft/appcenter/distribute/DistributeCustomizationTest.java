@@ -46,7 +46,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
     private void start(Distribute distribute) {
         distribute.onStarting(mAppCenterHandler);
-        distribute.onStarted(mContext, "a", null, mock(Channel.class));
+        distribute.onStarted(mContext, mock(Channel.class), "a", null, true);
     }
 
     @Test
