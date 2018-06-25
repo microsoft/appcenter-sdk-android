@@ -414,6 +414,9 @@ public class AppCenterTest {
         List<String> services = new ArrayList<>();
         services.add(service.getServiceName());
         verify(mStartServiceLog).setServices(eq(services));
+
+        /* We don't support updating app secret that way. */
+        verify(service, never()).onConfigurationUpdated(anyString(), anyString());
     }
 
     @Test
