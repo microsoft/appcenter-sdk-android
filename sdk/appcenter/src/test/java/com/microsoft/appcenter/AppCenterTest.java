@@ -1253,6 +1253,10 @@ public class AppCenterTest {
         AppCenter.startFromLibrary(mApplication, DummyService.class, AnotherDummyService.class);
         AppCenter.startFromLibrary(mApplication, AnotherDummyService.class, DummyService.class);
 
+        /* Verify App Center is configured and enabled. */
+        assertTrue(AppCenter.isConfigured());
+        assertTrue(AppCenter.isEnabled().get());
+
         /* Verify only dummy service has been started once, as the other one doesn't support start from library. */
         assertEquals(1, AppCenter.getInstance().getServices().size());
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
@@ -1261,6 +1265,10 @@ public class AppCenterTest {
         verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
         verify(mChannel, never()).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
         verify(mChannel, never()).setAppSecret(anyString());
+
+        /* Verify state. */
+        assertTrue(DummyService.isEnabled().get());
+        assertFalse(AnotherDummyService.isEnabled().get());
 
         /* Start two services from app. */
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class, AnotherDummyService.class);
@@ -1281,6 +1289,9 @@ public class AppCenterTest {
         verify(AnotherDummyService.getInstance()).getLogFactories();
         verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), isNull(String.class), eq(true));
         verify(mApplication).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
+
+        /* And enabled. */
+        assertTrue(AnotherDummyService.isEnabled().get());
 
         /* Verify start service log is sent. */
         verify(mChannel).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
