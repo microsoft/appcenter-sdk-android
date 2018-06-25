@@ -254,51 +254,51 @@ public class AnalyticsTest {
     }
 
     @Test
-    public void testTrackEvent() {
+    public void trackEventFromApp() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
         Analytics.trackEvent("eventName");
-        verify(channel, times(1)).enqueue(any(Log.class), anyString());
+        verify(channel).enqueue(isA(EventLog.class), anyString());
     }
 
     @Test
-    public void testTrackEventFromLibrary() {
+    public void trackEventFromLibrary() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, null, null, false);
 
-        /* There is no default transmission target so it enqueues but it will be filtered out. */
+        /* There is no default transmission target and no app secret so it must not enqueue. */
         Analytics.trackEvent("eventName");
-        verify(channel).enqueue(any(Log.class), anyString());
+        verify(channel, never()).enqueue(isA(EventLog.class), anyString());
 
         /* It works from a target. */
         Analytics.getTransmissionTarget("t").trackEvent("eventName");
-        verify(channel, times(2)).enqueue(any(Log.class), anyString());
+        verify(channel).enqueue(isA(EventLog.class), anyString());
     }
 
     @Test
-    public void testTrackPage() {
+    public void trackPageFromApp() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
-        Analytics.trackEvent("pageName");
-        verify(channel, times(1)).enqueue(any(Log.class), anyString());
+        Analytics.trackPage("pageName");
+        verify(channel).enqueue(isA(PageLog.class), anyString());
     }
 
     @Test
-    public void testTrackPageFromLibrary() {
+    public void trackPageFromLibrary() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, false);
 
-        /* There is no default transmission target so it enqueues but it will be filtered out. */
-        Analytics.trackEvent("pageName");
-        verify(channel).enqueue(any(Log.class), anyString());
+        /* Page tracking does not work from library. */
+        Analytics.trackPage("pageName");
+        verify(channel, never()).enqueue(isA(PageLog.class), anyString());
     }
 
     @Test
@@ -524,24 +524,28 @@ public class AnalyticsTest {
 
         /* Track event with default transmission target. */
         Analytics.trackEvent("name");
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+        if (startFromApp) {
+            verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
-                    boolean tokenMatch;
-                    if (defaultToken != null) {
-                        tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains(defaultToken);
-                    } else {
-                        tokenMatch = eventLog.getTransmissionTargetTokens().isEmpty();
+                @Override
+                public boolean matches(Object item) {
+                    if (item instanceof EventLog) {
+                        EventLog eventLog = (EventLog) item;
+                        boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                        boolean tokenMatch;
+                        if (defaultToken != null) {
+                            tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains(defaultToken);
+                        } else {
+                            tokenMatch = eventLog.getTransmissionTargetTokens().isEmpty();
+                        }
+                        return nameAndPropertiesMatch && tokenMatch;
                     }
-                    return nameAndPropertiesMatch && tokenMatch;
+                    return false;
                 }
-                return false;
-            }
-        }), anyString());
+            }), anyString());
+        } else {
+            verify(channel, never()).enqueue(isA(EventLog.class), anyString());
+        }
         reset(channel);
 
         /* Track event via transmission target method. */

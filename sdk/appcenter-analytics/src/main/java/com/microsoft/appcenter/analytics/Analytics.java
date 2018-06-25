@@ -105,7 +105,6 @@ public class Analytics extends AbstractAppCenterService {
      */
     private boolean mAutoPageTrackingEnabled = false;
 
-
     /**
      * Init.
      */
@@ -469,6 +468,7 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Start features at app level, this is not done if only libraries started the service.
      */
+    @WorkerThread
     private void startAppLevelFeatures() {
 
         /* Share the started from app check between all calls. */
@@ -506,7 +506,11 @@ public class Analytics extends AbstractAppCenterService {
 
             @Override
             public void run() {
-                queuePage(name, propertiesCopy);
+                if (mStartedFromApp) {
+                    queuePage(name, propertiesCopy);
+                } else {
+                    AppCenterLog.error(LOG_TAG, "Cannot track page if not started from app.");
+                }
             }
         });
     }
@@ -543,6 +547,9 @@ public class Analytics extends AbstractAppCenterService {
                 AnalyticsTransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? mDefaultTransmissionTarget : transmissionTarget;
                 if (aTransmissionTarget != null) {
                     eventLog.addTransmissionTarget(aTransmissionTarget.getTransmissionTargetToken());
+                } else if (!mStartedFromApp) {
+                    AppCenterLog.error(LOG_TAG, "Cannot track event using Analytics.trackEvent if not started from app, please start from the application or use Analytics.getTransmissionTarget.");
+                    return;
                 }
                 mChannel.enqueue(eventLog, ANALYTICS_GROUP);
             }
@@ -592,6 +599,7 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Set a default transmission target if a token has been provided.
      */
+    @WorkerThread
     private void setDefaultTransmissionTarget(String transmissionTargetToken) {
         mDefaultTransmissionTarget = getInstanceTransmissionTarget(transmissionTargetToken);
     }
