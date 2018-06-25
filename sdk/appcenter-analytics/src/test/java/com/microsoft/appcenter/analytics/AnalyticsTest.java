@@ -576,6 +576,54 @@ public class AnalyticsTest {
         }), anyString());
     }
 
+    @Test
+    public void appLevelFeatures() {
+
+        /* Start from library. */
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, null, null, false);
+
+        /* Session tracker not initialized. No page tracking. */
+        verify(channel, never()).addListener(isA(SessionTracker.class));
+        analytics.onActivityResumed(new SomeScreen());
+        ArgumentMatcher<Log> matcher = new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof PageLog) {
+                    PageLog pageLog = (PageLog) item;
+                    return "SomeScreen".equals(pageLog.getName());
+                }
+                return false;
+            }
+        };
+        verify(channel, never()).enqueue(argThat(matcher), eq(analytics.getGroupName()));
+
+        /* Even when switching states. */
+        Analytics.setEnabled(false);
+        Analytics.setEnabled(true);
+        verify(channel, never()).addListener(isA(SessionTracker.class));
+        verify(channel, never()).enqueue(argThat(matcher), eq(analytics.getGroupName()));
+
+        /* Now start app, no secret needed. */
+        analytics.onStarted(mock(Context.class), channel, null, null, true);
+
+        /* Session tracker is started now. And page tracked. */
+        verify(channel).addListener(isA(SessionTracker.class));
+        verify(channel).enqueue(argThat(matcher), eq(analytics.getGroupName()));
+
+        /* Session tracker removed if disabled. */
+        Analytics.setEnabled(false);
+        verify(channel).removeListener(isA(SessionTracker.class));
+
+        /* And added again on enabling again. Page tracked again. */
+        Analytics.setEnabled(true);
+        verify(channel, times(2)).addListener(isA(SessionTracker.class));
+        verify(channel, times(2)).enqueue(argThat(matcher), eq(analytics.getGroupName()));
+    }
+
     /**
      * Activity with page name automatically resolving to "My" (no "Activity" suffix).
      */
