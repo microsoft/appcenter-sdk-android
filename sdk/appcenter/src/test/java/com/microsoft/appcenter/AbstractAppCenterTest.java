@@ -143,7 +143,7 @@ public class AbstractAppCenterTest {
         HandlerThread handlerThread = mock(HandlerThread.class);
         whenNew(HandlerThread.class).withAnyArguments().thenReturn(handlerThread);
         when(handlerThread.getLooper()).thenReturn(mock(Looper.class));
-        addArgumentToRegistry(AppCenter.DISABLE_SERVICES, null);
+        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_SERVICES, null);
 
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
         when(StorageHelper.PreferencesStorage.getBoolean(anyString(), eq(true))).thenReturn(true);
