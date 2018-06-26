@@ -121,8 +121,8 @@ public class AppCenterAndroidTest {
         }
 
         @Override
-        public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startFromApp) {
-            super.onStarted(context, channel, appSecret, transmissionTargetToken, startFromApp);
+        public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+            super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
 
             /* Check no dead lock if we do that. */
             mInstallId = AppCenter.getInstallId().get();

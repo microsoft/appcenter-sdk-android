@@ -585,9 +585,9 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startFromApp) {
-        mStartedFromApp = startFromApp;
-        super.onStarted(context, channel, appSecret, transmissionTargetToken, startFromApp);
+    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+        mStartedFromApp = startedFromApp;
+        super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         setDefaultTransmissionTarget(transmissionTargetToken);
     }
 

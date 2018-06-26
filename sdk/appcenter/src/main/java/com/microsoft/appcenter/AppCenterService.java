@@ -68,10 +68,10 @@ public interface AppCenterService extends Application.ActivityLifecycleCallbacks
      * @param channel                 channel.
      * @param appSecret               application secret.
      * @param transmissionTargetToken transmission target token.
-     * @param startFromApp            true if starting from app, false if starting from a library.
+     * @param startedFromApp          true if started from app, false if started from a library.
      */
     @WorkerThread
-    void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startFromApp);
+    void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp);
 
     /**
      * Called when service started from library without any secret and then the app starts the service again
