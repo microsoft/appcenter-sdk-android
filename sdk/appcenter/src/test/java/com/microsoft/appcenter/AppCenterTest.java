@@ -1552,6 +1552,26 @@ public class AppCenterTest {
         verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), anyString(), anyString(), anyBoolean());
     }
 
+    @Test
+    public void startFromAppDoesNotEnableStartingUnsupportedServicesFromLibrary() {
+
+        /* Start one service from app with both secrets. */
+        String secret = DUMMY_TARGET_TOKEN_STRING + PAIR_DELIMITER + DUMMY_APP_SECRET;
+        AppCenter.start(mApplication, secret, DummyService.class);
+
+        /* Start another from library that does not support that mode. */
+        AppCenter.startFromLibrary(mApplication, AnotherDummyService.class);
+
+        /* Verify second service not started. */
+        verify(AnotherDummyService.getInstance(), never()).onStarted(any(Context.class), any(Channel.class), anyString(), anyString(), anyBoolean());
+
+        /* Now start from app instead. */
+        AppCenter.start(AnotherDummyService.class);
+
+        /* It should work now. */
+        verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), eq(true));
+    }
+
     private static class DummyService extends AbstractAppCenterService {
 
         private static DummyService sharedInstance;

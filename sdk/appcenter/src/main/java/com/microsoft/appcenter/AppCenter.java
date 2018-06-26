@@ -688,7 +688,14 @@ public class AppCenter {
                     } else if (shouldDisable(serviceInstance.getServiceName())) {
                         AppCenterLog.debug(LOG_TAG, "Instrumentation variable to disable service has been set; not starting service " + service.getName() + ".");
                     } else if (mAppSecret == null && serviceInstance.isAppSecretRequired()) {
-                        AppCenterLog.warn(LOG_TAG, "App Center was started without app secret, but the service requires it; not starting service " + service.getName() + ".");
+                        AppCenterLog.error(LOG_TAG, "App Center was started without app secret, but the service requires it; not starting service " + service.getName() + ".");
+                    } else if (!startFromApp && serviceInstance.isAppSecretRequired()) {
+
+                        /*
+                         * We use the same app secret required check as services requiring app secret
+                         * also requires being started from application and are not supported by libraries.
+                         */
+                        AppCenterLog.error(LOG_TAG, "This service cannot be started from a library: " + service.getName() + ".");
                     } else {
 
                         /* Share handler now with service while starting. */
