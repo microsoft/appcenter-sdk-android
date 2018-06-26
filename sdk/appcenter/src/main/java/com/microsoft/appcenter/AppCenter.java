@@ -3,7 +3,6 @@ package com.microsoft.appcenter;
 import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.IntRange;
@@ -26,7 +25,6 @@ import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -60,19 +58,6 @@ public class AppCenter {
      */
     @VisibleForTesting
     static final String CORE_GROUP = "group_core";
-
-    /**
-     * Name of the variable used to indicate services that should be disabled (typically for test
-     * cloud).
-     */
-    @VisibleForTesting
-    static final String DISABLE_SERVICES = "APP_CENTER_DISABLE";
-
-    /**
-     * Value to indicate that all services should be disabled.
-     */
-    @VisibleForTesting
-    static final String DISABLE_ALL_SERVICES = "All";
 
     /**
      * Delimiter between two key value pairs.
@@ -677,38 +662,7 @@ public class AppCenter {
             } else {
                 try {
                     AppCenterService serviceInstance = (AppCenterService) service.getMethod("getInstance").invoke(null);
-                    if (mServices.contains(serviceInstance)) {
-                        if (startFromApp) {
-                            if (mServicesStartedFromLibrary.remove(serviceInstance)) {
-                                updatedServices.add(serviceInstance);
-                            } else {
-                                AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + service.getName());
-                            }
-                        }
-                    } else if (shouldDisable(serviceInstance.getServiceName())) {
-                        AppCenterLog.debug(LOG_TAG, "Instrumentation variable to disable service has been set; not starting service " + service.getName() + ".");
-                    } else if (!startFromApp && serviceInstance.isAppSecretRequired()) {
-
-                        /*
-                         * We use the same app secret required check as services requiring app secret
-                         * also requires being started from application and are not supported by libraries.
-                         */
-                        AppCenterLog.error(LOG_TAG, "This service cannot be started from a library: " + service.getName() + ".");
-                    } else if (mAppSecret == null && serviceInstance.isAppSecretRequired()) {
-                        AppCenterLog.error(LOG_TAG, "App Center was started without app secret, but the service requires it; not starting service " + service.getName() + ".");
-                    } else {
-
-                        /* Share handler now with service while starting. */
-                        serviceInstance.onStarting(mAppCenterHandler);
-                        mApplication.registerActivityLifecycleCallbacks(serviceInstance);
-                        mServices.add(serviceInstance);
-                        startedServices.add(serviceInstance);
-
-                        /* Keep track of services started from a library before the app has started the services. */
-                        if (!startFromApp) {
-                            mServicesStartedFromLibrary.add(serviceInstance);
-                        }
-                    }
+                    startOrUpdateService(serviceInstance, startedServices, updatedServices, startFromApp);
                 } catch (Exception e) {
                     AppCenterLog.error(LOG_TAG, "Failed to get service instance '" + service.getName() + "', skipping it.", e);
                 }
@@ -723,6 +677,57 @@ public class AppCenter {
                 finishStartServices(updatedServices, startedServices, startFromApp);
             }
         });
+    }
+
+    private void startOrUpdateService(AppCenterService serviceInstance, Collection<AppCenterService> startedServices, Collection<AppCenterService> updatedServices, boolean startFromApp) {
+        if (startFromApp) {
+            startOrUpdateServiceFromApp(serviceInstance, startedServices, updatedServices);
+        } else if (!mServices.contains(serviceInstance)) {
+            startServiceFromLibrary(serviceInstance, startedServices);
+        }
+    }
+
+    private void startOrUpdateServiceFromApp(AppCenterService serviceInstance, Collection<AppCenterService> startedServices, Collection<AppCenterService> updatedServices) {
+        String serviceName = serviceInstance.getServiceName();
+        if (mServices.contains(serviceInstance)) {
+            if (mServicesStartedFromLibrary.remove(serviceInstance)) {
+                updatedServices.add(serviceInstance);
+            } else {
+                AppCenterLog.warn(LOG_TAG, "App Center has already started the service with class name: " + serviceInstance.getServiceName());
+            }
+        } else if (mAppSecret == null && serviceInstance.isAppSecretRequired()) {
+            AppCenterLog.error(LOG_TAG, "App Center was started without app secret, but the service requires it; not starting service " + serviceName + ".");
+        } else {
+            startService(serviceInstance, startedServices);
+        }
+    }
+
+    private void startServiceFromLibrary(AppCenterService serviceInstance, Collection<AppCenterService> startedServices) {
+
+        /*
+         * We use the same app secret required check as services requiring app secret
+         * also requires being started from application and are not supported by libraries.
+         */
+        String serviceName = serviceInstance.getServiceName();
+        if (serviceInstance.isAppSecretRequired()) {
+            AppCenterLog.error(LOG_TAG, "This service cannot be started from a library: " + serviceName + ".");
+        } else if (startService(serviceInstance, startedServices)) {
+            mServicesStartedFromLibrary.add(serviceInstance);
+        }
+    }
+
+    private boolean startService(AppCenterService serviceInstance, Collection<AppCenterService> startedServices) {
+        String serviceName = serviceInstance.getServiceName();
+        if (ServiceInstrumentationUtils.isServiceDisabledByInstrumentation(serviceName)) {
+            AppCenterLog.debug(LOG_TAG, "Instrumentation variable to disable service has been set; not starting service " + serviceName + ".");
+            return false;
+        } else {
+            serviceInstance.onStarting(mAppCenterHandler);
+            mApplication.registerActivityLifecycleCallbacks(serviceInstance);
+            mServices.add(serviceInstance);
+            startedServices.add(serviceInstance);
+            return true;
+        }
     }
 
     @WorkerThread
@@ -963,26 +968,5 @@ public class AppCenter {
     @VisibleForTesting
     public void setChannel(Channel channel) {
         mChannel = channel;
-    }
-
-    private Boolean shouldDisable(String serviceName) {
-        try {
-            Bundle arguments = InstrumentationRegistryHelper.getArguments();
-            String disableServices = arguments.getString(DISABLE_SERVICES);
-            if (disableServices == null) {
-                return false;
-            }
-            String[] disableServicesList = disableServices.split(",");
-            for (String service : disableServicesList) {
-                service = service.trim();
-                if (service.equals(DISABLE_ALL_SERVICES) || service.equals(serviceName)) {
-                    return true;
-                }
-            }
-            return false;
-        } catch (LinkageError | IllegalStateException e) {
-            AppCenterLog.debug(LOG_TAG, "Cannot read instrumentation variables in a non-test environment.");
-            return false;
-        }
     }
 }
