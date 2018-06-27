@@ -582,6 +582,28 @@ public class AnalyticsTest {
                 return false;
             }
         }), anyString());
+        reset(channel);
+
+        /* Create a child transmission target and track event. */
+        AnalyticsTransmissionTarget childTarget = target.getTransmissionTarget("token3");
+        childTarget.trackEvent("name");
+        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token3");
+                    return nameAndPropertiesMatch && tokenMatch;
+                }
+                return false;
+            }
+        }), anyString());
+        reset(channel);
+
+        /* Another child transmission target with the same token should be the same instance. */
+        assertSame(childTarget, target.getTransmissionTarget("token3"));
     }
 
     @Test

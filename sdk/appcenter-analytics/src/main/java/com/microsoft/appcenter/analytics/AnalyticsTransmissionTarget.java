@@ -2,6 +2,7 @@ package com.microsoft.appcenter.analytics;
 
 import android.support.annotation.NonNull;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -10,6 +11,8 @@ import java.util.Map;
 public class AnalyticsTransmissionTarget {
 
     private final String mTransmissionTargetToken;
+
+    private final Map<String, AnalyticsTransmissionTarget> mChildrenTargets = new HashMap<>();
 
     /**
      * Create a new instance.
@@ -47,6 +50,21 @@ public class AnalyticsTransmissionTarget {
     }
 
     /**
+     * Create a new transmission target based on the properties of the current target.
+     *
+     * @param transmissionTargetToken The transmission target token of the new transmission target.
+     * @return The new transmission target.
+     */
+    public synchronized AnalyticsTransmissionTarget getTransmissionTarget(String transmissionTargetToken) {
+        AnalyticsTransmissionTarget childTarget = mChildrenTargets.get(transmissionTargetToken);
+        if (childTarget == null) {
+            childTarget = new AnalyticsTransmissionTarget(transmissionTargetToken);
+            mChildrenTargets.put(transmissionTargetToken, childTarget);
+        }
+        return childTarget;
+    }
+
+    /**
      * Getter for transmission target token.
      *
      * @return the transmission target token.
@@ -54,5 +72,4 @@ public class AnalyticsTransmissionTarget {
     String getTransmissionTargetToken() {
         return mTransmissionTargetToken;
     }
-
 }
