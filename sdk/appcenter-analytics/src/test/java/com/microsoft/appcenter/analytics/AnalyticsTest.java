@@ -157,8 +157,14 @@ public class AnalyticsTest {
         Analytics.trackEvent("test", new HashMap<String, String>());
         Analytics.trackPage("test");
         Analytics.trackPage("test", new HashMap<String, String>());
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("t1");
+        target.trackEvent("test");
+        target.trackEvent("test", new HashMap<String, String>());
+        target.getTransmissionTarget("t2").trackEvent("test");
+        target.getTransmissionTarget("t2").trackEvent("test", new HashMap<String, String>());
 
-        verifyStatic(times(4));
+        /* Verify we just get an error every time. */
+        verifyStatic(times(8));
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
@@ -275,8 +281,13 @@ public class AnalyticsTest {
         verify(channel, never()).enqueue(isA(EventLog.class), anyString());
 
         /* It works from a target. */
-        Analytics.getTransmissionTarget("t").trackEvent("eventName");
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("t");
+        target.trackEvent("eventName");
         verify(channel).enqueue(isA(EventLog.class), anyString());
+
+        /* It works from a child target. */
+        target.getTransmissionTarget("t2").trackEvent("eventName");
+        verify(channel, times(2)).enqueue(isA(EventLog.class), anyString());
     }
 
     @Test
@@ -333,7 +344,10 @@ public class AnalyticsTest {
         verifyStatic();
         StorageHelper.PreferencesStorage.remove("sessions");
 
+        /* Now try to use all methods. Should not work. */
         Analytics.trackEvent("test");
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("t1");
+        target.trackEvent("test");
         Analytics.trackPage("test");
         analytics.onActivityResumed(new Activity());
         analytics.onActivityPaused(new Activity());
@@ -355,8 +369,10 @@ public class AnalyticsTest {
         Analytics.setEnabled(true);
         assertTrue(Analytics.isEnabled().get());
         Analytics.trackEvent("test");
+        target.trackEvent("test");
+        target.getTransmissionTarget("t2").trackEvent("test");
         Analytics.trackPage("test");
-        verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
+        verify(channel, times(4)).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
         /* Disable again. */
         Analytics.setEnabled(false);
@@ -367,7 +383,7 @@ public class AnalyticsTest {
         analytics.onActivityPaused(new Activity());
 
         /* No more log enqueued. */
-        verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
+        verify(channel, times(4)).enqueue(any(Log.class), eq(analytics.getGroupName()));
     }
 
     @Test

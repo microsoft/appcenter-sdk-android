@@ -10,8 +10,14 @@ import java.util.Map;
  */
 public class AnalyticsTransmissionTarget {
 
+    /**
+     * Target token for this level.
+     */
     private final String mTransmissionTargetToken;
 
+    /**
+     * Children targets for nesting.
+     */
     private final Map<String, AnalyticsTransmissionTarget> mChildrenTargets = new HashMap<>();
 
     /**
@@ -56,6 +62,8 @@ public class AnalyticsTransmissionTarget {
      * @return The new transmission target.
      */
     public synchronized AnalyticsTransmissionTarget getTransmissionTarget(String transmissionTargetToken) {
+
+        /* Reuse instance if a child with the same token has already been created. */
         AnalyticsTransmissionTarget childTarget = mChildrenTargets.get(transmissionTargetToken);
         if (childTarget == null) {
             childTarget = new AnalyticsTransmissionTarget(transmissionTargetToken);
