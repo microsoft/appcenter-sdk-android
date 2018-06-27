@@ -90,6 +90,12 @@ public class AnalyticsTransmissionTarget {
         return childTarget;
     }
 
+    /**
+     * Check whether this target is enabled or not.
+     *
+     * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
+     * @see AppCenterFuture
+     */
     public AppCenterFuture<Boolean> isEnabledAsync() {
         final DefaultAppCenterFuture<Boolean> future = new DefaultAppCenterFuture<>();
         Analytics.getInstance().postCommand(new Runnable() {
@@ -102,6 +108,13 @@ public class AnalyticsTransmissionTarget {
         return future;
     }
 
+    /**
+     * Enable or disable this target. The state is applied on all descendant targets.
+     * The state is not changed if one ancestor target or Analytics module or AppCenter is disabled.
+     *
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     * @return future with null result to monitor when the operation completes.
+     */
     public AppCenterFuture<Void> setEnabledAsync(final boolean enabled) {
         final DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
         Analytics.getInstance().postCommand(new Runnable() {

@@ -20,7 +20,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-
 public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
     @Mock
@@ -56,7 +55,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         }), anyString());
 
         /* Set enabled to false and assert that it cannot track event. */
-        transmissionTarget.setEnabledAsync(false);
+        transmissionTarget.setEnabledAsync(false).get();
         assertFalse(transmissionTarget.isEnabledAsync().get());
         transmissionTarget.trackEvent("eventName2");
         verify(mChannel, never()).enqueue(argThat(new ArgumentMatcher<Log>() {
@@ -80,7 +79,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         AnalyticsTransmissionTarget childTransmissionTarget = parentTransmissionTarget.getTransmissionTarget("child");
 
         /* Set enabled to false on parent and child should also have set enabled to false. */
-        parentTransmissionTarget.setEnabledAsync(false);
+        parentTransmissionTarget.setEnabledAsync(false).get();
         assertFalse(parentTransmissionTarget.isEnabledAsync().get());
         assertFalse(childTransmissionTarget.isEnabledAsync().get());
         childTransmissionTarget.trackEvent("eventName1");
@@ -120,7 +119,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         AnalyticsTransmissionTarget childTransmissionTarget = parentTransmissionTarget.getTransmissionTarget("child");
 
         /* Set enabled to false on parent. When try to set enabled to true on child, it should stay false. */
-        parentTransmissionTarget.setEnabledAsync(false);
+        parentTransmissionTarget.setEnabledAsync(false).get();
         childTransmissionTarget.setEnabledAsync(true);
         assertFalse(childTransmissionTarget.isEnabledAsync().get());
         childTransmissionTarget.trackEvent("eventName");
@@ -153,7 +152,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
         /* Disable grandparent. */
         AnalyticsTransmissionTarget grandParentTarget = Analytics.getTransmissionTarget("grandParent");
-        grandParentTarget.setEnabledAsync(false);
+        grandParentTarget.setEnabledAsync(false).get();
 
         /* Create a parent and child after. */
         AnalyticsTransmissionTarget parentTarget = grandParentTarget.getTransmissionTarget("parent");
