@@ -627,8 +627,10 @@ public class PushTest {
         doThrow(new IllegalStateException()).when(contextMock).startService(any(Intent.class));
         start(contextMock, Push.getInstance(), mock(Channel.class));
         assertTrue(Push.isEnabled().get());
-        verifyStatic(times(2));
+        verifyStatic();
         AppCenterLog.info(anyString(), anyString());
+        verifyStatic();
+        AppCenterLog.warn(anyString(), anyString());
         Push.getInstance().onActivityResumed(mock(Activity.class));
         verify(contextMock, times(2)).startService(any(Intent.class));
     }
