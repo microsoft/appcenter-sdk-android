@@ -147,4 +147,21 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         assertTrue(parentTarget.isEnabledAsync().get());
         assertTrue(childTarget.isEnabledAsync().get());
     }
+
+    @Test
+    public void createChildrenAfterDisabling() {
+
+        /* Disable grandparent. */
+        AnalyticsTransmissionTarget grandParentTarget = Analytics.getTransmissionTarget("grandParent");
+        grandParentTarget.setEnabledAsync(false);
+
+        /* Create a parent and child after. */
+        AnalyticsTransmissionTarget parentTarget = grandParentTarget.getTransmissionTarget("parent");
+        AnalyticsTransmissionTarget childTarget = parentTarget.getTransmissionTarget("child");
+
+        /* Check everything is disabled. */
+        assertFalse(grandParentTarget.isEnabledAsync().get());
+        assertFalse(parentTarget.isEnabledAsync().get());
+        assertFalse(childTarget.isEnabledAsync().get());
+    }
 }

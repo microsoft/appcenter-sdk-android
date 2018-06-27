@@ -161,7 +161,7 @@ public class AnalyticsTransmissionTarget {
     @WorkerThread
     private boolean areAncestorsEnabled() {
         for (AnalyticsTransmissionTarget target = mParentTarget; target != null; target = target.mParentTarget) {
-            if (!mParentTarget.isEnabledInStorage()) {
+            if (!target.isEnabledInStorage()) {
                 return false;
             }
         }
