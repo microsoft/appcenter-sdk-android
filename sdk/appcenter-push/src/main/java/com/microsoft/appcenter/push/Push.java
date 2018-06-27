@@ -173,7 +173,12 @@ public class Push extends AbstractAppCenterService {
      * Sender ID of your project before starting the Push service.
      *
      * @param senderId sender ID of your project.
+     *
+     * @deprecated Starting Android P at release date and later all versions of Android after April 2019,
+     * Firebase SDK is required to use push. Please follow the migration guide at https://aka.ms/...
+     * TODO: Set migration guide link.
      */
+    @Deprecated
     @SuppressWarnings("WeakerAccess")
     public static void setSenderId(@SuppressWarnings("SameParameterValue") String senderId) {
         getInstance().instanceSetSenderId(senderId);
@@ -430,7 +435,7 @@ public class Push extends AbstractAppCenterService {
             onTokenRefresh(FirebaseUtils.getToken());
             AppCenterLog.info(LOG_TAG, "Firebase SDK is available, using Firebase SDK registration.");
         } catch (FirebaseUtils.FirebaseUnavailableException e) {
-            AppCenterLog.info(LOG_TAG, "Firebase SDK is not available, using built in registration. cause: " + e.getMessage());
+            AppCenterLog.warn(LOG_TAG, "Firebase SDK is not available, using built in registration. cause: " + e.getMessage());
             registerPushTokenWithoutFirebase();
         }
     }
