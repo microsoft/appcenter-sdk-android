@@ -24,6 +24,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -320,7 +321,7 @@ public class Analytics extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
                 return transmissionTarget;
             }
-            transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken);
+            transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, null);
             AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
             mTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
             return transmissionTarget;
@@ -604,5 +605,31 @@ public class Analytics extends AbstractAppCenterService {
     @WorkerThread
     private void setDefaultTransmissionTarget(String transmissionTargetToken) {
         mDefaultTransmissionTarget = getInstanceTransmissionTarget(transmissionTargetToken);
+    }
+
+    /**
+     * Post a command.
+     *
+     * @param runnable                    command.
+     * @param future                      future to hold result.
+     * @param valueIfDisabledOrNotStarted result to set in future if AppCenter or Analytics disabled or not started.
+     * @param <T>                         result type.
+     */
+    <T> void postCommand(Runnable runnable, DefaultAppCenterFuture<T> future, T valueIfDisabledOrNotStarted) {
+
+        /*
+         * For the purpose of the commands used for this method,
+         * it turns out the non get operations use the same flow as get.
+         */
+        postAsyncGetter(runnable, future, valueIfDisabledOrNotStarted);
+    }
+
+    /**
+     * Get preference storage key prefix for this service.
+     *
+     * @return storage key.
+     */
+    String getEnabledPreferenceKeyPrefix() {
+        return getEnabledPreferenceKey() + "/";
     }
 }
