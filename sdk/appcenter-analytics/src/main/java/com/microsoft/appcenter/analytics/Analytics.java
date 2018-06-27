@@ -543,17 +543,22 @@ public class Analytics extends AbstractAppCenterService {
 
             @Override
             public void run() {
-                EventLog eventLog = new EventLog();
-                eventLog.setId(UUIDUtils.randomUUID());
-                eventLog.setName(name);
-                eventLog.setProperties(propertiesCopy);
                 AnalyticsTransmissionTarget aTransmissionTarget = (transmissionTarget == null) ? mDefaultTransmissionTarget : transmissionTarget;
+                EventLog eventLog = new EventLog();
                 if (aTransmissionTarget != null) {
-                    eventLog.addTransmissionTarget(aTransmissionTarget.getTransmissionTargetToken());
+                    if (aTransmissionTarget.isEnabled()) {
+                        eventLog.addTransmissionTarget(aTransmissionTarget.getTransmissionTargetToken());
+                    } else {
+                        AppCenterLog.error(LOG_TAG, "This transmission target is disabled.");
+                        return;
+                    }
                 } else if (!mStartedFromApp) {
                     AppCenterLog.error(LOG_TAG, "Cannot track event using Analytics.trackEvent if not started from app, please start from the application or use Analytics.getTransmissionTarget.");
                     return;
                 }
+                eventLog.setId(UUIDUtils.randomUUID());
+                eventLog.setName(name);
+                eventLog.setProperties(propertiesCopy);
                 mChannel.enqueue(eventLog, ANALYTICS_GROUP);
             }
         });

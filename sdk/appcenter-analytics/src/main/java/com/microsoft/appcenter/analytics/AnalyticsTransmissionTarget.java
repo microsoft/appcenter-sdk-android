@@ -96,14 +96,14 @@ public class AnalyticsTransmissionTarget {
 
             @Override
             public void run() {
-                future.complete(areAncestorsEnabled() && isEnabled());
+                future.complete(isEnabled());
             }
         }, future, false);
         return future;
     }
 
     public AppCenterFuture<Void> setEnabledAsync(final boolean enabled) {
-        DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
+        final DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
         Analytics.getInstance().postCommand(new Runnable() {
 
             @Override
@@ -113,24 +113,27 @@ public class AnalyticsTransmissionTarget {
                  * Like the relation between AppCenter and Analytics, we cannot change state if one of the parent is disabled.
                  * If this callback is called then it was already checked that AppCenter and Analytics are both enabled.
                  */
-                if (!areAncestorsEnabled()) {
-                    AppCenterLog.error(LOG_TAG, "One the parent transmission target is disabled, cannot change state.");
-                    return;
-                }
+                if (areAncestorsEnabled()) {
 
-                /* Propagate state to this instance then all descendants without a recursive call. */
-                List<AnalyticsTransmissionTarget> descendantTargets = new LinkedList<>();
-                descendantTargets.add(AnalyticsTransmissionTarget.this);
-                while (!descendantTargets.isEmpty()) {
-                    ListIterator<AnalyticsTransmissionTarget> descendantIterator = descendantTargets.listIterator();
-                    while (descendantIterator.hasNext()) {
-                        AnalyticsTransmissionTarget descendantTarget = descendantIterator.next();
-                        StorageHelper.PreferencesStorage.putBoolean(descendantTarget.getEnabledPreferenceKey(), enabled);
-                        for (AnalyticsTransmissionTarget childTarget : descendantTarget.mChildrenTargets.values()) {
-                            descendantIterator.add(childTarget);
+
+                    /* Propagate state to this instance then all descendants without a recursive call. */
+                    List<AnalyticsTransmissionTarget> descendantTargets = new LinkedList<>();
+                    descendantTargets.add(AnalyticsTransmissionTarget.this);
+                    while (!descendantTargets.isEmpty()) {
+                        ListIterator<AnalyticsTransmissionTarget> descendantIterator = descendantTargets.listIterator();
+                        while (descendantIterator.hasNext()) {
+                            AnalyticsTransmissionTarget descendantTarget = descendantIterator.next();
+                            descendantIterator.remove();
+                            StorageHelper.PreferencesStorage.putBoolean(descendantTarget.getEnabledPreferenceKey(), enabled);
+                            for (AnalyticsTransmissionTarget childTarget : descendantTarget.mChildrenTargets.values()) {
+                                descendantIterator.add(childTarget);
+                            }
                         }
                     }
+                } else {
+                    AppCenterLog.error(LOG_TAG, "One of the parent transmission target is disabled, cannot change state.");
                 }
+                future.complete(null);
             }
         }, future, null);
         return future;
@@ -151,17 +154,22 @@ public class AnalyticsTransmissionTarget {
     }
 
     @WorkerThread
-    private boolean isEnabled() {
+    private boolean isEnabledInStorage() {
         return StorageHelper.PreferencesStorage.getBoolean(getEnabledPreferenceKey(), true);
     }
 
     @WorkerThread
     private boolean areAncestorsEnabled() {
         for (AnalyticsTransmissionTarget target = mParentTarget; target != null; target = target.mParentTarget) {
-            if (!mParentTarget.isEnabled()) {
-                return true;
+            if (!mParentTarget.isEnabledInStorage()) {
+                return false;
             }
         }
-        return false;
+        return true;
+    }
+
+    @WorkerThread
+    boolean isEnabled() {
+        return areAncestorsEnabled() && isEnabledInStorage();
     }
 }
