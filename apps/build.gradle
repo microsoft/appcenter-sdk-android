@@ -42,7 +42,7 @@ def copyApkToProjectBuildTask(buildType) {
         dependency = defaultDependency
     }
     subprojects.each { project ->
-        def apkPath = "${project.buildDir}/outputs/apk/${dependency}DependencyVanilla/${buildType}/${project.name}-${dependency}Dependency-vanilla-${buildType}"
+        def apkPath = "${project.buildDir}/outputs/apk/${dependency}DependencyFirebase/${buildType}/${project.name}-${dependency}Dependency-firebase-${buildType}"
         if ("release" == buildType) {
             apkPath += "-unsigned"
         }
