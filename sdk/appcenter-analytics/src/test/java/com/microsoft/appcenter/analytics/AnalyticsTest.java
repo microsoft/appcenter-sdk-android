@@ -1,10 +1,8 @@
 package com.microsoft.appcenter.analytics;
 
 import android.content.Context;
-import android.os.SystemClock;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.AnalyticsValidator;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
@@ -21,24 +19,15 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
-import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,10 +38,8 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
@@ -63,70 +50,13 @@ import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-@SuppressWarnings("unused")
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, AppCenterLog.class, AppCenter.class, HandlerUtils.class})
-public class AnalyticsTest {
-
-    private static final String ANALYTICS_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Analytics.getInstance().getServiceName();
-
-    @Mock
-    private AppCenterFuture<Boolean> mCoreEnabledFuture;
-
-    @Mock
-    private AppCenterHandler mAppCenterHandler;
-
-    @Before
-    public void setUp() {
-        Analytics.unsetInstance();
-        mockStatic(SystemClock.class);
-        mockStatic(AppCenterLog.class);
-        mockStatic(AppCenter.class);
-        when(AppCenter.isEnabled()).thenReturn(mCoreEnabledFuture);
-        when(mCoreEnabledFuture.get()).thenReturn(true);
-        Answer<Void> runNow = new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) {
-                ((Runnable) invocation.getArguments()[0]).run();
-                return null;
-            }
-        };
-        doAnswer(runNow).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
-        mockStatic(HandlerUtils.class);
-        doAnswer(runNow).when(HandlerUtils.class);
-        HandlerUtils.runOnUiThread(any(Runnable.class));
-
-        /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
-        mockStatic(StorageHelper.PreferencesStorage.class);
-        when(StorageHelper.PreferencesStorage.getBoolean(ANALYTICS_ENABLED_KEY, true)).thenReturn(true);
-
-        /* Then simulate further changes to state. */
-        PowerMockito.doAnswer(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-
-                /* Whenever the new state is persisted, make further calls return the new state. */
-                boolean enabled = (Boolean) invocation.getArguments()[1];
-                when(StorageHelper.PreferencesStorage.getBoolean(ANALYTICS_ENABLED_KEY, true)).thenReturn(enabled);
-                return null;
-            }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putBoolean(eq(ANALYTICS_ENABLED_KEY), anyBoolean());
-
-        /* Pretend automatic page tracking is enabled by default, this will be the case if service becomes public. */
-        // TODO remove that after service is public
-        assertFalse(Analytics.isAutoPageTrackingEnabled());
-        Analytics.setAutoPageTrackingEnabled(true);
-    }
+public class AnalyticsTest extends AbstractAnalyticsTest {
 
     @Test
     public void singleton() {
@@ -509,117 +439,6 @@ public class AnalyticsTest {
         verify(analyticsListener, never()).onBeforeSending(any(EventLog.class));
         verify(analyticsListener, never()).onSendingSucceeded(any(EventLog.class));
         verify(analyticsListener, never()).onSendingFailed(any(EventLog.class), any(Exception.class));
-    }
-
-    @Test
-    public void testGetTransmissionTarget() {
-        assertNull(Analytics.getTransmissionTarget(""));
-        assertNotNull(Analytics.getTransmissionTarget("token"));
-    }
-
-    @Test
-    public void trackEventWithTransmissionTargetFromApp() {
-        testTrackEventWithTransmissionTarget("defaultToken", true);
-    }
-
-    @Test
-    public void trackEventWithTransmissionTargetFromLibrary() {
-        testTrackEventWithTransmissionTarget(null, false);
-    }
-
-    private void testTrackEventWithTransmissionTarget(final String defaultToken, boolean startFromApp) {
-        Analytics analytics = Analytics.getInstance();
-        Channel channel = mock(Channel.class);
-        analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, null, defaultToken, startFromApp);
-        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
-        assertNotNull(target);
-
-        /* Getting a reference to the same target a second time actually returns the same. */
-        assertSame(target, Analytics.getTransmissionTarget("token"));
-
-        /* Track event with default transmission target. */
-        Analytics.trackEvent("name");
-        if (startFromApp) {
-            verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-                @Override
-                public boolean matches(Object item) {
-                    if (item instanceof EventLog) {
-                        EventLog eventLog = (EventLog) item;
-                        boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
-                        boolean tokenMatch;
-                        if (defaultToken != null) {
-                            tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains(defaultToken);
-                        } else {
-                            tokenMatch = eventLog.getTransmissionTargetTokens().isEmpty();
-                        }
-                        return nameAndPropertiesMatch && tokenMatch;
-                    }
-                    return false;
-                }
-            }), anyString());
-        } else {
-            verify(channel, never()).enqueue(isA(EventLog.class), anyString());
-        }
-        reset(channel);
-
-        /* Track event via transmission target method. */
-        target.trackEvent("name");
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
-                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token");
-                    return nameAndPropertiesMatch && tokenMatch;
-                }
-                return false;
-            }
-        }), anyString());
-        reset(channel);
-
-        /* Track event via another transmission target method with properties. */
-        Analytics.getTransmissionTarget("token2").trackEvent("name", new HashMap<String, String>() {{
-            put("valid", "valid");
-        }});
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties().size() == 1 && "valid".equals(eventLog.getProperties().get("valid"));
-                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token2");
-                    return nameAndPropertiesMatch && tokenMatch;
-                }
-                return false;
-            }
-        }), anyString());
-        reset(channel);
-
-        /* Create a child transmission target and track event. */
-        AnalyticsTransmissionTarget childTarget = target.getTransmissionTarget("token3");
-        childTarget.trackEvent("name");
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
-                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token3");
-                    return nameAndPropertiesMatch && tokenMatch;
-                }
-                return false;
-            }
-        }), anyString());
-        reset(channel);
-
-        /* Another child transmission target with the same token should be the same instance. */
-        assertSame(childTarget, target.getTransmissionTarget("token3"));
     }
 
     @Test
