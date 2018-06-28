@@ -84,12 +84,8 @@ dependencies {
     implementation 'com.android.support.test.espresso:espresso-idling-resource:3.0.1'
 }
 
-/*
- * This will also bypass google-services.json if executing assembleDebug wildcard task.
- * This is needed to build from App Center build as we don't commit google-services.json and
- * App Center build cannot detect our gradle tasks so we make it execute assembleDebug with a
- * work around. We are interested in only a vanilla build variant (no Firebase) for such builds.
- */
-if (getGradle().getStartParameter().getTaskRequests().toString().contains("Firebase")) {
+// We are interested in excluding the plugin only for the vanilla sasquatch build variant.
+def taskRequests = getGradle().getStartParameter().getTaskRequests().toString()
+if (!taskRequests.contains("sasquatch") || taskRequests.contains("Firebase")) {
     apply plugin: 'com.google.gms.google-services'
 }
