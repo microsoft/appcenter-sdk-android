@@ -75,8 +75,8 @@ dependencies {
     //noinspection GradleDependency
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
 
-    firebaseImplementation "com.google.firebase:firebase-core:${rootProject.ext.firebaseLibVersion}"
-    firebaseImplementation "com.google.firebase:firebase-messaging:${rootProject.ext.firebaseLibVersion}"
+    firebaseImplementation "com.google.firebase:firebase-core:16.0.1"
+    firebaseImplementation "com.google.firebase:firebase-messaging:17.0.0"
 
     /* Force usage this version of support annotations to avoid conflict. */
     androidTestImplementation "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"

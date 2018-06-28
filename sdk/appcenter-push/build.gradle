@@ -3,10 +3,9 @@ evaluationDependsOn(':sdk')
 
 dependencies {
     api project(':sdk:appcenter')
-    def fcm = "com.google.firebase:firebase-messaging:${rootProject.ext.firebaseLibVersion}"
-    def fc = "com.google.firebase:firebase-core:${rootProject.ext.firebaseLibVersion}"
-    api fcm
-    compileOnly fc
-    testImplementation fcm
-    testImplementation fc
+
+    //noinspection GradleDependency
+    api "com.google.firebase:firebase-core:[15.0.2,)"
+    //noinspection GradleDependency
+    api "com.google.firebase:firebase-messaging:[15.0.2,)"
 }
