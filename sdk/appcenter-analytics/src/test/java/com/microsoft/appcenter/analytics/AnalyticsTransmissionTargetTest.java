@@ -59,6 +59,13 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
     }
 
     private void testTrackEventWithTransmissionTarget(final String defaultToken, boolean startFromApp) {
+
+        /* Overwrite setup for this test. */
+        Analytics.unsetInstance();
+        Analytics analytics = Analytics.getInstance();
+        mChannel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), mChannel, null, defaultToken, startFromApp);
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
         assertNotNull(target);
 

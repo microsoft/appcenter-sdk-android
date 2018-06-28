@@ -15,7 +15,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -64,7 +63,7 @@ abstract class AbstractAnalyticsTest {
         when(StorageHelper.PreferencesStorage.getBoolean(anyString(), eq(true))).thenReturn(true);
 
         /* Then simulate further changes to state. */
-        PowerMockito.doAnswer(new Answer<Object>() {
+        doAnswer(new Answer<Object>() {
 
             @Override
             public Object answer(InvocationOnMock invocation) {
@@ -79,7 +78,7 @@ abstract class AbstractAnalyticsTest {
         StorageHelper.PreferencesStorage.putBoolean(anyString(), anyBoolean());
 
         /* Pretend automatic page tracking is enabled by default, this will be the case if service becomes public. */
-        // TODO remove that after service is public
+        // TODO remove that after that feature becomes public and thus a default.
         assertFalse(Analytics.isAutoPageTrackingEnabled());
         Analytics.setAutoPageTrackingEnabled(true);
     }
