@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -186,9 +187,10 @@ public class SettingsActivity extends AppCompatActivity {
                         } else {
                             try {
                                 Class firebaseAnalyticsClass = Class.forName("com.google.firebase.analytics.FirebaseAnalytics");
-                                Object analyticsInstance = firebaseAnalyticsClass.getMethod("getInstance").invoke(null, getActivity());
-                                firebaseAnalyticsClass.getMethod("setAnalyticsCollectionEnabled").invoke(analyticsInstance, true);
+                                Object analyticsInstance = firebaseAnalyticsClass.getMethod("getInstance", Context.class).invoke(null, getActivity());
+                                firebaseAnalyticsClass.getMethod("setAnalyticsCollectionEnabled", boolean.class).invoke(analyticsInstance, false);
                             } catch (Exception ignored) {
+
                                 /* Nothing to handle; this is reached if Firebase isn't being used. */
                             }
                         }
