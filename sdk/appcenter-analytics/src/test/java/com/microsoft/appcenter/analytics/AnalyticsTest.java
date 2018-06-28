@@ -38,7 +38,6 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -51,7 +50,6 @@ import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -441,117 +439,6 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         verify(analyticsListener, never()).onBeforeSending(any(EventLog.class));
         verify(analyticsListener, never()).onSendingSucceeded(any(EventLog.class));
         verify(analyticsListener, never()).onSendingFailed(any(EventLog.class), any(Exception.class));
-    }
-
-    @Test
-    public void testGetTransmissionTarget() {
-        assertNull(Analytics.getTransmissionTarget(""));
-        assertNotNull(Analytics.getTransmissionTarget("token"));
-    }
-
-    @Test
-    public void trackEventWithTransmissionTargetFromApp() {
-        testTrackEventWithTransmissionTarget("defaultToken", true);
-    }
-
-    @Test
-    public void trackEventWithTransmissionTargetFromLibrary() {
-        testTrackEventWithTransmissionTarget(null, false);
-    }
-
-    private void testTrackEventWithTransmissionTarget(final String defaultToken, boolean startFromApp) {
-        Analytics analytics = Analytics.getInstance();
-        Channel channel = mock(Channel.class);
-        analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, null, defaultToken, startFromApp);
-        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
-        assertNotNull(target);
-
-        /* Getting a reference to the same target a second time actually returns the same. */
-        assertSame(target, Analytics.getTransmissionTarget("token"));
-
-        /* Track event with default transmission target. */
-        Analytics.trackEvent("name");
-        if (startFromApp) {
-            verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-                @Override
-                public boolean matches(Object item) {
-                    if (item instanceof EventLog) {
-                        EventLog eventLog = (EventLog) item;
-                        boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
-                        boolean tokenMatch;
-                        if (defaultToken != null) {
-                            tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains(defaultToken);
-                        } else {
-                            tokenMatch = eventLog.getTransmissionTargetTokens().isEmpty();
-                        }
-                        return nameAndPropertiesMatch && tokenMatch;
-                    }
-                    return false;
-                }
-            }), anyString());
-        } else {
-            verify(channel, never()).enqueue(isA(EventLog.class), anyString());
-        }
-        reset(channel);
-
-        /* Track event via transmission target method. */
-        target.trackEvent("name");
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
-                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token");
-                    return nameAndPropertiesMatch && tokenMatch;
-                }
-                return false;
-            }
-        }), anyString());
-        reset(channel);
-
-        /* Track event via another transmission target method with properties. */
-        Analytics.getTransmissionTarget("token2").trackEvent("name", new HashMap<String, String>() {{
-            put("valid", "valid");
-        }});
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties().size() == 1 && "valid".equals(eventLog.getProperties().get("valid"));
-                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token2");
-                    return nameAndPropertiesMatch && tokenMatch;
-                }
-                return false;
-            }
-        }), anyString());
-        reset(channel);
-
-        /* Create a child transmission target and track event. */
-        AnalyticsTransmissionTarget childTarget = target.getTransmissionTarget("token3");
-        childTarget.trackEvent("name");
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
-                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token3");
-                    return nameAndPropertiesMatch && tokenMatch;
-                }
-                return false;
-            }
-        }), anyString());
-        reset(channel);
-
-        /* Another child transmission target with the same token should be the same instance. */
-        assertSame(childTarget, target.getTransmissionTarget("token3"));
     }
 
     @Test
