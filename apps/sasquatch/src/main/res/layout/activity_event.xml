@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    tools:context=".activities.EventActivity">
+
+    <include layout="@layout/activity_log_top" />
+
+    <TextView
+        android:id="@+id/transmission_target_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/transmission_target" />
+
+    <Spinner
+        android:id="@+id/transmission_target"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:drawable/btn_dropdown"
+        android:spinnerMode="dropdown" />
+
+    <CheckBox
+        android:id="@+id/transmission_enabled"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="toggleTransmissionEnabled"
+        android:visibility="gone" />
+
+    <include layout="@layout/activity_log_bottom" />
+
+</LinearLayout>

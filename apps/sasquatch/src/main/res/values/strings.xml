@@ -35,4 +35,6 @@
     </string-array>
     <string name="version_x_available" tools:ignore="MissingTranslation">Version %1$s available!</string>
     <string name="push_toast" tools:ignore="MissingTranslation">Push clicked with data=%1s</string>
+    <string name="transmission_enabled" tools:ignore="MissingTranslation">Transmission target is enabled.</string>
+    <string name="transmission_disabled" tools:ignore="MissingTranslation">Transmission target is disabled.</string>
 </resources>

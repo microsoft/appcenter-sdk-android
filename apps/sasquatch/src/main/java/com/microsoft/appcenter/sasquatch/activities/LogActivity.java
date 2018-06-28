@@ -9,8 +9,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
@@ -24,21 +22,11 @@ public abstract class LogActivity extends AppCompatActivity {
 
     private LayoutInflater mLayoutInflater;
 
-    private Spinner mTransmissionTargetSpinner;
-
-    private String[] mTransmissionTargets;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_log);
+        setContentView(getLayoutId());
         mLayoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-        /* Transmission target views init. */
-        mTransmissionTargetSpinner = findViewById(R.id.transmission_target);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.target_id_names));
-        mTransmissionTargetSpinner.setAdapter(adapter);
-        mTransmissionTargets = getResources().getStringArray(R.array.target_id_values);
 
         /* Property view init. */
         mList = findViewById(R.id.list);
@@ -83,20 +71,7 @@ public abstract class LogActivity extends AppCompatActivity {
         trackLog(name, properties);
     }
 
-    protected abstract void trackLog(String name, Map<String, String> properties);
+    abstract void trackLog(String name, Map<String, String> properties);
 
-    /**
-     * Get transmission target to use or null to use default transmission (static singleton).
-     *
-     * @return transmission target or null for default.
-     */
-    String getTransmissionTarget() {
-
-        /* First item is always empty as it's default value which means either appcenter, one collector or both. */
-        int pos = mTransmissionTargetSpinner.getSelectedItemPosition();
-        if (pos == 0) {
-            return null;
-        }
-        return mTransmissionTargets[pos];
-    }
+    abstract int getLayoutId();
 }
