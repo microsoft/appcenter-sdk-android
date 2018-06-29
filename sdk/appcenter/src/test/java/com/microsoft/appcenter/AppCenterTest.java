@@ -337,7 +337,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
     @Test
     public void startTwoServicesWithSomeInvalidReferencesSplit() {
         AppCenter.configure(mApplication, DUMMY_APP_SECRET);
-        AppCenter.start(null, DummyService.class, null);
+        AppCenter.start((Class<AppCenterService>) null, DummyService.class, null);
         AppCenter.start(InvalidService.class, AnotherDummyService.class, null);
 
         /* Verify that the right amount of services have been loaded and configured */
@@ -609,18 +609,41 @@ public class AppCenterTest extends AbstractAppCenterTest {
     }
 
     @Test
-    public void nullAppSecretTest() {
-        AppCenter.start(mApplication, null, DummyService.class);
+    public void startWithNullAppSecretTest() {
+        AppCenter.start(mApplication, (String) null, DummyService.class);
         testNullOrEmptySecretString();
     }
 
     @Test
-    public void emptyAppSecretTest() {
+    public void configureWithNullAppSecretTest() {
+        AppCenter.configure(mApplication, null);
+        AppCenter.start(DummyService.class);
+        testNullOrEmptySecretString();
+    }
+
+    @Test
+    public void startWithEmptyAppSecretTest() {
         AppCenter.start(mApplication, "", DummyService.class);
         testNullOrEmptySecretString();
     }
 
+    @Test
+    public void configureWithEmptyAppSecretTest() {
+        AppCenter.configure(mApplication, "");
+        AppCenter.start(DummyService.class);
+        testNullOrEmptySecretString();
+    }
+
     private void testNullOrEmptySecretString() {
+
+        /* App Center is not configured. */
+        assertFalse(AppCenter.isConfigured());
+
+        /* Verify service did not start with null secrets from application. */
+        verify(DummyService.getInstance(), never()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), isNull(String.class), eq(true));
+    }
+
+    private void testWithoutAppSecret() {
 
         /* App Center is configured that way. */
         assertTrue(AppCenter.isConfigured());
@@ -630,7 +653,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
 
         /* We must not be able to reconfigure app secret from null/empty state. */
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class, AnotherDummyService.class);
-        AppCenter.start(mApplication, null, DummyService.class, AnotherDummyService.class);
+        AppCenter.start(mApplication, (String) null, DummyService.class, AnotherDummyService.class);
         AppCenter.start(mApplication, "", DummyService.class, AnotherDummyService.class);
 
         /* Verify start not called again (1 total call). */
@@ -641,6 +664,23 @@ public class AppCenterTest extends AbstractAppCenterTest {
 
         /* Verify the second service was not started as was part of second secret configuration. */
         verify(AnotherDummyService.getInstance(), never()).onStarted(any(Context.class), any(Channel.class), anyString(), anyString(), anyBoolean());
+    }
+
+    @Test
+    public void testStartWithoutAppSecret() {
+
+        /* Start App Center without an app secret. */
+        AppCenter.start(mApplication, DummyService.class);
+        testWithoutAppSecret();
+    }
+
+    @Test
+    public void testConfigureWithoutAppSecret() {
+
+        /* Configure and start App Center without an app secret. */
+        AppCenter.configure(mApplication);
+        AppCenter.start(DummyService.class);
+        testWithoutAppSecret();
     }
 
     @Test

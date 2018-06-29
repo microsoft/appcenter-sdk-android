@@ -258,7 +258,7 @@ public class AppCenter {
     }
 
     /**
-     * Configure the SDK.
+     * Configure the SDK with an app secret.
      * This may be called only once per application process lifetime.
      *
      * @param application Your application object.
@@ -266,7 +266,22 @@ public class AppCenter {
      */
     @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void configure(Application application, String appSecret) {
-        getInstance().instanceConfigure(application, appSecret, true);
+        if (appSecret == null || appSecret.isEmpty()) {
+            AppCenterLog.error(LOG_TAG, "appSecret may not be null or empty.");
+        } else {
+            getInstance().instanceConfigure(application, appSecret, true);
+        }
+    }
+
+    /**
+     * Configure the SDK without an app secret.
+     * This may be called only once per application process lifetime.
+     *
+     * @param application Your application object.
+     */
+    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
+    public static void configure(Application application) {
+        getInstance().instanceConfigure(application, null, true);
     }
 
     /**
@@ -281,7 +296,7 @@ public class AppCenter {
     }
 
     /**
-     * Configure the SDK with the list of services to start.
+     * Configure the SDK with the list of services to start with an app secret parameter.
      * This may be called only once per application process lifetime.
      *
      * @param application Your application object.
@@ -291,6 +306,18 @@ public class AppCenter {
     @SafeVarargs
     public static void start(Application application, String appSecret, Class<? extends AppCenterService>... services) {
         getInstance().configureAndStartServices(application, appSecret, services);
+    }
+
+    /**
+     * Configure the SDK with the list of services to start without an app secret.
+     * This may be called only once per application process lifetime.
+     *
+     * @param application Your application object.
+     * @param services    List of services to use.
+     */
+    @SafeVarargs
+    public static void start(Application application, Class<? extends AppCenterService>... services) {
+        getInstance().configureAndStartServices(application, null, true, services);
     }
 
     /**
@@ -536,7 +563,7 @@ public class AppCenter {
         mConfiguredFromApp = true;
 
         /* A null secret is still valid since some services don't require it. */
-        if (secretString != null && !secretString.isEmpty()) {
+        if (secretString != null) {
 
             /* Init parsing, the app secret string can contain other secrets.  */
             String[] pairs = secretString.split(PAIR_DELIMITER);
@@ -787,7 +814,11 @@ public class AppCenter {
     }
 
     private synchronized void configureAndStartServices(Application application, String appSecret, Class<? extends AppCenterService>[] services) {
-        configureAndStartServices(application, appSecret, true, services);
+        if (appSecret == null || appSecret.isEmpty()) {
+            AppCenterLog.error(LOG_TAG, "appSecret may not be null or empty.");
+        } else {
+            configureAndStartServices(application, appSecret, true, services);
+        }
     }
 
     private synchronized void startInstanceFromLibrary(Context context, Class<? extends AppCenterService>[] services) {
