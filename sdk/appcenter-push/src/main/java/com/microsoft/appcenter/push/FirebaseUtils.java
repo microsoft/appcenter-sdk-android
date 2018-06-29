@@ -49,9 +49,6 @@ class FirebaseUtils {
     static void setAnalyticsEnabled(@NonNull Context context, boolean enabled) throws FirebaseUnavailableException {
         try {
             FirebaseAnalytics instance = FirebaseAnalytics.getInstance(context);
-            if (instance == null) {
-                throw new FirebaseUnavailableException("null instance");
-            }
             instance.setAnalyticsCollectionEnabled(enabled);
         } catch (NoClassDefFoundError | IllegalAccessError e) {
             throw new FirebaseUnavailableException(e);

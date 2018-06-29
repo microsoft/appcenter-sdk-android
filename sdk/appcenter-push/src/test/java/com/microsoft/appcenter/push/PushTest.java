@@ -584,6 +584,7 @@ public class PushTest {
     public void registerWithoutFirebase() {
         IllegalStateException exception = new IllegalStateException();
         when(FirebaseInstanceId.getInstance()).thenThrow(exception);
+        //noinspection deprecation
         Push.setSenderId("1234");
         Context contextMock = mock(Context.class);
         start(contextMock, Push.getInstance(), mock(Channel.class));
@@ -622,6 +623,7 @@ public class PushTest {
     @Test
     public void registerWithoutFirebaseStartServiceThrowsIllegalState() {
         when(FirebaseInstanceId.getInstance()).thenThrow(new IllegalStateException());
+        //noinspection deprecation
         Push.setSenderId("1234");
         Context contextMock = mock(Context.class);
         doThrow(new IllegalStateException()).when(contextMock).startService(any(Intent.class));
@@ -638,6 +640,7 @@ public class PushTest {
     @Test
     public void registerWithoutFirebaseStartServiceThrowsRuntimeException() {
         when(FirebaseInstanceId.getInstance()).thenThrow(new IllegalStateException());
+        //noinspection deprecation
         Push.setSenderId("1234");
         Context contextMock = mock(Context.class);
         doThrow(new RuntimeException()).when(contextMock).startService(any(Intent.class));
@@ -660,16 +663,6 @@ public class PushTest {
     @Test
     public void firebaseAnalyticsThrowsIllegalAccessError() {
         when(FirebaseAnalytics.getInstance(any(Context.class))).thenThrow(new IllegalAccessError());
-        Context contextMock = mock(Context.class);
-        start(contextMock, Push.getInstance(), mock(Channel.class));
-        assertTrue(Push.isEnabled().get());
-        verifyStatic();
-        AppCenterLog.warn(anyString(), anyString());
-    }
-
-    @Test
-    public void firebaseAnalyticsNullInstance() {
-        when(FirebaseAnalytics.getInstance(any(Context.class))).thenReturn(null);
         Context contextMock = mock(Context.class);
         start(contextMock, Push.getInstance(), mock(Channel.class));
         assertTrue(Push.isEnabled().get());
