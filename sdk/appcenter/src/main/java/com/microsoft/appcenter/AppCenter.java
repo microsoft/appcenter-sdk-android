@@ -266,11 +266,7 @@ public class AppCenter {
      */
     @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void configure(Application application, String appSecret) {
-        if (appSecret == null || appSecret.isEmpty()) {
-            AppCenterLog.error(LOG_TAG, "appSecret may not be null or empty.");
-        } else {
-            getInstance().instanceConfigure(application, appSecret, true);
-        }
+        getInstance().configureInstanceWithRequiredAppSecret(application, appSecret);
     }
 
     /**
@@ -281,7 +277,7 @@ public class AppCenter {
      */
     @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void configure(Application application) {
-        getInstance().instanceConfigure(application, null, true);
+        getInstance().configureInstance(application, null, true);
     }
 
     /**
@@ -471,6 +467,17 @@ public class AppCenter {
     }
 
     /**
+     * Configure SDK without services with app secret internal function.
+     */
+    private void configureInstanceWithRequiredAppSecret(Application application, String appSecret) {
+        if (appSecret == null || appSecret.isEmpty()) {
+            AppCenterLog.error(LOG_TAG, "appSecret may not be null or empty.");
+        } else {
+            configureInstance(application, appSecret, true);
+        }
+    }
+
+    /**
      * Internal SDK configuration.
      *
      * @param application      application context.
@@ -479,9 +486,7 @@ public class AppCenter {
      * @param configureFromApp true if configuring from app, false if called from a library.
      * @return true if configuration was successful, false otherwise.
      */
-    /* UncaughtExceptionHandler is used by PowerMock but lint does not detect it. */
-    @SuppressLint("VisibleForTests")
-    private synchronized boolean instanceConfigure(Application application, String secretString, boolean configureFromApp) {
+    private synchronized boolean configureInstance(Application application, String secretString, boolean configureFromApp) {
 
         /* Check parameters. */
         if (application == null) {
@@ -827,7 +832,7 @@ public class AppCenter {
     }
 
     private void configureAndStartServices(Application application, String appSecret, boolean startFromApp, Class<? extends AppCenterService>[] services) {
-        boolean configuredSuccessfully = instanceConfigure(application, appSecret, startFromApp);
+        boolean configuredSuccessfully = configureInstance(application, appSecret, startFromApp);
         if (configuredSuccessfully) {
             startServices(startFromApp, services);
         }
