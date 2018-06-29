@@ -4,8 +4,6 @@ evaluationDependsOn(':sdk')
 dependencies {
     api project(':sdk:appcenter')
 
-    //noinspection GradleDependency
     api "com.google.firebase:firebase-core:16.0.1"
-    //noinspection GradleDependency
     api "com.google.firebase:firebase-messaging:17.0.0"
 }
