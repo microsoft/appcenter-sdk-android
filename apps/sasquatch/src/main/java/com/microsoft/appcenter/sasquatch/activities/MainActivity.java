@@ -36,6 +36,7 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -241,7 +242,7 @@ public class MainActivity extends AppCompatActivity {
 
     static void startAppCenter(Application application, String startTypeString) {
         StartType startType = StartType.valueOf(startTypeString);
-        if (startType == StartType.NONE) {
+        if (startType == StartType.SKIP_START) {
             return;
         }
         String appId = sSharedPreferences.getString(APP_SECRET_KEY, application.getString(R.string.app_secret));
@@ -257,6 +258,23 @@ public class MainActivity extends AppCompatActivity {
             case BOTH:
                 appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
                 break;
+            case NO_SECRET:
+
+                /* TODO remove reflection once API available in jCenter. */
+                try {
+
+                    @SuppressWarnings("JavaReflectionMemberAccess")
+                    Method startMethod = AppCenter.class.getMethod("start", Application.class, Class[].class);
+                    Class[] services = {Analytics.class, Crashes.class, Distribute.class, Push.class};
+                    startMethod.invoke(null, application, services);
+                } catch (NoSuchMethodException nse) {
+
+                    /* On jCenter we still have to pass null or empty as appSecret parameter. */
+                    break;
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                return;
         }
         AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
     }
@@ -265,6 +283,7 @@ public class MainActivity extends AppCompatActivity {
         APP_SECRET,
         TARGET,
         BOTH,
-        NONE
+        NO_SECRET,
+        SKIP_START
     }
 }

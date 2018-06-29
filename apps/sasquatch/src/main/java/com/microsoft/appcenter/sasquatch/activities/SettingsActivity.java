@@ -59,7 +59,7 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        sNeedRestartOnStartTypeUpdate = !MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString()).equals(StartType.NONE.toString());
+        sNeedRestartOnStartTypeUpdate = !MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString()).equals(StartType.SKIP_START.toString());
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
                 .commit();
@@ -303,7 +303,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
 
-            /* When changing start type from NONE to other type, we need to trigger a preference change to update the display from null to actual value. */
+            /* When changing start type from SKIP_START to other type, we need to trigger a preference change to update the display from null to actual value. */
             initChangeableSetting(R.string.install_id_key, String.valueOf(AppCenter.getInstallId().get()), new Preference.OnPreferenceChangeListener() {
 
                 @Override

@@ -258,7 +258,7 @@ public class AppCenter {
     }
 
     /**
-     * Configure the SDK.
+     * Configure the SDK with an app secret.
      * This may be called only once per application process lifetime.
      *
      * @param application Your application object.
@@ -266,7 +266,18 @@ public class AppCenter {
      */
     @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void configure(Application application, String appSecret) {
-        getInstance().instanceConfigure(application, appSecret, true);
+        getInstance().configureInstanceWithRequiredAppSecret(application, appSecret);
+    }
+
+    /**
+     * Configure the SDK without an app secret.
+     * This may be called only once per application process lifetime.
+     *
+     * @param application Your application object.
+     */
+    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
+    public static void configure(Application application) {
+        getInstance().configureInstance(application, null, true);
     }
 
     /**
@@ -281,7 +292,7 @@ public class AppCenter {
     }
 
     /**
-     * Configure the SDK with the list of services to start.
+     * Configure the SDK with the list of services to start with an app secret parameter.
      * This may be called only once per application process lifetime.
      *
      * @param application Your application object.
@@ -291,6 +302,18 @@ public class AppCenter {
     @SafeVarargs
     public static void start(Application application, String appSecret, Class<? extends AppCenterService>... services) {
         getInstance().configureAndStartServices(application, appSecret, services);
+    }
+
+    /**
+     * Configure the SDK with the list of services to start without an app secret.
+     * This may be called only once per application process lifetime.
+     *
+     * @param application Your application object.
+     * @param services    List of services to use.
+     */
+    @SafeVarargs
+    public static void start(Application application, Class<? extends AppCenterService>... services) {
+        getInstance().configureAndStartServices(application, null, true, services);
     }
 
     /**
@@ -444,6 +467,17 @@ public class AppCenter {
     }
 
     /**
+     * Configure SDK without services with app secret internal function.
+     */
+    private void configureInstanceWithRequiredAppSecret(Application application, String appSecret) {
+        if (appSecret == null || appSecret.isEmpty()) {
+            AppCenterLog.error(LOG_TAG, "appSecret may not be null or empty.");
+        } else {
+            configureInstance(application, appSecret, true);
+        }
+    }
+
+    /**
      * Internal SDK configuration.
      *
      * @param application      application context.
@@ -452,9 +486,7 @@ public class AppCenter {
      * @param configureFromApp true if configuring from app, false if called from a library.
      * @return true if configuration was successful, false otherwise.
      */
-    /* UncaughtExceptionHandler is used by PowerMock but lint does not detect it. */
-    @SuppressLint("VisibleForTests")
-    private synchronized boolean instanceConfigure(Application application, String secretString, boolean configureFromApp) {
+    private synchronized boolean configureInstance(Application application, String secretString, boolean configureFromApp) {
 
         /* Check parameters. */
         if (application == null) {
@@ -536,7 +568,7 @@ public class AppCenter {
         mConfiguredFromApp = true;
 
         /* A null secret is still valid since some services don't require it. */
-        if (secretString != null && !secretString.isEmpty()) {
+        if (secretString != null) {
 
             /* Init parsing, the app secret string can contain other secrets.  */
             String[] pairs = secretString.split(PAIR_DELIMITER);
@@ -787,7 +819,11 @@ public class AppCenter {
     }
 
     private synchronized void configureAndStartServices(Application application, String appSecret, Class<? extends AppCenterService>[] services) {
-        configureAndStartServices(application, appSecret, true, services);
+        if (appSecret == null || appSecret.isEmpty()) {
+            AppCenterLog.error(LOG_TAG, "appSecret may not be null or empty.");
+        } else {
+            configureAndStartServices(application, appSecret, true, services);
+        }
     }
 
     private synchronized void startInstanceFromLibrary(Context context, Class<? extends AppCenterService>[] services) {
@@ -796,7 +832,7 @@ public class AppCenter {
     }
 
     private void configureAndStartServices(Application application, String appSecret, boolean startFromApp, Class<? extends AppCenterService>[] services) {
-        boolean configuredSuccessfully = instanceConfigure(application, appSecret, startFromApp);
+        boolean configuredSuccessfully = configureInstance(application, appSecret, startFromApp);
         if (configuredSuccessfully) {
             startServices(startFromApp, services);
         }
