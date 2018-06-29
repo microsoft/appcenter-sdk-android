@@ -241,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
 
     static void startAppCenter(Application application, String startTypeString) {
         StartType startType = StartType.valueOf(startTypeString);
-        if (startType == StartType.NONE) {
+        if (startType == StartType.SKIP_START) {
             return;
         }
         String appId = sSharedPreferences.getString(APP_SECRET_KEY, application.getString(R.string.app_secret));
@@ -257,6 +257,9 @@ public class MainActivity extends AppCompatActivity {
             case BOTH:
                 appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
                 break;
+            case NO_SECRET:
+                AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class, Push.class);
+                return;
         }
         AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
     }
@@ -265,6 +268,7 @@ public class MainActivity extends AppCompatActivity {
         APP_SECRET,
         TARGET,
         BOTH,
-        NONE
+        NO_SECRET,
+        SKIP_START
     }
 }
