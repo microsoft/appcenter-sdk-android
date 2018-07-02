@@ -209,13 +209,8 @@ public class Push extends AbstractAppCenterService {
      * @param context the context to retrieve FirebaseAnalytics instance.
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
-    @SuppressWarnings("MissingPermission")
     private synchronized void setFirebaseAnalyticsEnabled(@NonNull Context context, boolean enabled) {
-        try {
-            FirebaseUtils.setAnalyticsEnabled(context, enabled);
-        } catch (FirebaseUtils.FirebaseUnavailableException e) {
-            AppCenterLog.warn(LOG_TAG, "Failed to enable or disable Firebase analytics collection.");
-        }
+        FirebaseUtils.setAnalyticsEnabled(context, enabled);
         mFirebaseAnalyticsEnabled = enabled;
     }
 

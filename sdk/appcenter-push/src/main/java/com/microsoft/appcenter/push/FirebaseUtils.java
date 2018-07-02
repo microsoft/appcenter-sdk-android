@@ -46,13 +46,9 @@ class FirebaseUtils {
     }
 
     @SuppressWarnings("MissingPermission")
-    static void setAnalyticsEnabled(@NonNull Context context, boolean enabled) throws FirebaseUnavailableException {
-        try {
-            FirebaseAnalytics instance = FirebaseAnalytics.getInstance(context);
-            instance.setAnalyticsCollectionEnabled(enabled);
-        } catch (NoClassDefFoundError | IllegalAccessError e) {
-            throw new FirebaseUnavailableException(e);
-        }
+    static void setAnalyticsEnabled(@NonNull Context context, boolean enabled) {
+        FirebaseAnalytics instance = FirebaseAnalytics.getInstance(context);
+        instance.setAnalyticsCollectionEnabled(enabled);
     }
 
     @Nullable
@@ -68,7 +64,7 @@ class FirebaseUtils {
                 throw new FirebaseUnavailableException("null instance");
             }
             return instance;
-        } catch (NoClassDefFoundError | IllegalAccessError | IllegalStateException e) {
+        } catch (IllegalStateException e) {
             throw new FirebaseUnavailableException(e);
         }
     }
