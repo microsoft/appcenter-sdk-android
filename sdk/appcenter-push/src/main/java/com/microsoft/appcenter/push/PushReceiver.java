@@ -5,6 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.utils.AppCenterLog;
+
+import static com.microsoft.appcenter.push.Push.LOG_TAG;
+
 public class PushReceiver extends BroadcastReceiver {
 
     /**
@@ -20,7 +24,7 @@ public class PushReceiver extends BroadcastReceiver {
     static final String INTENT_EXTRA_REGISTRATION = "registration_id";
 
     /**
-     *  Action when we receive a push.
+     * Action when we receive a push.
      */
     @VisibleForTesting
     static final String INTENT_ACTION_RECEIVE = "com.google.android.c2dm.intent.RECEIVE";
@@ -38,6 +42,13 @@ public class PushReceiver extends BroadcastReceiver {
         /* Received message action. */
         else if (INTENT_ACTION_RECEIVE.equals(action)) {
             Push.getInstance().onMessageReceived(context, intent);
+
+            /* Prevent handling message by not initialized firebase. */
+            if (!FirebaseUtils.isFirebaseAvailable()) {
+                AppCenterLog.warn(LOG_TAG, "Abort \"" + INTENT_ACTION_RECEIVE + "\" broadcast " +
+                        "because firebase is not available.");
+                abortBroadcast();
+            }
         }
     }
 }
