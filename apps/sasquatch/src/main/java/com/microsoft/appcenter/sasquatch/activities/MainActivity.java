@@ -126,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
         }
+
         //noinspection deprecation
         Push.setSenderId(SENDER_ID);
 

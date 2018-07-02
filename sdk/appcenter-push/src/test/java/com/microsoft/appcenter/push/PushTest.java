@@ -584,6 +584,7 @@ public class PushTest {
     public void registerWithoutFirebase() {
         IllegalStateException exception = new IllegalStateException();
         when(FirebaseInstanceId.getInstance()).thenThrow(exception);
+
         //noinspection deprecation
         Push.setSenderId("1234");
         Context contextMock = mock(Context.class);
@@ -623,6 +624,7 @@ public class PushTest {
     @Test
     public void registerWithoutFirebaseStartServiceThrowsIllegalState() {
         when(FirebaseInstanceId.getInstance()).thenThrow(new IllegalStateException());
+
         //noinspection deprecation
         Push.setSenderId("1234");
         Context contextMock = mock(Context.class);
@@ -640,6 +642,7 @@ public class PushTest {
     @Test
     public void registerWithoutFirebaseStartServiceThrowsRuntimeException() {
         when(FirebaseInstanceId.getInstance()).thenThrow(new IllegalStateException());
+
         //noinspection deprecation
         Push.setSenderId("1234");
         Context contextMock = mock(Context.class);
