@@ -192,7 +192,7 @@ public class PushTest {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
         when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
-        start( push, channel);
+        start(push, channel);
         verify(channel).removeGroup(eq(push.getGroupName()));
         assertTrue(Push.isEnabled().get());
         verify(mFirebaseInstanceId).getToken();
