@@ -42,13 +42,6 @@ public class PushReceiver extends BroadcastReceiver {
         /* Received message action. */
         else if (INTENT_ACTION_RECEIVE.equals(action)) {
             Push.getInstance().onMessageReceived(context, intent);
-
-            /* Prevent handling message by not initialized firebase. */
-            if (!FirebaseUtils.isFirebaseAvailable()) {
-                AppCenterLog.warn(LOG_TAG, "Abort \"" + INTENT_ACTION_RECEIVE + "\" broadcast " +
-                        "because firebase is not available.");
-                abortBroadcast();
-            }
         }
     }
 }

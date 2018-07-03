@@ -425,7 +425,12 @@ public class Push extends AbstractAppCenterService {
      * Register application for push.
      */
     private synchronized void registerPushToken() {
+
+        /* Update enable state of the firebase service. */
+        FirebaseUtils.setFirebaseMessagingServiceEnabled(mContext, FirebaseUtils.isFirebaseAvailable());
         try {
+
+            /* Try to get token through firebase. */
             onTokenRefresh(FirebaseUtils.getToken());
             AppCenterLog.info(LOG_TAG, "Firebase SDK is available, using Firebase SDK registration.");
         } catch (FirebaseUtils.FirebaseUnavailableException e) {
