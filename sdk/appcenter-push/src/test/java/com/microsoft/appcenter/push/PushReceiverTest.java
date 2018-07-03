@@ -3,8 +3,6 @@ package com.microsoft.appcenter.push;
 import android.content.Context;
 import android.content.Intent;
 
-import com.google.firebase.iid.FirebaseInstanceId;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

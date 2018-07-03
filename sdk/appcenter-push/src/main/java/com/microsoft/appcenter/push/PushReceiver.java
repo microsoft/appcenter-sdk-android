@@ -5,10 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.utils.AppCenterLog;
-
-import static com.microsoft.appcenter.push.Push.LOG_TAG;
-
 public class PushReceiver extends BroadcastReceiver {
 
     /**
