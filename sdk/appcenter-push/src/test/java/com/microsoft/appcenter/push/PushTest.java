@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.push;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -97,6 +98,9 @@ public class PushTest {
     @Mock
     private Context mContext;
 
+    @Mock
+    private PackageManager mPackageManager;
+
     @Before
     public void setUp() {
         Push.unsetInstance();
@@ -157,8 +161,7 @@ public class PushTest {
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Mock package manager. */
-        PackageManager packageManager = mock(PackageManager.class);
-        when(mContext.getPackageManager()).thenReturn(packageManager);
+        when(mContext.getPackageManager()).thenReturn(mPackageManager);
     }
 
     private void start(Push push, Channel channel) {
@@ -197,6 +200,8 @@ public class PushTest {
         assertTrue(Push.isEnabled().get());
         verify(mFirebaseInstanceId).getToken();
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()));
+        verify(mPackageManager).setComponentEnabledSetting(any(ComponentName.class),
+                eq(PackageManager.COMPONENT_ENABLED_STATE_DEFAULT), eq(PackageManager.DONT_KILL_APP));
 
         /* Enable while already enabled. */
         Push.setEnabled(true);
@@ -592,6 +597,8 @@ public class PushTest {
         start(Push.getInstance(), mock(Channel.class));
         assertTrue(Push.isEnabled().get());
         verify(mContext).startService(any(Intent.class));
+        verify(mPackageManager).setComponentEnabledSetting(any(ComponentName.class),
+                eq(PackageManager.COMPONENT_ENABLED_STATE_DISABLED), eq(PackageManager.DONT_KILL_APP));
     }
 
     @Test
