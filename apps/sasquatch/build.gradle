@@ -75,6 +75,7 @@ dependencies {
     //noinspection GradleDependency
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
 
+    // TODO remove this after SDK available in jCenter.
     firebaseImplementation "com.google.firebase:firebase-core:16.0.1"
     firebaseImplementation "com.google.firebase:firebase-messaging:17.0.0"
 
