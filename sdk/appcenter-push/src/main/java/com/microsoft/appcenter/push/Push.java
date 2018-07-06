@@ -174,8 +174,10 @@ public class Push extends AbstractAppCenterService {
      *
      * @param senderId sender ID of your project.
      *
-     * @deprecated Starting Android P at release date and later all versions of Android after April 2019,
-     * Firebase SDK is required to use push. Please follow the migration guide at https://aka.ms/acfba.
+     * @deprecated For all the Android developers using App Center, there is a change coming where 
+     * Firebase SDK is required to use Push Notifications. For Android P, its scheduled at
+     * the release date for the latest OS version. For all other versions of Android, it will be
+     * required after April 2019. Please follow the migration guide at https://aka.ms/acfba.
      */
     @Deprecated
     @SuppressWarnings("WeakerAccess")
@@ -435,8 +437,10 @@ public class Push extends AbstractAppCenterService {
             AppCenterLog.info(LOG_TAG, "Firebase SDK is available, using Firebase SDK registration.");
         } catch (FirebaseUtils.FirebaseUnavailableException e) {
             AppCenterLog.warn(LOG_TAG, "Firebase SDK is not available, using built in registration. " +
-                    "Starting Android P at release date and later all versions of Android after April 2019, " +
-                    "Firebase SDK is required to use push. Please follow the migration guide at https://aka.ms/acfba.\n" +
+                    "For all the Android developers using App Center, there is a change coming where Firebase SDK is required " +
+                    "to use Push Notifications. For Android P, its scheduled at the release date for the latest OS version. " +
+                    "For all other versions of Android, it will be required after April 2019. " +
+                    "Please follow the migration guide at https://aka.ms/acfba.\n" +
                     "Cause: " + e.getMessage());
             registerPushTokenWithoutFirebase();
         }
