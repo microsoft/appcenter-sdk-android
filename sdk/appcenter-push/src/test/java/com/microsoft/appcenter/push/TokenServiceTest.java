@@ -94,7 +94,7 @@ public class TokenServiceTest {
     public void firebaseUnavailable() {
 
         /* Just check it does not crash when no firebase. */
-        when(FirebaseInstanceId.getInstance()).thenThrow(new NoClassDefFoundError());
+        when(FirebaseInstanceId.getInstance()).thenReturn(null);
         TokenService service = new TokenService();
         service.onBind(mock(Intent.class));
         service.onStartCommand(mock(Intent.class), 0, 1);

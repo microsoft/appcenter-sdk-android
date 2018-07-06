@@ -20,7 +20,7 @@ public class PushReceiver extends BroadcastReceiver {
     static final String INTENT_EXTRA_REGISTRATION = "registration_id";
 
     /**
-     *  Action when we receive a push.
+     * Action when we receive a push.
      */
     @VisibleForTesting
     static final String INTENT_ACTION_RECEIVE = "com.google.android.c2dm.intent.RECEIVE";
