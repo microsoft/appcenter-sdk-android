@@ -253,17 +253,6 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
-     * Track a custom event with name and transmissionTarget.
-     *
-     * @param name               A page name.
-     * @param transmissionTarget The transmissionTarget for this event.
-     */
-    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
-    static void trackEvent(String name, AnalyticsTransmissionTarget transmissionTarget) {
-        trackEvent(name, null, transmissionTarget);
-    }
-
-    /**
      * Track a custom event with name and optional properties and optional transmissionTarget.
      * The name parameter can not be null or empty. Maximum allowed length = 256.
      * The properties parameter maximum item count = 20.
