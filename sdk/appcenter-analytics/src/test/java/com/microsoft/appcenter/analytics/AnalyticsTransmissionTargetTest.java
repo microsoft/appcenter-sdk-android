@@ -11,7 +11,9 @@ import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -284,5 +286,94 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         assertFalse(grandParentTarget.isEnabledAsync().get());
         assertFalse(parentTarget.isEnabledAsync().get());
         assertFalse(childTarget.isEnabledAsync().get());
+    }
+
+    @Test
+    public void setCommonEventProperties() {
+
+        /* Create transmission target and add property. */
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
+        target.setEventProperty("key", "value");
+
+        /* Track event without property. */
+        target.trackEvent("eventName");
+        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    Map<String, String> expectedProperties = new HashMap<>();
+                    expectedProperties.put("key", "value");
+                    boolean nameAndPropertiesMatch = eventLog.getName().equals("eventName") && expectedProperties.equals(eventLog.getProperties());
+                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("test");
+                    return nameAndPropertiesMatch && tokenMatch;
+                }
+                return false;
+            }
+        }), anyString());
+    }
+
+    @Test
+    public void setAndRemoveCommonEventPropertiesWithMerge() {
+
+        /* Create transmission target and add 2 properties (1 overwritten). */
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
+        target.setEventProperty("key1", "value1");
+        target.setEventProperty("key2", "ignore");
+        target.setEventProperty("remove", "ignore");
+
+        /* Remove some properties. */
+        target.removeEventProperty("remove");
+        target.removeEventProperty("notFound");
+
+        /* Prepare properties. */
+        Map<String, String> properties = new HashMap<>();
+        properties.put("key2", "value2");
+        properties.put("key3", "value3");
+
+        /* Track event with extra properties. */
+        target.trackEvent("eventName", properties);
+        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    Map<String, String> expectedProperties = new HashMap<>();
+                    expectedProperties.put("key1", "value1");
+                    expectedProperties.put("key2", "value2");
+                    expectedProperties.put("key3", "value3");
+                    boolean nameAndPropertiesMatch = eventLog.getName().equals("eventName") && expectedProperties.equals(eventLog.getProperties());
+                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("test");
+                    return nameAndPropertiesMatch && tokenMatch;
+                }
+                return false;
+            }
+        }), anyString());
+    }
+
+    @Test
+    public void trackEventWithEmptyProperties() {
+
+        /* Create transmission target. */
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
+
+        /* Track event with empty properties. */
+        target.trackEvent("eventName", Collections.<String, String>emptyMap());
+        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof EventLog) {
+                    EventLog eventLog = (EventLog) item;
+                    Map<String, String> expectedProperties = Collections.emptyMap();
+                    boolean nameAndPropertiesMatch = eventLog.getName().equals("eventName") && expectedProperties.equals(eventLog.getProperties());
+                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("test");
+                    return nameAndPropertiesMatch && tokenMatch;
+                }
+                return false;
+            }
+        }), anyString());
     }
 }
