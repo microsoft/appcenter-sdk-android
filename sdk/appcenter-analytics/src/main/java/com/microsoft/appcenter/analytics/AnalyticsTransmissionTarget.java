@@ -37,6 +37,11 @@ public class AnalyticsTransmissionTarget {
     private final Map<String, AnalyticsTransmissionTarget> mChildrenTargets = new HashMap<>();
 
     /**
+     * Common event properties for this target. Inherited by children.
+     */
+    private final Map<String, String> mEventProperties = new HashMap<>();
+
+    /**
      * Create a new instance.
      *
      * @param transmissionTargetToken The token for this transmission target.
@@ -54,23 +59,49 @@ public class AnalyticsTransmissionTarget {
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public void trackEvent(String name) {
-        Analytics.trackEvent(name, this);
+        trackEvent(name, null);
     }
 
     /**
      * Track a custom event with name and optional properties.
-     * The name parameter can not be null or empty. Maximum allowed length = 256.
-     * The properties parameter maximum item count = 5.
-     * The properties keys can not be null or empty, maximum allowed key length = 64.
-     * The properties values can not be null, maximum allowed value length = 64.
-     * Any length of name/keys/values that are longer than each limit will be truncated.
      *
      * @param name       An event name.
      * @param properties Optional properties.
      */
     @SuppressWarnings("WeakerAccess")
-    public void trackEvent(String name, Map<String, String> properties) {
-        Analytics.trackEvent(name, properties, this);
+    public synchronized void trackEvent(String name, Map<String, String> properties) {
+        Map<String, String> mergedProperties;
+        if (properties == null && mEventProperties.isEmpty()) {
+            mergedProperties = null;
+        } else {
+            mergedProperties = new HashMap<>(mEventProperties);
+            if (properties != null) {
+                mergedProperties.putAll(properties);
+            }
+        }
+        Analytics.trackEvent(name, mergedProperties, this);
+    }
+
+    /**
+     * Add or overwrite the given key for the common event properties. Properties will be inherited
+     * by children of this transmission target.
+     *
+     * @param key   The property key.
+     * @param value The property value.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public synchronized void setEventProperty(String key, String value) {
+        mEventProperties.put(key, value);
+    }
+
+    /**
+     * Removes the given key from the common event properties.
+     *
+     * @param key The property key to be removed.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public synchronized void removeEventProperty(String key) {
+        mEventProperties.remove(key);
     }
 
     /**
