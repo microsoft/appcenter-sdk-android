@@ -23,6 +23,7 @@ import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -98,8 +99,20 @@ public class EventPropertiesActivity extends AppCompatActivity {
                         CharSequence key = keyView.getText();
                         CharSequence value = valueView.getText();
                         if (!TextUtils.isEmpty(key) && !TextUtils.isEmpty(value)) {
-                            getSelectedTarget().setEventProperty(key.toString(), value.toString());
-                            updatePropertyList();
+                            Method method;
+                            try {
+                                method = AnalyticsTransmissionTarget.class.getMethod("setEventProperty", String.class, String.class);
+                            } catch (Exception e) {
+                                method = null;
+                            }
+                            if (method != null) {
+                                try {
+                                    method.invoke(getSelectedTarget(), key.toString(), value.toString());
+                                    updatePropertyList();
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
                         }
                         mAddPropertyLayout.setVisibility(View.GONE);
                     }
@@ -117,20 +130,27 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
     private void updatePropertyList() {
         AnalyticsTransmissionTarget target = getSelectedTarget();
+        Field field;
         try {
-            Field field = target.getClass().getDeclaredField("mEventProperties");
-            field.setAccessible(true);
-
-            //noinspection unchecked
-            Map<String, String> map = (Map<String, String>) field.get(target);
-            mPropertyListAdapter.mList.clear();
-            for (Map.Entry<String, String> entry : map.entrySet()) {
-                mPropertyListAdapter.mList.add(new Pair<>(entry.getKey(), entry.getValue()));
-            }
-            mListView.setAdapter(mPropertyListAdapter);
-            mPropertyListAdapter.notifyDataSetChanged();
+            field = target.getClass().getDeclaredField("mEventProperties");
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            field = null;
+        }
+        if (field != null) {
+            try {
+                field.setAccessible(true);
+
+                //noinspection unchecked
+                Map<String, String> map = (Map<String, String>) field.get(target);
+                mPropertyListAdapter.mList.clear();
+                for (Map.Entry<String, String> entry : map.entrySet()) {
+                    mPropertyListAdapter.mList.add(new Pair<>(entry.getKey(), entry.getValue()));
+                }
+                mListView.setAdapter(mPropertyListAdapter);
+                mPropertyListAdapter.notifyDataSetChanged();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -189,8 +209,20 @@ public class EventPropertiesActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     mList.remove(item);
-                    EventPropertiesActivity.this.getSelectedTarget().removeEventProperty(item.first);
-                    notifyDataSetChanged();
+                    Method method;
+                    try {
+                        method = AnalyticsTransmissionTarget.class.getMethod("removeEventProperty", String.class);
+                    } catch (Exception e) {
+                        method = null;
+                    }
+                    if (method != null) {
+                        try {
+                            method.invoke(getSelectedTarget(), item.first);
+                            notifyDataSetChanged();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
                 }
             });
             return rowView;

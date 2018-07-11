@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static android.view.View.GONE;
+
 /**
  * TODO remove reflection once new APIs available in jCenter.
  */
@@ -56,14 +58,24 @@ public class EventActivity extends LogActivity {
         });
 
         /* Init Configure target properties button. */
-        findViewById(R.id.configure_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(EventActivity.this, EventPropertiesActivity.class);
-                intent.putExtra("TARGET_SELECTED", mTransmissionTargetSpinner.getSelectedItemPosition());
-                startActivity(intent);
-            }
-        });
+        Method method;
+        try {
+            method = AnalyticsTransmissionTarget.class.getMethod("setEventProperty", String.class, String.class);
+        } catch (Exception e) {
+            method = null;
+        }
+        if (method == null) {
+            findViewById(R.id.configure_button).setVisibility(GONE);
+        } else {
+            findViewById(R.id.configure_button).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(EventActivity.this, EventPropertiesActivity.class);
+                    intent.putExtra("TARGET_SELECTED", mTransmissionTargetSpinner.getSelectedItemPosition());
+                    startActivity(intent);
+                }
+            });
+        }
 
         /* Init enabled check box. */
         mTransmissionEnabledCheckBox = findViewById(R.id.transmission_enabled);
@@ -125,7 +137,7 @@ public class EventActivity extends LogActivity {
 
     private void updateTransmissionEnabledCheckBox(AnalyticsTransmissionTarget target) {
         if (target == null || mIsEnabledMethod == null) {
-            mTransmissionEnabledCheckBox.setVisibility(View.GONE);
+            mTransmissionEnabledCheckBox.setVisibility(GONE);
         } else {
             mTransmissionEnabledCheckBox.setVisibility(View.VISIBLE);
             boolean enabled = isTransmissionEnabled(target);
