@@ -12,7 +12,6 @@ import com.microsoft.appcenter.sasquatch.activities.CustomPropertiesActivity;
 import com.microsoft.appcenter.sasquatch.activities.DeviceInfoActivity;
 import com.microsoft.appcenter.sasquatch.activities.DummyActivity;
 import com.microsoft.appcenter.sasquatch.activities.EventActivity;
-import com.microsoft.appcenter.sasquatch.activities.EventPropertiesActivity;
 import com.microsoft.appcenter.sasquatch.activities.ManagedErrorActivity;
 import com.microsoft.appcenter.sasquatch.activities.PageActivity;
 
@@ -31,7 +30,6 @@ public final class TestFeatures {
         sParentActivity = new WeakReference<>(parentActivity);
         sTestFeatureModels.add(new TestFeatureTitle(R.string.analytics_title));
         sTestFeatureModels.add(new TestFeature(R.string.title_event, R.string.description_event, EventActivity.class));
-        sTestFeatureModels.add(new TestFeature(R.string.title_event_properties, R.string.description_event_properties, EventPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_page, R.string.description_page, PageActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_generate_page_log, R.string.description_generate_page_log, DummyActivity.class));
         sTestFeatureModels.add(new TestFeatureTitle(R.string.crashes_title));

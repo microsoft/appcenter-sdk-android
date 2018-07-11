@@ -18,7 +18,6 @@
     <string name="title_event" tools:ignore="MissingTranslation">Events</string>
     <string name="description_event" tools:ignore="MissingTranslation">Send a custom event</string>
     <string name="title_event_properties" tools:ignore="MissingTranslation">Event properties</string>
-    <string name="description_event_properties" tools:ignore="MissingTranslation">Set event properties</string>
     <string name="title_page" tools:ignore="MissingTranslation">Pages</string>
     <string name="description_page" tools:ignore="MissingTranslation">Send custom pages</string>
     <string name="send" tools:ignore="MissingTranslation">Send</string>
