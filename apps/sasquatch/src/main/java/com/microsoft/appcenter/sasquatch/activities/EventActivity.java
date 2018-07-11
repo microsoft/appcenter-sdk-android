@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -12,6 +13,7 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.lang.reflect.Method;
@@ -53,15 +55,22 @@ public class EventActivity extends LogActivity {
             }
         });
 
+        /* Init Configure target properties button. */
+        findViewById(R.id.configure_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(EventActivity.this, EventPropertiesActivity.class);
+                intent.putExtra("TARGET_SELECTED", mTransmissionTargetSpinner.getSelectedItemPosition());
+                startActivity(intent);
+            }
+        });
+
         /* Init enabled check box. */
         mTransmissionEnabledCheckBox = findViewById(R.id.transmission_enabled);
-        Method getTransmissionTargetMethod;
         try {
             mIsEnabledMethod = AnalyticsTransmissionTarget.class.getMethod("isEnabledAsync");
-            getTransmissionTargetMethod = AnalyticsTransmissionTarget.class.getMethod("getTransmissionTarget", String.class);
         } catch (NoSuchMethodException e) {
             mIsEnabledMethod = null;
-            getTransmissionTargetMethod = null;
         }
 
         /*
@@ -69,23 +78,7 @@ public class EventActivity extends LogActivity {
          * The second one is the parent transmission target, the third one is a child,
          * the forth is a grandchild, etc...
          */
-        String[] targetTokens = getResources().getStringArray(R.array.target_id_values);
-        mTransmissionTargets.add(null);
-        mTransmissionTargets.add(Analytics.getTransmissionTarget(targetTokens[1]));
-        for (int i = 2; i < targetTokens.length; i++) {
-            String targetToken = targetTokens[i];
-            AnalyticsTransmissionTarget target;
-            if (getTransmissionTargetMethod == null) {
-                target = Analytics.getTransmissionTarget(targetToken);
-            } else {
-                try {
-                    target = (AnalyticsTransmissionTarget) getTransmissionTargetMethod.invoke(mTransmissionTargets.get(i - 1), targetToken);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            mTransmissionTargets.add(target);
-        }
+        mTransmissionTargets = EventActivityUtil.getAnalyticTransmissionTargetList(this);
 
         /* Test start from library. */
         try {
