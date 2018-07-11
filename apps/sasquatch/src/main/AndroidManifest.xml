@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools"
-          package="com.microsoft.appcenter.sasquatch">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.microsoft.appcenter.sasquatch">
 
     <application
         android:name=".SasquatchApplication"
@@ -15,37 +15,40 @@
             android:name=".activities.MainActivity"
             android:launchMode="singleTop">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
             android:name=".activities.CrashActivity"
-            android:label="@string/title_crashes"/>
-        <activity android:name=".activities.CrashSubActivity"/>
-        <activity android:name=".activities.CrashSubActivity2"/>
+            android:label="@string/title_crashes" />
+        <activity android:name=".activities.CrashSubActivity" />
+        <activity android:name=".activities.CrashSubActivity2" />
         <activity
             android:name=".activities.DeviceInfoActivity"
-            android:label="@string/title_device_info"/>
+            android:label="@string/title_device_info" />
         <activity
             android:name=".activities.EventActivity"
-            android:label="@string/title_event"/>
+            android:label="@string/title_event" />
+        <activity
+            android:name=".activities.EventPropertiesActivity"
+            android:label="@string/title_event_properties" />
         <activity
             android:name=".activities.PageActivity"
-            android:label="@string/title_page"/>
+            android:label="@string/title_page" />
         <activity
             android:name=".activities.DummyActivity"
-            android:label="@string/title_generate_page_log"/>
+            android:label="@string/title_generate_page_log" />
         <activity
             android:name=".activities.SettingsActivity"
-            android:label="@string/settings"/>
+            android:label="@string/settings" />
         <activity
             android:name=".activities.ManagedErrorActivity"
-            android:label="@string/title_error"/>
+            android:label="@string/title_error" />
         <activity
             android:name=".activities.CustomPropertiesActivity"
-            android:label="@string/title_custom_properties"/>
+            android:label="@string/title_custom_properties" />
 
         <!-- Set default notification icon and color. -->
         <meta-data
@@ -54,6 +57,7 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/appcenter_logo" />
+
     </application>
 
 </manifest>

@@ -17,6 +17,7 @@ public class SasquatchAnalyticsListener implements com.microsoft.appcenter.analy
 
     @VisibleForTesting
     public static final CountingIdlingResource analyticsIdlingResource = new CountingIdlingResource("analytics");
+
     private final Context mContext;
 
     public SasquatchAnalyticsListener(Context context) {
