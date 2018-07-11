@@ -69,17 +69,42 @@ public class AnalyticsTransmissionTarget {
      * @param properties Optional properties.
      */
     @SuppressWarnings("WeakerAccess")
-    public synchronized void trackEvent(String name, Map<String, String> properties) {
-        Map<String, String> mergedProperties;
-        if (properties == null && mEventProperties.isEmpty()) {
+    public void trackEvent(String name, Map<String, String> properties) {
+
+        /* Merge common properties. More specific target wins conflicts. */
+        Map<String, String> mergedProperties = new HashMap<>();
+        for (AnalyticsTransmissionTarget target = this; target != null; target = target.mParentTarget) {
+            target.mergeEventProperties(mergedProperties);
+        }
+
+        /* Override with parameter. */
+        if (properties != null) {
+            mergedProperties.putAll(properties);
+        }
+
+        /*
+         * If we passed null as parameter and no common properties set,
+         * keep null for consistency with Analytics class regarding null vs empty.
+         */
+        else if (mergedProperties.isEmpty()) {
             mergedProperties = null;
-        } else {
-            mergedProperties = new HashMap<>(mEventProperties);
-            if (properties != null) {
-                mergedProperties.putAll(properties);
+        }
+
+        /* Track event with merged properties. */
+        Analytics.trackEvent(name, mergedProperties, this);
+    }
+
+    /**
+     * Extracted method to synchronize on each level at once while reading properties.
+     * Nesting synchronize between parent/child could lead to deadlocks.
+     */
+    private synchronized void mergeEventProperties(Map<String, String> mergedProperties) {
+        for (Map.Entry<String, String> property : mEventProperties.entrySet()) {
+            String key = property.getKey();
+            if (!mergedProperties.containsKey(key)) {
+                mergedProperties.put(key, property.getValue());
             }
         }
-        Analytics.trackEvent(name, mergedProperties, this);
     }
 
     /**

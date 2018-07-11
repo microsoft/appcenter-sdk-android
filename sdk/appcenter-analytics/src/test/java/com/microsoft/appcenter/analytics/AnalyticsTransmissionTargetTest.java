@@ -8,6 +8,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
@@ -15,6 +16,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -375,5 +377,63 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 return false;
             }
         }), anyString());
+    }
+
+    @Test
+    public void eventPropertiesCascading() {
+
+        /* Create transmission target hierarchy. */
+        AnalyticsTransmissionTarget grandParent = Analytics.getTransmissionTarget("grandParent");
+        AnalyticsTransmissionTarget parent = grandParent.getTransmissionTarget("parent");
+        AnalyticsTransmissionTarget child = parent.getTransmissionTarget("child");
+
+        /* Set common properties across hierarchy with some overrides. */
+        grandParent.setEventProperty("a", "1");
+        grandParent.setEventProperty("b", "2");
+        grandParent.setEventProperty("c", "3");
+
+        /* Override some. */
+        parent.setEventProperty("a", "11");
+        parent.setEventProperty("b", "22");
+
+        /* And a new one. */
+        parent.setEventProperty("d", "44");
+
+        /* Just to show we still get value from grandParent if we remove an override. */
+        parent.setEventProperty("c", "33");
+        parent.removeEventProperty("c");
+
+        /* Overrides in child. */
+        child.setEventProperty("d", "444");
+
+        /* New in child. */
+        child.setEventProperty("e", "555");
+        child.setEventProperty("f", "666");
+
+        /* Track event in child. Override properties in trackEvent. */
+        Map<String, String> properties = new HashMap<>();
+        properties.put("f", "6666");
+        properties.put("g", "7777");
+        child.trackEvent("eventName", properties);
+
+        /* Verify log that was sent. */
+        ArgumentCaptor<EventLog> logArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        verify(mChannel).enqueue(logArgumentCaptor.capture(), anyString());
+        EventLog log = logArgumentCaptor.getValue();
+        assertNotNull(log);
+        assertEquals("eventName", log.getName());
+        assertEquals(1, log.getTransmissionTargetTokens().size());
+        assertTrue(log.getTransmissionTargetTokens().contains("child"));
+
+        /* Verify properties. */
+        Map<String, String> expectedProperties = new HashMap<>();
+        expectedProperties.put("a", "11");
+        expectedProperties.put("b", "22");
+        expectedProperties.put("c", "3");
+        expectedProperties.put("d", "444");
+        expectedProperties.put("e", "555");
+        expectedProperties.put("f", "6666");
+        expectedProperties.put("g", "7777");
+        assertEquals(expectedProperties, log.getProperties());
     }
 }
