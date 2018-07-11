@@ -68,10 +68,11 @@ public class EventActivity extends LogActivity {
             findViewById(R.id.configure_button).setVisibility(GONE);
         } else {
             findViewById(R.id.configure_button).setOnClickListener(new View.OnClickListener() {
+
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(EventActivity.this, EventPropertiesActivity.class);
-                    intent.putExtra("TARGET_SELECTED", mTransmissionTargetSpinner.getSelectedItemPosition());
+                    intent.putExtra(EventPropertiesActivity.EXTRA_TARGET_SELECTED, mTransmissionTargetSpinner.getSelectedItemPosition());
                     startActivity(intent);
                 }
             });

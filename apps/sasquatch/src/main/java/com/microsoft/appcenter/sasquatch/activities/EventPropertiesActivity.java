@@ -30,6 +30,8 @@ import java.util.Map;
 
 public class EventPropertiesActivity extends AppCompatActivity {
 
+    public final static String EXTRA_TARGET_SELECTED = "TARGET_SELECTED";
+
     private Spinner mTransmissionTargetSpinner;
 
     private ListView mListView;
@@ -60,7 +62,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> parent) {
             }
         });
-        mTransmissionTargetSpinner.setSelection(getIntent().getIntExtra("TARGET_SELECTED", 0));
+        mTransmissionTargetSpinner.setSelection(getIntent().getIntExtra(EXTRA_TARGET_SELECTED, 0));
 
         /* Initialize layout for a new property. */
         mAddPropertyLayout = findViewById(R.id.add_property);
@@ -118,6 +120,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
                     }
                 });
                 mAddPropertyLayout.findViewById(R.id.cancel_button).setOnClickListener(new View.OnClickListener() {
+
                     @Override
                     public void onClick(View v) {
                         mAddPropertyLayout.setVisibility(View.GONE);
@@ -192,7 +195,6 @@ public class EventPropertiesActivity extends AppCompatActivity {
             //noinspection unchecked
             final Pair<String, String> item = (Pair<String, String>) getItem(position);
             ViewHolder holder;
-
             if (convertView != null && convertView.getTag() != null) {
                 holder = (ViewHolder) convertView.getTag();
                 rowView = convertView;
@@ -203,9 +205,9 @@ public class EventPropertiesActivity extends AppCompatActivity {
                 holder = new ViewHolder(textView, imageButton);
                 rowView.setTag(holder);
             }
-
             holder.mTextView.setText(String.format(KEY_VALUE_PAIR_FORMAT, item.first, item.second));
             holder.mImageButton.setOnClickListener(new View.OnClickListener() {
+
                 @Override
                 public void onClick(View v) {
                     mList.remove(item);
@@ -230,6 +232,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
         private class ViewHolder {
             private final TextView mTextView;
+
             private final ImageButton mImageButton;
 
             private ViewHolder(TextView textView, ImageButton imageButton) {
