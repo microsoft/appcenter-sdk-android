@@ -614,6 +614,7 @@ public class SettingsActivity extends AppCompatActivity {
 
 
         private interface HasEnabled {
+
             boolean isEnabled();
 
             void setEnabled(boolean enabled);

@@ -231,6 +231,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
         }
 
         private class ViewHolder {
+
             private final TextView mTextView;
 
             private final ImageButton mImageButton;
