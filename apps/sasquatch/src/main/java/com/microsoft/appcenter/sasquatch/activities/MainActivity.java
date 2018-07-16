@@ -36,7 +36,6 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
-import java.lang.reflect.Method;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -52,8 +51,6 @@ public class MainActivity extends AppCompatActivity {
     static final String LOG_URL_KEY = "logUrl";
 
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
-
-    private static final String SENDER_ID = "177539951155";
 
     private static final String TEXT_ATTACHMENT_KEY = "textAttachment";
 
@@ -127,9 +124,6 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
         }
-
-        //noinspection deprecation
-        Push.setSenderId(SENDER_ID);
 
         /* Set crash attachments. */
         sCrashesListener.setTextAttachment(sSharedPreferences.getString(TEXT_ATTACHMENT_KEY, null));
@@ -261,21 +255,7 @@ public class MainActivity extends AppCompatActivity {
                 appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
                 break;
             case NO_SECRET:
-
-                /* TODO remove reflection once API available in jCenter. */
-                try {
-
-                    @SuppressWarnings("JavaReflectionMemberAccess")
-                    Method startMethod = AppCenter.class.getMethod("start", Application.class, Class[].class);
-                    Class[] services = {Analytics.class, Crashes.class, Distribute.class, Push.class};
-                    startMethod.invoke(null, application, services);
-                } catch (NoSuchMethodException nse) {
-
-                    /* On jCenter we still have to pass null or empty as appSecret parameter. */
-                    break;
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+                AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class, Push.class);
                 return;
         }
         AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);

@@ -6,7 +6,7 @@ evaluationDependsOn(':apps')
 
 android {
 
-    flavorDimensions "dependency", "pushLibrary"
+    flavorDimensions "dependency"
 
     defaultConfig {
         externalNativeBuild {
@@ -25,12 +25,6 @@ android {
         jcenterDependency {
             dimension "dependency"
             applicationIdSuffix ".jcenter"
-        }
-        vanilla {
-            dimension "pushLibrary"
-        }
-        firebase {
-            dimension "pushLibrary"
         }
     }
 
@@ -65,7 +59,7 @@ dependencies {
     projectDependencyImplementation project(':sdk:appcenter-push')
     projectDependencyImplementation project(':sdk:appcenter-rum')
 
-    def appCenterSdkVersion = "1.6.1"
+    def appCenterSdkVersion = "1.7.0"
     //noinspection GradleDependency
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
     //noinspection GradleDependency
@@ -75,18 +69,10 @@ dependencies {
     //noinspection GradleDependency
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
 
-    // TODO remove this after SDK available in jCenter.
-    firebaseImplementation "com.google.firebase:firebase-core:16.0.1"
-    firebaseImplementation "com.google.firebase:firebase-messaging:17.0.0"
-
     /* Force usage this version of support annotations to avoid conflict. */
     androidTestImplementation "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     implementation 'com.android.support.test.espresso:espresso-idling-resource:3.0.1'
 }
 
-// We are interested in excluding the plugin only for the vanilla sasquatch build variant.
-def taskRequests = getGradle().getStartParameter().getTaskRequests().toString()
-if (!taskRequests.contains("sasquatch") || taskRequests.contains("Firebase")) {
-    apply plugin: 'com.google.gms.google-services'
-}
+apply plugin: 'com.google.gms.google-services'
