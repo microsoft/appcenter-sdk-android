@@ -52,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
 
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
 
+    private static final String SENDER_ID = "177539951155";
+
     private static final String TEXT_ATTACHMENT_KEY = "textAttachment";
 
     private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
@@ -124,6 +126,9 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
         }
+
+        //noinspection deprecation
+        Push.setSenderId(SENDER_ID);
 
         /* Set crash attachments. */
         sCrashesListener.setTextAttachment(sSharedPreferences.getString(TEXT_ATTACHMENT_KEY, null));
