@@ -17,6 +17,7 @@
     <string name="description_error" tools:ignore="MissingTranslation">Send an exception</string>
     <string name="title_event" tools:ignore="MissingTranslation">Events</string>
     <string name="description_event" tools:ignore="MissingTranslation">Send a custom event</string>
+    <string name="title_event_properties" tools:ignore="MissingTranslation">Event properties</string>
     <string name="title_page" tools:ignore="MissingTranslation">Pages</string>
     <string name="description_page" tools:ignore="MissingTranslation">Send custom pages</string>
     <string name="send" tools:ignore="MissingTranslation">Send</string>
@@ -35,4 +36,7 @@
     </string-array>
     <string name="version_x_available" tools:ignore="MissingTranslation">Version %1$s available!</string>
     <string name="push_toast" tools:ignore="MissingTranslation">Push clicked with data=%1s</string>
+    <string name="transmission_enabled" tools:ignore="MissingTranslation">Transmission target is enabled.</string>
+    <string name="transmission_disabled" tools:ignore="MissingTranslation">Transmission target is disabled.</string>
+    <string name="configure_target_properties" tools:ignore="MissingTranslation">Configure target properties</string>
 </resources>

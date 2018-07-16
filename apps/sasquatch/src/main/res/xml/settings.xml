@@ -78,6 +78,7 @@
         android:key="@string/application_info_key"
         android:title="@string/application_info_title">
         <Preference
+            android:dependency="@string/appcenter_state_key"
             android:key="@string/install_id_key"
             android:title="@string/install_id_title" />
         <Preference

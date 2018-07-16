@@ -11,6 +11,14 @@ import com.microsoft.appcenter.ingestion.models.Log;
 public interface Channel {
 
     /**
+     * Set app secret. Intended usage is to use that only if there was no app secret at initialization time.
+     * The behavior is undefined if trying to update app secret a second time.
+     *
+     * @param appSecret app secret.
+     */
+    void setAppSecret(@NonNull String appSecret);
+
+    /**
      * Add a group for logs to be persisted and sent.
      *
      * @param groupName          the name of a group.

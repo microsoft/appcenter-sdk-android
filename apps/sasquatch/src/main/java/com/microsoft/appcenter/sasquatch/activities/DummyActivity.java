@@ -12,7 +12,9 @@ import com.microsoft.appcenter.sasquatch.R;
 import java.util.Locale;
 
 public class DummyActivity extends AppCompatActivity {
+
     private static int counter = 0;
+
     private int currentCounter;
 
     @Override
@@ -47,7 +49,6 @@ public class DummyActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         final Handler handler = new Handler();
         if (this.currentCounter == requestCode) {
             handler.postDelayed(new Runnable() {

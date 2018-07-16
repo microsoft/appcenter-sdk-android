@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
 import android.annotation.SuppressLint;
+import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -22,7 +23,6 @@ import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesListener;
-import com.microsoft.appcenter.crashes.CrashesPrivateHelper;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
@@ -36,6 +36,7 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -126,6 +127,8 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
         }
+
+        //noinspection deprecation
         Push.setSenderId(SENDER_ID);
 
         /* Set crash attachments. */
@@ -141,8 +144,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* Start App Center. */
-        StartType startType = StartType.valueOf(sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString()));
-        startAppCenter(startType);
+        String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
+        startAppCenter(getApplication(), startType);
 
         /* Attach NDK Crash Handler after SDK is initialized. */
         Crashes.getMinidumpDirectory().thenAccept(new AppCenterConsumer<String>() {
@@ -239,9 +242,13 @@ public class MainActivity extends AppCompatActivity {
         return sPushListener;
     }
 
-    private void startAppCenter(StartType startType) {
-        String appId = sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret));
-        String targetId = sSharedPreferences.getString(TARGET_KEY, getString(R.string.target_id));
+    static void startAppCenter(Application application, String startTypeString) {
+        StartType startType = StartType.valueOf(startTypeString);
+        if (startType == StartType.SKIP_START) {
+            return;
+        }
+        String appId = sSharedPreferences.getString(APP_SECRET_KEY, application.getString(R.string.app_secret));
+        String targetId = sSharedPreferences.getString(TARGET_KEY, application.getString(R.string.target_id));
         String appIdArg = "";
         switch (startType) {
             case APP_SECRET:
@@ -253,13 +260,32 @@ public class MainActivity extends AppCompatActivity {
             case BOTH:
                 appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
                 break;
+            case NO_SECRET:
+
+                /* TODO remove reflection once API available in jCenter. */
+                try {
+
+                    @SuppressWarnings("JavaReflectionMemberAccess")
+                    Method startMethod = AppCenter.class.getMethod("start", Application.class, Class[].class);
+                    Class[] services = {Analytics.class, Crashes.class, Distribute.class, Push.class};
+                    startMethod.invoke(null, application, services);
+                } catch (NoSuchMethodException nse) {
+
+                    /* On jCenter we still have to pass null or empty as appSecret parameter. */
+                    break;
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                return;
         }
-        AppCenter.start(getApplication(), appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
+        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
     }
 
     public enum StartType {
         APP_SECRET,
         TARGET,
-        BOTH
+        BOTH,
+        NO_SECRET,
+        SKIP_START
     }
 }

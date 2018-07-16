@@ -30,7 +30,6 @@ import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
@@ -105,7 +104,7 @@ public class CrashesAndroidTest {
         Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
     }
 
-    private void startFresh(CrashesListener listener) throws Exception {
+    private void startFresh(CrashesListener listener) {
 
         /* Configure new instance. */
         AppCenterPrivateHelper.unsetInstance();
@@ -118,13 +117,7 @@ public class CrashesAndroidTest {
         AppCenter.setEnabled(true).get();
 
         /* Replace channel. */
-        Method method = AppCenter.class.getDeclaredMethod("getInstance");
-        method.setAccessible(true);
-        AppCenter appCenter = (AppCenter) method.invoke(null);
-        method = AppCenter.class.getDeclaredMethod("setChannel", Channel.class);
-        method.setAccessible(true);
-        method.invoke(appCenter, mChannel);
-
+        AppCenter.getInstance().setChannel(mChannel);
         /* Set listener. */
         Crashes.setListener(listener);
 

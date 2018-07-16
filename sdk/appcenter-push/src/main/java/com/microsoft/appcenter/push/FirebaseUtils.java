@@ -1,12 +1,15 @@
 package com.microsoft.appcenter.push;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.messaging.FirebaseMessagingService;
 
 /**
  * Utilities to manipulate Firebase Push SDK.
@@ -46,16 +49,17 @@ class FirebaseUtils {
     }
 
     @SuppressWarnings("MissingPermission")
-    static void setAnalyticsEnabled(@NonNull Context context, boolean enabled) throws FirebaseUnavailableException {
-        try {
-            FirebaseAnalytics instance = FirebaseAnalytics.getInstance(context);
-            if (instance == null) {
-                throw new FirebaseUnavailableException("null instance");
-            }
-            instance.setAnalyticsCollectionEnabled(enabled);
-        } catch (NoClassDefFoundError | IllegalAccessError e) {
-            throw new FirebaseUnavailableException(e);
-        }
+    static void setAnalyticsEnabled(@NonNull Context context, boolean enabled) {
+        FirebaseAnalytics instance = FirebaseAnalytics.getInstance(context);
+        instance.setAnalyticsCollectionEnabled(enabled);
+    }
+
+    static void setFirebaseMessagingServiceEnabled(@NonNull Context context, boolean enabled) {
+        PackageManager packageManager = context.getPackageManager();
+        ComponentName firebaseComponentName = new ComponentName(context, FirebaseMessagingService.class.getName());
+        packageManager.setComponentEnabledSetting(firebaseComponentName,
+                enabled ? PackageManager.COMPONENT_ENABLED_STATE_DEFAULT : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
     }
 
     @Nullable
@@ -71,7 +75,7 @@ class FirebaseUtils {
                 throw new FirebaseUnavailableException("null instance");
             }
             return instance;
-        } catch (NoClassDefFoundError | IllegalAccessError | IllegalStateException e) {
+        } catch (IllegalStateException e) {
             throw new FirebaseUnavailableException(e);
         }
     }

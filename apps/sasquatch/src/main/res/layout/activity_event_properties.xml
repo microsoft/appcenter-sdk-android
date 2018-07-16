@@ -5,22 +5,9 @@
     android:layout_height="match_parent"
     android:gravity="center_horizontal"
     android:orientation="vertical"
-    tools:context=".activities.LogActivity">
+    tools:context=".activities.EventPropertiesActivity">
 
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/name" />
-
-    <EditText
-        android:id="@+id/name"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/name"
-        android:inputType="text" />
-
-    <TextView
-        android:id="@+id/transmission_target_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/transmission_target" />
@@ -32,27 +19,40 @@
         android:background="@android:drawable/btn_dropdown"
         android:spinnerMode="dropdown" />
 
-    <TextView
+    <LinearLayout
+        android:id="@+id/add_property"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/properties" />
+        android:orientation="vertical"
+        android:visibility="gone">
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        <include layout="@layout/property" />
 
         <LinearLayout
-            android:id="@+id/list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </ScrollView>
+            android:gravity="end"
+            android:orientation="horizontal">
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="send"
-        android:text="@string/send" />
+            <Button
+                android:id="@+id/add_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/add" />
+
+            <Button
+                android:id="@+id/cancel_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/cancel" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </LinearLayout>

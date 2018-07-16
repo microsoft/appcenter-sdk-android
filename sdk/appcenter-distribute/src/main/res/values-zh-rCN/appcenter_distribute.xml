@@ -18,5 +18,5 @@
   <string name="appcenter_distribute_update_failed_dialog_title">禁用应用程序更新</string>
   <string name="appcenter_distribute_update_failed_dialog_ignore">忽略</string>
   <string name="appcenter_distribute_update_failed_dialog_reinstall">重新安装应用程序</string>
-  <string name="appcenter_distribute_update_failed_dialog_message">此版本要么是侧面加载, 要么是在专用模式下使用浏览器下载的。</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">此版本是侧载或者在浏览器的隐私模式中下载的。</string>
 </resources>

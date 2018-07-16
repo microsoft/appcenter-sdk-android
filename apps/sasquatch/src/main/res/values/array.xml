@@ -4,5 +4,7 @@
         <item>APP_SECRET</item>
         <item>TARGET</item>
         <item>BOTH</item>
+        <item>NO_SECRET</item>
+        <item>SKIP_START</item>
     </string-array>
 </resources>

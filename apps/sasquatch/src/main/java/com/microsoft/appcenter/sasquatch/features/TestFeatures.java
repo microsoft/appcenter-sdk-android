@@ -22,7 +22,9 @@ import java.util.List;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 public final class TestFeatures {
+
     private static List<TestFeatureModel> sTestFeatureModels;
+
     private static WeakReference<Activity> sParentActivity;
 
     public static void initialize(Activity parentActivity) {
@@ -74,6 +76,7 @@ public final class TestFeatures {
     }
 
     abstract static class TestFeatureModel {
+
         private final String mTitle;
 
         TestFeatureModel(int title) {
@@ -86,13 +89,16 @@ public final class TestFeatures {
     }
 
     static class TestFeatureTitle extends TestFeatureModel {
+
         TestFeatureTitle(int title) {
             super(title);
         }
     }
 
     static class TestFeature extends TestFeatureModel {
+
         private final String mDescription;
+
         private final View.OnClickListener mOnClickListener;
 
         TestFeature(int title, int description, Class<? extends Activity> clazz) {
