@@ -1,6 +1,5 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -14,18 +13,11 @@ import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static android.view.View.GONE;
-
-/**
- * TODO remove reflection once new APIs available in jCenter.
- */
 public class EventActivity extends LogActivity {
 
     private Spinner mTransmissionTargetSpinner;
@@ -33,8 +25,6 @@ public class EventActivity extends LogActivity {
     private CheckBox mTransmissionEnabledCheckBox;
 
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
-
-    private Method mIsEnabledMethod;
 
     @SuppressWarnings("JavaReflectionMemberAccess")
     @Override
@@ -58,33 +48,18 @@ public class EventActivity extends LogActivity {
         });
 
         /* Init Configure target properties button. */
-        Method method;
-        try {
-            method = AnalyticsTransmissionTarget.class.getMethod("setEventProperty", String.class, String.class);
-        } catch (Exception e) {
-            method = null;
-        }
-        if (method == null) {
-            findViewById(R.id.configure_button).setVisibility(GONE);
-        } else {
-            findViewById(R.id.configure_button).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.configure_button).setOnClickListener(new View.OnClickListener() {
 
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(EventActivity.this, EventPropertiesActivity.class);
-                    intent.putExtra(EventPropertiesActivity.EXTRA_TARGET_SELECTED, mTransmissionTargetSpinner.getSelectedItemPosition());
-                    startActivity(intent);
-                }
-            });
-        }
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(EventActivity.this, EventPropertiesActivity.class);
+                intent.putExtra(EventPropertiesActivity.EXTRA_TARGET_SELECTED, mTransmissionTargetSpinner.getSelectedItemPosition());
+                startActivity(intent);
+            }
+        });
 
         /* Init enabled check box. */
         mTransmissionEnabledCheckBox = findViewById(R.id.transmission_enabled);
-        try {
-            mIsEnabledMethod = AnalyticsTransmissionTarget.class.getMethod("isEnabledAsync");
-        } catch (NoSuchMethodException e) {
-            mIsEnabledMethod = null;
-        }
 
         /*
          * The first element is a placeholder for default transmission.
@@ -94,13 +69,7 @@ public class EventActivity extends LogActivity {
         mTransmissionTargets = EventActivityUtil.getAnalyticTransmissionTargetList(this);
 
         /* Test start from library. */
-        try {
-            Method startFromLibrary = AppCenter.class.getMethod("startFromLibrary", Context.class, Class[].class);
-            startFromLibrary.invoke(null, this, new Class[]{Analytics.class});
-        } catch (NoSuchMethodException ignore) {
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        AppCenter.startFromLibrary(this, Analytics.class);
     }
 
     @Override
@@ -124,38 +93,27 @@ public class EventActivity extends LogActivity {
         return mTransmissionTargets.get(mTransmissionTargetSpinner.getSelectedItemPosition());
     }
 
-    public void toggleTransmissionEnabled(View view) throws Exception {
+    public void toggleTransmissionEnabled(View view) {
         boolean checked = mTransmissionEnabledCheckBox.isChecked();
         final AnalyticsTransmissionTarget target = getSelectedTarget();
         if (target != null) {
-
-            @SuppressWarnings("JavaReflectionMemberAccess")
-            Method method = AnalyticsTransmissionTarget.class.getMethod("setEnabledAsync", boolean.class);
-            method.invoke(target, checked);
+            target.setEnabledAsync(checked);
             updateTransmissionEnabledCheckBox(target);
         }
     }
 
     private void updateTransmissionEnabledCheckBox(AnalyticsTransmissionTarget target) {
-        if (target == null || mIsEnabledMethod == null) {
-            mTransmissionEnabledCheckBox.setVisibility(GONE);
+        if (target == null) {
+            mTransmissionEnabledCheckBox.setVisibility(View.GONE);
         } else {
             mTransmissionEnabledCheckBox.setVisibility(View.VISIBLE);
-            boolean enabled = isTransmissionEnabled(target);
+            boolean enabled = target.isEnabledAsync().get();
             mTransmissionEnabledCheckBox.setChecked(enabled);
             if (enabled) {
                 mTransmissionEnabledCheckBox.setText(R.string.transmission_enabled);
             } else {
                 mTransmissionEnabledCheckBox.setText(R.string.transmission_disabled);
             }
-        }
-    }
-
-    private boolean isTransmissionEnabled(AnalyticsTransmissionTarget target) {
-        try {
-            return (boolean) ((AppCenterFuture) mIsEnabledMethod.invoke(target)).get();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 }

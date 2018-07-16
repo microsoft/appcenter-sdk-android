@@ -23,7 +23,6 @@ import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -96,25 +95,14 @@ public class EventPropertiesActivity extends AppCompatActivity {
                 valueView.setText("");
                 mAddPropertyLayout.setVisibility(View.VISIBLE);
                 mAddPropertyLayout.findViewById(R.id.add_button).setOnClickListener(new View.OnClickListener() {
+
                     @Override
                     public void onClick(View v) {
                         CharSequence key = keyView.getText();
                         CharSequence value = valueView.getText();
                         if (!TextUtils.isEmpty(key) && !TextUtils.isEmpty(value)) {
-                            Method method;
-                            try {
-                                method = AnalyticsTransmissionTarget.class.getMethod("setEventProperty", String.class, String.class);
-                            } catch (Exception e) {
-                                method = null;
-                            }
-                            if (method != null) {
-                                try {
-                                    method.invoke(getSelectedTarget(), key.toString(), value.toString());
-                                    updatePropertyList();
-                                } catch (Exception e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }
+                            getSelectedTarget().setEventProperty(key.toString(), value.toString());
+                            updatePropertyList();
                         }
                         mAddPropertyLayout.setVisibility(View.GONE);
                     }
@@ -211,20 +199,8 @@ public class EventPropertiesActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     mList.remove(item);
-                    Method method;
-                    try {
-                        method = AnalyticsTransmissionTarget.class.getMethod("removeEventProperty", String.class);
-                    } catch (Exception e) {
-                        method = null;
-                    }
-                    if (method != null) {
-                        try {
-                            method.invoke(getSelectedTarget(), item.first);
-                            notifyDataSetChanged();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
+                    getSelectedTarget().removeEventProperty(item.first);
+                    notifyDataSetChanged();
                 }
             });
             return rowView;
