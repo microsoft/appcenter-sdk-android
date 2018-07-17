@@ -65,7 +65,7 @@ dependencies {
     projectDependencyImplementation project(':sdk:appcenter-push')
     projectDependencyImplementation project(':sdk:appcenter-rum')
 
-    def appCenterSdkVersion = "1.6.1"
+    def appCenterSdkVersion = "1.7.0"
     //noinspection GradleDependency
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
     //noinspection GradleDependency
@@ -74,10 +74,6 @@ dependencies {
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
     //noinspection GradleDependency
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
-
-    // TODO remove this after SDK available in jCenter.
-    firebaseImplementation "com.google.firebase:firebase-core:16.0.1"
-    firebaseImplementation "com.google.firebase:firebase-messaging:17.0.0"
 
     /* Force usage this version of support annotations to avoid conflict. */
     androidTestImplementation "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"

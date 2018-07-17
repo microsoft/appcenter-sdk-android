@@ -14,7 +14,7 @@ Please make sure the following is done when submitting a pull request:
 1. Fork the repository and create your branch from `develop`.
 1. Run `git submodule update --init` before opening the solution if you don't want errors in the test application.
 1. To run the test app that uses project references to the SDK sources:
-   1. Select build variant `projectDependencyVanillaDebug` before hitting gradle sync.
+   1. Select build variant `projectDependencyFirebaseDebug` before hitting gradle sync.
    1. Disable `Instant run` in Android Studio settings before running.
 1. To run unit tests within Android Studio, disable `Configure on demand` in Android Studio `Compiler` settings.
 1. Make sure all tests have passed and your code is covered: run `gradlew coverageReport` command to generate report.
