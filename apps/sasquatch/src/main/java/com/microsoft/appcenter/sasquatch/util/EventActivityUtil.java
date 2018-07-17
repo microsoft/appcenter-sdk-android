@@ -20,7 +20,7 @@ public class EventActivityUtil {
          * the forth is a grandchild, etc...
          */
         String[] targetTokens = activity.getResources().getStringArray(R.array.target_id_values);
-        targets.add(Analytics.getTransmissionTarget(activity.getResources().getString(R.string.target_id)));
+        targets.add(null);
         targets.add(Analytics.getTransmissionTarget(targetTokens[1]));
         for (int i = 2; i < targetTokens.length; i++) {
             String targetToken = targetTokens[i];
