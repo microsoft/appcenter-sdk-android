@@ -3,6 +3,7 @@ package com.microsoft.appcenter.analytics;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 
+import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
@@ -29,7 +30,7 @@ public class AnalyticsTransmissionTarget {
     /**
      * Parent target if any.
      */
-    private final AnalyticsTransmissionTarget mParentTarget;
+    protected final AnalyticsTransmissionTarget mParentTarget;
 
     /**
      * Children targets for nesting.
@@ -42,14 +43,26 @@ public class AnalyticsTransmissionTarget {
     private final Map<String, String> mEventProperties = new HashMap<>();
 
     /**
+     * Property configurator used to override Common Schema Part A properties.
+     */
+    private PropertyConfigurator mPropertyConfigurator;
+
+    /**
+     * Channel used for Property Configurator.
+     */
+    private Channel mChannel;
+
+    /**
      * Create a new instance.
      *
      * @param transmissionTargetToken The token for this transmission target.
      * @param parentTarget            Parent transmission target.
      */
-    AnalyticsTransmissionTarget(@NonNull String transmissionTargetToken, final AnalyticsTransmissionTarget parentTarget) {
+    AnalyticsTransmissionTarget(@NonNull String transmissionTargetToken, final AnalyticsTransmissionTarget parentTarget, Channel channel) {
         mTransmissionTargetToken = transmissionTargetToken;
         mParentTarget = parentTarget;
+        mChannel = channel;
+        mPropertyConfigurator = new PropertyConfigurator(channel, this);
     }
 
     /**
@@ -140,7 +153,7 @@ public class AnalyticsTransmissionTarget {
         /* Reuse instance if a child with the same token has already been created. */
         AnalyticsTransmissionTarget childTarget = mChildrenTargets.get(transmissionTargetToken);
         if (childTarget == null) {
-            childTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, this);
+            childTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, this, mChannel);
             mChildrenTargets.put(transmissionTargetToken, childTarget);
         }
         return childTarget;
@@ -215,6 +228,15 @@ public class AnalyticsTransmissionTarget {
      */
     String getTransmissionTargetToken() {
         return mTransmissionTargetToken;
+    }
+
+    /**
+     * Getter for property configurator to override Common Schema Part A properties.
+     *
+     * @return  the Property Configurator
+     */
+    public PropertyConfigurator getPropertyConfigurator() {
+        return mPropertyConfigurator;
     }
 
     @NonNull
