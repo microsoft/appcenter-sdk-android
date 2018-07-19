@@ -128,16 +128,16 @@ public class AppExtension implements Model {
     @Override
     public void read(JSONObject object) {
         setId(object.optString(ID, null));
-        setName(object.optString(NAME, null));
         setVer(object.optString(VER, null));
+        setName(object.optString(NAME, null));
         setLocale(object.optString(LOCALE, null));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
         JSONUtils.write(writer, ID, getId());
-        JSONUtils.write(writer, NAME, getName());
         JSONUtils.write(writer, VER, getVer());
+        JSONUtils.write(writer, NAME, getName());
         JSONUtils.write(writer, LOCALE, getLocale());
     }
 
@@ -150,16 +150,16 @@ public class AppExtension implements Model {
         AppExtension that = (AppExtension) o;
 
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (ver != null ? !ver.equals(that.ver) : that.ver != null) return false;
+        if (name != null ? !name.equals(that.name) : that.name != null) return false;
         return locale != null ? locale.equals(that.locale) : that.locale == null;
     }
 
     @Override
     public int hashCode() {
         int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (ver != null ? ver.hashCode() : 0);
+        result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (locale != null ? locale.hashCode() : 0);
         return result;
     }
