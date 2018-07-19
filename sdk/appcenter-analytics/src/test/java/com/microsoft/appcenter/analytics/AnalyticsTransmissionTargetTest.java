@@ -24,6 +24,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -464,27 +465,6 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
     }
 
     @Test
-    public void inheritCommonSchemaProperties() {
-        CommonSchemaLog log = new CommonSchemaEventLog();
-        log.setExt(new Extensions());
-        log.getExt().setApp(new AppExtension());
-
-        /* Set properties on parent to override unset properties on child */
-        AnalyticsTransmissionTarget parent = Analytics.getTransmissionTarget("parent");
-        parent.getPropertyConfigurator().setAppVersion("appVersion");
-        parent.getPropertyConfigurator().setAppName("appName");
-        parent.getPropertyConfigurator().setAppLocale("appLocale");
-
-        AnalyticsTransmissionTarget child = parent.getTransmissionTarget("child");
-        child.getPropertyConfigurator().onPreparingLog(log, "groupName");
-
-        /* Assert properties set on common schema. */
-        assertEquals("appVersion", log.getExt().getApp().getVer());
-        assertEquals("appName", log.getExt().getApp().getId());
-        assertEquals("appLocale", log.getExt().getApp().getLocale());
-    }
-
-    @Test
     public void commonSchemaPropertiesNotSetWhenDisabled() {
         CommonSchemaLog log = new CommonSchemaEventLog();
         log.setExt(new Extensions());
@@ -498,7 +478,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         target.getPropertyConfigurator().setAppLocale("appLocale");
         target.getPropertyConfigurator().onPreparingLog(log, "groupName");
 
-        /* Assert default values for properties */
+        /* Assert properties are null. */
         assertNull(log.getExt().getApp().getVer());
         assertNull(log.getExt().getApp().getId());
         assertNull(log.getExt().getApp().getLocale());
@@ -524,5 +504,37 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         assertEquals("appVersion", log.getExt().getApp().getVer());
         assertEquals("appName", log.getExt().getApp().getId());
         assertEquals("appLocale", log.getExt().getApp().getLocale());
+    }
+
+    @Test
+    public void grandparentsHaveNoPropertiesSet() {
+        CommonSchemaLog log = new CommonSchemaEventLog();
+        log.setExt(new Extensions());
+        log.getExt().setApp(new AppExtension());
+
+        /* Set up empty chain of parents. */
+        AnalyticsTransmissionTarget grandparent = Analytics.getTransmissionTarget("grandparent");
+        AnalyticsTransmissionTarget parent = grandparent.getTransmissionTarget("parent");
+        AnalyticsTransmissionTarget child = parent.getTransmissionTarget("child");
+        child.getPropertyConfigurator().onPreparingLog(log, "groupName");
+
+        /* Assert properties set on common schema. */
+        assertNull(log.getExt().getApp().getVer());
+        assertNull(log.getExt().getApp().getId());
+        assertNull(log.getExt().getApp().getLocale());
+    }
+
+    @Test
+    public void appCenterLogDoesNotOverride() {
+        Log log = new EventLog();
+
+        /* Get property configurator and set properties. */
+        PropertyConfigurator pc = Analytics.getTransmissionTarget("test").getPropertyConfigurator();
+        pc.setAppVersion("appVersion");
+        pc.setAppName("appName");
+        pc.setAppLocale("appLocale");
+        pc.onPreparingLog(log, "groupName");
+
+        verify(mChannel, never()).enqueue(isA(EventLog.class), anyString());
     }
 }
