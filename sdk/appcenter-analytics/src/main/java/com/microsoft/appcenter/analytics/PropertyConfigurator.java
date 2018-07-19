@@ -59,12 +59,12 @@ public class PropertyConfigurator extends AbstractChannelListener {
 
             /* Override app name if not null, else use the name of the nearest parent. */
             if (mAppName != null) {
-                app.setId(mAppName);
+                app.setName(mAppName);
             } else {
                 for (AnalyticsTransmissionTarget target = mTransmissionTarget.mParentTarget; target != null; target = target.mParentTarget) {
                     String parentAppName = target.getPropertyConfigurator().getAppName();
                     if (parentAppName != null) {
-                        app.setId(parentAppName);
+                        app.setName(parentAppName);
                         break;
                     }
                 }

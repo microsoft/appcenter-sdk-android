@@ -49,7 +49,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Assert properties set on common schema. */
         assertEquals("appVersion", log.getExt().getApp().getVer());
-        assertEquals("appName", log.getExt().getApp().getId());
+        assertEquals("appName", log.getExt().getApp().getName());
         assertEquals("appLocale", log.getExt().getApp().getLocale());
     }
 
@@ -61,7 +61,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Get target, disable it, and set properties. */
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
-        target.setEnabledAsync(false);
+        target.setEnabledAsync(false).get();
         target.getPropertyConfigurator().setAppVersion("appVersion");
         target.getPropertyConfigurator().setAppName("appName");
         target.getPropertyConfigurator().setAppLocale("appLocale");
@@ -69,7 +69,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Assert properties are null. */
         assertNull(log.getExt().getApp().getVer());
-        assertNull(log.getExt().getApp().getId());
+        assertNull(log.getExt().getApp().getName());
         assertNull(log.getExt().getApp().getLocale());
     }
 
@@ -91,7 +91,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Assert properties set on common schema. */
         assertEquals("appVersion", log.getExt().getApp().getVer());
-        assertEquals("appName", log.getExt().getApp().getId());
+        assertEquals("appName", log.getExt().getApp().getName());
         assertEquals("appLocale", log.getExt().getApp().getLocale());
     }
 
@@ -109,7 +109,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Assert properties set on common schema. */
         assertNull(log.getExt().getApp().getVer());
-        assertNull(log.getExt().getApp().getId());
+        assertNull(log.getExt().getApp().getName());
         assertNull(log.getExt().getApp().getLocale());
     }
 
