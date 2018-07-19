@@ -657,6 +657,28 @@ public class PushTest {
         AppCenterLog.error(anyString(), anyString(), any(Exception.class));
     }
 
+    @Test
+    public void firebaseAnalyticsThrowsNoClassDefFoundError() {
+        when(FirebaseAnalytics.getInstance(any(Context.class))).thenThrow(new NoClassDefFoundError());
+
+        /* Verify we still start Push without it. */
+        start(Push.getInstance(), mock(Channel.class));
+        assertTrue(Push.isEnabled().get());
+        verifyStatic();
+        FirebaseAnalytics.getInstance(any(Context.class));
+    }
+
+    @Test
+    public void firebaseAnalyticsThrowsIllegalAccessError() {
+        when(FirebaseAnalytics.getInstance(any(Context.class))).thenThrow(new IllegalAccessError());
+
+        /* Verify we still start Push without it. */
+        start(Push.getInstance(), mock(Channel.class));
+        assertTrue(Push.isEnabled().get());
+        verifyStatic();
+        FirebaseAnalytics.getInstance(any(Context.class));
+    }
+
     private static Intent createPushIntent(String title, String message, final Map<String, String> customData) {
         mockStatic(PushIntentUtils.class);
         Intent pushIntentMock = mock(Intent.class);
