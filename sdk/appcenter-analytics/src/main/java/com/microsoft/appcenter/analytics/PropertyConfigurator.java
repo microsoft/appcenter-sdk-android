@@ -45,12 +45,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
             channel.addListener(this);
         }
     }
-
-    /**
-     *
-     * @param log
-     * @param groupName
-     */
+    
     @Override
     public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
         if (log instanceof CommonSchemaLog && mTransmissionTarget.isEnabled()) {
