@@ -18,14 +18,14 @@ public class AppExtension implements Model {
     private static final String ID = "id";
 
     /**
-     * Name property.
-     */
-    private static final String NAME = "name";
-
-    /**
      * Version property.
      */
     private static final String VER = "ver";
+
+    /**
+     * Name property.
+     */
+    private static final String NAME = "name";
 
     /**
      * Locale property.
@@ -38,14 +38,14 @@ public class AppExtension implements Model {
     private String id;
 
     /**
-     * Application name.
-     */
-    private String name;
-
-    /**
      * Application version.
      */
     private String ver;
+
+    /**
+     * Application name.
+     */
+    private String name;
 
     /**
      * Application locale.
