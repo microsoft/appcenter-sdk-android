@@ -160,7 +160,6 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         assertSame(childTarget, target.getTransmissionTarget("token3"));
     }
 
-
     @Test
     public void setEnabled() {
 

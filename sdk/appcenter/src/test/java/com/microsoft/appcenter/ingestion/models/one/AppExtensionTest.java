@@ -38,6 +38,14 @@ public class AppExtensionTest {
         b.setVer("a2");
         checkEquals(a, b);
 
+        /* Name. */
+        a.setName("a2");
+        checkNotEquals(a, b);
+        b.setName("b2");
+        checkNotEquals(a, b);
+        b.setName("a2");
+        checkEquals(a, b);
+
         /* Locale. */
         a.setLocale("a3");
         checkNotEquals(a, b);
