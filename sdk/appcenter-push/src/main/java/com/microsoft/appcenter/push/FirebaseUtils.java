@@ -10,6 +10,10 @@ import android.support.annotation.VisibleForTesting;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.FirebaseMessagingService;
+import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.utils.AppCenterLog;
+
+import static com.microsoft.appcenter.push.Push.LOG_TAG;
 
 /**
  * Utilities to manipulate Firebase Push SDK.
@@ -50,8 +54,11 @@ class FirebaseUtils {
 
     @SuppressWarnings("MissingPermission")
     static void setAnalyticsEnabled(@NonNull Context context, boolean enabled) {
-        FirebaseAnalytics instance = FirebaseAnalytics.getInstance(context);
-        instance.setAnalyticsCollectionEnabled(enabled);
+        try {
+            FirebaseAnalytics.getInstance(context).setAnalyticsCollectionEnabled(enabled);
+        } catch (LinkageError e) {
+            AppCenterLog.debug(LOG_TAG, "Firebase analytics not available so cannot change state.");
+        }
     }
 
     static void setFirebaseMessagingServiceEnabled(@NonNull Context context, boolean enabled) {
