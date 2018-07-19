@@ -57,6 +57,7 @@ public class AnalyticsTransmissionTarget {
      *
      * @param transmissionTargetToken The token for this transmission target.
      * @param parentTarget            Parent transmission target.
+     * @param channel                 The channel for this transmission target.
      */
     AnalyticsTransmissionTarget(@NonNull String transmissionTargetToken, final AnalyticsTransmissionTarget parentTarget, Channel channel) {
         mTransmissionTargetToken = transmissionTargetToken;
