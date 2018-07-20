@@ -171,14 +171,13 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Create transmission target and add 2 properties (1 overwritten). */
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
-        PropertyConfigurator configurator = target.getPropertyConfigurator();
-        configurator.setEventProperty("key1", "value1");
-        configurator.setEventProperty("key2", "ignore");
-        configurator.setEventProperty("remove", "ignore");
+        target.getPropertyConfigurator().setEventProperty("key1", "value1");
+        target.getPropertyConfigurator().setEventProperty("key2", "ignore");
+        target.getPropertyConfigurator().setEventProperty("remove", "ignore");
 
         /* Remove some properties. */
-        configurator.removeEventProperty("remove");
-        configurator.removeEventProperty("notFound");
+        target.getPropertyConfigurator().removeEventProperty("remove");
+        target.getPropertyConfigurator().removeEventProperty("notFound");
 
         /* Prepare properties. */
         Map<String, String> properties = new HashMap<>();
