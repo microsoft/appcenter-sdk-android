@@ -139,7 +139,6 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         verifyNoMoreInteractions(log);
     }
 
-
     @Test
     public void setCommonEventProperties() {
 

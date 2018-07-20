@@ -182,7 +182,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
         mEventProperties.remove(key);
     }
 
-    /**
+    /*
      * Extracted method to synchronize on each level at once while reading properties.
      * Nesting synchronize between parent/child could lead to deadlocks.
      */
