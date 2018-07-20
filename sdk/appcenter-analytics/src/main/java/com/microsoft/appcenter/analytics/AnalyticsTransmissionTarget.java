@@ -38,11 +38,6 @@ public class AnalyticsTransmissionTarget {
     private final Map<String, AnalyticsTransmissionTarget> mChildrenTargets = new HashMap<>();
 
     /**
-     * Common event properties for this target. Inherited by children.
-     */
-    private final Map<String, String> mEventProperties = new HashMap<>();
-
-    /**
      * Property configurator used to override Common Schema Part A properties.
      */
     private PropertyConfigurator mPropertyConfigurator;
@@ -88,7 +83,7 @@ public class AnalyticsTransmissionTarget {
         /* Merge common properties. More specific target wins conflicts. */
         Map<String, String> mergedProperties = new HashMap<>();
         for (AnalyticsTransmissionTarget target = this; target != null; target = target.mParentTarget) {
-            target.mergeEventProperties(mergedProperties);
+            target.getPropertyConfigurator().mergeEventProperties(mergedProperties);
         }
 
         /* Override with parameter. */
@@ -106,41 +101,6 @@ public class AnalyticsTransmissionTarget {
 
         /* Track event with merged properties. */
         Analytics.trackEvent(name, mergedProperties, this);
-    }
-
-    /**
-     * Extracted method to synchronize on each level at once while reading properties.
-     * Nesting synchronize between parent/child could lead to deadlocks.
-     */
-    private synchronized void mergeEventProperties(Map<String, String> mergedProperties) {
-        for (Map.Entry<String, String> property : mEventProperties.entrySet()) {
-            String key = property.getKey();
-            if (!mergedProperties.containsKey(key)) {
-                mergedProperties.put(key, property.getValue());
-            }
-        }
-    }
-
-    /**
-     * Add or overwrite the given key for the common event properties. Properties will be inherited
-     * by children of this transmission target.
-     *
-     * @param key   The property key.
-     * @param value The property value.
-     */
-    @SuppressWarnings("WeakerAccess")
-    public synchronized void setEventProperty(String key, String value) {
-        mEventProperties.put(key, value);
-    }
-
-    /**
-     * Removes the given key from the common event properties.
-     *
-     * @param key The property key to be removed.
-     */
-    @SuppressWarnings("WeakerAccess")
-    public synchronized void removeEventProperty(String key) {
-        mEventProperties.remove(key);
     }
 
     /**

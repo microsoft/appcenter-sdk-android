@@ -8,6 +8,9 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Allow overriding Part A properties.
  */
@@ -32,6 +35,11 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * The transmission target which this configurator belongs to.
      */
     private AnalyticsTransmissionTarget mTransmissionTarget;
+
+    /**
+     * Common event properties for this target. Inherited by children.
+     */
+    private final Map<String, String> mEventProperties = new HashMap<>();
 
     /**
      * Create a new property configurator.
@@ -150,5 +158,40 @@ public class PropertyConfigurator extends AbstractChannelListener {
      */
     public void setAppLocale(String appLocale) {
         mAppLocale = appLocale;
+    }
+
+    /**
+     * Add or overwrite the given key for the common event properties. Properties will be inherited
+     * by children of this transmission target.
+     *
+     * @param key   The property key.
+     * @param value The property value.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public synchronized void setEventProperty(String key, String value) {
+        mEventProperties.put(key, value);
+    }
+
+    /**
+     * Removes the given key from the common event properties.
+     *
+     * @param key The property key to be removed.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public synchronized void removeEventProperty(String key) {
+        mEventProperties.remove(key);
+    }
+
+    /**
+     * Extracted method to synchronize on each level at once while reading properties.
+     * Nesting synchronize between parent/child could lead to deadlocks.
+     */
+    protected synchronized void mergeEventProperties(Map<String, String> mergedProperties) {
+        for (Map.Entry<String, String> property : mEventProperties.entrySet()) {
+            String key = property.getKey();
+            if (!mergedProperties.containsKey(key)) {
+                mergedProperties.put(key, property.getValue());
+            }
+        }
     }
 }

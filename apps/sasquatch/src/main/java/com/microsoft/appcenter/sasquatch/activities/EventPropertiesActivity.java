@@ -19,6 +19,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
+import com.microsoft.appcenter.analytics.PropertyConfigurator;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
 
@@ -101,7 +102,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
                         CharSequence key = keyView.getText();
                         CharSequence value = valueView.getText();
                         if (!TextUtils.isEmpty(key) && !TextUtils.isEmpty(value)) {
-                            getSelectedTarget().setEventProperty(key.toString(), value.toString());
+                            getSelectedTarget().getPropertyConfigurator().setEventProperty(key.toString(), value.toString());
                             updatePropertyList();
                         }
                         mAddPropertyLayout.setVisibility(View.GONE);
@@ -120,10 +121,10 @@ public class EventPropertiesActivity extends AppCompatActivity {
     }
 
     private void updatePropertyList() {
-        AnalyticsTransmissionTarget target = getSelectedTarget();
+        PropertyConfigurator configurator = getSelectedTarget().getPropertyConfigurator();
         Field field;
         try {
-            field = target.getClass().getDeclaredField("mEventProperties");
+            field = configurator.getClass().getDeclaredField("mEventProperties");
         } catch (Exception e) {
             field = null;
         }
@@ -132,7 +133,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
                 field.setAccessible(true);
 
                 //noinspection unchecked
-                Map<String, String> map = (Map<String, String>) field.get(target);
+                Map<String, String> map = (Map<String, String>) field.get(configurator);
                 mPropertyListAdapter.mList.clear();
                 for (Map.Entry<String, String> entry : map.entrySet()) {
                     mPropertyListAdapter.mList.add(new Pair<>(entry.getKey(), entry.getValue()));
@@ -199,7 +200,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     mList.remove(item);
-                    getSelectedTarget().removeEventProperty(item.first);
+                    getSelectedTarget().getPropertyConfigurator().removeEventProperty(item.first);
                     notifyDataSetChanged();
                 }
             });
