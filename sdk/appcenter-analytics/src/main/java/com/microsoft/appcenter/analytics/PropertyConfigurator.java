@@ -186,7 +186,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * Extracted method to synchronize on each level at once while reading properties.
      * Nesting synchronize between parent/child could lead to deadlocks.
      */
-    protected synchronized void mergeEventProperties(Map<String, String> mergedProperties) {
+    synchronized void mergeEventProperties(Map<String, String> mergedProperties) {
         for (Map.Entry<String, String> property : mEventProperties.entrySet()) {
             String key = property.getKey();
             if (!mergedProperties.containsKey(key)) {
