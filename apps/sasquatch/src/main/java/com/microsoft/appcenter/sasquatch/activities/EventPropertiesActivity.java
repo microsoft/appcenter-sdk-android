@@ -88,6 +88,8 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+
+        /* TODO remove reflection after overriding common schema properties feature is released. */
         AnalyticsTransmissionTarget target = getSelectedTarget();
         Object configurator;
         Method method;
@@ -140,6 +142,8 @@ public class EventPropertiesActivity extends AppCompatActivity {
     }
 
     private void updatePropertyList() {
+
+        /* TODO remove reflection after overriding common schema properties feature is released. */
         AnalyticsTransmissionTarget target = getSelectedTarget();
         Object configurator;
         Method method;
@@ -201,6 +205,8 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
+
+            /* TODO remove reflection after overriding common schema properties feature is released. */
             AnalyticsTransmissionTarget target = getSelectedTarget();
             Object configurator;
             Method method;
@@ -213,10 +219,9 @@ public class EventPropertiesActivity extends AppCompatActivity {
                 method = null;
             }
 
+            /* Set key and value strings to the view. */
             View rowView;
             if (method != null) {
-
-                /* Set key and value strings to the view. */
                 final Object finalConfigurator = configurator;
                 final Method finalMethod = method;
 
