@@ -197,6 +197,8 @@ public class CrashesTest {
         crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
 
         /* Test. */
+        verifyStatic(times(3));
+        StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true);
         assertFalse(Crashes.isEnabled().get());
         assertEquals(crashes.getInitializeTimestamp(), -1);
         assertNull(crashes.getUncaughtExceptionHandler());
