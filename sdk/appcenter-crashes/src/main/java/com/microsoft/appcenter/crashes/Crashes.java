@@ -365,8 +365,6 @@ public class Crashes extends AbstractAppCenterService {
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (isInstanceEnabled()) {
             processPendingErrors();
-        } else {
-            initialize();
         }
     }
 
