@@ -75,15 +75,19 @@ public class EventActivity extends LogActivity {
         mOverrideCommonSchemaButton = findViewById(R.id.override_cs_button);
 
         /* Init override common schema properties button. */
-        findViewById(R.id.override_cs_button).setOnClickListener(new View.OnClickListener() {
+        if (CommonSchemaPropertiesActivity.IS_SUPPORTED) {
+            mOverrideCommonSchemaButton.setOnClickListener(new View.OnClickListener() {
 
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(EventActivity.this, CommonSchemaPropertiesActivity.class);
-                intent.putExtra(ActivityConstants.EXTRA_TARGET_SELECTED, mTransmissionTargetSpinner.getSelectedItemPosition());
-                startActivity(intent);
-            }
-        });
+                @Override
+                public void onClick(View v) {
+                    final Intent intent = new Intent(EventActivity.this, CommonSchemaPropertiesActivity.class);
+                    intent.putExtra(ActivityConstants.EXTRA_TARGET_SELECTED, mTransmissionTargetSpinner.getSelectedItemPosition());
+                    startActivity(intent);
+                }
+            });
+        } else {
+            mOverrideCommonSchemaButton.setVisibility(View.GONE);
+        }
 
         /* Test start from library. */
         AppCenter.startFromLibrary(this, Analytics.class);
@@ -125,7 +129,9 @@ public class EventActivity extends LogActivity {
             mOverrideCommonSchemaButton.setVisibility(View.GONE);
         } else {
             mTransmissionEnabledCheckBox.setVisibility(View.VISIBLE);
-            mOverrideCommonSchemaButton.setVisibility(View.VISIBLE);
+            if (CommonSchemaPropertiesActivity.IS_SUPPORTED) {
+                mOverrideCommonSchemaButton.setVisibility(View.VISIBLE);
+            }
             boolean enabled = target.isEnabledAsync().get();
             mTransmissionEnabledCheckBox.setChecked(enabled);
             if (enabled) {

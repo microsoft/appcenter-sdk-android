@@ -1,7 +1,5 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -16,13 +14,15 @@ import com.microsoft.appcenter.analytics.PropertyConfigurator;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
 import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.EXTRA_TARGET_SELECTED;
 
 public class CommonSchemaPropertiesActivity extends AppCompatActivity {
+
+    /* TODO Remove this check after SDK release. */
+    static final boolean IS_SUPPORTED = true;
 
     private Spinner mCommonSchemaPropertiesSpinner;
 
