@@ -62,7 +62,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
      */
     @Override
     public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
-        if (checkLogBelongsToCurrentTarget(log)) {
+        if (shouldOverridePartAProperties(log)) {
             AppExtension app = ((CommonSchemaLog) log).getExt().getApp();
 
             /* Override app name if not null, else use the name of the nearest parent. */
@@ -112,7 +112,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * @param log log.
      * @return true if log should be overridden, false otherwise.
      */
-    private boolean checkLogBelongsToCurrentTarget(@NonNull Log log) {
+    private boolean shouldOverridePartAProperties(@NonNull Log log) {
         String targetToken = mTransmissionTarget.getTransmissionTargetToken();
         return log instanceof CommonSchemaLog && mTransmissionTarget.isEnabled()
                 && log.getTransmissionTargetTokens().contains(targetToken);
