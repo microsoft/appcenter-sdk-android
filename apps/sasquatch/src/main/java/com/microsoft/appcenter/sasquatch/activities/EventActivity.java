@@ -25,6 +25,8 @@ public class EventActivity extends LogActivity {
 
     private CheckBox mTransmissionEnabledCheckBox;
 
+    private Button mConfigureTargetPropertiesButton;
+
     private Button mOverrideCommonSchemaButton;
 
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
@@ -42,7 +44,7 @@ public class EventActivity extends LogActivity {
 
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                updateTransmissionEnabledCheckBox(getSelectedTarget());
+                updateButtonStates(getSelectedTarget());
             }
 
             @Override
@@ -51,7 +53,8 @@ public class EventActivity extends LogActivity {
         });
 
         /* Init Configure target properties button. */
-        findViewById(R.id.configure_button).setOnClickListener(new View.OnClickListener() {
+        mConfigureTargetPropertiesButton = findViewById(R.id.configure_button);
+        mConfigureTargetPropertiesButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -119,16 +122,18 @@ public class EventActivity extends LogActivity {
         final AnalyticsTransmissionTarget target = getSelectedTarget();
         if (target != null) {
             target.setEnabledAsync(checked);
-            updateTransmissionEnabledCheckBox(target);
+            updateButtonStates(target);
         }
     }
 
-    private void updateTransmissionEnabledCheckBox(AnalyticsTransmissionTarget target) {
+    private void updateButtonStates(AnalyticsTransmissionTarget target) {
         if (target == null) {
             mTransmissionEnabledCheckBox.setVisibility(View.GONE);
+            mConfigureTargetPropertiesButton.setVisibility(View.GONE);
             mOverrideCommonSchemaButton.setVisibility(View.GONE);
         } else {
             mTransmissionEnabledCheckBox.setVisibility(View.VISIBLE);
+            mConfigureTargetPropertiesButton.setVisibility(View.VISIBLE);
             if (CommonSchemaPropertiesActivity.IS_SUPPORTED) {
                 mOverrideCommonSchemaButton.setVisibility(View.VISIBLE);
             }
