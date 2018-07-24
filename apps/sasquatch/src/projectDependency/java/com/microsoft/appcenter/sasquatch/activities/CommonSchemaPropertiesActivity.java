@@ -31,7 +31,6 @@ public class CommonSchemaPropertiesActivity extends AppCompatActivity {
     private PropertyConfigurator mPropertyConfigurator;
 
     private enum PropertyName {
-
         APP_NAME,
         APP_VERSION,
         APP_LOCALE
