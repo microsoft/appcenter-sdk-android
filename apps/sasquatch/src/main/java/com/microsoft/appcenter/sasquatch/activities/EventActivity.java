@@ -59,7 +59,7 @@ public class EventActivity extends LogActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(EventActivity.this, EventPropertiesActivity.class);
-                intent.putExtra(ActivityConstants.EXTRA_TARGET_SELECTED, mTransmissionTargetSpinner.getSelectedItemPosition());
+                intent.putExtra(ActivityConstants.EXTRA_TARGET_SELECTED, mTransmissionTargetSpinner.getSelectedItemPosition() - 1);
                 startActivity(intent);
             }
         });

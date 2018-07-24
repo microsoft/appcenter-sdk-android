@@ -48,7 +48,10 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
         /* Initialize spinner for transmission targets. */
         mTransmissionTargetSpinner = findViewById(R.id.transmission_target);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.target_id_names));
+        String[] allTargetNames = getResources().getStringArray(R.array.target_id_names);
+        String[] nonDefaultTargetNames = new String[allTargetNames.length - 1];
+        System.arraycopy(allTargetNames, 1, nonDefaultTargetNames, 0, nonDefaultTargetNames.length);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, nonDefaultTargetNames);
         mTransmissionTargetSpinner.setAdapter(adapter);
         mTransmissionTargetSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -77,6 +80,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
          * the forth is a grandchild, etc...
          */
         mTransmissionTargets = EventActivityUtil.getAnalyticTransmissionTargetList(this);
+        mTransmissionTargets.remove(0);
     }
 
     @Override
