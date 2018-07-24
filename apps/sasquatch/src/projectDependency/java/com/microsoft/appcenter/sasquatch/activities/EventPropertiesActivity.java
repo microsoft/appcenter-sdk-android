@@ -23,14 +23,13 @@ import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class EventPropertiesActivity extends AppCompatActivity {
+import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.EXTRA_TARGET_SELECTED;
 
-    public final static String EXTRA_TARGET_SELECTED = "TARGET_SELECTED";
+public class EventPropertiesActivity extends AppCompatActivity {
 
     private Spinner mTransmissionTargetSpinner;
 

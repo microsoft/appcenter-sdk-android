@@ -56,7 +56,7 @@ public class EventActivity extends LogActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(EventActivity.this, EventPropertiesActivity.class);
-                intent.putExtra(EventPropertiesActivity.EXTRA_TARGET_SELECTED, mTransmissionTargetSpinner.getSelectedItemPosition());
+                intent.putExtra(ActivityConstants.EXTRA_TARGET_SELECTED, mTransmissionTargetSpinner.getSelectedItemPosition());
                 startActivity(intent);
             }
         });
@@ -80,6 +80,7 @@ public class EventActivity extends LogActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(EventActivity.this, CommonSchemaPropertiesActivity.class);
+                intent.putExtra(ActivityConstants.EXTRA_TARGET_SELECTED, mTransmissionTargetSpinner.getSelectedItemPosition());
                 startActivity(intent);
             }
         });
