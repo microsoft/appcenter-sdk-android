@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.Spinner;
 
@@ -24,6 +25,8 @@ public class EventActivity extends LogActivity {
 
     private CheckBox mTransmissionEnabledCheckBox;
 
+    private Button mOverrideCommonSchemaButton;
+
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
 
     @SuppressWarnings("JavaReflectionMemberAccess")
@@ -33,8 +36,8 @@ public class EventActivity extends LogActivity {
 
         /* Transmission target views init. */
         mTransmissionTargetSpinner = findViewById(R.id.transmission_target);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.target_id_names));
-        mTransmissionTargetSpinner.setAdapter(adapter);
+        ArrayAdapter<String> targetAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.target_id_names));
+        mTransmissionTargetSpinner.setAdapter(targetAdapter);
         mTransmissionTargetSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
@@ -67,6 +70,19 @@ public class EventActivity extends LogActivity {
          * the forth is a grandchild, etc...
          */
         mTransmissionTargets = EventActivityUtil.getAnalyticTransmissionTargetList(this);
+
+        /* Init common schema properties button. */
+        mOverrideCommonSchemaButton = findViewById(R.id.override_cs_button);
+
+        /* Init override common schema properties button. */
+        findViewById(R.id.override_cs_button).setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(EventActivity.this, CommonSchemaPropertiesActivity.class);
+                startActivity(intent);
+            }
+        });
 
         /* Test start from library. */
         AppCenter.startFromLibrary(this, Analytics.class);
@@ -105,8 +121,10 @@ public class EventActivity extends LogActivity {
     private void updateTransmissionEnabledCheckBox(AnalyticsTransmissionTarget target) {
         if (target == null) {
             mTransmissionEnabledCheckBox.setVisibility(View.GONE);
+            mOverrideCommonSchemaButton.setVisibility(View.GONE);
         } else {
             mTransmissionEnabledCheckBox.setVisibility(View.VISIBLE);
+            mOverrideCommonSchemaButton.setVisibility(View.VISIBLE);
             boolean enabled = target.isEnabledAsync().get();
             mTransmissionEnabledCheckBox.setChecked(enabled);
             if (enabled) {

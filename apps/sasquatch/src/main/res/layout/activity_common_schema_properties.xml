@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".activities.CommonSchemaPropertiesActivity">
+
+    <TextView
+        android:id="@+id/common_schema_property_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/common_schema_property_label" />
+
+    <Spinner
+        android:id="@+id/common_schema_property"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:drawable/btn_dropdown" />
+
+    <TextView
+        android:id="@+id/common_schema_property_value"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/common_schema_property_value" />
+
+    <EditText
+        android:id="@+id/common_schema_property_entry"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="text" />
+</LinearLayout>
