@@ -10,7 +10,6 @@ import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Allow overriding Part A properties.
@@ -114,9 +113,9 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * @return true if log should be overridden, false otherwise.
      */
     private boolean checkLogBelongsToCurrentTarget(@NonNull Log log) {
-        Set<String> targetTokens = log.getTransmissionTargetTokens();
+        String targetToken = mTransmissionTarget.getTransmissionTargetToken();
         return log instanceof CommonSchemaLog && mTransmissionTarget.isEnabled()
-                && targetTokens.contains(mTransmissionTarget.getTransmissionTargetToken());
+                && log.getTransmissionTargetTokens().contains(targetToken);
     }
 
     /**
