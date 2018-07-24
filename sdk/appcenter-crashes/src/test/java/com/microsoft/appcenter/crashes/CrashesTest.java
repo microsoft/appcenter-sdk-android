@@ -120,6 +120,7 @@ public class CrashesTest {
         assertEquals(errorLog.getAppLaunchTimestamp(), report.getAppStartTime());
         assertEquals(errorLog.getTimestamp(), report.getAppErrorTime());
         assertEquals(errorLog.getDevice(), report.getDevice());
+        assertNotNull(errorLog.getDevice());
     }
 
     @Before
@@ -721,22 +722,39 @@ public class CrashesTest {
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
 
+        /* The error report was created and cached but device is null here. */
+        verifyStatic();
+        ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, EXCEPTION);
+        assertNull(errorReport.getDevice());
+
         /* The channel sets a device. */
         mErrorLog.setDevice(mock(Device.class));
 
         ArgumentCaptor<ErrorReport> errorReportCaptor = ArgumentCaptor.forClass(ErrorReport.class);
         Channel.GroupListener channelListener = crashes.getChannelListener();
+
+        /* Simulate onBeforeSending event. */
         channelListener.onBeforeSending(mErrorLog);
         verify(crashesListener).onBeforeSending(errorReportCaptor.capture());
         assertErrorEquals(mErrorLog, errorReportCaptor.getValue());
+
+        /* Simulate onSuccess event. */
         channelListener.onSuccess(mErrorLog);
         verify(crashesListener).onSendingSucceeded(errorReportCaptor.capture());
         assertErrorEquals(mErrorLog, errorReportCaptor.getValue());
+
+        /* No more error reports should be produced at the point. */
         verifyStatic();
         ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, EXCEPTION);
+
+        /* Simulate onFailure event. */
         channelListener.onFailure(mErrorLog, EXCEPTION);
         verify(crashesListener).onSendingFailed(errorReportCaptor.capture(), eq(EXCEPTION));
         assertErrorEquals(mErrorLog, errorReportCaptor.getValue());
+
+        /* onSuccess and onFailure invalidate the cache, so one more call is expected. */
+        verifyStatic(times(2));
+        ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, EXCEPTION);
     }
 
     @Test
@@ -833,6 +851,7 @@ public class CrashesTest {
 
     @Test
     public void buildErrorReport() throws IOException, ClassNotFoundException {
+        mErrorLog.setDevice(mock(Device.class));
         ErrorReport errorReport = ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, EXCEPTION);
 
         mockStatic(ErrorLogHelper.class);
@@ -845,6 +864,13 @@ public class CrashesTest {
         Crashes crashes = Crashes.getInstance();
         ErrorReport report = crashes.buildErrorReport(mErrorLog);
         assertErrorEquals(mErrorLog, report);
+        verifyStatic();
+        ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, EXCEPTION);
+
+        /* Verify the caching. */
+        assertEquals(report, crashes.buildErrorReport(mErrorLog));
+        verifyStatic();
+        ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, EXCEPTION);
 
         mErrorLog.setId(UUIDUtils.randomUUID());
         report = crashes.buildErrorReport(mErrorLog);
