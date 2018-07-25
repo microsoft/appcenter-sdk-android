@@ -23,14 +23,13 @@ import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class EventPropertiesActivity extends AppCompatActivity {
+import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.EXTRA_TARGET_SELECTED;
 
-    public final static String EXTRA_TARGET_SELECTED = "TARGET_SELECTED";
+public class EventPropertiesActivity extends AppCompatActivity {
 
     private Spinner mTransmissionTargetSpinner;
 
@@ -49,7 +48,10 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
         /* Initialize spinner for transmission targets. */
         mTransmissionTargetSpinner = findViewById(R.id.transmission_target);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.target_id_names));
+        String[] allTargetNames = getResources().getStringArray(R.array.target_id_names);
+        String[] nonDefaultTargetNames = new String[allTargetNames.length - 1];
+        System.arraycopy(allTargetNames, 1, nonDefaultTargetNames, 0, nonDefaultTargetNames.length);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, nonDefaultTargetNames);
         mTransmissionTargetSpinner.setAdapter(adapter);
         mTransmissionTargetSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -78,6 +80,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
          * the forth is a grandchild, etc...
          */
         mTransmissionTargets = EventActivityUtil.getAnalyticTransmissionTargetList(this);
+        mTransmissionTargets.remove(0);
     }
 
     @Override
@@ -127,6 +130,8 @@ public class EventPropertiesActivity extends AppCompatActivity {
         return true;
     }
 
+
+    @SuppressWarnings("unchecked")
     private void updatePropertyList() {
         Field field = null;
         try {
@@ -137,16 +142,14 @@ public class EventPropertiesActivity extends AppCompatActivity {
         }
         if (field != null) {
             field.setAccessible(true);
-
-            //noinspection unchecked
-            Map<String, String> map = null;
+            Map<String, String> properties;
             try {
-                map = (Map<String, String>) field.get(getSelectedTarget().getPropertyConfigurator());
+                properties = (Map<String, String>) field.get(getSelectedTarget().getPropertyConfigurator());
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
             mPropertyListAdapter.mList.clear();
-            for (Map.Entry<String, String> entry : map.entrySet()) {
+            for (Map.Entry<String, String> entry : properties.entrySet()) {
                 mPropertyListAdapter.mList.add(new Pair<>(entry.getKey(), entry.getValue()));
             }
             mListView.setAdapter(mPropertyListAdapter);
@@ -184,12 +187,11 @@ public class EventPropertiesActivity extends AppCompatActivity {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public View getView(int position, View convertView, ViewGroup parent) {
 
             /* Set key and value strings to the view. */
             View rowView;
-
-            //noinspection unchecked
             final Pair<String, String> item = (Pair<String, String>) getItem(position);
             ViewHolder holder;
             if (convertView != null && convertView.getTag() != null) {

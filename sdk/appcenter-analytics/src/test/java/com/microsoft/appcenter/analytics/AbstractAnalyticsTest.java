@@ -32,8 +32,10 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 abstract class AbstractAnalyticsTest {
 
     static final String ANALYTICS_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Analytics.getInstance().getServiceName();
+
     @Mock
     AppCenterHandler mAppCenterHandler;
+
     @Mock
     private AppCenterFuture<Boolean> mCoreEnabledFuture;
 

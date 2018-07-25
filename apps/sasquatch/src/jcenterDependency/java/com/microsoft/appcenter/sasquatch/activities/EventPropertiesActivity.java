@@ -48,7 +48,10 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
         /* Initialize spinner for transmission targets. */
         mTransmissionTargetSpinner = findViewById(R.id.transmission_target);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.target_id_names));
+        String[] allTargetNames = getResources().getStringArray(R.array.target_id_names);
+        String[] nonDefaultTargetNames = new String[allTargetNames.length - 1];
+        System.arraycopy(allTargetNames, 1, nonDefaultTargetNames, 0, nonDefaultTargetNames.length);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, nonDefaultTargetNames);
         mTransmissionTargetSpinner.setAdapter(adapter);
         mTransmissionTargetSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -77,6 +80,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
          * the forth is a grandchild, etc...
          */
         mTransmissionTargets = EventActivityUtil.getAnalyticTransmissionTargetList(this);
+        mTransmissionTargets.remove(0);
     }
 
     @Override
@@ -119,6 +123,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     private void updatePropertyList() {
         AnalyticsTransmissionTarget target = getSelectedTarget();
         Field field;
@@ -130,8 +135,6 @@ public class EventPropertiesActivity extends AppCompatActivity {
         if (field != null) {
             try {
                 field.setAccessible(true);
-
-                //noinspection unchecked
                 Map<String, String> map = (Map<String, String>) field.get(target);
                 mPropertyListAdapter.mList.clear();
                 for (Map.Entry<String, String> entry : map.entrySet()) {
@@ -175,12 +178,11 @@ public class EventPropertiesActivity extends AppCompatActivity {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public View getView(int position, View convertView, ViewGroup parent) {
 
             /* Set key and value strings to the view. */
             View rowView;
-
-            //noinspection unchecked
             final Pair<String, String> item = (Pair<String, String>) getItem(position);
             ViewHolder holder;
             if (convertView != null && convertView.getTag() != null) {

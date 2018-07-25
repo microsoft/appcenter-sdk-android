@@ -56,6 +56,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         pc.setAppVersion("appVersion");
         pc.setAppName("appName");
         pc.setAppLocale("appLocale");
+        log.addTransmissionTarget("test");
         pc.onPreparingLog(log, "groupName");
 
         /* Assert properties set on common schema. */
@@ -76,6 +77,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         target.getPropertyConfigurator().setAppVersion("appVersion");
         target.getPropertyConfigurator().setAppName("appName");
         target.getPropertyConfigurator().setAppLocale("appLocale");
+        log.addTransmissionTarget("test");
         target.getPropertyConfigurator().onPreparingLog(log, "groupName");
 
         /* Assert properties are null. */
@@ -96,14 +98,51 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         grandparent.getPropertyConfigurator().setAppName("appName");
         grandparent.getPropertyConfigurator().setAppLocale("appLocale");
 
+        /* Set up hierarchy. */
         AnalyticsTransmissionTarget parent = grandparent.getTransmissionTarget("parent");
         AnalyticsTransmissionTarget child = parent.getTransmissionTarget("child");
+
+        /* Simulate channel callbacks. */
+        log.addTransmissionTarget("child");
+        grandparent.getPropertyConfigurator().onPreparingLog(log, "groupName");
+        parent.getPropertyConfigurator().onPreparingLog(log, "groupName");
         child.getPropertyConfigurator().onPreparingLog(log, "groupName");
 
         /* Assert properties set on common schema. */
         assertEquals("appVersion", log.getExt().getApp().getVer());
         assertEquals("appName", log.getExt().getApp().getName());
         assertEquals("appLocale", log.getExt().getApp().getLocale());
+    }
+
+    @Test
+    public void checkGrandParentNotOverriddenByDescendants() {
+        CommonSchemaLog log = new CommonSchemaEventLog();
+        log.setExt(new Extensions());
+        log.getExt().setApp(new AppExtension());
+
+        /* Set up hierarchy. */
+        AnalyticsTransmissionTarget grandparent = Analytics.getTransmissionTarget("grandparent");
+        AnalyticsTransmissionTarget parent = grandparent.getTransmissionTarget("parent");
+        AnalyticsTransmissionTarget child = parent.getTransmissionTarget("child");
+
+        /* Set properties on parent to override unset properties on child (but not grandparent). */
+        parent.getPropertyConfigurator().setAppVersion("appVersion");
+        parent.getPropertyConfigurator().setAppName("appName");
+        parent.getPropertyConfigurator().setAppLocale("appLocale");
+
+        /* Also set 1 on child. */
+        child.getPropertyConfigurator().setAppName("childName");
+
+        /* Simulate channel callbacks. */
+        log.addTransmissionTarget("grandParent");
+        grandparent.getPropertyConfigurator().onPreparingLog(log, "groupName");
+        parent.getPropertyConfigurator().onPreparingLog(log, "groupName");
+        child.getPropertyConfigurator().onPreparingLog(log, "groupName");
+
+        /* Assert properties set on common schema. */
+        assertNull(log.getExt().getApp().getVer());
+        assertNull(log.getExt().getApp().getName());
+        assertNull(log.getExt().getApp().getLocale());
     }
 
     @Test
@@ -116,6 +155,11 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         AnalyticsTransmissionTarget grandparent = Analytics.getTransmissionTarget("grandparent");
         AnalyticsTransmissionTarget parent = grandparent.getTransmissionTarget("parent");
         AnalyticsTransmissionTarget child = parent.getTransmissionTarget("child");
+
+        /* Simulate channel callbacks. */
+        log.addTransmissionTarget("child");
+        grandparent.getPropertyConfigurator().onPreparingLog(log, "groupName");
+        parent.getPropertyConfigurator().onPreparingLog(log, "groupName");
         child.getPropertyConfigurator().onPreparingLog(log, "groupName");
 
         /* Assert properties set on common schema. */

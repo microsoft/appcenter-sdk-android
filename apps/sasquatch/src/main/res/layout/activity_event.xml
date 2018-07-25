@@ -28,6 +28,13 @@
         android:layout_height="wrap_content"
         android:text="@string/configure_target_properties" />
 
+    <Button
+        android:id="@+id/override_cs_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/override_cs_properties"
+        android:visibility="gone" />
+
     <CheckBox
         android:id="@+id/transmission_enabled"
         android:layout_width="match_parent"

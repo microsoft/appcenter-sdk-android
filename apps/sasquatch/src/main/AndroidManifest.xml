@@ -49,6 +49,9 @@
         <activity
             android:name=".activities.CustomPropertiesActivity"
             android:label="@string/title_custom_properties" />
+        <activity
+            android:name=".activities.CommonSchemaPropertiesActivity"
+            android:label="@string/cs_properties_title" />
 
         <!-- Set default notification icon and color. -->
         <meta-data
@@ -57,7 +60,6 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/appcenter_logo" />
-
     </application>
 
 </manifest>
