@@ -130,6 +130,8 @@ public class EventPropertiesActivity extends AppCompatActivity {
         return true;
     }
 
+
+    @SuppressWarnings("unchecked")
     private void updatePropertyList() {
         Field field = null;
         try {
@@ -140,16 +142,14 @@ public class EventPropertiesActivity extends AppCompatActivity {
         }
         if (field != null) {
             field.setAccessible(true);
-
-            //noinspection unchecked
-            Map<String, String> map = null;
+            Map<String, String> properties;
             try {
-                map = (Map<String, String>) field.get(getSelectedTarget().getPropertyConfigurator());
+                properties = (Map<String, String>) field.get(getSelectedTarget().getPropertyConfigurator());
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
             mPropertyListAdapter.mList.clear();
-            for (Map.Entry<String, String> entry : map.entrySet()) {
+            for (Map.Entry<String, String> entry : properties.entrySet()) {
                 mPropertyListAdapter.mList.add(new Pair<>(entry.getKey(), entry.getValue()));
             }
             mListView.setAdapter(mPropertyListAdapter);
@@ -187,12 +187,11 @@ public class EventPropertiesActivity extends AppCompatActivity {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public View getView(int position, View convertView, ViewGroup parent) {
 
             /* Set key and value strings to the view. */
             View rowView;
-
-            //noinspection unchecked
             final Pair<String, String> item = (Pair<String, String>) getItem(position);
             ViewHolder holder;
             if (convertView != null && convertView.getTag() != null) {

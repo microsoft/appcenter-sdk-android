@@ -123,6 +123,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     private void updatePropertyList() {
         AnalyticsTransmissionTarget target = getSelectedTarget();
         Field field;
@@ -134,8 +135,6 @@ public class EventPropertiesActivity extends AppCompatActivity {
         if (field != null) {
             try {
                 field.setAccessible(true);
-
-                //noinspection unchecked
                 Map<String, String> map = (Map<String, String>) field.get(target);
                 mPropertyListAdapter.mList.clear();
                 for (Map.Entry<String, String> entry : map.entrySet()) {
@@ -179,12 +178,11 @@ public class EventPropertiesActivity extends AppCompatActivity {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public View getView(int position, View convertView, ViewGroup parent) {
 
             /* Set key and value strings to the view. */
             View rowView;
-
-            //noinspection unchecked
             final Pair<String, String> item = (Pair<String, String>) getItem(position);
             ViewHolder holder;
             if (convertView != null && convertView.getTag() != null) {
