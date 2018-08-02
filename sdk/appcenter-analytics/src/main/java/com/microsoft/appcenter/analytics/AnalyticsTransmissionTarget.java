@@ -223,6 +223,16 @@ public class AnalyticsTransmissionTarget {
         };
     }
 
+    /**
+     * Add ticket to common schema logs.
+     */
+    private synchronized static void addTicketToLog(@NonNull Log log) {
+        if (sAuthenticationProvider != null && log instanceof CommonSchemaLog) {
+            CommonSchemaLog csLog = (CommonSchemaLog) log;
+            csLog.getExt().getProtocol().setTicketKeys(Collections.singletonList(sAuthenticationProvider.getTicketKey()));
+        }
+    }
+
     @NonNull
     private String getEnabledPreferenceKey() {
         return Analytics.getInstance().getEnabledPreferenceKeyPrefix() + mTransmissionTargetToken.split("-")[0];
@@ -246,16 +256,6 @@ public class AnalyticsTransmissionTarget {
     @WorkerThread
     boolean isEnabled() {
         return areAncestorsEnabled() && isEnabledInStorage();
-    }
-
-    /**
-     * Add ticket to common schema logs.
-     */
-    private synchronized static void addTicketToLog(@NonNull Log log) {
-        if (sAuthenticationProvider != null && log instanceof CommonSchemaLog) {
-            CommonSchemaLog csLog = (CommonSchemaLog) log;
-            csLog.getExt().getProtocol().setTicketKeys(Collections.singletonList(sAuthenticationProvider.getTicketKey()));
-        }
     }
 
     /**
