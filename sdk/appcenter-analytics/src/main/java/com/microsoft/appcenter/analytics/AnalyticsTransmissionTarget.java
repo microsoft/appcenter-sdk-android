@@ -76,7 +76,7 @@ public class AnalyticsTransmissionTarget {
      *
      * @param authenticationProvider The authentication provider.
      */
-    public static void addAuthenticationProvider(AuthenticationProvider authenticationProvider) {
+    public static synchronized void addAuthenticationProvider(AuthenticationProvider authenticationProvider) {
         sAuthenticationProvider = authenticationProvider;
     }
 
@@ -211,12 +211,16 @@ public class AnalyticsTransmissionTarget {
     }
 
     /**
-     * Getter for property configurator to override Common Schema Part A properties.
-     *
-     * @return  the Property Configurator
+     * Init channel listener to add tickets to logs.
      */
-    public PropertyConfigurator getPropertyConfigurator() {
-        return mPropertyConfigurator;
+    static Channel.Listener getChannelListener() {
+        return new AbstractChannelListener() {
+
+            @Override
+            public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
+                addTicketToLog(log);
+            }
+        };
     }
 
     @NonNull
@@ -244,16 +248,22 @@ public class AnalyticsTransmissionTarget {
         return areAncestorsEnabled() && isEnabledInStorage();
     }
 
-    static Channel.Listener getChannelListener() {
-        return new AbstractChannelListener() {
+    /**
+     * Add ticket to common schema logs.
+     */
+    private synchronized static void addTicketToLog(@NonNull Log log) {
+        if (sAuthenticationProvider != null && log instanceof CommonSchemaLog) {
+            CommonSchemaLog csLog = (CommonSchemaLog) log;
+            csLog.getExt().getProtocol().setTicketKeys(Collections.singletonList(sAuthenticationProvider.getTicketKey()));
+        }
+    }
 
-            @Override
-            public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
-                if (sAuthenticationProvider != null && log instanceof CommonSchemaLog) {
-                    CommonSchemaLog csLog = (CommonSchemaLog) log;
-                    csLog.getExt().getProtocol().setTicketKeys(Collections.singletonList(sAuthenticationProvider.getTicketKey()));
-                }
-            }
-        };
+    /**
+     * Getter for property configurator to override Common Schema Part A properties.
+     *
+     * @return the Property Configurator
+     */
+    public PropertyConfigurator getPropertyConfigurator() {
+        return mPropertyConfigurator;
     }
 }
