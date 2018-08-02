@@ -51,7 +51,6 @@ public class AnalyticsTransmissionTarget {
      */
     private Channel mChannel;
 
-
     /**
      * The authentication provider to use.
      */
@@ -77,6 +76,18 @@ public class AnalyticsTransmissionTarget {
      * @param authenticationProvider The authentication provider.
      */
     public static synchronized void addAuthenticationProvider(AuthenticationProvider authenticationProvider) {
+        if (authenticationProvider.getType() == null) {
+            AppCenterLog.error(LOG_TAG, "Authentication provider type may not be null.");
+            return;
+        }
+        if (authenticationProvider.getTicketKey() == null) {
+            AppCenterLog.error(LOG_TAG, "Authentication ticket key may not be null.");
+            return;
+        }
+        if (authenticationProvider.getTokenProvider() == null) {
+            AppCenterLog.error(LOG_TAG, "Authentication token provider may not be null.");
+            return;
+        }
         sAuthenticationProvider = authenticationProvider;
     }
 
