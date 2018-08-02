@@ -3,12 +3,16 @@ package com.microsoft.appcenter.analytics;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 
+import com.microsoft.appcenter.channel.AbstractChannelListener;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,6 +51,12 @@ public class AnalyticsTransmissionTarget {
      */
     private Channel mChannel;
 
+
+    /**
+     * The authentication provider to use.
+     */
+    private static AuthenticationProvider sAuthenticationProvider;
+
     /**
      * Create a new instance.
      *
@@ -59,6 +69,15 @@ public class AnalyticsTransmissionTarget {
         mParentTarget = parentTarget;
         mChannel = channel;
         mPropertyConfigurator = new PropertyConfigurator(channel, this);
+    }
+
+    /**
+     * Add an authentication provider.
+     *
+     * @param authenticationProvider The authentication provider.
+     */
+    public static void addAuthenticationProvider(AuthenticationProvider authenticationProvider) {
+        sAuthenticationProvider = authenticationProvider;
     }
 
     /**
@@ -223,5 +242,18 @@ public class AnalyticsTransmissionTarget {
     @WorkerThread
     boolean isEnabled() {
         return areAncestorsEnabled() && isEnabledInStorage();
+    }
+
+    static Channel.Listener getChannelListener() {
+        return new AbstractChannelListener() {
+
+            @Override
+            public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
+                if (sAuthenticationProvider != null && log instanceof CommonSchemaLog) {
+                    CommonSchemaLog csLog = (CommonSchemaLog) log;
+                    csLog.getExt().getProtocol().setTicketKeys(Collections.singletonList(sAuthenticationProvider.getTicketKey()));
+                }
+            }
+        };
     }
 }

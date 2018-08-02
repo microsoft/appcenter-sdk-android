@@ -101,6 +101,11 @@ public class Analytics extends AbstractAppCenterService {
     private AnalyticsListener mAnalyticsListener;
 
     /**
+     * Custom analytics listener for transmission targets.
+     */
+    private Channel.Listener mAnalyticsTransmissionTargetListener;
+
+    /**
      * Automatic page tracking flag.
      * TODO the backend does not support pages yet so the default value would be true after the service becomes public.
      */
@@ -452,6 +457,10 @@ public class Analytics extends AbstractAppCenterService {
                 mSessionTracker.clearSessions();
                 mSessionTracker = null;
             }
+            if (mAnalyticsTransmissionTargetListener != null) {
+                mChannel.removeListener(mAnalyticsTransmissionTargetListener);
+                mAnalyticsTransmissionTargetListener = null;
+            }
         }
     }
 
@@ -479,6 +488,10 @@ public class Analytics extends AbstractAppCenterService {
                     processOnResume(activity);
                 }
             }
+
+            /* Add new channel listener for transmission target. */
+            mAnalyticsTransmissionTargetListener = AnalyticsTransmissionTarget.getChannelListener();
+            mChannel.addListener(mAnalyticsTransmissionTargetListener);
         }
     }
 
