@@ -72,7 +72,7 @@ public class AuthenticationProvider {
          * Implement this method and return a current authentication token.
          *
          * @param ticketKey The ticket key that is used to get an updated token.
-         * @return the updated tocken.
+         * @return the updated token.
          */
         String getToken(String ticketKey);
     }
