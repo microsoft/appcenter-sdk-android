@@ -6,15 +6,16 @@ public class AuthenticationProvider {
      * The type.
      */
     private final Type mType;
+
     /**
      * The ticket key for this authentication provider.
      */
     private final String mTicketKey;
+
     /**
      * The token provider that will be used to get an updated authentication token.
      */
     private final TokenProvider mTokenProvider;
-
 
     /**
      * Create a new authentication provider.
@@ -66,7 +67,7 @@ public class AuthenticationProvider {
     /**
      * Implement this interface to enable updating the authentication token.
      */
-    private interface TokenProvider {
+    public interface TokenProvider {
 
         /**
          * Implement this method and return a current authentication token.
@@ -76,6 +77,4 @@ public class AuthenticationProvider {
          */
         String getToken(String ticketKey);
     }
-
-
 }

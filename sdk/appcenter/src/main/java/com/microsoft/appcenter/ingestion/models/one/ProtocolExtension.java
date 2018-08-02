@@ -29,7 +29,6 @@ public class ProtocolExtension implements Model {
      */
     private static final String DEV_MODEL = "devModel";
 
-
     /**
      * Ticket keys.
      */

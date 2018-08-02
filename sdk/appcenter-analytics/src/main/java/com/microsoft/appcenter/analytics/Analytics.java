@@ -96,14 +96,14 @@ public class Analytics extends AbstractAppCenterService {
     private AnalyticsValidator mAnalyticsValidator;
 
     /**
+     * Channel listener used by transmission targets to decorate logs.
+     */
+    private Channel.Listener mAnalyticsTransmissionTargetListener;
+
+    /**
      * Custom analytics listener.
      */
     private AnalyticsListener mAnalyticsListener;
-
-    /**
-     * Custom analytics listener for transmission targets.
-     */
-    private Channel.Listener mAnalyticsTransmissionTargetListener;
 
     /**
      * Automatic page tracking flag.
