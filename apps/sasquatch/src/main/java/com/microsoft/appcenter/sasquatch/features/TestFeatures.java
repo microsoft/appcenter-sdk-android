@@ -3,6 +3,7 @@ package com.microsoft.appcenter.sasquatch.features;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 
@@ -19,6 +20,8 @@ import com.microsoft.appcenter.sasquatch.activities.PageActivity;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 public final class TestFeatures {
 
@@ -38,7 +41,16 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeature(R.string.title_error, R.string.description_error, ManagedErrorActivity.class));
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            sTestFeatureModels.add(new TestFeature(R.string.title_msa_auth, R.string.description_msa_auth, MicrosoftAuthenticationActivity.class));
+
+            // TODO: Remove reflection once new APIs available in jCenter.
+            try {
+                Class classAuthenticationProvider = Class.forName("com.microsoft.appcenter.analytics.AuthenticationProvider");
+                if (classAuthenticationProvider != null) {
+                    sTestFeatureModels.add(new TestFeature(R.string.title_msa_auth, R.string.description_msa_auth, MicrosoftAuthenticationActivity.class));
+                }
+            } catch (Exception e) {
+                Log.i(LOG_TAG, "AuthenticationProvider not yet available in this flavor.");
+            }
         }
         sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));

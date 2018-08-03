@@ -6,6 +6,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 
+import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
+import com.microsoft.appcenter.analytics.AuthenticationProvider;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.AuthenticationResult;
@@ -17,7 +19,7 @@ public class MicrosoftAuthenticationActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = "MicrosoftAuthentication";
     private static final String CLIENT_ID = "e5cf4c95-3ccb-4579-a978-ced840d7d5af";
-    private static final String[] SCOPES = new String[] { "User.Read" };
+    private static final String[] SCOPES = new String[]{"User.Read"};
 
     private PublicClientApplication mApplication;
     private AuthenticationResult mAuthentication;
@@ -41,14 +43,17 @@ public class MicrosoftAuthenticationActivity extends AppCompatActivity {
         mApplication.acquireTokenSilentAsync(SCOPES, mAuthentication.getUser(), null, true, getAuthenticationCallback());
     }
 
-    public void onLogoutClick(View view) {
-        mAuthentication = null;
-        onUpdateAccessToken(null);
-    }
-
-    private void onUpdateAccessToken(String accessToken) {
+    private void onUpdateAccessToken(final String userId, final String accessToken) {
         Log.i(LOG_TAG, "AccessToken: " + accessToken);
-        // TODO
+        AnalyticsTransmissionTarget.addAuthenticationProvider(
+                new AuthenticationProvider(AuthenticationProvider.Type.MSA, userId,
+                        new AuthenticationProvider.TokenProvider() {
+
+                            @Override
+                            public String getToken(String ticketKey) {
+                                return accessToken;
+                            }
+                        }));
     }
 
     @Override
@@ -62,7 +67,9 @@ public class MicrosoftAuthenticationActivity extends AppCompatActivity {
             @Override
             public void onSuccess(AuthenticationResult authenticationResult) {
                 mAuthentication = authenticationResult;
-                onUpdateAccessToken(authenticationResult.getAccessToken());
+                onUpdateAccessToken(
+                        authenticationResult.getUser().getUserIdentifier(),
+                        authenticationResult.getAccessToken());
             }
 
             @Override

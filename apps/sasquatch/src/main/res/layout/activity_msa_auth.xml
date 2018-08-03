@@ -20,11 +20,4 @@
         android:layout_height="wrap_content"
         android:onClick="onRefreshClick"
         android:text="@string/msa_auth_refresh_button" />
-
-    <Button
-        android:id="@+id/logout_button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="onLogoutClick"
-        android:text="@string/msa_auth_logout_button" />
 </LinearLayout>

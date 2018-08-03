@@ -52,5 +52,4 @@
     <string name="common_schema_property_value" tools:ignore="MissingTranslation">Value</string>
     <string name="msa_auth_login_button" tools:ignore="MissingTranslation">Login</string>
     <string name="msa_auth_refresh_button" tools:ignore="MissingTranslation">Refresh</string>
-    <string name="msa_auth_logout_button" tools:ignore="MissingTranslation">Logout</string>
 </resources>
