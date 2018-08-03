@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
@@ -20,6 +21,7 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.TicketCache;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URL;
@@ -59,6 +61,12 @@ public class OneCollectorIngestion implements Ingestion {
      */
     @VisibleForTesting
     static final String TICKETS = "Tickets";
+
+    /**
+     * Strict authentication header ticket.
+     */
+    @VisibleForTesting
+    static final String STRICT = "Strict";
 
     /**
      * Client version header key.
@@ -127,28 +135,31 @@ public class OneCollectorIngestion implements Ingestion {
         headers.put(API_KEY, apiKey.toString());
 
         /* Gather tokens from logs. */
-        Map<String, String> tickets = new HashMap<>();
+        JSONObject tickets = new JSONObject();
         for (Log log : logContainer.getLogs()) {
             List<String> ticketKeys = ((CommonSchemaLog) log).getExt().getProtocol().getTicketKeys();
             if (ticketKeys != null) {
                 for (String ticketKey : ticketKeys) {
                     String token = TicketCache.getInstance().getTicket(ticketKey);
                     if (token != null) {
-                        tickets.put(ticketKey, token);
+                        try {
+                            tickets.put(ticketKey, token);
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
             }
         }
 
-        /* Format to look like this: "ticketKey1"="p:token1";"ticketKey2"="p:token2". */
-        StringBuilder ticketKeys = new StringBuilder();
-        for (Map.Entry<String, String> ticket : tickets.entrySet()) {
-            ticketKeys.append('"').append(ticket.getKey()).append("\"=\"p:");
-            ticketKeys.append(ticket.getValue()).append("\";");
-        }
-        if (!tickets.isEmpty()) {
-            ticketKeys.deleteCharAt(ticketKeys.length() - 1);
-            headers.put(TICKETS, ticketKeys.toString());
+        /* Pass ticket header if we have at least 1 token. */
+        if (tickets.length() > 0) {
+            headers.put(TICKETS, tickets.toString());
+
+            /* Enable 401 errors on invalid tickets on debug builds. */
+            if (Constants.APPLICATION_DEBUGGABLE) {
+                headers.put(STRICT, Boolean.TRUE.toString());
+            }
         }
 
         /* Content type. */

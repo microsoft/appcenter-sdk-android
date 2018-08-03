@@ -5,6 +5,7 @@ import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
+import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.TicketCache;
 
 import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
@@ -22,6 +23,11 @@ public class AuthenticationProvider {
     private final String mTicketKey;
 
     /**
+     * The ticket key as hash.
+     */
+    private final String mTicketKeyHash;
+
+    /**
      * The token provider that will be used to get an updated authentication token.
      */
     private final TokenProvider mTokenProvider;
@@ -36,6 +42,7 @@ public class AuthenticationProvider {
     public AuthenticationProvider(Type type, String ticketKey, TokenProvider tokenProvider) {
         mType = type;
         mTicketKey = ticketKey;
+        mTicketKeyHash = ticketKey == null ? null : HashUtils.sha256(ticketKey);
         mTokenProvider = tokenProvider;
     }
 
@@ -55,6 +62,15 @@ public class AuthenticationProvider {
      */
     String getTicketKey() {
         return mTicketKey;
+    }
+
+    /**
+     * Get the ticket key hash for this authentication provider.
+     *
+     * @return the ticket key hash.
+     */
+    String getTicketKeyHash() {
+        return mTicketKeyHash;
     }
 
     /**
@@ -124,7 +140,7 @@ public class AuthenticationProvider {
 
         @Override
         protected void onPostExecute(String token) {
-            TicketCache.getInstance().putTicket(mAuthenticationProvider.mTicketKey, token);
+            TicketCache.getInstance().putTicket(mAuthenticationProvider.mTicketKeyHash, token);
         }
     }
 }

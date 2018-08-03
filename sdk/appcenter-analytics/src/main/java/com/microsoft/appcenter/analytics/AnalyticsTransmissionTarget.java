@@ -247,7 +247,7 @@ public class AnalyticsTransmissionTarget {
     private synchronized static void addTicketToLog(@NonNull Log log) {
         if (sAuthenticationProvider != null && log instanceof CommonSchemaLog) {
             CommonSchemaLog csLog = (CommonSchemaLog) log;
-            String ticketKey = sAuthenticationProvider.getTicketKey();
+            String ticketKey = sAuthenticationProvider.getTicketKeyHash();
             csLog.getExt().getProtocol().setTicketKeys(Collections.singletonList(ticketKey));
         }
     }
