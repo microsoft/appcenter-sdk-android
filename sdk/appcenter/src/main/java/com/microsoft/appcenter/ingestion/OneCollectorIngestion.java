@@ -14,8 +14,10 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
+import com.microsoft.appcenter.utils.TicketCache;
 
 import org.json.JSONException;
 
@@ -23,6 +25,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -50,6 +53,12 @@ public class OneCollectorIngestion implements Ingestion {
      */
     @VisibleForTesting
     static final String API_KEY = "apikey";
+
+    /**
+     * Tickets header.
+     */
+    @VisibleForTesting
+    static final String TICKETS = "Tickets";
 
     /**
      * Client version header key.
@@ -116,6 +125,31 @@ public class OneCollectorIngestion implements Ingestion {
             apiKey.deleteCharAt(apiKey.length() - 1);
         }
         headers.put(API_KEY, apiKey.toString());
+
+        /* Gather tokens from logs. */
+        Map<String, String> tickets = new HashMap<>();
+        for (Log log : logContainer.getLogs()) {
+            List<String> ticketKeys = ((CommonSchemaLog) log).getExt().getProtocol().getTicketKeys();
+            if (ticketKeys != null) {
+                for (String ticketKey : ticketKeys) {
+                    String token = TicketCache.getInstance().getTicket(ticketKey);
+                    if (token != null) {
+                        tickets.put(ticketKey, token);
+                    }
+                }
+            }
+        }
+
+        /* Format to look like this: "ticketKey1"="p:token1";"ticketKey2"="p:token2". */
+        StringBuilder ticketKeys = new StringBuilder();
+        for (Map.Entry<String, String> ticket : tickets.entrySet()) {
+            ticketKeys.append('"').append(ticket.getKey()).append("\"=\"p:");
+            ticketKeys.append(ticket.getValue()).append("\";");
+        }
+        if (!tickets.isEmpty()) {
+            ticketKeys.deleteCharAt(ticketKeys.length() - 1);
+            headers.put(TICKETS, ticketKeys.toString());
+        }
 
         /* Content type. */
         headers.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
