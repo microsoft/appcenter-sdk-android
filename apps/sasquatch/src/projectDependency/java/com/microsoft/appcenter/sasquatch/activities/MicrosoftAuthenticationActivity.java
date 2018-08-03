@@ -18,17 +18,19 @@ import com.microsoft.identity.client.PublicClientApplication;
 public class MicrosoftAuthenticationActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = "MicrosoftAuthentication";
+
     private static final String CLIENT_ID = "e5cf4c95-3ccb-4579-a978-ced840d7d5af";
+
     private static final String[] SCOPES = new String[]{"User.Read"};
 
     private PublicClientApplication mApplication;
+    
     private AuthenticationResult mAuthentication;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_msa_auth);
-
         mApplication = new PublicClientApplication(this.getApplicationContext(), CLIENT_ID);
     }
 
@@ -77,8 +79,11 @@ public class MicrosoftAuthenticationActivity extends AppCompatActivity {
                 Log.e(LOG_TAG, exception.getMessage());
                 if (exception instanceof MsalUiRequiredException) {
 
-                    // This explicitly indicates that developer needs to prompt the user, it could be refresh token is expired, revoked
-                    // or user changes the password; or it could be that no token was found in the token cache.
+                    /*
+                     * This explicitly indicates that developer needs to prompt the user,
+                     * it could be refresh token is expired, revoked or user changes the password;
+                     * or it could be that no token was found in the token cache.
+                     */
                     onLoginClick(null);
                 }
             }
