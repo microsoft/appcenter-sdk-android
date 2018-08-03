@@ -143,7 +143,7 @@ public class OneCollectorIngestion implements Ingestion {
                     String token = TicketCache.getInstance().getTicket(ticketKey);
                     if (token != null) {
                         try {
-                            tickets.put(ticketKey, token);
+                            tickets.put(ticketKey, "p:" + token);
                         } catch (JSONException e) {
                             throw new RuntimeException(e);
                         }
