@@ -27,6 +27,11 @@ import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
 public class AnalyticsTransmissionTarget {
 
     /**
+     * The authentication provider to use.
+     */
+    private static AuthenticationProvider sAuthenticationProvider;
+
+    /**
      * Target token for this level.
      */
     private final String mTransmissionTargetToken;
@@ -34,7 +39,7 @@ public class AnalyticsTransmissionTarget {
     /**
      * Parent target if any.
      */
-    protected final AnalyticsTransmissionTarget mParentTarget;
+    final AnalyticsTransmissionTarget mParentTarget;
 
     /**
      * Children targets for nesting.
@@ -42,19 +47,14 @@ public class AnalyticsTransmissionTarget {
     private final Map<String, AnalyticsTransmissionTarget> mChildrenTargets = new HashMap<>();
 
     /**
-     * Property configurator used to override Common Schema Part A properties.
-     */
-    private PropertyConfigurator mPropertyConfigurator;
-
-    /**
      * Channel used for Property Configurator.
      */
     private Channel mChannel;
 
     /**
-     * The authentication provider to use.
+     * Property configurator used to override Common Schema Part A properties.
      */
-    private static AuthenticationProvider sAuthenticationProvider;
+    private PropertyConfigurator mPropertyConfigurator;
 
     /**
      * Create a new instance.
@@ -240,7 +240,8 @@ public class AnalyticsTransmissionTarget {
     private synchronized static void addTicketToLog(@NonNull Log log) {
         if (sAuthenticationProvider != null && log instanceof CommonSchemaLog) {
             CommonSchemaLog csLog = (CommonSchemaLog) log;
-            csLog.getExt().getProtocol().setTicketKeys(Collections.singletonList(sAuthenticationProvider.getTicketKey()));
+            String ticketKey = sAuthenticationProvider.getTicketKey();
+            csLog.getExt().getProtocol().setTicketKeys(Collections.singletonList(ticketKey));
         }
     }
 
