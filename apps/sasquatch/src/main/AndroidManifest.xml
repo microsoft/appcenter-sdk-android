@@ -56,7 +56,7 @@
             android:label="@string/cs_properties_title" />
         <activity
             android:name=".activities.MicrosoftAuthenticationActivity"
-            android:label="@string/title_msa_login"></activity>
+            android:label="@string/title_msa_auth" />
 
         <!-- Set default notification icon and color. -->
         <meta-data
@@ -65,6 +65,20 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/appcenter_logo" />
+
+        <!--Intent filter to capture System Browser calling back to our app after Sign In-->
+        <activity android:name="com.microsoft.identity.client.BrowserTabActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="auth"
+                    android:scheme="msale5cf4c95-3ccb-4579-a978-ced840d7d5af" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

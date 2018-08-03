@@ -38,7 +38,7 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeature(R.string.title_error, R.string.description_error, ManagedErrorActivity.class));
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            sTestFeatureModels.add(new TestFeature(R.string.title_msa_login, R.string.description_msa_login, MicrosoftAuthenticationActivity.class));
+            sTestFeatureModels.add(new TestFeature(R.string.title_msa_auth, R.string.description_msa_auth, MicrosoftAuthenticationActivity.class));
         }
         sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
