@@ -2,7 +2,7 @@ package com.microsoft.appcenter.sasquatch.features;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.util.Log;
+import android.os.Build;
 import android.view.View;
 import android.widget.AdapterView;
 
@@ -13,13 +13,12 @@ import com.microsoft.appcenter.sasquatch.activities.DeviceInfoActivity;
 import com.microsoft.appcenter.sasquatch.activities.DummyActivity;
 import com.microsoft.appcenter.sasquatch.activities.EventActivity;
 import com.microsoft.appcenter.sasquatch.activities.ManagedErrorActivity;
+import com.microsoft.appcenter.sasquatch.activities.MicrosoftAuthenticationActivity;
 import com.microsoft.appcenter.sasquatch.activities.PageActivity;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 public final class TestFeatures {
 
@@ -38,14 +37,10 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeature(R.string.title_crashes, R.string.description_crashes, CrashActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_error, R.string.description_error, ManagedErrorActivity.class));
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));
-        try {
-            Class classCustomProperties = Class.forName("com.microsoft.appcenter.CustomProperties");
-            if (classCustomProperties != null) {
-                sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
-            }
-        } catch (Exception e) {
-            Log.i(LOG_TAG, "CustomProperties not yet available in this flavor.");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            sTestFeatureModels.add(new TestFeature(R.string.title_msa_login, R.string.description_msa_login, MicrosoftAuthenticationActivity.class));
         }
+        sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
     }
 
