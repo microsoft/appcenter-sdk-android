@@ -76,7 +76,7 @@
 
                 <data
                     android:host="auth"
-                    android:scheme="msale5cf4c95-3ccb-4579-a978-ced840d7d5af" />
+                    android:scheme="msal06181c2a-2403-437f-a490-9bcb06f85281" />
             </intent-filter>
         </activity>
     </application>

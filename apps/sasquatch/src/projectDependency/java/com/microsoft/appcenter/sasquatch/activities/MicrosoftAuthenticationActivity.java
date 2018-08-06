@@ -15,11 +15,11 @@ import com.microsoft.identity.client.MsalException;
 import com.microsoft.identity.client.MsalUiRequiredException;
 import com.microsoft.identity.client.PublicClientApplication;
 
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
+
 public class MicrosoftAuthenticationActivity extends AppCompatActivity {
 
-    private static final String LOG_TAG = "MicrosoftAuthentication";
-
-    private static final String CLIENT_ID = "e5cf4c95-3ccb-4579-a978-ced840d7d5af";
+    private static final String CLIENT_ID = "06181c2a-2403-437f-a490-9bcb06f85281";
 
     private static final String[] SCOPES = new String[]{"User.Read"};
 
