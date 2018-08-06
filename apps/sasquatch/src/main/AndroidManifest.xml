@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.microsoft.appcenter.sasquatch">
 
+    <uses-sdk tools:overrideLibrary="com.microsoft.identity.msal" />
+
     <application
         android:name=".SasquatchApplication"
         android:allowBackup="false"
@@ -52,6 +54,9 @@
         <activity
             android:name=".activities.CommonSchemaPropertiesActivity"
             android:label="@string/cs_properties_title" />
+        <activity
+            android:name=".activities.MicrosoftAuthenticationActivity"
+            android:label="@string/title_msa_auth" />
 
         <!-- Set default notification icon and color. -->
         <meta-data
@@ -60,6 +65,20 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/appcenter_logo" />
+
+        <!--Intent filter to capture System Browser calling back to our app after Sign In-->
+        <activity android:name="com.microsoft.identity.client.BrowserTabActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="auth"
+                    android:scheme="msal06181c2a-2403-437f-a490-9bcb06f85281" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
