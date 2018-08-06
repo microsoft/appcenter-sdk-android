@@ -23,4 +23,3 @@ public class MicrosoftAuthenticationActivity extends AppCompatActivity {
     public void onRefreshClick(View view) {
     }
 }
-

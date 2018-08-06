@@ -94,4 +94,3 @@ public class MicrosoftAuthenticationActivity extends AppCompatActivity {
         };
     }
 }
-
