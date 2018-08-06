@@ -1,5 +1,15 @@
 package com.microsoft.appcenter.analytics;
 
+import android.os.AsyncTask;
+import android.support.annotation.VisibleForTesting;
+
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.AsyncTaskUtils;
+import com.microsoft.appcenter.utils.HashUtils;
+import com.microsoft.appcenter.utils.TicketCache;
+
+import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
+
 public class AuthenticationProvider {
 
     /**
@@ -11,6 +21,11 @@ public class AuthenticationProvider {
      * The ticket key for this authentication provider.
      */
     private final String mTicketKey;
+
+    /**
+     * The ticket key as hash.
+     */
+    private final String mTicketKeyHash;
 
     /**
      * The token provider that will be used to get an updated authentication token.
@@ -27,6 +42,7 @@ public class AuthenticationProvider {
     public AuthenticationProvider(Type type, String ticketKey, TokenProvider tokenProvider) {
         mType = type;
         mTicketKey = ticketKey;
+        mTicketKeyHash = ticketKey == null ? null : HashUtils.sha256(ticketKey);
         mTokenProvider = tokenProvider;
     }
 
@@ -49,6 +65,15 @@ public class AuthenticationProvider {
     }
 
     /**
+     * Get the ticket key hash for this authentication provider.
+     *
+     * @return the ticket key hash.
+     */
+    String getTicketKeyHash() {
+        return mTicketKeyHash;
+    }
+
+    /**
      * Token provider object that will be called to provide a current authentication token.
      *
      * @return the token provider.
@@ -58,14 +83,22 @@ public class AuthenticationProvider {
     }
 
     /**
+     * Call token provider callback in background.
+     */
+    synchronized void acquireTokenAsync() {
+        AsyncTaskUtils.execute(LOG_TAG, new TokenCall(this));
+    }
+
+    /**
      * The type of the authentication provider, e.g. MSA.
      */
     public enum Type {
         MSA
+
     }
 
     /**
-     * Implement this interface to enable updating the authentication token.
+     * Application callback to request authentication token value.
      */
     public interface TokenProvider {
 
@@ -76,5 +109,38 @@ public class AuthenticationProvider {
          * @return the updated token.
          */
         String getToken(String ticketKey);
+
+    }
+
+    @VisibleForTesting
+    static class TokenCall extends AsyncTask<Void, Void, String> {
+
+        /**
+         * Authentication provider for this call.
+         */
+        private final AuthenticationProvider mAuthenticationProvider;
+
+        /**
+         * Init.
+         */
+        TokenCall(AuthenticationProvider authenticationProvider) {
+            mAuthenticationProvider = authenticationProvider;
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            String ticketKey = mAuthenticationProvider.mTicketKey;
+            try {
+                return mAuthenticationProvider.getTokenProvider().getToken(ticketKey);
+            } catch (RuntimeException e) {
+                AppCenterLog.error(LOG_TAG, "Failed to get token for key=" + ticketKey, e);
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String token) {
+            TicketCache.getInstance().putTicket(mAuthenticationProvider.mTicketKeyHash, token);
+        }
     }
 }

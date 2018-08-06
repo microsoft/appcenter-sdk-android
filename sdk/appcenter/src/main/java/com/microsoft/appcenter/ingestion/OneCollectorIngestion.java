@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
@@ -14,15 +15,19 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
+import com.microsoft.appcenter.utils.TicketCache;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -50,6 +55,18 @@ public class OneCollectorIngestion implements Ingestion {
      */
     @VisibleForTesting
     static final String API_KEY = "apikey";
+
+    /**
+     * Tickets header.
+     */
+    @VisibleForTesting
+    static final String TICKETS = "Tickets";
+
+    /**
+     * Strict authentication header ticket.
+     */
+    @VisibleForTesting
+    static final String STRICT = "Strict";
 
     /**
      * Client version header key.
@@ -116,6 +133,34 @@ public class OneCollectorIngestion implements Ingestion {
             apiKey.deleteCharAt(apiKey.length() - 1);
         }
         headers.put(API_KEY, apiKey.toString());
+
+        /* Gather tokens from logs. */
+        JSONObject tickets = new JSONObject();
+        for (Log log : logContainer.getLogs()) {
+            List<String> ticketKeys = ((CommonSchemaLog) log).getExt().getProtocol().getTicketKeys();
+            if (ticketKeys != null) {
+                for (String ticketKey : ticketKeys) {
+                    String token = TicketCache.getInstance().getTicket(ticketKey);
+                    if (token != null) {
+                        try {
+                            tickets.put(ticketKey, "p:" + token);
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            }
+        }
+
+        /* Pass ticket header if we have at least 1 token. */
+        if (tickets.length() > 0) {
+            headers.put(TICKETS, tickets.toString());
+
+            /* Enable 401 errors on invalid tickets on debug builds. */
+            if (Constants.APPLICATION_DEBUGGABLE) {
+                headers.put(STRICT, Boolean.TRUE.toString());
+            }
+        }
 
         /* Content type. */
         headers.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);

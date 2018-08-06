@@ -76,6 +76,8 @@ public class AnalyticsTransmissionTarget {
      * @param authenticationProvider The authentication provider.
      */
     public static synchronized void addAuthenticationProvider(AuthenticationProvider authenticationProvider) {
+
+        /* Validate input. */
         if (authenticationProvider.getType() == null) {
             AppCenterLog.error(LOG_TAG, "Authentication provider type may not be null.");
             return;
@@ -88,7 +90,12 @@ public class AnalyticsTransmissionTarget {
             AppCenterLog.error(LOG_TAG, "Authentication token provider may not be null.");
             return;
         }
+
+        /* Update current provider. */
         sAuthenticationProvider = authenticationProvider;
+
+        /* Request token now. */
+        authenticationProvider.acquireTokenAsync();
     }
 
     /**
@@ -240,7 +247,7 @@ public class AnalyticsTransmissionTarget {
     private synchronized static void addTicketToLog(@NonNull Log log) {
         if (sAuthenticationProvider != null && log instanceof CommonSchemaLog) {
             CommonSchemaLog csLog = (CommonSchemaLog) log;
-            String ticketKey = sAuthenticationProvider.getTicketKey();
+            String ticketKey = sAuthenticationProvider.getTicketKeyHash();
             csLog.getExt().getProtocol().setTicketKeys(Collections.singletonList(ticketKey));
         }
     }
