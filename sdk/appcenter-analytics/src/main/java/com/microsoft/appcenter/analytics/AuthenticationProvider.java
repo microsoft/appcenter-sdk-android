@@ -95,6 +95,7 @@ public class AuthenticationProvider {
      * Call token provider callback in background.
      */
     synchronized void acquireTokenAsync() {
+        AppCenterLog.debug(LOG_TAG, "Calling token provider=" + mType + " callback.");
         mTokenProvider.getToken(mTicketKey, new AuthenticationCallback() {
 
             @Override
@@ -107,6 +108,7 @@ public class AuthenticationProvider {
     private synchronized void handleTokenUpdate(String token, Date expiresAt) {
 
         /* Check parameters. */
+        AppCenterLog.debug(LOG_TAG, "Got result back from token provider=" + mType);
         if (token == null) {
             AppCenterLog.error(LOG_TAG, "Authentication failed for ticketKey=" + mTicketKey);
             return;
