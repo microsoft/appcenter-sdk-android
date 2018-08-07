@@ -27,11 +27,11 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -329,9 +329,10 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
         /* Add authentication provider. */
         AuthenticationProvider.TokenProvider tokenProvider = mock(AuthenticationProvider.TokenProvider.class);
-        AuthenticationProvider authenticationProvider = new AuthenticationProvider(AuthenticationProvider.Type.MSA, "key1", tokenProvider);
+        AuthenticationProvider authenticationProvider = spy(new AuthenticationProvider(AuthenticationProvider.Type.MSA, "key1", tokenProvider));
         AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
         assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider).acquireTokenAsync();
 
         /* No actions are prepared with no CommonSchemaLog. */
         AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(mock(Log.class), "test");
@@ -345,5 +346,12 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
         /* Verify log. */
         assertEquals(Collections.singletonList(authenticationProvider.getTicketKeyHash()), protocol.getTicketKeys());
+
+        /* Replace auth provider. */
+        AuthenticationProvider authenticationProvider2 = spy(new AuthenticationProvider(AuthenticationProvider.Type.MSA, "key1", tokenProvider));
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider2);
+        assertEquals(authenticationProvider2, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider).stopRefreshing();
+        verify(authenticationProvider2).acquireTokenAsync();
     }
 }
