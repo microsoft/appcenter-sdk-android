@@ -5,26 +5,38 @@ import android.support.annotation.VisibleForTesting;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Ticket cache for One Collector protocol.
+ */
 public class TicketCache {
 
-    private static final TicketCache sInstance = new TicketCache();
+    /**
+     * Cache backed by a simple map.
+     */
+    private static Map<String, String> sTickets = new HashMap<>();
 
-    private Map<String, String> mTickets = new HashMap<>();
-
-    public static TicketCache getInstance() {
-        return sInstance;
+    /**
+     * Get cached ticket.
+     *
+     * @param key ticket key.
+     * @return token value or null if not in cache.
+     */
+    public static String getTicket(String key) {
+        return sTickets.get(key);
     }
 
-    public String getTicket(String key) {
-        return mTickets.get(key);
-    }
-
-    public void putTicket(String key, String value) {
-        mTickets.put(key, value);
+    /**
+     * Insert or update ticket.
+     *
+     * @param key   ticket key.
+     * @param value ticket value.
+     */
+    public static void putTicket(String key, String value) {
+        sTickets.put(key, value);
     }
 
     @VisibleForTesting
-    void clearCache() {
-        mTickets.clear();
+    public static void clear() {
+        sTickets.clear();
     }
 }

@@ -140,7 +140,7 @@ public class OneCollectorIngestion implements Ingestion {
             List<String> ticketKeys = ((CommonSchemaLog) log).getExt().getProtocol().getTicketKeys();
             if (ticketKeys != null) {
                 for (String ticketKey : ticketKeys) {
-                    String token = TicketCache.getInstance().getTicket(ticketKey);
+                    String token = TicketCache.getTicket(ticketKey);
                     if (token != null) {
                         try {
                             tickets.put(ticketKey, "d:" + token);

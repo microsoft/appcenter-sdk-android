@@ -128,7 +128,7 @@ public class AuthenticationProvider {
         }
 
         /* Update cache. */
-        TicketCache.getInstance().putTicket(mTicketKeyHash, token);
+        TicketCache.putTicket(mTicketKeyHash, token);
 
         /* Schedule refresh. */
         long refreshTime = (long) ((expiresAt.getTime() - System.currentTimeMillis()) * REFRESH_THRESHOLD);

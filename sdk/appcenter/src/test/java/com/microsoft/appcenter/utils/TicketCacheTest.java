@@ -9,32 +9,30 @@ import static org.junit.Assert.assertNull;
 
 public class TicketCacheTest {
 
-    public static void clearTicketCache() {
-        TicketCache.getInstance().clearCache();
-    }
-
     @Before
     public void setUp() {
-        clearTicketCache();
+        TicketCache.clear();
     }
 
     @After
     public void tearDown() {
-        clearTicketCache();
+        TicketCache.clear();
+    }
+
+    @Test
+    public void coverInit() {
+        new TicketCache();
     }
 
     @Test
     public void storeTickets() {
-        TicketCache cache = TicketCache.getInstance();
-        assertNull(cache.getTicket("key1"));
-
-        cache.putTicket("key1", "1");
-        assertEquals("1", cache.getTicket("key1"));
-        cache.putTicket("key1", "2");
-        assertEquals("2", cache.getTicket("key1"));
-
-        cache.putTicket("key2", "1");
-        assertEquals("2", cache.getTicket("key1"));
-        assertEquals("1", cache.getTicket("key2"));
+        assertNull(TicketCache.getTicket("key1"));
+        TicketCache.putTicket("key1", "1");
+        assertEquals("1", TicketCache.getTicket("key1"));
+        TicketCache.putTicket("key1", "2");
+        assertEquals("2", TicketCache.getTicket("key1"));
+        TicketCache.putTicket("key2", "1");
+        assertEquals("2", TicketCache.getTicket("key1"));
+        assertEquals("1", TicketCache.getTicket("key2"));
     }
 }

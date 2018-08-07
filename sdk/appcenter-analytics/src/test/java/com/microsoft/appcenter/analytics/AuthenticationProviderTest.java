@@ -9,7 +9,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -25,23 +24,20 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({TicketCache.class, HandlerUtils.class})
 public class AuthenticationProviderTest {
 
-    @Mock
-    private TicketCache mTicketCache;
-
     @Before
     public void setUp() {
         mockStatic(TicketCache.class);
-        when(TicketCache.getInstance()).thenReturn(mTicketCache);
     }
 
     @Test
@@ -71,11 +67,14 @@ public class AuthenticationProviderTest {
 
         /* Verify onAuthenticationResult. */
         callback.getValue().onAuthenticationResult(null, new Date());
-        verifyNoMoreInteractions(mTicketCache);
+        verifyStatic(never());
+        TicketCache.putTicket(anyString(), anyString());
         callback.getValue().onAuthenticationResult("test", null);
-        verifyNoMoreInteractions(mTicketCache);
+        verifyStatic(never());
+        TicketCache.putTicket(anyString(), anyString());
         callback.getValue().onAuthenticationResult("test", new Date());
-        verify(mTicketCache).putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("test"));
+        verifyStatic();
+        TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("test"));
 
         /* Execute the timer. */
         runnable.getValue().run();

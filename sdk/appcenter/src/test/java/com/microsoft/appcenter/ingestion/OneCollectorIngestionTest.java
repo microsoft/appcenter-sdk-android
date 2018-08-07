@@ -17,7 +17,6 @@ import com.microsoft.appcenter.ingestion.models.one.Extensions;
 import com.microsoft.appcenter.ingestion.models.one.ProtocolExtension;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.TicketCache;
-import com.microsoft.appcenter.utils.TicketCacheTest;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
@@ -81,7 +80,7 @@ public class OneCollectorIngestionTest {
 
     @Before
     public void setUp() throws Exception {
-        TicketCacheTest.clearTicketCache();
+        TicketCache.clear();
 
         /* Test JSONObject implementation. */
         JSONObject json = mock(JSONObject.class);
@@ -197,7 +196,7 @@ public class OneCollectorIngestionTest {
             add("key2");
             add(null);
         }};
-        TicketCache.getInstance().putTicket("key2", "value2");
+        TicketCache.putTicket("key2", "value2");
         Extensions ext1 = new Extensions() {{
             setProtocol(new ProtocolExtension() {{
                 setTicketKeys(ticketKeys);
@@ -243,7 +242,7 @@ public class OneCollectorIngestionTest {
         final List<String> ticketKeys = new ArrayList<String>() {{
             add("key1");
         }};
-        TicketCache.getInstance().putTicket("key1", "value1");
+        TicketCache.putTicket("key1", "value1");
         Extensions ext1 = new Extensions() {{
             setProtocol(new ProtocolExtension() {{
                 setTicketKeys(ticketKeys);
