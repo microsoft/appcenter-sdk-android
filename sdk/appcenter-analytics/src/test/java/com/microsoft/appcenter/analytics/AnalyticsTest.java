@@ -260,6 +260,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         verify(channel).addListener(isA(SessionTracker.class));
         verify(channel).addListener(isA(AnalyticsValidator.class));
+        verify(channel).addListener(isA(AnalyticsTransmissionTarget.getChannelListener().getClass()));
 
         /* Now we can see the service enabled. */
         assertTrue(Analytics.isEnabled().get());
@@ -269,6 +270,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         assertFalse(Analytics.isEnabled().get());
         verify(channel).removeListener(isA(SessionTracker.class));
         verify(channel).removeListener(isA(AnalyticsValidator.class));
+        verify(channel).removeListener(isA(AnalyticsTransmissionTarget.getChannelListener().getClass()));
         verify(channel, times(2)).removeGroup(analytics.getGroupName());
         verify(channel).clear(analytics.getGroupName());
         verifyStatic();

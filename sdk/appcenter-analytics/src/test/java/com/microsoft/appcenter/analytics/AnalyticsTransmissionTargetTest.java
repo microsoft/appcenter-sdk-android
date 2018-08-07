@@ -3,16 +3,22 @@ package com.microsoft.appcenter.analytics;
 import android.content.Context;
 
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
+import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.Extensions;
+import com.microsoft.appcenter.ingestion.models.one.ProtocolExtension;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
+import java.util.Collections;
 import java.util.HashMap;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -21,11 +27,13 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
@@ -40,6 +48,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), mChannel, null, null, false);
+        AnalyticsTransmissionTarget.sAuthenticationProvider = null;
     }
 
     @Test
@@ -283,5 +292,58 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         assertFalse(grandParentTarget.isEnabledAsync().get());
         assertFalse(parentTarget.isEnabledAsync().get());
         assertFalse(childTarget.isEnabledAsync().get());
+    }
+
+    @Test
+    public void addAuthenticationProvider() {
+        AuthenticationProvider authenticationProvider = mock(AuthenticationProvider.class);
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider, never()).acquireTokenAsync();
+
+        /* Set type. */
+        when(authenticationProvider.getType()).thenReturn(AuthenticationProvider.Type.MSA);
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider, never()).acquireTokenAsync();
+
+        /* Set ticket key. */
+        when(authenticationProvider.getTicketKey()).thenReturn("key1");
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider, never()).acquireTokenAsync();
+
+        /* Set token provider. */
+        when(authenticationProvider.getTokenProvider()).thenReturn(mock(AuthenticationProvider.TokenProvider.class));
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider).acquireTokenAsync();
+    }
+
+    @Test
+    public void addTicketToLog() {
+
+        /* No actions are prepared without authentication provider. */
+        CommonSchemaLog log = new CommonSchemaEventLog();
+        AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(log, "test");
+
+        /* Add authentication provider. */
+        AuthenticationProvider.TokenProvider tokenProvider = mock(AuthenticationProvider.TokenProvider.class);
+        AuthenticationProvider authenticationProvider = new AuthenticationProvider(AuthenticationProvider.Type.MSA, "key1", tokenProvider);
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
+
+        /* No actions are prepared with no CommonSchemaLog. */
+        AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(mock(Log.class), "test");
+
+        /* Call prepare log. */
+        final ProtocolExtension protocol = new ProtocolExtension();
+        log.setExt(new Extensions() {{
+            setProtocol(protocol);
+        }});
+        AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(log, "test");
+
+        /* Verify log. */
+        assertEquals(Collections.singletonList(authenticationProvider.getTicketKeyHash()), protocol.getTicketKeys());
     }
 }
