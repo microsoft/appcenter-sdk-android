@@ -60,6 +60,8 @@ public class MSALoginActivity extends AppCompatActivity {
 
     private static final String AUTHORIZE_URL = "https://login.live.com/oauth20_authorize.srf";
 
+    private static final String TOKEN_URL = "https://login.live.com/oauth20_token.srf";
+
     private static final String CODE = "code";
 
     private static final String CLIENT_ID = "06181c2a-2403-437f-a490-9bcb06f85281";
@@ -111,7 +113,7 @@ public class MSALoginActivity extends AppCompatActivity {
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
-                    checkLoginUrl(url);
+                    checkSignInCompletion(url);
                 }
 
                 @Override
@@ -127,7 +129,7 @@ public class MSALoginActivity extends AppCompatActivity {
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
-                    checkLoginUrl(url);
+                    checkSignInCompletion(url);
                 }
 
                 @Override
@@ -139,6 +141,9 @@ public class MSALoginActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Clear cookie and reload sign in URL.
+     */
     public void reset(View view) {
         CookieManager cookieManager = CookieManager.getInstance();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -155,13 +160,19 @@ public class MSALoginActivity extends AppCompatActivity {
         signIn();
     }
 
+    /**
+     * Display error and exit screen.
+     */
     private void fail(int errorCode, CharSequence description) {
         Log.e(LOG_TAG, "Failed to login errorCode=" + errorCode + " message=" + description);
         Toast.makeText(this, R.string.failed_login, Toast.LENGTH_SHORT).show();
         finish();
     }
 
-    private void checkLoginUrl(String url) {
+    /**
+     * Check from web view if sign in completed and process completion.
+     */
+    private void checkSignInCompletion(String url) {
         if (url.startsWith(REDIRECT_URL)) {
             Uri uri = Uri.parse(url);
             String code = uri.getQueryParameter(CODE);
@@ -173,6 +184,9 @@ public class MSALoginActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Get initial access token.
+     */
     private void getToken(final String code) {
         Map<String, String> headers = new HashMap<>();
         headers.put(DefaultHttpClient.CONTENT_TYPE_KEY, "application/x-www-form-urlencoded");
@@ -197,7 +211,6 @@ public class MSALoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onCallSucceeded(String payload) {
-                        Log.i(LOG_TAG, payload);
                         try {
                             JSONObject response = new JSONObject(payload);
                             String userId = response.getString("user_id");
@@ -211,35 +224,15 @@ public class MSALoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onCallFailed(Exception e) {
-                        if (e instanceof HttpException) {
-                            HttpException he = (HttpException) e;
-                            fail(he.getStatusCode(), he.getPayload());
-                        } else {
-                            fail(0, e.getMessage());
-                        }
+                        handleCallFailure(e);
                     }
                 });
-    }
-
-    private void registerAppCenterAuthentication(String userId) {
-        AuthenticationProvider.TokenProvider tokenProvider = new AuthenticationProvider.TokenProvider() {
-
-            @Override
-            public void getToken(String ticketKey, AuthenticationProvider.AuthenticationCallback callback) {
-
-                /* Refresh token, doing that even on first time to test the code without having to wait 1 hour. */
-                refreshToken(callback);
-            }
-        };
-        AuthenticationProvider provider = new AuthenticationProvider(MSA, userId, tokenProvider);
-        AnalyticsTransmissionTarget.addAuthenticationProvider(provider);
-        finish();
     }
 
     private void refreshToken(final AuthenticationProvider.AuthenticationCallback callback) {
         Map<String, String> headers = new HashMap<>();
         headers.put(DefaultHttpClient.CONTENT_TYPE_KEY, "application/x-www-form-urlencoded");
-        sHttpClient.callAsync("https://login.live.com/oauth20_token.srf",
+        sHttpClient.callAsync(TOKEN_URL,
                 DefaultHttpClient.METHOD_POST,
                 headers,
                 new HttpClient.CallTemplate() {
@@ -261,7 +254,6 @@ public class MSALoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onCallSucceeded(String payload) {
-                        Log.i(LOG_TAG, payload);
                         try {
                             JSONObject response = new JSONObject(payload);
                             String accessToken = response.getString("access_token");
@@ -275,13 +267,32 @@ public class MSALoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onCallFailed(Exception e) {
-                        if (e instanceof HttpException) {
-                            HttpException he = (HttpException) e;
-                            fail(he.getStatusCode(), he.getPayload());
-                        } else {
-                            fail(0, e.getMessage());
-                        }
+                        handleCallFailure(e);
                     }
                 });
+    }
+
+    private void handleCallFailure(Exception e) {
+        if (e instanceof HttpException) {
+            HttpException he = (HttpException) e;
+            fail(he.getStatusCode(), he.getPayload());
+        } else {
+            fail(0, e.getMessage());
+        }
+    }
+
+    private void registerAppCenterAuthentication(String userId) {
+        AuthenticationProvider.TokenProvider tokenProvider = new AuthenticationProvider.TokenProvider() {
+
+            @Override
+            public void getToken(String ticketKey, AuthenticationProvider.AuthenticationCallback callback) {
+
+                /* Refresh token, doing that even on first time to test the refresh code without having to wait 1 hour. */
+                refreshToken(callback);
+            }
+        };
+        AuthenticationProvider provider = new AuthenticationProvider(MSA, userId, tokenProvider);
+        AnalyticsTransmissionTarget.addAuthenticationProvider(provider);
+        finish();
     }
 }
