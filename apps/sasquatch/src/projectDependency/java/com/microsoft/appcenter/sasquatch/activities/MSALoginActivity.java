@@ -34,6 +34,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URL;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -178,11 +179,14 @@ public class MSALoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onCallSucceeded(String payload) {
+                        Log.i(LOG_TAG, payload);
                         try {
                             JSONObject response = new JSONObject(payload);
                             String userId = response.getString("user_id");
                             String accessToken = response.getString("access_token");
-                            setAppCenterToken(userId, accessToken);
+                            long expiresIn = response.getLong("expires_in") * 1000L;
+                            Date expiresAt = new Date(System.currentTimeMillis() + expiresIn);
+                            setAppCenterToken(userId, accessToken, expiresAt);
                         } catch (JSONException e) {
                             onCallFailed(e);
                         }
@@ -200,14 +204,14 @@ public class MSALoginActivity extends AppCompatActivity {
                 });
     }
 
-    private void setAppCenterToken(String userId, final String accessToken) {
+    private void setAppCenterToken(String userId, final String accessToken, final Date expiresAt) {
         AuthenticationProvider.TokenProvider tokenProvider = new AuthenticationProvider.TokenProvider() {
 
             @Override
-            public String getToken(String ticketKey) {
+            public void getToken(String ticketKey, AuthenticationProvider.AuthenticationCallback callback) {
 
-                /* TODO handle refresh. */
-                return accessToken;
+                /* Initial token. TODO handle refresh when we get called a second time. */
+                callback.onAuthenticationResult(accessToken, expiresAt);
             }
         };
         AuthenticationProvider provider = new AuthenticationProvider(MSA, userId, tokenProvider);
