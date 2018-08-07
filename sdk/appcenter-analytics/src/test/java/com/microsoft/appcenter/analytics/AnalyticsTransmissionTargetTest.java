@@ -3,6 +3,7 @@ package com.microsoft.appcenter.analytics;
 import android.content.Context;
 
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
+import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
@@ -323,7 +324,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
     public void addTicketToLog() {
 
         /* No actions are prepared without authentication provider. */
-        final CommonSchemaLog log = mock(CommonSchemaLog.class);
+        CommonSchemaLog log = new CommonSchemaEventLog();
         AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(log, "test");
 
         /* Add authentication provider. */
@@ -336,13 +337,13 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(mock(Log.class), "test");
 
         /* Call prepare log. */
-        final ProtocolExtension protocol = mock(ProtocolExtension.class);
-        when(log.getExt()).thenReturn(new Extensions() {{
+        final ProtocolExtension protocol = new ProtocolExtension();
+        log.setExt(new Extensions() {{
             setProtocol(protocol);
         }});
         AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(log, "test");
 
         /* Verify log. */
-        verify(protocol).setTicketKeys(eq(Collections.singletonList(authenticationProvider.getTicketKeyHash())));
+        assertEquals(Collections.singletonList(authenticationProvider.getTicketKeyHash()), protocol.getTicketKeys());
     }
 }

@@ -16,6 +16,7 @@ import com.microsoft.appcenter.ingestion.models.one.Extensions;
 import com.microsoft.appcenter.ingestion.models.one.ProtocolExtension;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.TicketCache;
+import com.microsoft.appcenter.utils.TicketCacheTest;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
@@ -72,6 +73,7 @@ public class OneCollectorIngestionTest {
 
     @Before
     public void setUp() throws Exception {
+        TicketCacheTest.clearTicketCache();
 
         /* Test JSONObject implementation. */
         JSONObject json = mock(JSONObject.class);
@@ -108,9 +110,14 @@ public class OneCollectorIngestionTest {
         when(System.currentTimeMillis()).thenReturn(1234L);
 
         /* Build some payload. */
-        final Log log1 = mock(Log.class);
+        Extensions ext = new Extensions() {{
+            setProtocol(new ProtocolExtension());
+        }};
+        final CommonSchemaLog log1 = mock(CommonSchemaLog.class);
+        when(log1.getExt()).thenReturn(ext);
         when(log1.getTransmissionTargetTokens()).thenReturn(Collections.singleton("token1"));
-        final Log log2 = mock(Log.class);
+        final CommonSchemaLog log2 = mock(CommonSchemaLog.class);
+        when(log2.getExt()).thenReturn(ext);
         when(log2.getTransmissionTargetTokens()).thenReturn(new HashSet<>(Arrays.asList("token2", "token3")));
         LogContainer container = new LogContainer() {{
             setLogs(new ArrayList<Log>() {{
@@ -210,11 +217,15 @@ public class OneCollectorIngestionTest {
     public void failedSerialization() throws Exception {
 
         /* Build some payload. */
-        LogContainer container = new LogContainer();
-        Log log = mock(Log.class);
-        List<Log> logs = new ArrayList<>();
-        logs.add(log);
-        container.setLogs(logs);
+        final CommonSchemaLog log = mock(CommonSchemaLog.class);
+        when(log.getExt()).thenReturn(new Extensions() {{
+            setProtocol(new ProtocolExtension());
+        }});
+        LogContainer container = new LogContainer() {{
+            setLogs(new ArrayList<Log>() {{
+                add(log);
+            }});
+        }};
         LogSerializer serializer = mock(LogSerializer.class);
         JSONException exception = new JSONException("mock");
         when(serializer.serializeLog(log)).thenThrow(exception);
