@@ -137,15 +137,17 @@ public class OneCollectorIngestion implements Ingestion {
         /* Gather tokens from logs. */
         JSONObject tickets = new JSONObject();
         for (Log log : logContainer.getLogs()) {
-            List<String> ticketKeys = ((CommonSchemaLog) log).getExt().getProtocol().getTicketKeys();
-            if (ticketKeys != null) {
-                for (String ticketKey : ticketKeys) {
-                    String token = TicketCache.getInstance().getTicket(ticketKey);
-                    if (token != null) {
-                        try {
-                            tickets.put(ticketKey, "d:" + token);
-                        } catch (JSONException e) {
-                            throw new RuntimeException(e);
+            if (log instanceof CommonSchemaLog) {
+                List<String> ticketKeys = ((CommonSchemaLog) log).getExt().getProtocol().getTicketKeys();
+                if (ticketKeys != null) {
+                    for (String ticketKey : ticketKeys) {
+                        String token = TicketCache.getInstance().getTicket(ticketKey);
+                        if (token != null) {
+                            try {
+                                tickets.put(ticketKey, "d:" + token);
+                            } catch (JSONException e) {
+                                throw new RuntimeException(e);
+                            }
                         }
                     }
                 }
