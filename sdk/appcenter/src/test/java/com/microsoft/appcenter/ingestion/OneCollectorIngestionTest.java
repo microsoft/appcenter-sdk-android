@@ -2,6 +2,7 @@ package com.microsoft.appcenter.ingestion;
 
 import android.content.Context;
 
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
@@ -21,11 +22,13 @@ import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -44,7 +47,9 @@ import static com.microsoft.appcenter.BuildConfig.VERSION_NAME;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.ingestion.OneCollectorIngestion.TICKETS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
@@ -70,6 +75,9 @@ public class OneCollectorIngestionTest {
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
+
+    @Captor
+    private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
 
     @Before
     public void setUp() throws Exception {
@@ -100,6 +108,11 @@ public class OneCollectorIngestionTest {
                 return String.format("{%s}", String.join(",", pairs));
             }
         });
+    }
+
+    @After
+    public void tearDown() {
+        Constants.APPLICATION_DEBUGGABLE = false;
     }
 
     @Test
@@ -162,8 +175,19 @@ public class OneCollectorIngestionTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    public void passTickets() throws Exception {
+    public void passTicketsDebug() throws Exception {
+        Constants.APPLICATION_DEBUGGABLE = true;
+        Map<String, String> headers = passTickets();
+        assertEquals("true", headers.get(OneCollectorIngestion.STRICT));
+    }
+
+    @Test
+    public void passTicketsRelease() throws Exception {
+        Map<String, String> headers = passTickets();
+        assertNull(headers.get(OneCollectorIngestion.STRICT));
+    }
+
+    private Map<String, String> passTickets() throws Exception {
 
         /* Build some payload. */
         final CommonSchemaLog log1 = mock(CommonSchemaLog.class);
@@ -195,8 +219,7 @@ public class OneCollectorIngestionTest {
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         ServiceCall call = mock(ServiceCall.class);
-        ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class)Map.class);
-        when(httpClient.callAsync(anyString(), anyString(), headers.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(call);
+        when(httpClient.callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(call);
 
         /* Verify call to http client. */
         LogSerializer serializer = mock(LogSerializer.class);
@@ -206,11 +229,53 @@ public class OneCollectorIngestionTest {
         assertEquals(call, ingestion.sendAsync(null, null, container, serviceCallback));
 
         /* Verify call to http client. */
-        assertTrue(headers.getValue().containsKey(TICKETS));
-        assertEquals("{\"key2\":\"d:value2\"}", headers.getValue().get(TICKETS));
+        Map<String, String> headers = mHeadersCaptor.getValue();
+        assertTrue(headers.containsKey(TICKETS));
+        assertEquals("{\"key2\":\"d:value2\"}", headers.get(TICKETS));
+        return headers;
+    }
 
-        // TODO json put exception
-        // TODO verify STRICT header
+    @Test
+    public void ticketsFailToSerialize() throws Exception {
+
+        /* Build some payload. */
+        final CommonSchemaLog log1 = mock(CommonSchemaLog.class);
+        final List<String> ticketKeys = new ArrayList<String>() {{
+            add("key1");
+        }};
+        TicketCache.getInstance().putTicket("key1", "value1");
+        Extensions ext1 = new Extensions() {{
+            setProtocol(new ProtocolExtension() {{
+                setTicketKeys(ticketKeys);
+            }});
+        }};
+        when(log1.getExt()).thenReturn(ext1);
+        LogContainer container = new LogContainer() {{
+            setLogs(new ArrayList<Log>() {{
+                add(log1);
+            }});
+        }};
+
+        JSONObject ticketJson = mock(JSONObject.class);
+        whenNew(JSONObject.class).withNoArguments().thenReturn(ticketJson);
+        when(ticketJson.put(anyString(), anyString())).thenThrow(new JSONException("mock"));
+
+        /* Configure mock HTTP. */
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        ServiceCall call = mock(ServiceCall.class);
+        when(httpClient.callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(call);
+
+        /* Verify call to http client. */
+        LogSerializer serializer = mock(LogSerializer.class);
+        OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
+        ingestion.setLogUrl("http://mock");
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        assertEquals(call, ingestion.sendAsync(null, null, container, serviceCallback));
+
+        /* Verify call to http client was made without headers as JSON failed. */
+        Map<String, String> headers = mHeadersCaptor.getValue();
+        assertFalse(headers.containsKey(TICKETS));
     }
 
     @Test

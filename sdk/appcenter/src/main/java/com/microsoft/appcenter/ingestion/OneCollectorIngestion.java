@@ -145,7 +145,8 @@ public class OneCollectorIngestion implements Ingestion {
                         try {
                             tickets.put(ticketKey, "d:" + token);
                         } catch (JSONException e) {
-                            throw new RuntimeException(e);
+                            AppCenterLog.error(LOG_TAG, "Cannot serialize tickets, sending log anonymously", e);
+                            break;
                         }
                     }
                 }
