@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.analytics;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.TicketCache;
 
@@ -9,6 +10,11 @@ import java.util.Date;
 import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
 
 public class AuthenticationProvider {
+
+    /**
+     * Ratio threshold of expiry time to refresh token a bit before it's expired.
+     */
+    private static final double REFRESH_THRESHOLD = 0.9;
 
     /**
      * The type.
@@ -29,6 +35,11 @@ public class AuthenticationProvider {
      * The token provider that will be used to get an updated authentication token.
      */
     private final TokenProvider mTokenProvider;
+
+    /**
+     * Refresh timer.
+     */
+    private Runnable mRefreshTimer;
 
     /**
      * Create a new authentication provider.
@@ -88,6 +99,8 @@ public class AuthenticationProvider {
 
             @Override
             public void onAuthenticationResult(String token, Date expiresAt) {
+
+                /* Check parameters. */
                 if (token == null) {
                     AppCenterLog.error(LOG_TAG, "Authentication failed for ticketKey=" + mTicketKey);
                     return;
@@ -96,7 +109,21 @@ public class AuthenticationProvider {
                     AppCenterLog.error(LOG_TAG, "No expiry provided for ticketKey=" + mTicketKey);
                     return;
                 }
+
+                /* Update cache. */
                 TicketCache.getInstance().putTicket(mTicketKeyHash, token);
+
+                /* Schedule refresh. */
+                long refreshTime = (long) ((expiresAt.getTime() - System.currentTimeMillis()) * REFRESH_THRESHOLD);
+                AppCenterLog.info(LOG_TAG, "User authenticated for " + refreshTime + " ms. for provider=" + mType);
+                mRefreshTimer = new Runnable() {
+
+                    @Override
+                    public void run() {
+                        acquireTokenAsync();
+                    }
+                };
+                HandlerUtils.getMainHandler().postDelayed(mRefreshTimer, refreshTime);
             }
         });
     }
