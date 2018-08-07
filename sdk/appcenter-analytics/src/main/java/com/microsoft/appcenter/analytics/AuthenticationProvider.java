@@ -9,6 +9,9 @@ import java.util.Date;
 
 import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
 
+/**
+ * Authentication provider to associate logs with user identifier.
+ */
 public class AuthenticationProvider {
 
     /**
@@ -44,7 +47,7 @@ public class AuthenticationProvider {
     /**
      * Create a new authentication provider.
      *
-     * @param type          The type for the provider, e.g. MSA.
+     * @param type          The type for the provider.
      * @param ticketKey     The ticket key for the provider.
      * @param tokenProvider The token provider that will be used to get a current authentication token.
      */
@@ -94,7 +97,7 @@ public class AuthenticationProvider {
     /**
      * Call token provider callback in background.
      */
-    synchronized void acquireTokenAsync() {
+    void acquireTokenAsync() {
         AppCenterLog.debug(LOG_TAG, "Calling token provider=" + mType + " callback.");
         mTokenProvider.getToken(mTicketKey, new AuthenticationCallback() {
 
@@ -105,6 +108,12 @@ public class AuthenticationProvider {
         });
     }
 
+    /**
+     * Handle token callback update.
+     *
+     * @param token     token value.
+     * @param expiresAt token expiry date.
+     */
     private synchronized void handleTokenUpdate(String token, Date expiresAt) {
 
         /* Check parameters. */
@@ -134,6 +143,9 @@ public class AuthenticationProvider {
         HandlerUtils.getMainHandler().postDelayed(mRefreshTimer, refreshTime);
     }
 
+    /**
+     * Cancel token refresh timer if any is pending.
+     */
     synchronized void stopRefreshing() {
         if (mRefreshTimer != null) {
             HandlerUtils.getMainHandler().removeCallbacks(mRefreshTimer);
@@ -142,9 +154,13 @@ public class AuthenticationProvider {
     }
 
     /**
-     * The type of the authentication provider, e.g. MSA.
+     * The supported types of the authentication provider.
      */
     public enum Type {
+
+        /**
+         * Microsoft authentication.
+         */
         MSA
     }
 
@@ -154,7 +170,8 @@ public class AuthenticationProvider {
     public interface TokenProvider {
 
         /**
-         * Implement this method and return a current authentication token.
+         * Implement this method and pass a fresh authentication token using the callback.
+         * This will be called 1 time right after registering and also whenever the token is about to expire.
          *
          * @param ticketKey The ticket key that is used to get an updated token.
          * @param callback  callback to provide the result.
@@ -163,8 +180,17 @@ public class AuthenticationProvider {
 
     }
 
+    /**
+     * Authentication callback.
+     */
     public interface AuthenticationCallback {
 
+        /**
+         * Notify SDK that authentication completed.
+         *
+         * @param tokenValue token value or null if authentication failed.
+         * @param expiresAt  expiry date for token or null if authentication failed.
+         */
         void onAuthenticationResult(String tokenValue, Date expiresAt);
     }
 }

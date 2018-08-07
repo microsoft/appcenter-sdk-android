@@ -73,7 +73,7 @@ public class AnalyticsTransmissionTarget {
     }
 
     /**
-     * Add an authentication provider.
+     * Add an authentication provider to associate logs with user identifiers.
      *
      * @param authenticationProvider The authentication provider.
      */
