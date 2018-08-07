@@ -449,7 +449,7 @@ public class Distribute extends AbstractAppCenterService {
         /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
         if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
             AppCenterLog.info(LOG_TAG, "Launcher activity restarted.");
-            if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
+            if (mChannel != null && getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
                 mWorkflowCompleted = false;
                 mBrowserOpenedOrAborted = false;
             }
