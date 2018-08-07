@@ -77,7 +77,7 @@ public class MSALoginActivity extends AppCompatActivity {
     private static String sRefreshToken;
 
     /**
-     * Refresh toke scope.
+     * Refresh token scope.
      */
     private static String sRefreshTokenScope;
 
