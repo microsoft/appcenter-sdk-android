@@ -267,6 +267,7 @@ public class MSALoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onCallFailed(Exception e) {
+                        callback.onAuthenticationResult(null, null);
                         handleCallFailure(e);
                     }
                 });
