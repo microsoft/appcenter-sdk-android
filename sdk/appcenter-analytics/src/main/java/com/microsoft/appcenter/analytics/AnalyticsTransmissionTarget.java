@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.analytics;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.channel.AbstractChannelListener;
@@ -29,7 +30,8 @@ public class AnalyticsTransmissionTarget {
     /**
      * The authentication provider to use.
      */
-    private static AuthenticationProvider sAuthenticationProvider;
+    @VisibleForTesting
+    static AuthenticationProvider sAuthenticationProvider;
 
     /**
      * Target token for this level.
