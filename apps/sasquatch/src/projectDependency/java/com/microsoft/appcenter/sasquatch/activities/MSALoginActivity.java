@@ -67,15 +67,33 @@ public class MSALoginActivity extends AppCompatActivity {
     /**
      * HTTP Client to get tokens.
      */
-    private HttpClient mHttpClient;
+    private static HttpClient sHttpClient;
+
+    /**
+     * Refresh token if logged in.
+     */
+    private static String sRefreshToken;
+
+    /**
+     * Refresh toke scope.
+     */
+    private static String sRefreshTokenScope;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+
+        /* Init UI. */
         super.onCreate(savedInstanceState);
         setContentView(R.layout.msa_login);
-        HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
-        NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(this);
-        mHttpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
+
+        /* Init API client only once. */
+        if (sHttpClient == null) {
+            HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
+            NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(this);
+            sHttpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
+        }
+
+        /* Load sign in URL. */
         signIn();
     }
 
@@ -97,7 +115,7 @@ public class MSALoginActivity extends AppCompatActivity {
                 }
 
                 @Override
-                @TargetApi(23)
+                @TargetApi(Build.VERSION_CODES.M)
                 public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                     super.onReceivedError(view, request, error);
                     fail(error.getErrorCode(), error.getDescription());
@@ -158,7 +176,7 @@ public class MSALoginActivity extends AppCompatActivity {
     private void getToken(final String code) {
         Map<String, String> headers = new HashMap<>();
         headers.put(DefaultHttpClient.CONTENT_TYPE_KEY, "application/x-www-form-urlencoded");
-        mHttpClient.callAsync("https://login.live.com/oauth20_token.srf",
+        sHttpClient.callAsync("https://login.live.com/oauth20_token.srf",
                 DefaultHttpClient.METHOD_POST,
                 headers,
                 new HttpClient.CallTemplate() {
@@ -183,10 +201,9 @@ public class MSALoginActivity extends AppCompatActivity {
                         try {
                             JSONObject response = new JSONObject(payload);
                             String userId = response.getString("user_id");
-                            String accessToken = response.getString("access_token");
-                            long expiresIn = response.getLong("expires_in") * 1000L;
-                            Date expiresAt = new Date(System.currentTimeMillis() + expiresIn);
-                            setAppCenterToken(userId, accessToken, expiresAt);
+                            sRefreshToken = response.getString("refresh_token");
+                            sRefreshTokenScope = response.getString("scope");
+                            registerAppCenterAuthentication(userId);
                         } catch (JSONException e) {
                             onCallFailed(e);
                         }
@@ -204,18 +221,67 @@ public class MSALoginActivity extends AppCompatActivity {
                 });
     }
 
-    private void setAppCenterToken(String userId, final String accessToken, final Date expiresAt) {
+    private void registerAppCenterAuthentication(String userId) {
         AuthenticationProvider.TokenProvider tokenProvider = new AuthenticationProvider.TokenProvider() {
 
             @Override
             public void getToken(String ticketKey, AuthenticationProvider.AuthenticationCallback callback) {
 
-                /* Initial token. TODO handle refresh when we get called a second time. */
-                callback.onAuthenticationResult(accessToken, expiresAt);
+                /* Refresh token, doing that even on first time to test the code without having to wait 1 hour. */
+                refreshToken(callback);
             }
         };
         AuthenticationProvider provider = new AuthenticationProvider(MSA, userId, tokenProvider);
         AnalyticsTransmissionTarget.addAuthenticationProvider(provider);
         finish();
+    }
+
+    private void refreshToken(final AuthenticationProvider.AuthenticationCallback callback) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put(DefaultHttpClient.CONTENT_TYPE_KEY, "application/x-www-form-urlencoded");
+        sHttpClient.callAsync("https://login.live.com/oauth20_token.srf",
+                DefaultHttpClient.METHOD_POST,
+                headers,
+                new HttpClient.CallTemplate() {
+
+                    @Override
+                    public String buildRequestBody() {
+                        return "client_id=" + CLIENT_ID +
+                                "&grant_type=refresh_token" +
+                                "&redirect_uri=" + REDIRECT_URL +
+                                "&refresh_token=" + sRefreshToken +
+                                "&scope=" + sRefreshTokenScope;
+                    }
+
+                    @Override
+                    public void onBeforeCalling(URL url, Map<String, String> headers) {
+                    }
+                },
+                new ServiceCallback() {
+
+                    @Override
+                    public void onCallSucceeded(String payload) {
+                        Log.i(LOG_TAG, payload);
+                        try {
+                            JSONObject response = new JSONObject(payload);
+                            String accessToken = response.getString("access_token");
+                            long expiresIn = response.getLong("expires_in") * 1000L;
+                            Date expiresAt = new Date(System.currentTimeMillis() + expiresIn);
+                            callback.onAuthenticationResult(accessToken, expiresAt);
+                        } catch (JSONException e) {
+                            onCallFailed(e);
+                        }
+                    }
+
+                    @Override
+                    public void onCallFailed(Exception e) {
+                        if (e instanceof HttpException) {
+                            HttpException he = (HttpException) e;
+                            fail(he.getStatusCode(), he.getPayload());
+                        } else {
+                            fail(0, e.getMessage());
+                        }
+                    }
+                });
     }
 }
