@@ -91,6 +91,11 @@ public class AnalyticsTransmissionTarget {
             return;
         }
 
+        /* Stop refresh on previous provider if any. */
+        if (sAuthenticationProvider != null) {
+            sAuthenticationProvider.stopRefreshing();
+        }
+
         /* Update current provider. */
         sAuthenticationProvider = authenticationProvider;
 

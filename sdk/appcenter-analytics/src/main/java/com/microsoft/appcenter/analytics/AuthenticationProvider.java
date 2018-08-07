@@ -99,33 +99,44 @@ public class AuthenticationProvider {
 
             @Override
             public void onAuthenticationResult(String token, Date expiresAt) {
-
-                /* Check parameters. */
-                if (token == null) {
-                    AppCenterLog.error(LOG_TAG, "Authentication failed for ticketKey=" + mTicketKey);
-                    return;
-                }
-                if (expiresAt == null) {
-                    AppCenterLog.error(LOG_TAG, "No expiry provided for ticketKey=" + mTicketKey);
-                    return;
-                }
-
-                /* Update cache. */
-                TicketCache.getInstance().putTicket(mTicketKeyHash, token);
-
-                /* Schedule refresh. */
-                long refreshTime = (long) ((expiresAt.getTime() - System.currentTimeMillis()) * REFRESH_THRESHOLD);
-                AppCenterLog.info(LOG_TAG, "User authenticated for " + refreshTime + " ms. for provider=" + mType);
-                mRefreshTimer = new Runnable() {
-
-                    @Override
-                    public void run() {
-                        acquireTokenAsync();
-                    }
-                };
-                HandlerUtils.getMainHandler().postDelayed(mRefreshTimer, refreshTime);
+                handleTokenUpdate(token, expiresAt);
             }
         });
+    }
+
+    private synchronized void handleTokenUpdate(String token, Date expiresAt) {
+
+        /* Check parameters. */
+        if (token == null) {
+            AppCenterLog.error(LOG_TAG, "Authentication failed for ticketKey=" + mTicketKey);
+            return;
+        }
+        if (expiresAt == null) {
+            AppCenterLog.error(LOG_TAG, "No expiry provided for ticketKey=" + mTicketKey);
+            return;
+        }
+
+        /* Update cache. */
+        TicketCache.getInstance().putTicket(mTicketKeyHash, token);
+
+        /* Schedule refresh. */
+        long refreshTime = (long) ((expiresAt.getTime() - System.currentTimeMillis()) * REFRESH_THRESHOLD);
+        AppCenterLog.info(LOG_TAG, "User authenticated for " + refreshTime + " ms. for provider=" + mType);
+        mRefreshTimer = new Runnable() {
+
+            @Override
+            public void run() {
+                acquireTokenAsync();
+            }
+        };
+        HandlerUtils.getMainHandler().postDelayed(mRefreshTimer, refreshTime);
+    }
+
+    synchronized void stopRefreshing() {
+        if (mRefreshTimer != null) {
+            HandlerUtils.getMainHandler().removeCallbacks(mRefreshTimer);
+            mRefreshTimer = null;
+        }
     }
 
     /**
