@@ -15,12 +15,12 @@ import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
 public class AuthenticationProvider {
 
     /**
-     * Ratio threshold of expiry time to refresh token a bit before it's expired.
+     * Ratio of refresh interval to token lifetime. Used to refresh token a bit before it's expired.
      */
     private static final double REFRESH_THRESHOLD = 0.9;
 
     /**
-     * The type.
+     * The authentication provider type.
      */
     private final Type mType;
 
@@ -48,7 +48,10 @@ public class AuthenticationProvider {
      * Create a new authentication provider.
      *
      * @param type          The type for the provider.
-     * @param ticketKey     The ticket key for the provider.
+     * @param ticketKey     The ticket key for the provider. This can be any value and does not need to match user identifier.
+     *                      This value will be used in the token provider callback for giving context. The only requirement
+     *                      is that ticket key is different if registering a new provider (for example to switch user).
+     *                      Typical implementations will pass user identifier as a value but it's not a requirement.
      * @param tokenProvider The token provider that will be used to get a current authentication token.
      */
     public AuthenticationProvider(Type type, String ticketKey, TokenProvider tokenProvider) {
