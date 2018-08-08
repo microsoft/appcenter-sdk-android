@@ -162,7 +162,7 @@ public class AuthenticationProvider {
     public enum Type {
 
         /**
-         * Microsoft authentication.
+         * Microsoft account.
          */
         MSA
     }
@@ -180,7 +180,6 @@ public class AuthenticationProvider {
          * @param callback  callback to provide the result.
          */
         void getToken(String ticketKey, AuthenticationCallback callback);
-
     }
 
     /**
