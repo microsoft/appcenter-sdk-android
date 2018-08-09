@@ -124,5 +124,15 @@ public class AuthenticationProviderTest {
         /* Verify cache updated. */
         verifyStatic(times(2));
         TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("test"));
+
+        /* Now that called back, we can refresh again. */
+        reset(authenticationProvider);
+        reset(tokenProvider);
+        authenticationProvider.checkTokenExpiry();
+        verify(authenticationProvider).acquireTokenAsync();
+        verify(tokenProvider).getToken(anyString(), callback.capture());
+        callback.getValue().onAuthenticationResult("test", expiresAt);
+        verifyStatic(times(3));
+        TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("test"));
     }
 }
