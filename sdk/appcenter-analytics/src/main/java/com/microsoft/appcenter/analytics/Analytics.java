@@ -299,10 +299,11 @@ public class Analytics extends AbstractAppCenterService {
      * Get a transmission target to use to track events. Will create a new transmission target if necessary.
      *
      * @param transmissionTargetToken A string to identify a transmission target.
-     * @return a transmission target.
+     * @return a transmission target or null if the token is invalid.
      */
     private synchronized AnalyticsTransmissionTarget getInstanceTransmissionTarget(String transmissionTargetToken) {
         if (transmissionTargetToken == null || transmissionTargetToken.isEmpty()) {
+            AppCenterLog.error(LOG_TAG, "Transmission target may not be null or empty.");
             return null;
         } else {
             AnalyticsTransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);
