@@ -230,7 +230,7 @@ public class OneCollectorIngestionTest {
         /* Verify call to http client. */
         Map<String, String> headers = mHeadersCaptor.getValue();
         assertTrue(headers.containsKey(TICKETS));
-        assertEquals("{\"key2\":\"d:value2\"}", headers.get(TICKETS));
+        assertEquals("{\"key2\":\"value2\"}", headers.get(TICKETS));
         return headers;
     }
 

@@ -33,7 +33,9 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,15 +48,7 @@ import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
  */
 public class MSALoginActivity extends AppCompatActivity {
 
-    private static final String[] SCOPES = {
-            "wl.offline_access",
-            "ccs.ReadWrite",
-            "dds.read",
-            "dds.register",
-            "wns.connect",
-            "asimovrome.telemetry",
-            "https://activity.windows.com/UserActivity.ReadWrite.CreatedByApp",
-    };
+    private static final String SCOPE = "service::events.data.microsoft.com::MBI_SSL";
 
     private static final String REDIRECT_URL = "https://login.live.com/oauth20_desktop.srf";
 
@@ -62,9 +56,7 @@ public class MSALoginActivity extends AppCompatActivity {
 
     private static final String TOKEN_URL = "https://login.live.com/oauth20_token.srf";
 
-    private static final String CODE = "code";
-
-    private static final String CLIENT_ID = "06181c2a-2403-437f-a490-9bcb06f85281";
+    private static final String CLIENT_ID = "000000004C1D3F6C";
 
     /**
      * HTTP Client to get tokens.
@@ -75,11 +67,6 @@ public class MSALoginActivity extends AppCompatActivity {
      * Refresh token if logged in.
      */
     private static String sRefreshToken;
-
-    /**
-     * Refresh token scope.
-     */
-    private static String sRefreshTokenScope;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -101,8 +88,13 @@ public class MSALoginActivity extends AppCompatActivity {
 
     @SuppressLint("SetJavaScriptEnabled")
     private void signIn() {
-        String signInUrl = AUTHORIZE_URL + "?redirect_uri=" + REDIRECT_URL + "&response_type=code&client_id=" + CLIENT_ID +
-                "&scope=" + TextUtils.join("+", SCOPES);
+        String signInUrl;
+        try {
+            signInUrl = AUTHORIZE_URL + "?redirect_uri=" + REDIRECT_URL + "&response_type=token&client_id=" + CLIENT_ID +
+                    "&scope=" + URLEncoder.encode(SCOPE, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
         WebView web = findViewById(R.id.web_view);
         web.setWebChromeClient(new WebChromeClient());
         web.getSettings().setJavaScriptEnabled(true);
@@ -173,112 +165,24 @@ public class MSALoginActivity extends AppCompatActivity {
      * Check from web view if sign in completed and process completion.
      */
     private void checkSignInCompletion(String url) {
+        Log.v(LOG_TAG, "Browser url=" + url);
         if (url.startsWith(REDIRECT_URL)) {
             Uri uri = Uri.parse(url);
-            String code = uri.getQueryParameter(CODE);
-            if (TextUtils.isEmpty(code)) {
-                fail(0, "error=" + uri.getQueryParameter("error"));
-            } else {
-                getToken(code);
+            String fragment = uri.getFragment();
+            if (fragment != null && uri.getQueryParameter("lc") != null) {
+
+                /* Convert fragment to query string to process response. */
+                checkSignInCompletion(Uri.parse(REDIRECT_URL + "?" + fragment));
             }
         }
     }
 
-    /**
-     * Get initial access token.
-     */
-    private void getToken(final String code) {
-        Map<String, String> headers = new HashMap<>();
-        headers.put(DefaultHttpClient.CONTENT_TYPE_KEY, "application/x-www-form-urlencoded");
-        sHttpClient.callAsync(TOKEN_URL,
-                DefaultHttpClient.METHOD_POST,
-                headers,
-                new HttpClient.CallTemplate() {
-
-                    @Override
-                    public String buildRequestBody() {
-                        return "client_id=" + CLIENT_ID +
-                                "&grant_type=authorization_code" +
-                                "&redirect_uri=" + REDIRECT_URL +
-                                "&code=" + code;
-                    }
-
-                    @Override
-                    public void onBeforeCalling(URL url, Map<String, String> headers) {
-                    }
-                },
-                new ServiceCallback() {
-
-                    @Override
-                    public void onCallSucceeded(String payload) {
-                        try {
-                            JSONObject response = new JSONObject(payload);
-                            String userId = response.getString("user_id");
-                            sRefreshToken = response.getString("refresh_token");
-                            sRefreshTokenScope = response.getString("scope");
-                            registerAppCenterAuthentication(userId);
-                        } catch (JSONException e) {
-                            onCallFailed(e);
-                        }
-                    }
-
-                    @Override
-                    public void onCallFailed(Exception e) {
-                        handleCallFailure(e);
-                    }
-                });
-    }
-
-    private void refreshToken(final AuthenticationProvider.AuthenticationCallback callback) {
-        Map<String, String> headers = new HashMap<>();
-        headers.put(DefaultHttpClient.CONTENT_TYPE_KEY, "application/x-www-form-urlencoded");
-        sHttpClient.callAsync(TOKEN_URL,
-                DefaultHttpClient.METHOD_POST,
-                headers,
-                new HttpClient.CallTemplate() {
-
-                    @Override
-                    public String buildRequestBody() {
-                        return "client_id=" + CLIENT_ID +
-                                "&grant_type=refresh_token" +
-                                "&redirect_uri=" + REDIRECT_URL +
-                                "&refresh_token=" + sRefreshToken +
-                                "&scope=" + sRefreshTokenScope;
-                    }
-
-                    @Override
-                    public void onBeforeCalling(URL url, Map<String, String> headers) {
-                    }
-                },
-                new ServiceCallback() {
-
-                    @Override
-                    public void onCallSucceeded(String payload) {
-                        try {
-                            JSONObject response = new JSONObject(payload);
-                            String accessToken = response.getString("access_token");
-                            long expiresIn = response.getLong("expires_in") * 1000L;
-                            Date expiresAt = new Date(System.currentTimeMillis() + expiresIn);
-                            callback.onAuthenticationResult(accessToken, expiresAt);
-                        } catch (JSONException e) {
-                            onCallFailed(e);
-                        }
-                    }
-
-                    @Override
-                    public void onCallFailed(Exception e) {
-                        callback.onAuthenticationResult(null, null);
-                        handleCallFailure(e);
-                    }
-                });
-    }
-
-    private void handleCallFailure(Exception e) {
-        if (e instanceof HttpException) {
-            HttpException he = (HttpException) e;
-            fail(he.getStatusCode(), he.getPayload());
+    private void checkSignInCompletion(Uri uri) {
+        sRefreshToken = uri.getQueryParameter("refresh_token");
+        if (!TextUtils.isEmpty(sRefreshToken)) {
+            registerAppCenterAuthentication(uri.getQueryParameter("user_id"));
         } else {
-            fail(0, e.getMessage());
+            fail(0, "error=" + uri.getQueryParameter("error_description"));
         }
     }
 
@@ -295,5 +199,54 @@ public class MSALoginActivity extends AppCompatActivity {
         AuthenticationProvider provider = new AuthenticationProvider(MSA, userId, tokenProvider);
         AnalyticsTransmissionTarget.addAuthenticationProvider(provider);
         finish();
+    }
+
+    private void refreshToken(final AuthenticationProvider.AuthenticationCallback callback) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put(DefaultHttpClient.CONTENT_TYPE_KEY, "application/x-www-form-urlencoded");
+        sHttpClient.callAsync(TOKEN_URL,
+                DefaultHttpClient.METHOD_POST,
+                headers,
+                new HttpClient.CallTemplate() {
+
+                    @Override
+                    public String buildRequestBody() {
+                        return "client_id=" + CLIENT_ID +
+                                "&grant_type=refresh_token" +
+                                "&redirect_uri=" + REDIRECT_URL +
+                                "&refresh_token=" + sRefreshToken +
+                                "&scope=" + SCOPE;
+                    }
+
+                    @Override
+                    public void onBeforeCalling(URL url, Map<String, String> headers) {
+                    }
+                },
+                new ServiceCallback() {
+
+                    @Override
+                    public void onCallSucceeded(String payload) {
+                        try {
+                            JSONObject response = new JSONObject(payload);
+                            String accessToken = response.getString("access_token");
+                            long expiresIn = response.getLong("expires_in") * 1000L;
+                            Date expiresAt = new Date(System.currentTimeMillis() + expiresIn);
+                            callback.onAuthenticationResult("p:" + accessToken, expiresAt);
+                        } catch (JSONException e) {
+                            onCallFailed(e);
+                        }
+                    }
+
+                    @Override
+                    public void onCallFailed(Exception e) {
+                        callback.onAuthenticationResult(null, null);
+                        if (e instanceof HttpException) {
+                            HttpException he = (HttpException) e;
+                            fail(he.getStatusCode(), he.getPayload());
+                        } else {
+                            fail(0, e.getMessage());
+                        }
+                    }
+                });
     }
 }

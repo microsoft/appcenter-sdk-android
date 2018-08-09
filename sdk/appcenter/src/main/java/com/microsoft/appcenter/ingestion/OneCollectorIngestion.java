@@ -143,7 +143,7 @@ public class OneCollectorIngestion implements Ingestion {
                     String token = TicketCache.getTicket(ticketKey);
                     if (token != null) {
                         try {
-                            tickets.put(ticketKey, "d:" + token);
+                            tickets.put(ticketKey, token);
                         } catch (JSONException e) {
                             AppCenterLog.error(LOG_TAG, "Cannot serialize tickets, sending log anonymously", e);
                             break;
