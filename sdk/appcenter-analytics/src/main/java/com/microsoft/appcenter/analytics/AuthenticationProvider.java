@@ -1,7 +1,6 @@
 package com.microsoft.appcenter.analytics;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.TicketCache;
 
@@ -15,9 +14,9 @@ import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
 public class AuthenticationProvider {
 
     /**
-     * Ratio of refresh interval to token lifetime. Used to refresh token a bit before it's expired.
+     * Number of milliseconds to refresh token before it expires.
      */
-    private static final double REFRESH_THRESHOLD = 0.9;
+    private static final long REFRESH_THRESHOLD = 10 * 60 * 1000;
 
     /**
      * The authentication provider type.
@@ -40,9 +39,15 @@ public class AuthenticationProvider {
     private final TokenProvider mTokenProvider;
 
     /**
-     * Refresh timer.
+     * Current auth callback if we are refreshing token.
+     * Used to avoid doing it more than once at a time.
      */
-    private Runnable mRefreshTimer;
+    private AuthenticationCallback mCallback;
+
+    /**
+     * Current token expiry date.
+     */
+    private Date mExpiresAt;
 
     /**
      * Create a new authentication provider.
@@ -100,15 +105,23 @@ public class AuthenticationProvider {
     /**
      * Call token provider callback in background.
      */
-    void acquireTokenAsync() {
+    synchronized void acquireTokenAsync() {
+
+        /* Do nothing if already acquiring token. */
+        if (mCallback != null) {
+            return;
+        }
+
+        /* Acquire token using a callback for result to avoid blocking this thread. */
         AppCenterLog.debug(LOG_TAG, "Calling token provider=" + mType + " callback.");
-        mTokenProvider.getToken(mTicketKey, new AuthenticationCallback() {
+        mCallback = new AuthenticationCallback() {
 
             @Override
             public void onAuthenticationResult(String token, Date expiresAt) {
                 handleTokenUpdate(token, expiresAt);
             }
-        });
+        };
+        mTokenProvider.getToken(mTicketKey, mCallback);
     }
 
     /**
@@ -130,29 +143,22 @@ public class AuthenticationProvider {
             return;
         }
 
-        /* Update cache. */
+        /* Update shared cache. */
         TicketCache.putTicket(mTicketKeyHash, token);
 
-        /* Schedule refresh. */
-        long refreshTime = (long) ((expiresAt.getTime() - System.currentTimeMillis()) * REFRESH_THRESHOLD);
-        AppCenterLog.info(LOG_TAG, "User authenticated for " + refreshTime + " ms. for provider=" + mType);
-        mRefreshTimer = new Runnable() {
+        /* Keep track of safe expiry time. */
+        mExpiresAt = expiresAt;
 
-            @Override
-            public void run() {
-                acquireTokenAsync();
-            }
-        };
-        HandlerUtils.getMainHandler().postDelayed(mRefreshTimer, refreshTime);
+        /* Clear callback state. */
+        mCallback = null;
     }
 
     /**
-     * Cancel token refresh timer if any is pending.
+     * Trigger asynchronous token refresh if the token is about to expire.
      */
-    synchronized void stopRefreshing() {
-        if (mRefreshTimer != null) {
-            HandlerUtils.getMainHandler().removeCallbacks(mRefreshTimer);
-            mRefreshTimer = null;
+    synchronized void checkTokenExpiry() {
+        if (mExpiresAt != null && mExpiresAt.getTime() <= System.currentTimeMillis() + REFRESH_THRESHOLD) {
+            acquireTokenAsync();
         }
     }
 

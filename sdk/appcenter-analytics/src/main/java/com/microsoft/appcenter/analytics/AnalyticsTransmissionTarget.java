@@ -93,11 +93,6 @@ public class AnalyticsTransmissionTarget {
             return;
         }
 
-        /* Stop refresh on previous provider if any. */
-        if (sAuthenticationProvider != null) {
-            sAuthenticationProvider.stopRefreshing();
-        }
-
         /* Update current provider. */
         sAuthenticationProvider = authenticationProvider;
 
@@ -252,10 +247,21 @@ public class AnalyticsTransmissionTarget {
      * Add ticket to common schema logs.
      */
     private synchronized static void addTicketToLog(@NonNull Log log) {
+
+        /* Decorate only common schema logs when an authentication provider was registered. */
         if (sAuthenticationProvider != null && log instanceof CommonSchemaLog) {
+
+            /* Add ticket reference to log. */
             CommonSchemaLog csLog = (CommonSchemaLog) log;
             String ticketKey = sAuthenticationProvider.getTicketKeyHash();
             csLog.getExt().getProtocol().setTicketKeys(Collections.singletonList(ticketKey));
+
+            /*
+             * Check if we should try to refresh token if soon expired.
+             * Known corner case: if already expired and refresh takes longer than batching log time,
+             * then next logs will be anonymous until token refreshed.
+             */
+            sAuthenticationProvider.checkTokenExpiry();
         }
     }
 

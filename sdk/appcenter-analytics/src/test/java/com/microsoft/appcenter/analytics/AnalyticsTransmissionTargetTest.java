@@ -318,6 +318,20 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
         assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
         verify(authenticationProvider).acquireTokenAsync();
+
+        /* Replace provider with invalid parameters does not update. */
+        AuthenticationProvider authenticationProvider2 = mock(AuthenticationProvider.class);
+        when(authenticationProvider2.getType()).thenReturn(AuthenticationProvider.Type.MSA);
+        when(authenticationProvider2.getTicketKey()).thenReturn("key2");
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider2);
+        assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider2, never()).acquireTokenAsync();
+
+        /* Replace with valid provider. */
+        when(authenticationProvider2.getTokenProvider()).thenReturn(mock(AuthenticationProvider.TokenProvider.class));
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider2);
+        assertEquals(authenticationProvider2, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider2).acquireTokenAsync();
     }
 
     @Test
@@ -336,6 +350,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
         /* No actions are prepared with no CommonSchemaLog. */
         AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(mock(Log.class), "test");
+        verify(authenticationProvider, never()).checkTokenExpiry();
 
         /* Call prepare log. */
         final ProtocolExtension protocol = new ProtocolExtension();
@@ -347,11 +362,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         /* Verify log. */
         assertEquals(Collections.singletonList(authenticationProvider.getTicketKeyHash()), protocol.getTicketKeys());
 
-        /* Replace auth provider. */
-        AuthenticationProvider authenticationProvider2 = spy(new AuthenticationProvider(AuthenticationProvider.Type.MSA, "key1", tokenProvider));
-        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider2);
-        assertEquals(authenticationProvider2, AnalyticsTransmissionTarget.sAuthenticationProvider);
-        verify(authenticationProvider).stopRefreshing();
-        verify(authenticationProvider2).acquireTokenAsync();
+        /* And that we check expiry. */
+        verify(authenticationProvider).checkTokenExpiry();
     }
 }
