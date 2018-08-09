@@ -190,7 +190,7 @@ public class MSALoginActivity extends AppCompatActivity {
     private void getToken(final String code) {
         Map<String, String> headers = new HashMap<>();
         headers.put(DefaultHttpClient.CONTENT_TYPE_KEY, "application/x-www-form-urlencoded");
-        sHttpClient.callAsync("https://login.live.com/oauth20_token.srf",
+        sHttpClient.callAsync(TOKEN_URL,
                 DefaultHttpClient.METHOD_POST,
                 headers,
                 new HttpClient.CallTemplate() {
