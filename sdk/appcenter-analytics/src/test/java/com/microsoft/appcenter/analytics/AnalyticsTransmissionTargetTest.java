@@ -296,6 +296,12 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
     @Test
     public void addAuthenticationProvider() {
+
+        /* Passing null does not do anything and does not crash. */
+        AnalyticsTransmissionTarget.addAuthenticationProvider(null);
+        assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
+
+        /* Build an object now for the parameter. */
         AuthenticationProvider authenticationProvider = mock(AuthenticationProvider.class);
         AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
         assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
@@ -320,6 +326,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         verify(authenticationProvider).acquireTokenAsync();
 
         /* Replace provider with invalid parameters does not update. */
+        AnalyticsTransmissionTarget.addAuthenticationProvider(null);
         AuthenticationProvider authenticationProvider2 = mock(AuthenticationProvider.class);
         when(authenticationProvider2.getType()).thenReturn(AuthenticationProvider.Type.MSA);
         when(authenticationProvider2.getTicketKey()).thenReturn("key2");

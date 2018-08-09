@@ -80,6 +80,10 @@ public class AnalyticsTransmissionTarget {
     public static synchronized void addAuthenticationProvider(AuthenticationProvider authenticationProvider) {
 
         /* Validate input. */
+        if (authenticationProvider == null) {
+            AppCenterLog.error(LOG_TAG, "Authentication provider may not be null.");
+            return;
+        }
         if (authenticationProvider.getType() == null) {
             AppCenterLog.error(LOG_TAG, "Authentication provider type may not be null.");
             return;
