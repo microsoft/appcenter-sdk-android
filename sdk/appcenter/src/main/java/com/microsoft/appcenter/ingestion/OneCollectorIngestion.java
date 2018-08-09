@@ -157,7 +157,7 @@ public class OneCollectorIngestion implements Ingestion {
         if (tickets.length() > 0) {
             headers.put(TICKETS, tickets.toString());
 
-            /* Enable 401 errors on invalid tickets on debug builds. */
+            /* Enable 400 errors on invalid tickets on debug builds. */
             if (Constants.APPLICATION_DEBUGGABLE) {
                 headers.put(STRICT, Boolean.TRUE.toString());
             }
