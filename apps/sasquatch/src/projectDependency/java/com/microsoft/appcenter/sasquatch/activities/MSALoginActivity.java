@@ -60,7 +60,7 @@ public class MSALoginActivity extends AppCompatActivity {
 
     private static final String SIGN_OUT_URL = URL_PREFIX + "logout.srf?";
 
-    private static final String CLIENT_ID = "000000004023C59F";
+    private static final String CLIENT_ID = "000000004C1D3F6C";
 
     private static final String SCOPE = "service::events.data.microsoft.com::MBI_SSL";
 
