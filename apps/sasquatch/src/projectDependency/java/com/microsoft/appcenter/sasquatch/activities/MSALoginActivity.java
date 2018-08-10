@@ -60,7 +60,7 @@ public class MSALoginActivity extends AppCompatActivity {
 
     private static final String SIGN_OUT_URL = URL_PREFIX + "logout.srf?";
 
-    private static final String CLIENT_ID = "000000004C1D3F6C";
+    private static final String CLIENT_ID = "000000004023C59F";
 
     private static final String SCOPE = "service::events.data.microsoft.com::MBI_SSL";
 
@@ -114,38 +114,24 @@ public class MSALoginActivity extends AppCompatActivity {
         mWebView = findViewById(R.id.web_view);
         mWebView.setWebChromeClient(new WebChromeClient());
         mWebView.getSettings().setJavaScriptEnabled(true);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mWebView.setWebViewClient(new WebViewClient() {
+        mWebView.setWebViewClient(new WebViewClient() {
 
-                @Override
-                public void onPageFinished(WebView view, String url) {
-                    super.onPageFinished(view, url);
-                    checkSignInCompletion(url);
-                }
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                checkSignInCompletion(url);
+            }
 
-                @Override
-                @TargetApi(Build.VERSION_CODES.M)
-                public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                    super.onReceivedError(view, request, error);
-                    fail(error.getErrorCode(), error.getDescription());
-                }
-            });
-        } else {
-            mWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                fail(errorCode, description);
+            }
 
-                @Override
-                public void onPageFinished(WebView view, String url) {
-                    super.onPageFinished(view, url);
-                    checkSignInCompletion(url);
-                }
-
-                @Override
-                public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-                    super.onReceivedError(view, errorCode, description, failingUrl);
-                    fail(errorCode, description);
-                }
-            });
-        }
+            @Override
+            @TargetApi(Build.VERSION_CODES.M)
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                fail(error.getErrorCode(), error.getDescription());
+            }
+        });
 
         /* Show prompt or message that there will be no prompt to sign in. */
         String cookie = CookieManager.getInstance().getCookie(AUTHORIZE_URL);
