@@ -2,6 +2,7 @@ package com.microsoft.appcenter.ingestion;
 
 import android.content.Context;
 
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
@@ -11,13 +12,22 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.Extensions;
+import com.microsoft.appcenter.ingestion.models.one.ProtocolExtension;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.TicketCache;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -31,12 +41,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.BuildConfig.VERSION_NAME;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static com.microsoft.appcenter.ingestion.OneCollectorIngestion.TICKETS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.contains;
@@ -52,11 +65,54 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({OneCollectorIngestion.class, AppCenterLog.class})
+@PrepareForTest({
+        OneCollectorIngestion.class,
+        AppCenterLog.class,
+        JSONObject.class
+})
 public class OneCollectorIngestionTest {
 
     @Rule
-    public PowerMockRule rule = new PowerMockRule();
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
+
+    @Captor
+    private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
+
+    @Before
+    public void setUp() throws Exception {
+        TicketCache.clear();
+
+        /* Test JSONObject implementation. */
+        JSONObject json = mock(JSONObject.class);
+        whenNew(JSONObject.class).withAnyArguments().thenReturn(json);
+        final ArgumentCaptor<String> key = ArgumentCaptor.forClass(String.class);
+        final ArgumentCaptor<String> value = ArgumentCaptor.forClass(String.class);
+        when(json.put(key.capture(), value.capture())).thenReturn(json);
+        when(json.length()).thenAnswer(new Answer<Integer>() {
+
+            @Override
+            public Integer answer(InvocationOnMock invocation) {
+                return key.getAllValues().size();
+            }
+        });
+        when(json.toString()).thenAnswer(new Answer<String>() {
+
+            @Override
+            public String answer(InvocationOnMock invocation) {
+                int length = key.getAllValues().size();
+                String[] pairs = new String[length];
+                for (int i = 0; i < length; i++) {
+                    pairs[i] = String.format("\"%s\":\"%s\"", key.getAllValues().get(i), value.getAllValues().get(i));
+                }
+                return String.format("{%s}", String.join(",", pairs));
+            }
+        });
+    }
+
+    @After
+    public void tearDown() {
+        Constants.APPLICATION_DEBUGGABLE = false;
+    }
 
     @Test
     public void sendAsync() throws Exception {
@@ -66,15 +122,21 @@ public class OneCollectorIngestionTest {
         when(System.currentTimeMillis()).thenReturn(1234L);
 
         /* Build some payload. */
-        LogContainer container = new LogContainer();
-        Log log1 = mock(Log.class);
+        Extensions ext = new Extensions() {{
+            setProtocol(new ProtocolExtension());
+        }};
+        final CommonSchemaLog log1 = mock(CommonSchemaLog.class);
+        when(log1.getExt()).thenReturn(ext);
         when(log1.getTransmissionTargetTokens()).thenReturn(Collections.singleton("token1"));
-        Log log2 = mock(Log.class);
+        final CommonSchemaLog log2 = mock(CommonSchemaLog.class);
+        when(log2.getExt()).thenReturn(ext);
         when(log2.getTransmissionTargetTokens()).thenReturn(new HashSet<>(Arrays.asList("token2", "token3")));
-        List<Log> logs = new ArrayList<>();
-        logs.add(log1);
-        logs.add(log2);
-        container.setLogs(logs);
+        LogContainer container = new LogContainer() {{
+            setLogs(new ArrayList<Log>() {{
+                add(log1);
+                add(log2);
+            }});
+        }};
         LogSerializer serializer = mock(LogSerializer.class);
         when(serializer.serializeLog(log1)).thenReturn("mockPayload1");
         when(serializer.serializeLog(log2)).thenReturn("mockPayload2");
@@ -82,16 +144,9 @@ public class OneCollectorIngestionTest {
         /* Configure mock HTTP. */
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        final ServiceCall call = mock(ServiceCall.class);
-        final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) {
-                callTemplate.set((HttpClient.CallTemplate) invocation.getArguments()[3]);
-                return call;
-            }
-        });
+        ServiceCall call = mock(ServiceCall.class);
+        ArgumentCaptor<HttpClient.CallTemplate> callTemplate = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
+        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
 
         /* Test calling code. */
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
@@ -106,8 +161,8 @@ public class OneCollectorIngestionTest {
         expectedHeaders.put(OneCollectorIngestion.UPLOAD_TIME_KEY, "1234");
         expectedHeaders.put(DefaultHttpClient.CONTENT_TYPE_KEY, "application/x-json-stream; charset=utf-8");
         verify(httpClient).callAsync(eq("http://mock"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
-        assertNotNull(callTemplate.get());
-        assertEquals("mockPayload1\nmockPayload2\n", callTemplate.get().buildRequestBody());
+        assertNotNull(callTemplate.getValue());
+        assertEquals("mockPayload1\nmockPayload2\n", callTemplate.getValue().buildRequestBody());
 
         /* Verify close. */
         ingestion.close();
@@ -119,14 +174,122 @@ public class OneCollectorIngestionTest {
     }
 
     @Test
+    public void passTicketsDebug() throws Exception {
+        Constants.APPLICATION_DEBUGGABLE = true;
+        Map<String, String> headers = passTickets();
+        assertEquals("true", headers.get(OneCollectorIngestion.STRICT));
+    }
+
+    @Test
+    public void passTicketsRelease() throws Exception {
+        Map<String, String> headers = passTickets();
+        assertNull(headers.get(OneCollectorIngestion.STRICT));
+    }
+
+    private Map<String, String> passTickets() throws Exception {
+
+        /* Build some payload. */
+        final CommonSchemaLog log1 = mock(CommonSchemaLog.class);
+        final CommonSchemaLog log2 = mock(CommonSchemaLog.class);
+        final List<String> ticketKeys = new ArrayList<String>() {{
+            add("key1");
+            add("key2");
+            add(null);
+        }};
+        TicketCache.putTicket("key2", "value2");
+        Extensions ext1 = new Extensions() {{
+            setProtocol(new ProtocolExtension() {{
+                setTicketKeys(ticketKeys);
+            }});
+        }};
+        Extensions ext2 = new Extensions() {{
+            setProtocol(new ProtocolExtension());
+        }};
+        when(log1.getExt()).thenReturn(ext1);
+        when(log2.getExt()).thenReturn(ext2);
+        LogContainer container = new LogContainer() {{
+            setLogs(new ArrayList<Log>() {{
+                add(log1);
+                add(log2);
+            }});
+        }};
+
+        /* Configure mock HTTP. */
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        ServiceCall call = mock(ServiceCall.class);
+        when(httpClient.callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(call);
+
+        /* Verify call to http client. */
+        LogSerializer serializer = mock(LogSerializer.class);
+        OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
+        ingestion.setLogUrl("http://mock");
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        assertEquals(call, ingestion.sendAsync(null, null, container, serviceCallback));
+
+        /* Verify call to http client. */
+        Map<String, String> headers = mHeadersCaptor.getValue();
+        assertTrue(headers.containsKey(TICKETS));
+        assertEquals("{\"key2\":\"value2\"}", headers.get(TICKETS));
+        return headers;
+    }
+
+    @Test
+    public void ticketsFailToSerialize() throws Exception {
+
+        /* Build some payload. */
+        final CommonSchemaLog log1 = mock(CommonSchemaLog.class);
+        final List<String> ticketKeys = new ArrayList<String>() {{
+            add("key1");
+        }};
+        TicketCache.putTicket("key1", "value1");
+        Extensions ext1 = new Extensions() {{
+            setProtocol(new ProtocolExtension() {{
+                setTicketKeys(ticketKeys);
+            }});
+        }};
+        when(log1.getExt()).thenReturn(ext1);
+        LogContainer container = new LogContainer() {{
+            setLogs(new ArrayList<Log>() {{
+                add(log1);
+            }});
+        }};
+
+        JSONObject ticketJson = mock(JSONObject.class);
+        whenNew(JSONObject.class).withNoArguments().thenReturn(ticketJson);
+        when(ticketJson.put(anyString(), anyString())).thenThrow(new JSONException("mock"));
+
+        /* Configure mock HTTP. */
+        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
+        ServiceCall call = mock(ServiceCall.class);
+        when(httpClient.callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(call);
+
+        /* Verify call to http client. */
+        LogSerializer serializer = mock(LogSerializer.class);
+        OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
+        ingestion.setLogUrl("http://mock");
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        assertEquals(call, ingestion.sendAsync(null, null, container, serviceCallback));
+
+        /* Verify call to http client was made without headers as JSON failed. */
+        Map<String, String> headers = mHeadersCaptor.getValue();
+        assertFalse(headers.containsKey(TICKETS));
+    }
+
+    @Test
     public void failedSerialization() throws Exception {
 
         /* Build some payload. */
-        LogContainer container = new LogContainer();
-        Log log = mock(Log.class);
-        List<Log> logs = new ArrayList<>();
-        logs.add(log);
-        container.setLogs(logs);
+        final CommonSchemaLog log = mock(CommonSchemaLog.class);
+        when(log.getExt()).thenReturn(new Extensions() {{
+            setProtocol(new ProtocolExtension());
+        }});
+        LogContainer container = new LogContainer() {{
+            setLogs(new ArrayList<Log>() {{
+                add(log);
+            }});
+        }};
         LogSerializer serializer = mock(LogSerializer.class);
         JSONException exception = new JSONException("mock");
         when(serializer.serializeLog(log)).thenThrow(exception);
@@ -134,16 +297,9 @@ public class OneCollectorIngestionTest {
         /* Configure mock HTTP. */
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        final ServiceCall call = mock(ServiceCall.class);
-        final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) {
-                callTemplate.set((HttpClient.CallTemplate) invocation.getArguments()[3]);
-                return call;
-            }
-        });
+        ServiceCall call = mock(ServiceCall.class);
+        ArgumentCaptor<HttpClient.CallTemplate> callTemplate = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
+        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
 
         /* Test calling code. */
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
@@ -152,9 +308,9 @@ public class OneCollectorIngestionTest {
         assertEquals(call, ingestion.sendAsync(null, null, container, serviceCallback));
 
         /* Verify call to http client. */
-        assertNotNull(callTemplate.get());
+        assertNotNull(callTemplate.getValue());
         try {
-            callTemplate.get().buildRequestBody();
+            callTemplate.getValue().buildRequestBody();
             Assert.fail("Expected json exception");
         } catch (JSONException ignored) {
         }
@@ -221,21 +377,14 @@ public class OneCollectorIngestionTest {
     private HttpClient.CallTemplate getCallTemplate() throws Exception {
 
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
-        final ServiceCall call = mock(ServiceCall.class);
-        final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
+        ServiceCall call = mock(ServiceCall.class);
+        ArgumentCaptor<HttpClient.CallTemplate> callTemplate = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) {
-                callTemplate.set((HttpClient.CallTemplate) invocation.getArguments()[3]);
-                return call;
-            }
-        });
+        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), mock(LogSerializer.class));
         ingestion.setLogUrl("http://mock");
         assertEquals(call, ingestion.sendAsync(null, null, mock(LogContainer.class), mock(ServiceCallback.class)));
-        return callTemplate.get();
+        return callTemplate.getValue();
     }
 }

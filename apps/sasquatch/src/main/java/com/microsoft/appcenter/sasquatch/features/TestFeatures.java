@@ -12,6 +12,7 @@ import com.microsoft.appcenter.sasquatch.activities.CustomPropertiesActivity;
 import com.microsoft.appcenter.sasquatch.activities.DeviceInfoActivity;
 import com.microsoft.appcenter.sasquatch.activities.DummyActivity;
 import com.microsoft.appcenter.sasquatch.activities.EventActivity;
+import com.microsoft.appcenter.sasquatch.activities.MSALoginActivity;
 import com.microsoft.appcenter.sasquatch.activities.ManagedErrorActivity;
 import com.microsoft.appcenter.sasquatch.activities.PageActivity;
 
@@ -34,18 +35,19 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeature(R.string.title_event, R.string.description_event, EventActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_page, R.string.description_page, PageActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_generate_page_log, R.string.description_generate_page_log, DummyActivity.class));
+        try {
+            Class<?> authClass = Class.forName("com.microsoft.appcenter.analytics.AuthenticationProvider");
+            if (authClass != null) {
+                sTestFeatureModels.add(new TestFeature(R.string.title_msa_auth, R.string.description_msa_auth, MSALoginActivity.class));
+            }
+        } catch (Exception e) {
+            Log.i(LOG_TAG, "Authentication not yet available in this flavor.");
+        }
         sTestFeatureModels.add(new TestFeatureTitle(R.string.crashes_title));
         sTestFeatureModels.add(new TestFeature(R.string.title_crashes, R.string.description_crashes, CrashActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_error, R.string.description_error, ManagedErrorActivity.class));
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));
-        try {
-            Class classCustomProperties = Class.forName("com.microsoft.appcenter.CustomProperties");
-            if (classCustomProperties != null) {
-                sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
-            }
-        } catch (Exception e) {
-            Log.i(LOG_TAG, "CustomProperties not yet available in this flavor.");
-        }
+        sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
     }
 

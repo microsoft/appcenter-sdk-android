@@ -9,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
@@ -51,6 +52,8 @@ public class CommonSchemaLogSerializerTest {
 
         /* Add extension and fields 1 by 1. Start with protocol. */
         log.getExt().setProtocol(new ProtocolExtension());
+        checkSerialization(serializer, log);
+        log.getExt().getProtocol().setTicketKeys(Arrays.asList("First", "Second"));
         checkSerialization(serializer, log);
         log.getExt().getProtocol().setDevMake("Samsung");
         checkSerialization(serializer, log);

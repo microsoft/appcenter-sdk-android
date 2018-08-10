@@ -1,14 +1,19 @@
 package com.microsoft.appcenter.analytics;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
+import com.microsoft.appcenter.channel.AbstractChannelListener;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,6 +28,12 @@ import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
 public class AnalyticsTransmissionTarget {
 
     /**
+     * The authentication provider to use.
+     */
+    @VisibleForTesting
+    static AuthenticationProvider sAuthenticationProvider;
+
+    /**
      * Target token for this level.
      */
     private final String mTransmissionTargetToken;
@@ -30,7 +41,7 @@ public class AnalyticsTransmissionTarget {
     /**
      * Parent target if any.
      */
-    protected final AnalyticsTransmissionTarget mParentTarget;
+    final AnalyticsTransmissionTarget mParentTarget;
 
     /**
      * Children targets for nesting.
@@ -38,14 +49,14 @@ public class AnalyticsTransmissionTarget {
     private final Map<String, AnalyticsTransmissionTarget> mChildrenTargets = new HashMap<>();
 
     /**
-     * Property configurator used to override Common Schema Part A properties.
-     */
-    private PropertyConfigurator mPropertyConfigurator;
-
-    /**
      * Channel used for Property Configurator.
      */
     private Channel mChannel;
+
+    /**
+     * Property configurator used to override Common Schema Part A properties.
+     */
+    private PropertyConfigurator mPropertyConfigurator;
 
     /**
      * Create a new instance.
@@ -59,6 +70,38 @@ public class AnalyticsTransmissionTarget {
         mParentTarget = parentTarget;
         mChannel = channel;
         mPropertyConfigurator = new PropertyConfigurator(channel, this);
+    }
+
+    /**
+     * Add an authentication provider to associate logs with user identifiers.
+     *
+     * @param authenticationProvider The authentication provider.
+     */
+    public static synchronized void addAuthenticationProvider(AuthenticationProvider authenticationProvider) {
+
+        /* Validate input. */
+        if (authenticationProvider == null) {
+            AppCenterLog.error(LOG_TAG, "Authentication provider may not be null.");
+            return;
+        }
+        if (authenticationProvider.getType() == null) {
+            AppCenterLog.error(LOG_TAG, "Authentication provider type may not be null.");
+            return;
+        }
+        if (authenticationProvider.getTicketKey() == null) {
+            AppCenterLog.error(LOG_TAG, "Authentication ticket key may not be null.");
+            return;
+        }
+        if (authenticationProvider.getTokenProvider() == null) {
+            AppCenterLog.error(LOG_TAG, "Authentication token provider may not be null.");
+            return;
+        }
+
+        /* Update current provider. */
+        sAuthenticationProvider = authenticationProvider;
+
+        /* Request token now. */
+        authenticationProvider.acquireTokenAsync();
     }
 
     /**
@@ -192,12 +235,38 @@ public class AnalyticsTransmissionTarget {
     }
 
     /**
-     * Getter for property configurator to override Common Schema Part A properties.
-     *
-     * @return  the Property Configurator
+     * Init channel listener to add tickets to logs.
      */
-    public PropertyConfigurator getPropertyConfigurator() {
-        return mPropertyConfigurator;
+    static Channel.Listener getChannelListener() {
+        return new AbstractChannelListener() {
+
+            @Override
+            public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
+                addTicketToLog(log);
+            }
+        };
+    }
+
+    /**
+     * Add ticket to common schema logs.
+     */
+    private synchronized static void addTicketToLog(@NonNull Log log) {
+
+        /* Decorate only common schema logs when an authentication provider was registered. */
+        if (sAuthenticationProvider != null && log instanceof CommonSchemaLog) {
+
+            /* Add ticket reference to log. */
+            CommonSchemaLog csLog = (CommonSchemaLog) log;
+            String ticketKey = sAuthenticationProvider.getTicketKeyHash();
+            csLog.getExt().getProtocol().setTicketKeys(Collections.singletonList(ticketKey));
+
+            /*
+             * Check if we should try to refresh token if soon expired.
+             * Known corner case: if already expired and refresh takes longer than batching log time,
+             * then next logs will be anonymous until token refreshed.
+             */
+            sAuthenticationProvider.checkTokenExpiry();
+        }
     }
 
     @NonNull
@@ -223,5 +292,14 @@ public class AnalyticsTransmissionTarget {
     @WorkerThread
     boolean isEnabled() {
         return areAncestorsEnabled() && isEnabledInStorage();
+    }
+
+    /**
+     * Getter for property configurator to override Common Schema Part A properties.
+     *
+     * @return the Property Configurator
+     */
+    public PropertyConfigurator getPropertyConfigurator() {
+        return mPropertyConfigurator;
     }
 }

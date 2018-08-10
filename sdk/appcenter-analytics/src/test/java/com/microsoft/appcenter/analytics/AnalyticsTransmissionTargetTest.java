@@ -3,16 +3,22 @@ package com.microsoft.appcenter.analytics;
 import android.content.Context;
 
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
+import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.Extensions;
+import com.microsoft.appcenter.ingestion.models.one.ProtocolExtension;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
+import java.util.Collections;
 import java.util.HashMap;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -25,7 +31,9 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
@@ -40,6 +48,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), mChannel, null, null, false);
+        AnalyticsTransmissionTarget.sAuthenticationProvider = null;
     }
 
     @Test
@@ -283,5 +292,84 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         assertFalse(grandParentTarget.isEnabledAsync().get());
         assertFalse(parentTarget.isEnabledAsync().get());
         assertFalse(childTarget.isEnabledAsync().get());
+    }
+
+    @Test
+    public void addAuthenticationProvider() {
+
+        /* Passing null does not do anything and does not crash. */
+        AnalyticsTransmissionTarget.addAuthenticationProvider(null);
+        assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
+
+        /* Build an object now for the parameter. */
+        AuthenticationProvider authenticationProvider = mock(AuthenticationProvider.class);
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider, never()).acquireTokenAsync();
+
+        /* Set type. */
+        when(authenticationProvider.getType()).thenReturn(AuthenticationProvider.Type.MSA);
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider, never()).acquireTokenAsync();
+
+        /* Set ticket key. */
+        when(authenticationProvider.getTicketKey()).thenReturn("key1");
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider, never()).acquireTokenAsync();
+
+        /* Set token provider. */
+        when(authenticationProvider.getTokenProvider()).thenReturn(mock(AuthenticationProvider.TokenProvider.class));
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider).acquireTokenAsync();
+
+        /* Replace provider with invalid parameters does not update. */
+        AnalyticsTransmissionTarget.addAuthenticationProvider(null);
+        AuthenticationProvider authenticationProvider2 = mock(AuthenticationProvider.class);
+        when(authenticationProvider2.getType()).thenReturn(AuthenticationProvider.Type.MSA);
+        when(authenticationProvider2.getTicketKey()).thenReturn("key2");
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider2);
+        assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider2, never()).acquireTokenAsync();
+
+        /* Replace with valid provider. */
+        when(authenticationProvider2.getTokenProvider()).thenReturn(mock(AuthenticationProvider.TokenProvider.class));
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider2);
+        assertEquals(authenticationProvider2, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider2).acquireTokenAsync();
+    }
+
+    @Test
+    public void addTicketToLog() {
+
+        /* No actions are prepared without authentication provider. */
+        CommonSchemaLog log = new CommonSchemaEventLog();
+        AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(log, "test");
+
+        /* Add authentication provider. */
+        AuthenticationProvider.TokenProvider tokenProvider = mock(AuthenticationProvider.TokenProvider.class);
+        AuthenticationProvider authenticationProvider = spy(new AuthenticationProvider(AuthenticationProvider.Type.MSA, "key1", tokenProvider));
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider).acquireTokenAsync();
+
+        /* No actions are prepared with no CommonSchemaLog. */
+        AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(mock(Log.class), "test");
+        verify(authenticationProvider, never()).checkTokenExpiry();
+
+        /* Call prepare log. */
+        final ProtocolExtension protocol = new ProtocolExtension();
+        log.setExt(new Extensions() {{
+            setProtocol(protocol);
+        }});
+        AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(log, "test");
+
+        /* Verify log. */
+        assertEquals(Collections.singletonList(authenticationProvider.getTicketKeyHash()), protocol.getTicketKeys());
+
+        /* And that we check expiry. */
+        verify(authenticationProvider).checkTokenExpiry();
     }
 }

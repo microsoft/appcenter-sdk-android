@@ -96,6 +96,11 @@ public class Analytics extends AbstractAppCenterService {
     private AnalyticsValidator mAnalyticsValidator;
 
     /**
+     * Channel listener used by transmission targets to decorate logs.
+     */
+    private Channel.Listener mAnalyticsTransmissionTargetListener;
+
+    /**
      * Custom analytics listener.
      */
     private AnalyticsListener mAnalyticsListener;
@@ -453,6 +458,10 @@ public class Analytics extends AbstractAppCenterService {
                 mSessionTracker.clearSessions();
                 mSessionTracker = null;
             }
+            if (mAnalyticsTransmissionTargetListener != null) {
+                mChannel.removeListener(mAnalyticsTransmissionTargetListener);
+                mAnalyticsTransmissionTargetListener = null;
+            }
         }
     }
 
@@ -480,6 +489,10 @@ public class Analytics extends AbstractAppCenterService {
                     processOnResume(activity);
                 }
             }
+
+            /* Add new channel listener for transmission target. */
+            mAnalyticsTransmissionTargetListener = AnalyticsTransmissionTarget.getChannelListener();
+            mChannel.addListener(mAnalyticsTransmissionTargetListener);
         }
     }
 
