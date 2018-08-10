@@ -11,9 +11,23 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <Button
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="reset"
-        android:text="@string/reset" />
+        android:orientation="horizontal">
+
+        <Button
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="signIn"
+            android:text="@string/sign_in" />
+
+        <Button
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="signOut"
+            android:text="@string/sign_out" />
+    </LinearLayout>
 </LinearLayout>

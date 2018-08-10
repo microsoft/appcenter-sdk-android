@@ -50,5 +50,9 @@
         <item>App Locale</item>
     </string-array>
     <string name="common_schema_property_value" tools:ignore="MissingTranslation">Value</string>
-    <string name="failed_login" tools:ignore="MissingTranslation">Login failure, please check logs.</string>
+    <string name="sign_in" tools:ignore="MissingTranslation">Sign in</string>
+    <string name="sign_out" tools:ignore="MissingTranslation">Sign out</string>
+    <string name="signed_in" tools:ignore="MissingTranslation">Signed in.</string>
+    <string name="sign_in_failed" tools:ignore="MissingTranslation">Sign in failed, please check logs.</string>
+    <string name="signed_in_cookie">Clicking sign in will get token without prompt with cookie. Sign out to see prompt again.</string>
 </resources>

@@ -19,6 +19,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
 import com.microsoft.appcenter.analytics.AuthenticationProvider;
 import com.microsoft.appcenter.http.DefaultHttpClient;
@@ -28,6 +29,7 @@ import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import org.json.JSONException;
@@ -48,15 +50,35 @@ import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
  */
 public class MSALoginActivity extends AppCompatActivity {
 
-    private static final String SCOPE = "service::events.data.microsoft.com::MBI_SSL";
+    private static final String URL_PREFIX = "https://login.live.com/oauth20_";
 
-    private static final String REDIRECT_URL = "https://login.live.com/oauth20_desktop.srf";
+    private static final String REDIRECT_URL = URL_PREFIX + "desktop.srf";
 
-    private static final String AUTHORIZE_URL = "https://login.live.com/oauth20_authorize.srf";
+    private static final String AUTHORIZE_URL = URL_PREFIX + "authorize.srf?";
 
-    private static final String TOKEN_URL = "https://login.live.com/oauth20_token.srf";
+    private static final String TOKEN_URL = URL_PREFIX + "token.srf";
+
+    private static final String SIGN_OUT_URL = URL_PREFIX + "logout.srf?";
 
     private static final String CLIENT_ID = "000000004C1D3F6C";
+
+    private static final String SCOPE = "service::events.data.microsoft.com::MBI_SSL";
+
+    private static final String REFRESH_TOKEN = "refresh_token";
+
+    private static final String CLIENT_ID_PARAM = "&client_id=" + CLIENT_ID;
+
+    private static final String SCOPE_PARAM = "&scope=" + SCOPE;
+
+    private static String REDIRECT_URI_PARAM;
+
+    static {
+        try {
+            REDIRECT_URI_PARAM = "&redirect_uri=" + URLEncoder.encode(REDIRECT_URL, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * HTTP Client to get tokens.
@@ -68,6 +90,12 @@ public class MSALoginActivity extends AppCompatActivity {
      */
     private static String sRefreshToken;
 
+    /**
+     * Web view.
+     */
+    private WebView mWebView;
+
+    @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
 
@@ -82,25 +110,12 @@ public class MSALoginActivity extends AppCompatActivity {
             sHttpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
         }
 
-        /* Load sign in URL. */
-        signIn();
-    }
-
-    @SuppressLint("SetJavaScriptEnabled")
-    private void signIn() {
-        String signInUrl;
-        try {
-            signInUrl = AUTHORIZE_URL + "?redirect_uri=" + REDIRECT_URL + "&response_type=token&client_id=" + CLIENT_ID +
-                    "&scope=" + URLEncoder.encode(SCOPE, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-        WebView web = findViewById(R.id.web_view);
-        web.setWebChromeClient(new WebChromeClient());
-        web.getSettings().setJavaScriptEnabled(true);
-        web.loadUrl(signInUrl);
+        /* Configure web view. */
+        mWebView = findViewById(R.id.web_view);
+        mWebView.setWebChromeClient(new WebChromeClient());
+        mWebView.getSettings().setJavaScriptEnabled(true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            web.setWebViewClient(new WebViewClient() {
+            mWebView.setWebViewClient(new WebViewClient() {
 
                 @Override
                 public void onPageFinished(WebView view, String url) {
@@ -116,7 +131,7 @@ public class MSALoginActivity extends AppCompatActivity {
                 }
             });
         } else {
-            web.setWebViewClient(new WebViewClient() {
+            mWebView.setWebViewClient(new WebViewClient() {
 
                 @Override
                 public void onPageFinished(WebView view, String url) {
@@ -131,12 +146,24 @@ public class MSALoginActivity extends AppCompatActivity {
                 }
             });
         }
+
+        /* Show prompt or message that there will be no prompt to sign in. */
+        String cookie = CookieManager.getInstance().getCookie(AUTHORIZE_URL);
+        if (cookie.contains("MSPPre")) {
+            mWebView.loadData(getString(R.string.signed_in_cookie), "text/plain", "UFT-8");
+        } else {
+            signIn(null);
+        }
     }
 
-    /**
-     * Clear cookie and reload sign in URL.
-     */
-    public void reset(View view) {
+    public void signIn(View view) {
+        mWebView.loadUrl(AUTHORIZE_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM + "&response_type=token" +
+                SCOPE_PARAM);
+    }
+
+    public void signOut(View view) {
+        String url = SIGN_OUT_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM;
+        mWebView.loadUrl(url);
         CookieManager cookieManager = CookieManager.getInstance();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             cookieManager.removeAllCookies(null);
@@ -149,27 +176,26 @@ public class MSALoginActivity extends AppCompatActivity {
             cookieSyncManager.stopSync();
             cookieSyncManager.sync();
         }
-        signIn();
+        signIn(null);
     }
 
     /**
      * Display error and exit screen.
      */
     private void fail(int errorCode, CharSequence description) {
-        Log.e(LOG_TAG, "Failed to login errorCode=" + errorCode + " message=" + description);
-        Toast.makeText(this, R.string.failed_login, Toast.LENGTH_SHORT).show();
+        Log.e(LOG_TAG, "Failed to login errorCode=" + errorCode + " description=" + description);
+        Toast.makeText(this, R.string.sign_in_failed, Toast.LENGTH_SHORT).show();
         finish();
     }
 
     /**
-     * Check from web view if sign in completed and process completion.
+     * Check from mWebView view if sign in completed and process completion.
      */
     private void checkSignInCompletion(String url) {
-        Log.v(LOG_TAG, "Browser url=" + url);
         if (url.startsWith(REDIRECT_URL)) {
             Uri uri = Uri.parse(url);
             String fragment = uri.getFragment();
-            if (fragment != null && uri.getQueryParameter("lc") != null) {
+            if (fragment != null) {
 
                 /* Convert fragment to query string to process response. */
                 checkSignInCompletion(Uri.parse(REDIRECT_URL + "?" + fragment));
@@ -178,11 +204,11 @@ public class MSALoginActivity extends AppCompatActivity {
     }
 
     private void checkSignInCompletion(Uri uri) {
-        sRefreshToken = uri.getQueryParameter("refresh_token");
+        sRefreshToken = uri.getQueryParameter(REFRESH_TOKEN);
         if (!TextUtils.isEmpty(sRefreshToken)) {
             registerAppCenterAuthentication(uri.getQueryParameter("user_id"));
         } else {
-            fail(0, "error=" + uri.getQueryParameter("error_description"));
+            fail(0, uri.getQueryParameter("error_description"));
         }
     }
 
@@ -199,6 +225,7 @@ public class MSALoginActivity extends AppCompatActivity {
         AuthenticationProvider provider = new AuthenticationProvider(MSA, userId, tokenProvider);
         AnalyticsTransmissionTarget.addAuthenticationProvider(provider);
         finish();
+        Toast.makeText(this, R.string.signed_in, Toast.LENGTH_SHORT).show();
     }
 
     private void refreshToken(final AuthenticationProvider.AuthenticationCallback callback) {
@@ -211,15 +238,16 @@ public class MSALoginActivity extends AppCompatActivity {
 
                     @Override
                     public String buildRequestBody() {
-                        return "client_id=" + CLIENT_ID +
-                                "&grant_type=refresh_token" +
-                                "&redirect_uri=" + REDIRECT_URL +
-                                "&refresh_token=" + sRefreshToken +
-                                "&scope=" + SCOPE;
+                        return REDIRECT_URI_PARAM +
+                                CLIENT_ID_PARAM +
+                                "&grant_type=" + REFRESH_TOKEN +
+                                "&" + REFRESH_TOKEN + "=" + sRefreshToken +
+                                SCOPE_PARAM;
                     }
 
                     @Override
                     public void onBeforeCalling(URL url, Map<String, String> headers) {
+                        AppCenterLog.verbose(AppCenter.LOG_TAG, "Calling " + url + "...");
                     }
                 },
                 new ServiceCallback() {
