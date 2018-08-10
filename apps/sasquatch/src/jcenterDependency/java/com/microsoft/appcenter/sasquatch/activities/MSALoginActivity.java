@@ -6,6 +6,9 @@ import android.view.View;
 /* TODO remove when authentication released in jCenter. */
 public class MSALoginActivity extends Activity {
 
-    public void reset(View view) {
+    public void signIn(View view) {
+    }
+
+    public void signOut(View view) {
     }
 }
