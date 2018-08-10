@@ -74,7 +74,7 @@ public class MSALoginActivity extends AppCompatActivity {
 
     static {
         try {
-            REDIRECT_URI_PARAM = "&redirect_uri=" + URLEncoder.encode(REDIRECT_URL, "UTF-8");
+            REDIRECT_URI_PARAM = "redirect_uri=" + URLEncoder.encode(REDIRECT_URL, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
@@ -114,24 +114,6 @@ public class MSALoginActivity extends AppCompatActivity {
         mWebView = findViewById(R.id.web_view);
         mWebView.setWebChromeClient(new WebChromeClient());
         mWebView.getSettings().setJavaScriptEnabled(true);
-        mWebView.setWebViewClient(new WebViewClient() {
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                checkSignInCompletion(url);
-            }
-
-            @Override
-            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-                fail(errorCode, description);
-            }
-
-            @Override
-            @TargetApi(Build.VERSION_CODES.M)
-            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                fail(error.getErrorCode(), error.getDescription());
-            }
-        });
 
         /* Show prompt or message that there will be no prompt to sign in. */
         String cookie = CookieManager.getInstance().getCookie(AUTHORIZE_URL);
@@ -143,13 +125,62 @@ public class MSALoginActivity extends AppCompatActivity {
     }
 
     public void signIn(View view) {
+        mWebView.setWebViewClient(new WebViewClient() {
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                checkSignInCompletion(url);
+            }
+
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                failSignIn(errorCode, description);
+            }
+
+            @Override
+            @TargetApi(Build.VERSION_CODES.M)
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                failSignIn(error.getErrorCode(), error.getDescription());
+            }
+        });
         mWebView.loadUrl(AUTHORIZE_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM + "&response_type=token" +
                 SCOPE_PARAM);
     }
 
     public void signOut(View view) {
-        String url = SIGN_OUT_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM;
-        mWebView.loadUrl(url);
+        mWebView.setWebViewClient(new WebViewClient() {
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                if (url.startsWith(REDIRECT_URL)) {
+                    clearCookies();
+                    Uri uri = Uri.parse(url);
+                    String error = uri.getQueryParameter("error");
+                    if (error != null) {
+                        failSignOut(0, error);
+                    } else {
+                        signIn(null);
+                    }
+                }
+            }
+
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                clearCookies();
+                failSignOut(errorCode, description);
+            }
+
+            @Override
+            @TargetApi(Build.VERSION_CODES.M)
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                clearCookies();
+                failSignOut(error.getErrorCode(), error.getDescription());
+            }
+        });
+        mWebView.loadUrl(SIGN_OUT_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM);
+    }
+
+    private void clearCookies() {
         CookieManager cookieManager = CookieManager.getInstance();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             cookieManager.removeAllCookies(null);
@@ -162,15 +193,23 @@ public class MSALoginActivity extends AppCompatActivity {
             cookieSyncManager.stopSync();
             cookieSyncManager.sync();
         }
-        signIn(null);
     }
 
     /**
-     * Display error and exit screen.
+     * Display sign in error and exit screen.
      */
-    private void fail(int errorCode, CharSequence description) {
-        Log.e(LOG_TAG, "Failed to login errorCode=" + errorCode + " description=" + description);
+    private void failSignIn(int errorCode, CharSequence description) {
+        Log.e(LOG_TAG, "Failed to sign in errorCode=" + errorCode + " description=" + description);
         Toast.makeText(this, R.string.sign_in_failed, Toast.LENGTH_SHORT).show();
+        finish();
+    }
+
+    /**
+     * Display sign out error and exit screen.
+     */
+    private void failSignOut(int errorCode, CharSequence description) {
+        Log.e(LOG_TAG, "Failed to sign out errorCode=" + errorCode + " description=" + description);
+        Toast.makeText(this, R.string.sign_out_failed, Toast.LENGTH_SHORT).show();
         finish();
     }
 
@@ -194,7 +233,7 @@ public class MSALoginActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(sRefreshToken)) {
             registerAppCenterAuthentication(uri.getQueryParameter("user_id"));
         } else {
-            fail(0, uri.getQueryParameter("error_description"));
+            failSignIn(0, uri.getQueryParameter("error_description"));
         }
     }
 
@@ -256,9 +295,9 @@ public class MSALoginActivity extends AppCompatActivity {
                         callback.onAuthenticationResult(null, null);
                         if (e instanceof HttpException) {
                             HttpException he = (HttpException) e;
-                            fail(he.getStatusCode(), he.getPayload());
+                            failSignIn(he.getStatusCode(), he.getPayload());
                         } else {
-                            fail(0, e.getMessage());
+                            failSignIn(0, e.getMessage());
                         }
                     }
                 });
