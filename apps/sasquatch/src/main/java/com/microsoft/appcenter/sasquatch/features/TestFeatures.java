@@ -7,12 +7,12 @@ import android.view.View;
 import android.widget.AdapterView;
 
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.activities.AuthenticationProviderActivity;
 import com.microsoft.appcenter.sasquatch.activities.CrashActivity;
 import com.microsoft.appcenter.sasquatch.activities.CustomPropertiesActivity;
 import com.microsoft.appcenter.sasquatch.activities.DeviceInfoActivity;
 import com.microsoft.appcenter.sasquatch.activities.DummyActivity;
 import com.microsoft.appcenter.sasquatch.activities.EventActivity;
-import com.microsoft.appcenter.sasquatch.activities.MSALoginActivity;
 import com.microsoft.appcenter.sasquatch.activities.ManagedErrorActivity;
 import com.microsoft.appcenter.sasquatch.activities.PageActivity;
 
@@ -38,7 +38,7 @@ public final class TestFeatures {
         try {
             Class<?> authClass = Class.forName("com.microsoft.appcenter.analytics.AuthenticationProvider");
             if (authClass != null) {
-                sTestFeatureModels.add(new TestFeature(R.string.title_msa_auth, R.string.description_msa_auth, MSALoginActivity.class));
+                sTestFeatureModels.add(new TestFeature(R.string.title_auth, R.string.description_auth, AuthenticationProviderActivity.class));
             }
         } catch (Exception e) {
             Log.i(LOG_TAG, "Authentication not yet available in this flavor.");
@@ -57,6 +57,7 @@ public final class TestFeatures {
 
     public static AdapterView.OnItemClickListener getOnItemClickListener() {
         return new AdapterView.OnItemClickListener() {
+
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Object item = parent.getItemAtPosition(position);
@@ -70,6 +71,7 @@ public final class TestFeatures {
 
     private static View.OnClickListener getDefaultOnClickListener(final Class<? extends Activity> clazz) {
         return new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
                 sParentActivity.get().startActivity(new Intent(sParentActivity.get(), clazz));
@@ -77,7 +79,7 @@ public final class TestFeatures {
         };
     }
 
-    abstract static class TestFeatureModel {
+    public abstract static class TestFeatureModel {
 
         private final String mTitle;
 
@@ -90,14 +92,14 @@ public final class TestFeatures {
         }
     }
 
-    static class TestFeatureTitle extends TestFeatureModel {
+    public static class TestFeatureTitle extends TestFeatureModel {
 
-        TestFeatureTitle(int title) {
+        public TestFeatureTitle(int title) {
             super(title);
         }
     }
 
-    static class TestFeature extends TestFeatureModel {
+    public static class TestFeature extends TestFeatureModel {
 
         private final String mDescription;
 
@@ -107,7 +109,7 @@ public final class TestFeatures {
             this(title, description, getDefaultOnClickListener(clazz));
         }
 
-        TestFeature(int title, int description, View.OnClickListener listener) {
+        public TestFeature(int title, int description, View.OnClickListener listener) {
             super(title);
             this.mDescription = description > 0 ? sParentActivity.get().getResources().getString(description) : "";
             this.mOnClickListener = listener;

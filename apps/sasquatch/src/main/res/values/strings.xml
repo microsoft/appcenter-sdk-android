@@ -8,8 +8,8 @@
     <string name="description_crashes" tools:ignore="MissingTranslation">Test crashes</string>
     <string name="title_custom_properties" tools:ignore="MissingTranslation">Custom properties</string>
     <string name="description_custom_properties" tools:ignore="MissingTranslation">Send a custom properties</string>
-    <string name="title_msa_auth" tools:ignore="MissingTranslation">MSA Authentication</string>
-    <string name="description_msa_auth" tools:ignore="MissingTranslation">Associate telemetry with MSA token</string>
+    <string name="title_auth" tools:ignore="MissingTranslation">User Authentication</string>
+    <string name="description_auth" tools:ignore="MissingTranslation">Associate telemetry with user information</string>
     <string name="title_device_info" tools:ignore="MissingTranslation">Device info</string>
     <string name="description_device_info" tools:ignore="MissingTranslation">Display device information</string>
     <string name="title_generate_page_log" tools:ignore="MissingTranslation">Generate page logs</string>
@@ -56,4 +56,9 @@
     <string name="sign_in_failed" tools:ignore="MissingTranslation">Sign in failed, please check logs.</string>
     <string name="sign_out_failed" tools:ignore="MissingTranslation">Sign out failed, please check logs.</string>
     <string name="signed_in_cookie">Clicking sign in will get token without prompt with cookie. Sign out to see prompt again.</string>
+    <string name="msa_title">MSA authentication</string>
+    <string name="msa_compact_title">MSA compact ticket</string>
+    <string name="msa_compact_description">For first party applications</string>
+    <string name="msa_delegate_title">MSA delegate ticket</string>
+    <string name="msa_delegate_description">For third party applications</string>
 </resources>
