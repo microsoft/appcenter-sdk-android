@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="TypographyDashes">
-    <string name="target_id" tools:ignore="MissingTranslation">efebdbed73974ef881b81d43d1398e6b-d0b1aa53-61de-4320-af56-14aa7cd6e801-7197</string>
+    <string name="target_id" tools:ignore="MissingTranslation">89e889ccbe864ad6b924246d7045d55f-2d2d17d9-184c-4749-84a2-3fd0b3856ee1-7620</string>
     <string-array name="target_id_values" tools:ignore="InconsistentArrays,MissingTranslation">
         <item />
-        <item>0eac643c981e48e8afeb29d9df5593e1-cb0ac72d-a4c4-41a3-b032-9f5ae7b64460-7166</item>
-        <item>4ee5ab442b354e6abebd166820bd8fef-88dbb064-f5f9-4dec-a428-d34062307511-8016</item>
-        <item>3f883319a54e45c19cb9befa7540f7b5-495ff77a-be58-4d0c-b8a4-fabd04b9feac-7111</item>
+        <item>c86c1b0383d149f6969b80462b250e62-e3c516ac-ae36-4776-b3eb-9c21116a756c-7045</item>
+        <item>739fadd014d642809473cdde9d1177d1-4477e206-0087-4d70-b810-229652426c89-7219</item>
+        <item>518cb8157cb743be9f7a921a46fda15d-5c9111b6-2c0f-417e-95f9-2241235db0b6-6776</item>
     </string-array>
     <string-array name="target_id_names" tools:ignore="InconsistentArrays,MissingTranslation">
         <item>Default transmission</item>
