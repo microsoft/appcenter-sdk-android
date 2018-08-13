@@ -42,7 +42,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.microsoft.appcenter.analytics.AuthenticationProvider.Type.MSA;
+import static com.microsoft.appcenter.analytics.AuthenticationProvider.Type.MSA_COMPACT;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 /**
@@ -247,7 +247,7 @@ public class MSALoginActivity extends AppCompatActivity {
                 refreshToken(callback);
             }
         };
-        AuthenticationProvider provider = new AuthenticationProvider(MSA, userId, tokenProvider);
+        AuthenticationProvider provider = new AuthenticationProvider(MSA_COMPACT, userId, tokenProvider);
         AnalyticsTransmissionTarget.addAuthenticationProvider(provider);
         finish();
         Toast.makeText(this, R.string.signed_in, Toast.LENGTH_SHORT).show();
@@ -284,7 +284,7 @@ public class MSALoginActivity extends AppCompatActivity {
                             String accessToken = response.getString("access_token");
                             long expiresIn = response.getLong("expires_in") * 1000L;
                             Date expiresAt = new Date(System.currentTimeMillis() + expiresIn);
-                            callback.onAuthenticationResult("p:" + accessToken, expiresAt);
+                            callback.onAuthenticationResult(accessToken, expiresAt);
                         } catch (JSONException e) {
                             onCallFailed(e);
                         }

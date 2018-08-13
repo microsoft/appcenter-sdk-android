@@ -144,7 +144,7 @@ public class AuthenticationProvider {
         }
 
         /* Update shared cache. */
-        TicketCache.putTicket(mTicketKeyHash, token);
+        TicketCache.putTicket(mTicketKeyHash, mType.mTokenPrefix + token);
 
         /* Keep track of safe expiry time. */
         mExpiresAt = expiresAt;
@@ -168,9 +168,33 @@ public class AuthenticationProvider {
     public enum Type {
 
         /**
-         * Microsoft account.
+         * Microsoft account authentication for first party applications using compact tickets.
          */
-        MSA
+        MSA_COMPACT("p"),
+
+        /**
+         * Microsoft account authentication for third party applications using delegate tickets.
+         */
+        MSA_DELEGATE("d");
+
+        /**
+         * Token prefix separator.
+         */
+        private static final String TOKEN_PREFIX_SEPARATOR = ":";
+
+        /**
+         * Token value prefix.
+         */
+        private final String mTokenPrefix;
+
+        /**
+         * Init.
+         *
+         * @param tokenPrefix token value prefix.
+         */
+        Type(String tokenPrefix) {
+            mTokenPrefix = tokenPrefix + TOKEN_PREFIX_SEPARATOR;
+        }
     }
 
     /**

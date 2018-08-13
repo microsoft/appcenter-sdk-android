@@ -12,7 +12,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Date;
 
-import static com.microsoft.appcenter.analytics.AuthenticationProvider.Type.MSA;
+import static com.microsoft.appcenter.analytics.AuthenticationProvider.Type.MSA_COMPACT;
+import static com.microsoft.appcenter.analytics.AuthenticationProvider.Type.MSA_DELEGATE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -43,7 +44,7 @@ public class AuthenticationProviderTest {
     public void typeEnumTest() {
 
         /* Work around for code coverage. */
-        assertEquals(MSA, AuthenticationProvider.Type.valueOf(MSA.name()));
+        assertEquals(MSA_COMPACT, AuthenticationProvider.Type.valueOf(MSA_COMPACT.name()));
     }
 
     @Test
@@ -57,7 +58,7 @@ public class AuthenticationProviderTest {
         AuthenticationProvider.TokenProvider tokenProvider = mock(AuthenticationProvider.TokenProvider.class);
         ArgumentCaptor<AuthenticationProvider.AuthenticationCallback> callback = ArgumentCaptor.forClass(AuthenticationProvider.AuthenticationCallback.class);
         doNothing().when(tokenProvider).getToken(anyString(), callback.capture());
-        AuthenticationProvider authenticationProvider = new AuthenticationProvider(null, "key", tokenProvider);
+        AuthenticationProvider authenticationProvider = new AuthenticationProvider(MSA_COMPACT, "key", tokenProvider);
 
         /* Verify acquireTokenAsync. */
         authenticationProvider.acquireTokenAsync();
@@ -75,14 +76,14 @@ public class AuthenticationProviderTest {
         long freshDate = System.currentTimeMillis() + 15 * 60 * 1000;
         callback.getValue().onAuthenticationResult("test", new Date(freshDate));
         verifyStatic();
-        TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("test"));
+        TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("p:test"));
     }
 
     @Test
     public void refreshToken() {
         AuthenticationProvider.TokenProvider tokenProvider = mock(AuthenticationProvider.TokenProvider.class);
         ArgumentCaptor<AuthenticationProvider.AuthenticationCallback> callback = ArgumentCaptor.forClass(AuthenticationProvider.AuthenticationCallback.class);
-        AuthenticationProvider authenticationProvider = spy(new AuthenticationProvider(null, "key", tokenProvider));
+        AuthenticationProvider authenticationProvider = spy(new AuthenticationProvider(MSA_DELEGATE, "key", tokenProvider));
 
         /* When no token, then refresh does nothing. */
         authenticationProvider.checkTokenExpiry();
@@ -95,7 +96,7 @@ public class AuthenticationProviderTest {
         verify(tokenProvider).getToken(anyString(), callback.capture());
         callback.getValue().onAuthenticationResult("test", expiresAt);
         verifyStatic();
-        TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("test"));
+        TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("d:test"));
 
         /* Then refresh does nothing. */
         reset(authenticationProvider);
@@ -123,7 +124,7 @@ public class AuthenticationProviderTest {
 
         /* Verify cache updated. */
         verifyStatic(times(2));
-        TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("test"));
+        TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("d:test"));
 
         /* Now that called back, we can refresh again. */
         reset(authenticationProvider);
@@ -133,6 +134,6 @@ public class AuthenticationProviderTest {
         verify(tokenProvider).getToken(anyString(), callback.capture());
         callback.getValue().onAuthenticationResult("test", expiresAt);
         verifyStatic(times(3));
-        TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("test"));
+        TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("d:test"));
     }
 }
