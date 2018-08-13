@@ -308,7 +308,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         verify(authenticationProvider, never()).acquireTokenAsync();
 
         /* Set type. */
-        when(authenticationProvider.getType()).thenReturn(AuthenticationProvider.Type.MSA);
+        when(authenticationProvider.getType()).thenReturn(AuthenticationProvider.Type.MSA_COMPACT);
         AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
         assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
         verify(authenticationProvider, never()).acquireTokenAsync();
@@ -328,7 +328,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         /* Replace provider with invalid parameters does not update. */
         AnalyticsTransmissionTarget.addAuthenticationProvider(null);
         AuthenticationProvider authenticationProvider2 = mock(AuthenticationProvider.class);
-        when(authenticationProvider2.getType()).thenReturn(AuthenticationProvider.Type.MSA);
+        when(authenticationProvider2.getType()).thenReturn(AuthenticationProvider.Type.MSA_COMPACT);
         when(authenticationProvider2.getTicketKey()).thenReturn("key2");
         AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider2);
         assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
@@ -350,7 +350,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
         /* Add authentication provider. */
         AuthenticationProvider.TokenProvider tokenProvider = mock(AuthenticationProvider.TokenProvider.class);
-        AuthenticationProvider authenticationProvider = spy(new AuthenticationProvider(AuthenticationProvider.Type.MSA, "key1", tokenProvider));
+        AuthenticationProvider authenticationProvider = spy(new AuthenticationProvider(AuthenticationProvider.Type.MSA_COMPACT, "key1", tokenProvider));
         AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
         assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
         verify(authenticationProvider).acquireTokenAsync();
