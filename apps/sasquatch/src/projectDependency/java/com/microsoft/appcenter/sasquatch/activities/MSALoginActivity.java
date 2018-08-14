@@ -34,6 +34,7 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -41,7 +42,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.microsoft.appcenter.analytics.AuthenticationProvider.Type.MSA_COMPACT;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 /**
@@ -59,15 +59,25 @@ public class MSALoginActivity extends AppCompatActivity {
 
     private static final String SIGN_OUT_URL = URL_PREFIX + "logout.srf?";
 
-    private static final String CLIENT_ID = "000000004C1D3F6C";
+    private static final String CLIENT_ID_COMPACT = "000000004C1D3F6C";
 
-    private static final String SCOPE = "service::events.data.microsoft.com::MBI_SSL";
+    private static final String CLIENT_ID_DELEGATE = "06181c2a-2403-437f-a490-9bcb06f85281";
+
+    private static final String[] SCOPES_COMPACT = {"service::events.data.microsoft.com::MBI_SSL"};
+
+    private static final String[] SCOPES_DELEGATE = {
+            "wl.offline_access",
+            "AsimovRome.Telemetry",
+    };
+
+
+    private static final String USER_ID = "user_id";
+
+    private static final String SCOPE = "scope";
 
     private static final String REFRESH_TOKEN = "refresh_token";
 
-    private static final String CLIENT_ID_PARAM = "&client_id=" + CLIENT_ID;
-
-    private static final String SCOPE_PARAM = "&scope=" + SCOPE;
+    private static final String CLIENT_ID_PARAM = "&client_id=";
 
     private static String REDIRECT_URI_PARAM;
 
@@ -87,12 +97,27 @@ public class MSALoginActivity extends AppCompatActivity {
     /**
      * Refresh token if logged in.
      */
-    private static String sRefreshToken;
+    private String mRefreshToken;
+
+    /**
+     * Refresh token scope.
+     */
+    private String mRefreshTokenScope;
 
     /**
      * Web view.
      */
     private WebView mWebView;
+
+    /**
+     * Authentication provider type.
+     */
+    private AuthenticationProvider.Type mAuthType;
+
+    /**
+     * Client identifier to use.
+     */
+    private String mClientId;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -101,6 +126,9 @@ public class MSALoginActivity extends AppCompatActivity {
         /* Init UI. */
         super.onCreate(savedInstanceState);
         setContentView(R.layout.msa_login);
+
+        Serializable rawAuthType = getIntent().getSerializableExtra(AuthenticationProvider.Type.class.getName());
+        mAuthType = (AuthenticationProvider.Type) rawAuthType;
 
         /* Init API client only once. */
         if (sHttpClient == null) {
@@ -116,7 +144,13 @@ public class MSALoginActivity extends AppCompatActivity {
 
         /* Show prompt or message that there will be no prompt to sign in. */
         String cookie = CookieManager.getInstance().getCookie(AUTHORIZE_URL);
-        if (cookie.contains("MSPPre")) {
+        boolean compact = mAuthType == AuthenticationProvider.Type.MSA_COMPACT;
+        if (compact) {
+            mClientId = CLIENT_ID_COMPACT;
+        } else {
+            mClientId = CLIENT_ID_DELEGATE;
+        }
+        if (compact && cookie != null && cookie.contains("MSPPre")) {
             mWebView.loadData(getString(R.string.signed_in_cookie), "text/plain", "UFT-8");
         } else {
             signIn(null);
@@ -143,8 +177,11 @@ public class MSALoginActivity extends AppCompatActivity {
                 failSignIn(error.getErrorCode(), error.getDescription());
             }
         });
-        mWebView.loadUrl(AUTHORIZE_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM + "&response_type=token" +
-                SCOPE_PARAM);
+        boolean compactTicket = mAuthType == AuthenticationProvider.Type.MSA_COMPACT;
+        String responseType = compactTicket ? "token" : "code";
+        String[] scopes = compactTicket ? SCOPES_COMPACT : SCOPES_DELEGATE;
+        mWebView.loadUrl(AUTHORIZE_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM + mClientId + "&response_type=" + responseType +
+                "&scope=" + TextUtils.join("+", scopes));
     }
 
     public void signOut(View view) {
@@ -178,7 +215,7 @@ public class MSALoginActivity extends AppCompatActivity {
                 failSignOut(error.getErrorCode(), error.getDescription());
             }
         });
-        mWebView.loadUrl(SIGN_OUT_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM);
+        mWebView.loadUrl(SIGN_OUT_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM + mClientId);
     }
 
     @SuppressWarnings("deprecation")
@@ -221,21 +258,35 @@ public class MSALoginActivity extends AppCompatActivity {
     private void checkSignInCompletion(String url) {
         if (url.startsWith(REDIRECT_URL)) {
             Uri uri = Uri.parse(url);
-            String fragment = uri.getFragment();
-            if (fragment != null) {
+            if (mAuthType == AuthenticationProvider.Type.MSA_COMPACT) {
+                String fragment = uri.getFragment();
+                if (fragment != null) {
 
-                /* Convert fragment to query string to process response. */
-                checkSignInCompletion(Uri.parse(REDIRECT_URL + "?" + fragment));
+                    /* Convert fragment to query string to process response. */
+                    checkCompactSignInCompletion(Uri.parse(REDIRECT_URL + "?" + fragment));
+                }
+            } else {
+                checkDelegateSignInCompletion(uri);
             }
         }
     }
 
-    private void checkSignInCompletion(Uri uri) {
-        sRefreshToken = uri.getQueryParameter(REFRESH_TOKEN);
-        if (!TextUtils.isEmpty(sRefreshToken)) {
-            registerAppCenterAuthentication(uri.getQueryParameter("user_id"));
+    private void checkCompactSignInCompletion(Uri uri) {
+        mRefreshToken = uri.getQueryParameter(REFRESH_TOKEN);
+        mRefreshTokenScope = SCOPES_COMPACT[0];
+        if (!TextUtils.isEmpty(mRefreshToken)) {
+            registerAppCenterAuthentication(uri.getQueryParameter(USER_ID));
         } else {
             failSignIn(0, uri.getQueryParameter("error_description"));
+        }
+    }
+
+    private void checkDelegateSignInCompletion(Uri uri) {
+        String code = uri.getQueryParameter("code");
+        if (TextUtils.isEmpty(code)) {
+            failSignIn(0, "error=" + uri.getQueryParameter("error"));
+        } else {
+            getToken(code);
         }
     }
 
@@ -249,10 +300,56 @@ public class MSALoginActivity extends AppCompatActivity {
                 refreshToken(callback);
             }
         };
-        AuthenticationProvider provider = new AuthenticationProvider(MSA_COMPACT, userId, tokenProvider);
+        AuthenticationProvider provider = new AuthenticationProvider(mAuthType, userId, tokenProvider);
         AnalyticsTransmissionTarget.addAuthenticationProvider(provider);
         finish();
         Toast.makeText(this, R.string.signed_in, Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Get initial access token.
+     */
+    private void getToken(final String code) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put(DefaultHttpClient.CONTENT_TYPE_KEY, "application/x-www-form-urlencoded");
+        sHttpClient.callAsync(TOKEN_URL,
+                DefaultHttpClient.METHOD_POST,
+                headers,
+                new HttpClient.CallTemplate() {
+
+                    @Override
+                    public String buildRequestBody() {
+                        return REDIRECT_URI_PARAM +
+                                CLIENT_ID_PARAM + mClientId +
+                                "&grant_type=authorization_code" +
+                                "&code=" + code;
+                    }
+
+                    @Override
+                    public void onBeforeCalling(URL url, Map<String, String> headers) {
+                        AppCenterLog.verbose(AppCenter.LOG_TAG, "Calling " + url + "...");
+                    }
+                },
+                new ServiceCallback() {
+
+                    @Override
+                    public void onCallSucceeded(String payload) {
+                        try {
+                            JSONObject response = new JSONObject(payload);
+                            String userId = response.getString(USER_ID);
+                            mRefreshToken = response.getString(REFRESH_TOKEN);
+                            mRefreshTokenScope = response.getString(SCOPE);
+                            registerAppCenterAuthentication(userId);
+                        } catch (JSONException e) {
+                            onCallFailed(e);
+                        }
+                    }
+
+                    @Override
+                    public void onCallFailed(Exception e) {
+                        handleCallFailure(e);
+                    }
+                });
     }
 
     private void refreshToken(final AuthenticationProvider.AuthenticationCallback callback) {
@@ -266,10 +363,10 @@ public class MSALoginActivity extends AppCompatActivity {
                     @Override
                     public String buildRequestBody() {
                         return REDIRECT_URI_PARAM +
-                                CLIENT_ID_PARAM +
+                                CLIENT_ID_PARAM + mClientId +
                                 "&grant_type=" + REFRESH_TOKEN +
-                                "&" + REFRESH_TOKEN + "=" + sRefreshToken +
-                                SCOPE_PARAM;
+                                "&" + REFRESH_TOKEN + "=" + mRefreshToken +
+                                "&scope=" + mRefreshTokenScope;
                     }
 
                     @Override
@@ -295,13 +392,17 @@ public class MSALoginActivity extends AppCompatActivity {
                     @Override
                     public void onCallFailed(Exception e) {
                         callback.onAuthenticationResult(null, null);
-                        if (e instanceof HttpException) {
-                            HttpException he = (HttpException) e;
-                            failSignIn(he.getStatusCode(), he.getPayload());
-                        } else {
-                            failSignIn(0, e.getMessage());
-                        }
+                        handleCallFailure(e);
                     }
                 });
+    }
+
+    private void handleCallFailure(Exception e) {
+        if (e instanceof HttpException) {
+            HttpException he = (HttpException) e;
+            failSignIn(he.getStatusCode(), he.getPayload());
+        } else {
+            failSignIn(0, e.getMessage());
+        }
     }
 }
