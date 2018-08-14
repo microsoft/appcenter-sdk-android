@@ -10,6 +10,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLException;
@@ -115,10 +116,21 @@ public class HttpUtils {
     public static String hideApiKeys(@NonNull String apiKeys) {
 
         /* Replace all secret parts. */
-        String obfuscatedString = API_KEY_PATTERN.matcher(apiKeys).replaceAll("-***,");
+        StringBuilder buffer = new StringBuilder();
+        Matcher matcher = API_KEY_PATTERN.matcher(apiKeys);
+        int lastEnd = 0;
+        while (matcher.find()) {
+            buffer.append(apiKeys.substring(lastEnd, matcher.start()));
+            buffer.append("-***");
 
-        /* Since we did it in a simple way, it might have added an extra comma at the end, remove it. */
-        return obfuscatedString.substring(0, Math.max(0, obfuscatedString.length() - 1));
+            /* This will be either comma or end of line, thus empty string, for the last key. */
+            buffer.append(matcher.group(1));
+            lastEnd = matcher.end();
+        }
+        if (lastEnd < apiKeys.length()) {
+            buffer.append(apiKeys.substring(lastEnd, apiKeys.length()));
+        }
+        return buffer.toString();
     }
 
     public static String hideTickets(@NonNull String tickets) {
