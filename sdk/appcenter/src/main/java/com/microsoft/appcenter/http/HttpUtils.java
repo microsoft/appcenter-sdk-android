@@ -99,12 +99,13 @@ public class HttpUtils {
         return false;
     }
 
-    public static String hideSecret(String secret) {
-
-        /* Cannot hide null or empty string. */
-        if (secret == null || secret.isEmpty()) {
-            return secret;
-        }
+    /**
+     * Hide secret string.
+     *
+     * @param secret like an app secret or a bearer token.
+     * @return obfuscated secret.
+     */
+    public static String hideSecret(@NonNull String secret) {
 
         /* Hide secret if string is neither null nor empty string. */
         int hidingEndIndex = secret.length() - (secret.length() >= MAX_CHARACTERS_DISPLAYED_FOR_SECRET ? MAX_CHARACTERS_DISPLAYED_FOR_SECRET : 0);
@@ -113,6 +114,12 @@ public class HttpUtils {
         return new String(fill) + secret.substring(hidingEndIndex);
     }
 
+    /**
+     * Hide secret parts in api keys, expecting One Collector header format.
+     *
+     * @param apiKeys api keys string header value.
+     * @return obfuscated api keys or the original string as is if the format does not match.
+     */
     public static String hideApiKeys(@NonNull String apiKeys) {
 
         /* Replace all secret parts. */
@@ -133,6 +140,12 @@ public class HttpUtils {
         return buffer.toString();
     }
 
+    /**
+     * Hide token values in Tickets header string, expecting One Collector format.
+     *
+     * @param tickets tickets string header value.
+     * @return obfuscated tickets or the original string as is if the format does not match.
+     */
     public static String hideTickets(@NonNull String tickets) {
         return TOKEN_VALUE_PATTERN.matcher(tickets).replaceAll(":***");
     }

@@ -4,16 +4,10 @@ import org.junit.Test;
 
 import static com.microsoft.appcenter.http.HttpUtils.MAX_CHARACTERS_DISPLAYED_FOR_SECRET;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("unused")
 public class HttpUtilsTest {
-
-    @Test
-    public void hideNullSecret() {
-        assertNull(HttpUtils.hideSecret(null));
-    }
 
     @Test
     public void hideEmptySecret() {
@@ -22,10 +16,7 @@ public class HttpUtilsTest {
 
     @Test
     public void hideShortSecret() {
-        String secret = "Short";
-
-        //noinspection ReplaceAllDot
-        assertEquals(secret.replaceAll(".", "*"), HttpUtils.hideSecret(secret));
+        assertEquals("*****", HttpUtils.hideSecret("Short"));
     }
 
     @Test
