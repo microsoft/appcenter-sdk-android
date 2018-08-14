@@ -47,6 +47,12 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
     private void startMSALoginActivity(AuthenticationProvider.Type type) {
         Intent intent = new Intent(getApplication(), MSALoginActivity.class);
         intent.putExtra(AuthenticationProvider.Type.class.getName(), type);
-        startActivity(intent);
+        startActivityForResult(intent, 0);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        finish();
     }
 }
