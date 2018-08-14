@@ -20,6 +20,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -96,6 +97,16 @@ public class DefaultHttpClient implements HttpClient {
      * Minimum payload length in bytes to use gzip.
      */
     private static final int MIN_GZIP_LENGTH = 1400;
+
+    /**
+     * Pattern used to replace token in url encoded parameters.
+     */
+    private static Pattern TOKEN_REGEX_URL_ENCODED = Pattern.compile("token=[^&]+");
+
+    /**
+     * Pattern used to replace token in json responses.
+     */
+    private static Pattern TOKEN_REGEX_JSON = Pattern.compile("token\":\"[^\"]+\"");
 
     /**
      * Dump stream to string.
@@ -208,6 +219,7 @@ public class DefaultHttpClient implements HttpClient {
 
                 /* Compress payload if large enough to be worth it. */
                 if (AppCenterLog.getLogLevel() <= Log.VERBOSE) {
+                    payload = TOKEN_REGEX_URL_ENCODED.matcher(payload).replaceAll("token=***");
                     if (CONTENT_TYPE_VALUE.equals(headers.get(CONTENT_TYPE_KEY))) {
                         payload = new JSONObject(payload).toString(2);
                     }
@@ -235,7 +247,7 @@ public class DefaultHttpClient implements HttpClient {
             String contentType = urlConnection.getHeaderField(CONTENT_TYPE_KEY);
             String logPayload;
             if (contentType == null || contentType.startsWith("text/") || contentType.startsWith("application/")) {
-                logPayload = response;
+                logPayload = TOKEN_REGEX_JSON.matcher(response).replaceAll("token\":\"***\"");
             } else {
                 logPayload = "<binary>";
             }

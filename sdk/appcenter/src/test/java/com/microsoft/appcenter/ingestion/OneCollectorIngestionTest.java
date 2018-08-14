@@ -326,7 +326,9 @@ public class OneCollectorIngestionTest {
         /* Mock instances. */
         URL url = new URL("http://mock/path/file");
         String apiKeys = UUIDUtils.randomUUID().toString();
-        String obfuscatedSecret = HttpUtils.hideSecret(apiKeys);
+        String obfuscatedApiKeys = HttpUtils.hideApiKeys(apiKeys);
+        String tickets = "{'hash':'secretValue'}";
+        String obfuscatedTickets = HttpUtils.hideTickets(tickets);
         Map<String, String> headers = new HashMap<>();
         headers.put("Another-Header", "Another-Value");
         HttpClient.CallTemplate callTemplate = getCallTemplate();
@@ -350,9 +352,15 @@ public class OneCollectorIngestionTest {
         headers.put(OneCollectorIngestion.API_KEY, apiKeys);
         callTemplate.onBeforeCalling(url, headers);
 
-        /* Verify app secret is in log. */
+        /* Verify api key is in log. */
         verifyStatic();
-        AppCenterLog.verbose(anyString(), contains(obfuscatedSecret));
+        AppCenterLog.verbose(anyString(), contains(obfuscatedApiKeys));
+
+        /* Add ticket to header and check the same way as api key. */
+        headers.put(OneCollectorIngestion.TICKETS, tickets);
+        callTemplate.onBeforeCalling(url, headers);
+        verifyStatic();
+        AppCenterLog.verbose(anyString(), contains(obfuscatedTickets));
     }
 
     @Test

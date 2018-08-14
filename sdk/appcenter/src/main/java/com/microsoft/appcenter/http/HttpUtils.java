@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.http;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import java.io.EOFException;
@@ -38,6 +39,16 @@ public class HttpUtils {
      * Some transient exceptions can only be detected by interpreting the message...
      */
     private static final Pattern CONNECTION_ISSUE_PATTERN = Pattern.compile("connection (time|reset)|failure in ssl library, usually a protocol error|anchor for certification path not found");
+
+    /**
+     * Pattern for token value within ticket header (to replace with * characters).
+     */
+    private static final Pattern TOKEN_VALUE_PATTERN = Pattern.compile(":[^\"]+");
+
+    /**
+     * One Collector Ingestion API key pattern (secret key within the header value).
+     */
+    private static final Pattern API_KEY_PATTERN = Pattern.compile("-[^,]+(,|$)");
 
     @VisibleForTesting
     HttpUtils() {
@@ -99,5 +110,18 @@ public class HttpUtils {
         char[] fill = new char[hidingEndIndex];
         Arrays.fill(fill, '*');
         return new String(fill) + secret.substring(hidingEndIndex);
+    }
+
+    public static String hideApiKeys(@NonNull String apiKeys) {
+
+        /* Replace all secret parts. */
+        String obfuscatedString = API_KEY_PATTERN.matcher(apiKeys).replaceAll("-***,");
+
+        /* Since we did it in a simple way, it might have added an extra comma at the end, remove it. */
+        return obfuscatedString.substring(0, Math.max(0, obfuscatedString.length() - 1));
+    }
+
+    public static String hideTickets(@NonNull String tickets) {
+        return TOKEN_VALUE_PATTERN.matcher(tickets).replaceAll(":***");
     }
 }

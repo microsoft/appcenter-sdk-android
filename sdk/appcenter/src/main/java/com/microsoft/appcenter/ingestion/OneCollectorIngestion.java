@@ -246,9 +246,11 @@ public class OneCollectorIngestion implements Ingestion {
                 Map<String, String> logHeaders = new HashMap<>(headers);
                 String apiKeys = logHeaders.get(API_KEY);
                 if (apiKeys != null) {
-
-                    /* TODO possibly censor multiple API keys individually instead of whole set */
-                    logHeaders.put(API_KEY, HttpUtils.hideSecret(apiKeys));
+                    logHeaders.put(API_KEY, HttpUtils.hideApiKeys(apiKeys));
+                }
+                String tickets = logHeaders.get(TICKETS);
+                if (tickets != null) {
+                    logHeaders.put(TICKETS, HttpUtils.hideTickets(tickets));
                 }
                 AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
             }
