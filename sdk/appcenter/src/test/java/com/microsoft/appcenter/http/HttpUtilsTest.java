@@ -61,4 +61,19 @@ public class HttpUtilsTest {
     public void hideInvalidApiKey() {
         assertEquals("asIs", HttpUtils.hideApiKeys("asIs"));
     }
+
+    @Test
+    public void hideTickets() {
+        assertEquals("{\"a\":\"d:***\",\"b\":\"p:***\"}", HttpUtils.hideTickets("{\"a\":\"d:mock1\",\"b\":\"p:mock2\"}"));
+    }
+
+    @Test
+    public void hideEmptyTicket() {
+        assertEquals("", HttpUtils.hideTickets(""));
+    }
+
+    @Test
+    public void hideInvalidTicket() {
+        assertEquals("asIs", HttpUtils.hideTickets("asIs"));
+    }
 }
