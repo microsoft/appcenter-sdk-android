@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.http;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import java.io.EOFException;
@@ -38,6 +39,11 @@ public class HttpUtils {
      * Some transient exceptions can only be detected by interpreting the message...
      */
     private static final Pattern CONNECTION_ISSUE_PATTERN = Pattern.compile("connection (time|reset)|failure in ssl library, usually a protocol error|anchor for certification path not found");
+
+    /**
+     * Pattern for token value within ticket header (to replace with * characters).
+     */
+    private static final Pattern TOKEN_VALUE_PATTERN = Pattern.compile(":[^\"]+");
 
     @VisibleForTesting
     HttpUtils() {
@@ -99,5 +105,9 @@ public class HttpUtils {
         char[] fill = new char[hidingEndIndex];
         Arrays.fill(fill, '*');
         return new String(fill) + secret.substring(hidingEndIndex);
+    }
+
+    public static String hideTickets(@NonNull String tickets) {
+        return TOKEN_VALUE_PATTERN.matcher(tickets).replaceAll(":***");
     }
 }

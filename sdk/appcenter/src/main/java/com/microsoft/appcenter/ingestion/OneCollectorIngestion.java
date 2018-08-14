@@ -250,7 +250,7 @@ public class OneCollectorIngestion implements Ingestion {
                 }
                 String tickets = logHeaders.get(TICKETS);
                 if (tickets != null) {
-                    logHeaders.put(TICKETS, HttpUtils.hideSecret(tickets));
+                    logHeaders.put(TICKETS, HttpUtils.hideTickets(tickets));
                 }
                 AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
             }

@@ -328,7 +328,7 @@ public class OneCollectorIngestionTest {
         String apiKeys = UUIDUtils.randomUUID().toString();
         String obfuscatedApiKeys = HttpUtils.hideSecret(apiKeys);
         String tickets = "{'hash':'secretValue'}";
-        String obfuscatedTickets = HttpUtils.hideSecret(tickets);
+        String obfuscatedTickets = HttpUtils.hideTickets(tickets);
         Map<String, String> headers = new HashMap<>();
         headers.put("Another-Header", "Another-Value");
         HttpClient.CallTemplate callTemplate = getCallTemplate();
