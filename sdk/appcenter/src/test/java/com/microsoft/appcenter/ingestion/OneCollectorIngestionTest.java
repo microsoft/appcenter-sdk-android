@@ -326,7 +326,7 @@ public class OneCollectorIngestionTest {
         /* Mock instances. */
         URL url = new URL("http://mock/path/file");
         String apiKeys = UUIDUtils.randomUUID().toString();
-        String obfuscatedApiKeys = HttpUtils.hideSecret(apiKeys);
+        String obfuscatedApiKeys = HttpUtils.hideApiKeys(apiKeys);
         String tickets = "{'hash':'secretValue'}";
         String obfuscatedTickets = HttpUtils.hideTickets(tickets);
         Map<String, String> headers = new HashMap<>();

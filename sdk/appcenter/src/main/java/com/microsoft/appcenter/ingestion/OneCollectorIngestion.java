@@ -246,7 +246,7 @@ public class OneCollectorIngestion implements Ingestion {
                 Map<String, String> logHeaders = new HashMap<>(headers);
                 String apiKeys = logHeaders.get(API_KEY);
                 if (apiKeys != null) {
-                    logHeaders.put(API_KEY, HttpUtils.hideSecret(apiKeys));
+                    logHeaders.put(API_KEY, HttpUtils.hideApiKeys(apiKeys));
                 }
                 String tickets = logHeaders.get(TICKETS);
                 if (tickets != null) {

@@ -45,6 +45,11 @@ public class HttpUtils {
      */
     private static final Pattern TOKEN_VALUE_PATTERN = Pattern.compile(":[^\"]+");
 
+    /**
+     * One Collector Ingestion API key pattern (secret key within the header value).
+     */
+    private static final Pattern API_KEY_PATTERN = Pattern.compile("-[^,]+(,|$)");
+
     @VisibleForTesting
     HttpUtils() {
     }
@@ -105,6 +110,15 @@ public class HttpUtils {
         char[] fill = new char[hidingEndIndex];
         Arrays.fill(fill, '*');
         return new String(fill) + secret.substring(hidingEndIndex);
+    }
+
+    public static String hideApiKeys(@NonNull String apiKeys) {
+
+        /* Replace all secret parts. */
+        String obfuscatedString = API_KEY_PATTERN.matcher(apiKeys).replaceAll("-***,");
+
+        /* Since we did it in a simple way, it might have added an extra comma at the end, remove it. */
+        return obfuscatedString.substring(0, Math.max(0, obfuscatedString.length() - 1));
     }
 
     public static String hideTickets(@NonNull String tickets) {
