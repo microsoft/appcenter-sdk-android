@@ -11,7 +11,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.webkit.CookieManager;
-import android.webkit.CookieSyncManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -133,6 +132,7 @@ public class MSALoginActivity extends AppCompatActivity {
             }
 
             @Override
+            @SuppressWarnings("deprecation")
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 failSignIn(errorCode, description);
             }
@@ -165,6 +165,7 @@ public class MSALoginActivity extends AppCompatActivity {
             }
 
             @Override
+            @SuppressWarnings("deprecation")
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 clearCookies();
                 failSignOut(errorCode, description);
@@ -180,13 +181,14 @@ public class MSALoginActivity extends AppCompatActivity {
         mWebView.loadUrl(SIGN_OUT_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM);
     }
 
+    @SuppressWarnings("deprecation")
     private void clearCookies() {
         CookieManager cookieManager = CookieManager.getInstance();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             cookieManager.removeAllCookies(null);
             cookieManager.flush();
         } else {
-            CookieSyncManager cookieSyncManager = CookieSyncManager.createInstance(this);
+            android.webkit.CookieSyncManager cookieSyncManager = android.webkit.CookieSyncManager.createInstance(this);
             cookieSyncManager.startSync();
             cookieManager.removeAllCookie();
             cookieManager.removeSessionCookie();
