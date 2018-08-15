@@ -121,7 +121,7 @@ public class AuthenticationProvider {
                 handleTokenUpdate(token, expiryDate, this);
             }
         };
-        mTokenProvider.getToken(mTicketKey, mCallback);
+        mTokenProvider.acquireToken(mTicketKey, mCallback);
     }
 
     /**
@@ -216,7 +216,7 @@ public class AuthenticationProvider {
          * @param ticketKey The ticket key that is used to get an updated token.
          * @param callback  callback to provide the result.
          */
-        void getToken(String ticketKey, AuthenticationCallback callback);
+        void acquireToken(String ticketKey, AuthenticationCallback callback);
     }
 
     /**

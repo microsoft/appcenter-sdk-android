@@ -294,7 +294,7 @@ public class MSALoginActivity extends AppCompatActivity {
         AuthenticationProvider.TokenProvider tokenProvider = new AuthenticationProvider.TokenProvider() {
 
             @Override
-            public void getToken(String ticketKey, AuthenticationProvider.AuthenticationCallback callback) {
+            public void acquireToken(String ticketKey, AuthenticationProvider.AuthenticationCallback callback) {
 
                 /* Refresh token, doing that even on first time to test the refresh code without having to wait 1 hour. */
                 refreshToken(callback);
