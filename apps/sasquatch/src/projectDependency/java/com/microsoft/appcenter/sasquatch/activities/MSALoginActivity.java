@@ -382,8 +382,8 @@ public class MSALoginActivity extends AppCompatActivity {
                             JSONObject response = new JSONObject(payload);
                             String accessToken = response.getString("access_token");
                             long expiresIn = response.getLong("expires_in") * 1000L;
-                            Date expiresAt = new Date(System.currentTimeMillis() + expiresIn);
-                            callback.onAuthenticationResult(accessToken, expiresAt);
+                            Date expiryDate = new Date(System.currentTimeMillis() + expiresIn);
+                            callback.onAuthenticationResult(accessToken, expiryDate);
                         } catch (JSONException e) {
                             onCallFailed(e);
                         }
