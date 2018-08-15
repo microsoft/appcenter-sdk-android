@@ -54,7 +54,7 @@ public class AuthenticationProviderTest {
     }
 
     @Test
-    public void acquireTokenAsync() {
+    public void acquireTokenAsyncInvalidToken() {
         AuthenticationProvider.TokenProvider tokenProvider = mock(AuthenticationProvider.TokenProvider.class);
         ArgumentCaptor<AuthenticationProvider.AuthenticationCallback> callback = ArgumentCaptor.forClass(AuthenticationProvider.AuthenticationCallback.class);
         doNothing().when(tokenProvider).getToken(anyString(), callback.capture());
@@ -68,15 +68,58 @@ public class AuthenticationProviderTest {
         callback.getValue().onAuthenticationResult(null, new Date());
         verifyStatic(never());
         TicketCache.putTicket(anyString(), anyString());
+
+        /* Ignore calling callback more than once, even if parameters are valid the second time. */
+        long freshDate = System.currentTimeMillis() + 15 * 60 * 1000;
+        callback.getValue().onAuthenticationResult("test", new Date(freshDate));
+        verifyStatic(never());
+        TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("p:test"));
+    }
+
+    @Test
+    public void acquireTokenAsyncInvalidDate() {
+        AuthenticationProvider.TokenProvider tokenProvider = mock(AuthenticationProvider.TokenProvider.class);
+        ArgumentCaptor<AuthenticationProvider.AuthenticationCallback> callback = ArgumentCaptor.forClass(AuthenticationProvider.AuthenticationCallback.class);
+        doNothing().when(tokenProvider).getToken(anyString(), callback.capture());
+        AuthenticationProvider authenticationProvider = new AuthenticationProvider(MSA_COMPACT, "key", tokenProvider);
+
+        /* Verify acquireTokenAsync. */
+        authenticationProvider.acquireTokenAsync();
+        verify(tokenProvider).getToken(eq("key"), any(AuthenticationProvider.AuthenticationCallback.class));
+
+        /* When callback parameters are invalid, don't update cache. */
         callback.getValue().onAuthenticationResult("test", null);
         verifyStatic(never());
         TicketCache.putTicket(anyString(), anyString());
+
+        /* Ignore calling callback more than once, even if parameters are valid the second time. */
+        long freshDate = System.currentTimeMillis() + 15 * 60 * 1000;
+        callback.getValue().onAuthenticationResult("test", new Date(freshDate));
+        verifyStatic(never());
+        TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("p:test"));
+    }
+
+    @Test
+    public void acquireTokenAsyncValid() {
+        AuthenticationProvider.TokenProvider tokenProvider = mock(AuthenticationProvider.TokenProvider.class);
+        ArgumentCaptor<AuthenticationProvider.AuthenticationCallback> callback = ArgumentCaptor.forClass(AuthenticationProvider.AuthenticationCallback.class);
+        doNothing().when(tokenProvider).getToken(anyString(), callback.capture());
+        AuthenticationProvider authenticationProvider = new AuthenticationProvider(MSA_COMPACT, "key", tokenProvider);
+
+        /* Verify acquireTokenAsync. */
+        authenticationProvider.acquireTokenAsync();
+        verify(tokenProvider).getToken(eq("key"), any(AuthenticationProvider.AuthenticationCallback.class));
 
         /* When callback parameters are valid update cache. */
         long freshDate = System.currentTimeMillis() + 15 * 60 * 1000;
         callback.getValue().onAuthenticationResult("test", new Date(freshDate));
         verifyStatic();
         TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("p:test"));
+
+        /* Duplicate calls are ignored. */
+        callback.getValue().onAuthenticationResult("test2", new Date(freshDate));
+        verifyStatic(never());
+        TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("p:test2"));
     }
 
     @Test

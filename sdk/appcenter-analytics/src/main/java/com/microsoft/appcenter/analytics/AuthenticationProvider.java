@@ -118,7 +118,7 @@ public class AuthenticationProvider {
 
             @Override
             public void onAuthenticationResult(String token, Date expiresAt) {
-                handleTokenUpdate(token, expiresAt);
+                handleTokenUpdate(token, expiresAt, this);
             }
         };
         mTokenProvider.getToken(mTicketKey, mCallback);
@@ -129,8 +129,18 @@ public class AuthenticationProvider {
      *
      * @param token     token value.
      * @param expiresAt token expiry date.
+     * @param callback  authentication callback.
      */
-    private synchronized void handleTokenUpdate(String token, Date expiresAt) {
+    private synchronized void handleTokenUpdate(String token, Date expiresAt, AuthenticationCallback callback) {
+
+        /* Prevent multiple calls. */
+        if (mCallback != callback) {
+            AppCenterLog.debug(LOG_TAG, "Ignore duplicate authentication callback calls, provider=" + mType);
+            return;
+        }
+
+        /* Clear callback state. */
+        mCallback = null;
 
         /* Check parameters. */
         AppCenterLog.debug(LOG_TAG, "Got result back from token provider=" + mType);
@@ -148,9 +158,6 @@ public class AuthenticationProvider {
 
         /* Keep track of safe expiry time. */
         mExpiresAt = expiresAt;
-
-        /* Clear callback state. */
-        mCallback = null;
     }
 
     /**
