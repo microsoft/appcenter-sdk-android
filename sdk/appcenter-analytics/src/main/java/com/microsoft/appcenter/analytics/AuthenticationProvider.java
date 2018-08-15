@@ -47,7 +47,7 @@ public class AuthenticationProvider {
     /**
      * Current token expiry date.
      */
-    private Date mExpiresAt;
+    private Date mExpiryDate;
 
     /**
      * Create a new authentication provider.
@@ -117,8 +117,8 @@ public class AuthenticationProvider {
         mCallback = new AuthenticationCallback() {
 
             @Override
-            public void onAuthenticationResult(String token, Date expiresAt) {
-                handleTokenUpdate(token, expiresAt);
+            public void onAuthenticationResult(String token, Date expiryDate) {
+                handleTokenUpdate(token, expiryDate);
             }
         };
         mTokenProvider.getToken(mTicketKey, mCallback);
@@ -127,10 +127,10 @@ public class AuthenticationProvider {
     /**
      * Handle token callback update.
      *
-     * @param token     token value.
-     * @param expiresAt token expiry date.
+     * @param token      token value.
+     * @param expiryDate token expiry date.
      */
-    private synchronized void handleTokenUpdate(String token, Date expiresAt) {
+    private synchronized void handleTokenUpdate(String token, Date expiryDate) {
 
         /* Check parameters. */
         AppCenterLog.debug(LOG_TAG, "Got result back from token provider=" + mType);
@@ -138,8 +138,8 @@ public class AuthenticationProvider {
             AppCenterLog.error(LOG_TAG, "Authentication failed for ticketKey=" + mTicketKey);
             return;
         }
-        if (expiresAt == null) {
-            AppCenterLog.error(LOG_TAG, "No expiry provided for ticketKey=" + mTicketKey);
+        if (expiryDate == null) {
+            AppCenterLog.error(LOG_TAG, "No expiry date provided for ticketKey=" + mTicketKey);
             return;
         }
 
@@ -147,7 +147,7 @@ public class AuthenticationProvider {
         TicketCache.putTicket(mTicketKeyHash, mType.mTokenPrefix + token);
 
         /* Keep track of safe expiry time. */
-        mExpiresAt = expiresAt;
+        mExpiryDate = expiryDate;
 
         /* Clear callback state. */
         mCallback = null;
@@ -157,7 +157,7 @@ public class AuthenticationProvider {
      * Trigger asynchronous token refresh if the token is about to expire.
      */
     synchronized void checkTokenExpiry() {
-        if (mExpiresAt != null && mExpiresAt.getTime() <= System.currentTimeMillis() + REFRESH_THRESHOLD) {
+        if (mExpiryDate != null && mExpiryDate.getTime() <= System.currentTimeMillis() + REFRESH_THRESHOLD) {
             acquireTokenAsync();
         }
     }
@@ -221,8 +221,8 @@ public class AuthenticationProvider {
          * Notify SDK that authentication completed.
          *
          * @param tokenValue token value or null if authentication failed.
-         * @param expiresAt  expiry date for token or null if authentication failed.
+         * @param expiryDate expiry date for token or null if authentication failed.
          */
-        void onAuthenticationResult(String tokenValue, Date expiresAt);
+        void onAuthenticationResult(String tokenValue, Date expiryDate);
     }
 }

@@ -91,10 +91,10 @@ public class AuthenticationProviderTest {
 
         /* When acquired a fresh token. */
         authenticationProvider.acquireTokenAsync();
-        Date expiresAt = mock(Date.class);
-        when(expiresAt.getTime()).thenReturn(System.currentTimeMillis() + 15 * 60 * 1000);
+        Date expiryDate = mock(Date.class);
+        when(expiryDate.getTime()).thenReturn(System.currentTimeMillis() + 15 * 60 * 1000);
         verify(tokenProvider).getToken(anyString(), callback.capture());
-        callback.getValue().onAuthenticationResult("test", expiresAt);
+        callback.getValue().onAuthenticationResult("test", expiryDate);
         verifyStatic();
         TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("d:test"));
 
@@ -105,7 +105,7 @@ public class AuthenticationProviderTest {
         verify(authenticationProvider, never()).acquireTokenAsync();
 
         /* When token expiring soon, then it tries to acquire a new token. */
-        when(expiresAt.getTime()).thenReturn(System.currentTimeMillis() + 9 * 60 * 1000);
+        when(expiryDate.getTime()).thenReturn(System.currentTimeMillis() + 9 * 60 * 1000);
         authenticationProvider.checkTokenExpiry();
         verify(authenticationProvider).acquireTokenAsync();
         verify(tokenProvider).getToken(anyString(), callback.capture());
@@ -120,7 +120,7 @@ public class AuthenticationProviderTest {
         verify(tokenProvider, never()).getToken(anyString(), callback.capture());
 
         /* Call back after refresh. */
-        callback.getValue().onAuthenticationResult("test", expiresAt);
+        callback.getValue().onAuthenticationResult("test", expiryDate);
 
         /* Verify cache updated. */
         verifyStatic(times(2));
@@ -132,7 +132,7 @@ public class AuthenticationProviderTest {
         authenticationProvider.checkTokenExpiry();
         verify(authenticationProvider).acquireTokenAsync();
         verify(tokenProvider).getToken(anyString(), callback.capture());
-        callback.getValue().onAuthenticationResult("test", expiresAt);
+        callback.getValue().onAuthenticationResult("test", expiryDate);
         verifyStatic(times(3));
         TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("d:test"));
     }
