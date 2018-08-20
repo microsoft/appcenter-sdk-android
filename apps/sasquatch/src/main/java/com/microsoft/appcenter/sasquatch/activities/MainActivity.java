@@ -127,8 +127,8 @@ public class MainActivity extends AppCompatActivity {
             Distribute.setApiUrl(apiUrl);
         }
 
-        //noinspection deprecation
-        Push.setSenderId(SENDER_ID);
+        /* Set push sender ID the old way for testing without firebase lib. */
+        setSenderId();
 
         /* Set crash attachments. */
         sCrashesListener.setTextAttachment(sSharedPreferences.getString(TEXT_ATTACHMENT_KEY, null));
@@ -192,6 +192,11 @@ public class MainActivity extends AppCompatActivity {
         ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
+    }
+
+    @SuppressWarnings("deprecation")
+    private void setSenderId() {
+        Push.setSenderId(SENDER_ID);
     }
 
     @Override

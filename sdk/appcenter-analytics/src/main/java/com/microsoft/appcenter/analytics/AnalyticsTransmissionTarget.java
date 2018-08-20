@@ -1,13 +1,19 @@
 package com.microsoft.appcenter.analytics;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
+import com.microsoft.appcenter.channel.AbstractChannelListener;
+import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,6 +28,12 @@ import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
 public class AnalyticsTransmissionTarget {
 
     /**
+     * The authentication provider to use.
+     */
+    @VisibleForTesting
+    static AuthenticationProvider sAuthenticationProvider;
+
+    /**
      * Target token for this level.
      */
     private final String mTransmissionTargetToken;
@@ -29,7 +41,7 @@ public class AnalyticsTransmissionTarget {
     /**
      * Parent target if any.
      */
-    private final AnalyticsTransmissionTarget mParentTarget;
+    final AnalyticsTransmissionTarget mParentTarget;
 
     /**
      * Children targets for nesting.
@@ -37,19 +49,59 @@ public class AnalyticsTransmissionTarget {
     private final Map<String, AnalyticsTransmissionTarget> mChildrenTargets = new HashMap<>();
 
     /**
-     * Common event properties for this target. Inherited by children.
+     * Channel used for Property Configurator.
      */
-    private final Map<String, String> mEventProperties = new HashMap<>();
+    private Channel mChannel;
+
+    /**
+     * Property configurator used to override Common Schema Part A properties.
+     */
+    private PropertyConfigurator mPropertyConfigurator;
 
     /**
      * Create a new instance.
      *
      * @param transmissionTargetToken The token for this transmission target.
      * @param parentTarget            Parent transmission target.
+     * @param channel                 The channel for this transmission target.
      */
-    AnalyticsTransmissionTarget(@NonNull String transmissionTargetToken, final AnalyticsTransmissionTarget parentTarget) {
+    AnalyticsTransmissionTarget(@NonNull String transmissionTargetToken, final AnalyticsTransmissionTarget parentTarget, Channel channel) {
         mTransmissionTargetToken = transmissionTargetToken;
         mParentTarget = parentTarget;
+        mChannel = channel;
+        mPropertyConfigurator = new PropertyConfigurator(channel, this);
+    }
+
+    /**
+     * Add an authentication provider to associate logs with user identifiers.
+     *
+     * @param authenticationProvider The authentication provider.
+     */
+    public static synchronized void addAuthenticationProvider(AuthenticationProvider authenticationProvider) {
+
+        /* Validate input. */
+        if (authenticationProvider == null) {
+            AppCenterLog.error(LOG_TAG, "Authentication provider may not be null.");
+            return;
+        }
+        if (authenticationProvider.getType() == null) {
+            AppCenterLog.error(LOG_TAG, "Authentication provider type may not be null.");
+            return;
+        }
+        if (authenticationProvider.getTicketKey() == null) {
+            AppCenterLog.error(LOG_TAG, "Authentication ticket key may not be null.");
+            return;
+        }
+        if (authenticationProvider.getTokenProvider() == null) {
+            AppCenterLog.error(LOG_TAG, "Authentication token provider may not be null.");
+            return;
+        }
+
+        /* Update current provider. */
+        sAuthenticationProvider = authenticationProvider;
+
+        /* Request token now. */
+        authenticationProvider.acquireTokenAsync();
     }
 
     /**
@@ -74,7 +126,7 @@ public class AnalyticsTransmissionTarget {
         /* Merge common properties. More specific target wins conflicts. */
         Map<String, String> mergedProperties = new HashMap<>();
         for (AnalyticsTransmissionTarget target = this; target != null; target = target.mParentTarget) {
-            target.mergeEventProperties(mergedProperties);
+            target.getPropertyConfigurator().mergeEventProperties(mergedProperties);
         }
 
         /* Override with parameter. */
@@ -95,41 +147,6 @@ public class AnalyticsTransmissionTarget {
     }
 
     /**
-     * Extracted method to synchronize on each level at once while reading properties.
-     * Nesting synchronize between parent/child could lead to deadlocks.
-     */
-    private synchronized void mergeEventProperties(Map<String, String> mergedProperties) {
-        for (Map.Entry<String, String> property : mEventProperties.entrySet()) {
-            String key = property.getKey();
-            if (!mergedProperties.containsKey(key)) {
-                mergedProperties.put(key, property.getValue());
-            }
-        }
-    }
-
-    /**
-     * Add or overwrite the given key for the common event properties. Properties will be inherited
-     * by children of this transmission target.
-     *
-     * @param key   The property key.
-     * @param value The property value.
-     */
-    @SuppressWarnings("WeakerAccess")
-    public synchronized void setEventProperty(String key, String value) {
-        mEventProperties.put(key, value);
-    }
-
-    /**
-     * Removes the given key from the common event properties.
-     *
-     * @param key The property key to be removed.
-     */
-    @SuppressWarnings("WeakerAccess")
-    public synchronized void removeEventProperty(String key) {
-        mEventProperties.remove(key);
-    }
-
-    /**
      * Create a new transmission target based on the properties of the current target.
      *
      * @param transmissionTargetToken The transmission target token of the new transmission target.
@@ -140,7 +157,7 @@ public class AnalyticsTransmissionTarget {
         /* Reuse instance if a child with the same token has already been created. */
         AnalyticsTransmissionTarget childTarget = mChildrenTargets.get(transmissionTargetToken);
         if (childTarget == null) {
-            childTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, this);
+            childTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, this, mChannel);
             mChildrenTargets.put(transmissionTargetToken, childTarget);
         }
         return childTarget;
@@ -217,6 +234,41 @@ public class AnalyticsTransmissionTarget {
         return mTransmissionTargetToken;
     }
 
+    /**
+     * Init channel listener to add tickets to logs.
+     */
+    static Channel.Listener getChannelListener() {
+        return new AbstractChannelListener() {
+
+            @Override
+            public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
+                addTicketToLog(log);
+            }
+        };
+    }
+
+    /**
+     * Add ticket to common schema logs.
+     */
+    private synchronized static void addTicketToLog(@NonNull Log log) {
+
+        /* Decorate only common schema logs when an authentication provider was registered. */
+        if (sAuthenticationProvider != null && log instanceof CommonSchemaLog) {
+
+            /* Add ticket reference to log. */
+            CommonSchemaLog csLog = (CommonSchemaLog) log;
+            String ticketKey = sAuthenticationProvider.getTicketKeyHash();
+            csLog.getExt().getProtocol().setTicketKeys(Collections.singletonList(ticketKey));
+
+            /*
+             * Check if we should try to refresh token if soon expired.
+             * Known corner case: if already expired and refresh takes longer than batching log time,
+             * then next logs will be anonymous until token refreshed.
+             */
+            sAuthenticationProvider.checkTokenExpiry();
+        }
+    }
+
     @NonNull
     private String getEnabledPreferenceKey() {
         return Analytics.getInstance().getEnabledPreferenceKeyPrefix() + mTransmissionTargetToken.split("-")[0];
@@ -240,5 +292,14 @@ public class AnalyticsTransmissionTarget {
     @WorkerThread
     boolean isEnabled() {
         return areAncestorsEnabled() && isEnabledInStorage();
+    }
+
+    /**
+     * Getter for property configurator to override Common Schema Part A properties.
+     *
+     * @return the Property Configurator
+     */
+    public PropertyConfigurator getPropertyConfigurator() {
+        return mPropertyConfigurator;
     }
 }

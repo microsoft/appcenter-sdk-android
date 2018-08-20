@@ -3,18 +3,20 @@ package com.microsoft.appcenter.analytics;
 import android.content.Context;
 
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
+import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.Extensions;
+import com.microsoft.appcenter.ingestion.models.one.ProtocolExtension;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -29,7 +31,9 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
@@ -44,6 +48,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), mChannel, null, null, false);
+        AnalyticsTransmissionTarget.sAuthenticationProvider = null;
     }
 
     @Test
@@ -159,7 +164,6 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         /* Another child transmission target with the same token should be the same instance. */
         assertSame(childTarget, target.getTransmissionTarget("token3"));
     }
-
 
     @Test
     public void setEnabled() {
@@ -291,149 +295,81 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
     }
 
     @Test
-    public void setCommonEventProperties() {
+    public void addAuthenticationProvider() {
 
-        /* Create transmission target and add property. */
-        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
-        target.setEventProperty("key", "value");
+        /* Passing null does not do anything and does not crash. */
+        AnalyticsTransmissionTarget.addAuthenticationProvider(null);
+        assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
 
-        /* Track event without property. */
-        target.trackEvent("eventName");
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+        /* Build an object now for the parameter. */
+        AuthenticationProvider authenticationProvider = mock(AuthenticationProvider.class);
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider, never()).acquireTokenAsync();
 
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    Map<String, String> expectedProperties = new HashMap<>();
-                    expectedProperties.put("key", "value");
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("eventName") && expectedProperties.equals(eventLog.getProperties());
-                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("test");
-                    return nameAndPropertiesMatch && tokenMatch;
-                }
-                return false;
-            }
-        }), anyString());
+        /* Set type. */
+        when(authenticationProvider.getType()).thenReturn(AuthenticationProvider.Type.MSA_COMPACT);
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider, never()).acquireTokenAsync();
+
+        /* Set ticket key. */
+        when(authenticationProvider.getTicketKey()).thenReturn("key1");
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider, never()).acquireTokenAsync();
+
+        /* Set token provider. */
+        when(authenticationProvider.getTokenProvider()).thenReturn(mock(AuthenticationProvider.TokenProvider.class));
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider).acquireTokenAsync();
+
+        /* Replace provider with invalid parameters does not update. */
+        AnalyticsTransmissionTarget.addAuthenticationProvider(null);
+        AuthenticationProvider authenticationProvider2 = mock(AuthenticationProvider.class);
+        when(authenticationProvider2.getType()).thenReturn(AuthenticationProvider.Type.MSA_COMPACT);
+        when(authenticationProvider2.getTicketKey()).thenReturn("key2");
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider2);
+        assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider2, never()).acquireTokenAsync();
+
+        /* Replace with valid provider. */
+        when(authenticationProvider2.getTokenProvider()).thenReturn(mock(AuthenticationProvider.TokenProvider.class));
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider2);
+        assertEquals(authenticationProvider2, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider2).acquireTokenAsync();
     }
 
     @Test
-    public void setAndRemoveCommonEventPropertiesWithMerge() {
+    public void addTicketToLog() {
 
-        /* Create transmission target and add 2 properties (1 overwritten). */
-        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
-        target.setEventProperty("key1", "value1");
-        target.setEventProperty("key2", "ignore");
-        target.setEventProperty("remove", "ignore");
+        /* No actions are prepared without authentication provider. */
+        CommonSchemaLog log = new CommonSchemaEventLog();
+        AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(log, "test");
 
-        /* Remove some properties. */
-        target.removeEventProperty("remove");
-        target.removeEventProperty("notFound");
+        /* Add authentication provider. */
+        AuthenticationProvider.TokenProvider tokenProvider = mock(AuthenticationProvider.TokenProvider.class);
+        AuthenticationProvider authenticationProvider = spy(new AuthenticationProvider(AuthenticationProvider.Type.MSA_COMPACT, "key1", tokenProvider));
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+        assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider).acquireTokenAsync();
 
-        /* Prepare properties. */
-        Map<String, String> properties = new HashMap<>();
-        properties.put("key2", "value2");
-        properties.put("key3", "value3");
+        /* No actions are prepared with no CommonSchemaLog. */
+        AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(mock(Log.class), "test");
+        verify(authenticationProvider, never()).checkTokenExpiry();
 
-        /* Track event with extra properties. */
-        target.trackEvent("eventName", properties);
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+        /* Call prepare log. */
+        final ProtocolExtension protocol = new ProtocolExtension();
+        log.setExt(new Extensions() {{
+            setProtocol(protocol);
+        }});
+        AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(log, "test");
 
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    Map<String, String> expectedProperties = new HashMap<>();
-                    expectedProperties.put("key1", "value1");
-                    expectedProperties.put("key2", "value2");
-                    expectedProperties.put("key3", "value3");
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("eventName") && expectedProperties.equals(eventLog.getProperties());
-                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("test");
-                    return nameAndPropertiesMatch && tokenMatch;
-                }
-                return false;
-            }
-        }), anyString());
-    }
+        /* Verify log. */
+        assertEquals(Collections.singletonList(authenticationProvider.getTicketKeyHash()), protocol.getTicketKeys());
 
-    @Test
-    public void trackEventWithEmptyProperties() {
-
-        /* Create transmission target. */
-        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
-
-        /* Track event with empty properties. */
-        target.trackEvent("eventName", Collections.<String, String>emptyMap());
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    Map<String, String> expectedProperties = Collections.emptyMap();
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("eventName") && expectedProperties.equals(eventLog.getProperties());
-                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("test");
-                    return nameAndPropertiesMatch && tokenMatch;
-                }
-                return false;
-            }
-        }), anyString());
-    }
-
-    @Test
-    public void eventPropertiesCascading() {
-
-        /* Create transmission target hierarchy. */
-        AnalyticsTransmissionTarget grandParent = Analytics.getTransmissionTarget("grandParent");
-        AnalyticsTransmissionTarget parent = grandParent.getTransmissionTarget("parent");
-        AnalyticsTransmissionTarget child = parent.getTransmissionTarget("child");
-
-        /* Set common properties across hierarchy with some overrides. */
-        grandParent.setEventProperty("a", "1");
-        grandParent.setEventProperty("b", "2");
-        grandParent.setEventProperty("c", "3");
-
-        /* Override some. */
-        parent.setEventProperty("a", "11");
-        parent.setEventProperty("b", "22");
-
-        /* And a new one. */
-        parent.setEventProperty("d", "44");
-
-        /* Just to show we still get value from grandParent if we remove an override. */
-        parent.setEventProperty("c", "33");
-        parent.removeEventProperty("c");
-
-        /* Overrides in child. */
-        child.setEventProperty("d", "444");
-
-        /* New in child. */
-        child.setEventProperty("e", "555");
-        child.setEventProperty("f", "666");
-
-        /* Track event in child. Override properties in trackEvent. */
-        Map<String, String> properties = new HashMap<>();
-        properties.put("f", "6666");
-        properties.put("g", "7777");
-        child.trackEvent("eventName", properties);
-
-        /* Verify log that was sent. */
-        ArgumentCaptor<EventLog> logArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(logArgumentCaptor.capture(), anyString());
-        EventLog log = logArgumentCaptor.getValue();
-        assertNotNull(log);
-        assertEquals("eventName", log.getName());
-        assertEquals(1, log.getTransmissionTargetTokens().size());
-        assertTrue(log.getTransmissionTargetTokens().contains("child"));
-
-        /* Verify properties. */
-        Map<String, String> expectedProperties = new HashMap<>();
-        expectedProperties.put("a", "11");
-        expectedProperties.put("b", "22");
-        expectedProperties.put("c", "3");
-        expectedProperties.put("d", "444");
-        expectedProperties.put("e", "555");
-        expectedProperties.put("f", "6666");
-        expectedProperties.put("g", "7777");
-        assertEquals(expectedProperties, log.getProperties());
+        /* And that we check expiry. */
+        verify(authenticationProvider).checkTokenExpiry();
     }
 }

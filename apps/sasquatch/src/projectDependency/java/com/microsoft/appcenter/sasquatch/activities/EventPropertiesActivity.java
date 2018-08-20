@@ -27,9 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class EventPropertiesActivity extends AppCompatActivity {
+import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.EXTRA_TARGET_SELECTED;
 
-    public final static String EXTRA_TARGET_SELECTED = "TARGET_SELECTED";
+public class EventPropertiesActivity extends AppCompatActivity {
 
     private Spinner mTransmissionTargetSpinner;
 
@@ -48,7 +48,10 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
         /* Initialize spinner for transmission targets. */
         mTransmissionTargetSpinner = findViewById(R.id.transmission_target);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.target_id_names));
+        String[] allTargetNames = getResources().getStringArray(R.array.target_id_names);
+        String[] nonDefaultTargetNames = new String[allTargetNames.length - 1];
+        System.arraycopy(allTargetNames, 1, nonDefaultTargetNames, 0, nonDefaultTargetNames.length);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, nonDefaultTargetNames);
         mTransmissionTargetSpinner.setAdapter(adapter);
         mTransmissionTargetSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -77,6 +80,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
          * the forth is a grandchild, etc...
          */
         mTransmissionTargets = EventActivityUtil.getAnalyticTransmissionTargetList(this);
+        mTransmissionTargets.remove(0);
     }
 
     @Override
@@ -87,61 +91,69 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_add:
-                final TextView keyView = mAddPropertyLayout.findViewById(R.id.key);
-                final TextView valueView = mAddPropertyLayout.findViewById(R.id.value);
-                keyView.setText("");
-                valueView.setText("");
-                mAddPropertyLayout.setVisibility(View.VISIBLE);
-                mAddPropertyLayout.findViewById(R.id.add_button).setOnClickListener(new View.OnClickListener() {
+        final AnalyticsTransmissionTarget target = getSelectedTarget();
+        if (target != null) {
+            switch (item.getItemId()) {
+                case R.id.action_add:
+                    final TextView keyView = mAddPropertyLayout.findViewById(R.id.key);
+                    final TextView valueView = mAddPropertyLayout.findViewById(R.id.value);
+                    keyView.setText("");
+                    valueView.setText("");
+                    mAddPropertyLayout.setVisibility(View.VISIBLE);
+                    mAddPropertyLayout.findViewById(R.id.add_button).setOnClickListener(new View.OnClickListener() {
 
-                    @Override
-                    public void onClick(View v) {
-                        CharSequence key = keyView.getText();
-                        CharSequence value = valueView.getText();
-                        if (!TextUtils.isEmpty(key) && !TextUtils.isEmpty(value)) {
-                            getSelectedTarget().setEventProperty(key.toString(), value.toString());
-                            updatePropertyList();
+                        @Override
+                        public void onClick(View v) {
+                            CharSequence key = keyView.getText();
+                            CharSequence value = valueView.getText();
+                            if (!TextUtils.isEmpty(key) && !TextUtils.isEmpty(value)) {
+                                try {
+                                    target.getPropertyConfigurator().setEventProperty(key.toString(), value.toString());
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                                updatePropertyList();
+                            }
+                            mAddPropertyLayout.setVisibility(View.GONE);
                         }
-                        mAddPropertyLayout.setVisibility(View.GONE);
-                    }
-                });
-                mAddPropertyLayout.findViewById(R.id.cancel_button).setOnClickListener(new View.OnClickListener() {
+                    });
+                    mAddPropertyLayout.findViewById(R.id.cancel_button).setOnClickListener(new View.OnClickListener() {
 
-                    @Override
-                    public void onClick(View v) {
-                        mAddPropertyLayout.setVisibility(View.GONE);
-                    }
-                });
-                break;
+                        @Override
+                        public void onClick(View v) {
+                            mAddPropertyLayout.setVisibility(View.GONE);
+                        }
+                    });
+                    break;
+            }
         }
         return true;
     }
 
+
+    @SuppressWarnings("unchecked")
     private void updatePropertyList() {
-        AnalyticsTransmissionTarget target = getSelectedTarget();
-        Field field;
+        Field field = null;
         try {
-            field = target.getClass().getDeclaredField("mEventProperties");
-        } catch (Exception e) {
-            field = null;
+            if (getSelectedTarget() != null) {
+                field = getSelectedTarget().getPropertyConfigurator().getClass().getDeclaredField("mEventProperties");
+            }
+        } catch (NoSuchFieldException ignore) {
         }
         if (field != null) {
+            field.setAccessible(true);
+            Map<String, String> properties;
             try {
-                field.setAccessible(true);
-
-                //noinspection unchecked
-                Map<String, String> map = (Map<String, String>) field.get(target);
-                mPropertyListAdapter.mList.clear();
-                for (Map.Entry<String, String> entry : map.entrySet()) {
-                    mPropertyListAdapter.mList.add(new Pair<>(entry.getKey(), entry.getValue()));
-                }
-                mListView.setAdapter(mPropertyListAdapter);
-                mPropertyListAdapter.notifyDataSetChanged();
-            } catch (Exception e) {
+                properties = (Map<String, String>) field.get(getSelectedTarget().getPropertyConfigurator());
+            } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
+            mPropertyListAdapter.mList.clear();
+            for (Map.Entry<String, String> entry : properties.entrySet()) {
+                mPropertyListAdapter.mList.add(new Pair<>(entry.getKey(), entry.getValue()));
+            }
+            mListView.setAdapter(mPropertyListAdapter);
+            mPropertyListAdapter.notifyDataSetChanged();
         }
     }
 
@@ -175,12 +187,11 @@ public class EventPropertiesActivity extends AppCompatActivity {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public View getView(int position, View convertView, ViewGroup parent) {
 
             /* Set key and value strings to the view. */
             View rowView;
-
-            //noinspection unchecked
             final Pair<String, String> item = (Pair<String, String>) getItem(position);
             ViewHolder holder;
             if (convertView != null && convertView.getTag() != null) {
@@ -198,9 +209,12 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
                 @Override
                 public void onClick(View v) {
-                    mList.remove(item);
-                    getSelectedTarget().removeEventProperty(item.first);
-                    notifyDataSetChanged();
+                    AnalyticsTransmissionTarget target = getSelectedTarget();
+                    if (target != null) {
+                        mList.remove(item);
+                        target.getPropertyConfigurator().removeEventProperty(item.first);
+                        notifyDataSetChanged();
+                    }
                 }
             });
             return rowView;

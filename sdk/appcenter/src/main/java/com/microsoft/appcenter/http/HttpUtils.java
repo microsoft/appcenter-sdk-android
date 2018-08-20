@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.http;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import java.io.EOFException;
@@ -9,6 +10,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLException;
@@ -38,6 +40,16 @@ public class HttpUtils {
      * Some transient exceptions can only be detected by interpreting the message...
      */
     private static final Pattern CONNECTION_ISSUE_PATTERN = Pattern.compile("connection (time|reset)|failure in ssl library, usually a protocol error|anchor for certification path not found");
+
+    /**
+     * Pattern for token value within ticket header (to replace with * characters).
+     */
+    private static final Pattern TOKEN_VALUE_PATTERN = Pattern.compile(":[^\"]+");
+
+    /**
+     * One Collector Ingestion API key pattern (secret key within the header value).
+     */
+    private static final Pattern API_KEY_PATTERN = Pattern.compile("-[^,]+(,|$)");
 
     @VisibleForTesting
     HttpUtils() {
@@ -87,17 +99,54 @@ public class HttpUtils {
         return false;
     }
 
-    public static String hideSecret(String secret) {
-
-        /* Cannot hide null or empty string. */
-        if (secret == null || secret.isEmpty()) {
-            return secret;
-        }
+    /**
+     * Hide secret string.
+     *
+     * @param secret like an app secret or a bearer token.
+     * @return obfuscated secret.
+     */
+    public static String hideSecret(@NonNull String secret) {
 
         /* Hide secret if string is neither null nor empty string. */
         int hidingEndIndex = secret.length() - (secret.length() >= MAX_CHARACTERS_DISPLAYED_FOR_SECRET ? MAX_CHARACTERS_DISPLAYED_FOR_SECRET : 0);
         char[] fill = new char[hidingEndIndex];
         Arrays.fill(fill, '*');
         return new String(fill) + secret.substring(hidingEndIndex);
+    }
+
+    /**
+     * Hide secret parts in api keys, expecting One Collector header format.
+     *
+     * @param apiKeys api keys string header value.
+     * @return obfuscated api keys or the original string as is if the format does not match.
+     */
+    public static String hideApiKeys(@NonNull String apiKeys) {
+
+        /* Replace all secret parts. */
+        StringBuilder buffer = new StringBuilder();
+        Matcher matcher = API_KEY_PATTERN.matcher(apiKeys);
+        int lastEnd = 0;
+        while (matcher.find()) {
+            buffer.append(apiKeys.substring(lastEnd, matcher.start()));
+            buffer.append("-***");
+
+            /* This will be either comma or end of line, thus empty string, for the last key. */
+            buffer.append(matcher.group(1));
+            lastEnd = matcher.end();
+        }
+        if (lastEnd < apiKeys.length()) {
+            buffer.append(apiKeys.substring(lastEnd, apiKeys.length()));
+        }
+        return buffer.toString();
+    }
+
+    /**
+     * Hide token values in Tickets header string, expecting One Collector format.
+     *
+     * @param tickets tickets string header value.
+     * @return obfuscated tickets or the original string as is if the format does not match.
+     */
+    public static String hideTickets(@NonNull String tickets) {
+        return TOKEN_VALUE_PATTERN.matcher(tickets).replaceAll(":***");
     }
 }

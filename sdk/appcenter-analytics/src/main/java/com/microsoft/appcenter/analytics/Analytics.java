@@ -96,6 +96,11 @@ public class Analytics extends AbstractAppCenterService {
     private AnalyticsValidator mAnalyticsValidator;
 
     /**
+     * Channel listener used by transmission targets to decorate logs.
+     */
+    private Channel.Listener mAnalyticsTransmissionTargetListener;
+
+    /**
      * Custom analytics listener.
      */
     private AnalyticsListener mAnalyticsListener;
@@ -299,10 +304,11 @@ public class Analytics extends AbstractAppCenterService {
      * Get a transmission target to use to track events. Will create a new transmission target if necessary.
      *
      * @param transmissionTargetToken A string to identify a transmission target.
-     * @return a transmission target.
+     * @return a transmission target or null if the token is invalid.
      */
     private synchronized AnalyticsTransmissionTarget getInstanceTransmissionTarget(String transmissionTargetToken) {
         if (transmissionTargetToken == null || transmissionTargetToken.isEmpty()) {
+            AppCenterLog.error(LOG_TAG, "Transmission target may not be null or empty.");
             return null;
         } else {
             AnalyticsTransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);
@@ -310,7 +316,7 @@ public class Analytics extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
                 return transmissionTarget;
             }
-            transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, null);
+            transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, null, mChannel);
             AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
             mTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
             return transmissionTarget;
@@ -452,6 +458,10 @@ public class Analytics extends AbstractAppCenterService {
                 mSessionTracker.clearSessions();
                 mSessionTracker = null;
             }
+            if (mAnalyticsTransmissionTargetListener != null) {
+                mChannel.removeListener(mAnalyticsTransmissionTargetListener);
+                mAnalyticsTransmissionTargetListener = null;
+            }
         }
     }
 
@@ -479,6 +489,10 @@ public class Analytics extends AbstractAppCenterService {
                     processOnResume(activity);
                 }
             }
+
+            /* Add new channel listener for transmission target. */
+            mAnalyticsTransmissionTargetListener = AnalyticsTransmissionTarget.getChannelListener();
+            mChannel.addListener(mAnalyticsTransmissionTargetListener);
         }
     }
 

@@ -365,8 +365,6 @@ public class Crashes extends AbstractAppCenterService {
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (isInstanceEnabled()) {
             processPendingErrors();
-        } else {
-            initialize();
         }
     }
 
@@ -740,7 +738,9 @@ public class Crashes extends AbstractAppCenterService {
     ErrorReport buildErrorReport(ManagedErrorLog log) {
         UUID id = log.getId();
         if (mErrorReportCache.containsKey(id)) {
-            return mErrorReportCache.get(id).report;
+            ErrorReport report = mErrorReportCache.get(id).report;
+            report.setDevice(log.getDevice());
+            return report;
         } else {
             File file = ErrorLogHelper.getStoredThrowableFile(id);
             if (file != null) {
