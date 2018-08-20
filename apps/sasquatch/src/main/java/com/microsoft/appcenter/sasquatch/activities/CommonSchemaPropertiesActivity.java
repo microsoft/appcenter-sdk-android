@@ -21,9 +21,6 @@ import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.EXT
 
 public class CommonSchemaPropertiesActivity extends AppCompatActivity {
 
-    /* TODO Remove this check after SDK release. */
-    static final boolean IS_SUPPORTED = true;
-
     private Spinner mCommonSchemaPropertiesSpinner;
 
     private EditText mCommonSchemaPropertyValue;

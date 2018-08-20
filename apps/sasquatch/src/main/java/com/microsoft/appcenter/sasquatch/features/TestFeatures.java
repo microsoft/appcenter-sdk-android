@@ -2,7 +2,6 @@ package com.microsoft.appcenter.sasquatch.features;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 
@@ -20,8 +19,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
-
 public final class TestFeatures {
 
     private static List<TestFeatureModel> sTestFeatureModels;
@@ -35,14 +32,7 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeature(R.string.title_event, R.string.description_event, EventActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_page, R.string.description_page, PageActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_generate_page_log, R.string.description_generate_page_log, DummyActivity.class));
-        try {
-            Class<?> authClass = Class.forName("com.microsoft.appcenter.analytics.AuthenticationProvider");
-            if (authClass != null) {
-                sTestFeatureModels.add(new TestFeature(R.string.title_auth, R.string.description_auth, AuthenticationProviderActivity.class));
-            }
-        } catch (Exception e) {
-            Log.i(LOG_TAG, "Authentication not yet available in this flavor.");
-        }
+        sTestFeatureModels.add(new TestFeature(R.string.title_auth, R.string.description_auth, AuthenticationProviderActivity.class));
         sTestFeatureModels.add(new TestFeatureTitle(R.string.crashes_title));
         sTestFeatureModels.add(new TestFeature(R.string.title_crashes, R.string.description_crashes, CrashActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_error, R.string.description_error, ManagedErrorActivity.class));

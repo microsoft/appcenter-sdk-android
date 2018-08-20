@@ -44,9 +44,6 @@ import java.util.Map;
 
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
-/**
- * TODO move to main source folder after SDK release (and delete jCenter version).
- */
 public class MSALoginActivity extends AppCompatActivity {
 
     private static final String URL_PREFIX = "https://login.live.com/oauth20_";
