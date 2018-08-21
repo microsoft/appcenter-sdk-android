@@ -1,5 +1,22 @@
 # App Center SDK for Android Change Log
 
+## Version 1.8.0
+
+### AppCenterCrashes
+
+* **[Fix]** Fix a bug where some initialize operations were executed twice.
+* **[Fix]** Fix a bug where device information could be null when reading the error report client side.
+
+### AppCenterDistribute
+
+* **[Fix]** Fix a crash that could happen when starting the application.
+
+### AppCenterAnalytics
+
+- **[Feature]** Preparation work for a future change in transmission protocol and endpoint for Analytics data. There is no impact on your current workflow when using App Center.
+
+___
+
 ## Version 1.7.0
 
 ### AppCenterAnalytics
