@@ -56,9 +56,7 @@ public class MSALoginActivity extends AppCompatActivity {
 
     private static final String SIGN_OUT_URL = URL_PREFIX + "logout.srf?";
 
-    private static final String CLIENT_ID_COMPACT = "000000004C1D3F6C";
-
-    private static final String CLIENT_ID_DELEGATE = "06181c2a-2403-437f-a490-9bcb06f85281";
+    private static final String CLIENT_ID = "06181c2a-2403-437f-a490-9bcb06f85281";
 
     private static final String[] SCOPES_COMPACT = {"service::events.data.microsoft.com::MBI_SSL"};
 
@@ -74,7 +72,7 @@ public class MSALoginActivity extends AppCompatActivity {
 
     private static final String REFRESH_TOKEN = "refresh_token";
 
-    private static final String CLIENT_ID_PARAM = "&client_id=";
+    private static final String CLIENT_ID_PARAM = "&client_id=" + CLIENT_ID;
 
     private static String REDIRECT_URI_PARAM;
 
@@ -111,11 +109,6 @@ public class MSALoginActivity extends AppCompatActivity {
      */
     private AuthenticationProvider.Type mAuthType;
 
-    /**
-     * Client identifier to use.
-     */
-    private String mClientId;
-
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -142,11 +135,6 @@ public class MSALoginActivity extends AppCompatActivity {
         /* Show prompt or message that there will be no prompt to sign in. */
         String cookie = CookieManager.getInstance().getCookie(AUTHORIZE_URL);
         boolean compact = mAuthType == AuthenticationProvider.Type.MSA_COMPACT;
-        if (compact) {
-            mClientId = CLIENT_ID_COMPACT;
-        } else {
-            mClientId = CLIENT_ID_DELEGATE;
-        }
         if (compact && cookie != null && cookie.contains("MSPPre")) {
             mWebView.loadData(getString(R.string.signed_in_cookie), "text/plain", "UFT-8");
         } else {
@@ -177,7 +165,7 @@ public class MSALoginActivity extends AppCompatActivity {
         boolean compactTicket = mAuthType == AuthenticationProvider.Type.MSA_COMPACT;
         String responseType = compactTicket ? "token" : "code";
         String[] scopes = compactTicket ? SCOPES_COMPACT : SCOPES_DELEGATE;
-        mWebView.loadUrl(AUTHORIZE_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM + mClientId + "&response_type=" + responseType +
+        mWebView.loadUrl(AUTHORIZE_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM + "&response_type=" + responseType +
                 "&scope=" + TextUtils.join("+", scopes));
     }
 
@@ -212,7 +200,7 @@ public class MSALoginActivity extends AppCompatActivity {
                 failSignOut(error.getErrorCode(), error.getDescription());
             }
         });
-        mWebView.loadUrl(SIGN_OUT_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM + mClientId);
+        mWebView.loadUrl(SIGN_OUT_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM);
     }
 
     @SuppressWarnings("deprecation")
@@ -317,7 +305,7 @@ public class MSALoginActivity extends AppCompatActivity {
                     @Override
                     public String buildRequestBody() {
                         return REDIRECT_URI_PARAM +
-                                CLIENT_ID_PARAM + mClientId +
+                                CLIENT_ID_PARAM +
                                 "&grant_type=authorization_code" +
                                 "&code=" + code;
                     }
@@ -360,7 +348,7 @@ public class MSALoginActivity extends AppCompatActivity {
                     @Override
                     public String buildRequestBody() {
                         return REDIRECT_URI_PARAM +
-                                CLIENT_ID_PARAM + mClientId +
+                                CLIENT_ID_PARAM +
                                 "&grant_type=" + REFRESH_TOKEN +
                                 "&" + REFRESH_TOKEN + "=" + mRefreshToken +
                                 "&scope=" + mRefreshTokenScope;
