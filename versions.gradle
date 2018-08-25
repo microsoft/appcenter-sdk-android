@@ -4,7 +4,7 @@ ext {
     versionCode = 38
     versionName = '1.8.1'
     minSdkVersion = 15
-    targetSdkVersion = 27
-    compileSdkVersion = 27
+    targetSdkVersion = 28
+    compileSdkVersion = 28
     supportLibVersion = '27.1.1'
 }
