@@ -106,7 +106,6 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTP. */
         mockCall();
-        testTls1_2Setting(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1, 0);
         for (int apiLevel = Build.VERSION_CODES.JELLY_BEAN; apiLevel < Build.VERSION_CODES.KITKAT_WATCH; apiLevel++) {
             testTls1_2Setting(apiLevel, 1);
         }

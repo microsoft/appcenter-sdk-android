@@ -11,7 +11,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.util.Date;
 
 import static com.microsoft.appcenter.test.TestUtils.generateString;
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;

@@ -4,8 +4,8 @@ import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 
 import org.junit.Test;
 
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
 
 public class AppCenterInstrumentationTest extends AbstractAppCenterTest {

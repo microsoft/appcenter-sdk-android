@@ -101,12 +101,10 @@ public class PushNotifierTest {
         when(mNotificationBuilderMock.setContentTitle(anyString())).thenReturn(mNotificationBuilderMock);
         when(mNotificationBuilderMock.setContentText(anyString())).thenReturn(mNotificationBuilderMock);
         when(mNotificationBuilderMock.setWhen(anyLong())).thenReturn(mNotificationBuilderMock);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            when(mNotificationBuilderMock.build()).thenReturn(mNotificationMock);
-            Notification.BigTextStyle bigTextStyle = mock(Notification.BigTextStyle.class);
-            whenNew(Notification.BigTextStyle.class).withAnyArguments().thenReturn(bigTextStyle);
-            when(bigTextStyle.bigText(any(CharSequence.class))).thenReturn(bigTextStyle);
-        }
+        when(mNotificationBuilderMock.build()).thenReturn(mNotificationMock);
+        Notification.BigTextStyle bigTextStyle = mock(Notification.BigTextStyle.class);
+        whenNew(Notification.BigTextStyle.class).withAnyArguments().thenReturn(bigTextStyle);
+        when(bigTextStyle.bigText(any(CharSequence.class))).thenReturn(bigTextStyle);
         when(mNotificationBuilderMock.getNotification()).thenReturn(mNotificationMock);
         whenNew(Notification.Builder.class).withArguments(mContextMock).thenReturn(mNotificationBuilderMock);
         mApplicationInfoMock = new ApplicationInfo();
@@ -150,26 +148,16 @@ public class PushNotifierTest {
     }
 
     @Test
-    public void handlePushJellybean() throws Exception {
-        setVersionSdkInt(Build.VERSION_CODES.JELLY_BEAN);
+    public void handlePushBigText() {
         PushNotifier.handleNotification(mContextMock, new Intent());
         verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
         verifyStatic();
         PushIntentUtils.setMessageId(eq(mDummyGoogleMessageId), same(mActionIntentMock));
 
-        /* Verify we apply big text style on Android 4.1+. */
+        /* Verify we apply big text style. */
         ArgumentCaptor<Notification.BigTextStyle> styleArgumentCaptor = ArgumentCaptor.forClass(Notification.BigTextStyle.class);
         verify(mNotificationBuilderMock).setStyle(styleArgumentCaptor.capture());
         verify(styleArgumentCaptor.getValue()).bigText("message");
-    }
-
-    @Test
-    public void handlePushIceCreamSandwich() throws Exception {
-        setVersionSdkInt(Build.VERSION_CODES.ICE_CREAM_SANDWICH);
-        PushNotifier.handleNotification(mContextMock, new Intent());
-        verify(mNotificationManagerMock).notify(anyInt(), any(Notification.class));
-        verifyStatic();
-        PushIntentUtils.setMessageId(eq(mDummyGoogleMessageId), same(mActionIntentMock));
     }
 
     @Test
