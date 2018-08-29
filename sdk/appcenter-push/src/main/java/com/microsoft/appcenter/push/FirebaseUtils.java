@@ -10,7 +10,6 @@ import android.support.annotation.VisibleForTesting;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.FirebaseMessagingService;
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import static com.microsoft.appcenter.push.Push.LOG_TAG;

@@ -51,12 +51,12 @@ public class AnalyticsTransmissionTarget {
     /**
      * Channel used for Property Configurator.
      */
-    private Channel mChannel;
+    private final Channel mChannel;
 
     /**
      * Property configurator used to override Common Schema Part A properties.
      */
-    private PropertyConfigurator mPropertyConfigurator;
+    private final PropertyConfigurator mPropertyConfigurator;
 
     /**
      * Create a new instance.

@@ -74,7 +74,7 @@ public class MSALoginActivity extends AppCompatActivity {
 
     private static final String CLIENT_ID_PARAM = "&client_id=" + CLIENT_ID;
 
-    private static String REDIRECT_URI_PARAM;
+    private static final String REDIRECT_URI_PARAM;
 
     static {
         try {
@@ -142,6 +142,7 @@ public class MSALoginActivity extends AppCompatActivity {
         }
     }
 
+    @SuppressWarnings("unused")
     public void signIn(View view) {
         mWebView.setWebViewClient(new WebViewClient() {
 
@@ -169,6 +170,7 @@ public class MSALoginActivity extends AppCompatActivity {
                 "&scope=" + TextUtils.join("+", scopes));
     }
 
+    @SuppressWarnings("unused")
     public void signOut(View view) {
         mWebView.setWebViewClient(new WebViewClient() {
 

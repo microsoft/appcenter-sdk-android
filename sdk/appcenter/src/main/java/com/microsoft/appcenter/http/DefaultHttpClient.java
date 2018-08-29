@@ -101,12 +101,12 @@ public class DefaultHttpClient implements HttpClient {
     /**
      * Pattern used to replace token in url encoded parameters.
      */
-    private static Pattern TOKEN_REGEX_URL_ENCODED = Pattern.compile("token=[^&]+");
+    private static final Pattern TOKEN_REGEX_URL_ENCODED = Pattern.compile("token=[^&]+");
 
     /**
      * Pattern used to replace token in json responses.
      */
-    private static Pattern TOKEN_REGEX_JSON = Pattern.compile("token\":\"[^\"]+\"");
+    private static final Pattern TOKEN_REGEX_JSON = Pattern.compile("token\":\"[^\"]+\"");
 
     /**
      * Dump stream to string.
