@@ -1,5 +1,15 @@
 # App Center SDK for Android Change Log
 
+## Version 1.9.0 (Under active development)
+
+### AppCenter
+
+* **[Security]** To enforce TLS 1.2 on all HTTPS connections the SDK makes, we are dropping support for API level 15 (which supports only TLS 1.0), the minimum SDK version thus becomes 16. Previous versions of the SDK were already using TLS 1.2 on API level 16+.
+
+### AppCenterAnalytics
+
+* **[Feature]** Preparation work for a future change in transmission protocol and endpoint for Analytics data. There is no impact on your current workflow when using App Center.
+
 ## Version 1.8.0
 
 ### AppCenterCrashes
@@ -13,7 +23,7 @@
 
 ### AppCenterAnalytics
 
-- **[Feature]** Preparation work for a future change in transmission protocol and endpoint for Analytics data. There is no impact on your current workflow when using App Center.
+* **[Feature]** Preparation work for a future change in transmission protocol and endpoint for Analytics data. There is no impact on your current workflow when using App Center.
 
 ___
 
